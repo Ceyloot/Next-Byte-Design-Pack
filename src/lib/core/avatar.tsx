@@ -57,13 +57,14 @@ export interface AvatarProps
   alt?: string;
   fallback?: string;
   status?: AvatarStatus;
+  glass?: boolean;
 }
 
 /* ── Avatar ──────────────────────────────────────────────── */
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
   AvatarProps
->(({ className, size = 'default', shape = 'circle', src, alt, fallback, status, ...props }, ref) => {
+>(({ className, size = 'default', shape = 'circle', src, alt, fallback, status, glass, ...props }, ref) => {
   const sizeKey = size ?? 'default';
   const initials = fallback
     ? fallback.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -85,9 +86,12 @@ const Avatar = React.forwardRef<
         )}
         <AvatarPrimitive.Fallback
           className={cn(
-            'flex h-full w-full items-center justify-center bg-muted',
+            'flex h-full w-full items-center justify-center',
+            glass
+              ? '[background:linear-gradient(180deg,hsl(var(--foreground)/0.12)_0%,hsl(var(--foreground)/0.04)_100%)] backdrop-blur-xl border border-foreground/[0.14] text-foreground'
+              : 'bg-muted text-muted-foreground',
             fallbackTextSize[sizeKey] ?? 'text-sm',
-            'font-semibold text-muted-foreground select-none',
+            'font-semibold select-none',
           )}
         >
           {initials || <User className="h-[40%] w-[40%]" />}

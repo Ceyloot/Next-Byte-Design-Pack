@@ -79,13 +79,15 @@ const BORDER: Record<ToastVariant, string> = {
 };
 
 /* ── Toast item ──────────────────────────────────────────── */
-function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }) {
+function ToastItem({ toast, onDismiss, glass }: { toast: ToastData; onDismiss: () => void; glass?: boolean }) {
   const variant = toast.variant ?? 'default';
   return (
     <div
       className={cn(
-        'relative flex w-full items-start gap-3 rounded-xl border bg-card p-4',
-        'shadow-[0_2px_4px_0_rgb(0_0_0/0.08),0_16px_40px_-16px_rgb(0_0_0/0.4),inset_0_1px_0_0_rgb(255_255_255/0.06)]',
+        'relative flex w-full items-start gap-3 rounded-xl border p-4',
+        glass
+          ? 'nb-glass-static'
+          : 'bg-card shadow-[0_2px_4px_0_rgb(0_0_0/0.08),0_16px_40px_-16px_rgb(0_0_0/0.4),inset_0_1px_0_0_rgb(255_255_255/0.06)]',
         'animate-in slide-in-from-right-full fade-in duration-200',
         BORDER[variant],
       )}
@@ -128,9 +130,10 @@ const POSITION_CLASSES: Record<ToastPosition, string> = {
 
 export interface ToasterProps {
   position?: ToastPosition;
+  glass?: boolean;
 }
 
-export function Toaster({ position = 'bottom-right' }: ToasterProps) {
+export function Toaster({ position = 'bottom-right', glass = false }: ToasterProps) {
   const { toasts, dismiss } = useToast();
   return (
     <div
@@ -142,7 +145,7 @@ export function Toaster({ position = 'bottom-right' }: ToasterProps) {
     >
       {toasts.map(t => (
         <div key={t.id} className="pointer-events-auto w-full">
-          <ToastItem toast={t} onDismiss={() => { t.onDismiss?.(); dismiss(t.id); }} />
+          <ToastItem toast={t} glass={glass} onDismiss={() => { t.onDismiss?.(); dismiss(t.id); }} />
         </div>
       ))}
     </div>

@@ -35,9 +35,15 @@ export default {
         heading: ['var(--font-heading)', 'Space Grotesk', 'ui-sans-serif', 'sans-serif'],
       },
       keyframes: {
-        'spin-slow': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+        'spin-slow':      { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+        'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },
+        'accordion-up':   { from: { height: 'var(--radix-accordion-content-height)' }, to: { height: '0' } },
       },
-      animation: { 'spin-slow': 'spin-slow 4s linear infinite' },
+      animation: {
+        'spin-slow':      'spin-slow 4s linear infinite',
+        'accordion-down': 'accordion-down 0.18s ease-out',
+        'accordion-up':   'accordion-up 0.18s ease-out',
+      },
     },
   },
   plugins: [],

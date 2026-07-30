@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 /* ── context ─────────────────────────────────────────────── */
-type TabsVariant = 'underline' | 'pills' | 'card';
+type TabsVariant = 'underline' | 'pills' | 'card' | 'glass';
 type TabsSize = 'sm' | 'default' | 'lg';
 
 const TabsContext = React.createContext<{ variant: TabsVariant; size: TabsSize }>({
@@ -18,6 +18,7 @@ const listVariants = cva('flex items-center', {
       underline: 'border-b border-border gap-0',
       pills:     'gap-1',
       card:      'bg-muted/40 rounded-xl p-1 gap-1',
+      glass:     'nb-glass rounded-xl p-1 gap-1',
     },
   },
 });
@@ -34,6 +35,8 @@ const triggerVariants = cva(
           'rounded-lg border border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 data-[state=active]:text-primary',
         card:
           'rounded-lg text-muted-foreground hover:text-foreground data-[state=active]:bg-card data-[state=active]:border data-[state=active]:border-border data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_2px_0_rgb(0_0_0/0.06),0_8px_24px_-12px_rgb(0_0_0/0.28),inset_0_1px_0_0_rgb(255_255_255/0.06)]',
+        glass:
+          'rounded-lg text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground data-[state=active]:bg-gradient-to-b data-[state=active]:from-primary/[0.20] data-[state=active]:to-primary/[0.08] data-[state=active]:border data-[state=active]:border-primary/30 data-[state=active]:text-primary data-[state=active]:shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.30)]',
       },
       size: {
         sm:      'px-2.5 py-1 text-xs',

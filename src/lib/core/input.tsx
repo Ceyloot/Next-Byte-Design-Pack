@@ -18,6 +18,7 @@ const inputVariants = cva(
         ghost:   'border-transparent bg-transparent hover:bg-muted/40',
         error:   'border-destructive/60 bg-destructive/[0.04] focus-visible:ring-destructive',
         success: 'border-primary/60 bg-primary/[0.04] focus-visible:ring-primary',
+        glass:   'nb-glass-static border-foreground/[0.14] hover:border-primary/35',
       },
       size: {
         sm:      'h-8 px-2.5 text-xs',
@@ -29,7 +30,7 @@ const inputVariants = cva(
   }
 );
 
-export type InputVariant = 'default' | 'ghost' | 'error' | 'success';
+export type InputVariant = 'default' | 'ghost' | 'error' | 'success' | 'glass';
 export type InputSize = 'sm' | 'default' | 'lg';
 
 export interface InputProps
@@ -88,29 +89,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   }
 );
 Input.displayName = 'Input';
-
-/* ── Textarea ─────────────────────────────────────────────── */
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-    Pick<VariantProps<typeof inputVariants>, 'variant'> {
-  rows?: number;
-}
-
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, variant = 'default', rows = 3, ...props }, ref) => (
-    <textarea
-      ref={ref}
-      rows={rows}
-      className={cn(
-        inputVariants({ variant, size: 'default' }),
-        'h-auto min-h-[80px] resize-y py-2.5',
-        className
-      )}
-      {...props}
-    />
-  )
-);
-Textarea.displayName = 'Textarea';
 
 /* ── InputLabel ───────────────────────────────────────────── */
 export interface InputLabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
@@ -173,4 +151,4 @@ const InputGroup: React.FC<InputGroupProps> = ({
   </div>
 );
 
-export { Input, Textarea, InputGroup, InputLabel, InputMessage, inputVariants };
+export { Input, InputGroup, InputLabel, InputMessage, inputVariants };

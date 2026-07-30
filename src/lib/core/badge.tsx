@@ -13,6 +13,7 @@ const badgeVariants = cva(
         destructive: 'border-destructive/40 bg-destructive/10 text-destructive',
         outline:     'border-border bg-transparent text-foreground',
         ghost:       'border-transparent bg-muted/40 text-muted-foreground',
+        glass:       'nb-glass-static border-foreground/[0.14] text-foreground shadow-[var(--shadow-glass)]',
       },
       size: {
         sm:      'px-1.5 py-0 text-[10px]',
@@ -27,6 +28,8 @@ const badgeVariants = cva(
     defaultVariants: { variant: 'default', size: 'default', shape: 'rounded' },
   }
 );
+
+export type BadgeVariant = 'default' | 'primary' | 'warning' | 'destructive' | 'outline' | 'ghost' | 'glass';
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>,
