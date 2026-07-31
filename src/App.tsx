@@ -3,9 +3,11 @@ import {
   Search, Copy, Check, Cpu, Star, LayoutDashboard,
   Package, Users, Settings, Trash2, Globe, Eye,
   Download, Layers, Shield, Award, Flame, BarChart3,
-  MessageSquare, Calendar, Bell, Activity, Lock,
+  MessageSquare, Calendar as CalendarIcon, Bell, Activity, Lock,
   ChevronRight, Filter, RefreshCw, Mail,
   Home, Inbox, FileText, PlusCircle, FolderOpen,
+  Code2, Megaphone, FlaskConical, Palette, Lightbulb,
+  PenLine, SlidersHorizontal, CheckCircle2,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -20,6 +22,7 @@ import {
   Tooltip, TooltipTrigger, TooltipContent,
   Checkbox, RadioGroup, RadioGroupItem,
   Textarea, Progress, EmptyState,
+  TagChip, TagChipGroup, ContextPill, CountdownTimer,
 } from '@/lib/core';
 
 import {
@@ -48,12 +51,19 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/lib/layout/popover';
 
 import {
   Sparkline, StatCard, ActivityFeed, AlertCard,
-  Tile, TileHeader, TileRow, TilePill, TileAction, TileFooter
+  Tile, TileHeader, TileRow, TilePill, TileAction, TileFooter,
+  ProductCard, ProfileCard, PricingCard,
+  FolderCard, FolderGrid, FOLDER_COLORS,
 } from '@/lib/analytics';
 
 import {
   TechGrid, PatternBackground, CommandSearch,
-  QuickNav, ModelSearch, type Model
+  QuickNav, ModelSearch, type Model,
+  Carousel, AnnouncementCarousel,
+  FileTree, KanbanBoard, MasonryGrid, Calendar,
+  NodeCanvas,
+  type FileTreeSection, type KanbanColumn, type CalendarEvent,
+  type WorkflowNode, type WorkflowEdge, type CanvasCategory,
 } from '@/lib/patterns';
 
 /* ── Colour helpers ───────────────────────────────────────── */
@@ -148,7 +158,10 @@ const NAV = [
       { id: 'radio',     name: 'Radio',      status: 'new'    },
       { id: 'textarea',  name: 'Textarea',   status: 'new'    },
       { id: 'progress',  name: 'Progress',   status: 'new'    },
-      { id: 'emptystate',name: 'EmptyState', status: 'new'    },
+      { id: 'emptystate',  name: 'EmptyState',     status: 'new'    },
+      { id: 'tagchip',     name: 'TagChip',         status: 'new'    },
+      { id: 'contextpill', name: 'ContextPill',     status: 'new'    },
+      { id: 'countdown',   name: 'CountdownTimer',  status: 'new'    },
     ],
   },
   {
@@ -174,6 +187,10 @@ const NAV = [
       { id: 'activityfeed', name: 'ActivityFeed',  status: 'stable' },
       { id: 'alertcard',    name: 'AlertCard',     status: 'beta'   },
       { id: 'tile',         name: 'Tile',          status: 'stable' },
+      { id: 'productcard',  name: 'ProductCard',   status: 'new'    },
+      { id: 'profilecard',  name: 'ProfileCard',   status: 'new'    },
+      { id: 'pricingcard',  name: 'PricingCard',   status: 'new'    },
+      { id: 'foldercard',   name: 'FolderCard',    status: 'new'    },
     ],
   },
   {
@@ -184,6 +201,13 @@ const NAV = [
       { id: 'modelsearch',   name: 'ModelSearch',        status: 'new'    },
       { id: 'bgpatterns',    name: 'BackgroundPatterns', status: 'stable' },
       { id: 'techgrid',      name: 'TechGrid',           status: 'stable' },
+      { id: 'carousel',      name: 'Carousel',           status: 'new'    },
+      { id: 'announcement',  name: 'AnnouncementCarousel', status: 'new'  },
+      { id: 'filetree',      name: 'FileTree',           status: 'new'    },
+      { id: 'kanban',        name: 'KanbanBoard',        status: 'new'    },
+      { id: 'masonrygrid',   name: 'MasonryGrid',        status: 'new'    },
+      { id: 'calendar',      name: 'Calendar',           status: 'new'    },
+      { id: 'nodecanvas',    name: 'NodeCanvas',         status: 'new'    },
     ],
   },
   {
@@ -351,6 +375,21 @@ export default function App() {
   const [checkStates, setCheckStates] = useState({ a: true, b: false, c: false });
   const [radioVal, setRadioVal] = useState('pro');
   const [progressVal, setProgressVal] = useState(65);
+  const [selectedTagChips, setSelectedTagChips] = useState<string[]>(['developer', 'designer']);
+  const [contextPillValues, setContextPillValues] = useState({ type: 'Auto', model: 'Pro', memory: 'Włączona' });
+  const [selectedFolder, setSelectedFolder] = useState<string | undefined>('nextbyte');
+  const [selectedTreeNode, setSelectedTreeNode] = useState<string | undefined>('comp-button');
+  const [carouselAutoplay, setCarouselAutoplay] = useState(false);
+  const DEMO_COUNTDOWN = useMemo(() => new Date(Date.now() + 16 * 86400000 + 17 * 3600000 + 26 * 60000), []);
+  const DEMO_CALENDAR_EVENTS: CalendarEvent[] = useMemo(() => {
+    const today = new Date();
+    const y = today.getFullYear(), mo = today.getMonth(), d = today.getDate();
+    return [
+      { id: 'e1', title: 'Daily standup', start: new Date(y,mo,d,9,0), end: new Date(y,mo,d,9,30), color: 'hsl(204 91% 70% / 0.8)' },
+      { id: 'e2', title: 'Design review', start: new Date(y,mo,d,14,0), end: new Date(y,mo,d,15,30), color: 'hsl(150 60% 45% / 0.8)' },
+    ];
+  }, []);
+
   const [customVars, setCustomVars] = useState<Record<string,string>>({
     '--background':'0 0% 2%','--foreground':'0 0% 96%','--card':'0 0% 3%',
     '--card-foreground':'0 0% 96%','--popover':'0 0% 3%','--popover-foreground':'0 0% 96%',
@@ -1527,7 +1566,7 @@ export default function App() {
               className={glass ? 'nb-glass rounded-xl p-2' : ''}
               items={[
                 { icon:<MessageSquare className="h-4 w-4" />, label:'Konwersacje', sublabel:'AI' },
-                { icon:<Calendar className="h-4 w-4" />,      label:'Kalendarz' },
+                { icon:<CalendarIcon className="h-4 w-4" />,      label:'Kalendarz' },
                 { icon:<BarChart3 className="h-4 w-4" />,     label:'Analityka' },
                 { icon:<Shield className="h-4 w-4" />,        label:'Bezpieczeństwo' },
               ]}
@@ -2456,6 +2495,968 @@ export default function App() {
               { name:'description', type:'string', desc:'Opis pomocniczy' },
               { name:'action',      type:'ReactNode', desc:'Slot na przycisk CTA' },
               { name:'size',        type:"'sm'|'default'|'lg'", default:"'default'", desc:'Rozmiar i padding' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── TAGCHIP ─────────────────────────────────────────── */
+      case 'tagchip': return (
+        <>
+          <PageHeader name="TagChip" pkg="core" status="new"
+            description="Klikalne etykiety ról i kategorii z grupą wielokrotnego wyboru. Trzy rozmiary, ikony, stany aktywny/nieaktywny." />
+          <SectionLabel>Pojedyncze chipy</SectionLabel>
+          <Preview glass={glass} tight>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[
+                { id:'developer', label:'Developer',  icon:<Code2 className="h-3 w-3" /> },
+                { id:'marketer',  label:'Marketer',   icon:<Megaphone className="h-3 w-3" /> },
+                { id:'researcher',label:'Researcher', icon:<FlaskConical className="h-3 w-3" /> },
+                { id:'designer',  label:'Designer',   icon:<Palette className="h-3 w-3" /> },
+                { id:'founder',   label:'Founder',    icon:<Lightbulb className="h-3 w-3" /> },
+                { id:'writer',    label:'Writer',     icon:<PenLine className="h-3 w-3" /> },
+              ].map(c => (
+                <TagChip
+                  key={c.id}
+                  label={c.label}
+                  icon={c.icon}
+                  active={selectedTagChips.includes(c.id)}
+                  onClick={() => setSelectedTagChips(prev =>
+                    prev.includes(c.id) ? prev.filter(x => x !== c.id) : [...prev, c.id]
+                  )}
+                />
+              ))}
+            </div>
+          </Preview>
+          <div className="mt-6">
+            <SectionLabel>Rozmiary</SectionLabel>
+            <Preview glass={false} tight>
+              <div className="flex flex-wrap gap-3 items-center justify-center">
+                {(['sm','default','lg'] as const).map(s => (
+                  <div key={s} className="flex flex-col items-center gap-1.5">
+                    <TagChip label={s} size={s} active />
+                    <span className="text-[9px] font-mono text-muted-foreground/60">{s}</span>
+                  </div>
+                ))}
+                <TagChip label="Wyłączony" disabled />
+              </div>
+            </Preview>
+          </div>
+          <div className="mt-6"><SectionLabel>TagChipGroup (multi select)</SectionLabel>
+            <Preview glass={false} tight>
+              <TagChipGroup
+                multi
+                value={selectedTagChips}
+                onChange={v => setSelectedTagChips(v as string[])}
+                chips={[
+                  { id:'developer', label:'Developer' },
+                  { id:'marketer',  label:'Marketer'  },
+                  { id:'designer',  label:'Designer'  },
+                  { id:'founder',   label:'Founder'   },
+                  { id:'writer',    label:'Writer'    },
+                ]}
+              />
+            </Preview>
+          </div>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="tc-import" copied={copied} onCopy={copy}
+              code={`import { TagChip, TagChipGroup } from '@nextbyte/core';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Props — TagChip</SectionLabel>
+            <PropsTable rows={[
+              { name:'label',   type:'string', desc:'Tekst chipu' },
+              { name:'icon',    type:'ReactNode', desc:'Ikona po lewej stronie' },
+              { name:'active',  type:'boolean', default:'false', desc:'Stan aktywny (podświetlony primary)' },
+              { name:'size',    type:"'sm'|'default'|'lg'", default:"'default'", desc:'Rozmiar chipu' },
+              { name:'onClick', type:'() => void', desc:'Callback kliknięcia' },
+              { name:'disabled',type:'boolean', default:'false', desc:'Wyłącza interakcję' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── CONTEXTPILL ─────────────────────────────────────── */
+      case 'contextpill': return (
+        <>
+          <PageHeader name="ContextPill" pkg="core" status="new"
+            description="Pill z etykietą kontekstową i wartością dropdown. Idealny do selektorów trybu/modelu/ustawień w toolbar." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <Preview glass={glass} tight>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <ContextPill label="Typ:" value={contextPillValues.type} icon={<SlidersHorizontal className="h-3 w-3" />}
+                onClick={() => setContextPillValues(v => ({ ...v, type: v.type === 'Auto' ? 'Manual' : 'Auto' }))} />
+              <ContextPill label="Model:" value={contextPillValues.model}
+                onClick={() => setContextPillValues(v => ({ ...v, model: v.model === 'Pro' ? 'Ultra' : 'Pro' }))} />
+              <ContextPill label="Pamięć" value={contextPillValues.memory}
+                active={contextPillValues.memory === 'Włączona'}
+                onClick={() => setContextPillValues(v => ({ ...v, memory: v.memory === 'Włączona' ? 'Wyłączona' : 'Włączona' }))} />
+            </div>
+            <p className="text-center text-[10px] text-muted-foreground/50 mt-3">Kliknij aby zmienić wartość</p>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Rozmiary</SectionLabel>
+            <Preview glass={false} tight>
+              <div className="flex gap-3 items-center justify-center">
+                <ContextPill label="Rozmiar:" value="sm" size="sm" />
+                <ContextPill label="Rozmiar:" value="default" size="default" />
+              </div>
+            </Preview>
+          </div>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="cp-import" copied={copied} onCopy={copy}
+              code={`import { ContextPill } from '@nextbyte/core';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="cp-usage" copied={copied} onCopy={copy}
+              code={`<ContextPill\n  label="Model:"\n  value="Pro"\n  icon={<Cpu className="h-3 w-3" />}\n  onClick={() => setModel(prev => ...)}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props</SectionLabel>
+            <PropsTable rows={[
+              { name:'label',   type:'string', desc:'Etykieta kontekstowa (np. "Model:")' },
+              { name:'value',   type:'string', desc:'Aktualnie wybrana wartość' },
+              { name:'icon',    type:'ReactNode', desc:'Ikona po lewej' },
+              { name:'active',  type:'boolean', desc:'Stan aktywny — primary border' },
+              { name:'size',    type:"'sm'|'default'", default:"'default'", desc:'Rozmiar' },
+              { name:'onClick', type:'() => void', desc:'Callback — otwórz swój dropdown/popover' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── COUNTDOWN ───────────────────────────────────────── */
+      case 'countdown': return (
+        <>
+          <PageHeader name="CountdownTimer" pkg="core" status="new"
+            description="Odliczanie do daty docelowej w czterech wariantach wizualnych. Auto-aktualizacja co sekundę. Callback onEnd." />
+          <SectionLabel>Warianty</SectionLabel>
+          <Preview glass={glass}>
+            <div className="grid grid-cols-2 gap-8 max-w-md mx-auto">
+              <div className="flex flex-col gap-2">
+                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">default</p>
+                <CountdownTimer targetDate={DEMO_COUNTDOWN} label="Kończy się za" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">compact</p>
+                <CountdownTimer targetDate={DEMO_COUNTDOWN} variant="compact" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">badge</p>
+                <CountdownTimer targetDate={DEMO_COUNTDOWN} variant="badge" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">blocks</p>
+                <CountdownTimer targetDate={DEMO_COUNTDOWN} variant="blocks" showSeconds={false} />
+              </div>
+            </div>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="cd-import" copied={copied} onCopy={copy}
+              code={`import { CountdownTimer } from '@nextbyte/core';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="cd-usage" copied={copied} onCopy={copy}
+              code={`<CountdownTimer\n  targetDate={new Date('2026-12-31')}\n  variant="blocks"\n  label="Do końca roku"\n  showSeconds={false}\n  onEnd={() => console.log('Koniec!')}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props</SectionLabel>
+            <PropsTable rows={[
+              { name:'targetDate',  type:'Date | number', desc:'Data docelowa lub timestamp ms' },
+              { name:'variant',     type:"'default'|'compact'|'badge'|'blocks'", default:"'default'", desc:'Styl wizualny' },
+              { name:'showSeconds', type:'boolean', default:'true', desc:'Wyświetla sekundy' },
+              { name:'label',       type:'string', desc:'Etykieta nad odliczaniem (tylko default)' },
+              { name:'onEnd',       type:'() => void', desc:'Callback po osiągnięciu zera' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── PRODUCTCARD ─────────────────────────────────────── */
+      case 'productcard': return (
+        <>
+          <PageHeader name="ProductCard" pkg="analytics" status="new"
+            description="Karta produktu z okładką, tytułem, ceną i przyciskiem akcji. Używana w sklepach, bibliotekach i marketplace'ach." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <Preview glass={glass}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
+              <ProductCard
+                title="Idealne Scenariusze Na Social Media"
+                price={370} priceAlt="37 zł"
+                badge="NextByte"
+                coverColor="hsl(204 91% 60% / 0.15)"
+                className={glass ? 'nb-glass' : ''}
+                cover={
+                  <div className="flex flex-col gap-1 p-3 rounded-xl border border-border/40 bg-card/50 text-[9px] font-mono text-muted-foreground/60 max-w-[140px]">
+                    <p className="font-bold text-foreground/80 mb-1">📁 PACZKA SOCIAL</p>
+                    {['#00 INDEX','#01 HOOK','#02 FORMATY','#03 STORYTELLING','#04 SCENARIUSZ'].map(i => (
+                      <p key={i}>■ {i}</p>
+                    ))}
+                  </div>
+                }
+                onAction={() => toast({ title:'ProductCard', description:'Kliknięto Zobacz →' })}
+              />
+              <ProductCard
+                title="Oferta Idealna"
+                price={370} priceAlt="37 zł"
+                badge="NextByte"
+                coverColor="hsl(280 70% 55% / 0.12)"
+                className={glass ? 'nb-glass' : ''}
+                cover={
+                  <div className="flex flex-col gap-0.5 p-3 rounded-xl border border-border/40 bg-card/50 text-[9px] font-mono text-muted-foreground/60 max-w-[140px]">
+                    <p className="font-bold text-foreground/80 mb-1">👥 MENTOR LIST</p>
+                    {['#01 Alex Hormozi','#02 Russell B.','#03 Dan Kennedy','#04 Sam Ovens','#05 Iman Gadzhi'].map(i => (
+                      <p key={i}>{i}</p>
+                    ))}
+                  </div>
+                }
+                onAction={() => toast({ title:'ProductCard', description:'Kliknięto Zobacz →' })}
+              />
+            </div>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="pc-import" copied={copied} onCopy={copy}
+              code={`import { ProductCard } from '@nextbyte/analytics';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="pc-usage" copied={copied} onCopy={copy}
+              code={`<ProductCard\n  title="Pakiet wiedzy"\n  price={370}\n  priceAlt="37 zł"\n  badge="NextByte"\n  coverColor="hsl(204 91% 60% / 0.15)"\n  onAction={() => navigate('/sklep/123')}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props</SectionLabel>
+            <PropsTable rows={[
+              { name:'title',      type:'string', desc:'Nazwa produktu' },
+              { name:'price',      type:'number', desc:'Cena w Byte' },
+              { name:'priceAlt',   type:'string', desc:'Cena alternatywna np. "37 zł"' },
+              { name:'badge',      type:'string', desc:'Etykieta wydawcy' },
+              { name:'cover',      type:'ReactNode', desc:'Okładka — własny element' },
+              { name:'coverColor', type:'string', desc:'Kolor tła okładki' },
+              { name:'onAction',   type:'() => void', desc:'Callback przycisku akcji' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── PROFILECARD ─────────────────────────────────────── */
+      case 'profilecard': return (
+        <>
+          <PageHeader name="ProfileCard" pkg="analytics" status="new"
+            description="Karta profilu użytkownika z awatarem, rolą, datą dołączenia, linkami social i sekcją Showcase." />
+          <SectionLabel>Pełny profil</SectionLabel>
+          <Preview glass={glass}>
+            <div className="max-w-lg mx-auto">
+              <ProfileCard
+                name="Artur Bącik"
+                role="Wizjoner"
+                avatar={<Avatar fallback="Artur Bącik" size="lg" status="online" glass={glass} />}
+                joinedDate="Dołączył czerwiec 2025"
+                badgeCount={3}
+                socials={{ youtube: '#', instagram: '#', linkedin: '#' }}
+                bio="Twórca NextByte — platformy AI i systemu komponentów dla nowoczesnych aplikacji SaaS."
+                className={glass ? 'nb-glass' : ''}
+                showcase={
+                  <div className="flex gap-2 flex-wrap">
+                    {['Beta Tester','Wizjoner','Kronikarz'].map(a => (
+                      <span key={a} className="text-[10px] font-bold border border-primary/30 bg-primary/5 text-primary px-2.5 py-1 rounded-full">
+                        ✦ {a}
+                      </span>
+                    ))}
+                  </div>
+                }
+              />
+            </div>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Wariant kompaktowy</SectionLabel>
+            <Preview glass={glass} tight>
+              <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                {[
+                  { name:'Michał Pętalą', role:'Kreator' },
+                  { name:'Kajetan Siwiec', role:'Analityk' },
+                  { name:'Krystian Socha', role:'Designer' },
+                ].map(u => (
+                  <ProfileCard key={u.name} compact name={u.name} role={u.role}
+                    className={glass ? 'nb-glass' : ''}
+                    avatar={<Avatar fallback={u.name} size="sm" />} />
+                ))}
+              </div>
+            </Preview>
+          </div>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="prc-import" copied={copied} onCopy={copy}
+              code={`import { ProfileCard } from '@nextbyte/analytics';`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props</SectionLabel>
+            <PropsTable rows={[
+              { name:'name',       type:'string', desc:'Imię i nazwisko' },
+              { name:'role',       type:'string', desc:'Rola/tytuł użytkownika' },
+              { name:'avatar',     type:'ReactNode', desc:'Element awatara (np. <Avatar />)' },
+              { name:'joinedDate', type:'string', desc:'Data dołączenia jako string' },
+              { name:'badgeCount', type:'number', desc:'Liczba odznak' },
+              { name:'socials',    type:'SocialLinks', desc:'Linki social media' },
+              { name:'bio',        type:'string', desc:'Opis O mnie' },
+              { name:'showcase',   type:'ReactNode', desc:'Slot na osiągnięcia/showcase' },
+              { name:'compact',    type:'boolean', default:'false', desc:'Wersja minimalna bez social/bio/showcase' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── PRICINGCARD ─────────────────────────────────────── */
+      case 'pricingcard': return (
+        <>
+          <PageHeader name="PricingCard" pkg="analytics" status="new"
+            description="Karta cennika / subskrypcji z dyskontem, etykietami ograniczoności, odliczaniem i listą features." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <Preview glass={glass}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+              <PricingCard
+                title="BEZPŁATNY"
+                subtitle="Start z platformą NextByte"
+                price={{ amount: 0, currency: 'PLN', period: 'miesiąc' }}
+                features={['Płacisz tylko za zużycie', 'Chat AI', 'Studio Zdjęć', 'Personalny Asystent', 'PromptEx']}
+                action={{ label: 'Twój aktualny plan', onClick: () => {} }}
+                glass={glass}
+              />
+              <PricingCard
+                title="PREMIUM"
+                subtitle="Pełny dostęp do funkcji AI"
+                discount={17}
+                price={{ amount: 99, currency: 'PLN', period: 'miesiąc' }}
+                originalPrice={119}
+                features={['495 Byte / miesiąc', 'Chat AI UNLIMITED', 'Kalendarz, Zadania, Notatki', 'Baza Danych', 'Szyfrowanie']}
+                action={{ label: 'Wybierz PREMIUM', onClick: () => toast({ title:'PREMIUM', description:'Kliknięto' }) }}
+                glass={glass}
+              />
+              <PricingCard
+                title="ULTIMATE"
+                subtitle="Maksymalne możliwości AI"
+                badge="Najlepsza oferta"
+                price={{ amount: 349, currency: 'PLN', period: 'miesiąc' }}
+                features={['2450 Byte / miesiąc', 'Chat AI UNLIMITED', 'Kalendarz, Zadania, Notatki', 'Baza Danych', 'Szyfrowanie', 'Enhancer 2x']}
+                action={{ label: 'Wybierz ULTIMATE', onClick: () => toast({ title:'ULTIMATE', description:'Kliknięto' }) }}
+                highlight
+                glass={glass}
+              />
+            </div>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="prc2-import" copied={copied} onCopy={copy}
+              code={`import { PricingCard } from '@nextbyte/analytics';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="prc2-usage" copied={copied} onCopy={copy}
+              code={`<PricingCard\n  discount={40}\n  badge="Limitowana"\n  endsAt={new Date('2026-09-01')}\n  title="Paczka Premium"\n  price={{ amount: 149, currency: 'zł' }}\n  features={['5000 Byte', 'Bez limitu ważności']}\n  action={{ label: 'Kup teraz', onClick: handleBuy }}\n  highlight\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props</SectionLabel>
+            <PropsTable rows={[
+              { name:'discount',      type:'number', desc:'Procent rabatu (np. 40 = -40%)' },
+              { name:'badge',         type:'string', desc:'Etykieta (LIMITOWANA, NOWOŚĆ)' },
+              { name:'available',     type:'string', desc:'Dostępność (np. "1/1")' },
+              { name:'endsAt',        type:'Date | number', desc:'Data końca promocji — auto CountdownTimer' },
+              { name:'title',         type:'string', desc:'Tytuł karty' },
+              { name:'price',         type:'{ amount, currency?, period? }', desc:'Cena' },
+              { name:'originalPrice', type:'number', desc:'Przekreślona cena oryginalna' },
+              { name:'features',      type:'string[]', desc:'Lista cech/benefitów' },
+              { name:'action',        type:'{ label, onClick }', desc:'Przycisk CTA' },
+              { name:'highlight',     type:'boolean', default:'false', desc:'Wyróżniona wersja (primary border + glow)' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── FOLDERCARD ──────────────────────────────────────── */
+      case 'foldercard': return (
+        <>
+          <PageHeader name="FolderCard" pkg="analytics" status="new"
+            description="Karta folderu z gradientową ikoną, licznikiem elementów i akcentem kolorystycznym. FolderGrid do siatki." />
+          <SectionLabel>Karty list</SectionLabel>
+          <Preview glass={glass}>
+            <div className="flex flex-col gap-2 max-w-sm mx-auto">
+              {[
+                { id:'customy',   name:'customy',   count:2 },
+                { id:'kambip',    name:'Kambip',    count:3 },
+                { id:'nextbyte',  name:'NextByte',  count:9 },
+                { id:'prywata',   name:'prywata',   count:6 },
+              ].map((f, i) => (
+                <FolderCard key={f.id} {...f}
+                  color={FOLDER_COLORS[i % FOLDER_COLORS.length]}
+                  active={selectedFolder === f.id}
+                  glass={glass}
+                  onClick={() => setSelectedFolder(f.id)}
+                />
+              ))}
+            </div>
+          </Preview>
+          <div className="mt-6">
+            <SectionLabel>FolderGrid (siatka)</SectionLabel>
+            <Preview glass={glass}>
+              <FolderGrid
+                columns={3}
+                selected={selectedFolder}
+                glass={glass}
+                onSelect={setSelectedFolder}
+                folders={[
+                  { id:'customy',  name:'customy',  count:2 },
+                  { id:'kambip',   name:'Kambip',   count:3 },
+                  { id:'nextbyte', name:'NextByte',  count:9 },
+                  { id:'prywata',  name:'prywata',  count:6 },
+                  { id:'lemans',   name:'LE MANS',  count:4 },
+                ]}
+              />
+            </Preview>
+          </div>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="fc-import" copied={copied} onCopy={copy}
+              code={`import { FolderCard, FolderGrid, FOLDER_COLORS } from '@nextbyte/analytics';`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props — FolderCard</SectionLabel>
+            <PropsTable rows={[
+              { name:'name',     type:'string', desc:'Nazwa folderu' },
+              { name:'count',    type:'number', desc:'Liczba elementów' },
+              { name:'color',    type:'string', desc:'Gradient CSS tła ikony' },
+              { name:'sharedBy', type:'string', desc:'Właściciel udostępnienia' },
+              { name:'active',   type:'boolean', default:'false', desc:'Stan zaznaczony' },
+              { name:'onClick',  type:'() => void', desc:'Callback kliknięcia' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── CAROUSEL ────────────────────────────────────────── */
+      case 'carousel': return (
+        <>
+          <PageHeader name="Carousel" pkg="patterns" status="new"
+            description="Slider z nawigacją strzałkami, kropkami paginacji i opcjonalnym autoplay. Przyjmuje dowolne ReactNode jako slajdy." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <Preview glass={glass}>
+            <Carousel
+              autoplay={carouselAutoplay}
+              items={[
+                <div key="1" className="rounded-2xl overflow-hidden border border-border/50">
+                  <div className="h-40 bg-gradient-to-br from-primary/30 to-primary/5 flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary/70 mb-1">NOWOŚCI · 1/4</p>
+                      <p className="text-base font-bold text-foreground">Nowy interfejs Chatu AI</p>
+                      <p className="text-xs text-muted-foreground mt-1">Szklany design pola wiadomości</p>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-card/60">
+                    <Button size="sm" variant="outline">Zobacz Chat AI →</Button>
+                  </div>
+                </div>,
+                <div key="2" className="rounded-2xl overflow-hidden border border-border/50">
+                  <div className="h-40 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70 mb-1">NOWOŚCI · 2/4</p>
+                      <p className="text-base font-bold text-foreground">Studio Zdjęć 2K</p>
+                      <p className="text-xs text-muted-foreground mt-1">Generuj w rozdzielczości 2048×2048</p>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-card/60">
+                    <Button size="sm" variant="outline">Otwórz Studio →</Button>
+                  </div>
+                </div>,
+                <div key="3" className="rounded-2xl overflow-hidden border border-border/50">
+                  <div className="h-40 bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400/70 mb-1">NOWOŚCI · 3/4</p>
+                      <p className="text-base font-bold text-foreground">PromptEx Generator</p>
+                      <p className="text-xs text-muted-foreground mt-1">Projektuj prompty jak architekt</p>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-card/60">
+                    <Button size="sm" variant="outline">Otwórz PromptEx →</Button>
+                  </div>
+                </div>,
+              ]}
+            />
+            <div className="mt-4 flex justify-center">
+              <Button size="sm" variant="outline" onClick={() => setCarouselAutoplay(a => !a)}>
+                {carouselAutoplay ? 'Zatrzymaj autoplay' : 'Włącz autoplay (4s)'}
+              </Button>
+            </div>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="car-import" copied={copied} onCopy={copy}
+              code={`import { Carousel } from '@nextbyte/patterns';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="car-usage" copied={copied} onCopy={copy}
+              code={`<Carousel\n  items={[<SlideA />, <SlideB />, <SlideC />]}\n  autoplay\n  interval={4000}\n  showDots\n  showArrows\n  loop\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props</SectionLabel>
+            <PropsTable rows={[
+              { name:'items',      type:'ReactNode[]', desc:'Tablica slajdów' },
+              { name:'autoplay',   type:'boolean', default:'false', desc:'Automatyczne przełączanie' },
+              { name:'interval',   type:'number', default:'4000', desc:'Czas między slajdami w ms' },
+              { name:'showDots',   type:'boolean', default:'true', desc:'Wyświetla kropki paginacji' },
+              { name:'showArrows', type:'boolean', default:'true', desc:'Wyświetla strzałki nawigacji' },
+              { name:'loop',       type:'boolean', default:'true', desc:'Pętla (po ostatnim wraca do pierwszego)' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── FILETREE ────────────────────────────────────────── */
+      case 'filetree': return (
+        <>
+          <PageHeader name="FileTree" pkg="patterns" status="new"
+            description="Drzewo folderów i plików z sekcjami, rozwijaniem, licznikami i zaznaczeniem. Używany w nawigacji notatek i projektów." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <Preview glass={glass} tight>
+            <div className="max-w-xs mx-auto border border-border/60 rounded-xl bg-card/30 p-2">
+              <FileTree
+                selected={selectedTreeNode}
+                onSelect={setSelectedTreeNode}
+                sections={[
+                  {
+                    id:'folders', label:'Foldery', defaultExpanded: true,
+                    nodes: [
+                      { id:'customy',  label:'customy',  type:'folder', count:2, children:[
+                        { id:'cust-1', label:'Custom CSS', type:'file' },
+                        { id:'cust-2', label:'Custom JS',  type:'file' },
+                      ]},
+                      { id:'nextbyte', label:'NextByte',  type:'folder', count:9 },
+                      { id:'prywata',  label:'prywata',   type:'folder', count:6 },
+                    ],
+                  },
+                  {
+                    id:'notes', label:'Notatki', defaultExpanded: true,
+                    nodes: [
+                      { id:'note-1', label:'Funkcje i Integracje NextByte', type:'file' },
+                      { id:'note-2', label:'Deep Research: algorytm', type:'file', badge:'AI' },
+                      { id:'note-3', label:'nda', type:'file' },
+                    ],
+                  },
+                  {
+                    id:'shared', label:'Udostępnione', defaultExpanded: false,
+                    nodes: [
+                      { id:'sh-1', label:'Michał Pętala', type:'folder', count:1, shared:true },
+                      { id:'sh-2', label:'Kajetan Siwiec', type:'folder', count:1, shared:true },
+                    ],
+                  },
+                ]}
+              />
+            </div>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="ft-import" copied={copied} onCopy={copy}
+              code={`import { FileTree } from '@nextbyte/patterns';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="ft-usage" copied={copied} onCopy={copy}
+              code={`<FileTree\n  selected={selectedNode}\n  onSelect={setSelectedNode}\n  sections={[\n    {\n      id: 'folders',\n      label: 'Foldery',\n      nodes: [\n        { id: 'nb', label: 'NextByte', type: 'folder', count: 9, children: [...] },\n      ],\n    },\n  ]}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props — FileTreeNode</SectionLabel>
+            <PropsTable rows={[
+              { name:'id',      type:'string', desc:'Unikalny identyfikator' },
+              { name:'label',   type:'string', desc:'Wyświetlana nazwa' },
+              { name:'type',    type:"'folder'|'file'", desc:'Typ węzła' },
+              { name:'count',   type:'number', desc:'Liczba elementów' },
+              { name:'badge',   type:'string', desc:'Mała etykieta (np. "AI", "Nowa")' },
+              { name:'shared',  type:'boolean', desc:'Wyświetla ikonę udostępnienia' },
+              { name:'children',type:'FileTreeNode[]', desc:'Węzły potomne (tylko folder)' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── KANBAN ──────────────────────────────────────────── */
+      case 'kanban': return (
+        <>
+          <PageHeader name="KanbanBoard" pkg="patterns" status="new"
+            description="Tablica Kanban z kolumnami i kartami zadań. Priorytety, tagi, assignee. Gotowy do integracji drag-and-drop." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <Preview glass={glass} tight>
+            <KanbanBoard
+              glass={glass}
+              onAddCard={colId => toast({ title:'KanbanBoard', description:`Dodaj zadanie do kolumny: ${colId}` })}
+              columns={[
+                {
+                  id:'todo', title:'Do zrobienia',
+                  icon:<Inbox className="h-3.5 w-3.5" />,
+                  cards:[],
+                  emptyLabel:'Przeciągnij zadanie tutaj',
+                },
+                {
+                  id:'inprogress', title:'W trakcie',
+                  icon:<Activity className="h-3.5 w-3.5" />,
+                  cards:[
+                    { id:'t1', title:'Implementacja komponentu Kanban', priority:'urgent', tags:['frontend'], assignee:'AB' },
+                    { id:'t2', title:'Design system — tokeny kolorów', priority:'high', description:'Aktualizacja palet dla nowych motywów.' },
+                  ],
+                },
+                {
+                  id:'review', title:'Do sprawdzenia',
+                  icon:<Eye className="h-3.5 w-3.5" />,
+                  cards:[
+                    { id:'t3', title:'Code review: Calendar', priority:'medium', tags:['review'], assignee:'KS' },
+                  ],
+                },
+                {
+                  id:'done', title:'Gotowe',
+                  icon:<CheckCircle2 className="h-3.5 w-3.5" />,
+                  cards:[
+                    { id:'t4', title:'Sidebar komponent', priority:'low', tags:['done'] },
+                  ],
+                },
+              ]}
+            />
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="kb-import" copied={copied} onCopy={copy}
+              code={`import { KanbanBoard } from '@nextbyte/patterns';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="kb-usage" copied={copied} onCopy={copy}
+              code={`<KanbanBoard\n  columns={[\n    { id: 'todo',  title: 'Do zrobienia', cards: [] },\n    { id: 'doing', title: 'W trakcie',    cards: [{ id:'t1', title:'Zadanie', priority:'high' }] },\n    { id: 'done',  title: 'Gotowe',      cards: [] },\n  ]}\n  onAddCard={(colId) => handleAdd(colId)}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props — KanbanCard</SectionLabel>
+            <PropsTable rows={[
+              { name:'id',          type:'string', desc:'Unikalny identyfikator' },
+              { name:'title',       type:'string', desc:'Tytuł zadania' },
+              { name:'priority',    type:"'low'|'medium'|'high'|'urgent'", desc:'Priorytet' },
+              { name:'description', type:'string', desc:'Opis pomocniczy (2 linie)' },
+              { name:'tags',        type:'string[]', desc:'Tagi/etykiety' },
+              { name:'assignee',    type:'string', desc:'Inicjały przypisanej osoby' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── MASONRYGRID ─────────────────────────────────────── */
+      case 'masonrygrid': return (
+        <>
+          <PageHeader name="MasonryGrid" pkg="patterns" status="new"
+            description="Siatka galerii z różnymi proporcjami i opcjonalnymi podpisami. Hover-overlay z caption. Akceptuje src lub placeholder." />
+          <SectionLabel>Podgląd galerii</SectionLabel>
+          <Preview glass={glass} tight>
+            <MasonryGrid
+              columns={3}
+              gap={8}
+              glass={glass}
+              onItemClick={item => toast({ title:'MasonryGrid', description:`Kliknięto: ${item.caption ?? item.id}` })}
+              items={[
+                { id:'m1', aspectRatio:1,    caption:'Mazda MX-5 — niebieski metalik',
+                  placeholder:<div className="w-full h-full bg-gradient-to-br from-blue-600/30 to-blue-900/20 flex items-center justify-center"><span className="text-2xl">🚗</span></div> },
+                { id:'m2', aspectRatio:0.75, caption:'Futurystyczne miasto',
+                  placeholder:<div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-indigo-900/20 flex items-center justify-center"><span className="text-2xl">🌆</span></div> },
+                { id:'m3', aspectRatio:1.33, caption:'JZK Racing — logo',
+                  placeholder:<div className="w-full h-full bg-gradient-to-br from-red-600/30 to-orange-900/20 flex items-center justify-center"><span className="text-2xl">🏎️</span></div> },
+                { id:'m4', aspectRatio:1,    caption:'Tygrys w lesie',
+                  placeholder:<div className="w-full h-full bg-gradient-to-br from-amber-600/30 to-amber-900/20 flex items-center justify-center"><span className="text-2xl">🐯</span></div> },
+                { id:'m5', aspectRatio:1.33, caption:'Hell Yeah Liquid',
+                  placeholder:<div className="w-full h-full bg-gradient-to-br from-red-800/30 to-gray-900/20 flex items-center justify-center"><span className="text-2xl">🔥</span></div> },
+                { id:'m6', aspectRatio:0.75, caption:'Projekty techniczne',
+                  placeholder:<div className="w-full h-full bg-gradient-to-br from-slate-600/30 to-slate-900/20 flex items-center justify-center"><span className="text-2xl">📐</span></div> },
+              ]}
+            />
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="mg-import" copied={copied} onCopy={copy}
+              code={`import { MasonryGrid } from '@nextbyte/patterns';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="mg-usage" copied={copied} onCopy={copy}
+              code={`<MasonryGrid\n  columns={3}\n  gap={8}\n  items={[\n    { id: '1', src: '/img/photo.jpg', alt: 'Opis', caption: 'Podpis' },\n    { id: '2', src: '/img/photo2.jpg', aspectRatio: 0.75 },\n  ]}\n  onItemClick={(item) => openLightbox(item)}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props — MasonryItem</SectionLabel>
+            <PropsTable rows={[
+              { name:'id',          type:'string', desc:'Unikalny identyfikator' },
+              { name:'src',         type:'string', desc:'URL obrazka' },
+              { name:'alt',         type:'string', desc:'Alt text' },
+              { name:'caption',     type:'string', desc:'Podpis wyświetlany na hover' },
+              { name:'placeholder', type:'ReactNode', desc:'Fallback gdy brak src' },
+              { name:'aspectRatio', type:'number', desc:'Stosunek szerokość/wysokość (np. 1.33 = 4:3)' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── CALENDAR ────────────────────────────────────────── */
+      case 'calendar': return (
+        <>
+          <PageHeader name="Calendar" pkg="patterns" status="new"
+            description="Kalendarz tygodniowy z siatką godzin, wskaźnikiem aktualnego czasu i eventami. Przełączanie Dzień/Tydzień/Miesiąc." />
+          <SectionLabel>Widok tygodniowy</SectionLabel>
+          <Preview glass={glass} tight>
+            <Calendar
+              glass={glass}
+              events={DEMO_CALENDAR_EVENTS}
+              onEventClick={ev => toast({ title:'Kliknięto event', description:ev.title })}
+              onDateClick={date => toast({ title:'Kliknięto dzień', description:date.toLocaleDateString('pl-PL') })}
+            />
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="cal-import" copied={copied} onCopy={copy}
+              code={`import { Calendar, type CalendarEvent } from '@nextbyte/patterns';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="cal-usage" copied={copied} onCopy={copy}
+              code={`const events: CalendarEvent[] = [\n  {\n    id: 'e1',\n    title: 'Daily standup',\n    start: new Date(2026, 6, 31, 9, 0),\n    end:   new Date(2026, 6, 31, 9, 30),\n    color: 'hsl(204 91% 70% / 0.8)',\n  },\n];\n\n<Calendar\n  defaultView="week"\n  events={events}\n  onEventClick={(ev) => openEventModal(ev)}\n  onDateClick={(date) => openNewEventModal(date)}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props</SectionLabel>
+            <PropsTable rows={[
+              { name:'defaultView',   type:"'day'|'week'|'month'", default:"'week'", desc:'Domyślny widok kalendarza' },
+              { name:'events',        type:'CalendarEvent[]', desc:'Lista eventów' },
+              { name:'onEventClick',  type:'(event: CalendarEvent) => void', desc:'Kliknięcie eventu' },
+              { name:'onDateClick',   type:'(date: Date) => void', desc:'Kliknięcie pustego dnia/godziny' },
+            ]} />
+          </div>
+          <div className="mt-4"><SectionLabel>CalendarEvent</SectionLabel>
+            <PropsTable rows={[
+              { name:'id',    type:'string', desc:'Unikalny identyfikator' },
+              { name:'title', type:'string', desc:'Tytuł eventu' },
+              { name:'start', type:'Date', desc:'Data i godzina rozpoczęcia' },
+              { name:'end',   type:'Date', desc:'Data i godzina zakończenia' },
+              { name:'color', type:'string', desc:'Kolor tła eventu (CSS string)' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── ANNOUNCEMENT CAROUSEL ──────────────────────────────── */
+      case 'announcement': return (
+        <>
+          <PageHeader name="AnnouncementCarousel" pkg="patterns" status="new"
+            description="Carousel na nowości i aktualizacje platformy. Badge PREMIUM/NOWOŚĆ, preview screenshot, opis i link." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <Preview glass={glass}>
+            <div className="w-full">
+              <AnnouncementCarousel
+                title="NOWOŚCI"
+                newCount={4}
+                glass={glass}
+                items={[
+                  {
+                    id: 'ai-local',
+                    badge: 'PREMIUM · NOWOŚĆ',
+                    badgePremium: true,
+                    preview: (
+                      <div className="w-full h-full bg-background flex flex-col items-center justify-center gap-3 p-4">
+                        <div className="flex items-center gap-2 border border-primary/30 bg-primary/5 rounded-xl px-4 py-2">
+                          <span className="text-lg">🛡️</span>
+                          <span className="text-sm font-bold text-primary">AI LOKALNE</span>
+                        </div>
+                        <div className="flex items-center gap-2 border border-border/40 bg-card rounded-xl px-3 py-2 w-full max-w-xs">
+                          <span className="text-[10px] text-muted-foreground flex-1">🔧 Lokalny Model ∨</span>
+                          <span className="text-[10px] text-muted-foreground border-l border-border/40 pl-2">☑ Zbalansowany ∨</span>
+                          <span className="text-[10px] font-bold text-primary border-l border-border/40 pl-2">⟳ SYNCHRONIZUJ</span>
+                        </div>
+                        <div className="border border-border/40 bg-card/50 rounded-xl px-3 py-2 w-full max-w-xs">
+                          <span className="text-[10px] text-muted-foreground/40">Szukaj w internecie...</span>
+                        </div>
+                      </div>
+                    ),
+                    icon: '⚙️',
+                    iconBg: 'hsl(204 91% 50%)',
+                    title: 'Lokalny AI — Twój model, Twoja prywatność',
+                    description: 'Podłącz LM Studio / Ollama i rozmawiaj offline. 0 Byte za wiadomość, dane nie opuszczają Twojego komputera.',
+                    linkLabel: 'Skonfiguruj Lokalny AI',
+                    onClick: () => toast({ title:'AnnouncementCarousel', description:'Kliknięto Skonfiguruj Lokalny AI' }),
+                  },
+                  {
+                    id: 'studio',
+                    badge: 'NOWOŚĆ',
+                    preview: (
+                      <div className="w-full h-full bg-background flex items-center justify-center gap-4 p-4">
+                        <div className="grid grid-cols-3 gap-2">
+                          {Array.from({length:6}).map((_,i)=>(
+                            <div key={i} className="w-16 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10" />
+                          ))}
+                        </div>
+                      </div>
+                    ),
+                    icon: '🎨',
+                    iconBg: 'hsl(280 70% 55%)',
+                    title: 'Studio Zdjęć 2.0 — nowe generatory',
+                    description: 'Flux Pro, Ideogram 3, Dall-E 4. Generuj w natywnej rozdzielczości 4K bez kompresji.',
+                    linkLabel: 'Otwórz Studio',
+                    onClick: () => toast({ title:'AnnouncementCarousel', description:'Kliknięto Otwórz Studio' }),
+                  },
+                  {
+                    id: 'agents',
+                    badge: 'BETA',
+                    preview: (
+                      <div className="w-full h-full bg-background flex items-center justify-center p-4">
+                        <div className="flex gap-3 items-center">
+                          {['🤖','→','🔍','→','📝'].map((e,i)=>(
+                            <span key={i} className="text-2xl opacity-80">{e}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ),
+                    icon: '🤖',
+                    iconBg: 'hsl(142 71% 40%)',
+                    title: 'Agenci AI — budujesz własne workflow',
+                    description: 'Połącz nody, skonfiguruj triggery i uruchom autonomiczny agent bez pisania kodu.',
+                    linkLabel: 'Stwórz Agenta',
+                    onClick: () => toast({ title:'AnnouncementCarousel', description:'Kliknięto Stwórz Agenta' }),
+                  },
+                  {
+                    id: 'kursy',
+                    preview: (
+                      <div className="w-full h-full bg-background flex items-center justify-center p-4">
+                        <div className="flex flex-col gap-1.5 text-[10px] font-mono text-muted-foreground/60 border border-border/30 rounded-lg p-3">
+                          {['#00 INDEX','#01 HOOK','#02 FORMATY','#03 STORY','#04 CTA'].map(i=>(
+                            <p key={i}>■ {i}</p>
+                          ))}
+                        </div>
+                      </div>
+                    ),
+                    icon: '📚',
+                    iconBg: 'hsl(20 90% 50%)',
+                    title: 'Nowy kurs: Idealna Oferta',
+                    description: 'Alex Hormozi, Russell B., Dan Kennedy — metody 6-cyfrowych ofert w jednym pakiecie.',
+                    linkLabel: 'Zobacz kurs',
+                    onClick: () => toast({ title:'AnnouncementCarousel', description:'Kliknięto Zobacz kurs' }),
+                  },
+                ]}
+              />
+            </div>
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="ac-import" copied={copied} onCopy={copy}
+              code={`import { AnnouncementCarousel } from '@nextbyte/patterns';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="ac-usage" copied={copied} onCopy={copy}
+              code={`<AnnouncementCarousel\n  title="NOWOŚCI"\n  newCount={4}\n  items={[\n    {\n      id: 'item-1',\n      badge: 'PREMIUM · NOWOŚĆ',\n      badgePremium: true,\n      preview: <MyPreviewComponent />,\n      icon: '⚙️',\n      iconBg: 'hsl(204 91% 50%)',\n      title: 'Tytuł aktualności',\n      description: 'Opis funkcji...',\n      linkLabel: 'Dowiedz się więcej',\n      onClick: () => navigate('/nowosci/1'),\n    },\n  ]}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props — Announcement</SectionLabel>
+            <PropsTable rows={[
+              { name:'id',           type:'string', desc:'Unikalny identyfikator' },
+              { name:'badge',        type:'string', desc:'Etykieta górna np. "PREMIUM · NOWOŚĆ"' },
+              { name:'badgePremium', type:'boolean', desc:'Wariant primary (niebieski) dla badge' },
+              { name:'preview',      type:'ReactNode', desc:'Obszar podglądu / screenshot' },
+              { name:'icon',         type:'ReactNode', desc:'Ikona w stopce karty' },
+              { name:'iconBg',       type:'string', desc:'Kolor tła ikony (CSS)' },
+              { name:'title',        type:'string', desc:'Tytuł aktualności' },
+              { name:'description',  type:'string', desc:'Opis / lead' },
+              { name:'linkLabel',    type:'string', desc:'Tekst linku CTA' },
+              { name:'onClick',      type:'() => void', desc:'Callback kliknięcia linku' },
+            ]} />
+          </div>
+        </>
+      );
+
+      /* ── NODE CANVAS ─────────────────────────────────────────── */
+      case 'nodecanvas': return (
+        <>
+          <PageHeader name="NodeCanvas" pkg="patterns" status="new"
+            description="Canvas do wizualizacji workflow i agentów AI. Nody z polami, połączenia bezier z glow effect, opcjonalny panel boczny." />
+          <SectionLabel>Workflow agenta AI</SectionLabel>
+          <Preview glass={glass} tight>
+            <NodeCanvas
+              glass={glass}
+              canvasHeight={400}
+              sidePanel
+              onNodeClick={id => toast({ title:'NodeCanvas', description:`Kliknięto node: ${id}` })}
+              categories={[
+                { icon:'🤖', label:'AI',          description:'Agenci i modele językowe' },
+                { icon:'⚡', label:'Akcja',       description:'Integracje: Slack, Telegram' },
+                { icon:'🔀', label:'Transformacja', description:'Filtruj i konwertuj dane' },
+                { icon:'🔁', label:'Flow',        description:'Rozgałęzienia, pętle' },
+                { icon:'⚙️', label:'Core',        description:'Kod i wywołania HTTP' },
+                { icon:'👤', label:'Human in loop', description:'Czekaj na akcję użytkownika' },
+              ]}
+              nodes={[
+                {
+                  id: 'trigger',
+                  x: 20, y: 80,
+                  title: 'Chat message',
+                  subtitle: 'When chat message received',
+                  icon: '💬',
+                  completed: true,
+                },
+                {
+                  id: 'agent',
+                  x: 240, y: 30,
+                  title: 'AI Agent',
+                  subtitle: 'Tools Agent',
+                  icon: '🤖',
+                  accentColor: 'hsl(var(--primary))',
+                  completed: true,
+                },
+                {
+                  id: 'openai',
+                  x: 120, y: 210,
+                  title: 'OpenAI Chat Model',
+                  icon: '🧠',
+                  accentColor: 'hsl(var(--primary))',
+                  completed: true,
+                  fields: [
+                    { label: 'Credential', value: 'Open AI account 4', type: 'select' },
+                    { label: 'Model', value: 'gpt-4o-mini', type: 'select' },
+                  ],
+                },
+                {
+                  id: 'memory',
+                  x: 290, y: 210,
+                  title: 'Postgres Chat Memory',
+                  subtitle: '(Deactivated)',
+                  icon: '🐘',
+                  fields: [],
+                },
+                {
+                  id: 'vector',
+                  x: 460, y: 120,
+                  title: 'Vector Store Tool',
+                  icon: '🗄️',
+                  completed: true,
+                },
+                {
+                  id: 'qdrant',
+                  x: 460, y: 240,
+                  title: 'Qdrant Vector Store',
+                  subtitle: 'Store1',
+                  icon: '🔷',
+                  completed: true,
+                  fields: [],
+                },
+                {
+                  id: 'embeddings',
+                  x: 620, y: 300,
+                  title: 'Embeddings OpenAI',
+                  icon: '📐',
+                  completed: true,
+                },
+              ] as WorkflowNode[]}
+              edges={[
+                { id:'e1', from:'trigger',  to:'agent',      fromSide:'right',  toSide:'left',   label:'wiadomość' },
+                { id:'e2', from:'openai',   to:'agent',      fromSide:'top',    toSide:'bottom',  label:'model' },
+                { id:'e3', from:'memory',   to:'agent',      fromSide:'top',    toSide:'bottom',  label:'memory' },
+                { id:'e4', from:'agent',    to:'vector',     fromSide:'right',  toSide:'left',   label:'tool' },
+                { id:'e5', from:'vector',   to:'qdrant',     fromSide:'bottom', toSide:'top',    label:'1 item' },
+                { id:'e6', from:'qdrant',   to:'embeddings', fromSide:'right',  toSide:'left',   label:'vector' },
+              ] as WorkflowEdge[]}
+            />
+          </Preview>
+          <div className="mt-6"><SectionLabel>Import</SectionLabel>
+            <CodeBlock id="nc-import" copied={copied} onCopy={copy}
+              code={`import { NodeCanvas, type WorkflowNode, type WorkflowEdge } from '@nextbyte/patterns';`} />
+          </div>
+          <div className="mt-4"><SectionLabel>Użycie</SectionLabel>
+            <CodeBlock id="nc-usage" copied={copied} onCopy={copy}
+              code={`const nodes: WorkflowNode[] = [\n  { id: 'n1', x: 20,  y: 80, title: 'Chat message', icon: '💬', completed: true },\n  { id: 'n2', x: 240, y: 30, title: 'AI Agent', icon: '🤖',\n    accentColor: 'hsl(var(--primary))',\n    fields: [{ label: 'Model', value: 'gpt-4o', type: 'select' }] },\n];\n\nconst edges: WorkflowEdge[] = [\n  { id: 'e1', from: 'n1', to: 'n2', fromSide: 'right', toSide: 'left', label: 'wiadomość' },\n];\n\n<NodeCanvas\n  nodes={nodes}\n  edges={edges}\n  canvasHeight={400}\n  sidePanel\n  categories={[{ icon: '🤖', label: 'AI', description: 'Agenci i modele' }]}\n  onNodeClick={(id) => console.log('clicked', id)}\n/>`} />
+          </div>
+          <div className="mt-6"><SectionLabel>Props — WorkflowNode</SectionLabel>
+            <PropsTable rows={[
+              { name:'id',          type:'string', desc:'Unikalny identyfikator' },
+              { name:'x / y',       type:'number', desc:'Pozycja na canvasie (px)' },
+              { name:'title',       type:'string', desc:'Nazwa noda' },
+              { name:'subtitle',    type:'string', desc:'Podtytuł pod tytułem' },
+              { name:'icon',        type:'ReactNode', desc:'Ikona w nagłówku noda' },
+              { name:'fields',      type:'NodeField[]', desc:'Pola z wartościami w ciele noda' },
+              { name:'accentColor', type:'string', desc:'Kolor bordera i ikony (CSS string)' },
+              { name:'completed',   type:'boolean', desc:'Zielony checkmark w nagłówku' },
+              { name:'width',       type:'number', default:'176', desc:'Szerokość noda w px' },
+            ]} />
+          </div>
+          <div className="mt-4"><SectionLabel>Props — WorkflowEdge</SectionLabel>
+            <PropsTable rows={[
+              { name:'id',       type:'string', desc:'Unikalny identyfikator' },
+              { name:'from',     type:'string', desc:'ID noda źródłowego' },
+              { name:'to',       type:'string', desc:'ID noda docelowego' },
+              { name:'fromSide', type:"'right'|'left'|'top'|'bottom'", default:"'right'", desc:'Port wyjściowy' },
+              { name:'toSide',   type:"'left'|'right'|'top'|'bottom'", default:"'left'", desc:'Port wejściowy' },
+              { name:'label',    type:'string', desc:'Etykieta przy połączeniu' },
+              { name:'color',    type:'string', desc:'Kolor linii (domyślnie zielony)' },
             ]} />
           </div>
         </>

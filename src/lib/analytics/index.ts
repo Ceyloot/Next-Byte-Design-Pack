@@ -3,3 +3,7 @@ export * from './stat-card';
 export * from './activity-feed';
 export * from './alert-card';
 export * from './tile';
+export * from './product-card';
+export * from './profile-card';
+export * from './pricing-card';
+export * from './folder-card';
