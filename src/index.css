@@ -1,8 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Grotesk:wght@300..700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html, body {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
 
 @keyframes shimmer {
   to { transform: translateX(100%); }
@@ -76,6 +88,58 @@
   --ring: 204 91% 70%;
   --secondary: 0 0% 6%;
   --secondary-foreground: 0 0% 96%;
+}
+
+/* ─── Glassmorphism Motyw ✨ ─── */
+[data-theme="glassmorphism"] {
+  --background: 224 71% 4%;
+  --foreground: 210 40% 98%;
+  --card: 224 50% 8%;
+  --card-foreground: 210 40% 98%;
+  --popover: 224 50% 8%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 204 95% 70%;
+  --primary-foreground: 224 71% 4%;
+  --secondary: 220 40% 15%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 220 40% 12%;
+  --muted-foreground: 215 20% 70%;
+  --accent: 204 95% 70%;
+  --accent-foreground: 224 71% 4%;
+  --border: 217 90% 70% / 0.25;
+  --input: 220 40% 12%;
+  --ring: 204 95% 70%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --brand-primary: 204 95% 70%;
+  --brand-primary-light: 202 95% 80%;
+  --brand-primary-dark: 209 85% 60%;
+}
+
+/* ─── Liquid Glass Motyw 💧 ─── */
+[data-theme="liquid-glass"] {
+  --background: 250 40% 5%;
+  --foreground: 0 0% 98%;
+  --card: 250 45% 9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 250 45% 9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 265 95% 72%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 250 30% 16%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 250 30% 12%;
+  --muted-foreground: 250 15% 72%;
+  --accent: 190 95% 65%;
+  --accent-foreground: 250 40% 5%;
+  --border: 265 95% 72% / 0.3;
+  --input: 250 30% 14%;
+  --ring: 265 95% 72%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --brand-primary: 265 95% 72%;
+  --brand-primary-light: 265 95% 82%;
+  --brand-primary-dark: 265 85% 60%;
 }
 
 /* ─── Jasny motyw ☀ ─── */

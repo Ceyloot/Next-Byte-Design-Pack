@@ -17,3 +17,4 @@ export * from './empty-state';
 export * from './tag-chip';
 export * from './context-pill';
 export * from './countdown-timer';
+export * from './liquid-glass';

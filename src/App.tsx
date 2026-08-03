@@ -23,6 +23,7 @@ import {
   Checkbox, RadioGroup, RadioGroupItem,
   Textarea, Progress, EmptyState,
   TagChip, TagChipGroup, ContextPill, CountdownTimer,
+  LiquidGlass,
 } from '@/lib/core';
 
 import {
@@ -55,6 +56,8 @@ import {
   ProductCard, ProfileCard, PricingCard,
   FolderCard, FolderGrid, FOLDER_COLORS,
 } from '@/lib/analytics';
+
+import { LandingPreview } from '@/components/LandingPreview';
 
 import {
   TechGrid, PatternBackground, CommandSearch,
@@ -109,10 +112,25 @@ function readVar(name: string) {
   return typeof window==='undefined' ? '' : getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+const BACKGROUND_OPTIONS = [
+  { id: 'grid',      name: '👾 Custom Grid',    desc: 'Dostosowywalna siatka z poświatą' },
+  { id: 'mars',      name: '🔴 Mars Planet',    desc: 'Fotorealistyczny krajobraz Marsa' },
+  { id: 'galaxy',    name: '🌌 Galaktyka',      desc: 'Głęboka mgławica kosmiczna' },
+  { id: 'cyberpunk', name: '🌇 Cyberpunk City', desc: 'Nocne miasto w neonach' },
+  { id: 'aurora',    name: '🏔️ Zorza Polarna',  desc: 'Zorza polarna nad górskim pejzażem' },
+  { id: 'ocean',     name: '🌊 Głębia Oceanu',  desc: 'Morska otchłań oceaniczna' },
+  { id: 'obsidian',  name: '🖤 Pure Obsidian',   desc: 'Czysty ciemny podkład' },
+  { id: 'none',      name: '🚫 Bez tła',         desc: 'Standardowe jednolite tło' },
+] as const;
+
+type BackgroundOption = typeof BACKGROUND_OPTIONS[number]['id'];
+
 /* ── Constants ────────────────────────────────────────────── */
 const THEMES = [
-  { key: null,            label: 'Domyślny',    isLight: false },
-  { key: 'dark-theme',    label: 'Ciemny v2',   isLight: false },
+  { key: null,            label: 'Domyślny',     isLight: false },
+  { key: 'glassmorphism', label: '✨ Glassmorphism', isLight: false },
+  { key: 'liquid-glass',  label: '💧 Liquid Glass',  isLight: false },
+  { key: 'dark-theme',    label: 'Ciemny v2',    isLight: false },
   { key: 'light-apple',   label: 'Jasny',        isLight: true  },
   { key: 'nextbyte-light',label: 'NB Jasny',     isLight: true  },
   { key: 'future-theme',  label: 'Przyszły',     isLight: true  },
@@ -141,6 +159,12 @@ const CONTRACT_VARS = [
 
 const NAV = [
   {
+    id: 'preview', label: 'Preview', pkg: 'preview',
+    items: [
+      { id: 'landing', name: '↗ Landing', status: 'new' as const },
+    ],
+  },
+  {
     id: 'core', label: 'Core', pkg: 'core',
     items: [
       { id: 'button',    name: 'Button',     status: 'stable' },
@@ -162,6 +186,7 @@ const NAV = [
       { id: 'tagchip',     name: 'TagChip',         status: 'new'    },
       { id: 'contextpill', name: 'ContextPill',     status: 'new'    },
       { id: 'countdown',   name: 'CountdownTimer',  status: 'new'    },
+      { id: 'liquidglass', name: 'LiquidGlass',     status: 'new'    },
     ],
   },
   {
@@ -333,17 +358,21 @@ function Preview({ children, glass, tight }: {
 }) {
   return (
     <div className={cn(
-      'relative rounded-2xl border border-border/60',
+      'relative rounded-2xl border border-border/60 transition-all duration-500',
+      glass && 'border-primary/30 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]',
       tight ? 'p-6' : 'p-10',
     )}>
       {/* Background blobs clipped to card boundary */}
       <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
         {glass ? (
           <>
-            <div className="absolute inset-0 bg-card/20" />
-            <div className="absolute -top-20 -left-10 h-56 w-56 rounded-full bg-primary/50 blur-3xl" />
-            <div className="absolute -bottom-16 right-4 h-48 w-48 rounded-full bg-emerald-500/35 blur-3xl" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 h-40 w-40 rounded-full bg-fuchsia-500/25 blur-3xl" />
+            <div className="absolute inset-0 bg-card/10 backdrop-blur-xl" />
+            <div className="absolute -top-24 -left-12 h-64 w-64 rounded-full bg-primary/45 blur-3xl animate-pulse" />
+            <div className="absolute -bottom-20 right-6 h-60 w-60 rounded-full bg-emerald-500/35 blur-3xl animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-52 w-52 rounded-full bg-fuchsia-500/30 blur-3xl" />
+            <div className="absolute top-1/4 right-1/4 h-36 w-36 rounded-full bg-amber-500/25 blur-2xl" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/15 via-transparent to-transparent opacity-80" />
+            <div className="absolute inset-0 border border-white/10 rounded-2xl" />
           </>
         ) : (
           <div className="absolute inset-0 bg-card/30" />
@@ -378,8 +407,15 @@ export default function App() {
   const [selectedTagChips, setSelectedTagChips] = useState<string[]>(['developer', 'designer']);
   const [contextPillValues, setContextPillValues] = useState({ type: 'Auto', model: 'Pro', memory: 'Włączona' });
   const [selectedFolder, setSelectedFolder] = useState<string | undefined>('nextbyte');
-  const [selectedTreeNode, setSelectedTreeNode] = useState<string | undefined>('comp-button');
   const [carouselAutoplay, setCarouselAutoplay] = useState(false);
+  const [appBg, setAppBg]                 = useState<BackgroundOption>('blobs');
+  const [lgDepth, setLgDepth]             = useState(12);
+  const [lgStrength, setLgStrength]       = useState(100);
+  const [lgAberration, setLgAberration]   = useState(2);
+  const [lgBlur, setLgBlur]               = useState(0);
+  const [lgColor, setLgColor]             = useState<'transparent'|'black'|'white'>('transparent');
+  const [lgButton, setLgButton]           = useState(false);
+  const [lgBgScene, setLgBgScene]         = useState<'blobs'|'mesh'|'grid'|'ui'>('blobs');
   const DEMO_COUNTDOWN = useMemo(() => new Date(Date.now() + 16 * 86400000 + 17 * 3600000 + 26 * 60000), []);
   const DEMO_CALENDAR_EVENTS: CalendarEvent[] = useMemo(() => {
     const today = new Date();
@@ -431,8 +467,73 @@ export default function App() {
 
   /* ── Render ─────────────────────────────────────────────── */
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden relative">
       <Toaster position="bottom-right" glass={glass} />
+
+      {/* Global Stage Background (Fixed position for liquid glass refraction) */}
+      {appBg !== 'none' && (
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-80 transition-all duration-700">
+          {appBg === 'grid' && (
+            <div className="absolute inset-0 bg-black">
+              <div className="absolute inset-0 opacity-30 bg-[linear-gradient(to_right,#22d3ee_1px,transparent_1px),linear-gradient(to_bottom,#22d3ee_1px,transparent_1px)] bg-[size:40px_40px]" />
+              <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-cyan-500/20 rounded-full blur-[140px]" />
+            </div>
+          )}
+          {appBg === 'mars' && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=2400&q=80')`,
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+            </div>
+          )}
+          {appBg === 'galaxy' && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=2400&q=80')`,
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
+            </div>
+          )}
+          {appBg === 'cyberpunk' && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=2400&q=80')`,
+              }}
+            >
+              <div className="absolute inset-0 bg-black/50" />
+            </div>
+          )}
+          {appBg === 'aurora' && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=2400&q=80')`,
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/75" />
+            </div>
+          )}
+          {appBg === 'ocean' && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=2400&q=80')`,
+              }}
+            >
+              <div className="absolute inset-0 bg-black/40" />
+            </div>
+          )}
+          {appBg === 'obsidian' && (
+            <div className="absolute inset-0 bg-[#050507]" />
+          )}
+        </div>
+      )}
 
       {/* TopBar */}
       <header className="h-11 shrink-0 border-b border-border bg-background/90 backdrop-blur-xl z-50 flex items-center gap-4 px-4">
@@ -459,6 +560,23 @@ export default function App() {
           Glass
         </button>
 
+        {/* Background picker */}
+        <Select
+          value={appBg}
+          onValueChange={v => setAppBg(v as BackgroundOption)}
+        >
+          <SelectTrigger size="sm" className="w-36 text-xs h-7 border-border/60">
+            <SelectValue>{BACKGROUND_OPTIONS.find(b => b.id === appBg)?.name ?? 'Tło'}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {BACKGROUND_OPTIONS.map(b => (
+              <SelectItem key={b.id} value={b.id}>
+                {b.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {/* Theme picker */}
         <Select
           value={String(activeTheme)}
@@ -477,7 +595,7 @@ export default function App() {
         </Select>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative z-10">
 
         {/* Left Nav */}
         <nav className="w-52 shrink-0 border-r border-border flex flex-col overflow-hidden bg-card/10">
@@ -527,9 +645,11 @@ export default function App() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-8 py-8">
-            {renderPage()}
-          </div>
+          {active === 'landing' ? renderPage() : (
+            <div className="max-w-3xl mx-auto px-8 py-8">
+              {renderPage()}
+            </div>
+          )}
         </main>
       </div>
 
@@ -585,6 +705,9 @@ export default function App() {
   /* ───────────────────────────────────────────────────────── */
   function renderPage() {
     switch (active) {
+
+      /* ── LANDING PREVIEW ────────────────────────────────── */
+      case 'landing': return <LandingPreview />;
 
       /* ── BUTTON ─────────────────────────────────────────── */
       case 'button': return (
@@ -2664,6 +2787,357 @@ export default function App() {
               { name:'label',       type:'string', desc:'Etykieta nad odliczaniem (tylko default)' },
               { name:'onEnd',       type:'() => void', desc:'Callback po osiągnięciu zera' },
             ]} />
+          </div>
+        </>
+      );
+
+      /* ── LIQUID GLASS ───────────────────────────────────── */
+      case 'liquidglass': return (
+        <>
+          <PageHeader name="LiquidGlass & Glassmorphism Studio" pkg="core" status="new"
+            description="Zaawansowany system glassmorphizmu i szkła cieczowego (iOS-style Liquid Lens). Łączy filtry SVG feDisplacementMap z rozmyciem tła backdrop-filter i aberracją chromatyczną." />
+
+          {/* ── INTERAKTYWNY PLAC ZABAW (STUDIO PLAYGROUND) ── */}
+          <SectionLabel>Interaktywny Studio Playground</SectionLabel>
+          <div className="flex flex-col gap-6">
+            {/* Control Panel */}
+            <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-xl space-y-5">
+              {/* Presety */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Gotowe Presety Szkła</span>
+                  <span className="text-[10px] text-primary font-mono">Wybierz styl jednym kliknięciem</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { name: ' Apple Liquid', depth: 12, strength: 100, ab: 2, blur: 0, color: 'transparent' as const, btn: false },
+                    { name: '🌈 Prism Chromatic', depth: 18, strength: 220, ab: 6, blur: 0, color: 'transparent' as const, btn: false },
+                    { name: '🧊 Frosted Dark Crystal', depth: 10, strength: 60, ab: 1, blur: 8, color: 'black' as const, btn: false },
+                    { name: '⚡ Cyberpunk Glass Dock', depth: 15, strength: 140, ab: 4, blur: 0, color: 'transparent' as const, btn: true },
+                    { name: '💎 Ultra Clean Gloss', depth: 4, strength: 25, ab: 0, blur: 0, color: 'white' as const, btn: false },
+                  ].map(p => (
+                    <button
+                      key={p.name}
+                      onClick={() => {
+                        setLgDepth(p.depth);
+                        setLgStrength(p.strength);
+                        setLgAberration(p.ab);
+                        setLgBlur(p.blur);
+                        setLgColor(p.color);
+                        setLgButton(p.btn);
+                      }}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-all"
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Suwaki i parametry */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 text-xs">
+                {/* Depth */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-muted-foreground">Grubość krawędzi (Depth)</span>
+                    <span className="font-mono text-primary">{lgDepth}px</span>
+                  </div>
+                  <input
+                    type="range" min={1} max={30} value={lgDepth}
+                    onChange={e => setLgDepth(Number(e.target.value))}
+                    className="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Strength */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-muted-foreground">Siła ugięcia (Strength)</span>
+                    <span className="font-mono text-primary">{lgStrength}</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={300} value={lgStrength}
+                    onChange={e => setLgStrength(Number(e.target.value))}
+                    className="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Aberracja Chromatyczna */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-muted-foreground">Pryzmat RGB (Aberracja)</span>
+                    <span className="font-mono text-primary">{lgAberration}px</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={12} value={lgAberration}
+                    onChange={e => setLgAberration(Number(e.target.value))}
+                    className="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Dodatkowy Blur */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-muted-foreground">Dodatkowy Blur</span>
+                    <span className="font-mono text-primary">{lgBlur}px</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={25} value={lgBlur}
+                    onChange={e => setLgBlur(Number(e.target.value))}
+                    className="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Opcje dodatkowe */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                {/* Color tint */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Odcień podkładu:</span>
+                  {(['transparent', 'black', 'white'] as const).map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setLgColor(c)}
+                      className={cn(
+                        'text-xs font-semibold px-2.5 py-1 rounded-lg border capitalize transition-all',
+                        lgColor === c ? 'border-primary bg-primary/10 text-primary' : 'border-border/50 text-muted-foreground'
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Button mode */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Tryb Przysku (Hover Tilt):</span>
+                  <Switch checked={lgButton} onCheckedChange={setLgButton} />
+                </div>
+
+                {/* Background Scene */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Tło sceny:</span>
+                  {(['blobs', 'mesh', 'grid', 'ui'] as const).map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setLgBgScene(s)}
+                      className={cn(
+                        'text-xs font-semibold px-2.5 py-1 rounded-lg border uppercase tracking-wider transition-all',
+                        lgBgScene === s ? 'border-primary bg-primary/10 text-primary' : 'border-border/50 text-muted-foreground'
+                      )}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Stage Podglądu na żywo */}
+            <div className="relative rounded-3xl border border-border/80 overflow-hidden min-h-[380px] flex items-center justify-center p-8">
+              {/* Dynamiczne Tło Sceny */}
+              {lgBgScene === 'blobs' && (
+                <div className="absolute inset-0 bg-zinc-950 overflow-hidden pointer-events-none">
+                  <div className="absolute -top-16 -left-16 w-80 h-80 rounded-full bg-primary/70 blur-3xl animate-pulse" />
+                  <div className="absolute top-1/3 right-10 w-72 h-72 rounded-full bg-purple-600/60 blur-3xl" />
+                  <div className="absolute -bottom-20 left-1/3 w-80 h-80 rounded-full bg-emerald-500/50 blur-3xl" />
+                  <div className="absolute top-1/2 left-1/4 w-48 h-48 rounded-full bg-amber-500/40 blur-2xl" />
+                </div>
+              )}
+
+              {lgBgScene === 'mesh' && (
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(ellipse at 10% 20%, #70BEFA 0%, transparent 40%), radial-gradient(ellipse at 90% 80%, #9B6FE8 0%, transparent 45%), radial-gradient(ellipse at 50% 50%, #4ADE80 0%, transparent 50%), #09090b',
+                  }}
+                />
+              )}
+
+              {lgBgScene === 'grid' && (
+                <div className="absolute inset-0 bg-black pointer-events-none flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 opacity-30 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:32px_32px]" />
+                  <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl" />
+                  <div className="font-mono text-cyan-400/40 text-xs tracking-widest leading-relaxed select-none">
+                    01001100 01001001 01010001 01010101 01001001 01000100 <br />
+                    NEXTBYTE AI DESIGN SYSTEM LIQUID GLASS CORE MODULE <br />
+                    01000111 01001100 01000001 01010011 01010011 00110011
+                  </div>
+                </div>
+              )}
+
+              {lgBgScene === 'ui' && (
+                <div className="absolute inset-0 bg-zinc-900 p-6 opacity-70 pointer-events-none grid grid-cols-3 gap-4">
+                  <div className="rounded-xl bg-card border border-border p-4 space-y-2">
+                    <div className="h-4 w-24 bg-primary/40 rounded" />
+                    <div className="h-3 w-32 bg-muted rounded" />
+                    <div className="h-20 bg-muted/30 rounded-lg" />
+                  </div>
+                  <div className="rounded-xl bg-card border border-border p-4 space-y-2">
+                    <div className="h-4 w-20 bg-purple-500/40 rounded" />
+                    <div className="h-3 w-28 bg-muted rounded" />
+                    <div className="h-20 bg-muted/30 rounded-lg" />
+                  </div>
+                  <div className="rounded-xl bg-card border border-border p-4 space-y-2">
+                    <div className="h-4 w-28 bg-emerald-500/40 rounded" />
+                    <div className="h-3 w-16 bg-muted rounded" />
+                    <div className="h-20 bg-muted/30 rounded-lg" />
+                  </div>
+                </div>
+              )}
+
+              {/* Główny Komponent LiquidGlass w Podglądzie */}
+              <div className="relative z-10 flex flex-col items-center gap-6">
+                <LiquidGlass
+                  className="rounded-[32px] shadow-2xl"
+                  depth={lgDepth}
+                  strength={lgStrength}
+                  chromaticAberration={lgAberration}
+                  blur={lgBlur}
+                  color={lgColor}
+                  button={lgButton}
+                >
+                  <div className="px-12 py-8 text-center max-w-md">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 text-xs font-bold mb-3">
+                      <Sparkline data={[10,20,15,30,45]} width={40} height={14} smooth />
+                      <span>Liquid Lens Active</span>
+                    </div>
+                    <h3 className="text-3xl font-black tracking-tight text-white/90">NextByte Liquid</h3>
+                    <p className="text-sm text-white/60 mt-2 leading-relaxed">
+                      Elegancja i optyczna dyspersja światła na krawędziach szkła. Przesuń suwaki powyżej!
+                    </p>
+                  </div>
+                </LiquidGlass>
+              </div>
+            </div>
+
+            {/* Generowany Kod */}
+            <div>
+              <SectionLabel>Wygenerowany kod JSX</SectionLabel>
+              <CodeBlock
+                id="lg-generated-code"
+                copied={copied}
+                onCopy={copy}
+                code={`<LiquidGlass\n  className="rounded-3xl"\n  depth={${lgDepth}}\n  strength={${lgStrength}}\n  chromaticAberration={${lgAberration}}\n  blur={${lgBlur}}\n  color="${lgColor}"\n  button={${lgButton}}\n>\n  <div className="p-8 text-white">Zawartość wewnątrz szkła</div>\n</LiquidGlass>`}
+              />
+            </div>
+          </div>
+
+          {/* ── GABLOTA GOTOWYCH KOMPONENTÓW UI ZE SZKŁA ── */}
+          <div className="mt-12">
+            <SectionLabel>Gablota Komponentów UI (Liquid Glass Suite)</SectionLabel>
+            <Preview glass={false}>
+              <div
+                className="relative rounded-2xl overflow-hidden p-8 grid grid-cols-1 md:grid-cols-2 gap-8"
+                style={{
+                  background: 'radial-gradient(circle at 30% 30%, hsl(204 91% 60% / 0.4) 0%, transparent 60%), radial-gradient(circle at 70% 70%, hsl(270 75% 60% / 0.4) 0%, transparent 60%), #09090b',
+                }}
+              >
+                {/* 1. Szklany Odtwarzacz Media */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider">01. Szklany Odtwarzacz Audio</span>
+                  <LiquidGlass className="rounded-3xl w-full" depth={10} chromaticAberration={2} color="black">
+                    <div className="p-5 w-full flex flex-col gap-4 text-white/90">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center font-bold text-black text-lg shadow-lg">
+                          ♬
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold truncate">Cybernetic Symphony</p>
+                          <p className="text-xs text-white/50 truncate">NextByte Sound Lab · 2026</p>
+                        </div>
+                        <span className="text-xs font-mono text-primary">03:42</span>
+                      </div>
+                      {/* Pasek postępu */}
+                      <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full w-2/3 bg-primary rounded-full" />
+                      </div>
+                      {/* Przyciski */}
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs text-white/40 cursor-pointer hover:text-white">⏮</span>
+                        <div className="w-10 h-10 rounded-full bg-white/15 border border-white/30 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
+                          ▶
+                        </div>
+                        <span className="text-xs text-white/40 cursor-pointer hover:text-white">⏭</span>
+                      </div>
+                    </div>
+                  </LiquidGlass>
+                </div>
+
+                {/* 2. Szklany Floating Dock iOS */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider">02. Szklany Dock Pływający</span>
+                  <div className="h-full flex items-center justify-center">
+                    <LiquidGlass className="rounded-full" button depth={14} chromaticAberration={3} color="transparent">
+                      <div className="px-6 py-3 flex items-center gap-4 text-white">
+                        {[
+                          { icon: '🏠', label: 'Home' },
+                          { icon: '💬', label: 'Chat' },
+                          { icon: '🎨', label: 'Studio' },
+                          { icon: '⚙️', label: 'Opcje' },
+                        ].map((item, i) => (
+                          <div key={item.label} className="flex items-center gap-2 cursor-pointer hover:scale-110 transition-transform">
+                            <span className="text-xl">{item.icon}</span>
+                            {i === 0 && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                          </div>
+                        ))}
+                      </div>
+                    </LiquidGlass>
+                  </div>
+                </div>
+
+                {/* 3. Szklana Karta Metryki KPI */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider">03. Szklany Kafel KPI</span>
+                  <LiquidGlass className="rounded-3xl w-full" depth={12} chromaticAberration={2} color="black">
+                    <div className="p-6 w-full flex items-center justify-between text-white">
+                      <div>
+                        <p className="text-xs text-white/50 uppercase font-semibold tracking-wider">Prędkość Generowania</p>
+                        <p className="text-3xl font-black mt-1">142 tok/s</p>
+                        <p className="text-xs text-emerald-400 mt-1 font-medium">↑ +34% wyższa wydajność</p>
+                      </div>
+                      <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary text-2xl font-bold">
+                        ⚡
+                      </div>
+                    </div>
+                  </LiquidGlass>
+                </div>
+
+                {/* 4. Szklane Badge & Tag Chips */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider">04. Szklane Przyciski i Chipki</span>
+                  <div className="flex flex-wrap gap-3 items-center justify-center h-full p-4">
+                    <LiquidGlass className="rounded-full" button depth={8} chromaticAberration={2} color="white">
+                      <span className="px-5 py-2 text-xs font-bold text-zinc-900">Pobierz Pack</span>
+                    </LiquidGlass>
+                    <LiquidGlass className="rounded-full" button depth={8} chromaticAberration={2} color="black">
+                      <span className="px-5 py-2 text-xs font-bold text-white">Zobacz Demo</span>
+                    </LiquidGlass>
+                    <LiquidGlass className="rounded-full" inline depth={6} strength={50}>
+                      <span className="px-4 py-1 text-[11px] font-medium text-white/80">v3.0 Release</span>
+                    </LiquidGlass>
+                  </div>
+                </div>
+              </div>
+            </Preview>
+          </div>
+
+          {/* Porównanie specyfikacji */}
+          <div className="mt-8">
+            <SectionLabel>Porównanie Technologii Glassmorphizmu</SectionLabel>
+            <PropsTable rows={[
+              { name: 'LiquidGlass',          type: 'SVG feDisplacementMap + backdrop-filter', desc: 'Realistyczne ugina tło na krawędziach soczewki jak prawdziwe grube szkło. Wspiera aberrację RGB.' },
+              { name: '.nb-glass',            type: 'CSS backdrop-filter blur + gradient',     desc: 'Klasyczny gładki glassmorphism do kart i kontenerów bez zniekształceń optycznych.' },
+              { name: '.nb-glass-static',     type: 'CSS backdrop-filter blur (static position)', desc: 'Wariant do rozwijanych menu, popoverów i dialogów overlay.' },
+            ]} />
+          </div>
+
+          <div className="mt-4 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+            <p className="text-[11px] text-amber-400/80">
+              <strong>Wskazówka wydajnościowa:</strong> Komponent `LiquidGlass` generuje dynamiczne filtry SVG data URI. Do masowych list (np. 100 kart) zaleca się stosowanie klas `.nb-glass`, natomiast `LiquidGlass` idealnie sprawdza się w wyeksponowanych elementach Hero, Dockach i kartach akcji.
+            </p>
           </div>
         </>
       );
