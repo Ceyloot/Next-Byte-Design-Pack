@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+import { LiquidGlass } from './liquid-glass';
+import { useUIStyle } from './ui-style-context';
 
 const inputVariants = cva(
   [
-    'flex w-full rounded-xl border bg-input text-sm text-foreground',
+    'flex w-full rounded-xl border text-sm text-foreground',
     'placeholder:text-muted-foreground',
     'transition-colors duration-200',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
@@ -14,11 +16,18 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-border bg-input hover:border-border/80',
-        ghost:   'border-transparent bg-transparent hover:bg-muted/40',
-        error:   'border-destructive/60 bg-destructive/[0.04] focus-visible:ring-destructive',
-        success: 'border-primary/60 bg-primary/[0.04] focus-visible:ring-primary',
-        glass:   'nb-glass-static border-foreground/[0.14] hover:border-primary/35',
+        default:       'border-border bg-input hover:border-border/80',
+        ghost:         'border-transparent bg-transparent hover:bg-muted/40',
+        error:         'border-destructive/60 bg-destructive/[0.04] focus-visible:ring-destructive',
+        success:       'border-primary/60 bg-primary/[0.04] focus-visible:ring-primary',
+        glass:         'nb-glass-static border-foreground/[0.14] hover:border-primary/35',
+        glassmorphism: 'border-white/20 bg-white/5 text-white backdrop-blur-xl hover:border-white/40',
+        liquid:        'border-white/25 bg-transparent text-white hover:border-white/45',
+        'liquid-glass':'border-white/20 bg-transparent text-white hover:border-white/40',
+        nextbyte:      'border-primary/60 bg-primary/[0.03] text-foreground focus-visible:ring-primary/50',
+        gradient:      'border-border bg-gradient-to-r from-card/30 to-muted/20 hover:border-primary/40',
+        secondary:     'border-border bg-secondary/30 text-secondary-foreground hover:bg-secondary/50',
+        destructive:   'border-destructive/60 bg-destructive/[0.04] text-destructive focus-visible:ring-destructive',
       },
       size: {
         sm:      'h-8 px-2.5 text-xs',
@@ -30,7 +39,7 @@ const inputVariants = cva(
   }
 );
 
-export type InputVariant = 'default' | 'ghost' | 'error' | 'success' | 'glass';
+export type InputVariant = 'default' | 'ghost' | 'error' | 'success' | 'glass' | 'glassmorphism' | 'liquid' | 'liquid-glass';
 export type InputSize = 'sm' | 'default' | 'lg';
 
 export interface InputProps
@@ -44,26 +53,52 @@ export interface InputProps
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant, size, iconLeft, iconRight, prefix, suffix, ...props }, ref) => {
+    const { styleMode } = useUIStyle();
+    
+    const isDefault = !variant || variant === 'default';
+    const activeVariant = isDefault && styleMode === 'liquid' ? 'liquid-glass'
+                        : isDefault && styleMode === 'glass' ? 'glassmorphism'
+                        : variant;
+
     const hasWrapper = iconLeft || iconRight || prefix || suffix;
+    
     const inputEl = (
       <input
         ref={ref}
         className={cn(
-          inputVariants({ variant, size }),
+          inputVariants({ variant: activeVariant, size }),
           hasWrapper && 'flex-1 border-0 bg-transparent ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none',
+          (activeVariant === 'liquid-glass' || activeVariant === 'liquid' || activeVariant === 'glassmorphism') && 'bg-transparent text-white',
           className
         )}
         {...props}
       />
     );
 
-    if (!hasWrapper) return inputEl;
+    if (!hasWrapper) {
+      if (activeVariant === 'liquid-glass' || activeVariant === 'liquid') {
+        return (
+          <LiquidGlass mode="svg" depth={8} chromaticAberration={0} className="rounded-xl w-full">
+            {inputEl}
+          </LiquidGlass>
+        );
+      }
+      if (activeVariant === 'glassmorphism') {
+        return (
+          <LiquidGlass mode="native" className="rounded-xl w-full">
+            {inputEl}
+          </LiquidGlass>
+        );
+      }
+      return inputEl;
+    }
 
-    return (
+    const wrapperContent = (
       <div
         className={cn(
-          inputVariants({ variant, size }),
-          'flex items-center gap-0 p-0 overflow-hidden',
+          inputVariants({ variant: activeVariant, size }),
+          'flex items-center gap-0 p-0 overflow-hidden w-full',
+          (activeVariant === 'liquid-glass' || activeVariant === 'liquid' || activeVariant === 'glassmorphism') && 'bg-transparent border-0 shadow-none',
           className
         )}
       >
@@ -86,6 +121,24 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
+
+    if (activeVariant === 'liquid-glass' || activeVariant === 'liquid') {
+      return (
+        <LiquidGlass mode="svg" depth={8} chromaticAberration={0} className="rounded-xl w-full">
+          {wrapperContent}
+        </LiquidGlass>
+      );
+    }
+
+    if (activeVariant === 'glassmorphism') {
+      return (
+        <LiquidGlass mode="native" className="rounded-xl w-full">
+          {wrapperContent}
+        </LiquidGlass>
+      );
+    }
+
+    return wrapperContent;
   }
 );
 Input.displayName = 'Input';

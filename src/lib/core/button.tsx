@@ -3,6 +3,8 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { LiquidGlass } from './liquid-glass'
+import { useUIStyle } from './ui-style-context'
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -24,9 +26,15 @@ const buttonVariants = cva(
         gradient:
           "relative overflow-hidden bg-gradient-to-r from-primary to-primary/65 text-primary-foreground font-semibold border-0 shadow-[0_0_20px_-4px_hsl(var(--primary)/0.5)] hover:shadow-[0_0_30px_-2px_hsl(var(--primary)/0.6)] hover:brightness-110 active:scale-[0.98]",
         nextbyte:
-          "relative overflow-hidden border border-primary/30 bg-gradient-to-b from-primary/[0.14] to-primary/[0.04] text-primary font-semibold rounded-xl shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.30),0_1px_3px_0_rgb(0_0_0/0.06)] hover:border-primary/55 hover:from-primary/[0.22] hover:to-primary/[0.10] hover:text-primary hover:shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.40),0_0_0_2.5px_hsl(var(--primary)/0.14),0_4px_18px_-4px_hsl(var(--primary)/0.30)] active:scale-[0.98] active:shadow-none",
+          "relative overflow-hidden border border-primary/50 bg-[#07070a]/60 text-primary font-semibold rounded-xl shadow-[0_0_12px_-3px_hsl(var(--primary)/0.3),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 hover:border-primary hover:bg-[#07070a]/80 hover:text-primary hover:shadow-[0_0_18px_-1px_hsl(var(--primary)/0.45),0_0_0_2px_hsl(var(--primary)/0.12)] active:scale-[0.97] active:shadow-none",
         glass:
-          "rounded-full font-semibold tracking-tight text-foreground [background:linear-gradient(180deg,hsl(var(--foreground)/0.10)_0%,hsl(var(--foreground)/0.03)_100%)] border border-foreground/[0.14] backdrop-blur-xl hover:text-foreground hover:border-foreground/[0.26] hover:[background:linear-gradient(180deg,hsl(var(--foreground)/0.16)_0%,hsl(var(--primary)/0.10)_100%)] shadow-[var(--shadow-glass)] active:scale-[0.98]",
+          "rounded-xl font-semibold tracking-tight text-foreground bg-white/10 border border-white/20 backdrop-blur-xl hover:text-foreground hover:border-white/40 hover:bg-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_20px_-4px_rgba(0,0,0,0.4)] active:scale-[0.98]",
+        glassmorphism:
+          "rounded-xl font-semibold tracking-tight text-foreground bg-white/10 border border-white/20 backdrop-blur-xl hover:text-foreground hover:border-white/40 hover:bg-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_20px_-4px_rgba(0,0,0,0.4)] active:scale-[0.98]",
+        liquid:
+          "rounded-xl font-semibold tracking-tight text-white bg-gradient-to-b from-white/20 via-white/5 to-white/10 border border-white/35 backdrop-blur-2xl shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.5),inset_0_-1.5px_1px_rgba(0,0,0,0.2),0_12px_28px_-6px_rgba(0,0,0,0.5)] hover:border-white/60 hover:from-white/30 hover:to-white/15 active:scale-[0.98]",
+        "liquid-glass":
+          "rounded-xl font-semibold tracking-tight text-white bg-gradient-to-b from-white/20 via-white/5 to-white/10 border border-white/35 backdrop-blur-2xl shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.5),inset_0_-1.5px_1px_rgba(0,0,0,0.2),0_12px_28px_-6px_rgba(0,0,0,0.5)] hover:border-white/60 hover:from-white/30 hover:to-white/15 active:scale-[0.98]",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -51,17 +59,51 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+    const Comp = asChild ? Slot : "button";
+    const { styleMode } = useUIStyle();
+
+    const isDefault = !variant || variant === 'default';
+    const activeVariant = isDefault && styleMode === 'liquid' ? 'liquid-glass'
+                        : isDefault && styleMode === 'glass' ? 'glassmorphism'
+                        : variant;
+
+    if (activeVariant === 'liquid' || activeVariant === 'liquid-glass') {
+      return (
+        <LiquidGlass inline button mode="svg" depth={10} chromaticAberration={0} className="rounded-xl shadow-xl">
+          <Comp
+            className={cn(buttonVariants({ variant: 'nextbyte', size, className }), 'bg-transparent border-0 text-white shadow-none')}
+            ref={ref}
+            {...props}
+          >
+            {children}
+          </Comp>
+        </LiquidGlass>
+      );
+    }
+
+    if (activeVariant === 'glass' || activeVariant === 'glassmorphism') {
+      return (
+        <LiquidGlass inline button mode="native" className="rounded-xl shadow-xl">
+          <Comp
+            className={cn(buttonVariants({ variant: 'nextbyte', size, className }), 'bg-transparent border-0 text-white shadow-none')}
+            ref={ref}
+            {...props}
+          >
+            {children}
+          </Comp>
+        </LiquidGlass>
+      );
+    }
 
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant: activeVariant, size, className }))}
         ref={ref}
         {...props}
       >
         {children}
       </Comp>
-    )
+    );
   }
 )
 Button.displayName = "Button"

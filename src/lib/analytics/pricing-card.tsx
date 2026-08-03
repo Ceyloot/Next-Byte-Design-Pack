@@ -36,10 +36,12 @@ export function PricingCard({
           : 'bg-card border-border/50',
       className,
     )}>
-      {/* Glow blob */}
+      {/* Smooth non-clipped top light aura */}
       <div className={cn(
-        'pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-52 h-36 rounded-full blur-3xl',
-        highlight ? 'bg-white/25' : 'bg-white/10',
+        'pointer-events-none absolute inset-x-0 top-0 h-32 opacity-40 transition-opacity',
+        highlight
+          ? 'bg-gradient-to-b from-primary/30 via-primary/5 to-transparent'
+          : 'bg-gradient-to-b from-white/10 to-transparent',
       )} />
 
       {/* Badge / discount row */}

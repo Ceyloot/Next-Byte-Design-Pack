@@ -57,8 +57,8 @@ function variantActivePill(v: AccentVariant) {
 export function LandingPreview() {
   const [paletteId, setPaletteId] = useState<PaletteId>('blue');
   const [accentVariant, setAccentVariant] = useState<AccentVariant>('primary');
-  const [glassStyle, setGlassStyle] = useState<'flat' | 'glass' | 'liquid'>('glass');
-  const [landingBg, setLandingBg] = useState<'grid' | 'mars' | 'galaxy' | 'cyberpunk' | 'aurora' | 'ocean' | 'obsidian'>('grid');
+  const [glassStyle, setGlassStyle] = useState<'flat' | 'glass' | 'liquid'>('liquid');
+  const [landingBg, setLandingBg] = useState<'grid' | 'mars' | 'galaxy' | 'cyberpunk' | 'aurora' | 'tahoe' | 'buildings' | 'bars' | 'ocean' | 'obsidian'>('grid');
 
   // Customizer dla siatki (Grid)
   const [gridSize, setGridSize] = useState(40);
@@ -96,6 +96,10 @@ export function LandingPreview() {
   const isWarning     = accentVariant === 'warning';
   const isDestructive = accentVariant === 'destructive';
 
+  const isLiquid = glassStyle === 'liquid';
+  const isGlassmorphism = glassStyle === 'glass';
+  const isAnyGlass = glassStyle !== 'flat';
+
   const ctaBtnVariant = (
     isDestructive ? 'destructive' :
     accentVariant === 'primary' ? 'nextbyte' :
@@ -119,31 +123,35 @@ export function LandingPreview() {
   return (
     <div className="min-h-full bg-background text-foreground relative overflow-hidden">
 
-      {/* ── Dynamic Background Stage (Fotorealistyczne zdjęcia & Custom Grid) ── */}
-      {landingBg === 'grid' && (
-        <div className="fixed inset-0 bg-black pointer-events-none z-0 transition-all">
-          <div
-            className="absolute inset-0 transition-all"
-            style={{
-              opacity: gridOpacity,
-              backgroundImage: `linear-gradient(to right, rgba(${gridLineColorHex}, 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(${gridLineColorHex}, 0.5) 1px, transparent 1px)`,
-              backgroundSize: `${gridSize}px ${gridSize}px`,
-            }}
-          />
-          {gridAura && (
-            <div
-              className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full blur-[150px] pointer-events-none opacity-40 transition-all"
-              style={{
-                background: gridColor === 'purple' ? '#a855f7' :
-                            gridColor === 'emerald' ? '#4ade80' :
-                            gridColor === 'amber' ? '#f59e0b' :
-                            gridColor === 'white' ? '#ffffff' :
-                            '#06b6d4',
-              }}
-            />
+      {/* ── Dynamic Background Stage (Aktywne tylko w trybie Glassmorphism / Liquid Glass) ── */}
+      {!isAnyGlass ? (
+        <div className="fixed inset-0 bg-[#07070a] pointer-events-none z-0" />
+      ) : (
+        <>
+          {landingBg === 'grid' && (
+            <div className="fixed inset-0 bg-black pointer-events-none z-0 transition-all">
+              <div
+                className="absolute inset-0 transition-all"
+                style={{
+                  opacity: gridOpacity,
+                  backgroundImage: `linear-gradient(to right, rgba(${gridLineColorHex}, 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(${gridLineColorHex}, 0.5) 1px, transparent 1px)`,
+                  backgroundSize: `${gridSize}px ${gridSize}px`,
+                }}
+              />
+              {gridAura && (
+                <div
+                  className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full blur-[150px] pointer-events-none opacity-40 transition-all"
+                  style={{
+                    background: gridColor === 'purple' ? '#a855f7' :
+                                gridColor === 'emerald' ? '#4ade80' :
+                                gridColor === 'amber' ? '#f59e0b' :
+                                gridColor === 'white' ? '#ffffff' :
+                                '#06b6d4',
+                  }}
+                />
+              )}
+            </div>
           )}
-        </div>
-      )}
 
       {landingBg === 'mars' && (
         <div
@@ -189,6 +197,39 @@ export function LandingPreview() {
         </div>
       )}
 
+      {landingBg === 'tahoe' && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2400&q=80')`,
+          }}
+        >
+          <div className="absolute inset-0 bg-black/35 backdrop-brightness-95" />
+        </div>
+      )}
+
+      {landingBg === 'buildings' && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2400&q=80')`,
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+        </div>
+      )}
+
+      {landingBg === 'bars' && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 transition-all duration-700 opacity-90"
+          style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 25%, #311042 50%, #450a0a 75%, #09090b 100%)',
+          }}
+        >
+          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-400 via-purple-600 to-transparent blur-2xl" />
+        </div>
+      )}
+
       {landingBg === 'ocean' && (
         <div
           className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
@@ -203,10 +244,12 @@ export function LandingPreview() {
       {landingBg === 'obsidian' && (
         <div className="fixed inset-0 bg-[#050507] pointer-events-none z-0" />
       )}
+        </>
+      )}
 
-      {/* ── Sticky Style Toolbar ───────────────────────────────────── */}
+      {/* ── Sticky Style Toolbar (Z odpowiednim lewym odstępem pl-12) ──────────────── */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl relative">
-        <div className="flex items-center gap-3 px-6 py-2.5 flex-wrap">
+        <div className="flex items-center gap-3 px-8 sm:px-12 pl-10 sm:pl-16 py-2.5 flex-wrap">
           <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">
             Style & Studio
           </span>
@@ -235,7 +278,7 @@ export function LandingPreview() {
 
           <div className="h-3.5 w-px bg-border" />
 
-          {/* Wybór Tła (Zdjęcia & Grid) */}
+          {/* Wybór Tła (Zdjęcia & Grid z liquid-glass-studio) */}
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground/50 shrink-0">Tło Sceny</span>
             <div className="flex gap-1 flex-wrap">
@@ -243,9 +286,12 @@ export function LandingPreview() {
                 { id: 'grid',      label: '👾 Custom Grid' },
                 { id: 'mars',      label: '🔴 Mars Planet' },
                 { id: 'galaxy',    label: '🌌 Galaktyka' },
-                { id: 'cyberpunk', label: '🌇 Cyberpunk City' },
-                { id: 'aurora',    label: '🏔️ Zorza Polarna' },
-                { id: 'ocean',     label: '🌊 Głębia Oceanu' },
+                { id: 'cyberpunk', label: '🌇 Cyberpunk' },
+                { id: 'aurora',    label: '🏔️ Zorza' },
+                { id: 'tahoe',     label: '🏞️ Lake Tahoe' },
+                { id: 'buildings', label: '🏙️ Skyline' },
+                { id: 'bars',      label: '📊 Prism Bars' },
+                { id: 'ocean',     label: '🌊 Ocean' },
                 { id: 'obsidian',  label: '🖤 Obsidian' },
               ].map(b => (
                 <button
@@ -273,7 +319,7 @@ export function LandingPreview() {
               {[
                 { id: 'flat',   label: 'Płaski' },
                 { id: 'glass',  label: '✨ Glassmorphism' },
-                { id: 'liquid', label: '💧 Liquid Glass' },
+                { id: 'liquid', label: '💧 Liquid Glass Studio' },
               ].map(s => (
                 <button
                   key={s.id}
@@ -391,16 +437,16 @@ export function LandingPreview() {
             Zaawansowany design system React nowej generacji. Kryształowy glassmorphism, optyczne filtry soczewkowe i pełna produktywność bez kompromisów.
           </p>
 
-          {/* Hero CTAs - Nowoczesne prostokątne zaokrąglenia rounded-xl */}
+          {/* Hero CTAs - Dynamiczne dopasowanie do wybranego stylu (Płaski / Glass / Liquid) */}
           <div className="relative z-10 flex flex-wrap gap-4 justify-center mb-12 items-center">
-            {glassStyle === 'liquid' ? (
+            {isAnyGlass ? (
               <>
-                <LiquidGlass inline button depth={10} chromaticAberration={2} className="rounded-xl shadow-2xl">
+                <LiquidGlass inline button mode={isLiquid ? 'svg' : 'native'} depth={10} chromaticAberration={0} className="rounded-xl shadow-2xl">
                   <Button variant={ctaBtnVariant} size="lg" className={cn(ctaBtnClass, 'rounded-xl px-7 font-bold text-base py-5 border-0')}>
                     Zacznij teraz <ArrowRight className="h-5 w-5 ml-2" />
                   </Button>
                 </LiquidGlass>
-                <LiquidGlass inline button depth={8} chromaticAberration={1.5} className="rounded-xl shadow-2xl">
+                <LiquidGlass inline button mode={isLiquid ? 'svg' : 'native'} depth={8} chromaticAberration={0} className="rounded-xl shadow-2xl">
                   <Button variant="outline" size="lg" className="rounded-xl px-7 font-semibold text-base py-5 border-0 text-white hover:bg-white/10">
                     Dokumentacja
                   </Button>
@@ -411,7 +457,7 @@ export function LandingPreview() {
                 <Button variant={ctaBtnVariant} size="lg" className={cn(ctaBtnClass, 'rounded-xl px-7 font-bold shadow-xl text-base py-5')}>
                   Zacznij teraz <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
-                <Button variant="outline" size="lg" className={cn('rounded-xl px-7 font-semibold text-base py-5', glassStyle === 'glass' && 'nb-glass border-white/25')}>
+                <Button variant="outline" size="lg" className="rounded-xl px-7 font-semibold text-base py-5 border-border/60">
                   Dokumentacja
                 </Button>
               </>
@@ -425,7 +471,7 @@ export function LandingPreview() {
                 key={f}
                 className={cn(
                   'flex items-center gap-2 text-xs font-semibold border rounded-xl px-3.5 py-1.5 transition-all shadow-md',
-                  glassStyle !== 'flat' ? 'nb-glass border-white/20 text-white' : 'border-border/60 bg-card/40 text-muted-foreground',
+                  isAnyGlass ? 'nb-glass border-white/20 text-white' : 'border-border/60 bg-card/40 text-muted-foreground',
                 )}
               >
                 <CheckCircle2 className={cn('h-3.5 w-3.5',
@@ -438,8 +484,8 @@ export function LandingPreview() {
 
           {/* Floating Glass Dashboard Showcase Card */}
           <div className="w-full max-w-4xl relative z-10">
-            {glassStyle === 'liquid' ? (
-              <LiquidGlass className="rounded-3xl p-6 sm:p-8 shadow-2xl text-left" depth={14} chromaticAberration={2}>
+            {isAnyGlass ? (
+              <LiquidGlass mode={isLiquid ? 'svg' : 'native'} className="rounded-3xl p-6 sm:p-8 shadow-2xl text-left" depth={12} chromaticAberration={0}>
                 <div className="flex flex-col gap-6 text-white">
                   <div className="flex items-center justify-between border-b border-white/10 pb-4">
                     <div className="flex items-center gap-3">
@@ -468,7 +514,7 @@ export function LandingPreview() {
                 </div>
               </LiquidGlass>
             ) : (
-              <div className={cn('rounded-3xl p-6 sm:p-8 text-left border shadow-2xl transition-all', glassStyle === 'glass' ? 'nb-glass border-white/20' : 'bg-card border-border')}>
+              <div className="rounded-3xl p-6 sm:p-8 text-left border shadow-2xl transition-all bg-card border-border">
                 <div className="flex flex-col gap-6 text-foreground">
                   <div className="flex items-center justify-between border-b border-border/60 pb-4">
                     <div className="flex items-center gap-3">
@@ -502,28 +548,47 @@ export function LandingPreview() {
 
         {/* ── Floating Glass Stats Bar ───────────────────────────────────── */}
         <section className="px-6 py-6 my-2">
-          <div className={cn(
-            'max-w-3xl mx-auto rounded-3xl p-6 transition-all border shadow-2xl',
-            glassStyle !== 'flat' ? 'nb-glass border-white/15' : 'bg-card/40 border-border',
-          )}>
-            <div className="grid grid-cols-3 divide-x divide-white/10">
-              {[
-                { value: '50+',  label: 'Komponentów' },
-                { value: '15',   label: 'Motywów Systemowych' },
-                { value: '100%', label: 'TypeScript & WCAG' },
-              ].map(s => (
-                <div key={s.label} className="flex flex-col items-center text-center px-4 py-1">
-                  <span className={cn(
-                    'text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight',
-                    isWarning ? 'text-amber-400' : isDestructive ? 'text-red-400' : 'text-primary',
-                  )}>
-                    {s.value}
-                  </span>
-                  <span className="text-xs text-muted-foreground font-medium mt-1">{s.label}</span>
-                </div>
-              ))}
+          {isAnyGlass ? (
+            <LiquidGlass mode={isLiquid ? 'svg' : 'native'} className="max-w-3xl mx-auto rounded-3xl p-6 transition-all shadow-2xl" depth={6} chromaticAberration={0}>
+              <div className="grid grid-cols-3 divide-x divide-white/10">
+                {[
+                  { value: '50+',  label: 'Komponentów' },
+                  { value: '15',   label: 'Motywów Systemowych' },
+                  { value: '100%', label: 'TypeScript & WCAG' },
+                ].map(s => (
+                  <div key={s.label} className="flex flex-col items-center text-center px-4 py-1">
+                    <span className={cn(
+                      'text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight',
+                      isWarning ? 'text-amber-400' : isDestructive ? 'text-red-400' : 'text-primary',
+                    )}>
+                      {s.value}
+                    </span>
+                    <span className="text-xs text-white/70 font-medium mt-1">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </LiquidGlass>
+          ) : (
+            <div className="max-w-3xl mx-auto rounded-3xl p-6 transition-all border shadow-2xl bg-card/40 border-border">
+              <div className="grid grid-cols-3 divide-x divide-border">
+                {[
+                  { value: '50+',  label: 'Komponentów' },
+                  { value: '15',   label: 'Motywów Systemowych' },
+                  { value: '100%', label: 'TypeScript & WCAG' },
+                ].map(s => (
+                  <div key={s.label} className="flex flex-col items-center text-center px-4 py-1">
+                    <span className={cn(
+                      'text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight',
+                      isWarning ? 'text-amber-400' : isDestructive ? 'text-red-400' : 'text-primary',
+                    )}>
+                      {s.value}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium mt-1">{s.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         {/* ── Features grid ─────────────────────────────────────────────── */}
@@ -548,8 +613,8 @@ export function LandingPreview() {
                 { icon: <Layers className="h-5 w-5" />,   title: 'Prymitywy Radix UI',  desc: 'Solidna baza dostępności i logiki pod spodem.' },
                 { icon: <Package className="h-5 w-5" />,  title: 'Tree-shaking',        desc: 'Importuj tylko to co używasz. Minimalny rozmiar pakietu.' },
               ].map(f => (
-                glassStyle === 'liquid' ? (
-                  <LiquidGlass key={f.title} className="rounded-3xl h-full shadow-xl" depth={6} chromaticAberration={0}>
+                isAnyGlass ? (
+                  <LiquidGlass key={f.title} mode={isLiquid ? 'svg' : 'native'} className="rounded-3xl h-full shadow-xl" depth={6} chromaticAberration={0}>
                     <div className="p-6 flex flex-col gap-3.5 h-full text-left">
                       <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary/30 to-purple-500/20 border border-white/20 flex items-center justify-center text-primary shadow-md">
                         {f.icon}
@@ -562,15 +627,9 @@ export function LandingPreview() {
                   <div
                     key={f.title}
                     className={cn(
-                      'rounded-3xl border p-6 flex flex-col gap-3.5 text-left transition-all',
-                      glassStyle === 'glass' && 'nb-glass border-white/15 hover:-translate-y-1 hover:border-primary/40 shadow-lg',
-                      glassStyle === 'flat' && (
-                        isDestructive
-                          ? 'border-red-500/20 bg-red-500/5 hover:border-red-500/40'
-                          : isWarning
-                            ? 'border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40'
-                            : 'border-border/60 bg-card/40 hover:border-primary/30 hover:bg-card/70'
-                      )
+                      'rounded-3xl border p-6 flex flex-col gap-3.5 text-left transition-all border-border/60 bg-card/40 hover:border-primary/30 hover:bg-card/70',
+                      isDestructive && 'border-red-500/20 bg-red-500/5 hover:border-red-500/40',
+                      isWarning && 'border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40',
                     )}
                   >
                     <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center border shadow-md', iconBg)}>
@@ -587,8 +646,8 @@ export function LandingPreview() {
 
         {/* ── Team / Social proof (Pływająca Szklana Karta) ───────────────── */}
         <section className="px-6 py-4 my-4">
-          {glassStyle === 'liquid' ? (
-            <LiquidGlass className="max-w-5xl mx-auto rounded-3xl shadow-2xl" depth={6} chromaticAberration={0}>
+          {isAnyGlass ? (
+            <LiquidGlass mode={isLiquid ? 'svg' : 'native'} className="max-w-5xl mx-auto rounded-3xl shadow-2xl" depth={6} chromaticAberration={0}>
               <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-white">
                 <div className="text-left">
                   <p className="text-base font-bold mb-1">Zaufany przez tysiące deweloperów</p>
@@ -607,10 +666,7 @@ export function LandingPreview() {
               </div>
             </LiquidGlass>
           ) : (
-            <div className={cn(
-              'max-w-5xl mx-auto rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all border shadow-2xl',
-              glassStyle === 'glass' ? 'nb-glass border-white/15' : 'bg-card/40 border-border',
-            )}>
+            <div className="max-w-5xl mx-auto rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all border shadow-2xl bg-card/40 border-border">
               <div className="text-left">
                 <p className="text-base font-bold text-foreground mb-1">Zaufany przez tysiące deweloperów</p>
                 <p className="text-xs text-muted-foreground">Dołącz do rosnącej społeczności deweloperów budujących z NextByte UI.</p>
@@ -646,21 +702,19 @@ export function LandingPreview() {
                 { title: 'PRO', subtitle: 'Dla profesjonalistów', badge: 'Popularny', price: '99', originalPrice: 119, period: 'mies', features: ['Wszystkie komponenty', '15 motywów', 'Wsparcie priorytetowe', 'Figma kit'], actionLabel: 'Wybierz Pro', highlight: true },
                 { title: 'ENTERPRISE', subtitle: 'Dla firm i zespołów', price: '349', period: 'mies', features: ['Licencja firmowa', 'Dedykowane wsparcie', 'Custom komponenty', 'SLA 99.9%'], actionLabel: 'Skontaktuj się', highlight: false },
               ].map(p => (
-                glassStyle === 'liquid' ? (
-                  <LiquidGlass key={p.title} className={cn('rounded-3xl shadow-xl', p.highlight && 'scale-[1.03]')} depth={7} chromaticAberration={0}>
-                    <div className="p-6">
-                      <PricingCard
-                        title={p.title}
-                        subtitle={p.subtitle}
-                        badge={p.badge}
-                        price={{ amount: p.price, currency: 'zł', period: p.period }}
-                        originalPrice={p.originalPrice}
-                        features={p.features}
-                        action={{ label: p.actionLabel, onClick: () => {} }}
-                        highlight={p.highlight}
-                        className="bg-transparent border-0 shadow-none p-0 text-white"
-                      />
-                    </div>
+                isAnyGlass ? (
+                  <LiquidGlass key={p.title} mode={isLiquid ? 'svg' : 'native'} className={cn('rounded-3xl shadow-xl h-full', p.highlight && 'scale-[1.03]')} depth={7} chromaticAberration={0}>
+                    <PricingCard
+                      title={p.title}
+                      subtitle={p.subtitle}
+                      badge={p.badge}
+                      price={{ amount: p.price, currency: 'zł', period: p.period }}
+                      originalPrice={p.originalPrice}
+                      features={p.features}
+                      action={{ label: p.actionLabel, onClick: () => {} }}
+                      highlight={p.highlight}
+                      className="bg-transparent border-0 shadow-none text-white h-full"
+                    />
                   </LiquidGlass>
                 ) : (
                   <PricingCard
@@ -673,7 +727,7 @@ export function LandingPreview() {
                     features={p.features}
                     action={{ label: p.actionLabel, onClick: () => {} }}
                     highlight={p.highlight}
-                    className={cn('rounded-3xl border transition-all shadow-xl', p.highlight && 'scale-[1.03]', glassStyle === 'glass' ? 'nb-glass border-white/15' : 'bg-card/40 border-border')}
+                    className={cn('rounded-3xl border transition-all shadow-xl', p.highlight && 'scale-[1.03]', 'bg-card/40 border-border')}
                   />
                 )
               ))}
@@ -683,8 +737,8 @@ export function LandingPreview() {
 
         {/* ── CTA Banner (Pływająca Karta Glass) ────────────────────────── */}
         <section className="px-6 py-12">
-          {glassStyle === 'liquid' ? (
-            <LiquidGlass className="max-w-2xl mx-auto rounded-3xl shadow-2xl" depth={8} chromaticAberration={0}>
+          {isAnyGlass ? (
+            <LiquidGlass mode={isLiquid ? 'svg' : 'native'} className="max-w-2xl mx-auto rounded-3xl shadow-2xl" depth={8} chromaticAberration={0}>
               <div className="p-8 sm:p-10 text-center text-white">
                 <div className={cn('inline-flex w-12 h-12 rounded-2xl items-center justify-center mb-4 border shadow-md', iconBg)}>
                   <Bell className="h-5 w-5 text-primary" />
@@ -705,10 +759,7 @@ export function LandingPreview() {
               </div>
             </LiquidGlass>
           ) : (
-            <div className={cn(
-              'max-w-2xl mx-auto rounded-3xl p-8 sm:p-10 text-center transition-all border shadow-2xl',
-              glassStyle === 'glass' ? 'nb-glass border-white/15' : 'bg-card/40 border-border',
-            )}>
+            <div className="max-w-2xl mx-auto rounded-3xl p-8 sm:p-10 text-center transition-all border shadow-2xl bg-card/40 border-border">
               <div className={cn('inline-flex w-12 h-12 rounded-2xl items-center justify-center mb-4 border shadow-md', iconBg)}>
                 <Bell className="h-5 w-5" />
               </div>
@@ -717,7 +768,7 @@ export function LandingPreview() {
                 Dołącz do 50 000 deweloperów budujących z NextByte.
               </p>
               <div className="flex gap-2 max-w-sm mx-auto">
-                <Input placeholder="Twój email" className={cn('flex-1', glassStyle !== 'flat' && 'nb-glass')} />
+                <Input placeholder="Twój email" className="flex-1" />
                 <Button variant={ctaBtnVariant} className={cn('rounded-xl font-bold', ctaBtnClass)}>
                   Dołącz
                 </Button>

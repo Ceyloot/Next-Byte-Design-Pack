@@ -3,6 +3,8 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { inputVariants, type InputVariant, type InputSize } from './input';
+import { useUIStyle } from './ui-style-context';
+import { LiquidGlass } from './liquid-glass';
 
 /* ── Root ────────────────────────────────────────────────── */
 const Select = SelectPrimitive.Root;
@@ -19,23 +21,51 @@ export interface SelectTriggerProps
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   SelectTriggerProps
->(({ className, variant = 'default', size = 'default', children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      inputVariants({ variant, size }),
-      'flex items-center justify-between cursor-pointer',
-      '[&>span]:line-clamp-1',
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground opacity-60" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-));
+>(({ className, variant, size = 'default', children, ...props }, ref) => {
+  const { styleMode } = useUIStyle();
+  
+  const isDefault = !variant || variant === 'default';
+  const activeVariant = isDefault && styleMode === 'liquid' ? 'liquid-glass'
+                      : isDefault && styleMode === 'glass' ? 'glassmorphism'
+                      : variant;
+
+  const triggerEl = (
+    <SelectPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        inputVariants({ variant: activeVariant, size }),
+        'flex items-center justify-between cursor-pointer w-full',
+        (activeVariant === 'liquid-glass' || activeVariant === 'liquid' || activeVariant === 'glassmorphism') && 'bg-transparent border-0 text-white shadow-none',
+        '[&>span]:line-clamp-1',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground opacity-60" />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  );
+
+  if (activeVariant === 'liquid-glass' || activeVariant === 'liquid') {
+    return (
+      <LiquidGlass mode="svg" depth={8} chromaticAberration={0} className="rounded-xl w-full">
+        {triggerEl}
+      </LiquidGlass>
+    );
+  }
+
+  if (activeVariant === 'glassmorphism') {
+    return (
+      <LiquidGlass mode="native" className="rounded-xl w-full">
+        {triggerEl}
+      </LiquidGlass>
+    );
+  }
+
+  return triggerEl;
+});
 SelectTrigger.displayName = 'SelectTrigger';
 
 /* ── ScrollButton ────────────────────────────────────────── */

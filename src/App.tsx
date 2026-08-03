@@ -25,6 +25,7 @@ import {
   TagChip, TagChipGroup, ContextPill, CountdownTimer,
   LiquidGlass,
 } from '@/lib/core';
+import { useUIStyle } from './lib/core/ui-style-context';
 
 import {
   Panel, Sidebar, SidebarHeader, SidebarSection,
@@ -118,9 +119,12 @@ const BACKGROUND_OPTIONS = [
   { id: 'galaxy',    name: '🌌 Galaktyka',      desc: 'Głęboka mgławica kosmiczna' },
   { id: 'cyberpunk', name: '🌇 Cyberpunk City', desc: 'Nocne miasto w neonach' },
   { id: 'aurora',    name: '🏔️ Zorza Polarna',  desc: 'Zorza polarna nad górskim pejzażem' },
+  { id: 'tahoe',     name: '🏞️ Lake Tahoe',    desc: 'Alpejskie jezioro z krajobrazem' },
+  { id: 'buildings', name: '🏙️ City Skyline',   desc: 'Architektura miejskich wieżowców' },
+  { id: 'bars',      name: '📊 Prism Bars',     desc: 'Wielobarwny pryzmat podświetlenia' },
   { id: 'ocean',     name: '🌊 Głębia Oceanu',  desc: 'Morska otchłań oceaniczna' },
   { id: 'obsidian',  name: '🖤 Pure Obsidian',   desc: 'Czysty ciemny podkład' },
-  { id: 'none',      name: '🚫 Bez tła',         desc: 'Standardowe jednolite tło' },
+  { id: 'none',      name: '🖤 Jednolite Dark',  desc: 'Czyste ciemne tło bez grafiki' },
 ] as const;
 
 type BackgroundOption = typeof BACKGROUND_OPTIONS[number]['id'];
@@ -353,31 +357,11 @@ function PropsTable({ rows }: { rows: { name: string; type: string; default?: st
   );
 }
 
-function Preview({ children, glass, tight }: {
-  children: React.ReactNode; glass?: boolean; tight?: boolean;
+function Preview({ children, tight }: {
+  children: React.ReactNode; glassStyle?: 'flat' | 'glass' | 'liquid'; tight?: boolean;
 }) {
   return (
-    <div className={cn(
-      'relative rounded-2xl border border-border/60 transition-all duration-500',
-      glass && 'border-primary/30 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]',
-      tight ? 'p-6' : 'p-10',
-    )}>
-      {/* Background blobs clipped to card boundary */}
-      <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-        {glass ? (
-          <>
-            <div className="absolute inset-0 bg-card/10 backdrop-blur-xl" />
-            <div className="absolute -top-24 -left-12 h-64 w-64 rounded-full bg-primary/45 blur-3xl animate-pulse" />
-            <div className="absolute -bottom-20 right-6 h-60 w-60 rounded-full bg-emerald-500/35 blur-3xl animate-pulse" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-52 w-52 rounded-full bg-fuchsia-500/30 blur-3xl" />
-            <div className="absolute top-1/4 right-1/4 h-36 w-36 rounded-full bg-amber-500/25 blur-2xl" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/15 via-transparent to-transparent opacity-80" />
-            <div className="absolute inset-0 border border-white/10 rounded-2xl" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-card/30" />
-        )}
-      </div>
+    <div className={cn('relative rounded-2xl border border-border/60 bg-card/20 transition-all duration-300', tight ? 'p-6' : 'p-10')}>
       <div className="relative z-10">{children}</div>
     </div>
   );
@@ -388,7 +372,9 @@ export default function App() {
   const [active, setActive]         = useState<NavId>('button');
   const [activeTheme, setActiveTheme] = useState<ThemeKey>(null);
   const [search, setSearch]         = useState('');
-  const [glass, setGlass]           = useState(false);
+  const { styleMode: glassStyleMode, setStyleMode: setGlassStyleMode } = useUIStyle();
+  const [componentVariantFilter, setComponentVariantFilter] = useState<'all' | 'nextbyte' | 'glassmorphism' | 'liquid-glass' | 'gradient' | 'outline' | 'ghost' | 'secondary' | 'destructive' | 'default'>('all');
+  const glass = glassStyleMode !== 'flat';
   const [copied, setCopied]         = useState<string|null>(null);
   const [dialogOpen, setDialogOpen] = useState<string|null>(null);
   const [alertPage, setAlertPage]   = useState(1);
@@ -468,7 +454,7 @@ export default function App() {
   /* ── Render ─────────────────────────────────────────────── */
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden relative">
-      <Toaster position="bottom-right" glass={glass} />
+      <Toaster position="bottom-right" glass={glassStyleMode !== 'flat'} />
 
       {/* Global Stage Background (Fixed position for liquid glass refraction) */}
       {appBg !== 'none' && (
@@ -519,6 +505,36 @@ export default function App() {
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/75" />
             </div>
           )}
+          {appBg === 'tahoe' && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2400&q=80')`,
+              }}
+            >
+              <div className="absolute inset-0 bg-black/35 backdrop-brightness-95" />
+            </div>
+          )}
+          {appBg === 'buildings' && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2400&q=80')`,
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+            </div>
+          )}
+          {appBg === 'bars' && (
+            <div
+              className="absolute inset-0 opacity-90"
+              style={{
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 25%, #311042 50%, #450a0a 75%, #09090b 100%)',
+              }}
+            >
+              <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-400 via-purple-600 to-transparent blur-2xl" />
+            </div>
+          )}
           {appBg === 'ocean' && (
             <div
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -546,19 +562,6 @@ export default function App() {
 
         <div className="flex-1" />
 
-        {/* Glass context toggle */}
-        <button
-          onClick={() => setGlass(g => !g)}
-          title="Przełącz tło glassmorphism w podglądach"
-          className={cn(
-            'text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all',
-            glass
-              ? 'border-primary/40 bg-primary/10 text-primary'
-              : 'border-border/60 text-muted-foreground hover:text-foreground'
-          )}
-        >
-          Glass
-        </button>
 
         {/* Background picker */}
         <Select
@@ -597,8 +600,8 @@ export default function App() {
 
       <div className="flex flex-1 overflow-hidden relative z-10">
 
-        {/* Left Nav */}
-        <nav className="w-52 shrink-0 border-r border-border flex flex-col overflow-hidden bg-card/10">
+        {/* Left Nav (Crisp & Backdrop-Blurred for full visibility) */}
+        <nav className="w-56 shrink-0 border-r border-border flex flex-col overflow-hidden bg-background/95 backdrop-blur-2xl z-30 shadow-2xl relative">
           <div className="p-2.5 border-b border-border/40">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/60 pointer-events-none" />
@@ -647,6 +650,42 @@ export default function App() {
         <main className="flex-1 overflow-y-auto">
           {active === 'landing' ? renderPage() : (
             <div className="max-w-3xl mx-auto px-8 py-8">
+              {/* Sleek unified Component Variant Selector bar on top of every component page */}
+              <div className="mb-6 p-3 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl flex items-center justify-between gap-3 flex-wrap shadow-lg">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-foreground shrink-0">
+                    Wariant Wyglądu
+                  </span>
+                </div>
+                <div className="flex gap-1 items-center flex-wrap">
+                  {[
+                    { id: 'all',           label: 'Wszystkie warianty' },
+                    { id: 'glassmorphism', label: '✨ glassmorphism' },
+                    { id: 'liquid-glass',  label: '💧 liquid-glass' },
+                    { id: 'nextbyte',      label: 'nextbyte' },
+                    { id: 'gradient',      label: 'gradient' },
+                    { id: 'outline',       label: 'outline' },
+                    { id: 'ghost',         label: 'ghost' },
+                    { id: 'secondary',     label: 'secondary' },
+                    { id: 'destructive',   label: 'destructive' },
+                    { id: 'default',       label: 'default' },
+                  ].map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setComponentVariantFilter(s.id as any)}
+                      className={cn(
+                        'text-[10px] font-bold px-2 py-1 rounded-lg border transition-all shadow-sm',
+                        componentVariantFilter === s.id
+                          ? 'border-primary bg-primary/20 text-primary shadow-md scale-[1.02]'
+                          : 'border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/20'
+                      )}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {renderPage()}
             </div>
           )}
@@ -717,14 +756,16 @@ export default function App() {
             description="Interaktywny element wywołujący akcje. Osiem wariantów wizualnych i pięć rozmiarów. Domyślny wariant nextbyte jest podpisem wizualnym NextByte."
           />
           <SectionLabel>Warianty</SectionLabel>
-          <Preview glass={glass} tight>
+          <Preview glassStyle={glassStyleMode} tight>
             <div className="flex flex-wrap gap-3 items-center justify-center">
-              {(['nextbyte','glass','gradient','outline','ghost','destructive','secondary','default'] as const).map(v => (
-                <div key={v} className="flex flex-col items-center gap-1.5">
-                  <Button variant={v}>{v}</Button>
-                  <span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>
-                </div>
-              ))}
+              {(['nextbyte','glassmorphism','liquid-glass','gradient','outline','ghost','destructive','secondary','default'] as const)
+                .filter(v => componentVariantFilter === 'all' || componentVariantFilter === v)
+                .map(v => (
+                  <div key={v} className="flex flex-col items-center gap-1.5">
+                    <Button variant={v}>{v}</Button>
+                    <span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>
+                  </div>
+                ))}
             </div>
           </Preview>
 
@@ -734,12 +775,12 @@ export default function App() {
               <div className="flex flex-wrap items-center gap-3 justify-center">
                 {(['sm','default','lg','xl'] as const).map(s => (
                   <div key={s} className="flex flex-col items-center gap-1.5">
-                    <Button size={s}>Przycisk</Button>
+                    <Button variant={componentVariantFilter === 'all' ? 'nextbyte' : componentVariantFilter} size={s}>Przycisk</Button>
                     <span className="text-[9px] font-mono text-muted-foreground/60">{s}</span>
                   </div>
                 ))}
                 <div className="flex flex-col items-center gap-1.5">
-                  <Button size="icon"><Star className="h-4 w-4" /></Button>
+                  <Button variant={componentVariantFilter === 'all' ? 'nextbyte' : componentVariantFilter} size="icon"><Star className="h-4 w-4" /></Button>
                   <span className="text-[9px] font-mono text-muted-foreground/60">icon</span>
                 </div>
               </div>
@@ -771,25 +812,27 @@ export default function App() {
           <PageHeader name="Badge" pkg="core" status="stable"
             description="Etykieta statusu lub kategorii. Siedem wariantów, trzy rozmiary, dwa kształty, opcjonalna kropka statusu." />
           <SectionLabel>Warianty</SectionLabel>
-          <Preview glass={glass} tight>
+          <Preview glassStyle={glassStyleMode} tight>
             <div className="flex flex-wrap gap-3 items-center justify-center">
-              {(['default','primary','warning','destructive','outline','ghost','glass'] as const).map(v => (
-                <div key={v} className="flex flex-col items-center gap-1.5">
-                  <Badge variant={v} dot>{v}</Badge>
-                  <span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>
-                </div>
-              ))}
+              {(['default','primary','warning','destructive','outline','ghost','glass','glassmorphism','liquid-glass'] as const)
+                .filter(v => componentVariantFilter === 'all' || componentVariantFilter === v)
+                .map(v => (
+                  <div key={v} className="flex flex-col items-center gap-1.5">
+                    <Badge variant={v} dot>{v}</Badge>
+                    <span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>
+                  </div>
+                ))}
             </div>
           </Preview>
           <div className="mt-6"><SectionLabel>Rozmiary i kształty</SectionLabel>
             <Preview glass={false} tight>
               <div className="flex flex-wrap gap-4 items-center justify-center">
-                <Badge variant="primary" size="sm">sm</Badge>
-                <Badge variant="primary" size="default">default</Badge>
-                <Badge variant="primary" size="lg">lg</Badge>
+                <Badge variant={componentVariantFilter === 'all' ? 'primary' : componentVariantFilter} size="sm">sm</Badge>
+                <Badge variant={componentVariantFilter === 'all' ? 'primary' : componentVariantFilter} size="default">default</Badge>
+                <Badge variant={componentVariantFilter === 'all' ? 'primary' : componentVariantFilter} size="lg">lg</Badge>
                 <Separator orientation="vertical" className="h-5" />
-                <Badge variant="primary" shape="square">square</Badge>
-                <Badge variant="primary" shape="rounded">rounded</Badge>
+                <Badge variant={componentVariantFilter === 'all' ? 'primary' : componentVariantFilter} shape="square">square</Badge>
+                <Badge variant={componentVariantFilter === 'all' ? 'primary' : componentVariantFilter} shape="rounded">rounded</Badge>
               </div>
             </Preview>
           </div>
@@ -818,15 +861,24 @@ export default function App() {
           <PageHeader name="Input" pkg="core" status="new"
             description="Pole tekstowe z wariantami walidacyjnymi, ikonami i prefix/suffix. InputGroup opakowuje input z etykietą i komunikatem." />
           <SectionLabel>Warianty</SectionLabel>
-          <Preview glass={glass}>
+          <Preview glassStyle={glassStyleMode}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
               {([
-                { v:'default' as const, label:'Default' },
-                { v:'ghost'   as const, label:'Ghost'   },
-                { v:'error'   as const, label:'Error'   },
-                { v:'success' as const, label:'Success' },
-                { v:'glass'   as const, label:'Glass'   },
-              ]).map(({ v, label }) => (
+                { v:'nextbyte'      as const, label:'NextByte' },
+                { v:'glassmorphism' as const, label:'✨ Glassmorphism' },
+                { v:'liquid-glass'  as const, label:'💧 Liquid Glass' },
+                { v:'gradient'      as const, label:'Gradient' },
+                { v:'outline'       as const, label:'Outline' },
+                { v:'ghost'         as const, label:'Ghost'   },
+                { v:'destructive'   as const, label:'Destructive' },
+                { v:'secondary'     as const, label:'Secondary' },
+                { v:'default'       as const, label:'Default' },
+                { v:'error'         as const, label:'Error'   },
+                { v:'success'       as const, label:'Success' },
+                { v:'glass'         as const, label:'Glass'   },
+              ])
+              .filter(({ v }) => componentVariantFilter === 'all' || componentVariantFilter === (v as any))
+              .map(({ v, label }) => (
                 <InputGroup key={v} label={label}>
                   <Input variant={v} placeholder={`variant="${v}"`} />
                 </InputGroup>
@@ -864,22 +916,24 @@ export default function App() {
           <SectionLabel>Podgląd</SectionLabel>
           <Preview glass={glass} tight>
             <div className="flex flex-wrap gap-6 items-start justify-center">
-              {(['default','ghost','glass','outline'] as const).map(v => (
-                <div key={v} className="flex flex-col items-center gap-1.5 w-40">
-                  <Select>
-                    <SelectTrigger variant={v} size="default"><SelectValue placeholder={`${v}`} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Opcje</SelectLabel>
-                        <SelectItem value="a">Opcja A</SelectItem>
-                        <SelectItem value="b">Opcja B</SelectItem>
-                        <SelectItem value="c">Opcja C</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>
-                </div>
-              ))}
+               {(['nextbyte', 'glassmorphism', 'liquid-glass', 'gradient', 'outline', 'ghost', 'destructive', 'secondary', 'default'] as const)
+                .filter(v => componentVariantFilter === 'all' || componentVariantFilter === v)
+                .map(v => (
+                  <div key={v} className="flex flex-col items-center gap-1.5 w-40">
+                    <Select>
+                      <SelectTrigger variant={v} size="default"><SelectValue placeholder={`${v}`} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Opcje</SelectLabel>
+                          <SelectItem value="a">Opcja A</SelectItem>
+                          <SelectItem value="b">Opcja B</SelectItem>
+                          <SelectItem value="c">Opcja C</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>
+                  </div>
+                ))}
             </div>
           </Preview>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>

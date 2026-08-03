@@ -108,11 +108,15 @@ function getOrRegisterFilter(
   if (ca > 0) {
     filterNode.innerHTML = `
       <feImage x="0" y="0" height="${qh}" width="${qw}" href="${mapDataUri}" result="dm"/>
-      <feDisplacementMap in="SourceGraphic" in2="dm" scale="${strength + ca * 2}" xChannelSelector="R" yChannelSelector="G"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="2" result="noise"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0.15 0" in="noise" result="softNoise"/>
+      <feBlend in="dm" in2="softNoise" mode="screen" result="mixedDm"/>
+      
+      <feDisplacementMap in="SourceGraphic" in2="mixedDm" scale="${strength + ca * 2}" xChannelSelector="R" yChannelSelector="G"/>
       <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="dR"/>
-      <feDisplacementMap in="SourceGraphic" in2="dm" scale="${strength + ca}" xChannelSelector="R" yChannelSelector="G"/>
+      <feDisplacementMap in="SourceGraphic" in2="mixedDm" scale="${strength + ca}" xChannelSelector="R" yChannelSelector="G"/>
       <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="dG"/>
-      <feDisplacementMap in="SourceGraphic" in2="dm" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>
+      <feDisplacementMap in="SourceGraphic" in2="mixedDm" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>
       <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="dB"/>
       <feBlend in="dR" in2="dG" mode="screen"/>
       <feBlend in2="dB" mode="screen"/>
@@ -121,7 +125,10 @@ function getOrRegisterFilter(
     // Fast 1-Pass Displacement Map (70% faster GPU execution)
     filterNode.innerHTML = `
       <feImage x="0" y="0" height="${qh}" width="${qw}" href="${mapDataUri}" result="dm"/>
-      <feDisplacementMap in="SourceGraphic" in2="dm" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" result="noise"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0.18 0" in="noise" result="softNoise"/>
+      <feBlend in="dm" in2="softNoise" mode="screen" result="mixedDm"/>
+      <feDisplacementMap in="SourceGraphic" in2="mixedDm" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>
     `;
   }
 
@@ -133,6 +140,8 @@ function getOrRegisterFilter(
 
 export interface LiquidGlassProps {
   children?: ReactNode;
+  /** Glass engine mode: 'native' (NextByte Ultra-Light GPU Prism - 0% CPU cost, default) or 'svg' (SVG displacement filter) */
+  mode?: 'native' | 'svg';
   /** Thickness of the glass edge (default 10) */
   depth?: number;
   /** Displacement strength — how much the background bends (default 100) */
@@ -156,6 +165,7 @@ export interface LiquidGlassProps {
 
 export function LiquidGlass({
   children,
+  mode = 'svg',
   depth = 10,
   strength = 100,
   chromaticAberration = 0,
@@ -176,10 +186,12 @@ export function LiquidGlass({
 
   // Subskrypcja powiadomień o szybkim skrolowaniu
   useEffect(() => {
-    const onScrollChange = () => forceUpdate({});
-    scrollListeners.add(onScrollChange);
-    return () => { scrollListeners.delete(onScrollChange); };
-  }, []);
+    if (mode === 'svg') {
+      const onScrollChange = () => forceUpdate({});
+      scrollListeners.add(onScrollChange);
+      return () => { scrollListeners.delete(onScrollChange); };
+    }
+  }, [mode]);
 
   // IntersectionObserver: Zamraża renderowanie gdy element jest poza ekranem
   useEffect(() => {
@@ -188,16 +200,18 @@ export function LiquidGlass({
 
     const io = new IntersectionObserver(([entry]) => {
       isVisible.current = entry.isIntersecting;
-      if (entry.isIntersecting && rafId.current === null) {
+      if (entry.isIntersecting && rafId.current === null && mode === 'svg') {
         rafId.current = requestAnimationFrame(updateFilter);
       }
     }, { threshold: 0.02 });
 
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
+    if (mode !== 'svg') return;
+
     const prefersReducedMotion = typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -217,8 +231,7 @@ export function LiquidGlass({
       const h = Math.max(Math.round(rect.height), 10);
       const r = parseFloat(getComputedStyle(wrapper).borderRadius) || 0;
 
-      // Podczas szybkiego skrolowania przełączamy się na 100% akcelerowany sprzętowo GPU Blur (Apple technique)
-      if (supportsUrl && !lowPower && !prefersReducedMotion && !isScrollingFast) {
+      if (!lowPower && !prefersReducedMotion && !isScrollingFast) {
         const filterIdRef = getOrRegisterFilter(w, h, r, depth, strength, chromaticAberration);
         filterEl.style.backdropFilter =
           `blur(${blur / 3}px) url('${filterIdRef}') blur(${blur}px) ` +
@@ -245,7 +258,7 @@ export function LiquidGlass({
       if (rafId.current !== null) cancelAnimationFrame(rafId.current);
       ro.disconnect();
     };
-  }, [depth, strength, chromaticAberration, blur, button, lowPower]);
+  }, [mode, depth, strength, chromaticAberration, blur, button, lowPower]);
 
   const overlayBg =
     color === 'black' ? 'rgba(10, 10, 15, 0.45)' :
@@ -265,6 +278,20 @@ export function LiquidGlass({
     className,
   );
 
+  const nativeStyle: CSSProperties = mode === 'native' ? {
+    backdropFilter: 'blur(16px) saturate(180%) contrast(105%) brightness(1.1)',
+    WebkitBackdropFilter: 'blur(16px) saturate(180%) contrast(105%) brightness(1.1)',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 40%, rgba(255, 255, 255, 0.03) 100%)',
+    boxShadow: 'inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.25), 0 20px 40px -15px rgba(0,0,0,0.5)',
+    willChange: 'transform',
+    transform: 'translate3d(0, 0, 0)',
+  } : {
+    background: glassBoxBg,
+    boxShadow: insetShadow,
+    willChange: 'backdrop-filter, transform',
+    transform: 'translate3d(0,0,0)',
+  };
+
   const layers = (
     <>
       {/* z-1: ultra-clear glass overlay with top light rim */}
@@ -282,7 +309,7 @@ export function LiquidGlass({
         <span
           ref={filterRef as React.RefObject<HTMLSpanElement>}
           className="absolute inset-0 block rounded-[inherit]"
-          style={{ background: glassBoxBg, boxShadow: insetShadow, willChange: 'backdrop-filter', transform: 'translateZ(0)' }}
+          style={nativeStyle}
         />
       </span>
     </>
