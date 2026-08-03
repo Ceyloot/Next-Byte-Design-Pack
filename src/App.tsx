@@ -265,6 +265,89 @@ const DEMO_TABLE = [
   { name:'StatCard',    file:'stat-card.tsx',lines:88, status:'stable', author:'AB' },
 ];
 
+/* ── Per-page variant bar definitions ────────────────────── */
+type PVItem = { id: string; label: string };
+const PAGE_VARIANTS: Partial<Record<string, PVItem[]>> = {
+  button:        [{ id:'all', label:'Wszystkie' }, { id:'nextbyte', label:'nextbyte' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }, { id:'gradient', label:'gradient' }, { id:'outline', label:'outline' }, { id:'ghost', label:'ghost' }, { id:'secondary', label:'secondary' }, { id:'destructive', label:'destructive' }, { id:'default', label:'default' }],
+  badge:         [{ id:'all', label:'Wszystkie' }, { id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'warning', label:'warning' }, { id:'destructive', label:'destructive' }, { id:'outline', label:'outline' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  input:         [{ id:'all', label:'Wszystkie' }, { id:'nextbyte', label:'nextbyte' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }, { id:'gradient', label:'gradient' }, { id:'outline', label:'outline' }, { id:'ghost', label:'ghost' }, { id:'error', label:'error' }, { id:'success', label:'success' }, { id:'glass', label:'glass' }, { id:'default', label:'default' }],
+  select:        [{ id:'default', label:'default' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'outline', label:'outline' }],
+  avatar:        [{ id:'xs', label:'xs' }, { id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }, { id:'xl', label:'xl' }, { id:'2xl', label:'2xl' }],
+  separator:     [{ id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'muted', label:'muted' }, { id:'dashed', label:'dashed' }, { id:'gradient', label:'gradient' }, { id:'fade', label:'fade' }],
+  skeleton:      [{ id:'default', label:'default' }, { id:'shimmer', label:'shimmer' }],
+  metricbar:     [{ id:'primary', label:'primary' }, { id:'success', label:'success' }, { id:'warning', label:'warning' }, { id:'destructive', label:'destructive' }],
+  tooltip:       [{ id:'top', label:'↑ góra' }, { id:'bottom', label:'↓ dół' }, { id:'left', label:'← lewo' }, { id:'right', label:'→ prawo' }],
+  textarea:      [{ id:'default', label:'default' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'error', label:'error' }, { id:'success', label:'success' }],
+  tabs:          [{ id:'underline', label:'underline' }, { id:'pills', label:'pills' }, { id:'card', label:'card' }, { id:'glass', label:'glass' }],
+  table:         [{ id:'default', label:'default' }, { id:'bordered', label:'bordered' }, { id:'striped', label:'striped' }],
+  accordion:     [{ id:'default', label:'default' }, { id:'bordered', label:'bordered' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }],
+  emptystate:    [{ id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }],
+  countdown:     [{ id:'default', label:'default' }, { id:'compact', label:'compact' }, { id:'badge', label:'badge' }, { id:'blocks', label:'blocks' }],
+  statcard:      [{ id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }],
+  tile:          [{ id:'neutralna', label:'neutralna' }, { id:'akcent', label:'akcent' }, { id:'krytyczna', label:'krytyczna' }],
+  sparkline:     [{ id:'positive', label:'wzrost ↑' }, { id:'negative', label:'spadek ↓' }, { id:'neutral', label:'stabilny →' }],
+  alertcard:     [{ id:'info', label:'info' }, { id:'warning', label:'warning' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }],
+  commandsearch: [{ id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }],
+  pricingcard:   [{ id:'0', label:'Wyróżniony: 1' }, { id:'1', label:'Wyróżniony: 2' }, { id:'2', label:'Wyróżniony: 3' }],
+  toast:         [{ id:'default', label:'domyślny' }, { id:'success', label:'sukces' }, { id:'warning', label:'uwaga' }, { id:'destructive', label:'błąd' }],
+};
+
+const VARIANT_BAR_LABEL: Partial<Record<string, string>> = {
+  button: 'Wariant wyglądu', badge: 'Wariant wyglądu', input: 'Wariant wyglądu',
+  select: 'Wariant triggera', avatar: 'Rozmiar', separator: 'Wariant',
+  skeleton: 'Animacja', metricbar: 'Kolor', tooltip: 'Pozycja',
+  textarea: 'Wariant', tabs: 'Wariant', table: 'Wariant', accordion: 'Wariant',
+  emptystate: 'Rozmiar', countdown: 'Tryb', statcard: 'Wariant',
+  tile: 'Intencja', sparkline: 'Trend', alertcard: 'Wariant',
+  commandsearch: 'Rozmiar', pricingcard: 'Wyróżnienie',
+  toast: 'Wariant',
+};
+
+/* ── Interactive Demo Helpers ─────────────────────────────── */
+function VariantBar<T extends string>({
+  label, options, value, onChange,
+}: {
+  label: string; options: readonly T[]; value: T; onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 shrink-0 min-w-[52px]">{label}</span>
+      <div className="flex gap-1 flex-wrap">
+        {options.map(o => (
+          <button key={o} onClick={() => onChange(o)} className={cn(
+            'px-2.5 py-1 text-[10px] font-mono font-semibold rounded-lg border transition-all',
+            value === o
+              ? 'border-primary/50 bg-primary/10 text-primary'
+              : 'border-border/60 text-muted-foreground hover:text-foreground hover:border-border',
+          )}>{o}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DemoControls({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4 px-4 py-3 rounded-xl bg-muted/10 border border-border/40">
+      {children}
+    </div>
+  );
+}
+
+function ToggleCtrl({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{label}</span>
+      <button onClick={() => onChange(!value)} className={cn(
+        'px-2.5 py-1 text-[10px] font-mono font-semibold rounded-lg border transition-all',
+        value
+          ? 'border-primary/50 bg-primary/10 text-primary'
+          : 'border-border/60 text-muted-foreground hover:text-foreground hover:border-border',
+      )}>{value ? 'on' : 'off'}</button>
+    </div>
+  );
+}
+
 /* ── UI helpers ───────────────────────────────────────────── */
 function StatusDot({ status }: { status: string }) {
   return (
@@ -373,7 +456,10 @@ export default function App() {
   const [activeTheme, setActiveTheme] = useState<ThemeKey>(null);
   const [search, setSearch]         = useState('');
   const { styleMode: glassStyleMode, setStyleMode: setGlassStyleMode } = useUIStyle();
-  const [componentVariantFilter, setComponentVariantFilter] = useState<'all' | 'nextbyte' | 'glassmorphism' | 'liquid-glass' | 'gradient' | 'outline' | 'ghost' | 'secondary' | 'destructive' | 'default'>('all');
+  const [componentVariantFilter, setComponentVariantFilter] = useState<string>(
+    () => PAGE_VARIANTS[active]?.[0]?.id ?? 'all'
+  );
+  const [_filterPage, _setFilterPage] = useState<string>(active);
   const glass = glassStyleMode !== 'flat';
   const [copied, setCopied]         = useState<string|null>(null);
   const [dialogOpen, setDialogOpen] = useState<string|null>(null);
@@ -402,6 +488,43 @@ export default function App() {
   const [lgColor, setLgColor]             = useState<'transparent'|'black'|'white'>('transparent');
   const [lgButton, setLgButton]           = useState(false);
   const [lgBgScene, setLgBgScene]         = useState<'blobs'|'mesh'|'grid'|'ui'>('blobs');
+
+  // Demo mode controls
+  const [demoSelectV, setDemoSelectV]           = useState<'default'|'ghost'|'glass'|'outline'>('default');
+  const [demoSelectSz, setDemoSelectSz]         = useState<'sm'|'default'|'lg'>('default');
+  const [demoAvatarSz, setDemoAvatarSz]         = useState<'xs'|'sm'|'default'|'lg'|'xl'|'2xl'>('default');
+  const [demoAvatarShape, setDemoAvatarShape]   = useState<'circle'|'square'>('circle');
+  const [demoAvatarStatus, setDemoAvatarStatus] = useState<'online'|'offline'|'busy'|'away'>('online');
+  const [demoSepV, setDemoSepV]                 = useState<'default'|'primary'|'muted'|'dashed'|'gradient'|'fade'>('default');
+  const [demoSkelV, setDemoSkelV]               = useState<'default'|'shimmer'>('shimmer');
+  const [demoMetricColor, setDemoMetricColor]   = useState<'primary'|'success'|'warning'|'destructive'>('primary');
+  const [demoMetricSize, setDemoMetricSize]     = useState<'sm'|'default'|'lg'>('default');
+  const [demoMetricVal, setDemoMetricVal]       = useState(7);
+  const [demoTextareaV, setDemoTextareaV]       = useState<'default'|'ghost'|'glass'|'error'|'success'>('default');
+  const [demoTextareaSz, setDemoTextareaSz]     = useState<'sm'|'default'|'lg'>('default');
+  const [demoTabsV, setDemoTabsV]               = useState<'underline'|'pills'|'card'|'glass'>('underline');
+  const [demoTabsSz, setDemoTabsSz]             = useState<'sm'|'default'|'lg'>('default');
+  const [demoTableV, setDemoTableV]             = useState<'default'|'bordered'|'striped'>('default');
+  const [demoTableSz, setDemoTableSz]           = useState<'sm'|'default'|'lg'>('sm');
+  const [demoAccV, setDemoAccV]                 = useState<'default'|'bordered'|'ghost'|'glass'>('default');
+  const [demoCountdownV, setDemoCountdownV]     = useState<'default'|'compact'|'badge'|'blocks'>('blocks');
+  const [demoCountdownSec, setDemoCountdownSec] = useState(true);
+  const [demoStatV, setDemoStatV]               = useState<'default'|'primary'|'success'|'destructive'>('primary');
+  const [demoStatTrend, setDemoStatTrend]       = useState<'positive'|'negative'|'neutral'>('positive');
+  const [demoTileIntent, setDemoTileIntent]     = useState<'neutralna'|'akcent'|'krytyczna'>('akcent');
+  const [demoTileElev, setDemoTileElev]         = useState<'plaska'|'uniesiona'|'wyzej'>('uniesiona');
+  const [demoTileInter, setDemoTileInter]       = useState(true);
+  const [demoPricingGlass, setDemoPricingGlass] = useState(false);
+  const [demoPricingHL, setDemoPricingHL]       = useState(2);
+  const [demoESSize, setDemoESSize]             = useState<'sm'|'default'|'lg'>('default');
+  const [demoSparkTrend, setDemoSparkTrend]     = useState<'positive'|'negative'|'neutral'>('positive');
+  const [demoSparkSmooth, setDemoSparkSmooth]   = useState(true);
+  const [demoSparkFill, setDemoSparkFill]       = useState(true);
+  const [demoTooltipSide, setDemoTooltipSide]   = useState<'top'|'bottom'|'left'|'right'>('top');
+  const [demoTooltipV, setDemoTooltipV]         = useState<'default'|'glass'>('default');
+  const [demoAlertV, setDemoAlertV]             = useState<'info'|'warning'|'success'|'destructive'>('info');
+  const [demoAlertPriority, setDemoAlertPriority] = useState<'low'|'medium'|'high'|'critical'>('high');
+  const [demoCSSz, setDemoCSSz]                 = useState<'sm'|'default'|'lg'>('default');
   const DEMO_COUNTDOWN = useMemo(() => new Date(Date.now() + 16 * 86400000 + 17 * 3600000 + 26 * 60000), []);
   const DEMO_CALENDAR_EVENTS: CalendarEvent[] = useMemo(() => {
     const today = new Date();
@@ -425,6 +548,11 @@ export default function App() {
   const { toast } = useToast();
 
   useEffect(() => { setTick(1); }, []);
+
+  if (_filterPage !== active) {
+    _setFilterPage(active);
+    setComponentVariantFilter(PAGE_VARIANTS[active]?.[0]?.id ?? 'all');
+  }
 
   const applyTheme = useCallback((key: ThemeKey) => {
     CONTRACT_VARS.forEach(n => document.documentElement.style.removeProperty(n));
@@ -650,42 +778,33 @@ export default function App() {
         <main className="flex-1 overflow-y-auto">
           {active === 'landing' ? renderPage() : (
             <div className="max-w-3xl mx-auto px-8 py-8">
-              {/* Sleek unified Component Variant Selector bar on top of every component page */}
-              <div className="mb-6 p-3 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl flex items-center justify-between gap-3 flex-wrap shadow-lg">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-foreground shrink-0">
-                    Wariant Wyglądu
-                  </span>
+              {/* Per-page variant bar — dynamic options per component */}
+              {PAGE_VARIANTS[active] && (
+                <div className="mb-6 p-3 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl flex items-center gap-3 flex-wrap shadow-lg">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+                      {VARIANT_BAR_LABEL[active] ?? 'Wariant'}
+                    </span>
+                  </div>
+                  <div className="flex gap-1 items-center flex-wrap">
+                    {PAGE_VARIANTS[active]!.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setComponentVariantFilter(s.id)}
+                        className={cn(
+                          'text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all',
+                          componentVariantFilter === s.id
+                            ? 'border-primary bg-primary/20 text-primary shadow-md scale-[1.02]'
+                            : 'border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/20'
+                        )}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-1 items-center flex-wrap">
-                  {[
-                    { id: 'all',           label: 'Wszystkie warianty' },
-                    { id: 'glassmorphism', label: '✨ glassmorphism' },
-                    { id: 'liquid-glass',  label: '💧 liquid-glass' },
-                    { id: 'nextbyte',      label: 'nextbyte' },
-                    { id: 'gradient',      label: 'gradient' },
-                    { id: 'outline',       label: 'outline' },
-                    { id: 'ghost',         label: 'ghost' },
-                    { id: 'secondary',     label: 'secondary' },
-                    { id: 'destructive',   label: 'destructive' },
-                    { id: 'default',       label: 'default' },
-                  ].map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => setComponentVariantFilter(s.id as any)}
-                      className={cn(
-                        'text-[10px] font-bold px-2 py-1 rounded-lg border transition-all shadow-sm',
-                        componentVariantFilter === s.id
-                          ? 'border-primary bg-primary/20 text-primary shadow-md scale-[1.02]'
-                          : 'border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/20'
-                      )}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
               {renderPage()}
             </div>
           )}
@@ -914,28 +1033,50 @@ export default function App() {
           <PageHeader name="Select" pkg="core" status="new"
             description="Lista wyboru oparta na Radix UI Select. Obsługuje grupy, separatory, etykiety i cztery warianty wizualne triggera." />
           <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoSelectSz} onChange={setDemoSelectSz} />
+          </DemoControls>
           <Preview glass={glass} tight>
-            <div className="flex flex-wrap gap-6 items-start justify-center">
-               {(['nextbyte', 'glassmorphism', 'liquid-glass', 'gradient', 'outline', 'ghost', 'destructive', 'secondary', 'default'] as const)
-                .filter(v => componentVariantFilter === 'all' || componentVariantFilter === v)
-                .map(v => (
-                  <div key={v} className="flex flex-col items-center gap-1.5 w-40">
-                    <Select>
-                      <SelectTrigger variant={v} size="default"><SelectValue placeholder={`${v}`} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Opcje</SelectLabel>
-                          <SelectItem value="a">Opcja A</SelectItem>
-                          <SelectItem value="b">Opcja B</SelectItem>
-                          <SelectItem value="c">Opcja C</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>
-                  </div>
-                ))}
+            <div className="flex justify-center">
+              <div className="w-56">
+                <Select>
+                  <SelectTrigger variant={componentVariantFilter as any} size={demoSelectSz}>
+                    <SelectValue placeholder={`variant="${componentVariantFilter}"`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Kategoria A</SelectLabel>
+                      <SelectItem value="a">Opcja Alpha</SelectItem>
+                      <SelectItem value="b">Opcja Beta</SelectItem>
+                      <SelectSeparator />
+                      <SelectLabel>Kategoria B</SelectLabel>
+                      <SelectItem value="c">Opcja Gamma</SelectItem>
+                      <SelectItem value="d">Opcja Delta</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie warianty</SectionLabel>
+            <Preview glass={false} tight>
+              <div className="flex flex-wrap gap-3 items-start justify-center">
+                {(['default','ghost','glass','outline'] as const).map(v => (
+                  <div key={v} className="flex flex-col items-center gap-1.5 w-36">
+                    <Select>
+                      <SelectTrigger variant={v} size="sm"><SelectValue placeholder={v} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="a">Opcja A</SelectItem>
+                        <SelectItem value="b">Opcja B</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-[9px] font-mono text-muted-foreground/50">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="select-import" copied={copied} onCopy={copy}
               code={`import {\n  Select, SelectTrigger, SelectValue,\n  SelectContent, SelectItem,\n  SelectGroup, SelectLabel, SelectSeparator\n} from '@nextbyte/core';`} />
@@ -958,38 +1099,47 @@ export default function App() {
         <>
           <PageHeader name="Avatar" pkg="core" status="new"
             description="Awatar użytkownika z inicjałami jako fallback, wskaźnikami statusu i grupowaniem. Obsługuje kółko i kwadrat." />
-          <SectionLabel>Rozmiary i statusy</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Kształt" options={['circle','square'] as const} value={demoAvatarShape} onChange={setDemoAvatarShape} />
+            <VariantBar label="Status" options={['online','offline','busy','away'] as const} value={demoAvatarStatus} onChange={setDemoAvatarStatus} />
+          </DemoControls>
           <Preview glass={glass} tight>
             <div className="flex flex-col gap-6 items-center">
-              <div className="flex items-end gap-4">
-                {(['xs','sm','default','lg','xl','2xl'] as const).map(s => (
-                  <div key={s} className="flex flex-col items-center gap-1.5">
-                    <Avatar fallback="Artur Bącik" size={s} status="online" glass={glass} />
-                    <span className="text-[9px] font-mono text-muted-foreground/60">{s}</span>
-                  </div>
-                ))}
+              <Avatar fallback="Artur Bącik" size={componentVariantFilter as any} shape={demoAvatarShape} status={demoAvatarStatus} glass={glass} />
+              <div className="text-[10px] font-mono text-muted-foreground/50">
+                size="{componentVariantFilter}" shape="{demoAvatarShape}" status="{demoAvatarStatus}"
               </div>
-              <Separator className="w-full" />
-              <div className="flex items-center gap-4">
-                {(['online','busy','away','offline'] as const).map(st => (
-                  <div key={st} className="flex flex-col items-center gap-1.5">
-                    <Avatar fallback="NB" status={st} glass={glass} />
-                    <span className="text-[9px] font-mono text-muted-foreground/60">{st}</span>
-                  </div>
-                ))}
-                <Separator orientation="vertical" className="h-10" />
-                <div className="flex flex-col items-center gap-1.5">
-                  <Avatar fallback="NB" shape="square" status="online" glass={glass} />
-                  <span className="text-[9px] font-mono text-muted-foreground/60">square</span>
-                </div>
-              </div>
-              <Separator className="w-full" />
-              <AvatarGroup size="default" max={3} avatars={[
-                { fallback:'Anna Kowalska' }, { fallback:'Piotr Nowak' },
-                { fallback:'Maria Wójcik' }, { fallback:'Kasia Wiśniewska' }
-              ]} />
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Rozmiary i statusy</SectionLabel>
+            <Preview glass={false} tight>
+              <div className="flex flex-col gap-5 items-center">
+                <div className="flex items-end gap-4">
+                  {(['xs','sm','default','lg','xl','2xl'] as const).map(s => (
+                    <div key={s} className="flex flex-col items-center gap-1.5">
+                      <Avatar fallback="NB" size={s} status="online" />
+                      <span className="text-[9px] font-mono text-muted-foreground/60">{s}</span>
+                    </div>
+                  ))}
+                </div>
+                <Separator className="w-full max-w-sm" />
+                <div className="flex items-center gap-4">
+                  {(['online','busy','away','offline'] as const).map(st => (
+                    <div key={st} className="flex flex-col items-center gap-1.5">
+                      <Avatar fallback="NB" status={st} />
+                      <span className="text-[9px] font-mono text-muted-foreground/60">{st}</span>
+                    </div>
+                  ))}
+                </div>
+                <AvatarGroup size="default" max={3} avatars={[
+                  { fallback:'Anna Kowalska' }, { fallback:'Piotr Nowak' },
+                  { fallback:'Maria Wójcik' }, { fallback:'Kasia Wiśniewska' }
+                ]} />
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="avatar-import" copied={copied} onCopy={copy}
               code={`import { Avatar, AvatarGroup } from '@nextbyte/core';`} />
@@ -1016,23 +1166,27 @@ export default function App() {
         <>
           <PageHeader name="Separator" pkg="core" status="stable"
             description="Linia podziału pozioma lub pionowa w sześciu wariantach. Obsługuje etykietę wyśrodkowaną." />
-          <SectionLabel>Warianty</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
           <Preview glass={false}>
-            <div className="flex flex-col gap-5 max-w-sm mx-auto">
-              {(['default','primary','muted','dashed','gradient','fade'] as const).map(v => (
-                <div key={v} className="flex flex-col gap-1.5">
-                  <Separator variant={v} label={<Badge variant="outline" size="sm">{v}</Badge>} />
-                </div>
-              ))}
+            <div className="flex flex-col gap-6 max-w-sm mx-auto">
+              <Separator variant={componentVariantFilter as any} label={<Badge variant="outline" size="sm">{componentVariantFilter}</Badge>} />
               <div className="flex items-center gap-4 h-10">
-                <span className="text-xs text-muted-foreground">Pionowy</span>
-                <Separator orientation="vertical" variant="primary" />
-                <span className="text-xs text-muted-foreground">separator</span>
-                <Separator orientation="vertical" />
-                <span className="text-xs text-muted-foreground">koniec</span>
+                <span className="text-xs text-muted-foreground">Z etykietą</span>
+                <Separator orientation="vertical" variant={componentVariantFilter as any} />
+                <span className="text-xs text-muted-foreground">pionowy</span>
               </div>
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie warianty</SectionLabel>
+            <Preview glass={false}>
+              <div className="flex flex-col gap-4 max-w-sm mx-auto">
+                {(['default','primary','muted','dashed','gradient','fade'] as const).map(v => (
+                  <Separator key={v} variant={v} label={<span className="text-[9px] font-mono text-muted-foreground/60">{v}</span>} />
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="sep-import" copied={copied} onCopy={copy}
               code={`import { Separator } from '@nextbyte/core';`} />
@@ -1057,25 +1211,19 @@ export default function App() {
             <div className="flex flex-col gap-6 max-w-sm mx-auto">
               <div className="space-y-2">
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-3">Linie</p>
-                <Skeleton variant="shimmer" shape="line" className="h-4 w-3/4" />
-                <Skeleton variant="shimmer" shape="line" className="h-3 w-1/2" />
-                <Skeleton variant="shimmer" shape="line" className="h-3 w-5/6" />
+                <Skeleton variant={componentVariantFilter as any} shape="line" className="h-4 w-3/4" />
+                <Skeleton variant={componentVariantFilter as any} shape="line" className="h-3 w-1/2" />
+                <Skeleton variant={componentVariantFilter as any} shape="line" className="h-3 w-5/6" />
               </div>
               <Separator />
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-3">Blok tekstowy</p>
-                <SkeletonText lines={3} lastLineWidth="40%" variant="shimmer" />
+                <SkeletonText lines={3} lastLineWidth="40%" variant={componentVariantFilter as any} />
               </div>
               <Separator />
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-3">Kafelek</p>
-                  <SkeletonTile variant="shimmer" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-3">Default</p>
-                  <SkeletonTile variant="default" />
-                </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-3">Kafelek</p>
+                <SkeletonTile variant={componentVariantFilter as any} />
               </div>
             </div>
           </Preview>
@@ -1100,20 +1248,17 @@ export default function App() {
           <SectionLabel>Triggeruj powiadomienia</SectionLabel>
           <Preview glass={glass} tight>
             <div className="flex flex-col gap-3 items-center">
-              <div className="flex flex-wrap gap-3 justify-center">
-                <Button variant="outline" size="sm" onClick={() => toast({ title:'Informacja', description:'Operacja trwa...', variant:'default' })}>
-                  Default
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => toast({ title:'Sukces!', description:'Dane zostały zapisane.', variant:'success' })}>
-                  Success
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => toast({ title:'Uwaga', description:'Czas sesji wygasa.', variant:'warning' })}>
-                  Warning
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => toast({ title:'Błąd', description:'Połączenie przerwane.', variant:'destructive' })}>
-                  Destructive
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast({
+                  title: componentVariantFilter === 'default' ? 'Informacja' : componentVariantFilter === 'success' ? 'Sukces!' : componentVariantFilter === 'warning' ? 'Uwaga' : 'Błąd',
+                  description: componentVariantFilter === 'default' ? 'Operacja trwa...' : componentVariantFilter === 'success' ? 'Dane zostały zapisane.' : componentVariantFilter === 'warning' ? 'Czas sesji wygasa.' : 'Połączenie przerwane.',
+                  variant: componentVariantFilter as any,
+                })}
+              >
+                Pokaż toast — {componentVariantFilter}
+              </Button>
               {glass && (
                 <p className="text-[10px] text-primary/70 font-medium">
                   ✦ Glass aktywny — włącz w topbarze aby zobaczyć efekt na toastach
@@ -1151,21 +1296,25 @@ export default function App() {
         <>
           <PageHeader name="MetricBar" pkg="core" status="new"
             description="Blokowy wskaźnik wartości do wizualizacji metryk modeli AI, zasobów systemowych lub wskaźników KPI." />
-          <SectionLabel>Kolory i rozmiary</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoMetricSize} onChange={setDemoMetricSize} />
+          </DemoControls>
           <Preview glass={false}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-lg mx-auto">
-              <div className="flex flex-col gap-3">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Warianty kolorów</p>
-                <MetricBar label="Primary"     value={7} color="primary"     showValue />
-                <MetricBar label="Success"     value={8} color="success"     showValue />
-                <MetricBar label="Warning"     value={4} color="warning"     showValue />
-                <MetricBar label="Destructive" value={2} color="destructive" showValue />
-              </div>
-              <div className="flex flex-col gap-3">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Rozmiary</p>
-                <MetricBar label="Small (sm)"    value={6} size="sm"      color="success" />
-                <MetricBar label="Default"       value={6} size="default" color="success" />
-                <MetricBar label="Large (lg)"    value={6} size="lg"      color="success" />
+            <div className="flex flex-col gap-4 max-w-sm mx-auto">
+              <MetricBar label="Metryka A" value={demoMetricVal} color={componentVariantFilter as any} size={demoMetricSize} showValue />
+              <MetricBar label="Metryka B" value={Math.max(1, demoMetricVal - 2)} color={componentVariantFilter as any} size={demoMetricSize} showValue />
+              <MetricBar label="Metryka C" value={Math.min(10, demoMetricVal + 1)} color={componentVariantFilter as any} size={demoMetricSize} showValue />
+              <div className="mt-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                  Wartość: <span className="text-foreground">{demoMetricVal}/10</span>
+                </p>
+                <input
+                  type="range" min={1} max={10} step={1}
+                  value={demoMetricVal}
+                  onChange={e => setDemoMetricVal(Number(e.target.value))}
+                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-primary"
+                />
               </div>
             </div>
           </Preview>
@@ -1272,26 +1421,41 @@ export default function App() {
         <>
           <PageHeader name="Tabs" pkg="layout" status="stable"
             description="Zakładki w czterech wariantach wizualnych i trzech rozmiarach. Oparty na Radix UI Tabs." />
-          <SectionLabel>Warianty</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoTabsSz} onChange={setDemoTabsSz} />
+          </DemoControls>
           <Preview glass={glass}>
-            <div className="flex flex-col gap-6">
-              {(['underline','pills','card','glass'] as const).map(v => (
-                <div key={v}>
-                  <p className="text-[10px] font-mono text-muted-foreground/60 mb-2">{v}</p>
-                  <Tabs variant={v} defaultValue="a">
-                    <TabsList>
-                      <TabsTrigger value="a"><LayoutDashboard className="h-3.5 w-3.5" /> Pulpit</TabsTrigger>
-                      <TabsTrigger value="b">Analityka</TabsTrigger>
-                      <TabsTrigger value="c">Ustawienia</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="a"><div className="text-xs text-muted-foreground p-2">Zawartość zakładki Pulpit</div></TabsContent>
-                    <TabsContent value="b"><div className="text-xs text-muted-foreground p-2">Zawartość zakładki Analityka</div></TabsContent>
-                    <TabsContent value="c"><div className="text-xs text-muted-foreground p-2">Zawartość zakładki Ustawienia</div></TabsContent>
-                  </Tabs>
-                </div>
-              ))}
-            </div>
+            <Tabs variant={componentVariantFilter as any} size={demoTabsSz} defaultValue="a">
+              <TabsList>
+                <TabsTrigger value="a"><LayoutDashboard className="h-3.5 w-3.5" /> Pulpit</TabsTrigger>
+                <TabsTrigger value="b">Analityka</TabsTrigger>
+                <TabsTrigger value="c">Ustawienia</TabsTrigger>
+              </TabsList>
+              <TabsContent value="a"><div className="text-xs text-muted-foreground p-2">Zawartość zakładki Pulpit</div></TabsContent>
+              <TabsContent value="b"><div className="text-xs text-muted-foreground p-2">Zawartość zakładki Analityka</div></TabsContent>
+              <TabsContent value="c"><div className="text-xs text-muted-foreground p-2">Zawartość zakładki Ustawienia</div></TabsContent>
+            </Tabs>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie warianty</SectionLabel>
+            <Preview glass={false}>
+              <div className="flex flex-col gap-5">
+                {(['underline','pills','card','glass'] as const).map(v => (
+                  <div key={v}>
+                    <p className="text-[9px] font-mono text-muted-foreground/50 mb-2 uppercase tracking-wider">{v}</p>
+                    <Tabs variant={v} size="sm" defaultValue="a">
+                      <TabsList>
+                        <TabsTrigger value="a">Pulpit</TabsTrigger>
+                        <TabsTrigger value="b">Analityka</TabsTrigger>
+                        <TabsTrigger value="c">Ustawienia</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="tabs-import" copied={copied} onCopy={copy}
               code={`import { Tabs, TabsList, TabsTrigger, TabsContent } from '@nextbyte/layout';`} />
@@ -1455,8 +1619,11 @@ export default function App() {
           <PageHeader name="Table" pkg="layout" status="stable"
             description="Tabela danych z nagłówkami sortowania, zaznaczeniem wierszy, trzema wariantami wizualnymi i rozmiarami." />
           <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoTableSz} onChange={setDemoTableSz} />
+          </DemoControls>
           <Preview glass={glass} tight>
-            <Table variant="default" size="sm">
+            <Table variant={componentVariantFilter as any} size={demoTableSz}>
               <TableHeader>
                 <TableRow>
                   <TableHead sortable sortDirection="asc">Komponent</TableHead>
@@ -1500,21 +1667,42 @@ export default function App() {
         <>
           <PageHeader name="Sparkline" pkg="analytics" status="stable"
             description="Mini-wykres SVG z wygładzaniem krzywa Béziera i wypełnieniem. Trzy typy trendu zmieniają paletę kolorów." />
-          <SectionLabel>Trendy</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <ToggleCtrl label="Smooth" value={demoSparkSmooth} onChange={setDemoSparkSmooth} />
+            <ToggleCtrl label="Fill" value={demoSparkFill} onChange={setDemoSparkFill} />
+          </DemoControls>
           <Preview glass={false} tight>
-            <div className="flex flex-wrap gap-8 items-center justify-center">
-              {([
-                { data:[20,25,18,30,28,38,42,50,55,62], trend:'positive' as const, label:'Wzrost' },
-                { data:[80,72,68,74,60,55,48,42,38,20], trend:'negative' as const, label:'Spadek' },
-                { data:[40,42,40,44,42,43,41,42,40],    trend:'neutral'  as const, label:'Stabilny' },
-              ]).map(({ data, trend, label }) => (
-                <div key={label} className="flex flex-col items-center gap-2">
-                  <Sparkline data={data} trend={trend} width={120} height={44} smooth showFill />
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
-                </div>
-              ))}
+            <div className="flex flex-col items-center gap-3">
+              <Sparkline
+                data={componentVariantFilter === 'positive' ? [20,25,18,30,28,38,42,50,55,62] : componentVariantFilter === 'negative' ? [80,72,68,74,60,55,48,42,38,20] : [40,42,40,44,42,43,41,42,40]}
+                trend={componentVariantFilter as any}
+                width={200} height={60}
+                smooth={demoSparkSmooth}
+                showFill={demoSparkFill}
+              />
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {demoSparkTrend === 'positive' ? 'Wzrost' : demoSparkTrend === 'negative' ? 'Spadek' : 'Stabilny'}
+              </span>
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie trendy</SectionLabel>
+            <Preview glass={false} tight>
+              <div className="flex flex-wrap gap-8 items-center justify-center">
+                {([
+                  { data:[20,25,18,30,28,38,42,50,55,62], trend:'positive' as const, label:'Wzrost' },
+                  { data:[80,72,68,74,60,55,48,42,38,20], trend:'negative' as const, label:'Spadek' },
+                  { data:[40,42,40,44,42,43,41,42,40],    trend:'neutral'  as const, label:'Stabilny' },
+                ]).map(({ data, trend, label }) => (
+                  <div key={label} className="flex flex-col items-center gap-2">
+                    <Sparkline data={data} trend={trend} width={120} height={44} smooth showFill />
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="spark-import" copied={copied} onCopy={copy}
               code={`import { Sparkline } from '@nextbyte/analytics';`} />
@@ -1538,14 +1726,35 @@ export default function App() {
           <PageHeader name="StatCard" pkg="analytics" status="stable"
             description="Karta metryki z etykietą, wartością główną, trendem i mini-sparkline. Cztery warianty kolorystyczne." />
           <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Trend" options={['positive','negative','neutral'] as const} value={demoStatTrend} onChange={setDemoStatTrend} />
+          </DemoControls>
           <Preview glass={glass}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <StatCard label="Przychód" value="$48 295" description="+12.5% vs poprzedni tydzień" trend="positive" trendValue="+12.5%" sparklineData={[40,42,41,45,48,50,55]} icon={<BarChart3 className="h-4 w-4" />} variant="primary" className={glass ? 'nb-glass' : ''} />
-              <StatCard label="Saldo" value="◈ 14 Byte" description="−10 ¢/dzień · na wyczerpaniu" trend="negative" trendValue="−10 ¢/dzień" sparklineData={[80,72,68,60,55,48,14]} icon={<Activity className="h-4 w-4" />} className={glass ? 'nb-glass' : ''} />
-              <StatCard label="Integracje" value="4 aktywne" description="+3 w tym tygodniu" trend="positive" trendValue="+3" sparklineData={[1,1,2,2,3,4,4]} icon={<Package className="h-4 w-4" />} variant="success" className={glass ? 'nb-glass' : ''} />
-              <StatCard label="Błędy" value="12" description="−5 vs wczoraj" trend="negative" trendValue="−5" sparklineData={[20,18,15,17,14,13,12]} icon={<Bell className="h-4 w-4" />} variant="destructive" className={glass ? 'nb-glass' : ''} />
+            <div className="max-w-xs mx-auto">
+              <StatCard
+                label="Przychód"
+                value={demoStatTrend === 'positive' ? '$48 295' : demoStatTrend === 'negative' ? '$21 340' : '$36 800'}
+                description={demoStatTrend === 'positive' ? '+12.5% vs poprzedni tydzień' : demoStatTrend === 'negative' ? '−8.2% vs poprzedni tydzień' : '±0.3% vs poprzedni tydzień'}
+                trend={demoStatTrend}
+                trendValue={demoStatTrend === 'positive' ? '+12.5%' : demoStatTrend === 'negative' ? '−8.2%' : '±0.3%'}
+                sparklineData={demoStatTrend === 'positive' ? [40,42,41,45,48,50,55] : demoStatTrend === 'negative' ? [55,50,48,45,40,35,32] : [42,43,42,44,43,42,43]}
+                icon={<BarChart3 className="h-4 w-4" />}
+                variant={componentVariantFilter as any}
+                className={glass ? 'nb-glass' : ''}
+              />
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie warianty</SectionLabel>
+            <Preview glass={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <StatCard label="Przychód" value="$48 295" description="+12.5% vs poprzedni tydzień" trend="positive" trendValue="+12.5%" sparklineData={[40,42,41,45,48,50,55]} icon={<BarChart3 className="h-4 w-4" />} variant="primary" />
+                <StatCard label="Saldo" value="◈ 14 Byte" description="−10 ¢/dzień · na wyczerpaniu" trend="negative" trendValue="−10 ¢/dzień" sparklineData={[80,72,68,60,55,48,14]} icon={<Activity className="h-4 w-4" />} />
+                <StatCard label="Integracje" value="4 aktywne" description="+3 w tym tygodniu" trend="positive" trendValue="+3" sparklineData={[1,1,2,2,3,4,4]} icon={<Package className="h-4 w-4" />} variant="success" />
+                <StatCard label="Błędy" value="12" description="−5 vs wczoraj" trend="negative" trendValue="−5" sparklineData={[20,18,15,17,14,13,12]} icon={<Bell className="h-4 w-4" />} variant="destructive" />
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="statcard-import" copied={copied} onCopy={copy}
               code={`import { StatCard } from '@nextbyte/analytics';`} />
@@ -1607,31 +1816,46 @@ export default function App() {
         <>
           <PageHeader name="AlertCard" pkg="analytics" status="beta"
             description="Karta powiadomienia systemowego z czterema priorytetami, paginacją i przyciskiem akcji." />
-          <SectionLabel>Warianty</SectionLabel>
-          <Preview glass={glass}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {([
-                { variant:'info'    as const, title:'Nowa wersja dostępna', desc:'NextByte v3.1 jest gotowy do aktualizacji.' },
-                { variant:'warning' as const, title:'Wygasające klucze API', desc:'Klucze wygasną za 48h. Zweryfikuj uprawnienia.' },
-                { variant:'success' as const, title:'Wdrożenie ukończone',  desc:'Wszystkie kontenery działają poprawnie.' },
-                { variant:'destructive' as const, title:'Błąd połączenia',  desc:'Host docelowy nie odpowiada od 5 minut.' },
-              ]).map(({ variant, title, desc }) => (
-                <AlertCard
-                  key={variant}
-                  variant={variant}
-                  title={title}
-                  description={desc}
-                  priority="high"
-                  className={glass ? 'nb-glass' : ''}
-                  action={{ label:'Działaj', onClick:() => toast({ title, variant:'default' }) }}
-                  currentPage={alertPage}
-                  totalPages={3}
-                  onPrev={() => setAlertPage(p=>Math.max(1,p-1))}
-                  onNext={() => setAlertPage(p=>Math.min(3,p+1))}
-                />
-              ))}
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Priorytet" options={['low','medium','high','critical'] as const} value={demoAlertPriority} onChange={setDemoAlertPriority} />
+          </DemoControls>
+          <Preview glass={glass} tight>
+            <div className="max-w-sm mx-auto">
+              <AlertCard
+                variant={componentVariantFilter as any}
+                title={componentVariantFilter === 'info' ? 'Nowa wersja dostępna' : componentVariantFilter === 'warning' ? 'Wygasające klucze API' : componentVariantFilter === 'success' ? 'Wdrożenie ukończone' : 'Błąd połączenia'}
+                description={componentVariantFilter === 'info' ? 'NextByte v3.1 jest gotowy do aktualizacji.' : componentVariantFilter === 'warning' ? 'Klucze wygasną za 48h. Zweryfikuj uprawnienia.' : componentVariantFilter === 'success' ? 'Wszystkie kontenery działają poprawnie.' : 'Host docelowy nie odpowiada od 5 minut.'}
+                priority={demoAlertPriority}
+                className={glass ? 'nb-glass' : ''}
+                action={{ label:'Działaj', onClick:() => toast({ title:'AlertCard', description:`${componentVariantFilter} · ${demoAlertPriority}` }) }}
+                currentPage={alertPage}
+                totalPages={3}
+                onPrev={() => setAlertPage(p=>Math.max(1,p-1))}
+                onNext={() => setAlertPage(p=>Math.min(3,p+1))}
+              />
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie warianty</SectionLabel>
+            <Preview glass={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {([
+                  { variant:'info'        as const, title:'Nowa wersja dostępna', desc:'NextByte v3.1 jest gotowy do aktualizacji.' },
+                  { variant:'warning'     as const, title:'Wygasające klucze API', desc:'Klucze wygasną za 48h. Zweryfikuj uprawnienia.' },
+                  { variant:'success'     as const, title:'Wdrożenie ukończone',  desc:'Wszystkie kontenery działają poprawnie.' },
+                  { variant:'destructive' as const, title:'Błąd połączenia',      desc:'Host docelowy nie odpowiada od 5 minut.' },
+                ]).map(({ variant, title, desc }) => (
+                  <AlertCard key={variant} variant={variant} title={title} description={desc} priority="high"
+                    action={{ label:'Działaj', onClick:() => toast({ title, variant:'default' }) }}
+                    currentPage={alertPage} totalPages={3}
+                    onPrev={() => setAlertPage(p=>Math.max(1,p-1))}
+                    onNext={() => setAlertPage(p=>Math.min(3,p+1))}
+                  />
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="alert-import" copied={copied} onCopy={copy}
               code={`import { AlertCard } from '@nextbyte/analytics';`} />
@@ -1655,30 +1879,45 @@ export default function App() {
         <>
           <PageHeader name="Tile" pkg="analytics" status="stable"
             description="Uniwersalny kafelek z trzema intencjami, trzema elewacjami i opcją hover-lift. Złożony z pod-komponentów." />
-          <SectionLabel>Intencje</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Elewacja" options={['plaska','uniesiona','wyzej'] as const} value={demoTileElev} onChange={setDemoTileElev} />
+            <ToggleCtrl label="Interaktywny" value={demoTileInter} onChange={setDemoTileInter} />
+          </DemoControls>
           <Preview glass={glass}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {([
-                { intent:'neutralna' as const, pill:'neutralna' },
-                { intent:'akcent'    as const, pill:'akcent'    },
-                { intent:'krytyczna' as const, pill:'krytyczna' },
-              ]).map(({ intent, pill }) => (
-                <Tile key={intent} intencja={intent} elewacja="uniesiona" interaktywny className={glass ? 'nb-glass' : ''}>
-                  <TileHeader
-                    ikona={LayoutDashboard}
-                    tytul="Karta systemu"
-                    intencja={intent}
-                    poPrawej={<TilePill intencja={intent}>{pill}</TilePill>}
-                  />
-                  <TileRow ikona={Users} poPrawej="stable">Moduł główny</TileRow>
-                  <TileFooter>
-                    <TileAction rodzaj="glowna">Wyświetl</TileAction>
-                    <TileAction rodzaj="usun" ikona={Trash2} samaIkona aria-label="Usuń" />
-                  </TileFooter>
-                </Tile>
-              ))}
+            <div className="max-w-xs mx-auto">
+              <Tile intencja={componentVariantFilter as any} elewacja={demoTileElev} interaktywny={demoTileInter} className={glass ? 'nb-glass' : ''}>
+                <TileHeader
+                  ikona={LayoutDashboard}
+                  tytul="Karta systemu"
+                  intencja={componentVariantFilter as any}
+                  poPrawej={<TilePill intencja={componentVariantFilter as any}>{componentVariantFilter}</TilePill>}
+                />
+                <TileRow ikona={Users} poPrawej="stable">Moduł główny</TileRow>
+                <TileFooter>
+                  <TileAction rodzaj="glowna">Wyświetl</TileAction>
+                  <TileAction rodzaj="usun" ikona={Trash2} samaIkona aria-label="Usuń" />
+                </TileFooter>
+              </Tile>
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie intencje</SectionLabel>
+            <Preview glass={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(['neutralna','akcent','krytyczna'] as const).map(intent => (
+                  <Tile key={intent} intencja={intent} elewacja="uniesiona" interaktywny>
+                    <TileHeader ikona={LayoutDashboard} tytul="Karta systemu" intencja={intent} poPrawej={<TilePill intencja={intent}>{intent}</TilePill>} />
+                    <TileRow ikona={Users} poPrawej="stable">Moduł główny</TileRow>
+                    <TileFooter>
+                      <TileAction rodzaj="glowna">Wyświetl</TileAction>
+                      <TileAction rodzaj="usun" ikona={Trash2} samaIkona aria-label="Usuń" />
+                    </TileFooter>
+                  </Tile>
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="tile-import" copied={copied} onCopy={copy}
               code={`import {\n  Tile, TileHeader, TileRow, TilePill,\n  TileAction, TileFooter\n} from '@nextbyte/analytics';`} />
@@ -1698,23 +1937,32 @@ export default function App() {
         <>
           <PageHeader name="CommandSearch" pkg="patterns" status="stable"
             description="Pasek szybkiego wyszukiwania ⌘K w trzech rozmiarach. Wywołuje callback onOpen — integracja z własnym modal search." />
-          <SectionLabel>Rozmiary</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
           <Preview glass={glass}>
-            <div className="flex flex-col gap-4 max-w-sm mx-auto">
-              {(['sm','default','lg'] as const).map(s => (
-                <div key={s} className="flex flex-col gap-1.5">
-                  <span className="text-[9px] font-mono text-muted-foreground/60">{s}</span>
-                  <CommandSearch
-                    size={s}
-                    placeholder={`Wyszukaj... (${s})`}
-                    shortcut="⌘K"
-                    className={glass ? 'nb-glass' : ''}
-                    onOpen={() => toast({ title:'CommandSearch', description:`Otwarto rozmiar ${s}.` })}
-                  />
-                </div>
-              ))}
+            <div className="max-w-sm mx-auto">
+              <CommandSearch
+                size={componentVariantFilter as any}
+                placeholder={`Wyszukaj... (${componentVariantFilter})`}
+                shortcut="⌘K"
+                className={glass ? 'nb-glass' : ''}
+                onOpen={() => toast({ title:'CommandSearch', description:`Otwarto rozmiar ${componentVariantFilter}.` })}
+              />
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie rozmiary</SectionLabel>
+            <Preview glass={false}>
+              <div className="flex flex-col gap-4 max-w-sm mx-auto">
+                {(['sm','default','lg'] as const).map(s => (
+                  <div key={s} className="flex flex-col gap-1.5">
+                    <span className="text-[9px] font-mono text-muted-foreground/60">{s}</span>
+                    <CommandSearch size={s} placeholder={`Wyszukaj... (${s})`} shortcut="⌘K"
+                      onOpen={() => toast({ title:'CommandSearch', description:`Rozmiar ${s}.` })} />
+                  </div>
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="cs-import" copied={copied} onCopy={copy}
               code={`import { CommandSearch } from '@nextbyte/patterns';`} />
@@ -2082,6 +2330,24 @@ export default function App() {
         <>
           <PageHeader name="Tooltip" pkg="core" status="new"
             description="Pływający hint zakotwiczony do triggera. Dwa warianty wizualne, cztery pozycje, auto-portal. Wymaga TooltipProvider raz w drzewie." />
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Wariant" options={['default','glass'] as const} value={demoTooltipV} onChange={setDemoTooltipV} />
+          </DemoControls>
+          <Preview glass={glass} tight>
+            <TooltipProvider>
+              <div className="flex justify-center py-8">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant={demoTooltipV === 'glass' ? 'glass' : 'outline'} size="sm">Najedź na mnie</Button>
+                  </TooltipTrigger>
+                  <TooltipContent side={componentVariantFilter as any} variant={demoTooltipV}>
+                    Tooltip · {componentVariantFilter} · {demoTooltipV}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+          </Preview>
           <SectionLabel>Pozycje i warianty</SectionLabel>
           <Preview glass={glass}>
             <TooltipProvider>
@@ -2262,41 +2528,53 @@ export default function App() {
         <>
           <PageHeader name="Accordion" pkg="layout" status="new"
             description="Zwijane sekcje w czterech wariantach wizualnych. Obsługuje single i multiple. Oparty na Radix UI Accordion." />
-          <SectionLabel>Warianty</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
           <Preview glass={glass}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {([
-                { variant:'default'  as const, label:'default' },
-                { variant:'bordered' as const, label:'bordered' },
-                { variant:'ghost'    as const, label:'ghost' },
-                { variant:'glass'    as const, label:'glass' },
-              ]).map(({ variant, label }) => (
-                <div key={variant}>
-                  <p className="text-[9px] font-mono text-muted-foreground/50 mb-2 uppercase tracking-wider">{label}</p>
-                  <Accordion type="single" collapsible variant={variant} defaultValue="item-1">
-                    <AccordionItem value="item-1">
-                      <AccordionTrigger>Czym jest NextByte?</AccordionTrigger>
-                      <AccordionContent>
-                        NextByte to platforma AI i system komponentów dla nowoczesnych aplikacji SaaS.
-                      </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-2">
-                      <AccordionTrigger>Jak zacząć?</AccordionTrigger>
-                      <AccordionContent>
-                        Zainstaluj paczkę i zaimportuj komponenty z odpowiedniego pakietu.
-                      </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-3">
-                      <AccordionTrigger>Czy obsługuje TypeScript?</AccordionTrigger>
-                      <AccordionContent>
-                        Tak — pełne typy i eksporty dla każdego komponentu.
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </div>
-              ))}
+            <div className="max-w-sm mx-auto">
+              <Accordion type="single" collapsible variant={componentVariantFilter as any} defaultValue="item-1">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>Czym jest NextByte?</AccordionTrigger>
+                  <AccordionContent>
+                    NextByte to platforma AI i system komponentów dla nowoczesnych aplikacji SaaS.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger>Jak zacząć?</AccordionTrigger>
+                  <AccordionContent>
+                    Zainstaluj paczkę i zaimportuj komponenty z odpowiedniego pakietu.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3">
+                  <AccordionTrigger>Czy obsługuje TypeScript?</AccordionTrigger>
+                  <AccordionContent>
+                    Tak — pełne typy i eksporty dla każdego komponentu.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie warianty</SectionLabel>
+            <Preview glass={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {(['default','bordered','ghost','glass'] as const).map(v => (
+                  <div key={v}>
+                    <p className="text-[9px] font-mono text-muted-foreground/50 mb-2 uppercase tracking-wider">{v}</p>
+                    <Accordion type="single" collapsible variant={v} defaultValue="q1">
+                      <AccordionItem value="q1">
+                        <AccordionTrigger>Pytanie pierwsze?</AccordionTrigger>
+                        <AccordionContent>Odpowiedź na pierwsze pytanie.</AccordionContent>
+                      </AccordionItem>
+                      <AccordionItem value="q2">
+                        <AccordionTrigger>Pytanie drugie?</AccordionTrigger>
+                        <AccordionContent>Odpowiedź na drugie pytanie.</AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="acc-import" copied={copied} onCopy={copy}
               code={`import {\n  Accordion, AccordionItem,\n  AccordionTrigger, AccordionContent\n} from '@nextbyte/layout';`} />
@@ -2432,21 +2710,16 @@ export default function App() {
         <>
           <PageHeader name="Textarea" pkg="core" status="new"
             description="Wieloliniowe pole tekstowe w pięciu wariantach wizualnych. Obsługuje auto-resize i trzy rozmiary." />
-          <SectionLabel>Warianty</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoTextareaSz} onChange={setDemoTextareaSz} />
+          </DemoControls>
           <Preview glass={glass}>
             <div className="grid grid-cols-1 gap-4 max-w-sm mx-auto">
-              {([
-                { variant:'default' as const, placeholder:'Wariant default...' },
-                { variant:'ghost'   as const, placeholder:'Wariant ghost...' },
-                { variant:'glass'   as const, placeholder:'Wariant glass...' },
-                { variant:'error'   as const, placeholder:'Wariant error...' },
-                { variant:'success' as const, placeholder:'Wariant success...' },
-              ]).map(({ variant, placeholder }) => (
-                <div key={variant} className="flex flex-col gap-1">
-                  <span className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">{variant}</span>
-                  <Textarea variant={variant} placeholder={placeholder} rows={2} />
-                </div>
-              ))}
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">{componentVariantFilter} · {demoTextareaSz}</span>
+                <Textarea variant={componentVariantFilter as any} size={demoTextareaSz} placeholder={`Wariant ${componentVariantFilter}...`} rows={4} />
+              </div>
             </div>
           </Preview>
           <div className="mt-6">
@@ -2621,42 +2894,31 @@ export default function App() {
         <>
           <PageHeader name="EmptyState" pkg="core" status="new"
             description="Placeholder dla pustych list, wyników wyszukiwania i błędów. Ikona, tytuł, opis i slot na CTA. Trzy rozmiary." />
-          <SectionLabel>Przykłady</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
           <Preview glass={glass}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-border/60 bg-card/30">
-                <EmptyState
-                  icon={<Inbox className="h-full w-full" />}
-                  title="Brak powiadomień"
-                  description="Gdy pojawią się nowe powiadomienia, znajdziesz je tutaj."
-                />
-              </div>
-              <div className="rounded-xl border border-border/60 bg-card/30">
-                <EmptyState
-                  icon={<Search className="h-full w-full" />}
-                  title="Brak wyników"
-                  description={`Nie znaleziono niczego dla Twojego zapytania.`}
-                  action={<Button variant="outline" size="sm">Wyczyść filtr</Button>}
-                />
-              </div>
-              <div className="rounded-xl border border-border/60 bg-card/30">
-                <EmptyState
-                  icon={<FolderOpen className="h-full w-full" />}
-                  title="Brak projektów"
-                  description="Utwórz swój pierwszy projekt, aby zacząć pracę."
-                  action={<Button size="sm"><PlusCircle className="h-3.5 w-3.5 mr-1.5" />Nowy projekt</Button>}
-                />
-              </div>
-              <div className="rounded-xl border border-border/60 bg-card/30">
-                <EmptyState
-                  size="sm"
-                  icon={<Activity className="h-full w-full" />}
-                  title="Brak aktywności"
-                  description="Historia aktywności jest pusta."
-                />
-              </div>
+            <div className="rounded-xl border border-border/60 bg-card/30 max-w-sm mx-auto">
+              <EmptyState
+                size={componentVariantFilter as any}
+                icon={<FolderOpen className="h-full w-full" />}
+                title="Brak projektów"
+                description="Utwórz swój pierwszy projekt, aby zacząć pracę."
+                action={<Button size="sm"><PlusCircle className="h-3.5 w-3.5 mr-1.5" />Nowy projekt</Button>}
+              />
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Przykłady</SectionLabel>
+            <Preview glass={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-border/60 bg-card/30">
+                  <EmptyState icon={<Inbox className="h-full w-full" />} title="Brak powiadomień" description="Gdy pojawią się nowe powiadomienia, znajdziesz je tutaj." />
+                </div>
+                <div className="rounded-xl border border-border/60 bg-card/30">
+                  <EmptyState icon={<Search className="h-full w-full" />} title="Brak wyników" description="Nie znaleziono niczego dla Twojego zapytania." action={<Button variant="outline" size="sm">Wyczyść filtr</Button>} />
+                </div>
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="es-import" copied={copied} onCopy={copy}
               code={`import { EmptyState } from '@nextbyte/core';`} />
@@ -2804,27 +3066,33 @@ export default function App() {
         <>
           <PageHeader name="CountdownTimer" pkg="core" status="new"
             description="Odliczanie do daty docelowej w czterech wariantach wizualnych. Auto-aktualizacja co sekundę. Callback onEnd." />
-          <SectionLabel>Warianty</SectionLabel>
+          <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <ToggleCtrl label="Sekundy" value={demoCountdownSec} onChange={setDemoCountdownSec} />
+          </DemoControls>
           <Preview glass={glass}>
-            <div className="grid grid-cols-2 gap-8 max-w-md mx-auto">
-              <div className="flex flex-col gap-2">
-                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">default</p>
-                <CountdownTimer targetDate={DEMO_COUNTDOWN} label="Kończy się za" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">compact</p>
-                <CountdownTimer targetDate={DEMO_COUNTDOWN} variant="compact" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">badge</p>
-                <CountdownTimer targetDate={DEMO_COUNTDOWN} variant="badge" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">blocks</p>
-                <CountdownTimer targetDate={DEMO_COUNTDOWN} variant="blocks" showSeconds={false} />
-              </div>
+            <div className="flex justify-center">
+              <CountdownTimer
+                targetDate={DEMO_COUNTDOWN}
+                variant={componentVariantFilter as any}
+                showSeconds={demoCountdownSec}
+                label={componentVariantFilter === 'default' ? 'Kończy się za' : undefined}
+              />
             </div>
           </Preview>
+          <div className="mt-4">
+            <SectionLabel>Wszystkie warianty</SectionLabel>
+            <Preview glass={false}>
+              <div className="grid grid-cols-2 gap-8 max-w-md mx-auto">
+                {(['default','compact','badge','blocks'] as const).map(v => (
+                  <div key={v} className="flex flex-col gap-2">
+                    <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">{v}</p>
+                    <CountdownTimer targetDate={DEMO_COUNTDOWN} variant={v} showSeconds={v !== 'blocks'} label={v === 'default' ? 'Kończy się za' : undefined} />
+                  </div>
+                ))}
+              </div>
+            </Preview>
+          </div>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="cd-import" copied={copied} onCopy={copy}
               code={`import { CountdownTimer } from '@nextbyte/core';`} />
@@ -3330,6 +3598,9 @@ export default function App() {
           <PageHeader name="PricingCard" pkg="analytics" status="new"
             description="Karta cennika / subskrypcji z dyskontem, etykietami ograniczoności, odliczaniem i listą features." />
           <SectionLabel>Podgląd</SectionLabel>
+          <DemoControls>
+            <ToggleCtrl label="Glass" value={demoPricingGlass} onChange={setDemoPricingGlass} />
+          </DemoControls>
           <Preview glass={glass}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
               <PricingCard
@@ -3338,7 +3609,8 @@ export default function App() {
                 price={{ amount: 0, currency: 'PLN', period: 'miesiąc' }}
                 features={['Płacisz tylko za zużycie', 'Chat AI', 'Studio Zdjęć', 'Personalny Asystent', 'PromptEx']}
                 action={{ label: 'Twój aktualny plan', onClick: () => {} }}
-                glass={glass}
+                highlight={componentVariantFilter === '0'}
+                glass={demoPricingGlass}
               />
               <PricingCard
                 title="PREMIUM"
@@ -3348,7 +3620,8 @@ export default function App() {
                 originalPrice={119}
                 features={['495 Byte / miesiąc', 'Chat AI UNLIMITED', 'Kalendarz, Zadania, Notatki', 'Baza Danych', 'Szyfrowanie']}
                 action={{ label: 'Wybierz PREMIUM', onClick: () => toast({ title:'PREMIUM', description:'Kliknięto' }) }}
-                glass={glass}
+                highlight={componentVariantFilter === '1'}
+                glass={demoPricingGlass}
               />
               <PricingCard
                 title="ULTIMATE"
@@ -3357,8 +3630,8 @@ export default function App() {
                 price={{ amount: 349, currency: 'PLN', period: 'miesiąc' }}
                 features={['2450 Byte / miesiąc', 'Chat AI UNLIMITED', 'Kalendarz, Zadania, Notatki', 'Baza Danych', 'Szyfrowanie', 'Enhancer 2x']}
                 action={{ label: 'Wybierz ULTIMATE', onClick: () => toast({ title:'ULTIMATE', description:'Kliknięto' }) }}
-                highlight
-                glass={glass}
+                highlight={componentVariantFilter === '2'}
+                glass={demoPricingGlass}
               />
             </div>
           </Preview>
