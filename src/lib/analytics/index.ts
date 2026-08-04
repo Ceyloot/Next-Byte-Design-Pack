@@ -7,3 +7,4 @@ export * from './product-card';
 export * from './profile-card';
 export * from './pricing-card';
 export * from './folder-card';
+export * from './circular-stat';

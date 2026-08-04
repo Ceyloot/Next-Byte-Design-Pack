@@ -56,9 +56,11 @@ import {
   Tile, TileHeader, TileRow, TilePill, TileAction, TileFooter,
   ProductCard, ProfileCard, PricingCard,
   FolderCard, FolderGrid, FOLDER_COLORS,
+  CircularProgress, CircularStatCard, DonutStat, ConcentricRingsStat,
 } from '@/lib/analytics';
 
 import { LandingPreview } from '@/components/LandingPreview';
+import { NextbyteBrandHero } from '@/components/NextbyteBrandHero';
 
 import {
   TechGrid, PatternBackground, CommandSearch,
@@ -163,9 +165,10 @@ const CONTRACT_VARS = [
 
 const NAV = [
   {
-    id: 'preview', label: 'Preview', pkg: 'preview',
+    id: 'overview', label: 'Overview', pkg: 'nextbyte',
     items: [
-      { id: 'landing', name: '↗ Landing', status: 'new' as const },
+      { id: 'brand',   name: '✨ NextByte Hub', status: 'new' as const },
+      { id: 'landing', name: '↗ Landing Page', status: 'new' as const },
     ],
   },
   {
@@ -213,6 +216,7 @@ const NAV = [
     items: [
       { id: 'sparkline',    name: 'Sparkline',     status: 'stable' },
       { id: 'statcard',     name: 'StatCard',      status: 'stable' },
+      { id: 'circularstat', name: 'Statystyki Koliste', status: 'new' },
       { id: 'activityfeed', name: 'ActivityFeed',  status: 'stable' },
       { id: 'alertcard',    name: 'AlertCard',     status: 'beta'   },
       { id: 'tile',         name: 'Tile',          status: 'stable' },
@@ -284,6 +288,7 @@ const PAGE_VARIANTS: Partial<Record<string, PVItem[]>> = {
   emptystate:    [{ id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   countdown:     [{ id:'default', label:'default' }, { id:'compact', label:'compact' }, { id:'badge', label:'badge' }, { id:'blocks', label:'blocks' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   statcard:      [{ id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  circularstat:  [{ id:'liquid', label:'💧 liquid' }, { id:'glass', label:'✨ glass' }, { id:'neon', label:'⚡ neon' }, { id:'solid', label:'solid' }],
   tile:          [{ id:'neutralna', label:'neutralna' }, { id:'akcent', label:'akcent' }, { id:'krytyczna', label:'krytyczna' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   sparkline:     [{ id:'positive', label:'wzrost ↑' }, { id:'negative', label:'spadek ↓' }, { id:'neutral', label:'stabilny →' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   alertcard:     [{ id:'info', label:'info' }, { id:'warning', label:'warning' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
@@ -298,6 +303,7 @@ const VARIANT_BAR_LABEL: Partial<Record<string, string>> = {
   skeleton: 'Animacja', metricbar: 'Kolor', tooltip: 'Pozycja',
   textarea: 'Wariant', tabs: 'Wariant', table: 'Wariant', accordion: 'Wariant',
   emptystate: 'Rozmiar', countdown: 'Tryb', statcard: 'Wariant',
+  circularstat: 'Wariant wskaźnika',
   tile: 'Intencja', sparkline: 'Trend', alertcard: 'Wariant',
   commandsearch: 'Rozmiar', pricingcard: 'Wyróżnienie',
   toast: 'Wariant',
@@ -466,7 +472,7 @@ function Preview({ children, tight }: {
 
 /* ── Main App ─────────────────────────────────────────────── */
 export default function App() {
-  const [active, setActive]         = useState<NavId>('button');
+  const [active, setActive]         = useState<NavId>('brand');
   const [activeTheme, setActiveTheme] = useState<ThemeKey>(null);
   const [search, setSearch]         = useState('');
   const { styleMode: glassStyleMode, setStyleMode: setGlassStyleMode } = useUIStyle();
@@ -793,8 +799,10 @@ export default function App() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
-          {active === 'landing' ? renderPage() : (
-            <div className="max-w-3xl mx-auto px-8 py-8">
+          {active === 'landing' ? (
+            renderPage()
+          ) : (
+            <div className="max-w-5xl mx-auto px-6 py-8">
               {renderPage()}
             </div>
           )}
@@ -877,6 +885,61 @@ export default function App() {
     ) : null;
 
     switch (active) {
+
+      /* ── NEXTBYTE BRAND HUB ─────────────────────────────── */
+      case 'brand': return (
+        <div className="space-y-8">
+          <NextbyteBrandHero onExploreClick={() => setActive('circularstat')} />
+
+          <SectionLabel>Kluczowe Moduły Ekosystemu NextByte</SectionLabel>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-3xl border border-white/10 bg-card/40 backdrop-blur-xl flex flex-col justify-between hover:border-primary/40 transition-all shadow-xl">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl mb-4 text-cyan-400">
+                  💧
+                </div>
+                <h3 className="font-heading font-bold text-lg text-foreground">Technologia Liquid Glass</h3>
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  Dynamiczne zniekształcenia optyczne `feDisplacementMap`, aberracja pryzmatyczna RGB oraz płynne ugięcie światła pod krawędziami soczewek.
+                </p>
+              </div>
+              <Button variant="nextbyte" size="sm" className="mt-6 w-full font-bold" onClick={() => setActive('liquidglass')}>
+                Zobacz LiquidGlass →
+              </Button>
+            </div>
+
+            <div className="p-6 rounded-3xl border border-white/10 bg-card/40 backdrop-blur-xl flex flex-col justify-between hover:border-primary/40 transition-all shadow-xl">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-2xl mb-4 text-purple-400">
+                  📊
+                </div>
+                <h3 className="font-heading font-bold text-lg text-foreground">Statystyki Koliste & Gauges</h3>
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  Animowane wskaźniki kołowe, wykresy alokacji zasobów Donut oraz współśrodkowa telemetria w czasie rzeczywistym.
+                </p>
+              </div>
+              <Button variant="nextbyte" size="sm" className="mt-6 w-full font-bold" onClick={() => setActive('circularstat')}>
+                Zobacz Statystyki Koliste →
+              </Button>
+            </div>
+
+            <div className="p-6 rounded-3xl border border-white/10 bg-card/40 backdrop-blur-xl flex flex-col justify-between hover:border-primary/40 transition-all shadow-xl">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-2xl mb-4 text-emerald-400">
+                  🎨
+                </div>
+                <h3 className="font-heading font-bold text-lg text-foreground">Gablota Komponentów UI</h3>
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  Ponad 40 gotowych komponentów z pełną obsługą 3 trybów wizualnych: Liquid Glass, Glassmorphism oraz Standard.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="mt-6 w-full font-bold" onClick={() => setActive('button')}>
+                Przeglądaj Komponenty →
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
 
       /* ── LANDING PREVIEW ────────────────────────────────── */
       case 'landing': return <LandingPreview />;
@@ -3488,11 +3551,144 @@ export default function App() {
               { name: '.nb-glass-static',     type: 'CSS backdrop-filter blur (static position)', desc: 'Wariant do rozwijanych menu, popoverów i dialogów overlay.' },
             ]} />
           </div>
+        </>
+      );
 
-          <div className="mt-4 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
-            <p className="text-[11px] text-amber-400/80">
-              <strong>Wskazówka wydajnościowa:</strong> Komponent `LiquidGlass` generuje dynamiczne filtry SVG data URI. Do masowych list (np. 100 kart) zaleca się stosowanie klas `.nb-glass`, natomiast `LiquidGlass` idealnie sprawdza się w wyeksponowanych elementach Hero, Dockach i kartach akcji.
-            </p>
+      /* ── STATYSTYKI KOLISTE (CIRCULAR STATS & RADIAL GAUGES) ─ */
+      case 'circularstat': return (
+        <>
+          <PageHeader
+            name="Statystyki Koliste (Circular Statistics & Radial Gauges)"
+            pkg="analytics"
+            status="new"
+            description="Animowane wskaźniki kołowe, wykresy typu Donut oraz współśrodkowe pierścienie (Concentric Rings) w stylu NextByte & Liquid Glass."
+          />
+          {variantBar}
+
+          {/* Podgląd Interaktywny i Karty Gauges */}
+          <SectionLabel>Wirtualny Wskaźnik Kolisty i Karty KPI</SectionLabel>
+          <Preview glass={glass}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <CircularStatCard
+                title="Precyzja AI NextByte"
+                value={99.8}
+                unit="%"
+                badgeText="ULTRA"
+                description="Dokładność generowania oraz rozumowania modelu NextByte AI."
+                gradientFrom="#00f2fe"
+                gradientTo="#4facfe"
+                trend="positive"
+                trendValue="+4.2% w tym miesiącu"
+                variant={componentVariantFilter as any}
+                icon={<Sparkles className="w-5 h-5 text-cyan-400" />}
+              />
+
+              <CircularStatCard
+                title="Wydajność Klastera"
+                value={87}
+                unit="%"
+                badgeText="LIVE"
+                description="Obciążenie wątków obliczeniowych GPU."
+                gradientFrom="#a855f7"
+                gradientTo="#ec4899"
+                trend="positive"
+                trendValue="Stabilna praca"
+                variant={componentVariantFilter as any}
+                icon={<Cpu className="w-5 h-5 text-purple-400" />}
+              />
+
+              <CircularStatCard
+                title="Latencja Odpowiedzi"
+                value={14}
+                unit="ms"
+                badgeText="FAST"
+                description="Średni czas odpowiedzi API w regionie UE."
+                gradientFrom="#10b981"
+                gradientTo="#3b82f6"
+                trend="positive"
+                trendValue="-8ms szybsza"
+                variant={componentVariantFilter as any}
+                icon={<Zap className="w-5 h-5 text-emerald-400" />}
+              />
+            </div>
+          </Preview>
+
+          {/* Wykres Donut i Pierścienie Współśrodkowe */}
+          <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <SectionLabel>Wykres Donut (Podział Alokacji Zasobów)</SectionLabel>
+              <Preview glass={glass} tight>
+                <DonutStat
+                  title="Rozkład Wykorzystania Modelu AI"
+                  subtitle="Udział modeli NextByte i zewnętrznych w obecnym okresie"
+                  centerText="4.8M"
+                  centerSubtext="Zapytania"
+                  variant={componentVariantFilter as any}
+                  segments={[
+                    { id: 'nb-pro', label: 'NextByte Pro', value: 45, color: '#00f2fe' },
+                    { id: 'nb-ultra', label: 'NextByte Ultra', value: 30, color: '#a855f7' },
+                    { id: 'gpt-5', label: 'GPT-5 Engine', value: 15, color: '#10b981' },
+                    { id: 'claude', label: 'Claude Sonnet', value: 10, color: '#f59e0b' },
+                  ]}
+                />
+              </Preview>
+            </div>
+
+            <div>
+              <SectionLabel>Współśrodkowe Pierścienie (Multi-Gauge Telemetry)</SectionLabel>
+              <Preview glass={glass} tight>
+                <ConcentricRingsStat
+                  title="Telemetria Systemu w Czasie Rzeczywistym"
+                  subtitle="Jednoczesny podgląd obciążenia CPU, RAM, GPU i Przepustowości"
+                  variant={componentVariantFilter as any}
+                  rings={[
+                    { id: 'gpu', label: 'Użycie GPU', value: 92, color: '#00f2fe', icon: <Zap className="w-3.5 h-3.5" /> },
+                    { id: 'cpu', label: 'Procesor (CPU)', value: 68, color: '#a855f7', icon: <Cpu className="w-3.5 h-3.5" /> },
+                    { id: 'ram', label: 'Pamięć VRAM', value: 84, color: '#10b981', icon: <Activity className="w-3.5 h-3.5" /> },
+                    { id: 'net', label: 'Przepustowość', value: 45, color: '#f59e0b', icon: <Shield className="w-3.5 h-3.5" /> },
+                  ]}
+                />
+              </Preview>
+            </div>
+          </div>
+
+          {/* Samodzielne Rozmiary i Stylistyka CircularProgress */}
+          <div className="mt-10">
+            <SectionLabel>Wskaźniki CircularProgress — Różne Rozmiary</SectionLabel>
+            <Preview glass={glass}>
+              <div className="flex flex-wrap items-center justify-around gap-6 py-4">
+                <CircularProgress value={35} size={90} strokeWidth={8} label="Storage" gradientFrom="#f43f5e" gradientTo="#fb923c" />
+                <CircularProgress value={62} size={110} strokeWidth={10} label="Cache" gradientFrom="#10b981" gradientTo="#06b6d4" />
+                <CircularProgress value={88} size={130} strokeWidth={12} label="Security" gradientFrom="#a855f7" gradientTo="#6366f1" />
+                <CircularProgress value={96} size={150} strokeWidth={14} label="Uptime" gradientFrom="#00f2fe" gradientTo="#3b82f6" />
+              </div>
+            </Preview>
+          </div>
+
+          {/* Sekcja Importu i Props */}
+          <div className="mt-8">
+            <SectionLabel>Import</SectionLabel>
+            <CodeBlock id="circ-import" copied={copied} onCopy={copy}
+              code={`import { CircularProgress, CircularStatCard, DonutStat, ConcentricRingsStat } from '@nextbyte/analytics';`} />
+          </div>
+          <div className="mt-4">
+            <SectionLabel>Użycie — CircularStatCard</SectionLabel>
+            <CodeBlock id="circ-usage" copied={copied} onCopy={copy}
+              code={`<CircularStatCard\n  title="Precyzja AI"\n  value={99.8}\n  unit="%"\n  badgeText="ULTRA"\n  gradientFrom="#00f2fe"\n  gradientTo="#4facfe"\n  trend="positive"\n  trendValue="+4.2%"\n  variant="liquid"\n/>`} />
+          </div>
+          <div className="mt-6">
+            <SectionLabel>Props — CircularStatCard</SectionLabel>
+            <PropsTable rows={[
+              { name:'title',        type:'string', desc:'Tytuł metryki' },
+              { name:'value',        type:'number', desc:'Wartość (0-100 dla koła progress)' },
+              { name:'unit',         type:'string', default:'"%"', desc:'Jednostka (np. %, ms, GB)' },
+              { name:'badgeText',    type:'string', desc:'Opcjonalna etykieta w nagłówku' },
+              { name:'description',  type:'string', desc:'Krótki opis pod wartością' },
+              { name:'gradientFrom', type:'string', default:'"#38bdf8"', desc:'Kolor początkowy pierścienia' },
+              { name:'gradientTo',   type:'string', default:'"#818cf8"', desc:'Kolor końcowy pierścienia' },
+              { name:'variant',      type:"'liquid' | 'glass' | 'neon' | 'solid'", default:"'liquid'", desc:'Wariant wyglądu' },
+              { name:'trend',        type:"'positive' | 'negative' | 'neutral'", desc:'Kierunek trendu' },
+            ]} />
           </div>
         </>
       );
