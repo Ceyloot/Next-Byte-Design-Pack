@@ -271,24 +271,24 @@ const PAGE_VARIANTS: Partial<Record<string, PVItem[]>> = {
   button:        [{ id:'all', label:'Wszystkie' }, { id:'nextbyte', label:'nextbyte' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }, { id:'gradient', label:'gradient' }, { id:'outline', label:'outline' }, { id:'ghost', label:'ghost' }, { id:'secondary', label:'secondary' }, { id:'destructive', label:'destructive' }, { id:'default', label:'default' }],
   badge:         [{ id:'all', label:'Wszystkie' }, { id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'warning', label:'warning' }, { id:'destructive', label:'destructive' }, { id:'outline', label:'outline' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   input:         [{ id:'all', label:'Wszystkie' }, { id:'nextbyte', label:'nextbyte' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }, { id:'gradient', label:'gradient' }, { id:'outline', label:'outline' }, { id:'ghost', label:'ghost' }, { id:'error', label:'error' }, { id:'success', label:'success' }, { id:'glass', label:'glass' }, { id:'default', label:'default' }],
-  select:        [{ id:'default', label:'default' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'outline', label:'outline' }],
+  select:        [{ id:'default', label:'default' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'outline', label:'outline' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   avatar:        [{ id:'xs', label:'xs' }, { id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }, { id:'xl', label:'xl' }, { id:'2xl', label:'2xl' }],
   separator:     [{ id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'muted', label:'muted' }, { id:'dashed', label:'dashed' }, { id:'gradient', label:'gradient' }, { id:'fade', label:'fade' }],
   skeleton:      [{ id:'default', label:'default' }, { id:'shimmer', label:'shimmer' }],
-  metricbar:     [{ id:'primary', label:'primary' }, { id:'success', label:'success' }, { id:'warning', label:'warning' }, { id:'destructive', label:'destructive' }],
+  metricbar:     [{ id:'primary', label:'primary' }, { id:'success', label:'success' }, { id:'warning', label:'warning' }, { id:'destructive', label:'destructive' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   tooltip:       [{ id:'top', label:'↑ góra' }, { id:'bottom', label:'↓ dół' }, { id:'left', label:'← lewo' }, { id:'right', label:'→ prawo' }],
-  textarea:      [{ id:'default', label:'default' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'error', label:'error' }, { id:'success', label:'success' }],
-  tabs:          [{ id:'underline', label:'underline' }, { id:'pills', label:'pills' }, { id:'card', label:'card' }, { id:'glass', label:'glass' }],
-  table:         [{ id:'default', label:'default' }, { id:'bordered', label:'bordered' }, { id:'striped', label:'striped' }],
-  accordion:     [{ id:'default', label:'default' }, { id:'bordered', label:'bordered' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }],
-  emptystate:    [{ id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }],
-  countdown:     [{ id:'default', label:'default' }, { id:'compact', label:'compact' }, { id:'badge', label:'badge' }, { id:'blocks', label:'blocks' }],
-  statcard:      [{ id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }],
-  tile:          [{ id:'neutralna', label:'neutralna' }, { id:'akcent', label:'akcent' }, { id:'krytyczna', label:'krytyczna' }],
-  sparkline:     [{ id:'positive', label:'wzrost ↑' }, { id:'negative', label:'spadek ↓' }, { id:'neutral', label:'stabilny →' }],
-  alertcard:     [{ id:'info', label:'info' }, { id:'warning', label:'warning' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }],
-  commandsearch: [{ id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }],
-  pricingcard:   [{ id:'0', label:'Wyróżniony: 1' }, { id:'1', label:'Wyróżniony: 2' }, { id:'2', label:'Wyróżniony: 3' }],
+  textarea:      [{ id:'default', label:'default' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }, { id:'error', label:'error' }, { id:'success', label:'success' }],
+  tabs:          [{ id:'underline', label:'underline' }, { id:'pills', label:'pills' }, { id:'card', label:'card' }, { id:'glass', label:'glass' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  table:         [{ id:'default', label:'default' }, { id:'bordered', label:'bordered' }, { id:'striped', label:'striped' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  accordion:     [{ id:'default', label:'default' }, { id:'bordered', label:'bordered' }, { id:'ghost', label:'ghost' }, { id:'glass', label:'glass' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  emptystate:    [{ id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  countdown:     [{ id:'default', label:'default' }, { id:'compact', label:'compact' }, { id:'badge', label:'badge' }, { id:'blocks', label:'blocks' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  statcard:      [{ id:'default', label:'default' }, { id:'primary', label:'primary' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  tile:          [{ id:'neutralna', label:'neutralna' }, { id:'akcent', label:'akcent' }, { id:'krytyczna', label:'krytyczna' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  sparkline:     [{ id:'positive', label:'wzrost ↑' }, { id:'negative', label:'spadek ↓' }, { id:'neutral', label:'stabilny →' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  alertcard:     [{ id:'info', label:'info' }, { id:'warning', label:'warning' }, { id:'success', label:'success' }, { id:'destructive', label:'destructive' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  commandsearch: [{ id:'sm', label:'sm' }, { id:'default', label:'default' }, { id:'lg', label:'lg' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
+  pricingcard:   [{ id:'0', label:'Wyróżniony: 1' }, { id:'1', label:'Wyróżniony: 2' }, { id:'2', label:'Wyróżniony: 3' }, { id:'glassmorphism', label:'✨ glassmorphism' }, { id:'liquid-glass', label:'💧 liquid-glass' }],
   toast:         [{ id:'default', label:'domyślny' }, { id:'success', label:'sukces' }, { id:'warning', label:'uwaga' }, { id:'destructive', label:'błąd' }],
 };
 
@@ -328,7 +328,7 @@ function VariantBar<T extends string>({
 
 function DemoControls({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4 px-4 py-3 rounded-xl bg-muted/10 border border-border/40">
+    <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
       {children}
     </div>
   );
@@ -346,6 +346,20 @@ function ToggleCtrl({ label, value, onChange }: { label: string; value: boolean;
       )}>{value ? 'on' : 'off'}</button>
     </div>
   );
+}
+
+function GlassWrap({ liquid, glass, className, children }: { liquid: boolean; glass: boolean; className?: string; children: React.ReactNode }) {
+  if (liquid) return (
+    <LiquidGlass mode="svg" depth={8} strength={80} chromaticAberration={0} className={cn('rounded-2xl', className)}>
+      {children}
+    </LiquidGlass>
+  );
+  if (glass) return (
+    <div className={cn('nb-glass-static rounded-2xl overflow-hidden', className)}>
+      {children}
+    </div>
+  );
+  return <>{children}</>;
 }
 
 /* ── UI helpers ───────────────────────────────────────────── */
@@ -461,6 +475,8 @@ export default function App() {
   );
   const [_filterPage, _setFilterPage] = useState<string>(active);
   const glass = glassStyleMode !== 'flat';
+  const isGlass  = componentVariantFilter === 'glassmorphism' || componentVariantFilter === 'liquid-glass';
+  const isLiquid = componentVariantFilter === 'liquid-glass';
   const [copied, setCopied]         = useState<string|null>(null);
   const [dialogOpen, setDialogOpen] = useState<string|null>(null);
   const [alertPage, setAlertPage]   = useState(1);
@@ -548,6 +564,7 @@ export default function App() {
   const { toast } = useToast();
 
   useEffect(() => { setTick(1); }, []);
+
 
   if (_filterPage !== active) {
     _setFilterPage(active);
@@ -778,33 +795,6 @@ export default function App() {
         <main className="flex-1 overflow-y-auto">
           {active === 'landing' ? renderPage() : (
             <div className="max-w-3xl mx-auto px-8 py-8">
-              {/* Per-page variant bar — dynamic options per component */}
-              {PAGE_VARIANTS[active] && (
-                <div className="mb-6 p-3 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl flex items-center gap-3 flex-wrap shadow-lg">
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      {VARIANT_BAR_LABEL[active] ?? 'Wariant'}
-                    </span>
-                  </div>
-                  <div className="flex gap-1 items-center flex-wrap">
-                    {PAGE_VARIANTS[active]!.map(s => (
-                      <button
-                        key={s.id}
-                        onClick={() => setComponentVariantFilter(s.id)}
-                        className={cn(
-                          'text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all',
-                          componentVariantFilter === s.id
-                            ? 'border-primary bg-primary/20 text-primary shadow-md scale-[1.02]'
-                            : 'border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/20'
-                        )}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
               {renderPage()}
             </div>
           )}
@@ -862,6 +852,30 @@ export default function App() {
 
   /* ───────────────────────────────────────────────────────── */
   function renderPage() {
+    const variantBar = PAGE_VARIANTS[active] ? (
+      <div className="flex items-center gap-2 flex-wrap mb-3 mt-5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 shrink-0 min-w-[48px]">
+          {VARIANT_BAR_LABEL[active] ?? 'Wariant'}
+        </span>
+        <div className="flex gap-1 flex-wrap">
+          {PAGE_VARIANTS[active]!.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setComponentVariantFilter(s.id)}
+              className={cn(
+                'text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all',
+                componentVariantFilter === s.id
+                  ? 'border-primary bg-primary/20 text-primary'
+                  : 'border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/20'
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
+
     switch (active) {
 
       /* ── LANDING PREVIEW ────────────────────────────────── */
@@ -1032,7 +1046,7 @@ export default function App() {
         <>
           <PageHeader name="Select" pkg="core" status="new"
             description="Lista wyboru oparta na Radix UI Select. Obsługuje grupy, separatory, etykiety i cztery warianty wizualne triggera." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoSelectSz} onChange={setDemoSelectSz} />
           </DemoControls>
@@ -1099,7 +1113,7 @@ export default function App() {
         <>
           <PageHeader name="Avatar" pkg="core" status="new"
             description="Awatar użytkownika z inicjałami jako fallback, wskaźnikami statusu i grupowaniem. Obsługuje kółko i kwadrat." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Kształt" options={['circle','square'] as const} value={demoAvatarShape} onChange={setDemoAvatarShape} />
             <VariantBar label="Status" options={['online','offline','busy','away'] as const} value={demoAvatarStatus} onChange={setDemoAvatarStatus} />
@@ -1166,7 +1180,7 @@ export default function App() {
         <>
           <PageHeader name="Separator" pkg="core" status="stable"
             description="Linia podziału pozioma lub pionowa w sześciu wariantach. Obsługuje etykietę wyśrodkowaną." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={false}>
             <div className="flex flex-col gap-6 max-w-sm mx-auto">
               <Separator variant={componentVariantFilter as any} label={<Badge variant="outline" size="sm">{componentVariantFilter}</Badge>} />
@@ -1206,7 +1220,7 @@ export default function App() {
         <>
           <PageHeader name="Skeleton" pkg="core" status="stable"
             description="Placeholder ładowania. Skeleton bazowy, SkeletonText dla bloków tekstu, SkeletonTile dla gotowych kart." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={false}>
             <div className="flex flex-col gap-6 max-w-sm mx-auto">
               <div className="space-y-2">
@@ -1296,15 +1310,19 @@ export default function App() {
         <>
           <PageHeader name="MetricBar" pkg="core" status="new"
             description="Blokowy wskaźnik wartości do wizualizacji metryk modeli AI, zasobów systemowych lub wskaźników KPI." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoMetricSize} onChange={setDemoMetricSize} />
           </DemoControls>
-          <Preview glass={false}>
-            <div className="flex flex-col gap-4 max-w-sm mx-auto">
-              <MetricBar label="Metryka A" value={demoMetricVal} color={componentVariantFilter as any} size={demoMetricSize} showValue />
-              <MetricBar label="Metryka B" value={Math.max(1, demoMetricVal - 2)} color={componentVariantFilter as any} size={demoMetricSize} showValue />
-              <MetricBar label="Metryka C" value={Math.min(10, demoMetricVal + 1)} color={componentVariantFilter as any} size={demoMetricSize} showValue />
+          <Preview glass={glass || isGlass}>
+            <div className="w-full max-w-sm mx-auto">
+              <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid} className="p-4 mb-2">
+                <div className="flex flex-col gap-4">
+                  <MetricBar label="Metryka A" value={demoMetricVal} color={isGlass ? 'primary' : componentVariantFilter as any} size={demoMetricSize} showValue />
+                  <MetricBar label="Metryka B" value={Math.max(1, demoMetricVal - 2)} color={isGlass ? 'success' : componentVariantFilter as any} size={demoMetricSize} showValue />
+                  <MetricBar label="Metryka C" value={Math.min(10, demoMetricVal + 1)} color={isGlass ? 'warning' : componentVariantFilter as any} size={demoMetricSize} showValue />
+                </div>
+              </GlassWrap>
               <div className="mt-2">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">
                   Wartość: <span className="text-foreground">{demoMetricVal}/10</span>
@@ -1344,7 +1362,7 @@ export default function App() {
         <>
           <PageHeader name="Panel" pkg="layout" status="beta"
             description="Kontener z nagłówkiem, licznikiem elementów, ikoną, opcją zwijania i wbudowaną wyszukiwarką." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass}>
             <div className="max-w-xs mx-auto">
               <Panel
@@ -1384,7 +1402,7 @@ export default function App() {
         <>
           <PageHeader name="Sidebar" pkg="layout" status="beta"
             description="Nawigacja boczna ze zwijaniem, sekcjami, elementami z ikonami i paskiem użytkownika w stopce." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass} tight>
             <div className="h-72 flex rounded-xl border border-border/60 overflow-hidden">
               <Sidebar collapsible defaultCollapsed={false} className={glass ? 'nb-glass' : ''}>
@@ -1421,12 +1439,12 @@ export default function App() {
         <>
           <PageHeader name="Tabs" pkg="layout" status="stable"
             description="Zakładki w czterech wariantach wizualnych i trzech rozmiarach. Oparty na Radix UI Tabs." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoTabsSz} onChange={setDemoTabsSz} />
           </DemoControls>
           <Preview glass={glass}>
-            <Tabs variant={componentVariantFilter as any} size={demoTabsSz} defaultValue="a">
+            <Tabs variant={isGlass ? 'glass' : componentVariantFilter as any} size={demoTabsSz} defaultValue="a">
               <TabsList>
                 <TabsTrigger value="a"><LayoutDashboard className="h-3.5 w-3.5" /> Pulpit</TabsTrigger>
                 <TabsTrigger value="b">Analityka</TabsTrigger>
@@ -1618,12 +1636,13 @@ export default function App() {
         <>
           <PageHeader name="Table" pkg="layout" status="stable"
             description="Tabela danych z nagłówkami sortowania, zaznaczeniem wierszy, trzema wariantami wizualnymi i rozmiarami." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoTableSz} onChange={setDemoTableSz} />
           </DemoControls>
-          <Preview glass={glass} tight>
-            <Table variant={componentVariantFilter as any} size={demoTableSz}>
+          <Preview glass={glass || isGlass} tight>
+            <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid}>
+            <Table variant={isGlass ? 'default' : componentVariantFilter as any} size={demoTableSz}>
               <TableHeader>
                 <TableRow>
                   <TableHead sortable sortDirection="asc">Komponent</TableHead>
@@ -1648,6 +1667,7 @@ export default function App() {
                 ))}
               </TableBody>
             </Table>
+            </GlassWrap>
           </Preview>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="table-import" copied={copied} onCopy={copy}
@@ -1667,24 +1687,26 @@ export default function App() {
         <>
           <PageHeader name="Sparkline" pkg="analytics" status="stable"
             description="Mini-wykres SVG z wygładzaniem krzywa Béziera i wypełnieniem. Trzy typy trendu zmieniają paletę kolorów." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <ToggleCtrl label="Smooth" value={demoSparkSmooth} onChange={setDemoSparkSmooth} />
             <ToggleCtrl label="Fill" value={demoSparkFill} onChange={setDemoSparkFill} />
           </DemoControls>
-          <Preview glass={false} tight>
+          <Preview glass={glass || isGlass} tight>
+            <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid} className="p-4">
             <div className="flex flex-col items-center gap-3">
               <Sparkline
-                data={componentVariantFilter === 'positive' ? [20,25,18,30,28,38,42,50,55,62] : componentVariantFilter === 'negative' ? [80,72,68,74,60,55,48,42,38,20] : [40,42,40,44,42,43,41,42,40]}
-                trend={componentVariantFilter as any}
+                data={isGlass || componentVariantFilter === 'positive' ? [20,25,18,30,28,38,42,50,55,62] : componentVariantFilter === 'negative' ? [80,72,68,74,60,55,48,42,38,20] : [40,42,40,44,42,43,41,42,40]}
+                trend={isGlass ? 'positive' : componentVariantFilter as any}
                 width={200} height={60}
                 smooth={demoSparkSmooth}
                 showFill={demoSparkFill}
               />
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {demoSparkTrend === 'positive' ? 'Wzrost' : demoSparkTrend === 'negative' ? 'Spadek' : 'Stabilny'}
+                {isGlass ? componentVariantFilter : demoSparkTrend === 'positive' ? 'Wzrost' : demoSparkTrend === 'negative' ? 'Spadek' : 'Stabilny'}
               </span>
             </div>
+            </GlassWrap>
           </Preview>
           <div className="mt-4">
             <SectionLabel>Wszystkie trendy</SectionLabel>
@@ -1725,12 +1747,13 @@ export default function App() {
         <>
           <PageHeader name="StatCard" pkg="analytics" status="stable"
             description="Karta metryki z etykietą, wartością główną, trendem i mini-sparkline. Cztery warianty kolorystyczne." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Trend" options={['positive','negative','neutral'] as const} value={demoStatTrend} onChange={setDemoStatTrend} />
           </DemoControls>
-          <Preview glass={glass}>
+          <Preview glass={glass || isGlass}>
             <div className="max-w-xs mx-auto">
+              <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid}>
               <StatCard
                 label="Przychód"
                 value={demoStatTrend === 'positive' ? '$48 295' : demoStatTrend === 'negative' ? '$21 340' : '$36 800'}
@@ -1739,9 +1762,10 @@ export default function App() {
                 trendValue={demoStatTrend === 'positive' ? '+12.5%' : demoStatTrend === 'negative' ? '−8.2%' : '±0.3%'}
                 sparklineData={demoStatTrend === 'positive' ? [40,42,41,45,48,50,55] : demoStatTrend === 'negative' ? [55,50,48,45,40,35,32] : [42,43,42,44,43,42,43]}
                 icon={<BarChart3 className="h-4 w-4" />}
-                variant={componentVariantFilter as any}
+                variant={isGlass ? 'default' : componentVariantFilter as any}
                 className={glass ? 'nb-glass' : ''}
               />
+              </GlassWrap>
             </div>
           </Preview>
           <div className="mt-4">
@@ -1783,7 +1807,7 @@ export default function App() {
         <>
           <PageHeader name="ActivityFeed" pkg="analytics" status="stable"
             description="Dziennik aktywności z osią czasu, wskaźnikami stanu (done/in-progress/pending) i opcją live." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass}>
             <ActivityFeed
               title="Dziennik aktywności"
@@ -1816,24 +1840,26 @@ export default function App() {
         <>
           <PageHeader name="AlertCard" pkg="analytics" status="beta"
             description="Karta powiadomienia systemowego z czterema priorytetami, paginacją i przyciskiem akcji." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Priorytet" options={['low','medium','high','critical'] as const} value={demoAlertPriority} onChange={setDemoAlertPriority} />
           </DemoControls>
-          <Preview glass={glass} tight>
+          <Preview glass={glass || isGlass} tight>
             <div className="max-w-sm mx-auto">
+              <GlassWrap liquid={isLiquid} glass={false}>
               <AlertCard
-                variant={componentVariantFilter as any}
-                title={componentVariantFilter === 'info' ? 'Nowa wersja dostępna' : componentVariantFilter === 'warning' ? 'Wygasające klucze API' : componentVariantFilter === 'success' ? 'Wdrożenie ukończone' : 'Błąd połączenia'}
-                description={componentVariantFilter === 'info' ? 'NextByte v3.1 jest gotowy do aktualizacji.' : componentVariantFilter === 'warning' ? 'Klucze wygasną za 48h. Zweryfikuj uprawnienia.' : componentVariantFilter === 'success' ? 'Wszystkie kontenery działają poprawnie.' : 'Host docelowy nie odpowiada od 5 minut.'}
+                variant={isGlass ? 'info' : componentVariantFilter as any}
+                title={isGlass || componentVariantFilter === 'info' ? 'Nowa wersja dostępna' : componentVariantFilter === 'warning' ? 'Wygasające klucze API' : componentVariantFilter === 'success' ? 'Wdrożenie ukończone' : 'Błąd połączenia'}
+                description={isGlass || componentVariantFilter === 'info' ? 'NextByte v3.1 jest gotowy do aktualizacji.' : componentVariantFilter === 'warning' ? 'Klucze wygasną za 48h. Zweryfikuj uprawnienia.' : componentVariantFilter === 'success' ? 'Wszystkie kontenery działają poprawnie.' : 'Host docelowy nie odpowiada od 5 minut.'}
                 priority={demoAlertPriority}
-                className={glass ? 'nb-glass' : ''}
+                glass={isGlass || glass}
                 action={{ label:'Działaj', onClick:() => toast({ title:'AlertCard', description:`${componentVariantFilter} · ${demoAlertPriority}` }) }}
                 currentPage={alertPage}
                 totalPages={3}
                 onPrev={() => setAlertPage(p=>Math.max(1,p-1))}
                 onNext={() => setAlertPage(p=>Math.min(3,p+1))}
               />
+              </GlassWrap>
             </div>
           </Preview>
           <div className="mt-4">
@@ -1879,19 +1905,20 @@ export default function App() {
         <>
           <PageHeader name="Tile" pkg="analytics" status="stable"
             description="Uniwersalny kafelek z trzema intencjami, trzema elewacjami i opcją hover-lift. Złożony z pod-komponentów." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Elewacja" options={['plaska','uniesiona','wyzej'] as const} value={demoTileElev} onChange={setDemoTileElev} />
             <ToggleCtrl label="Interaktywny" value={demoTileInter} onChange={setDemoTileInter} />
           </DemoControls>
-          <Preview glass={glass}>
+          <Preview glass={glass || isGlass}>
             <div className="max-w-xs mx-auto">
-              <Tile intencja={componentVariantFilter as any} elewacja={demoTileElev} interaktywny={demoTileInter} className={glass ? 'nb-glass' : ''}>
+              <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid}>
+              <Tile intencja={isGlass ? 'akcent' : componentVariantFilter as any} elewacja={demoTileElev} interaktywny={demoTileInter}>
                 <TileHeader
                   ikona={LayoutDashboard}
                   tytul="Karta systemu"
-                  intencja={componentVariantFilter as any}
-                  poPrawej={<TilePill intencja={componentVariantFilter as any}>{componentVariantFilter}</TilePill>}
+                  intencja={isGlass ? 'akcent' : componentVariantFilter as any}
+                  poPrawej={<TilePill intencja={isGlass ? 'akcent' : componentVariantFilter as any}>{isGlass ? componentVariantFilter : componentVariantFilter}</TilePill>}
                 />
                 <TileRow ikona={Users} poPrawej="stable">Moduł główny</TileRow>
                 <TileFooter>
@@ -1899,6 +1926,7 @@ export default function App() {
                   <TileAction rodzaj="usun" ikona={Trash2} samaIkona aria-label="Usuń" />
                 </TileFooter>
               </Tile>
+              </GlassWrap>
             </div>
           </Preview>
           <div className="mt-4">
@@ -1937,16 +1965,17 @@ export default function App() {
         <>
           <PageHeader name="CommandSearch" pkg="patterns" status="stable"
             description="Pasek szybkiego wyszukiwania ⌘K w trzech rozmiarach. Wywołuje callback onOpen — integracja z własnym modal search." />
-          <SectionLabel>Podgląd</SectionLabel>
-          <Preview glass={glass}>
+          {variantBar}
+          <Preview glass={glass || isGlass}>
             <div className="max-w-sm mx-auto">
+              <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid}>
               <CommandSearch
-                size={componentVariantFilter as any}
+                size={isGlass ? 'default' : componentVariantFilter as any}
                 placeholder={`Wyszukaj... (${componentVariantFilter})`}
                 shortcut="⌘K"
-                className={glass ? 'nb-glass' : ''}
-                onOpen={() => toast({ title:'CommandSearch', description:`Otwarto rozmiar ${componentVariantFilter}.` })}
+                onOpen={() => toast({ title:'CommandSearch', description:`Otwarto: ${componentVariantFilter}.` })}
               />
+              </GlassWrap>
             </div>
           </Preview>
           <div className="mt-4">
@@ -1983,7 +2012,7 @@ export default function App() {
         <>
           <PageHeader name="QuickNav" pkg="patterns" status="stable"
             description="Siatka skrótów nawigacyjnych z wypełnionymi i pustymi slotami. Trzy rozmiary elementów." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass} tight>
             <QuickNav
               slots={6}
@@ -2018,7 +2047,7 @@ export default function App() {
         <>
           <PageHeader name="ModelSearch" pkg="patterns" status="new"
             description="Selektor modeli AI z wyszukiwarką, grupowaniem, panelem metryk i konfiguracją. Podpina się do własnej listy modeli." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass}>
             <div className="max-w-md mx-auto">
               <p className="text-[10px] text-muted-foreground mb-3">Kliknij trigger i najedź na model by zobaczyć metryki</p>
@@ -2173,7 +2202,7 @@ export default function App() {
         <>
           <PageHeader name="TechGrid" pkg="patterns" status="stable"
             description="Siatka techniczna SVG jako element tła z maską radialną u góry. Idealna jako warstwa absolutna za treścią." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={false} tight>
             <div className="relative h-40 w-full rounded-xl border border-border/60 bg-card overflow-hidden flex items-center justify-center">
               <TechGrid oczko={28} className="absolute inset-0 pointer-events-none" />
@@ -2330,7 +2359,7 @@ export default function App() {
         <>
           <PageHeader name="Tooltip" pkg="core" status="new"
             description="Pływający hint zakotwiczony do triggera. Dwa warianty wizualne, cztery pozycje, auto-portal. Wymaga TooltipProvider raz w drzewie." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Wariant" options={['default','glass'] as const} value={demoTooltipV} onChange={setDemoTooltipV} />
           </DemoControls>
@@ -2528,10 +2557,10 @@ export default function App() {
         <>
           <PageHeader name="Accordion" pkg="layout" status="new"
             description="Zwijane sekcje w czterech wariantach wizualnych. Obsługuje single i multiple. Oparty na Radix UI Accordion." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass}>
             <div className="max-w-sm mx-auto">
-              <Accordion type="single" collapsible variant={componentVariantFilter as any} defaultValue="item-1">
+              <Accordion type="single" collapsible variant={isGlass ? 'glass' : componentVariantFilter as any} defaultValue="item-1">
                 <AccordionItem value="item-1">
                   <AccordionTrigger>Czym jest NextByte?</AccordionTrigger>
                   <AccordionContent>
@@ -2663,7 +2692,7 @@ export default function App() {
         <>
           <PageHeader name="Radio" pkg="core" status="new"
             description="Grupa przycisków radio — jeden wybór z wielu. Trzy rozmiary. Radix UI RadioGroup." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass} tight>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-sm mx-auto">
               <div>
@@ -2710,7 +2739,7 @@ export default function App() {
         <>
           <PageHeader name="Textarea" pkg="core" status="new"
             description="Wieloliniowe pole tekstowe w pięciu wariantach wizualnych. Obsługuje auto-resize i trzy rozmiary." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <VariantBar label="Rozmiar" options={['sm','default','lg'] as const} value={demoTextareaSz} onChange={setDemoTextareaSz} />
           </DemoControls>
@@ -2718,7 +2747,7 @@ export default function App() {
             <div className="grid grid-cols-1 gap-4 max-w-sm mx-auto">
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-wider">{componentVariantFilter} · {demoTextareaSz}</span>
-                <Textarea variant={componentVariantFilter as any} size={demoTextareaSz} placeholder={`Wariant ${componentVariantFilter}...`} rows={4} />
+                <Textarea variant={isGlass ? 'glass' : componentVariantFilter as any} size={demoTextareaSz} placeholder={`Wariant ${componentVariantFilter}...`} rows={4} />
               </div>
             </div>
           </Preview>
@@ -2894,17 +2923,19 @@ export default function App() {
         <>
           <PageHeader name="EmptyState" pkg="core" status="new"
             description="Placeholder dla pustych list, wyników wyszukiwania i błędów. Ikona, tytuł, opis i slot na CTA. Trzy rozmiary." />
-          <SectionLabel>Podgląd</SectionLabel>
-          <Preview glass={glass}>
-            <div className="rounded-xl border border-border/60 bg-card/30 max-w-sm mx-auto">
+          {variantBar}
+          <Preview glass={glass || isGlass}>
+            <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid} className="max-w-sm mx-auto">
+            <div className={cn('rounded-xl border border-border/60', !isGlass && 'bg-card/30')}>
               <EmptyState
-                size={componentVariantFilter as any}
+                size={isGlass ? 'default' : componentVariantFilter as any}
                 icon={<FolderOpen className="h-full w-full" />}
                 title="Brak projektów"
                 description="Utwórz swój pierwszy projekt, aby zacząć pracę."
                 action={<Button size="sm"><PlusCircle className="h-3.5 w-3.5 mr-1.5" />Nowy projekt</Button>}
               />
             </div>
+            </GlassWrap>
           </Preview>
           <div className="mt-4">
             <SectionLabel>Przykłady</SectionLabel>
@@ -3019,7 +3050,7 @@ export default function App() {
         <>
           <PageHeader name="ContextPill" pkg="core" status="new"
             description="Pill z etykietą kontekstową i wartością dropdown. Idealny do selektorów trybu/modelu/ustawień w toolbar." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass} tight>
             <div className="flex flex-wrap gap-2 justify-center">
               <ContextPill label="Typ:" value={contextPillValues.type} icon={<SlidersHorizontal className="h-3 w-3" />}
@@ -3066,18 +3097,20 @@ export default function App() {
         <>
           <PageHeader name="CountdownTimer" pkg="core" status="new"
             description="Odliczanie do daty docelowej w czterech wariantach wizualnych. Auto-aktualizacja co sekundę. Callback onEnd." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <ToggleCtrl label="Sekundy" value={demoCountdownSec} onChange={setDemoCountdownSec} />
           </DemoControls>
-          <Preview glass={glass}>
+          <Preview glass={glass || isGlass}>
             <div className="flex justify-center">
+              <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid}>
               <CountdownTimer
                 targetDate={DEMO_COUNTDOWN}
-                variant={componentVariantFilter as any}
+                variant={isGlass ? 'blocks' : componentVariantFilter as any}
                 showSeconds={demoCountdownSec}
-                label={componentVariantFilter === 'default' ? 'Kończy się za' : undefined}
+                label={!isGlass && componentVariantFilter === 'default' ? 'Kończy się za' : undefined}
               />
+              </GlassWrap>
             </div>
           </Preview>
           <div className="mt-4">
@@ -3469,7 +3502,7 @@ export default function App() {
         <>
           <PageHeader name="ProductCard" pkg="analytics" status="new"
             description="Karta produktu z okładką, tytułem, ceną i przyciskiem akcji. Używana w sklepach, bibliotekach i marketplace'ach." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
               <ProductCard
@@ -3597,11 +3630,12 @@ export default function App() {
         <>
           <PageHeader name="PricingCard" pkg="analytics" status="new"
             description="Karta cennika / subskrypcji z dyskontem, etykietami ograniczoności, odliczaniem i listą features." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <DemoControls>
             <ToggleCtrl label="Glass" value={demoPricingGlass} onChange={setDemoPricingGlass} />
           </DemoControls>
-          <Preview glass={glass}>
+          <Preview glass={glass || isGlass}>
+            <GlassWrap liquid={isLiquid} glass={isGlass && !isLiquid} className="w-full">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
               <PricingCard
                 title="BEZPŁATNY"
@@ -3609,8 +3643,8 @@ export default function App() {
                 price={{ amount: 0, currency: 'PLN', period: 'miesiąc' }}
                 features={['Płacisz tylko za zużycie', 'Chat AI', 'Studio Zdjęć', 'Personalny Asystent', 'PromptEx']}
                 action={{ label: 'Twój aktualny plan', onClick: () => {} }}
-                highlight={componentVariantFilter === '0'}
-                glass={demoPricingGlass}
+                highlight={isGlass ? false : componentVariantFilter === '0'}
+                glass={isGlass || demoPricingGlass}
               />
               <PricingCard
                 title="PREMIUM"
@@ -3620,8 +3654,8 @@ export default function App() {
                 originalPrice={119}
                 features={['495 Byte / miesiąc', 'Chat AI UNLIMITED', 'Kalendarz, Zadania, Notatki', 'Baza Danych', 'Szyfrowanie']}
                 action={{ label: 'Wybierz PREMIUM', onClick: () => toast({ title:'PREMIUM', description:'Kliknięto' }) }}
-                highlight={componentVariantFilter === '1'}
-                glass={demoPricingGlass}
+                highlight={isGlass ? true : componentVariantFilter === '1'}
+                glass={isGlass || demoPricingGlass}
               />
               <PricingCard
                 title="ULTIMATE"
@@ -3630,10 +3664,11 @@ export default function App() {
                 price={{ amount: 349, currency: 'PLN', period: 'miesiąc' }}
                 features={['2450 Byte / miesiąc', 'Chat AI UNLIMITED', 'Kalendarz, Zadania, Notatki', 'Baza Danych', 'Szyfrowanie', 'Enhancer 2x']}
                 action={{ label: 'Wybierz ULTIMATE', onClick: () => toast({ title:'ULTIMATE', description:'Kliknięto' }) }}
-                highlight={componentVariantFilter === '2'}
-                glass={demoPricingGlass}
+                highlight={isGlass ? false : componentVariantFilter === '2'}
+                glass={isGlass || demoPricingGlass}
               />
             </div>
+            </GlassWrap>
           </Preview>
           <div className="mt-6"><SectionLabel>Import</SectionLabel>
             <CodeBlock id="prc2-import" copied={copied} onCopy={copy}
@@ -3723,7 +3758,7 @@ export default function App() {
         <>
           <PageHeader name="Carousel" pkg="patterns" status="new"
             description="Slider z nawigacją strzałkami, kropkami paginacji i opcjonalnym autoplay. Przyjmuje dowolne ReactNode jako slajdy." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass}>
             <Carousel
               autoplay={carouselAutoplay}
@@ -3798,7 +3833,7 @@ export default function App() {
         <>
           <PageHeader name="FileTree" pkg="patterns" status="new"
             description="Drzewo folderów i plików z sekcjami, rozwijaniem, licznikami i zaznaczeniem. Używany w nawigacji notatek i projektów." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass} tight>
             <div className="max-w-xs mx-auto border border-border/60 rounded-xl bg-card/30 p-2">
               <FileTree
@@ -3862,7 +3897,7 @@ export default function App() {
         <>
           <PageHeader name="KanbanBoard" pkg="patterns" status="new"
             description="Tablica Kanban z kolumnami i kartami zadań. Priorytety, tagi, assignee. Gotowy do integracji drag-and-drop." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass} tight>
             <KanbanBoard
               glass={glass}
@@ -4016,7 +4051,7 @@ export default function App() {
         <>
           <PageHeader name="AnnouncementCarousel" pkg="patterns" status="new"
             description="Carousel na nowości i aktualizacje platformy. Badge PREMIUM/NOWOŚĆ, preview screenshot, opis i link." />
-          <SectionLabel>Podgląd</SectionLabel>
+          {variantBar}
           <Preview glass={glass}>
             <div className="w-full">
               <AnnouncementCarousel
