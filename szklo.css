@@ -1,0 +1,63 @@
+.nb-glass {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(
+      180deg,
+      hsl(var(--foreground) / 0.07) 0%,
+      hsl(var(--foreground) / 0.02) 45%,
+      hsl(var(--primary) / 0.05) 100%
+    ),
+    hsl(var(--card) / 0.55);
+  border: 1px solid hsl(var(--foreground) / 0.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    /* refleks górny — to on daje wrażenie szkła */
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.16),
+    /* delikatne przyciemnienie dołu, jakby światło padało z góry */
+    inset 0 -1px 0 0 hsl(var(--primary) / 0.08),
+    0 1px 2px 0 hsl(0 0% 0% / 0.18),
+    0 10px 30px -12px hsl(0 0% 0% / 0.34);
+  transition: box-shadow .32s ease, border-color .32s ease, background .32s ease, transform .32s ease;
+}
+
+.nb-glass:hover {
+  border-color: hsl(var(--primary) / 0.42);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.22),
+    inset 0 -1px 0 0 hsl(var(--primary) / 0.16),
+    0 1px 2px 0 hsl(0 0% 0% / 0.2),
+    0 14px 38px -12px hsl(0 0% 0% / 0.42),
+    /* poświata w kolorze motywu użytkownika */
+    0 0 0 1px hsl(var(--primary) / 0.16),
+    0 6px 26px -6px hsl(var(--primary) / 0.3);
+  transform: translateY(-1px);
+}
+
+.nb-glass:active { transform: translateY(0); }
+
+.nb-glass:disabled { opacity: .5; transform: none; box-shadow: none; }
+
+/* Pasmo światła przesuwane po szkle przy najechaniu. Czysta dekoracja,
+   więc wyłącza się dla osób, które proszą o mniej ruchu. */
+.nb-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    hsl(var(--foreground) / 0.12) 48%,
+    transparent 66%
+  );
+  transition: opacity .32s ease;
+}
+.nb-glass:hover::after { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-glass, .nb-glass::after { transition: none; }
+  .nb-glass:hover { transform: none; }

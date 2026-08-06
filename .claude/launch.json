@@ -1,10 +1,10 @@
-﻿{
+{
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "NextByte Design",
+      "name": "nextbyte-preview",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["run", "dev", "--prefix", "nextbyte-preview"],
       "port": 5173,
       "autoPort": true
     }
