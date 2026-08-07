@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { useGlass } from "@/lib/glass-context"
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -69,17 +70,22 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    const { isGlass } = useGlass()
     const isNextbyte = variant === "nextbyte" || (!variant && true)
+
+    // Tylko nextbyte dostaje glass — pozostałe warianty zachowują własny styl.
+    // Szkło należy do kontenerów (Card, Panel), nie do samych przycisków.
+    const glassClass = isGlass && isNextbyte ? 'nb-szklo-plynne' : ''
 
     if (isNextbyte && !asChild) {
       return (
         <Comp
-          className={cn(buttonVariants({ variant, size, className }))}
+          className={cn(buttonVariants({ variant, size, className }), glassClass)}
           ref={ref}
           {...props}
         >
-          {/* Animated gradient border glow */}
-          <span className="absolute -inset-[1px] rounded-xl overflow-hidden opacity-0 group-hover/nextbyte:opacity-70 transition-opacity duration-500 pointer-events-none">
+          {/* Animated gradient border — zawsze lekko widoczny, pełna siła na hover */}
+          <span className="absolute -inset-[1px] rounded-xl overflow-hidden opacity-20 group-hover/nextbyte:opacity-80 transition-opacity duration-500 pointer-events-none">
             <span className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,hsl(var(--primary)/0.3)_0deg,hsl(var(--primary)/0.6)_60deg,hsl(var(--primary))_120deg,hsl(var(--primary)/0.6)_180deg,hsl(var(--primary)/0.3)_240deg,hsl(var(--primary)/0.1)_300deg,hsl(var(--primary)/0.1)_360deg)] animate-spin-slow" />
             <span className="absolute inset-[1px] rounded-[10px] bg-card" />
           </span>
@@ -92,7 +98,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, className }), glassClass)}
         ref={ref}
         {...props}
       >

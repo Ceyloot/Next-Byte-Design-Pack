@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import { useGlass } from "@/lib/glass-context"
 
 const inputVariants = cva(
   [
@@ -32,17 +33,49 @@ const inputVariants = cva(
 
 export interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
-    VariantProps<typeof inputVariants> {}
+    VariantProps<typeof inputVariants> {
+  iconLeft?: React.ReactNode
+  iconRight?: React.ReactNode
+}
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, variant, inputSize, type, ...props }, ref) => (
-    <input
-      type={type}
-      className={cn(inputVariants({ variant, inputSize, className }))}
-      ref={ref}
-      {...props}
-    />
-  ),
+  ({ className, variant, inputSize, type, iconLeft, iconRight, ...props }, ref) => {
+    const { isGlass } = useGlass()
+    const glassClass = isGlass ? 'nb-szklo nb-szklo-plynne' : ''
+
+    const inputEl = (
+      <input
+        type={type}
+        className={cn(
+          inputVariants({ variant, inputSize }),
+          iconLeft && 'pl-9',
+          iconRight && 'pr-9',
+          glassClass,
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+
+    if (!iconLeft && !iconRight) return inputEl
+
+    return (
+      <div className="relative w-full">
+        {iconLeft && (
+          <span className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground flex items-center">
+            {iconLeft}
+          </span>
+        )}
+        {inputEl}
+        {iconRight && (
+          <span className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground flex items-center">
+            {iconRight}
+          </span>
+        )}
+      </div>
+    )
+  },
 )
 Input.displayName = "Input"
 

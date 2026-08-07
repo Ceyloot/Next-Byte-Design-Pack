@@ -2,6 +2,7 @@ import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useGlass } from "@/lib/glass-context"
 
 const Select       = SelectPrimitive.Root
 const SelectGroup  = SelectPrimitive.Group
@@ -19,7 +20,9 @@ const SIZE_H = { sm: "h-8 text-xs", default: "h-10 text-sm", lg: "h-12 text-base
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   SelectTriggerProps
->(({ className, children, error, triggerSize = "default", ...props }, ref) => (
+>(({ className, children, error, triggerSize = "default", ...props }, ref) => {
+  const { isGlass } = useGlass()
+  return (
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
@@ -31,6 +34,7 @@ const SelectTrigger = React.forwardRef<
       "[&>span]:line-clamp-1",
       error && "border-destructive/50 hover:border-destructive/70 focus:ring-destructive/60",
       SIZE_H[triggerSize],
+      isGlass && 'nb-szklo nb-szklo-plynne',
       className,
     )}
     {...props}
@@ -40,7 +44,8 @@ const SelectTrigger = React.forwardRef<
       <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
-))
+  )
+})
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 
 /* ── Scroll buttons ──────────────────────────────────────────────── */
@@ -76,7 +81,9 @@ SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayNam
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
+>(({ className, children, position = "popper", ...props }, ref) => {
+  const { isGlass } = useGlass()
+  return (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
@@ -89,6 +96,7 @@ const SelectContent = React.forwardRef<
         "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
         position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
+        isGlass && 'nb-szklo',
         className,
       )}
       position={position}
@@ -106,7 +114,8 @@ const SelectContent = React.forwardRef<
       <SelectScrollDownButton />
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
-))
+  )
+})
 SelectContent.displayName = SelectPrimitive.Content.displayName
 
 /* ── Label (group header) ────────────────────────────────────────── */

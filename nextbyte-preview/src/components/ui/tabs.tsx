@@ -1,6 +1,7 @@
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 import { cn } from "@/lib/utils"
+import { useGlass } from "@/lib/glass-context"
 
 const Tabs      = TabsPrimitive.Root
 const TabsGroup = TabsPrimitive.List  // alias
@@ -9,16 +10,20 @@ const TabsGroup = TabsPrimitive.List  // alias
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref) => {
+  const { isGlass } = useGlass()
+  return (
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex items-center gap-0.5 rounded-xl border border-border bg-muted/40 p-1",
+      "inline-flex items-center gap-0.5 rounded-[1.75rem] border border-border bg-muted/40 p-1",
+      isGlass && 'nb-szklo nb-szklo-plynne',
       className,
     )}
     {...props}
   />
-))
+  )
+})
 TabsList.displayName = TabsPrimitive.List.displayName
 
 /* ── Pojedyncza zakładka ─────────────────────────────────────────── */
