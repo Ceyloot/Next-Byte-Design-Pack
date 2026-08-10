@@ -1,0 +1,173 @@
+import React from 'react'
+import { Sparkles, Blend, Stars, Building2, Waves, Ban } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+export type BgKey = 'nextbyte' | 'gradient' | 'galaxy' | 'city' | 'aurora' | 'off'
+
+export const BG_OPTIONS: { key: BgKey; label: string; icon: React.ReactNode }[] = [
+  { key: 'nextbyte', label: 'NextByte',  icon: <Sparkles   className="h-3.5 w-3.5" /> },
+  { key: 'gradient', label: 'Gradient',  icon: <Blend      className="h-3.5 w-3.5" /> },
+  { key: 'galaxy',   label: 'Galaktyka', icon: <Stars      className="h-3.5 w-3.5" /> },
+  { key: 'city',     label: 'Miasto',    icon: <Building2  className="h-3.5 w-3.5" /> },
+  { key: 'aurora',   label: 'Zorza',     icon: <Waves      className="h-3.5 w-3.5" /> },
+  { key: 'off',      label: 'Brak',      icon: <Ban        className="h-3.5 w-3.5" /> },
+]
+
+/* Unsplash — wysokiej jakości, publiczne zdjęcia */
+const PHOTOS: Partial<Record<BgKey, string>> = {
+  galaxy: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=85&fit=crop',
+  city:   'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=85&fit=crop',
+  aurora: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=85&fit=crop',
+}
+
+/* Przyciemnienie żeby glass wyglądał lepiej na zdjęciu */
+const OVERLAYS: Partial<Record<BgKey, string>> = {
+  galaxy: 'rgba(2,2,15,0.45)',
+  city:   'rgba(3,5,18,0.50)',
+  aurora: 'rgba(2,8,12,0.40)',
+}
+
+function PhotoBg({ bgKey }: { bgKey: BgKey }) {
+  const url     = PHOTOS[bgKey]
+  const overlay = OVERLAYS[bgKey]
+  if (!url) return null
+  return (
+    <>
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:    `url(${url})`,
+          backgroundSize:     'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat:   'no-repeat',
+        }}
+      />
+      {overlay && (
+        <div className="absolute inset-0" style={{ background: overlay }} />
+      )}
+    </>
+  )
+}
+
+function GradientBg() {
+  return <div className="absolute inset-0 nb-app-bg" />
+}
+
+/* ── NextByte — 1:1 z produkcyjnego Panelu Głównego ──────────────────────
+   Warstwowa scena z pięciu elementów, wszystkie fixed pod treścią:
+     1. body = #09090b (zinc-950)
+     2. cztery radial aury po rogach — dwie z domieszką primary (błękit),
+        dwie w foreground (biel schodząca w tło)
+     3. siatka techniczna SVG w kolorze #70BEFA (błękit marki), 0.12 opacity,
+        maskowana centralną „latarnią" żeby brzegi znikały
+     4. centralne przyciemnienie do background, żeby środek się wyciszył
+   Każda warstwa oddzielnie, żeby dało się dostroić bez ruszania innych. */
+
+/* Skopiowane 1:1 z produkcyjnej strony Tablice_NextByte.
+   Siatka 60×60 px, stroke #70BEFA (błękit marki), stroke-opacity 0.12. */
+const SIATKA_SVG =
+  "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 60 0 L 0 0 0 60' fill='none' stroke='%2370BEFA' stroke-width='1' stroke-opacity='0.12'/%3E%3C/svg%3E\")"
+
+/* Maska „latarnia" — siatka widoczna tylko w środkowych 10%, potem
+   plynnie znika do 90%. Dokładnie tak jak w produkcji. */
+const MASKA_LATARNIA = 'radial-gradient(circle, white 10%, transparent 90%)'
+
+function NextByteBg() {
+  /* Tło strony Tablice_NextByte:
+       1. baza #09090b (zinc-950)
+       2. siatka techniczna centralnie zamaskowana
+       3. cztery ROZMYTE „światła" po rogach — okrągłe pudełka z blur 90-110px
+          z radialnym gradientem w środku. To one dają atmosferę.
+       4. centralna winieta ściągająca uwagę do środka. */
+  return (
+    <>
+      {/* Baza */}
+      <div className="absolute inset-0" style={{ backgroundColor: '#09090b' }} />
+
+      {/* Siatka */}
+      <div
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{
+          backgroundImage: SIATKA_SVG,
+          maskImage: MASKA_LATARNIA,
+          WebkitMaskImage: MASKA_LATARNIA,
+        }}
+      />
+
+      {/* Kontener świateł — overflow-hidden przycina rogi, blur pływa. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Światło 1 — lewo-góra, cieplejsze, z primary 15% */}
+        <div
+          className="absolute -left-[15%] -top-[25%] h-[70%] w-[65%] rounded-full blur-[90px]"
+          style={{
+            background:
+              'radial-gradient(circle, color-mix(in oklab, hsl(var(--foreground)) 6%, color-mix(in oklab, hsl(var(--primary)) 15%, hsl(var(--background)))), transparent 70%)',
+          }}
+        />
+        {/* Światło 2 — prawo-góra, chłodniejsze, primary 10% */}
+        <div
+          className="absolute -right-[10%] top-[10%] h-[60%] w-[50%] rounded-full blur-[100px]"
+          style={{
+            background:
+              'radial-gradient(circle, color-mix(in oklab, hsl(var(--foreground)) 4%, color-mix(in oklab, hsl(var(--primary)) 10%, hsl(var(--background)))), transparent 70%)',
+          }}
+        />
+        {/* Światło 3 — dół, czysta biel bez primary */}
+        <div
+          className="absolute -bottom-[30%] left-[20%] h-[60%] w-[70%] rounded-full blur-[110px]"
+          style={{
+            background:
+              'radial-gradient(circle, color-mix(in oklab, hsl(var(--foreground)) 6%, hsl(var(--background))), transparent 70%)',
+          }}
+        />
+        {/* Winieta — ściaga uwage do srodka */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(120% 90% at 50% 40%, transparent 40%, hsl(var(--background) / 0.6) 100%)',
+          }}
+        />
+      </div>
+    </>
+  )
+}
+
+interface AppBackgroundProps { bgKey: BgKey }
+
+export function AppBackground({ bgKey }: AppBackgroundProps) {
+  if (bgKey === 'off') return null
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none fixed inset-0"
+      style={{ zIndex: 0 }}
+    >
+      {bgKey === 'nextbyte' ? <NextByteBg />
+        : bgKey === 'gradient' ? <GradientBg />
+        : <PhotoBg bgKey={bgKey} />}
+    </div>
+  )
+}
+
+interface BgToggleProps { bgKey: BgKey; onCycle: () => void }
+
+export function BgToggle({ bgKey, onCycle }: BgToggleProps) {
+  const current = BG_OPTIONS.find(b => b.key === bgKey)!
+  return (
+    <button
+      onClick={onCycle}
+      title="Zmień tło"
+      className={cn(
+        'fixed right-4 top-4 z-[9999] flex items-center gap-2 rounded-nb-sm border',
+        'px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur-md transition-all duration-200',
+        bgKey !== 'off'
+          ? 'border-white/15 bg-black/45 text-white/75 hover:bg-black/60 hover:text-white'
+          : 'border-border bg-card/80 text-muted-foreground hover:text-foreground',
+      )}
+    >
+      <span className="opacity-70">{current.icon}</span>
+      <span>{current.label}</span>
+    </button>
+  )
+}

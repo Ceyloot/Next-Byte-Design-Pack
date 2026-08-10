@@ -50,7 +50,7 @@ export function GlassModal({
         className={cn(
           'absolute inset-0',
           isGlass
-            ? 'nb-szklo nb-szklo-plynne rounded-none border-0'
+            ? 'nb-szklo nb-szklo-plynne nb-powierzchnia rounded-none border-0'
             : 'bg-background/80 backdrop-blur-sm',
         )}
         style={isGlass ? { backdropFilter: 'blur(16px) saturate(1.4)', background: 'hsl(var(--card) / 0.25)' } : {}}
@@ -60,9 +60,9 @@ export function GlassModal({
       <GlassCard
         role="dialog"
         aria-modal="true"
-        className={cn('relative z-10 w-full', width, 'rounded-3xl p-0 overflow-hidden', className)}
+        className={cn('relative z-10 w-full', width, 'rounded-nb-lg p-0 overflow-hidden', className)}
         padding="p-0"
-        radius="rounded-3xl"
+        radius="rounded-nb-lg"
       >
         {(title || description) && (
           <div className="flex items-start justify-between gap-4 border-b border-foreground/10 px-6 py-5">

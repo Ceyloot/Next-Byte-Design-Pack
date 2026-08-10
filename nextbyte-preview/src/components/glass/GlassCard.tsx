@@ -11,7 +11,7 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function GlassCard({
   variant = 'default',
-  radius = 'rounded-2xl',
+  radius = 'rounded-nb',
   padding = 'p-5',
   interactive = false,
   className,
@@ -23,9 +23,12 @@ export function GlassCard({
   return (
     <div
       className={cn(
+        /* Soczewka na krawędzi. Zasięg steruje klasa na <html>:
+           .nb-refrakcja-chrome  → tylko nav/panel/modal
+           .nb-refrakcja-wszedzie → również karty i mniejsze elementy */
         isGlass
-          ? cn('nb-szklo', variant === 'thin' && 'nb-szklo-plynne')
-          : 'border border-border bg-card',
+          ? 'nb-szklo nb-szklo-plynne'
+          : cn('nb-tafla', interactive && 'nb-tafla-int'),
         radius,
         padding,
         interactive && 'cursor-pointer',

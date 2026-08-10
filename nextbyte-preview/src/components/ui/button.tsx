@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { useGlass } from "@/lib/glass-context"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-nb-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -39,7 +39,7 @@ const buttonVariants = cva(
         // powietrzu, w każdym z tych 717 plików.
         // `--foreground` odwraca się razem z motywem: w ciemnych daje 2% bieli
         // (czyli to samo co dotąd), w jasnych 2% czerni. Widoczne w obu.
-        nextbyte: "relative border border-border text-primary hover:text-primary font-semibold rounded-xl hover:border-transparent transition-all duration-300 bg-foreground/[0.02] backdrop-blur-2xl overflow-hidden group/nextbyte",
+        nextbyte: "relative border border-border text-primary hover:text-primary font-semibold rounded-nb hover:border-transparent transition-all duration-300 bg-foreground/[0.02] backdrop-blur-2xl overflow-hidden group/nextbyte",
         // Mocniejszy rejestr TEGO SAMEGO przycisku — nie osobny komponent.
         // Do wezwań na stronie wejściowej i miejsc pokazowych. Cały wygląd
         // siedzi w `.nb-glass` w index.css i liczy się od zmiennych motywu,
@@ -75,7 +75,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Tylko nextbyte dostaje glass — pozostałe warianty zachowują własny styl.
     // Szkło należy do kontenerów (Card, Panel), nie do samych przycisków.
-    const glassClass = isGlass && isNextbyte ? 'nb-szklo-plynne' : ''
+    const glassClass = isGlass && isNextbyte ? 'nb-szklo' : ''
 
     if (isNextbyte && !asChild) {
       return (
@@ -85,7 +85,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           {...props}
         >
           {/* Animated gradient border — zawsze lekko widoczny, pełna siła na hover */}
-          <span className="absolute -inset-[1px] rounded-xl overflow-hidden opacity-20 group-hover/nextbyte:opacity-80 transition-opacity duration-500 pointer-events-none">
+          <span className="absolute -inset-[1px] rounded-nb overflow-hidden opacity-20 group-hover/nextbyte:opacity-80 transition-opacity duration-500 pointer-events-none">
             <span className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,hsl(var(--primary)/0.3)_0deg,hsl(var(--primary)/0.6)_60deg,hsl(var(--primary))_120deg,hsl(var(--primary)/0.6)_180deg,hsl(var(--primary)/0.3)_240deg,hsl(var(--primary)/0.1)_300deg,hsl(var(--primary)/0.1)_360deg)] animate-spin-slow" />
             <span className="absolute inset-[1px] rounded-[10px] bg-card" />
           </span>

@@ -39,8 +39,8 @@ export function GlassSearch({
 
   return (
     <div className={cn(
-      isGlass ? 'nb-szklo nb-szklo-plynne' : 'border border-border bg-input',
-      'relative flex items-center rounded-[1.75rem]',
+      isGlass ? 'nb-szklo' : 'border border-border bg-input',
+      'relative flex items-center rounded-nb',
       sz.wrap,
       className,
     )}>

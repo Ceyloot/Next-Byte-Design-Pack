@@ -38,7 +38,7 @@ const Switch = React.forwardRef<
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       "disabled:cursor-not-allowed disabled:opacity-50",
       TRACK[switchSize],
-      isGlass && 'nb-szklo nb-szklo-plynne',
+      isGlass && 'nb-szklo',
       className,
     )}
     {...props}

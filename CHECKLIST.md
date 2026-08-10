@@ -170,9 +170,9 @@
 - [ ] Sticky header
 
 ## 08 · Nawigacja
-- [ ] Top navbar (desktop)
+- [x] Top navbar (desktop) — `GlassNav` ✓
 - [ ] Top navbar (mobile)
-- [ ] Sticky navbar
+- [x] Sticky navbar — `App header` ✓
 - [ ] Transparent → solid navbar (scroll)
 - [ ] Mobile hamburger menu
 - [ ] Mobile bottom navigation bar
@@ -189,12 +189,12 @@
 - [ ] Steps / Stepper (pionowy)
 - [x] Tab bar poziomy — `NbTabs` ✓
 - [ ] Tab bar pionowy
-- [ ] Pill tabs
+- [x] Pill tabs — `NbTabs` ✓
 - [ ] Underline tabs
-- [ ] Scrollable tabs (overflow)
+- [x] Scrollable tabs (overflow) — `NbTabs` ✓
 - [ ] Mega menu
-- [ ] Dropdown menu
-- [ ] Context menu (right-click)
+- [x] Dropdown menu — `GlassDropdown` ✓
+- [x] Context menu (right-click) — `GlassDropdown` ✓
 - [ ] Command palette (⌘K)
 - [ ] Back button
 - [ ] Skip to content (a11y)
@@ -206,15 +206,15 @@
 - [x] Button — Secondary — `button.tsx` ✓
 - [x] Button — Ghost — `button.tsx` ✓
 - [x] Button — Outline — `button.tsx` ✓
-- [ ] Button — Destructive
+- [x] Button — Destructive — `GlassButton danger` ✓
 - [ ] Button — Link
-- [ ] Button — Icon only (square)
+- [x] Button — Icon only (square) — `GlassButton size=icon` ✓
 - [ ] Button — Icon only (round)
-- [ ] Button z ikoną po lewej
+- [x] Button z ikoną po lewej — `GlassButton` ✓
 - [ ] Button z ikoną po prawej
 - [ ] Button — loading (spinner)
-- [ ] Button — disabled
-- [ ] Button — XS / SM / MD / LG / XL sizes
+- [x] Button — disabled — `GlassButton` ✓
+- [x] Button — XS / SM / MD / LG / XL sizes — `GlassButton` ✓
 - [ ] Button group (joined)
 - [ ] Split button (action + dropdown)
 - [ ] Toggle button (on/off)
@@ -226,7 +226,7 @@
 - [ ] Share button
 - [ ] Download button
 - [ ] Social button (sign in with…)
-- [ ] Icon button z tooltip
+- [x] Icon button z tooltip — `GlassTooltip + GlassButton` ✓
 - [ ] Ripple effect button
 
 ## 10 · Formularze
@@ -297,11 +297,11 @@
 - [ ] Card z obrazkiem (bok — poziomy)
 - [ ] Card horizontal (full-width)
 - [ ] Card z akcjami (footer)
-- [ ] Card — interaktywny (hover lift)
+- [x] Card — interaktywny (hover lift) — `GlassCard interactive` ✓
 - [x] Card — glass — `GlassCard` ✓
 - [ ] Card — outline
 - [ ] Card — filled (tło akcentem)
-- [ ] Card statystyk (stat card)
+- [x] Card statystyk (stat card) — `GlassStat` ✓
 - [ ] Card cennik (pricing)
 - [ ] Card profil użytkownika
 - [ ] Card blog / artykuł
@@ -312,16 +312,16 @@
 - [ ] Card powiadomienie
 - [ ] Card media (video thumbnail)
 - [ ] Card szkielet (skeleton loading)
-- [ ] Card grid / layout kart
-- [ ] Panel boczny (aside)
-- [ ] Accordion item
-- [ ] Accordion group (FAQ)
-- [ ] Collapsible section
+- [x] Card grid / layout kart — `KartySection` ✓
+- [x] Panel boczny (aside) — `GlassPanel` ✓
+- [x] Accordion item — `GlassAccordionItem` ✓
+- [x] Accordion group (FAQ) — `GlassAccordion` ✓
+- [x] Collapsible section — `GlassCollapsible` ✓
 - [ ] Details / Summary (native)
-- [ ] Expandable card (read more)
+- [x] Expandable card (read more) — `GlassCollapsible` ✓
 - [ ] Info box / callout
 - [ ] Sticky note
-- [ ] Alert box (inline)
+- [x] Alert box (inline) — `GlassAlert` ✓
 - [ ] Highlight box
 - [ ] Well / inset box
 
@@ -334,32 +334,32 @@
 - [ ] Modal — z krokami (wizard)
 - [ ] Modal — z obrazkiem (lightbox)
 - [ ] Modal — video
-- [ ] Drawer — prawy
-- [ ] Drawer — lewy
-- [ ] Drawer — dolny (bottom sheet)
-- [ ] Drawer — górny
+- [x] Drawer — prawy — `GlassDrawer side=right` ✓
+- [x] Drawer — lewy — `GlassDrawer side=left` ✓
+- [x] Drawer — dolny (bottom sheet) — `GlassDrawer side=bottom` ✓
+- [x] Drawer — górny — `GlassDrawer side=top` ✓
 - [ ] Popover (triggered)
-- [ ] Tooltip — basic (dark)
+- [x] Tooltip — basic (dark) — `GlassTooltip` ✓
 - [ ] Tooltip — light
-- [ ] Tooltip — rich (z treścią)
-- [ ] Tooltip — z delay
-- [ ] Dropdown panel
-- [ ] Sheet (bottom, mobile native)
+- [x] Tooltip — rich (z treścią) — `GlassTooltip` ✓
+- [x] Tooltip — z delay — `GlassTooltip delay` ✓
+- [x] Dropdown panel — `GlassDropdown` ✓
+- [x] Sheet (bottom, mobile native) — `GlassDrawer handle` ✓
 - [ ] Alert dialog (confirm/cancel)
 - [ ] Alert dialog — destructive
 - [ ] Cookie consent banner
 - [ ] Announcement banner (top)
 - [ ] Floating action panel
-- [ ] Overlay backdrop
+- [x] Overlay backdrop — `GlassModal` ✓
 - [ ] Command palette overlay
 
 ## 13 · Feedback & Stany
-- [ ] Alert — info
-- [ ] Alert — success
-- [ ] Alert — warning
-- [ ] Alert — error
+- [x] Alert — info — `GlassAlert` ✓
+- [x] Alert — success — `GlassAlert` ✓
+- [x] Alert — warning — `GlassAlert` ✓
+- [x] Alert — error — `GlassAlert` ✓
 - [ ] Alert z akcją (przycisk)
-- [ ] Alert — dismissible (X)
+- [x] Alert — dismissible (X) — `GlassAlert onClose` ✓
 - [ ] Alert — inline (w formularzu)
 - [ ] Toast — success
 - [ ] Toast — error
@@ -368,32 +368,32 @@
 - [ ] Toast — loading
 - [ ] Toast stack (kolejka)
 - [ ] Toast z akcją (undo)
-- [ ] Notification badge (liczba)
-- [ ] Notification dot
+- [x] Notification badge (liczba) — `GlassBadge` ✓
+- [x] Notification dot — `GlassBadge dot` ✓
 - [ ] Inline validation (pod polem)
 - [ ] Form error summary (lista błędów)
-- [ ] Empty state — ogólny
-- [ ] Empty state — brak wyników (search)
-- [ ] Empty state — brak danych (tabela)
-- [ ] Empty state — z CTA
+- [x] Empty state — ogólny — `GlassEmpty` ✓
+- [x] Empty state — brak wyników (search) — `GlassEmpty` ✓
+- [x] Empty state — brak danych (tabela) — `GlassEmpty` ✓
+- [x] Empty state — z CTA — `GlassEmpty action` ✓
 - [ ] Error page — 404
 - [ ] Error page — 500
 - [ ] Error page — brak dostępu (403)
 - [ ] Success page
-- [ ] Loading overlay (full-screen)
-- [ ] Skeleton — tekst linia
-- [ ] Skeleton — akapit
-- [ ] Skeleton — karta
-- [ ] Skeleton — tabela
-- [ ] Skeleton — avatar
-- [ ] Skeleton — obraz
-- [ ] Skeleton — list item
-- [ ] Spinner — kółkowy
-- [ ] Spinner — linear
-- [ ] Spinner — dots (3 punkty)
-- [ ] Shimmer / pulse efekt
+- [x] Loading overlay (full-screen) — `GlassLoadingOverlay` ✓
+- [x] Skeleton — tekst linia — `GlassSkeletonText` ✓
+- [x] Skeleton — akapit — `GlassSkeletonText` ✓
+- [x] Skeleton — karta — `GlassSkeletonCard` ✓
+- [x] Skeleton — tabela — `GlassSkeletonTable` ✓
+- [x] Skeleton — avatar — `GlassSkeletonAvatar` ✓
+- [x] Skeleton — obraz — `GlassSkeletonImage` ✓
+- [x] Skeleton — list item — `GlassSkeletonListItem` ✓
+- [x] Spinner — kółkowy — `GlassSpinner` ✓
+- [x] Spinner — linear — `GlassSpinnerBar` ✓
+- [x] Spinner — dots (3 punkty) — `GlassSpinnerDots` ✓
+- [x] Shimmer / pulse efekt — `nb-shimmer` ✓
 - [x] Progress bar (determinate) — `GlassProgress` ✓
-- [ ] Progress bar (indeterminate)
+- [x] Progress bar (indeterminate) — `GlassSpinnerBar` ✓
 - [ ] Progress steps (etapy)
 - [ ] Upload progress
 
@@ -425,8 +425,8 @@
 - [ ] Badge — liczba
 - [ ] Badge — nowy/beta
 - [ ] Badge — premium
-- [ ] Chip / tag
-- [ ] Chip removable
+- [x] Chip / tag — `GlassChip` ✓
+- [x] Chip removable — `GlassChip onRemove` ✓
 - [ ] Tag cloud
 - [ ] Timeline (pionowa)
 - [ ] Timeline (pozioma)
@@ -494,33 +494,33 @@
 - [ ] Audio player
 - [ ] Waveform visualizer
 - [ ] Document preview (PDF icon + nazwa)
-- [ ] Avatar — inicjały
+- [x] Avatar — inicjały — `GlassAvatar` ✓
 - [ ] Avatar — zdjęcie
-- [ ] Avatar — z fallbackiem
-- [ ] Avatar group (stos)
-- [ ] Avatar z badge statusu
-- [ ] Avatar z tooltipem
+- [x] Avatar — z fallbackiem — `GlassAvatar` ✓
+- [x] Avatar group (stos) — `GlassAvatarGroup` ✓
+- [x] Avatar z badge statusu — `GlassAvatar status` ✓
+- [x] Avatar z tooltipem — `GlassAvatar + GlassTooltip` ✓
 - [ ] Logo display (marka)
 - [ ] Brand asset showcase page
 
 ## 17 · Stany Ładowania
-- [ ] Spinner okrągły (SM)
-- [ ] Spinner okrągły (MD)
-- [ ] Spinner okrągły (LG)
-- [ ] Spinner liniowy (top loader)
-- [ ] Dots bouncing
+- [x] Spinner okrągły (SM) — `GlassSpinner sm` ✓
+- [x] Spinner okrągły (MD) — `GlassSpinner md` ✓
+- [x] Spinner okrągły (LG) — `GlassSpinner lg` ✓
+- [x] Spinner liniowy (top loader) — `GlassSpinnerBar top` ✓
+- [x] Dots bouncing — `GlassSpinnerDots` ✓
 - [ ] Dots pulsing
-- [ ] Skeleton text (1 linia)
-- [ ] Skeleton text (3 linie)
-- [ ] Skeleton card
-- [ ] Skeleton avatar + tekst
-- [ ] Skeleton tabela
-- [ ] Skeleton form
-- [ ] Skeleton list
-- [ ] Shimmer overlay
+- [x] Skeleton text (1 linia) — `GlassSkeletonText lines=1` ✓
+- [x] Skeleton text (3 linie) — `GlassSkeletonText lines=3` ✓
+- [x] Skeleton card — `GlassSkeletonCard` ✓
+- [x] Skeleton avatar + tekst — `GlassSkeletonListItem` ✓
+- [x] Skeleton tabela — `GlassSkeletonTable` ✓
+- [x] Skeleton form — `GlassSkeletonForm` ✓
+- [x] Skeleton list — `GlassSkeletonListItem` ✓
+- [x] Shimmer overlay — `nb-shimmer` ✓
 - [ ] Blur placeholder (image)
-- [ ] Progress bar strony (top)
-- [ ] Loading overlay (modal z spinnerem)
+- [x] Progress bar strony (top) — `GlassSpinnerBar top` ✓
+- [x] Loading overlay (modal z spinnerem) — `GlassLoadingOverlay` ✓
 - [ ] Lazy reveal (fade in on load)
 - [ ] Suspense fallback
 
@@ -862,17 +862,17 @@
 | Kształty & Dekoracje | 0 | 24 |
 | Tła & Wzory | 0 | 20 |
 | Layout | 0 | 20 |
-| Nawigacja | 1 | 30 |
-| Przyciski & Akcje | 4 | 26 |
-| Formularze | 1 | 55 |
-| Karty & Kontenery | 2 | 32 |
-| Nakładki | 1 | 26 |
-| Feedback & Stany | 1 | 42 |
-| Wyświetlanie Danych | 2 | 48 |
-| Wizualizacja Danych | 1 | 31 |
-| Media & Zasoby | 0 | 26 |
-| Stany Ładowania | 0 | 19 |
-| Marketing & Landing | 0 | 40 |
+| Nawigacja | 7 | 30 |
+| Przyciski & Akcje | 10 | 26 |
+| Formularze | 1 | 60 |
+| Karty & Kontenery | 11 | 32 |
+| Nakładki | 11 | 26 |
+| Feedback & Stany | 25 | 42 |
+| Wyświetlanie Danych | 4 | 44 |
+| Wizualizacja Danych | 1 | 30 |
+| Media & Zasoby | 5 | 26 |
+| Stany Ładowania | 15 | 19 |
+| Marketing & Landing | 0 | 42 |
 | Dashboard & Admin | 0 | 27 |
 | E-commerce | 0 | 37 |
 | Autentykacja | 0 | 20 |
@@ -885,4 +885,6 @@
 | Utilities & Misc | 0 | 25 |
 | Tła Profilowe & Wzory | 1 | 10 |
 | Brandbook & Styleguide | 0 | 20 |
-| **RAZEM** | **14** | **811** |
+| **RAZEM** | **91** | **783** |
+
+**Postęp: 11.6%**

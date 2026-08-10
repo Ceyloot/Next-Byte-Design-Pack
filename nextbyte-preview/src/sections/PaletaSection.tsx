@@ -21,8 +21,8 @@ function ColorSwatch({ name, tick }: { name: string; tick: number }) {
   void tick
   const val = readVar(name)
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-card/60 p-2">
-      <div className="h-8 w-8 shrink-0 rounded-lg border border-border/30" style={{ background: `hsl(${val})` }} />
+    <div className="flex items-center gap-2 rounded-nb border border-border bg-card/60 p-2">
+      <div className="h-8 w-8 shrink-0 rounded-nb-sm border border-border/30" style={{ background: `hsl(${val})` }} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-mono text-[10px] font-semibold text-card-foreground">{name}</p>
         <p className="font-mono text-[9px] text-muted-foreground">{val || '—'}</p>

@@ -54,7 +54,7 @@ export type Elewacja = keyof typeof ELEWACJA;
 export type Intencja = keyof typeof INTENCJA;
 
 /* ── PROMIENIE — jedna decyzja na poziom zagnieżdżenia ────────────────── */
-const PROMIEN = { kafelek: 'rounded-2xl', wiersz: 'rounded-xl', chip: 'rounded-xl', pigulka: 'rounded-full' } as const;
+const PROMIEN = { kafelek: 'rounded-nb', wiersz: 'rounded-nb', chip: 'rounded-nb', pigulka: 'rounded-full' } as const;
 
 /* ─────────────────────────────────────────────────────────────────────── */
 

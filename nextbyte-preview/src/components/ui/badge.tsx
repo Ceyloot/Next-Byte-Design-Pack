@@ -46,7 +46,7 @@ export function Badge({
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full border font-medium',
         size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs',
-        isGlass ? 'nb-szklo nb-szklo-plynne' : '',
+        isGlass ? 'nb-szklo' : '',
         isGlass ? intentGlass[intent] : intentNormal[intent],
         className,
       )}

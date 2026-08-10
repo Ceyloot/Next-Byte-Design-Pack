@@ -44,7 +44,7 @@ export function GlassBadge({
   return (
     <span
       className={cn(
-        isGlass ? 'nb-szklo nb-szklo-plynne' : intentNormal[intent],
+        isGlass ? 'nb-szklo' : intentNormal[intent],
         isGlass && intentGlass[intent],
         'inline-flex items-center gap-1.5 rounded-full border font-medium',
         size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs',

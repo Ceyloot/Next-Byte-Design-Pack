@@ -5,7 +5,7 @@ import { GlassModal, GlassButton, GlassInput, GlassSearch, GlassBadge, GlassStat
 import { toast } from '@/components/ui/toaster'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/40">{children}</p>
+  return <p className="nb-etykieta mb-3">{children}</p>
 }
 
 export function NakladkiSection() {

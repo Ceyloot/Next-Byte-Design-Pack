@@ -26,7 +26,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-input px-3",
+      "flex w-full items-center justify-between gap-2 rounded-nb border border-border bg-input px-3",
       "text-foreground placeholder:text-muted-foreground",
       "transition-colors duration-200 hover:border-border/70",
       "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
@@ -34,7 +34,7 @@ const SelectTrigger = React.forwardRef<
       "[&>span]:line-clamp-1",
       error && "border-destructive/50 hover:border-destructive/70 focus:ring-destructive/60",
       SIZE_H[triggerSize],
-      isGlass && 'nb-szklo nb-szklo-plynne',
+      isGlass && 'nb-szklo',
       className,
     )}
     {...props}
@@ -89,7 +89,7 @@ const SelectContent = React.forwardRef<
       ref={ref}
       className={cn(
         "relative z-50 max-h-96 min-w-[8rem] overflow-hidden",
-        "rounded-xl border border-border bg-popover text-popover-foreground",
+        "rounded-nb border border-border bg-popover text-popover-foreground",
         "shadow-[0_8px_24px_-12px_rgb(0_0_0/0.28),0_2px_4px_0_rgb(0_0_0/0.06)]",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -139,7 +139,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm",
+      "relative flex w-full cursor-default select-none items-center rounded-nb-sm py-1.5 pl-8 pr-2 text-sm",
       "text-popover-foreground outline-none",
       "focus:bg-accent focus:text-accent-foreground",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from '@/components/ui/toaster'
 import { NbTabs } from '@/components/ui/NbTabs'
-import { Layers, Sparkles, LayoutGrid, Navigation, PanelTop, Palette, BarChart2 } from 'lucide-react'
+import { Layers, Sparkles, LayoutGrid, Navigation, PanelTop, Palette, BarChart2, Loader } from 'lucide-react'
 import { GlassProvider, useGlass } from '@/lib/glass-context'
+import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
+import { AppBackground, BgToggle, BG_OPTIONS, type BgKey } from '@/components/AppBackground'
 import { AkcjeSection }    from '@/sections/AkcjeSection'
 import { FormularzeSection } from '@/sections/FormularzeSection'
 import { KartySection }    from '@/sections/KartySection'
@@ -10,6 +12,7 @@ import { NawigacjaSection } from '@/sections/NawigacjaSection'
 import { NakladkiSection }  from '@/sections/NakladkiSection'
 import { PaletaSection }    from '@/sections/PaletaSection'
 import { DaneSection }      from '@/sections/DaneSection'
+import { StanySection }     from '@/sections/StanySection'
 import { cn } from '@/lib/utils'
 
 // ── Motywy ─────────────────────────────────────────────────────────
@@ -41,6 +44,7 @@ const TABS = [
   { key: 'nawigacja',  label: 'Nawigacja',  icon: <Navigation className="h-3.5 w-3.5" /> },
   { key: 'nakładki',   label: 'Nakładki',   icon: <PanelTop   className="h-3.5 w-3.5" /> },
   { key: 'dane',       label: 'Dane',       icon: <BarChart2  className="h-3.5 w-3.5" /> },
+  { key: 'stany',      label: 'Stany',      icon: <Loader     className="h-3.5 w-3.5" /> },
   { key: 'paleta',     label: 'Paleta',     icon: <Palette    className="h-3.5 w-3.5" /> },
 ] as const
 
@@ -66,11 +70,42 @@ function GlassToggle() {
   )
 }
 
+// ── Przełącznik zasięgu refrakcji ─────────────────────────────────
+function RefrakcjaToggle({ wszedzie, onToggle }: { wszedzie: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      title="Zasięg soczewki na krawędziach"
+      className={cn(
+        'shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-all duration-200',
+        wszedzie
+          ? 'border-amber-400/60 bg-amber-950/70 text-amber-300'
+          : 'border-border bg-card text-foreground/60 hover:text-foreground',
+      )}
+    >
+      <span className={cn('h-1.5 w-1.5 rounded-full', wszedzie ? 'bg-amber-400' : 'bg-foreground/30')} />
+      {wszedzie ? 'Soczewka: wszędzie' : 'Soczewka: chrome'}
+    </button>
+  )
+}
+
 // ── Główna treść (wewnątrz GlassProvider) ─────────────────────────
 function AppInner() {
+  const { isGlass } = useGlass()
   const [activeTheme, setActiveTheme] = useState<ThemeKey>(null)
   const [activeTab,   setActiveTab]   = useState<TabKey>('karty')
-  const [bgVisible,   setBgVisible]   = useState(true)
+  const [bgKey,       setBgKey]       = useState<BgKey>('nextbyte')
+  const [lensWszedzie, setLensWszedzie] = useState(true)
+
+  /* Klasa na <html> steruje zasięgiem soczewki */
+  useEffect(() => {
+    document.documentElement.classList.toggle('nb-refrakcja-chrome', !lensWszedzie)
+  }, [lensWszedzie])
+
+  const cycleBg = () => {
+    const idx = BG_OPTIONS.findIndex(b => b.key === bgKey)
+    setBgKey(BG_OPTIONS[(idx + 1) % BG_OPTIONS.length].key)
+  }
 
   useEffect(() => {
     if (activeTheme === null) document.documentElement.removeAttribute('data-theme')
@@ -84,31 +119,21 @@ function AppInner() {
     nawigacja:  <NawigacjaSection />,
     nakładki:   <NakladkiSection />,
     dane:       <DaneSection />,
+    stany:      <StanySection />,
     paleta:     <PaletaSection />,
   }
 
   return (
     <>
-      {/* Tło — fixed, nie scrolluje, backdrop-filter działa poprawnie */}
-      <div
-        aria-hidden
-        className={cn(
-          'nb-app-bg pointer-events-none fixed inset-0 transition-opacity duration-500',
-          bgVisible ? 'opacity-100' : 'opacity-0',
-        )}
-        style={{ zIndex: 0 }}
-      />
+      {/* Filtry refrakcji — montowane WYŁĄCZNIE w trybie glass.
+          Przy wyłączonym szkle mapa 16 KB w ogóle nie trafia do DOM. */}
+      {isGlass && <NbGlassFilters />}
 
-      {/* Toggle tła */}
-      <button
-        onClick={() => setBgVisible((v) => !v)}
-        className={cn(
-          'fixed right-4 top-4 z-[9999] flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-lg backdrop-blur-md transition-all duration-200',
-          bgVisible ? 'border-cyan-400/60 bg-cyan-950/80 text-cyan-300' : 'border-border bg-card/80 text-muted-foreground hover:text-foreground',
-        )}
-      >
-        {bgVisible ? '🌌' : '⬜'} Tło
-      </button>
+      {/* Tło — fixed, nie scrolluje, backdrop-filter działa poprawnie */}
+      <AppBackground bgKey={bgKey} />
+
+      {/* Przycisk cyklowania tła */}
+      <BgToggle bgKey={bgKey} onCycle={cycleBg} />
 
       <div className="relative min-h-screen text-foreground font-sans" style={{ zIndex: 1 }}>
 
@@ -122,6 +147,9 @@ function AppInner() {
                 <Sparkles className="h-4 w-4 text-primary" />NB
               </span>
               <GlassToggle />
+              {isGlass && (
+                <RefrakcjaToggle wszedzie={lensWszedzie} onToggle={() => setLensWszedzie(v => !v)} />
+              )}
               <div className="h-4 w-px bg-border shrink-0" />
               <div className="flex items-center gap-1.5 min-w-0">
                 {THEMES.map((t) => {
@@ -131,7 +159,7 @@ function AppInner() {
                       key={String(t.key)}
                       onClick={() => setActiveTheme(t.key)}
                       className={cn(
-                        'shrink-0 rounded-lg border px-2 py-1 text-[10px] font-semibold transition-all duration-150 whitespace-nowrap',
+                        'shrink-0 rounded-nb-sm border px-2 py-1 text-[10px] font-semibold transition-all duration-150 whitespace-nowrap',
                         isActive
                           ? 'border-primary/60 bg-primary/10 text-primary'
                           : 'border-border bg-card text-foreground/60 hover:border-primary/30 hover:text-foreground',

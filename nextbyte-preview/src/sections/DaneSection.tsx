@@ -3,7 +3,7 @@ import { RefreshCw, Database, HardDrive, Users, Zap, FileStack, Table2, TicketCh
 import { GlassCard, GlassPanel, GlassBadge, GlassButton, GlassRing, GlassProgress } from '@/components/glass'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/40">{children}</p>
+  return <p className="nb-etykieta mb-3">{children}</p>
 }
 
 const PLATFORM_STATS = [

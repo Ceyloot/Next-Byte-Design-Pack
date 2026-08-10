@@ -24,6 +24,11 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        // Skala proporcjonalna do roli
+        'nb-xs': 'var(--r-xs)',   //  7px  badge, chip, tag
+        'nb-sm': 'var(--r-sm)',   // 11px  przycisk, input, kontrolek
+        'nb':    'var(--r-md)',   // 16px  karta, panel, wiersz listy
+        'nb-lg': 'var(--r-lg)',   // 22px  modal, szuflada, navbar
       },
       fontFamily: {
         sans: ['var(--font-body)', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],

@@ -16,8 +16,8 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex items-center gap-0.5 rounded-[1.75rem] border border-border bg-muted/40 p-1",
-      isGlass && 'nb-szklo nb-szklo-plynne',
+      "inline-flex items-center gap-0.5 rounded-nb border border-border bg-muted/40 p-1",
+      isGlass && 'nb-szklo',
       className,
     )}
     {...props}
@@ -34,7 +34,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5",
+      "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-nb-sm px-3 py-1.5",
       "text-sm font-medium text-muted-foreground",
       "transition-all duration-150",
       // aktywna zakładka

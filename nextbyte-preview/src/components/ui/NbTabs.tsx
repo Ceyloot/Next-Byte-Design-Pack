@@ -75,8 +75,8 @@ export function NbTabs({ tabs, defaultTab, onChange, className }: NbTabsProps) {
       ref={containerRef}
       role="tablist"
       className={cn(
-        'relative flex flex-wrap items-center gap-0.5 rounded-[1.75rem] border p-1',
-        isGlass ? 'nb-szklo nb-szklo-plynne' : 'border-border bg-muted/20',
+        'relative flex flex-wrap items-center gap-0.5 rounded-nb border p-1',
+        isGlass ? 'nb-szklo' : 'border-border bg-muted/20',
         className,
       )}
     >
@@ -93,8 +93,9 @@ export function NbTabs({ tabs, defaultTab, onChange, className }: NbTabsProps) {
             <span className="absolute inset-[1px] rounded-full nb-pigulka-szklo" />
           </span>
         ) : (
-          /* Zwykłe wypełnienie bez animacji */
-          <span className="absolute inset-0 rounded-full bg-background border border-border shadow-sm" />
+          /* Aktywna zakładka — realny błękit marki, nie „prawie-tło z obwódką".
+             Cień w primary daje delikatną poświatę pod pigułką. */
+          <span className="absolute inset-0 rounded-full bg-primary shadow-[0_1px_0_0_hsl(210_40%_100%/.2)_inset,0_6px_16px_-6px_hsl(var(--primary)/.5)]" />
         )}
       </span>
 
@@ -116,7 +117,7 @@ export function NbTabs({ tabs, defaultTab, onChange, className }: NbTabsProps) {
               'justify-center gap-1.5 whitespace-nowrap rounded-full px-3 sm:px-5 py-1.5',
               'text-xs sm:text-sm font-medium transition-colors duration-200',
               isActive
-                ? 'text-foreground'
+                ? (isGlass ? 'text-foreground' : 'text-primary-foreground')
                 : 'text-foreground/65 hover:text-foreground hover:bg-foreground/5',
             )}
           >

@@ -1,23 +1,18 @@
 import React from 'react'
 import { BarChart3, Users, Activity, Shield, Zap, Layers, ArrowRight, Sparkles } from 'lucide-react'
 import { GlassCard, GlassStat, GlassPanel, GlassBadge, GlassButton, GlassModelSearch } from '@/components/glass'
-import { useGlass } from '@/lib/glass-context'
 import { cn } from '@/lib/utils'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/40">{children}</p>
+  return <p className="nb-etykieta mb-3">{children}</p>
 }
 
 export function KartySection() {
-  const { isGlass } = useGlass()
-  /* W trybie glass inner panele NIE dostają nb-szklo — to tworzy brzydkie zagnieżdżone kontury.
-     Zamiast tego: cienka półprzezroczysta ramka + bardzo lekkie tło. */
-  const panel  = isGlass
-    ? 'rounded-xl nb-szklo nb-szklo-plynne p-4'
-    : 'rounded-xl border border-border bg-muted/30 p-4'
-  const iconBox = isGlass
-    ? 'rounded-lg nb-szklo nb-szklo-plynne p-1.5'
-    : 'rounded-lg border border-border bg-card p-1.5'
+  /* Jeden wzór dla obu trybów: nb-wglobienie (panel) i nb-wglobienie-gnizado
+     (mniejsza rzecz jak gniazdo ikony). Oparte na alfie foreground, więc
+     wygląda identycznie na glass i na nb-tafla — koniec z rozjazdem. */
+  const panel   = 'rounded-nb-sm nb-wglobienie p-4'
+  const iconBox = 'rounded-nb-xs nb-wglobienie-gnizado p-1.5'
 
   return (
     <div className="space-y-10">
@@ -28,50 +23,60 @@ export function KartySection() {
         <SectionLabel>Warianty zawartości</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
-          {/* Karta informacyjna */}
-          <GlassCard className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className={cn(iconBox, 'text-primary')}><BarChart3 className="h-4 w-4" /></span>
-              <p className="text-sm font-semibold text-foreground">Analityka</p>
+          {/* Wariant A — liczba prowadzi, ikona schodzi do roli podpisu.
+              Hierarchia niesiona rozmiarem, nie ozdobnikiem. */}
+          <GlassCard className="flex flex-col justify-between gap-5">
+            <div className="space-y-1">
+              <p className="text-3xl font-semibold tracking-tight text-foreground nb-liczby">2,41 M</p>
+              <p className="text-xs text-foreground/50">tokenów przetworzonych w tym miesiącu</p>
             </div>
-            <p className="text-xs text-foreground/60">Monitoruj wyniki w czasie rzeczywistym. Szczegółowe raporty i wizualizacje danych.</p>
-            <div className="flex items-center gap-2 text-xs font-medium text-primary cursor-pointer">
-              Szczegóły <ArrowRight className="h-3 w-3" />
+            <div className="flex items-center justify-between border-t border-foreground/[0.08] pt-3">
+              <span className="flex items-center gap-1.5 text-xs text-foreground/45">
+                <BarChart3 className="h-3.5 w-3.5" />Analityka
+              </span>
+              <span className="flex cursor-pointer items-center gap-1 text-xs font-medium text-primary">
+                Szczegóły <ArrowRight className="h-3 w-3" />
+              </span>
             </div>
           </GlassCard>
 
-          {/* Karta statusu */}
-          <GlassCard className="space-y-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <span className={cn(iconBox, 'text-emerald-400')}><Activity className="h-4 w-4" /></span>
-                <p className="text-sm font-semibold text-foreground">Status systemu</p>
-              </div>
-              <GlassBadge intent="success" dot size="sm">OK</GlassBadge>
+          {/* Wariant B — lista danych bez zagnieżdżonego pudełka.
+              Rytm buduje hairline między wierszami. */}
+          <GlassCard className="space-y-3.5">
+            <div className="flex items-baseline justify-between">
+              <p className="text-sm font-semibold text-foreground">Status systemu</p>
+              <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />operacyjny
+              </span>
             </div>
-            <div className={cn(panel, 'space-y-2')}>
-              {['API Gateway', 'Model Router', 'Vector DB'].map((s) => (
-                <div key={s} className="flex items-center justify-between text-xs">
+            <div className="divide-y divide-foreground/[0.07]">
+              {[['API Gateway', '99,98%'], ['Model Router', '99,95%'], ['Vector DB', '99,99%']].map(([s, v]) => (
+                <div key={s} className="flex items-center justify-between py-2 text-xs first:pt-0 last:pb-0">
                   <span className="text-foreground/60">{s}</span>
-                  <span className="text-emerald-400 font-medium">99.9%</span>
+                  <span className="font-medium text-foreground/85 nb-liczby">{v}</span>
                 </div>
               ))}
             </div>
           </GlassCard>
 
-          {/* Karta bezpieczeństwa */}
-          <GlassCard className="space-y-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <span className={cn(iconBox, 'text-red-400')}><Shield className="h-4 w-4" /></span>
-                <p className="text-sm font-semibold text-foreground">Bezpieczeństwo</p>
-              </div>
-              <GlassBadge intent="danger" dot size="sm">3 alerty</GlassBadge>
+          {/* Wariant C — pasek istotności zamiast badge'a w rogu.
+              Stan czyta się z formy, nie tylko z koloru tekstu. */}
+          <GlassCard className="space-y-3.5">
+            <div className="flex items-baseline justify-between">
+              <p className="text-sm font-semibold text-foreground">Bezpieczeństwo</p>
+              <span className="text-xs text-foreground/45 nb-liczby">3 zdarzenia</span>
             </div>
-            <div className={cn(panel, 'space-y-1.5')}>
-              <div className="text-xs text-red-400 font-medium">Nieautoryzowany dostęp</div>
-              <div className="text-xs text-amber-400 font-medium">Podejrzane logowania</div>
-              <div className="text-xs text-foreground/50">Sprawdzenie certyfikatów</div>
+            <div className="space-y-2">
+              {[
+                ['Nieautoryzowany dostęp',   'bg-destructive',   'text-foreground/85'],
+                ['Podejrzane logowania',     'bg-primary',       'text-foreground/85'],
+                ['Sprawdzenie certyfikatów', 'bg-foreground/25', 'text-foreground/50'],
+              ].map(([t, bar, tone]) => (
+                <div key={t} className="flex items-stretch gap-2.5">
+                  <span className={cn('w-0.5 shrink-0 rounded-full', bar)} />
+                  <span className={cn('py-0.5 text-xs', tone)}>{t}</span>
+                </div>
+              ))}
             </div>
           </GlassCard>
         </div>

@@ -35,9 +35,9 @@ export function GlassInput({
       <input
         className={cn(
           isGlass
-            ? 'nb-szklo nb-szklo-plynne bg-transparent'
+            ? 'nb-szklo bg-transparent'
             : 'border border-border bg-input',
-          'w-full rounded-xl outline-none',
+          'w-full rounded-nb outline-none',
           'text-foreground placeholder:text-foreground/40',
           'transition-[border-color,box-shadow] duration-200',
           'focus:border-primary/50 focus:ring-2 focus:ring-primary/20',
