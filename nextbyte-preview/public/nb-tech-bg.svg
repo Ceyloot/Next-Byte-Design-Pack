@@ -1,223 +1,116 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
   <defs>
-    <radialGradient id="sky" cx="50%" cy="42%" r="60%">
-      <stop offset="0%"   stop-color="#0a1628"/>
-      <stop offset="100%" stop-color="#020509"/>
+
+    <!-- Noise grain -->
+    <filter id="grain" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" seed="8" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="grey"/>
+      <feBlend in="SourceGraphic" in2="grey" mode="overlay" result="blend"/>
+      <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+    </filter>
+
+    <!-- Soft blur for blobs -->
+    <filter id="blob-blur-xl" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="90"/>
+    </filter>
+    <filter id="blob-blur-lg" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="70"/>
+    </filter>
+    <filter id="blob-blur-md" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="48"/>
+    </filter>
+
+    <!-- Radial gradient blobs -->
+    <radialGradient id="gBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.90"/>
+      <stop offset="60%"  stop-color="#2563eb" stop-opacity="0.50"/>
+      <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="orb" cx="50%" cy="50%" r="50%">
-      <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
-      <stop offset="20%"  stop-color="#38bdf8" stop-opacity="0.9"/>
-      <stop offset="55%"  stop-color="#0ea5e9" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+
+    <radialGradient id="gViolet" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#a855f7" stop-opacity="0.85"/>
+      <stop offset="55%"  stop-color="#7c3aed" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#6d28d9" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="horizon-halo" cx="50%" cy="0%" r="100%">
-      <stop offset="0%"   stop-color="#0ea5e9" stop-opacity="0.7"/>
-      <stop offset="40%"  stop-color="#7c3aed" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+
+    <radialGradient id="gCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#22d3ee" stop-opacity="0.80"/>
+      <stop offset="55%"  stop-color="#06b6d4" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#0891b2" stop-opacity="0"/>
     </radialGradient>
-    <!-- Fade siatki: jasna przy horyzoncie, ciemna na dole -->
-    <linearGradient id="gfade" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.75"/>
-      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.06"/>
+
+    <radialGradient id="gEmerald" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#34d399" stop-opacity="0.75"/>
+      <stop offset="55%"  stop-color="#10b981" stop-opacity="0.38"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gAmber" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.70"/>
+      <stop offset="55%"  stop-color="#f59e0b" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gRose" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#fb7185" stop-opacity="0.65"/>
+      <stop offset="55%"  stop-color="#f43f5e" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#e11d48" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Vignette overlay -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+      <stop offset="0%"   stop-color="#050510" stop-opacity="0"/>
+      <stop offset="75%"  stop-color="#050510" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#050510" stop-opacity="0.80"/>
+    </radialGradient>
+
+    <!-- Top darken -->
+    <linearGradient id="topFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#050510" stop-opacity="0.60"/>
+      <stop offset="18%"  stop-color="#050510" stop-opacity="0"/>
     </linearGradient>
-    <!-- Fade siatki dla linii poziomych -->
-    <linearGradient id="hfade" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.05"/>
-      <stop offset="20%"  stop-color="#00d4ff" stop-opacity="0.5"/>
-      <stop offset="50%"  stop-color="#00d4ff" stop-opacity="0.7"/>
-      <stop offset="80%"  stop-color="#00d4ff" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.05"/>
+
+    <!-- Bottom darken -->
+    <linearGradient id="bottomFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#050510" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#050510" stop-opacity="0.55"/>
     </linearGradient>
   </defs>
 
-  <!-- Tło -->
-  <rect width="1440" height="900" fill="url(#sky)"/>
+  <!-- ── Base ── -->
+  <rect width="1440" height="900" fill="#050510"/>
 
-  <!-- Subtelna fioletowa poświata z góry -->
-  <ellipse cx="720" cy="200" rx="600" ry="300" fill="#4f46e5" opacity="0.08"/>
-  <!-- Niebieska poświata przy horyzoncie -->
-  <ellipse cx="720" cy="540" rx="700" ry="180" fill="url(#horizon-halo)"/>
+  <!-- ── Color blobs ── -->
 
-  <!-- ══ PERSPEKTYWICZNA SIATKA (synthwave) ══ -->
-  <!-- VP = (720, 540) -->
+  <!-- BLUE — lewy górny narożnik, za kartą Analityka -->
+  <ellipse cx="260" cy="270" rx="420" ry="380" fill="url(#gBlue)" filter="url(#blob-blur-xl)" opacity="0.85"/>
 
-  <!-- Linie POZIOME (równoległe do horyzontu, zbiegające optycznie) -->
-  <rect x="0"  y="543" width="1440" height="1" fill="url(#hfade)" opacity="0.9"/>
-  <rect x="0"  y="554" width="1440" height="1" fill="url(#hfade)" opacity="0.8"/>
-  <rect x="0"  y="568" width="1440" height="1" fill="url(#hfade)" opacity="0.75"/>
-  <rect x="0"  y="587" width="1440" height="1" fill="url(#hfade)" opacity="0.7"/>
-  <rect x="0"  y="612" width="1440" height="1" fill="url(#hfade)" opacity="0.65"/>
-  <rect x="0"  y="644" width="1440" height="1" fill="url(#hfade)" opacity="0.6"/>
-  <rect x="0"  y="686" width="1440" height="1" fill="url(#hfade)" opacity="0.55"/>
-  <rect x="0"  y="736" width="1440" height="1" fill="url(#hfade)" opacity="0.45"/>
-  <rect x="0"  y="794" width="1440" height="1" fill="url(#hfade)" opacity="0.35"/>
-  <rect x="0"  y="860" width="1440" height="1" fill="url(#hfade)" opacity="0.25"/>
+  <!-- VIOLET — środek górny, za Status systemu -->
+  <ellipse cx="820" cy="200" rx="400" ry="340" fill="url(#gViolet)" filter="url(#blob-blur-xl)" opacity="0.80"/>
 
-  <!-- Linie PROMIENIOWE od VP do krawędzi dolnej -->
-  <line x1="720" y1="540" x2="-360"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="-100"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="60"    y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="180"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="280"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="370"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="455"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="535"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="612"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="685"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="720"   y2="900" stroke="url(#gfade)" stroke-width="1.4" opacity="0.7"/>
-  <line x1="720" y1="540" x2="755"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="828"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="905"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="985"   y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="1070"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="1160"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="1260"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="1380"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="1540"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.65"/>
-  <line x1="720" y1="540" x2="1800"  y2="900" stroke="url(#gfade)" stroke-width="1.2" opacity="0.6"/>
+  <!-- CYAN — prawy górny, za Bezpieczeństwo -->
+  <ellipse cx="1280" cy="310" rx="380" ry="320" fill="url(#gCyan)" filter="url(#blob-blur-xl)" opacity="0.78"/>
 
-  <!-- ══ BLASK HORYZONTU ══ -->
-  <rect x="0" y="528" width="1440" height="24" fill="#0ea5e9" opacity="0.18"/>
-  <rect x="0" y="536" width="1440" height="8"  fill="#38bdf8" opacity="0.35"/>
-  <rect x="0" y="539" width="1440" height="3"  fill="white"   opacity="0.12"/>
+  <!-- EMERALD — lewy dolny, za stat cards -->
+  <ellipse cx="280" cy="680" rx="360" ry="300" fill="url(#gEmerald)" filter="url(#blob-blur-lg)" opacity="0.72"/>
 
-  <!-- ══ CENTRALNA KULA ══ -->
-  <!-- Daleka poświata -->
-  <circle cx="720" cy="540" r="180" fill="#0ea5e9" opacity="0.04"/>
-  <circle cx="720" cy="540" r="90"  fill="#0ea5e9" opacity="0.08"/>
-  <circle cx="720" cy="540" r="42"  fill="#0ea5e9" opacity="0.18"/>
-  <!-- Kula właściwa -->
-  <circle cx="720" cy="540" r="18"  fill="url(#orb)"/>
-  <circle cx="714" cy="534" r="5"   fill="white" opacity="0.7"/>
+  <!-- AMBER — prawy dolny, za GlassModelSearch -->
+  <ellipse cx="1150" cy="700" rx="340" ry="280" fill="url(#gAmber)" filter="url(#blob-blur-lg)" opacity="0.68"/>
 
-  <!-- ══ GWIAZDY ══ -->
-  <g fill="white">
-    <circle cx="88"  cy="42"  r="0.9" opacity="0.85"/>
-    <circle cx="162" cy="118" r="0.6" opacity="0.7"/>
-    <circle cx="235" cy="60"  r="1.1" opacity="0.8"/>
-    <circle cx="320" cy="92"  r="0.7" opacity="0.65"/>
-    <circle cx="405" cy="28"  r="0.8" opacity="0.9"/>
-    <circle cx="470" cy="145" r="0.5" opacity="0.7"/>
-    <circle cx="548" cy="72"  r="1.0" opacity="0.85"/>
-    <circle cx="632" cy="38"  r="0.7" opacity="0.7"/>
-    <circle cx="710" cy="100" r="1.2" opacity="0.9"/>
-    <circle cx="780" cy="22"  r="0.6" opacity="0.65"/>
-    <circle cx="852" cy="82"  r="0.8" opacity="0.8"/>
-    <circle cx="928" cy="50"  r="1.0" opacity="0.75"/>
-    <circle cx="1002" cy="130" r="0.7" opacity="0.7"/>
-    <circle cx="1068" cy="32"  r="0.9" opacity="0.85"/>
-    <circle cx="1145" cy="90"  r="1.1" opacity="0.9"/>
-    <circle cx="1218" cy="58"  r="0.6" opacity="0.65"/>
-    <circle cx="1295" cy="115" r="0.8" opacity="0.8"/>
-    <circle cx="1368" cy="40"  r="1.0" opacity="0.75"/>
-    <circle cx="1422" cy="98"  r="0.7" opacity="0.7"/>
-    <circle cx="50"  cy="200" r="0.5" opacity="0.5"/>
-    <circle cx="290" cy="260" r="0.6" opacity="0.55"/>
-    <circle cx="510" cy="185" r="0.7" opacity="0.6"/>
-    <circle cx="730" cy="240" r="0.5" opacity="0.5"/>
-    <circle cx="950" cy="170" r="0.6" opacity="0.55"/>
-    <circle cx="1170" cy="230" r="0.5" opacity="0.5"/>
-    <circle cx="1390" cy="175" r="0.6" opacity="0.55"/>
-    <circle cx="140" cy="340" r="0.4" opacity="0.4"/>
-    <circle cx="420" cy="400" r="0.5" opacity="0.45"/>
-    <circle cx="650" cy="325" r="0.6" opacity="0.5"/>
-    <circle cx="880" cy="385" r="0.4" opacity="0.4"/>
-    <circle cx="1110" cy="310" r="0.5" opacity="0.45"/>
-    <circle cx="1340" cy="370" r="0.4" opacity="0.4"/>
-  </g>
+  <!-- ROSE — środkowy accent, małe -->
+  <ellipse cx="720" cy="560" rx="260" ry="220" fill="url(#gRose)" filter="url(#blob-blur-md)" opacity="0.55"/>
 
-  <!-- ══ SIEĆ NEURONOWA (AI network) ══ -->
-  <!-- Tło połączeń -->
-  <g stroke="#0ea5e9" stroke-width="0.8" opacity="0.2" fill="none">
-    <line x1="185"  y1="115" x2="440"  y2="195"/>
-    <line x1="440"  y1="195" x2="720"  y2="148"/>
-    <line x1="720"  y1="148" x2="985"  y2="205"/>
-    <line x1="985"  y1="205" x2="1255" y2="122"/>
-    <line x1="185"  y1="115" x2="330"  y2="335"/>
-    <line x1="440"  y1="195" x2="555"  y2="375"/>
-    <line x1="720"  y1="148" x2="720"  y2="395"/>
-    <line x1="985"  y1="205" x2="875"  y2="385"/>
-    <line x1="1255" y1="122" x2="1105" y2="355"/>
-    <line x1="330"  y1="335" x2="555"  y2="375"/>
-    <line x1="555"  y1="375" x2="720"  y2="395"/>
-    <line x1="720"  y1="395" x2="875"  y2="385"/>
-    <line x1="875"  y1="385" x2="1105" y2="355"/>
-    <line x1="330"  y1="335" x2="155"  y2="415"/>
-    <line x1="1105" y1="355" x2="1285" y2="425"/>
-    <line x1="155"  y1="415" x2="345"  y2="488"/>
-    <line x1="345"  y1="488" x2="555"  y2="488"/>
-    <line x1="555"  y1="488" x2="720"  y2="508"/>
-    <line x1="720"  y1="508" x2="878"  y2="492"/>
-    <line x1="878"  y1="492" x2="1085" y2="488"/>
-    <line x1="1085" y1="488" x2="1285" y2="425"/>
-  </g>
-  <g stroke="#8b5cf6" stroke-width="0.8" opacity="0.15" fill="none">
-    <line x1="95"   y1="275" x2="330"  y2="335"/>
-    <line x1="330"  y1="335" x2="155"  y2="415"/>
-    <line x1="1345" y1="255" x2="1105" y2="355"/>
-    <line x1="1105" y1="355" x2="1285" y2="425"/>
-    <line x1="440"  y1="195" x2="330"  y2="335"/>
-    <line x1="985"  y1="205" x2="1105" y2="355"/>
-  </g>
-  <!-- Węzły — niebieskie -->
-  <g fill="#0ea5e9">
-    <circle cx="720"  cy="148" r="4.5" opacity="0.9"/>
-    <circle cx="440"  cy="195" r="4"   opacity="0.85"/>
-    <circle cx="985"  cy="205" r="4"   opacity="0.85"/>
-    <circle cx="185"  cy="115" r="3.5" opacity="0.8"/>
-    <circle cx="1255" cy="122" r="3.5" opacity="0.8"/>
-    <circle cx="720"  cy="395" r="4.5" opacity="0.9"/>
-    <circle cx="555"  cy="375" r="3.5" opacity="0.8"/>
-    <circle cx="875"  cy="385" r="3.5" opacity="0.8"/>
-    <circle cx="330"  cy="335" r="3"   opacity="0.75"/>
-    <circle cx="1105" cy="355" r="3"   opacity="0.75"/>
-    <circle cx="720"  cy="508" r="4"   opacity="0.85"/>
-    <circle cx="345"  cy="488" r="3"   opacity="0.7"/>
-    <circle cx="1085" cy="488" r="3"   opacity="0.7"/>
-    <circle cx="155"  cy="415" r="2.5" opacity="0.65"/>
-    <circle cx="1285" cy="425" r="2.5" opacity="0.65"/>
-  </g>
-  <!-- Węzły — fioletowe -->
-  <g fill="#8b5cf6">
-    <circle cx="95"   cy="275" r="3"   opacity="0.8"/>
-    <circle cx="1345" cy="255" r="3"   opacity="0.8"/>
-    <circle cx="555"  cy="488" r="2.5" opacity="0.7"/>
-    <circle cx="878"  cy="492" r="2.5" opacity="0.7"/>
-  </g>
+  <!-- Dodatkowe małe połyski -->
+  <ellipse cx="520" cy="440" rx="180" ry="150" fill="url(#gViolet)" filter="url(#blob-blur-md)" opacity="0.38"/>
+  <ellipse cx="1000" cy="480" rx="190" ry="155" fill="url(#gCyan)"   filter="url(#blob-blur-md)" opacity="0.35"/>
 
-  <!-- ══ ŚLADY OBWODÓW — lewy dół ══ -->
-  <g stroke="#00d4ff" stroke-width="1.2" opacity="0.22" fill="none">
-    <polyline points="0,790 90,790 90,850 175,850"/>
-    <polyline points="0,830 48,830 48,870 130,870 130,900"/>
-    <polyline points="90,790 90,725 175,725 175,682 305,682"/>
-    <rect x="166" y="841" width="18" height="18" rx="3" stroke-width="0.9" opacity="0.5"/>
-    <circle cx="90"  cy="790" r="3" fill="#00d4ff" opacity="0.6"/>
-    <circle cx="90"  cy="850" r="3" fill="#00d4ff" opacity="0.6"/>
-    <circle cx="175" cy="725" r="3" fill="#00d4ff" opacity="0.6"/>
-    <circle cx="305" cy="682" r="3" fill="#00d4ff" opacity="0.6"/>
-  </g>
-  <!-- ══ ŚLADY OBWODÓW — prawy dół ══ -->
-  <g stroke="#a78bfa" stroke-width="1.2" opacity="0.22" fill="none">
-    <polyline points="1440,810 1350,810 1350,748 1265,748"/>
-    <polyline points="1440,855 1398,855 1398,782 1318,782 1318,748"/>
-    <polyline points="1350,748 1350,685 1228,685 1228,645 1108,645"/>
-    <rect x="1257" y="739" width="18" height="18" rx="3" stroke-width="0.9" opacity="0.5"/>
-    <circle cx="1350" cy="810" r="3" fill="#a78bfa" opacity="0.6"/>
-    <circle cx="1350" cy="748" r="3" fill="#a78bfa" opacity="0.6"/>
-    <circle cx="1228" cy="685" r="3" fill="#a78bfa" opacity="0.6"/>
-    <circle cx="1108" cy="645" r="3" fill="#a78bfa" opacity="0.6"/>
-  </g>
+  <!-- ── Vignette i fade'y ── -->
+  <rect width="1440" height="900" fill="url(#vignette)"/>
+  <rect width="1440" height="900" fill="url(#topFade)"/>
+  <rect width="1440" height="900" fill="url(#bottomFade)"/>
 
-  <!-- ══ NAPISY HEX ══ -->
-  <g font-family="monospace" font-size="9" letter-spacing="1.5" fill="#00d4ff" opacity="0.15">
-    <text x="22"   y="610">0x4E42 · NEXT_BYTE · AI_CORE · v2.4</text>
-    <text x="22"   y="628">NEURAL::FABRIC · GPU_ACTIVE · LATENCY_0.4ms</text>
-    <text x="22"   y="882">SYS::GLASS_RENDER · OK · REFRACTION_1.4</text>
-    <text x="1418" y="610" text-anchor="end">0xFF · RENDER · FRAME_01</text>
-    <text x="1418" y="628" text-anchor="end">BLUR_20px · SAT_1.6 · FRESNEL</text>
-    <text x="1418" y="882" text-anchor="end">DISPERSION_7 · GLARE_-45deg</text>
-  </g>
+  <!-- ── Grain overlay ── -->
+  <rect width="1440" height="900" fill="#050510" opacity="0"/>
+  <rect width="1440" height="900" filter="url(#grain)" opacity="0.035" fill="white"/>
 
-  <!-- Finalny ciemny overlay na samej górze (nieznaczny) -->
-  <rect width="1440" height="80" fill="#020509" opacity="0.3"/>
 </svg>

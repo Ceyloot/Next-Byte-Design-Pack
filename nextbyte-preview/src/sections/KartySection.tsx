@@ -10,8 +10,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function KartySection() {
   const { isGlass } = useGlass()
-  const panel  = isGlass ? 'nb-szklo nb-szklo-plynne rounded-2xl p-4' : 'rounded-2xl border border-border bg-muted/30 p-4'
-  const iconBox = isGlass ? 'nb-szklo nb-szklo-plynne rounded-xl p-1.5' : 'rounded-xl border border-border bg-card p-1.5'
+  /* W trybie glass inner panele NIE dostają nb-szklo — to tworzy brzydkie zagnieżdżone kontury.
+     Zamiast tego: cienka półprzezroczysta ramka + bardzo lekkie tło. */
+  const panel  = isGlass
+    ? 'rounded-xl nb-szklo nb-szklo-plynne p-4'
+    : 'rounded-xl border border-border bg-muted/30 p-4'
+  const iconBox = isGlass
+    ? 'rounded-lg nb-szklo nb-szklo-plynne p-1.5'
+    : 'rounded-lg border border-border bg-card p-1.5'
 
   return (
     <div className="space-y-10">

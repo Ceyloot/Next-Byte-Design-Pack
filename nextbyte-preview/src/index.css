@@ -4,10 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Czcionki ─────────────────────────────────────────────── */
+/* ── Czcionki + base reset ─────────────────────────────────── */
 :root {
   --font-heading: 'Space Grotesk';
   --font-body: 'Inter';
+}
+
+html, body {
+  background-color: hsl(var(--background));
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -485,70 +489,62 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    NextByte — Liquid Glass System (nb-szklo)
-   Przepisany z produkcyjnego Studio Zdjęć (nextbyte.space).
-   Sterowany zmiennymi --nb-p1-* ustawionymi na :root.
+   Lekki, CSS-only. Bez SVG displacement (zbyt drogie na 60+ elementach).
+   backdrop-filter: blur + saturate — sprzętowo akcelerowane, jeden pass GPU.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --nb-p1-cien:          0.34;
-  --nb-p1-czas:          0.32;
-  --nb-p1-korpus:        0.55;
-  --nb-p1-lsnienie:      0.07;
-  --nb-p1-nasycenie:     1.6;
-  --nb-p1-obwodka:       0.20;
-  --nb-p1-obwodka-hover: 0.35;
-  --nb-p1-poswiata:      0.3;
-  --nb-p1-refleks:       0.16;
-  --nb-p1-rozmycie:      20;
-  --nb-p1-uniesienie:    1;
+  --nb-blur:       16px;   /* rozmycie tła pod szkłem                */
+  --nb-sat:        1.80;   /* nasycenie kolorów tła                   */
+  --nb-fill:       0.50;   /* krycie tła karty (card / korpus)        */
+  --nb-border:     0.16;   /* opacity białej obwódki                  */
+  --nb-border-h:   0.30;   /* border on hover                         */
+  --nb-shine:      0.08;   /* jasność górnego refleksu                */
+  --nb-shadow:     0.30;   /* cień                                     */
+  --nb-glow:       0.22;   /* poświata primary on hover               */
+  --nb-lift:       1px;    /* uniesienie on hover                     */
+  --nb-speed:      0.28s;  /* transition speed                        */
 }
 
-/* SZKŁO — główny kontener */
+/* ── Tło aplikacji — czyste CSS gradients, zero filter overhead ──────────── */
+.nb-app-bg {
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59,130,246,.26) 0%, transparent 68%),
+    radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139,92,246,.22) 0%, transparent 68%),
+    radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34,211,238,.18) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 44% at 12% 80%, rgba(52,211,153,.16) 0%, transparent 68%),
+    radial-gradient(ellipse 46% 40% at 82% 78%, rgba(251,191,36,.14) 0%, transparent 68%),
+    radial-gradient(ellipse 38% 34% at 48% 54%, rgba(251,113,133,.12) 0%, transparent 68%);
+}
+
+/* Light themes — jasne, subtelne blobs */
+[data-theme="light-apple"]    .nb-app-bg,
+[data-theme="nextbyte-light"] .nb-app-bg,
+[data-theme="future-theme"]   .nb-app-bg {
+  background-image:
+    radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59,130,246,.10) 0%, transparent 68%),
+    radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139,92,246,.08) 0%, transparent 68%),
+    radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34,211,238,.07) 0%, transparent 68%);
+}
+
+/* ── SZKŁO — główny kontener ─────────────────────────────────────────────── */
 .nb-szklo {
   position: relative;
-  isolation: isolate;
-  background:
-    linear-gradient(
-      180deg,
-      hsl(var(--foreground) / calc(var(--nb-p1-lsnienie, 0.07) * 1))   0%,
-      hsl(var(--foreground) / calc(var(--nb-p1-lsnienie, 0.07) * 0.3)) 45%,
-      hsl(var(--primary)    / calc(var(--nb-p1-lsnienie, 0.07) * 0.7)) 100%
-    ),
-    hsl(var(--card) / var(--nb-p1-korpus, 0.55));
-  border: 1px solid hsl(var(--foreground) / var(--nb-p1-obwodka, 0.20));
-  -webkit-backdrop-filter:
-    blur(calc(var(--nb-p1-rozmycie, 20) * 1px))
-    saturate(var(--nb-p1-nasycenie, 1.6));
-  backdrop-filter:
-    blur(calc(var(--nb-p1-rozmycie, 20) * 1px))
-    saturate(var(--nb-p1-nasycenie, 1.6));
+  background: hsl(var(--card) / var(--nb-fill));
+  border: 1px solid hsl(var(--foreground) / var(--nb-border));
+  -webkit-backdrop-filter: blur(var(--nb-blur)) saturate(var(--nb-sat));
+          backdrop-filter: blur(var(--nb-blur)) saturate(var(--nb-sat));
   box-shadow:
-    inset 0  1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.16)),
-    inset 0 -1px 0 0 hsl(var(--primary)    / calc(var(--nb-p1-refleks, 0.16) * 0.5)),
-    0 1px 2px 0       hsl(0 0% 0% / 0.18),
-    0 10px 30px -12px hsl(0 0% 0% / var(--nb-p1-cien, 0.34));
+    inset 0 1px 0 hsl(var(--foreground) / var(--nb-shine)),
+    0 4px 20px -4px hsl(0 0% 0% / var(--nb-shadow));
   transition:
-    box-shadow   calc(var(--nb-p1-czas, 0.32) * 1s) ease,
-    border-color calc(var(--nb-p1-czas, 0.32) * 1s) ease,
-    background   calc(var(--nb-p1-czas, 0.32) * 1s) ease,
-    transform    calc(var(--nb-p1-czas, 0.32) * 1s) ease;
+    border-color var(--nb-speed) ease,
+    box-shadow   var(--nb-speed) ease,
+    transform    var(--nb-speed) ease;
 }
 
-.nb-szklo:hover {
-  border-color: hsl(var(--primary) / var(--nb-p1-obwodka-hover, 0.35));
-  box-shadow:
-    inset 0  1px 0 0 hsl(var(--foreground) / calc(var(--nb-p1-refleks, 0.16) * 1.4)),
-    inset 0 -1px 0 0 hsl(var(--primary)    / calc(var(--nb-p1-refleks, 0.16) * 1.0)),
-    0 1px 2px 0       hsl(0 0% 0% / 0.2),
-    0 14px 38px -12px hsl(0 0% 0% / calc(var(--nb-p1-cien, 0.34) * 1.25)),
-    0 0 0 1px         hsl(var(--primary) / calc(var(--nb-p1-poswiata, 0.3) * 0.5)),
-    0 6px 26px -6px   hsl(var(--primary) / var(--nb-p1-poswiata, 0.3));
-  transform: translateY(calc(var(--nb-p1-uniesienie, 1) * -1px));
-}
-
-.nb-szklo:active  { transform: translateY(0); }
-.nb-szklo:disabled { opacity: .5; transform: none; box-shadow: none; }
-
+/* Górny refleks — cienka linia białego blasku */
 .nb-szklo::before {
   content: '';
   position: absolute;
@@ -556,13 +552,14 @@
   border-radius: inherit;
   pointer-events: none;
   background: linear-gradient(
-    130deg,
-    hsl(var(--foreground) / calc(var(--nb-p1-lsnienie, 0.07) * 2)) 0%,
-    hsl(var(--foreground) / calc(var(--nb-p1-lsnienie, 0.07) * 1)) 18%,
-    transparent 44%
+    160deg,
+    hsl(var(--foreground) / calc(var(--nb-shine) * 1.8)) 0%,
+    hsl(var(--foreground) / calc(var(--nb-shine) * 0.6)) 20%,
+    transparent 45%
   );
 }
 
+/* Shimmer on hover — pojawia się tylko na karcie pod kursorem */
 .nb-szklo::after {
   content: '';
   position: absolute;
@@ -571,53 +568,50 @@
   pointer-events: none;
   opacity: 0;
   background: linear-gradient(
-    105deg,
-    transparent 28%,
-    hsl(var(--foreground) / calc(var(--nb-p1-lsnienie, 0.07) * 2.3)) 46%,
-    hsl(var(--primary)    / calc(var(--nb-p1-lsnienie, 0.07) * 0.9)) 52%,
-    transparent 68%
+    108deg,
+    transparent 30%,
+    hsl(var(--foreground) / calc(var(--nb-shine) * 2.0)) 48%,
+    hsl(var(--primary)    / calc(var(--nb-shine) * 0.8)) 54%,
+    transparent 70%
   );
-  transition: opacity calc(var(--nb-p1-czas, 0.32) * 1s) ease;
+  transition: opacity var(--nb-speed) ease;
+}
+
+.nb-szklo:hover {
+  border-color: hsl(var(--primary) / var(--nb-border-h));
+  box-shadow:
+    inset 0 1px 0 hsl(var(--foreground) / calc(var(--nb-shine) * 1.5)),
+    0 8px 28px -6px hsl(0 0% 0% / calc(var(--nb-shadow) * 1.3)),
+    0 0 0 1px hsl(var(--primary) / calc(var(--nb-glow) * 0.55)),
+    0 0 22px -4px hsl(var(--primary) / var(--nb-glow));
+  transform: translateY(calc(var(--nb-lift) * -1));
 }
 .nb-szklo:hover::after { opacity: 1; }
+.nb-szklo:active        { transform: translateY(0); }
 
-/* SZKŁO PŁYNNE — navbary, panele boczne (cieńsze, bez uniesienia) */
+/* ── SZKŁO PŁYNNE — navbary, toolbary (cieńsze, bez uniesienia) ─────────── */
 .nb-szklo-plynne {
-  background: hsl(var(--card) / calc(var(--nb-p1-korpus, 0.55) * 0.5));
-  -webkit-backdrop-filter:
-    blur(calc(var(--nb-p1-rozmycie, 20) * 2px))
-    saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
-  backdrop-filter:
-    blur(calc(var(--nb-p1-rozmycie, 20) * 2px))
-    saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
-  box-shadow:
-    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.16)),
-    0 8px 32px -8px hsl(0 0% 0% / calc(var(--nb-p1-cien, 0.34) * 0.7));
+  background: hsl(var(--card) / calc(var(--nb-fill) * 0.55));
+  -webkit-backdrop-filter: blur(calc(var(--nb-blur) * 2)) saturate(calc(var(--nb-sat) * 1.05));
+          backdrop-filter: blur(calc(var(--nb-blur) * 2)) saturate(calc(var(--nb-sat) * 1.05));
+  box-shadow: inset 0 1px 0 hsl(var(--foreground) / var(--nb-shine));
 }
-.nb-szklo-plynne:hover {
-  transform: none;
-  box-shadow:
-    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.16)),
-    0 8px 32px -8px hsl(0 0% 0% / calc(var(--nb-p1-cien, 0.34) * 0.7));
-}
+.nb-szklo-plynne:hover { transform: none; }
 
-/* PIGUŁKA — aktywna zakładka */
-@property --nb-gradient-angle {
+/* ── PIGUŁKA — aktywna zakładka ─────────────────────────────────────────── */
+@property --nb-spin {
   syntax: '<angle>';
   initial-value: 0deg;
   inherits: false;
 }
-@keyframes nb-border-spin {
-  from { --nb-gradient-angle: 0deg; }
-  to   { --nb-gradient-angle: 360deg; }
-}
+@keyframes nb-spin { to { --nb-spin: 360deg; } }
 @media (prefers-reduced-motion: no-preference) {
-  .nb-tab-pill-spin { animation: nb-border-spin 3s linear infinite; }
+  .nb-tab-pill-spin { animation: nb-spin 3s linear infinite; }
 }
 
 .nb-pigulka-rant {
   background: conic-gradient(
-    from var(--nb-gradient-angle, 0deg),
+    from var(--nb-spin, 0deg),
     hsl(var(--primary)),
     hsl(var(--primary) / 0.3),
     hsl(var(--primary) / 0.1),
@@ -629,18 +623,13 @@
 .nb-pigulka-szklo {
   background: hsl(var(--card) / 0.82);
   -webkit-backdrop-filter: blur(8px) saturate(1.5);
-  backdrop-filter: blur(8px) saturate(1.5);
+          backdrop-filter: blur(8px) saturate(1.5);
   box-shadow:
-    inset 0  1px 0 0 hsl(var(--foreground) / 0.14),
-    inset 0 -1px 0 0 hsl(var(--primary)    / 0.06);
+    inset 0  1px 0 hsl(var(--foreground) / 0.14),
+    inset 0 -1px 0 hsl(var(--primary)    / 0.06);
 }
 
-/* Stary alias — nb-glass = nb-szklo (backwards compat) */
-.nb-glass { }
-.nb-glass::before { }
-.nb-glass::after  { }
-
 @media (prefers-reduced-motion: reduce) {
-  .nb-szklo, .nb-szklo::before, .nb-szklo::after { transition: none; }
+  .nb-szklo, .nb-szklo::after { transition: none; }
   .nb-szklo:hover { transform: none; }
 }

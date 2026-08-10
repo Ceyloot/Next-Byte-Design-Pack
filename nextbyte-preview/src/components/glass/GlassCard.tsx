@@ -19,6 +19,7 @@ export function GlassCard({
   ...props
 }: GlassCardProps) {
   const { isGlass } = useGlass()
+
   return (
     <div
       className={cn(

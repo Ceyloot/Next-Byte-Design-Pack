@@ -67,8 +67,6 @@ function GlassToggle() {
 }
 
 // ── Główna treść (wewnątrz GlassProvider) ─────────────────────────
-const NB_TECH_BG = `url('/nb-tech-bg.svg')`
-
 function AppInner() {
   const [activeTheme, setActiveTheme] = useState<ThemeKey>(null)
   const [activeTab,   setActiveTab]   = useState<TabKey>('karty')
@@ -78,11 +76,6 @@ function AppInner() {
     if (activeTheme === null) document.documentElement.removeAttribute('data-theme')
     else document.documentElement.setAttribute('data-theme', activeTheme)
   }, [activeTheme])
-
-  useEffect(() => {
-    document.body.classList.add('bg-background')
-    return () => document.body.classList.remove('bg-background')
-  }, [])
 
   const sectionMap: Record<TabKey, React.ReactNode> = {
     karty:      <KartySection />,
@@ -96,14 +89,17 @@ function AppInner() {
 
   return (
     <>
-      {/* Tło NB Tech — poza głównym divem */}
+      {/* Tło — fixed, nie scrolluje, backdrop-filter działa poprawnie */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 transition-opacity duration-500"
-        style={{ zIndex: 0, opacity: bgVisible ? 1 : 0, backgroundImage: NB_TECH_BG, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        className={cn(
+          'nb-app-bg pointer-events-none fixed inset-0 transition-opacity duration-500',
+          bgVisible ? 'opacity-100' : 'opacity-0',
+        )}
+        style={{ zIndex: 0 }}
       />
 
-      {/* Toggle tła — fixed prawy górny róg */}
+      {/* Toggle tła */}
       <button
         onClick={() => setBgVisible((v) => !v)}
         className={cn(
