@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from '@/components/ui/toaster'
 import { NbTabs } from '@/components/ui/NbTabs'
-import { Layers, Sparkles, LayoutGrid, Navigation, PanelTop, Palette, BarChart2, Loader } from 'lucide-react'
+import { Layers, Sparkles, LayoutGrid, Navigation, PanelTop, Palette, BarChart2, Loader, MonitorPlay } from 'lucide-react'
 import { GlassProvider, useGlass } from '@/lib/glass-context'
 import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
 import { AppBackground, BgToggle, BG_OPTIONS, type BgKey } from '@/components/AppBackground'
@@ -13,6 +13,7 @@ import { NakladkiSection }  from '@/sections/NakladkiSection'
 import { PaletaSection }    from '@/sections/PaletaSection'
 import { DaneSection }      from '@/sections/DaneSection'
 import { StanySection }     from '@/sections/StanySection'
+import { PreviewSection }   from '@/sections/PreviewSection'
 import { cn } from '@/lib/utils'
 
 // ── Motywy ─────────────────────────────────────────────────────────
@@ -38,14 +39,15 @@ type ThemeKey = (typeof THEMES)[number]['key']
 
 // ── Zakładki główne ────────────────────────────────────────────────
 const TABS = [
-  { key: 'karty',      label: 'Karty',      icon: <LayoutGrid className="h-3.5 w-3.5" /> },
-  { key: 'akcje',      label: 'Akcje',      icon: <Sparkles   className="h-3.5 w-3.5" /> },
-  { key: 'formularze', label: 'Formularze', icon: <Layers     className="h-3.5 w-3.5" /> },
-  { key: 'nawigacja',  label: 'Nawigacja',  icon: <Navigation className="h-3.5 w-3.5" /> },
-  { key: 'nakładki',   label: 'Nakładki',   icon: <PanelTop   className="h-3.5 w-3.5" /> },
-  { key: 'dane',       label: 'Dane',       icon: <BarChart2  className="h-3.5 w-3.5" /> },
-  { key: 'stany',      label: 'Stany',      icon: <Loader     className="h-3.5 w-3.5" /> },
-  { key: 'paleta',     label: 'Paleta',     icon: <Palette    className="h-3.5 w-3.5" /> },
+  { key: 'preview',    label: 'Preview',    icon: <MonitorPlay className="h-3.5 w-3.5" /> },
+  { key: 'karty',      label: 'Karty',      icon: <LayoutGrid  className="h-3.5 w-3.5" /> },
+  { key: 'akcje',      label: 'Akcje',      icon: <Sparkles    className="h-3.5 w-3.5" /> },
+  { key: 'formularze', label: 'Formularze', icon: <Layers      className="h-3.5 w-3.5" /> },
+  { key: 'nawigacja',  label: 'Nawigacja',  icon: <Navigation  className="h-3.5 w-3.5" /> },
+  { key: 'nakładki',   label: 'Nakładki',   icon: <PanelTop    className="h-3.5 w-3.5" /> },
+  { key: 'dane',       label: 'Dane',       icon: <BarChart2   className="h-3.5 w-3.5" /> },
+  { key: 'stany',      label: 'Stany',      icon: <Loader      className="h-3.5 w-3.5" /> },
+  { key: 'paleta',     label: 'Paleta',     icon: <Palette     className="h-3.5 w-3.5" /> },
 ] as const
 
 type TabKey = (typeof TABS)[number]['key']
@@ -93,7 +95,7 @@ function RefrakcjaToggle({ wszedzie, onToggle }: { wszedzie: boolean; onToggle: 
 function AppInner() {
   const { isGlass } = useGlass()
   const [activeTheme, setActiveTheme] = useState<ThemeKey>(null)
-  const [activeTab,   setActiveTab]   = useState<TabKey>('karty')
+  const [activeTab,   setActiveTab]   = useState<TabKey>('preview')
   const [bgKey,       setBgKey]       = useState<BgKey>('nextbyte')
   const [lensWszedzie, setLensWszedzie] = useState(true)
 
@@ -113,6 +115,7 @@ function AppInner() {
   }, [activeTheme])
 
   const sectionMap: Record<TabKey, React.ReactNode> = {
+    preview:    <PreviewSection />,
     karty:      <KartySection />,
     akcje:      <AkcjeSection />,
     formularze: <FormularzeSection />,
@@ -185,7 +188,10 @@ function AppInner() {
         </header>
 
         {/* ── TREŚĆ ZAKŁADKI ────────────────────────────────────────── */}
-        <main className="mx-auto max-w-screen-xl px-4 py-8">
+        <main className={activeTab === 'preview'
+          ? 'w-full'
+          : 'mx-auto max-w-screen-xl px-4 py-8'
+        }>
           {sectionMap[activeTab]}
         </main>
 
