@@ -5,8 +5,8 @@
       "name": "nextbyte-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "nextbyte-preview"],
-      "port": 5173,
-      "autoPort": true
+      "port": 5190,
+      "autoPort": false
     }
   ]
 }

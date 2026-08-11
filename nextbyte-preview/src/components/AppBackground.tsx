@@ -63,36 +63,29 @@ function GradientBg() {
      4. centralne przyciemnienie do background, żeby środek się wyciszył
    Każda warstwa oddzielnie, żeby dało się dostroić bez ruszania innych. */
 
-/* Skopiowane 1:1 z produkcyjnej strony Tablice_NextByte.
-   Siatka 60×60 px, stroke #70BEFA (błękit marki), stroke-opacity 0.12. */
-const SIATKA_SVG =
-  "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 60 0 L 0 0 0 60' fill='none' stroke='%2370BEFA' stroke-width='1' stroke-opacity='0.12'/%3E%3C/svg%3E\")"
-
 /* Maska „latarnia" — siatka widoczna tylko w środkowych 10%, potem
    plynnie znika do 90%. Dokładnie tak jak w produkcji. */
 const MASKA_LATARNIA = 'radial-gradient(circle, white 10%, transparent 90%)'
 
 function NextByteBg() {
-  /* Tło strony Tablice_NextByte:
-       1. baza #09090b (zinc-950)
-       2. siatka techniczna centralnie zamaskowana
-       3. cztery ROZMYTE „światła" po rogach — okrągłe pudełka z blur 90-110px
-          z radialnym gradientem w środku. To one dają atmosferę.
-       4. centralna winieta ściągająca uwagę do środka. */
   return (
     <>
-      {/* Baza */}
-      <div className="absolute inset-0" style={{ backgroundColor: '#09090b' }} />
+      {/* Baza — używa tokenu motywu, działa w jasnych i ciemnych */}
+      <div className="absolute inset-0" style={{ backgroundColor: 'hsl(var(--background))' }} />
 
-      {/* Siatka */}
-      <div
+      {/* Siatka — inline SVG żeby kolor primary śledził motyw */}
+      <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{
-          backgroundImage: SIATKA_SVG,
-          maskImage: MASKA_LATARNIA,
-          WebkitMaskImage: MASKA_LATARNIA,
-        }}
-      />
+        style={{ maskImage: MASKA_LATARNIA, WebkitMaskImage: MASKA_LATARNIA }}
+        aria-hidden
+      >
+        <defs>
+          <pattern id="nb-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="hsl(var(--primary))" strokeWidth="1" strokeOpacity="0.14" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#nb-grid)" />
+      </svg>
 
       {/* Kontener świateł — overflow-hidden przycina rogi, blur pływa. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -161,9 +154,7 @@ export function BgToggle({ bgKey, onCycle }: BgToggleProps) {
       className={cn(
         'fixed right-4 top-4 z-[9999] flex items-center gap-2 rounded-nb-sm border',
         'px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur-md transition-all duration-200',
-        bgKey !== 'off'
-          ? 'border-white/15 bg-black/45 text-white/75 hover:bg-black/60 hover:text-white'
-          : 'border-border bg-card/80 text-muted-foreground hover:text-foreground',
+        'border-border/60 bg-card/75 text-foreground/55 hover:bg-card/90 hover:text-foreground',
       )}
     >
       <span className="opacity-70">{current.icon}</span>

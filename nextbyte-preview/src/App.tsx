@@ -17,22 +17,25 @@ import { PreviewSection }   from '@/sections/PreviewSection'
 import { cn } from '@/lib/utils'
 
 // ── Motywy ─────────────────────────────────────────────────────────
+// mode: 'dark' | 'light' | 'warm' — przekazywane do iframe previews
 const THEMES = [
-  { key: null,            label: 'Default',       price: 'darmowy',  isDefault: true,  isLight: false },
-  { key: 'dark-theme',    label: 'Ciemny',        price: 'darmowy',  isDefault: false, isLight: false },
-  { key: 'light-apple',   label: 'Jasny Apple',   price: 'darmowy',  isDefault: false, isLight: true  },
-  { key: 'nextbyte-light',label: 'NB Jasny',      price: 'darmowy',  isDefault: false, isLight: true  },
-  { key: 'future-theme',  label: 'Przyszły',      price: 'darmowy',  isDefault: false, isLight: true  },
-  { key: 'lime-green',    label: 'Lime',          price: 'darmowy',  isDefault: false, isLight: false },
-  { key: 'refspace',      label: 'RefSpace',      price: 'darmowy',  isDefault: false, isLight: false },
-  { key: 'sloneczny',     label: 'Słoneczny',     price: 'darmowy',  isDefault: false, isLight: false },
-  { key: 'teczowy',       label: 'Tęczowy',       price: 'darmowy',  isDefault: false, isLight: false },
-  { key: 'aurora',        label: 'Aurora',        price: '150 Byte', isDefault: false, isLight: false },
-  { key: 'fioletowy',     label: 'Fioletowy',     price: '150 Byte', isDefault: false, isLight: false },
-  { key: 'nextbyte-v2',   label: 'NB Lekki',      price: '150 Byte', isDefault: false, isLight: false },
-  { key: 'dragon-red',    label: 'Smoczy',        price: '150 Byte', isDefault: false, isLight: false },
-  { key: 'snowy-white',   label: 'Śnieżny',       price: '150 Byte', isDefault: false, isLight: false },
-  { key: 'luxury',        label: 'Luxury',        price: '500 Byte', isDefault: false, isLight: false },
+  { key: null,            label: 'Default',       price: 'darmowy',  isDefault: true,  isLight: false, mode: 'dark'  as const },
+  { key: 'przyjazny',     label: 'Przyjazny',     price: 'darmowy',  isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'dark-theme',    label: 'Ciemny',        price: 'darmowy',  isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'light-apple',   label: 'Jasny Apple',   price: 'darmowy',  isDefault: false, isLight: true,  mode: 'light' as const },
+  { key: 'nextbyte-light',label: 'NB Jasny',      price: 'darmowy',  isDefault: false, isLight: true,  mode: 'light' as const },
+  { key: 'future-theme',  label: 'Przyszły',      price: 'darmowy',  isDefault: false, isLight: true,  mode: 'light' as const },
+  { key: 'scandinavian',  label: 'Scandi',        price: 'darmowy',  isDefault: false, isLight: true,  mode: 'warm'  as const },
+  { key: 'lime-green',    label: 'Lime',          price: 'darmowy',  isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'refspace',      label: 'RefSpace',      price: 'darmowy',  isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'sloneczny',     label: 'Słoneczny',     price: 'darmowy',  isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'teczowy',       label: 'Tęczowy',       price: 'darmowy',  isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'aurora',        label: 'Aurora',        price: '150 Byte', isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'fioletowy',     label: 'Fioletowy',     price: '150 Byte', isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'nextbyte-v2',   label: 'NB Lekki',      price: '150 Byte', isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'dragon-red',    label: 'Smoczy',        price: '150 Byte', isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'snowy-white',   label: 'Śnieżny',       price: '150 Byte', isDefault: false, isLight: false, mode: 'dark'  as const },
+  { key: 'luxury',        label: 'Luxury',        price: '500 Byte', isDefault: false, isLight: false, mode: 'dark'  as const },
 ] as const
 
 type ThemeKey = (typeof THEMES)[number]['key']

@@ -1,417 +1,370 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React from 'react'
+import { 
+  Grid, Sparkles, MessageSquare, Terminal, Brain, ShieldAlert, 
+  TrendingUp, Camera, Video, Calendar, CheckSquare, FileText, 
+  LayoutGrid, Briefcase, Bell, Settings, Search, Plus, Award, 
+  Image as ImageIcon, FileCode, ChevronRight, Activity, ArrowUpRight,
+  TrendingDown, Download, Filter, MoreHorizontal
+} from 'lucide-react'
 
-/* ─── Injected keyframes & preview-only styles ───────────────────────────── */
-const STYLES = `
-@keyframes nb-scale-x {
-  from { transform: scaleX(0) }
-  to   { transform: scaleX(1) }
-}
-@keyframes nb-fade-up {
-  from { opacity: 0; transform: translateY(8px) }
-  to   { opacity: 1; transform: none }
-}
-@keyframes nb-breathe {
-  0%,100% { opacity:1; transform:scale(1)   }
-  50%     { opacity:.4; transform:scale(.65) }
-}
-@keyframes nb-blink {
-  0%,100% { opacity:1 } 50% { opacity:0 }
-}
+// ── Mock Data ────────────────────────────────────────────────────
+const STATS = [
+  { label: 'Zużycie Tokenów', value: '2,410,320', trend: '+14.2%', isPositive: true, subtext: 'w tym miesiącu' },
+  { label: 'Aktywne Zadania', value: '18', trend: '-2', isPositive: false, subtext: '3 w toku' },
+  { label: 'Wygenerowane Grafiki', value: '4,305', trend: '+8.4%', isPositive: true, subtext: 'w tym tygodniu' },
+  { label: 'Współczynnik Trafności AI', value: '98.9%', trend: '+0.4%', isPositive: true, subtext: 'średnia p99' },
+]
 
-/* stagger */
-.pv-cell { animation: nb-fade-up .4s ease both }
-.pv-cell:nth-child(1){ animation-delay: 20ms }
-.pv-cell:nth-child(2){ animation-delay: 70ms }
-.pv-cell:nth-child(3){ animation-delay:120ms }
-.pv-cell:nth-child(4){ animation-delay:170ms }
-.pv-cell:nth-child(5){ animation-delay:220ms }
-.pv-cell:nth-child(6){ animation-delay:270ms }
-.pv-cell:nth-child(7){ animation-delay:320ms }
-.pv-cell:nth-child(8){ animation-delay:370ms }
-.pv-cell:nth-child(9){ animation-delay:420ms }
+const TRANSACTIONS = [
+  { id: '#04910', task: 'Projekt logo dla NextByte', module: 'Studio Zdjęć', status: 'Sukces', qty: 12, cost: '1,450 Byte' },
+  { id: '#04911', task: 'Analiza rynku i konkurencji', module: 'Chat AI', status: 'Sukces', qty: 20, cost: '820 Byte' },
+  { id: '#04912', task: 'Generowanie video promocyjnego', module: 'Studio Video', status: 'Oczekuje', qty: 1, cost: '5,000 Byte' },
+  { id: '#04913', task: 'Trening modelu na dokumentach', module: 'Pamięć AI', status: 'Błąd', qty: 8, cost: '320 Byte' },
+]
 
-/* bento tile */
-.pv-tile {
-  border-radius: var(--r-md);
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--tafla-1) / .72);
-  backdrop-filter: blur(10px) saturate(1.05);
-  box-shadow: var(--swiatlo-gorne), var(--cien-plaski);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-  height: 100%;
-  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-}
-.pv-tile:hover {
-  border-color: hsl(var(--primary) / .22);
-  box-shadow: var(--swiatlo-gorne), var(--cien-uniesiony), 0 0 0 1px hsl(var(--primary) / .08);
-  transform: translateY(-1px);
-}
+const LIVE_ACTIVITIES = [
+  { title: 'Generowanie obrazu: "mazda miata z popupami..."', time: '5 min temu', type: 'img' },
+  { title: 'Chat AI: "Jakie umiejętności potrzebuje..."', time: '12 min temu', type: 'chat' },
+  { title: 'Edycja dokumentu B2C TikTok', time: '1 godz temu', type: 'doc' },
+]
 
-/* progress bar */
-.pv-bar {
-  transform-origin: left;
-  animation: nb-scale-x 1s cubic-bezier(.16,1,.3,1) var(--delay,.6s) both;
-}
+// Status Badge Component
+function StatusBadge({ status }: { status: string }) {
+  let style = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+  if (status === 'Oczekuje') style = 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+  if (status === 'Błąd') style = 'bg-destructive/10 text-destructive border-destructive/20'
 
-/* status pulse */
-.pv-pulse { animation: nb-breathe 2.2s ease-in-out infinite }
-
-/* toggle thumb */
-.pv-thumb { transition: margin-left .22s cubic-bezier(.34,1.56,.64,1) }
-
-/* cursor blink in "typing" input */
-.pv-cursor { display:inline-block; animation: nb-blink .9s step-end infinite }
-
-/* demo button base */
-.pv-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: 12px; font-weight: 600; letter-spacing: -.01em;
-  border-radius: var(--r-sm);
-  cursor: default; user-select: none;
-  transition: color .14s, background .14s, border-color .14s, box-shadow .14s;
-}
-.pv-btn-primary {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border: 1px solid transparent;
-  padding: 8px 16px;
-  box-shadow: 0 1px 0 0 hsl(210 40% 100% / .12) inset, 0 6px 16px -6px hsl(var(--primary) / .45);
-}
-.pv-btn-primary:hover {
-  box-shadow: 0 1px 0 0 hsl(210 40% 100% / .18) inset, 0 10px 24px -6px hsl(var(--primary) / .55);
-  filter: brightness(1.06);
-}
-.pv-btn-outline {
-  background: transparent;
-  color: hsl(var(--foreground));
-  border: 1px solid hsl(var(--border));
-  padding: 8px 14px;
-}
-.pv-btn-outline:hover {
-  border-color: hsl(var(--primary) / .5);
-  color: hsl(var(--primary));
-  background: hsl(var(--primary) / .04);
-}
-.pv-btn-ghost {
-  background: transparent;
-  color: hsl(var(--muted-foreground));
-  border: 1px solid transparent;
-  padding: 8px 12px;
-}
-.pv-btn-ghost:hover {
-  background: hsl(var(--foreground) / .04);
-  color: hsl(var(--foreground));
-}
-.pv-btn-danger {
-  background: hsl(var(--destructive) / .08);
-  color: hsl(var(--destructive));
-  border: 1px solid hsl(var(--destructive) / .22);
-  padding: 7px 12px;
-  font-size: 11px;
-}
-
-/* demo badge — NOT rounded-full */
-.pv-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 9px;
-  border-radius: var(--r-xs);
-  font-size: 10.5px; font-weight: 700;
-  cursor: default; user-select: none;
-}
-.pv-badge-success { background: rgb(34 197 94 / .09); color: #4ADE80; border: 1px solid rgb(34 197 94 / .18) }
-.pv-badge-primary { background: hsl(var(--primary) / .1); color: hsl(var(--primary)); border: 1px solid hsl(var(--primary) / .22) }
-.pv-badge-warn    { background: rgb(245 158 11 / .09); color: #F59E0B; border: 1px solid rgb(245 158 11 / .2) }
-.pv-badge-muted   { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); border: 1px solid hsl(var(--border)) }
-
-/* demo chip — NOT rounded-full */
-.pv-chip {
-  display: inline-flex; align-items: center;
-  padding: 3px 9px;
-  border-radius: var(--r-xs);
-  font-size: 11px; font-weight: 500;
-  cursor: default; user-select: none;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-  border: 1px solid hsl(var(--border));
-}
-.pv-chip-primary {
-  background: hsl(var(--primary) / .08);
-  color: hsl(var(--primary));
-  border: 1px solid hsl(var(--primary) / .18);
-}
-
-/* demo input */
-.pv-input {
-  width: 100%; padding: 8px 12px;
-  border-radius: var(--r-sm);
-  font-size: 12px;
-  background: hsl(var(--muted));
-  border: 1px solid hsl(var(--border));
-  color: hsl(var(--muted-foreground));
-  outline: none; cursor: default;
-  transition: border-color .15s, box-shadow .15s, background .15s;
-}
-.pv-input-focus {
-  background: hsl(var(--primary) / .04);
-  border-color: hsl(var(--primary) / .55);
-  box-shadow: 0 0 0 3px hsl(var(--primary) / .1);
-  color: hsl(var(--foreground));
-}
-.pv-input::placeholder { color: hsl(var(--muted-foreground) / .5) }
-`
-
-/* ─── Primitive helpers ──────────────────────────────────────────────────── */
-function Tile({ children, style, className = '' }: { children: React.ReactNode; style?: React.CSSProperties; className?: string }) {
-  return <div className={`pv-tile pv-cell ${className}`} style={style}>{children}</div>
-}
-
-function TileName({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-[10px] font-medium mt-auto pt-3 block"
-      style={{ color: 'hsl(var(--muted-foreground) / .35)' }}>
-      {children}
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${style}`}>
+      <span className={`w-1 h-1 rounded-full ${status === 'Sukces' ? 'bg-emerald-500' : status === 'Oczekuje' ? 'bg-amber-500' : 'bg-destructive'}`} />
+      {status}
     </span>
   )
 }
 
-function Progress({ label, pct, delay = '.6s' }: { label: string; pct: number; delay?: string }) {
+// ── Sidebar Item ─────────────────────────────────────────────────
+interface SItemProps {
+  icon: React.ReactNode
+  label: string
+  active?: boolean
+  dot?: boolean
+  count?: number
+}
+
+function SItem({ icon, label, active, dot, count }: SItemProps) {
   return (
-    <div className="w-full">
-      <div className="flex justify-between mb-[5px]">
-        <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>{label}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'hsl(var(--foreground))', fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
-      </div>
-      <div style={{ height: 3, background: 'hsl(var(--muted))', borderRadius: 99, overflow: 'hidden' }}>
-        <div className="pv-bar" style={{ height: '100%', width: `${pct}%`, background: 'hsl(var(--primary))', borderRadius: 99, '--delay': delay } as React.CSSProperties} />
-      </div>
+    <div className={`
+      group flex items-center gap-2.5 px-3 py-1.5 rounded-nb-sm cursor-pointer text-xs transition-all duration-150 relative
+      ${active 
+        ? 'bg-primary/10 text-primary font-medium' 
+        : 'text-foreground/60 hover:text-foreground hover:bg-foreground/[0.03]'}
+    `}>
+      {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-primary rounded-r" />}
+      <span className={`transition-transform duration-150 ${active ? 'scale-105' : 'group-hover:scale-105 opacity-80 group-hover:opacity-100'}`}>
+        {icon}
+      </span>
+      <span className="flex-1 truncate">{label}</span>
+      {dot && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+      {count !== undefined && (
+        <span className="text-[10px] font-mono opacity-50 bg-foreground/5 px-1.5 py-0.5 rounded border border-foreground/[0.03] group-hover:opacity-85 transition-opacity">
+          {count}
+        </span>
+      )}
     </div>
   )
 }
 
-/* ─── Toggle ─────────────────────────────────────────────────────────────── */
-function Toggle({ on }: { on: boolean }) {
+function SLabel({ label }: { label: string }) {
   return (
-    <div style={{
-      width: 42, height: 23, borderRadius: 12, padding: 3, display: 'flex', alignItems: 'center',
-      background: on ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-      border: on ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border))',
-      transition: 'background .2s, border-color .2s', cursor: 'default', flexShrink: 0,
-    }}>
-      <div className="pv-thumb" style={{
-        width: 17, height: 17, borderRadius: '50%',
-        background: on ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground) / .4)',
-        marginLeft: on ? 19 : 0,
-      }} />
+    <div className="text-[9px] font-bold tracking-wider uppercase text-muted-foreground/45 px-3 pt-3.5 pb-1 select-none">
+      {label}
     </div>
   )
 }
 
-/* ─── Code block ─────────────────────────────────────────────────────────── */
-function CodeBlock() {
-  return (
-    <div style={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
-      <div style={{ padding: '10px 16px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F56' }} />
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FEBC2E' }} />
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840' }} />
-        <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: 'monospace', fontWeight: 600, color: 'hsl(var(--muted-foreground))' }}>nb-tokens.css</span>
-      </div>
-      <pre style={{ padding: '16px 18px', fontSize: 11.5, lineHeight: 2.1, fontFamily: "'SF Mono','Consolas','Courier New',monospace", color: 'hsl(var(--muted-foreground) / .55)', margin: 0, overflowX: 'auto' }}>
-        <span style={{ color: 'hsl(var(--muted-foreground) / .28)' }}>/* shape follows function */</span>{'\n'}
-        <span style={{ color: 'hsl(var(--primary) / .65)' }}>--r-xs</span>{': '}<span style={{ color: 'hsl(var(--foreground) / .5)' }}>7px</span>{'   '}<span style={{ color: 'hsl(var(--muted-foreground) / .25)' }}>/* badge, chip */</span>{'\n'}
-        <span style={{ color: 'hsl(var(--primary) / .65)' }}>--r-sm</span>{': '}<span style={{ color: 'hsl(var(--foreground) / .5)' }}>11px</span>{'  '}<span style={{ color: 'hsl(var(--muted-foreground) / .25)' }}>/* button, input */</span>{'\n'}
-        <span style={{ color: 'hsl(var(--primary) / .65)' }}>--r-md</span>{': '}<span style={{ color: 'hsl(var(--foreground) / .5)' }}>16px</span>{'  '}<span style={{ color: 'hsl(var(--muted-foreground) / .25)' }}>/* card, panel */</span>{'\n'}
-        <span style={{ color: 'hsl(var(--primary) / .65)' }}>--r-lg</span>{': '}<span style={{ color: 'hsl(var(--foreground) / .5)' }}>22px</span>{'  '}<span style={{ color: 'hsl(var(--muted-foreground) / .25)' }}>/* modal, nav */</span>{'\n\n'}
-        <span style={{ color: 'hsl(var(--muted-foreground) / .28)' }}>/* motion is semantic */</span>{'\n'}
-        <span style={{ color: 'hsl(var(--primary) / .65)' }}>--speed-xs</span>{': '}<span style={{ color: 'hsl(var(--foreground) / .5)' }}>80ms</span>{'\n'}
-        <span style={{ color: 'hsl(var(--primary) / .65)' }}>--speed-sm</span>{': '}<span style={{ color: 'hsl(var(--foreground) / .5)' }}>140ms</span>{'\n'}
-        <span style={{ color: 'hsl(var(--primary) / .65)' }}>--speed-md</span>{': '}<span style={{ color: 'hsl(var(--foreground) / .5)' }}>220ms</span>
-      </pre>
-    </div>
-  )
-}
-
-/* ─── Main ───────────────────────────────────────────────────────────────── */
+// ── Main Component ───────────────────────────────────────────────
 export function PreviewSection() {
-  const [on, setOn] = useState(true)
-  const styleEl = useRef<HTMLStyleElement | null>(null)
-
-  useEffect(() => {
-    const el = document.createElement('style')
-    el.textContent = STYLES
-    document.head.appendChild(el)
-    styleEl.current = el
-    return () => el.remove()
-  }, [])
-
-  useEffect(() => {
-    const t = setInterval(() => setOn(v => !v), 2800)
-    return () => clearInterval(t)
-  }, [])
-
   return (
-    <div className="-mx-4 -mt-8 pb-14">
+    <div className="w-full h-[calc(100vh-84px)] flex font-sans antialiased text-foreground overflow-hidden bg-background">
+      
+      {/* Decorative radial gradients for high-end SaaS feel */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(var(--primary),0.02),transparent_50%)] pointer-events-none" />
 
-      {/* ── HEADER ── */}
-      <div style={{ padding: '52px 32px 36px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontSize: 'clamp(60px,8.5vw,88px)', fontWeight: 900, letterSpacing: '-.06em', lineHeight: 1, color: 'hsl(var(--foreground))', fontVariantNumeric: 'tabular-nums' }}>
-            811
-          </div>
-          <div style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', marginTop: 8, letterSpacing: '-.01em' }}>
-            komponentów · 15 motywów · 30 kategorii
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 7 }}>
-            <span className="pv-badge pv-badge-success"><span className="pv-pulse" style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }} />Aktywnie budowane</span>
-            <span className="pv-badge pv-badge-primary">v0.1</span>
-          </div>
-          <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground) / .35)' }}>NextByte Design Pack · 2026</span>
-        </div>
-      </div>
-
-      {/* ── BENTO GRID ── */}
-      <div style={{ padding: '16px 32px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gridTemplateRows: '168px 136px 172px', gap: 10 }}>
-
-        {/* Buttons — 2×1 */}
-        <Tile style={{ gridColumn: '1/3' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-            <button className="pv-btn pv-btn-primary">Zapisz zmiany</button>
-            <button className="pv-btn pv-btn-outline">Anuluj</button>
-            <button className="pv-btn pv-btn-ghost">Podgląd</button>
-            <button className="pv-btn pv-btn-danger">Usuń</button>
-          </div>
-          <TileName>Button · 6 wariantów · var(--r-sm) = 11px</TileName>
-        </Tile>
-
-        {/* Toggle — 1×1 */}
-        <Tile>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Toggle on={on} />
-              <span style={{ fontSize: 12, color: on ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', transition: 'color .2s' }}>
-                {on ? 'Aktywny' : 'Wyłączony'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Toggle on={false} />
-              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Wyłączony</span>
-            </div>
-          </div>
-          <TileName>Toggle · spring animation</TileName>
-        </Tile>
-
-        {/* Badges — 1×1 */}
-        <Tile>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <span className="pv-badge pv-badge-success" style={{ width: 'fit-content' }}><span className="pv-pulse" style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }}/>Gotowy</span>
-            <span className="pv-badge pv-badge-primary" style={{ width: 'fit-content' }}><span className="pv-pulse" style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }}/>Beta</span>
-            <span className="pv-badge pv-badge-warn"    style={{ width: 'fit-content' }}><span className="pv-pulse" style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }}/>Uwaga</span>
-            <span className="pv-badge pv-badge-muted"   style={{ width: 'fit-content' }}>W planie</span>
-          </div>
-          <TileName>Badge · var(--r-xs) = 7px · nie pill</TileName>
-        </Tile>
-
-        {/* FEATURED — 2×2 */}
-        <Tile style={{ gridColumn: '1/3', gridRow: '2/4', background: 'hsl(var(--tafla-2) / .85)' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'hsl(var(--muted-foreground) / .4)', marginBottom: 12, letterSpacing: '.01em' }}>
-            Analiza projektu · live
-          </div>
-          {/* Realistic dashboard card */}
-          <div style={{ flex: 1, background: 'hsl(var(--muted) / .45)', borderRadius: 'var(--r-sm)', border: '1px solid hsl(var(--border))', padding: 16, display: 'flex', flexDirection: 'column', gap: 11 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'hsl(var(--foreground))', marginBottom: 2, letterSpacing: '-.02em' }}>NB Design Pack</div>
-                <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>Ostatnia aktualizacja: teraz</div>
+      {/* ══ SIDEBAR (Linear/Craft Style) ══ */}
+      <aside className="w-56 shrink-0 border-r border-border/40 bg-card/25 backdrop-blur-md flex flex-col overflow-hidden relative z-10">
+        
+        {/* Workspace dropdown selector */}
+        <div className="p-3 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 cursor-pointer group">
+              <div className="w-6 h-6 rounded-nb-xs bg-primary flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-102 transition-transform">
+                <Activity className="h-3.5 w-3.5 text-primary-foreground stroke-[2.5]" />
               </div>
-              <span className="pv-badge pv-badge-success"><span className="pv-pulse" style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }}/>Live</span>
+              <div>
+                <span className="text-xs font-semibold tracking-tight text-foreground block leading-none">Agencja</span>
+                <span className="text-[10px] text-muted-foreground/60">Artur Bącik Team</span>
+              </div>
             </div>
-            <div style={{ height: 1, background: 'hsl(var(--border))' }} />
-            <Progress label="API requests" pct={81} delay=".7s" />
-            <Progress label="Cache hit rate" pct={94} delay=".9s" />
-            <Progress label="Error budget" pct={12} delay="1.1s" />
-            <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
-              <button className="pv-btn pv-btn-primary" style={{ fontSize: 11, padding: '6px 14px' }}>Szczegóły →</button>
-              <button className="pv-btn pv-btn-outline" style={{ fontSize: 11, padding: '6px 12px' }}>Eksport</button>
-            </div>
+            <button className="text-foreground/40 hover:text-foreground p-1 hover:bg-foreground/[0.04] rounded-nb-xs transition-colors">
+              <Settings className="h-3.5 w-3.5" />
+            </button>
           </div>
-          <TileName>GlassCard · embedded dashboard · real context</TileName>
-        </Tile>
 
-        {/* Inputs — 2×1 */}
-        <Tile style={{ gridColumn: '3/5' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <input className="pv-input" placeholder="Szukaj komponentu…" readOnly />
-            <input className="pv-input pv-input-focus" defaultValue="GlassCard" readOnly />
+          {/* Quick Finder / Search bar */}
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-nb-sm bg-foreground/[0.02] border border-foreground/[0.04] hover:bg-foreground/[0.04] hover:border-foreground/[0.07] transition-all cursor-pointer group">
+            <Search className="h-3.5 w-3.5 text-foreground/40 group-hover:text-foreground/60 transition-colors" />
+            <span className="flex-1 text-[11px] text-foreground/45 group-hover:text-foreground/60 transition-colors">Wyszukaj...</span>
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-sans font-medium bg-foreground/5 border border-foreground/10 rounded text-foreground/45 shadow-sm">⌘K</kbd>
           </div>
-          <TileName>Input · focus ring via box-shadow · nie ring-2</TileName>
-        </Tile>
-
-        {/* Stat — 1×1 */}
-        <Tile>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 46, fontWeight: 900, letterSpacing: '-.05em', color: 'hsl(var(--foreground))', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>15</div>
-            <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', marginTop: 5 }}>unikalnych motywów</div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', marginTop: 4 }}>+3 nowe</div>
-          </div>
-          <TileName>Stat · GlassStat</TileName>
-        </Tile>
-
-        {/* Chips — 1×1 */}
-        <Tile>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-              <span className="pv-chip pv-chip-primary">React</span>
-              <span className="pv-chip pv-chip-primary">TypeScript</span>
-              <span className="pv-chip">Tailwind</span>
-              <span className="pv-chip">Vite</span>
-            </div>
-          </div>
-          <TileName>Chip / Tag · var(--r-xs) = 7px</TileName>
-        </Tile>
-
-      </div>
-
-      {/* ── SECOND ROW ── */}
-      <div style={{ padding: '10px 32px 0', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-
-        {/* Code block — 2 cols */}
-        <div className="pv-cell" style={{ gridColumn: '1/3' }}>
-          <CodeBlock />
         </div>
 
-        {/* Progress — 1 col */}
-        <Tile>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14, justifyContent: 'center' }}>
-            <Progress label="Akcje" pct={68} delay="1.3s" />
-            <Progress label="Formularze" pct={44} delay="1.5s" />
-            <Progress label="Nawigacja" pct={31} delay="1.7s" />
-            <Progress label="Dane" pct={19} delay="1.9s" />
-          </div>
-          <TileName>Postęp budowania</TileName>
-        </Tile>
-      </div>
+        {/* Navigation items */}
+        <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-[2px] scrollbar-none">
+          <SItem icon={<Grid className="h-3.5 w-3.5" />} label="Dashboard" active />
+          
+          <SLabel label="AI Workspace" />
+          <SItem icon={<Sparkles className="h-3.5 w-3.5" />} label="Personalny Asystent" />
+          <SItem icon={<MessageSquare className="h-3.5 w-3.5" />} label="Chat AI" />
+          <SItem icon={<Terminal className="h-3.5 w-3.5" />} label="PromptEx" />
+          <SItem icon={<Brain className="h-3.5 w-3.5" />} label="Pamięć AI" />
+          <SItem icon={<ShieldAlert className="h-3.5 w-3.5" />} label="Red Zone" dot />
+          
+          <SLabel label="Moduły" />
+          <SItem icon={<TrendingUp className="h-3.5 w-3.5" />} label="Trend" />
+          <SItem icon={<Camera className="h-3.5 w-3.5" />} label="Studio Zdjęć" />
+          <SItem icon={<Video className="h-3.5 w-3.5" />} label="Studio Video" />
+          
+          <SLabel label="Praca" />
+          <SItem icon={<Calendar className="h-3.5 w-3.5" />} label="Kalendarz" />
+          <SItem icon={<CheckSquare className="h-3.5 w-3.5" />} label="Zadania" count={7} />
+          <SItem icon={<FileText className="h-3.5 w-3.5" />} label="Notatki" />
+          <SItem icon={<LayoutGrid className="h-3.5 w-3.5" />} label="Tablice" />
+          <SItem icon={<Briefcase className="h-3.5 w-3.5" />} label="Firma" />
+        </nav>
 
-      {/* ── STATS BAR ── */}
-      <div style={{ margin: '10px 32px 0', borderRadius: 'var(--r-md)', border: '1px solid hsl(var(--border))', background: 'hsl(var(--tafla-1) / .72)', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}>
-        {[
-          { n: '811', l: 'komponentów' },
-          { n: '15',  l: 'motywów' },
-          { n: '30',  l: 'kategorii' },
-          { n: '0',   l: 'blobów w tle' },
-        ].map((s, i) => (
-          <div key={s.n} style={{ padding: '20px 24px', borderRight: i < 3 ? '1px solid hsl(var(--border))' : 'none' }}>
-            <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-.04em', color: 'hsl(var(--foreground))', lineHeight: 1, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{s.n}</div>
-            <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>{s.l}</div>
+        {/* User Account / Footer */}
+        <div className="p-3 border-t border-border/40 bg-card/10 flex items-center gap-2.5">
+          <div className="relative group cursor-pointer">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-primary/60 flex items-center justify-center text-[10px] font-bold text-primary-foreground shadow-sm">
+              AB
+            </div>
+            <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-card" />
           </div>
-        ))}
-      </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-medium text-foreground truncate">Artur Bącik</div>
+            <div className="text-[10px] text-muted-foreground/60 truncate">Free · 0 Byte</div>
+          </div>
+          <button className="text-foreground/45 hover:text-foreground p-1.5 hover:bg-foreground/[0.04] rounded-full transition-colors relative">
+            <Bell className="h-3.5 w-3.5" />
+            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
+          </button>
+        </div>
+      </aside>
 
+      {/* ══ MAIN DASHBOARD AREA ══ */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-muted/20 z-10">
+        
+        {/* Header / Top bar */}
+        <header className="h-14 border-b border-border/30 px-6 flex items-center justify-between shrink-0 bg-card/30 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Dashboard</span>
+            <ChevronRight className="h-3 w-3 opacity-60" />
+            <span className="text-foreground font-medium">Overview</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button className="h-8 px-3 rounded-nb-sm border border-border/60 hover:bg-foreground/[0.03] text-foreground/75 hover:text-foreground text-xs font-medium flex items-center gap-1.5 transition-all">
+              <Download className="h-3.5 w-3.5" /> Eksportuj CSV
+            </button>
+            <button className="h-8 px-3 rounded-nb-sm bg-primary text-primary-foreground hover:bg-primary/95 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm shadow-primary/10">
+              <Plus className="h-3.5 w-3.5 stroke-[2.5]" /> Nowy projekt
+            </button>
+          </div>
+        </header>
+
+        {/* Scrollable content container */}
+        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+          
+          {/* Greeting section */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-foreground">Witaj z powrotem, Artur</h2>
+              <p className="text-xs text-muted-foreground">Monitoruj zużycie tokenów, zadania i procesy AI w czasie rzeczywistym.</p>
+            </div>
+            <div className="flex rounded-nb-sm border border-border/40 bg-foreground/[0.01] p-0.5 font-mono text-[10px]">
+              {['Dzienny', 'Tygodniowy', 'Miesięczny'].map((opt, idx) => (
+                <button 
+                  key={opt} 
+                  className={`px-2.5 py-1 rounded-nb-xs transition-all ${idx === 1 ? 'bg-primary text-primary-foreground font-semibold shadow-sm' : 'text-foreground/50 hover:text-foreground'}`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {STATS.map((stat, i) => (
+              <div 
+                key={stat.label} 
+                className="bg-card border border-border/30 rounded-nb p-4 shadow-sm hover:shadow-md hover:border-border/50 transition-all flex flex-col justify-between"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[11px] font-medium text-muted-foreground">{stat.label}</span>
+                  <span className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-bold ${stat.isPositive ? 'text-emerald-500' : 'text-destructive'}`}>
+                    {stat.trend}
+                  </span>
+                </div>
+                
+                <div className="flex items-baseline justify-between mt-2">
+                  <div>
+                    <span className="text-2xl font-bold tracking-tight text-foreground font-sans">{stat.value}</span>
+                    <span className="block text-[10px] text-muted-foreground/60 mt-0.5">{stat.subtext}</span>
+                  </div>
+                  {/* Subtle vector sparkline graph */}
+                  <svg className="w-14 h-8 text-primary" viewBox="0 0 100 50">
+                    <path 
+                      d={i % 2 === 0 ? "M 0 45 Q 25 15 50 30 T 100 5" : "M 0 5 Q 25 40 50 25 T 100 45"} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          {/* Main Charts & Live Feed Section */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Sales Trend / Performance block */}
+            <div className="bg-card border border-border/30 rounded-nb p-4 shadow-sm lg:col-span-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Trend Zużycia Systemu</h3>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-lg font-bold text-foreground">20,320 Byte</span>
+                    <span className="text-[10px] text-emerald-500 font-mono font-semibold flex items-center gap-0.5">
+                      <ArrowUpRight className="h-3 w-3" /> +12.4% vs wczoraj
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground/50 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Nowy użytkownik
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground/50 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-foreground/20" /> Powracający
+                  </span>
+                </div>
+              </div>
+
+              {/* Grid Bar Chart (Pure CSS/Tailwind) */}
+              <div className="h-44 flex items-end justify-between gap-1.5 pt-4 px-2 relative border-b border-border/20">
+                {/* Horizontal reference lines */}
+                <div className="absolute inset-x-0 top-[20%] border-t border-dashed border-border/10 pointer-events-none" />
+                <div className="absolute inset-x-0 top-[50%] border-t border-dashed border-border/10 pointer-events-none" />
+                <div className="absolute inset-x-0 top-[80%] border-t border-dashed border-border/10 pointer-events-none" />
+                
+                {[35, 65, 40, 90, 50, 75, 45, 60, 80, 55, 70, 85].map((h, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group/bar relative">
+                    {/* Tooltip */}
+                    <div className="absolute bottom-[105%] bg-foreground text-background text-[9px] font-semibold px-2 py-0.75 rounded opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md z-20 font-mono">
+                      {h * 240} Byte
+                    </div>
+                    {/* Bar */}
+                    <div className="w-full rounded-t-nb-xs overflow-hidden flex flex-col justify-end h-full">
+                      <div 
+                        style={{ height: `${h}%` }} 
+                        className="bg-primary/20 group-hover/bar:bg-primary transition-colors rounded-t-[2px]"
+                      />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground/40 font-mono mt-1 select-none">
+                      {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI Modules Breakdown */}
+            <div className="bg-card border border-border/30 rounded-nb p-4 shadow-sm flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 mb-3">Udział Modułów AI</h3>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Chat AI & Modele Językowe', percentage: 48, cost: '12.4k Byte', color: 'bg-primary' },
+                    { label: 'Studio Generowania Grafiki', percentage: 28, cost: '7.1k Byte', color: 'bg-emerald-500' },
+                    { label: 'Studio Video & Klatkowanie', percentage: 14, cost: '3.6k Byte', color: 'bg-amber-500' },
+                    { label: 'Pamięć & Agenci Wektorowi', percentage: 10, cost: '2.5k Byte', color: 'bg-foreground/35' },
+                  ].map((mod) => (
+                    <div key={mod.label} className="text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-foreground/75 font-medium">{mod.label}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground">{mod.cost} ({mod.percentage}%)</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-foreground/5 rounded-full overflow-hidden">
+                        <div style={{ width: `${mod.percentage}%` }} className={`h-full rounded-full ${mod.color}`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="pt-4 border-t border-border/20 mt-4">
+                <button className="w-full py-2 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-border text-foreground/80 hover:text-foreground text-xs font-medium rounded-nb-sm flex items-center justify-center gap-1 transition-all">
+                  Analiza kosztów <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Transactions Table / Details */}
+          <section className="bg-card border border-border/30 rounded-nb shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-border/30 flex items-center justify-between bg-card/20 shrink-0">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Ostatnie Transakcje i Zadania</h3>
+              <div className="flex items-center gap-2">
+                <button className="p-1.5 rounded-nb-xs border border-border/60 hover:bg-foreground/[0.03] text-foreground/70 transition-all">
+                  <Filter className="h-3.5 w-3.5" />
+                </button>
+                <button className="p-1.5 rounded-nb-xs border border-border/60 hover:bg-foreground/[0.03] text-foreground/70 transition-all">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border/30 bg-muted/10 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50">
+                    <th className="py-2.5 px-4">ID</th>
+                    <th className="py-2.5 px-4">Nazwa zadania</th>
+                    <th className="py-2.5 px-4">Moduł</th>
+                    <th className="py-2.5 px-4">Status</th>
+                    <th className="py-2.5 px-4 text-right">Ilość</th>
+                    <th className="py-2.5 px-4 text-right">Koszt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20 text-xs">
+                  {TRANSACTIONS.map((t) => (
+                    <tr key={t.id} className="hover:bg-foreground/[0.01] transition-all">
+                      <td className="py-2.5 px-4 font-mono text-[10px] text-muted-foreground">{t.id}</td>
+                      <td className="py-2.5 px-4 font-medium text-foreground">{t.task}</td>
+                      <td className="py-2.5 px-4 text-muted-foreground/80">{t.module}</td>
+                      <td className="py-2.5 px-4"><StatusBadge status={t.status} /></td>
+                      <td className="py-2.5 px-4 text-right font-mono text-muted-foreground">{t.qty}</td>
+                      <td className="py-2.5 px-4 text-right font-mono font-medium text-foreground">{t.cost}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+        
+      </div>
     </div>
   )
 }

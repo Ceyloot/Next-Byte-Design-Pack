@@ -176,6 +176,72 @@ h2                  { letter-spacing: -0.026em; }
     0 8px 22px -12px hsl(215 40% 2% / .6);
 }
 
+/* ─── Motyw PRZYJAZNY — Revolut × Claude × Fitatu ────────────────────
+   Ciepły dark navy zamiast prawie-czarnego, koralowy primary zamiast
+   zimnego cyjanu, miętowy accent. Neutralne mają wyraźne ciepłe podbicie
+   (H 30 na foreground) — teksty czytają się jak krem, nie jak biel z
+   ekranu diagnostycznego. Promienie podbite o 2-4 px, żeby wszystko
+   miało większy „oddech" — Revolut i Claude tak robią. */
+[data-theme="przyjazny"] {
+  --background: 230 22% 7%;
+  --foreground: 30 24% 94%;
+
+  --card: 230 20% 10%;
+  --card-foreground: 30 24% 94%;
+  --popover: 230 20% 10%;
+  --popover-foreground: 30 24% 94%;
+
+  --primary: 14 90% 65%;              /* koral — Claude-warm, Revolut-electric */
+  --primary-foreground: 20 20% 8%;
+  --brand-primary: 14 90% 65%;
+  --brand-primary-dark: 12 84% 56%;
+  --brand-primary-light: 18 94% 74%;
+
+  --accent: 165 58% 58%;              /* mięta — Fitatu-fresh */
+  --accent-foreground: 165 40% 8%;
+
+  --secondary: 230 16% 14%;
+  --secondary-foreground: 30 22% 92%;
+  --muted: 230 18% 12%;
+  --muted-foreground: 230 10% 66%;
+  --input: 230 18% 13%;
+  --border: 230 14% 20%;
+  --ring: 14 90% 65%;
+
+  --destructive: 348 82% 62%;         /* róż-czerwony spójny z korala */
+  --destructive-foreground: 30 24% 96%;
+
+  --brand-text-muted:     230 8% 64%;
+  --brand-text-primary:   30 24% 98%;
+  --brand-text-secondary: 30 18% 90%;
+  --brand-text-tertiary:  30 12% 78%;
+
+  --sidebar: 230 20% 10%;
+  --sidebar-accent: 14 50% 20%;
+  --sidebar-accent-foreground: 14 90% 68%;
+  --sidebar-border: 230 14% 20%;
+  --sidebar-foreground: 30 24% 94%;
+  --sidebar-primary: 14 90% 65%;
+  --sidebar-primary-foreground: 20 20% 8%;
+  --sidebar-ring: 14 90% 65%;
+
+  /* Większy oddech na powierzchniach — sygnatura Revolut/Claude */
+  --r-md: 20px;
+  --r-lg: 26px;
+
+  /* Warstwy głębi w tym motywie — cieplejsze, bez chłodnego niebieskiego */
+  --tafla-1: 230 20% 10%;
+  --tafla-2: 230 18% 13%;
+  --tafla-3: 230 16% 16%;
+
+  /* Cienie mają odrobinę koloru primary — koralowy rzut na krawędzi */
+  --swiatlo-gorne: inset 0 1px 0 0 hsl(30 60% 100% / .07);
+  --cien-plaski:   0 1px 2px -1px hsl(230 40% 2% / .55);
+  --cien-uniesiony:
+    0 1px 2px -1px hsl(230 40% 2% / .5),
+    0 12px 32px -14px hsl(14 60% 20% / .55);
+}
+
 /* ─── Ciemny motyw (darmowy) — DOMYSLNY ─── */
 [data-theme="dark-theme"] {
   --accent: 204 91% 70%;
@@ -578,6 +644,66 @@ h2                  { letter-spacing: -0.026em; }
   --secondary-foreground: 0 0% 96%;
 }
 
+/* ─── Scandinavian ☀ (darmowy) — ciepły kremowy editorial ─── */
+[data-theme="scandinavian"] {
+  --background: 46 20% 95%;          /* #f6f3e8 — ciepła lekko żółta biel */
+  --foreground: 42 14% 12%;          /* prawie-czarny z żółto-ciepłym odcieniem */
+
+  --card: 46 16% 99%;                /* #fefdf8 — bardzo ciepła biała karta */
+  --card-foreground: 42 14% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 38 12% 12%;
+
+  --primary: 161 22% 40%;            /* szałwiowa zieleń — #4c6e63 */
+  --primary-foreground: 0 0% 100%;
+  --brand-primary: 161 22% 40%;
+  --brand-primary-dark: 161 22% 30%;
+  --brand-primary-light: 161 20% 52%;
+
+  --accent: 161 14% 88%;
+  --accent-foreground: 161 22% 26%;
+
+  --secondary: 38 8% 92%;
+  --secondary-foreground: 38 12% 18%;
+  --muted: 38 8% 93%;
+  --muted-foreground: 38 6% 46%;
+  --input: 38 8% 86%;
+  --border: 38 8% 83%;
+  --ring: 161 22% 40%;
+
+  --destructive: 0 72% 52%;
+  --destructive-foreground: 0 0% 100%;
+
+  --brand-text-muted:     38 6% 52%;
+  --brand-text-primary:   38 12% 10%;
+  --brand-text-secondary: 38 8% 26%;
+  --brand-text-tertiary:  38 6% 42%;
+
+  --sidebar: 38 8% 93%;
+  --sidebar-accent: 161 14% 86%;
+  --sidebar-accent-foreground: 161 22% 28%;
+  --sidebar-border: 38 8% 83%;
+  --sidebar-foreground: 38 12% 14%;
+  --sidebar-primary: 161 22% 40%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-ring: 161 22% 40%;
+
+  /* Zaokrąglenia — nieco bardziej organiczne niż domyślne */
+  --r-md: 14px;
+  --r-lg: 20px;
+
+  /* Warstwy głębi (tryb jasny = cień w dół, nie hairline) */
+  --tafla-1: 0 0% 100%;
+  --tafla-2: 38 8% 97%;
+  --tafla-3: 38 8% 94%;
+
+  --swiatlo-gorne:  inset 0 1px 0 0 hsl(0 0% 100% / .90);
+  --cien-plaski:    0 1px 3px -1px hsl(38 20% 20% / .10);
+  --cien-uniesiony:
+    0 1px 2px -1px hsl(38 20% 20% / .08),
+    0 8px 22px -12px hsl(38 20% 20% / .14);
+}
+
 /* ─── Luxury (500 Byte) ─── */
 [data-theme="luxury"] {
   --accent: 39 39% 58%;
@@ -654,6 +780,14 @@ h2                  { letter-spacing: -0.026em; }
     radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59,130,246,.10) 0%, transparent 68%),
     radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139,92,246,.08) 0%, transparent 68%),
     radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34,211,238,.07) 0%, transparent 68%);
+}
+
+/* Scandinavian — ciepłe szałwiowe blobs na kremowym tle */
+[data-theme="scandinavian"] .nb-app-bg {
+  background-image:
+    radial-gradient(ellipse 62% 52% at 18% 22%, rgba(76,110,99,.10) 0%, transparent 68%),
+    radial-gradient(ellipse 52% 44% at 82% 28%, rgba(100,128,80,.07) 0%, transparent 68%),
+    radial-gradient(ellipse 46% 38% at 52% 82%, rgba(90,118,108,.08) 0%, transparent 68%);
 }
 
 /* ── SZKŁO — warstwa bazowa, z soczewką na krawędzi ────────────────────── */
