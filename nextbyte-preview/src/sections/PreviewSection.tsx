@@ -197,7 +197,7 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
       </aside>
 
       {/* ══ MAIN DASHBOARD AREA ══ */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-muted/5 z-10">
+      <div className="flex-1 flex flex-col overflow-hidden bg-black/[0.18] z-10">
         
         {/* Header / Top bar */}
         <header className="h-14 border-b border-border/30 px-6 flex items-center justify-between shrink-0 bg-card/20 backdrop-blur-sm">
@@ -218,7 +218,7 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
         </header>
 
         {/* Scrollable content container */}
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <main className="flex-1 overflow-y-auto p-5 space-y-4">
           
           {/* Greeting section */}
           <div className="flex items-center justify-between">
@@ -239,32 +239,35 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
           </div>
 
           {/* Stats Grid */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {STATS.map((stat, i) => (
-              <div 
-                key={stat.label} 
-                className="bg-card/75 border border-border/40 rounded-nb p-4 shadow-sm hover:shadow-md hover:border-primary/20 hover:bg-card transition-all duration-300 flex flex-col justify-between"
+              <div
+                key={stat.label}
+                className={`bg-card/80 border rounded-nb p-4 shadow-sm hover:shadow-md hover:bg-card/95 transition-all duration-300 flex flex-col justify-between ${stat.isPositive ? 'border-emerald-500/15 hover:border-emerald-500/30' : 'border-rose-500/15 hover:border-rose-500/30'}`}
               >
+                {/* Colored top accent line */}
+                <div className={`absolute top-0 left-4 right-4 h-[1.5px] rounded-full ${stat.isPositive ? 'bg-emerald-500/40' : 'bg-rose-500/40'}`} style={{ position: 'absolute' }} />
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[11px] font-medium text-muted-foreground">{stat.label}</span>
-                  <span className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${stat.isPositive ? 'text-emerald-400 bg-emerald-500/5 border border-emerald-500/10' : 'text-rose-400 bg-rose-500/5 border border-rose-500/10'}`}>
+                  <span className="text-[11px] font-medium text-muted-foreground/80">{stat.label}</span>
+                  <span className={`inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${stat.isPositive ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
                     {stat.trend}
                   </span>
                 </div>
-                
                 <div className="flex items-baseline justify-between mt-2">
                   <div>
-                    <span className="text-2xl font-bold tracking-tight text-foreground font-sans">{stat.value}</span>
-                    <span className="block text-[10px] text-muted-foreground/60 mt-0.5">{stat.subtext}</span>
+                    <span className="text-2xl font-bold tracking-tight text-foreground">{stat.value}</span>
+                    <span className="block text-[10px] text-muted-foreground/50 mt-0.5">{stat.subtext}</span>
                   </div>
-                  {/* Subtle vector sparkline graph */}
                   <svg className={`w-14 h-8 ${stat.isPositive ? 'text-emerald-500' : 'text-rose-500'}`} viewBox="0 0 100 50">
-                    <path 
-                      d={i % 2 === 0 ? "M 0 45 Q 25 15 50 30 T 100 5" : "M 0 5 Q 25 40 50 25 T 100 45"} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round"
+                    <defs>
+                      <linearGradient id={`sg${i}`} x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.3"/>
+                        <stop offset="100%" stopColor="currentColor" stopOpacity="1"/>
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d={i % 2 === 0 ? "M 0 45 Q 25 15 50 30 T 100 5" : "M 0 5 Q 25 40 50 25 T 100 45"}
+                      fill="none" stroke={`url(#sg${i})`} strokeWidth="2.5" strokeLinecap="round"
                     />
                   </svg>
                 </div>
@@ -273,10 +276,10 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
           </section>
 
           {/* Main Charts & Live Feed Section */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+
             {/* Sales Trend / Performance block */}
-            <div className="bg-card/75 border border-border/40 rounded-nb p-5 shadow-sm lg:col-span-2 flex flex-col justify-between">
+            <div className="bg-card/80 border border-border/30 rounded-nb p-5 shadow-sm lg:col-span-2 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Trend Zużycia Systemu</h3>
@@ -314,7 +317,7 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
                     <div className="w-full rounded-t-nb-xs overflow-hidden flex flex-col justify-end h-full">
                       <div 
                         style={{ height: `${h}%` }} 
-                        className="bg-gradient-to-t from-primary/10 to-primary/60 group-hover/bar:from-primary/30 group-hover/bar:to-primary transition-all duration-300 rounded-t-[3px] border-t border-primary/20"
+                        className="bg-gradient-to-t from-primary/20 to-primary/80 group-hover/bar:from-primary/40 group-hover/bar:to-primary transition-all duration-300 rounded-t-[3px]"
                       />
                     </div>
                     <span className="text-[9px] text-muted-foreground/60 font-mono mt-1.5 select-none font-medium">
@@ -326,7 +329,7 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
             </div>
 
             {/* AI Modules Breakdown */}
-            <div className="bg-card/75 border border-border/40 rounded-nb p-5 shadow-sm flex flex-col justify-between">
+            <div className="bg-card/80 border border-border/30 rounded-nb p-5 shadow-sm flex flex-col justify-between">
               <div>
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-4">Udział Modułów AI</h3>
                 <div className="space-y-4">
@@ -357,7 +360,7 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
           </section>
 
           {/* Transactions Table / Details */}
-          <section className="bg-card/75 border border-border/40 rounded-nb shadow-sm overflow-hidden">
+          <section className="bg-card/80 border border-border/30 rounded-nb shadow-sm overflow-hidden">
             <div className="p-4 border-b border-border/30 flex items-center justify-between bg-card/25 shrink-0">
               <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Ostatnie Transakcje i Zadania</h3>
               <div className="flex items-center gap-2">
