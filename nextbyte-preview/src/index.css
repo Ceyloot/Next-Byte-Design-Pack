@@ -109,10 +109,10 @@ h2                  { letter-spacing: -0.026em; }
    promień rodzica − własny odstęp. Narożniki są wtedy współśrodkowe,
    zamiast „pływać" jeden w drugim. Do tego służy calc() niżej. */
 :root {
-  --r-xs: 7px;    /* badge, chip, tag, kropka statusu        */
-  --r-sm: 11px;   /* przycisk, input, select, mały kontrolek */
-  --r-md: 16px;   /* karta, panel, wiersz listy, akordeon    */
-  --r-lg: 22px;   /* modal, szuflada, navbar, duża tafla     */
+  --r-xs: 4px;    /* badge, chip, tag, kropka statusu        */
+  --r-sm: 6px;    /* przycisk, input, select, mały kontrolek */
+  --r-md: 8px;    /* karta, panel, wiersz listy, akordeon    */
+  --r-lg: 12px;   /* modal, szuflada, navbar, duża tafla     */
 
   /* Tailwind czyta --radius dla lg/md/sm */
   --radius:    var(--r-md);
