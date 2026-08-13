@@ -1,30 +1,33 @@
 import React from 'react'
-import { Sparkles, Blend, Stars, Building2, Waves, Ban } from 'lucide-react'
+import { Sparkles, Blend, Stars, Building2, Waves, Ban, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type BgKey = 'nextbyte' | 'gradient' | 'galaxy' | 'city' | 'aurora' | 'off'
+export type BgKey = 'nextbyte' | 'landscape' | 'gradient' | 'galaxy' | 'city' | 'aurora' | 'off'
 
 export const BG_OPTIONS: { key: BgKey; label: string; icon: React.ReactNode }[] = [
-  { key: 'nextbyte', label: 'NextByte',  icon: <Sparkles   className="h-3.5 w-3.5" /> },
-  { key: 'gradient', label: 'Gradient',  icon: <Blend      className="h-3.5 w-3.5" /> },
-  { key: 'galaxy',   label: 'Galaktyka', icon: <Stars      className="h-3.5 w-3.5" /> },
-  { key: 'city',     label: 'Miasto',    icon: <Building2  className="h-3.5 w-3.5" /> },
-  { key: 'aurora',   label: 'Zorza',     icon: <Waves      className="h-3.5 w-3.5" /> },
-  { key: 'off',      label: 'Brak',      icon: <Ban        className="h-3.5 w-3.5" /> },
+  { key: 'nextbyte',  label: 'NextByte',  icon: <Sparkles   className="h-3.5 w-3.5" /> },
+  { key: 'landscape', label: 'Krajobraz', icon: <ImageIcon  className="h-3.5 w-3.5" /> },
+  { key: 'gradient',  label: 'Gradient',  icon: <Blend      className="h-3.5 w-3.5" /> },
+  { key: 'galaxy',    label: 'Galaktyka', icon: <Stars      className="h-3.5 w-3.5" /> },
+  { key: 'city',      label: 'Miasto',    icon: <Building2  className="h-3.5 w-3.5" /> },
+  { key: 'aurora',    label: 'Zorza',     icon: <Waves      className="h-3.5 w-3.5" /> },
+  { key: 'off',       label: 'Brak',      icon: <Ban        className="h-3.5 w-3.5" /> },
 ]
 
 /* Unsplash — wysokiej jakości, publiczne zdjęcia */
 const PHOTOS: Partial<Record<BgKey, string>> = {
-  galaxy: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=85&fit=crop',
-  city:   'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=85&fit=crop',
-  aurora: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=85&fit=crop',
+  landscape: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&fit=crop',
+  galaxy:    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=85&fit=crop',
+  city:      'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=85&fit=crop',
+  aurora:    'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=85&fit=crop',
 }
 
 /* Przyciemnienie żeby glass wyglądał lepiej na zdjęciu */
 const OVERLAYS: Partial<Record<BgKey, string>> = {
-  galaxy: 'rgba(2,2,15,0.45)',
-  city:   'rgba(3,5,18,0.50)',
-  aurora: 'rgba(2,8,12,0.40)',
+  landscape: 'rgba(5, 20, 25, 0.25)',
+  galaxy:    'rgba(2,2,15,0.45)',
+  city:      'rgba(3,5,18,0.50)',
+  aurora:    'rgba(2,8,12,0.40)',
 }
 
 function PhotoBg({ bgKey }: { bgKey: BgKey }) {

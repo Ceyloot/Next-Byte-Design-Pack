@@ -23,8 +23,8 @@ html, body {
      przez kartę, zamiast być z niej wycięta. Bez url() filtra, więc
      zero kosztu na kilkudziesięciu kartach naraz. */
   background-color: hsl(var(--tafla-1) / .72);
-  border: 1px solid hsl(var(--border));
-  box-shadow: var(--swiatlo-gorne), var(--cien-plaski);
+  border: 1px solid transparent;
+  box-shadow: var(--cien-plaski);
   -webkit-backdrop-filter: blur(10px) saturate(1.05);
           backdrop-filter: blur(10px) saturate(1.05);
 }
@@ -736,102 +736,154 @@ h2                  { letter-spacing: -0.026em; }
    Refrakcja działa identycznie jak w produkcyjnej aplikacji NextByte.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   NextByte — Liquid Glass System (nb-szklo 1:1 z produkcyjnego Studio Zdjęć)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 :root {
-  /* ── Wartości 1:1 z produkcyjnej aplikacji NextByte ── */
-  --nb-szklo-krycie:     0;      /* krycie tła — 0 = pełna przejrzystość */
-  --nb-szklo-rozmycie:   8.8px;  /* rozmycie tła pod szkłem              */
-  --nb-szklo-nasycenie:  130%;   /* nasycenie kolorów tła                */
-  --nb-szklo-jasnosc:    1;      /* jasność                              */
-
-  /* Rant — 4-stronny inset, to daje efekt „zawijania" krawędzi szkła */
-  --nb-cien-ranty:
-    inset  0  1px 0 0 hsl(0 0% 100% / .16),
-    inset  1px 0  0 0 hsl(0 0% 100% / .06),
-    inset -1px 0  0 0 hsl(0 0% 100% / .06),
-    inset  0 -1px 0 0 hsl(0 0%   0% / .22);
-  --nb-cien-uniesienie:
-    0 1px 2px -1px hsl(0 0% 0% / .10),
-    0 10px 28px -12px hsl(0 0% 0% / .22);
-
-  --nb-border:     0.14;   /* opacity obwódki (produkcja: .14)         */
-  --nb-border-h:   0.28;   /* border on hover                         */
-  --nb-glow:       0.22;   /* poświata primary on hover               */
-  --nb-lift:       1px;    /* uniesienie on hover                     */
-  --nb-speed:      0.28s;  /* transition speed                        */
+  --nb-p1-cien:         0.25;
+  --nb-p1-czas:         0.32;
+  --nb-p1-korpus:       0.05;   /* 95% krystalicznej czystości */
+  --nb-p1-lsnienie:     0.22;
+  --nb-p1-nasycenie:    1.35;
+  --nb-p1-obwodka:      0.20;
+  --nb-p1-obwodka-hover: 0.45;
+  --nb-p1-poswiata:     0.4;
+  --nb-p1-refleks:      0.50;
+  --nb-p1-rozmycie:     4;      /* minimalny blur max 15% (4px) — krystaliczna ostrość tła */
+  --nb-p1-uniesienie:   1.5;
 }
 
-/* ── Tło aplikacji — czyste CSS gradients, zero filter overhead ──────────── */
+/* ── Light Mode Glass (Apple iOS 26 Style — Ostre, Wyraziste, Krystaliczne) ── */
+[data-theme="light-apple"],
+[data-theme="nextbyte-light"],
+[data-theme="future-theme"],
+[data-theme="scandinavian"] {
+  --nb-p1-korpus:       0.55;   /* Krystalicznie czysta jasna tafla z wyrazistym kontrastem */
+  --nb-p1-lsnienie:     0.45;
+  --nb-p1-obwodka:      0.65;
+  --nb-p1-refleks:      0.80;
+  --nb-p1-nasycenie:    1.60;
+  --nb-p1-rozmycie:     12;
+}
+
+/* ── Tło aplikacji — czyste CSS gradients ──────────────────────────────── */
 .nb-app-bg {
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59,130,246,.26) 0%, transparent 68%),
-    radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139,92,246,.22) 0%, transparent 68%),
-    radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34,211,238,.18) 0%, transparent 68%),
-    radial-gradient(ellipse 50% 44% at 12% 80%, rgba(52,211,153,.16) 0%, transparent 68%),
-    radial-gradient(ellipse 46% 40% at 82% 78%, rgba(251,191,36,.14) 0%, transparent 68%),
-    radial-gradient(ellipse 38% 34% at 48% 54%, rgba(251,113,133,.12) 0%, transparent 68%);
+    radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59,130,246,.32) 0%, transparent 68%),
+    radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139,92,246,.28) 0%, transparent 68%),
+    radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34,211,238,.24) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 44% at 12% 80%, rgba(52,211,153,.20) 0%, transparent 68%),
+    radial-gradient(ellipse 46% 40% at 82% 78%, rgba(251,191,36,.18) 0%, transparent 68%),
+    radial-gradient(ellipse 38% 34% at 48% 54%, rgba(251,113,133,.16) 0%, transparent 68%);
 }
 
-/* Light themes — jasne, subtelne blobs */
 [data-theme="light-apple"]    .nb-app-bg,
 [data-theme="nextbyte-light"] .nb-app-bg,
 [data-theme="future-theme"]   .nb-app-bg {
   background-image:
-    radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59,130,246,.10) 0%, transparent 68%),
-    radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139,92,246,.08) 0%, transparent 68%),
-    radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34,211,238,.07) 0%, transparent 68%);
+    radial-gradient(ellipse 70% 60% at 15% 20%, rgba(59,130,246,.30) 0%, transparent 68%),
+    radial-gradient(ellipse 65% 55% at 80% 20%, rgba(14,165,233,.25) 0%, transparent 68%),
+    radial-gradient(ellipse 55% 50% at 90% 75%, rgba(99,102,241,.22) 0%, transparent 68%);
 }
 
-/* Scandinavian — ciepłe szałwiowe blobs na kremowym tle */
-[data-theme="scandinavian"] .nb-app-bg {
-  background-image:
-    radial-gradient(ellipse 62% 52% at 18% 22%, rgba(76,110,99,.10) 0%, transparent 68%),
-    radial-gradient(ellipse 52% 44% at 82% 28%, rgba(100,128,80,.07) 0%, transparent 68%),
-    radial-gradient(ellipse 46% 38% at 52% 82%, rgba(90,118,108,.08) 0%, transparent 68%);
-}
-
-/* ── SZKŁO — warstwa bazowa, z soczewką na krawędzi ────────────────────── */
-.nb-szklo {
+/* Gwarancja: Wszystkie teksty, ikony i nagłówki kafelka leżą bezpiecznie NAD refrakcją ramki (z-index: 1) */
+.nb-szklo > *,
+.glass-card > * {
   position: relative;
-  background-color: hsl(var(--card) / var(--nb-szklo-krycie, 0));
-  border: 1px solid hsl(var(--foreground) / var(--nb-border));
-  /* Soczewka na krawędzi — na KAŻDYM elemencie szkła */
-  -webkit-backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
-          backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
-  /* Rant + uniesienie — to buduje wrażenie grubości i zawijania krawędzi.
-     UWAGA: box-shadow celowo NIE jest animowany — Chrome nie interpoluje
-     nierejestrowanych custom properties i zatrzymuje wartość na zerach. */
-  box-shadow: var(--nb-cien-ranty), var(--nb-cien-uniesienie);
-  transition:
-    border-color var(--nb-speed) ease,
-    transform    var(--nb-speed) ease;
+  z-index: 1;
 }
 
-.nb-szklo:hover {
-  border-color: hsl(var(--primary) / var(--nb-border-h));
+/* ── SZKŁO LIQUID GLASS — Refrakcja Fali Cieczy na Dolnej Krawędzi ── */
+.is-glass .nb-szklo,
+.is-glass .glass-card {
+  position: relative;
+  isolation: isolate;
+  /* Each tile's expensive backdrop-filter repaint stays scoped to itself —
+     without this, a change on one glass tile (hover, scroll) can force the
+     browser to reconsider paint for the others too. */
+  contain: layout paint;
+
+  /* Czyste półprzezroczyste tło */
+  background-color: hsl(var(--card) / var(--nb-p1-korpus, 0.05));
+
+  /* Delikatna translucencyjna obwódka */
+  border: 1px solid hsl(var(--foreground) / var(--nb-p1-obwodka, 0.20));
+
+  /* Refrakcja optyczna fali cieczy na dolnej krawędzi + gładki blur 4px */
+  -webkit-backdrop-filter:
+    url(#nb-refrakcja-delikatne)
+    blur(calc(var(--nb-p1-rozmycie, 4) * 1px))
+    saturate(var(--nb-p1-nasycenie, 1.35));
+  backdrop-filter:
+    url(#nb-refrakcja-delikatne)
+    blur(calc(var(--nb-p1-rozmycie, 4) * 1px))
+    saturate(var(--nb-p1-nasycenie, 1.35));
+
+  /* Załamanie 5px na samej krawędzi daje efekt wygiętej cieczy */
   box-shadow:
-    var(--nb-cien-ranty),
-    0 2px 4px 0 hsl(0 0% 0% / .08),
-    0 16px 40px -16px hsl(0 0% 0% / .34),
-    0 0 0 1px hsl(var(--primary) / calc(var(--nb-glow) * 0.55)),
-    0 0 22px -4px hsl(var(--primary) / var(--nb-glow));
-  transform: translateY(calc(var(--nb-lift) * -1));
-}
-.nb-szklo:active { transform: translateY(0); }
+    inset 0 0 0 2.5px hsl(var(--foreground) / 0.22),
+    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.50)),
+    0 4px 16px -4px rgba(0, 0, 0, 0.20);
 
-/* ── SZKŁO PŁYNNE — mocniejsza soczewka (duże powierzchnie) ─────────────── */
+  transition: border-color 0.20s ease, box-shadow 0.20s ease, background-color 0.20s ease;
+}
+
+/* Stylizacja dla jasnego motywu (Jasny Apple, NB Jasny, Przyszły) — Ostre i wyraźne jak na rysunku */
+[data-theme="light-apple"] .is-glass .nb-szklo,
+[data-theme="nextbyte-light"] .is-glass .nb-szklo,
+[data-theme="future-theme"] .is-glass .nb-szklo,
+[data-theme="scandinavian"] .is-glass .nb-szklo {
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.50),
+    0 8px 30px -8px rgba(0, 0, 0, 0.12) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+          backdrop-filter: blur(12px) saturate(180%) !important;
+}
+
+.is-glass .nb-szklo:hover,
+.is-glass .glass-card:hover {
+  border-color: hsl(var(--foreground) / calc(var(--nb-p1-obwodka, 0.20) * 1.6));
+  box-shadow:
+    inset 0 0 0 1.5px hsl(var(--foreground) / 0.30),
+    inset 0 1.5px 0 0 hsl(var(--foreground) / calc(var(--nb-p1-refleks, 0.50) * 1.4)),
+    0 6px 20px -4px rgba(0, 0, 0, 0.25);
+}
+
+.nb-szklo:active, .glass-card:active { transform: none; }
+
+/* ── SZKŁO PŁYNNE ────────────────────────────────────────────────────────── */
 .nb-szklo-plynne {
-  -webkit-backdrop-filter: url(#nb-refrakcja-wyrazne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
-          backdrop-filter: url(#nb-refrakcja-wyrazne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+  background:
+    hsl(var(--card) / calc(var(--nb-p1-korpus, 0.28) * 0.5));
+  -webkit-backdrop-filter:
+    blur(calc(var(--nb-p1-rozmycie, 20) * 2px))
+    saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
+  backdrop-filter:
+    blur(calc(var(--nb-p1-rozmycie, 20) * 2px))
+    saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.16)),
+    0 8px 32px -8px hsl(0 0% 0% / calc(var(--nb-p1-cien, 0.34) * 0.7));
 }
-.nb-szklo-plynne:hover { transform: none; }
 
-/* ── ZASIĘG SOCZEWKI ─────────────────────────────────────────────────────
-   Tryb „chrome": soczewka tylko na dużych powierzchniach (nav/panel/modal).
-   Reszta schodzi na tanie blur. */
+.nb-szklo-plynne:hover {
+  transform: none;
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.16)),
+    0 8px 32px -8px hsl(0 0% 0% / calc(var(--nb-p1-cien, 0.34) * 0.7));
+}
+
+/* ── ZASIĘG SOCZEWKI (Tryb "Tylko Chrome") ──────────────────────────────
+   W trybie bez soczewki kafelki pozostają krystalicznie przezroczyste (4px blur, 5% opacity),
+   ale zdejmują filtr SVG dla maksymalnej płynności 60FPS. */
 html.nb-refrakcja-chrome .nb-szklo:not(.nb-powierzchnia) {
-  -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
-          backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+  -webkit-backdrop-filter: saturate(135%) blur(4px);
+          backdrop-filter: saturate(135%) blur(4px);
 }
 
 /* ── SZKŁO WYRAŹNE — mocniejsza refrakcja dla elementów wyróżnionych ────── */
@@ -923,5 +975,48 @@ html.nb-refrakcja-chrome .nb-szklo:not(.nb-powierzchnia) {
 @media (prefers-reduced-motion: reduce) {
   .nb-szklo, .nb-szklo::after { transition: none; }
   .nb-szklo:hover { transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRYB NORMAL (html:not(.is-glass)) — 100% Solidne, Nieprzezroczyste Kafelki
+   ═══════════════════════════════════════════════════════════════════════════ */
+html:not(.is-glass) .nb-szklo,
+html:not(.is-glass) .glass-card,
+html:not(.is-glass) .nb-szklo-plynne,
+html:not(.is-glass) aside {
+  background-color: hsl(var(--card)) !important;
+  background-image: none !important;
+  opacity: 1 !important;
+  border: 1px solid hsl(var(--border) / 0.8) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 6px 20px -6px rgba(0, 0, 0, 0.15) !important;
+  transform: none !important;
+}
+
+html:not(.is-glass) .nb-szklo:hover,
+html:not(.is-glass) .glass-card:hover,
+html:not(.is-glass) .nb-szklo-plynne:hover {
+  border-color: hsl(var(--primary) / 0.5) !important;
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.18) !important;
+  transform: translateY(-1px) !important;
+}
+
+html:not(.is-glass) .nb-szklo::before,
+html:not(.is-glass) .glass-card::before,
+html:not(.is-glass) .nb-szklo::after,
+html:not(.is-glass) .glass-card::after {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Wewnętrzne wiersze, pigułki i przyciski w trybie Normal — 100% solidne */
+html:not(.is-glass) .nb-szklo div.border,
+html:not(.is-glass) .glass-card div.border,
+html:not(.is-glass) .nb-szklo button.border {
+  background-color: hsl(var(--muted) / 0.6) !important;
+  border-color: hsl(var(--border) / 0.6) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 

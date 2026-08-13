@@ -96,17 +96,19 @@ function RefrakcjaToggle({ wszedzie, onToggle }: { wszedzie: boolean; onToggle: 
 
 // ── Główna treść (wewnątrz GlassProvider) ─────────────────────────
 function AppInner() {
-  const { isGlass, toggle: toggleGlass } = useGlass()
+  const { isGlass, toggle: toggleGlass, showContent, toggleContent } = useGlass()
   const [activeTheme, setActiveTheme] = useState<ThemeKey>(null)
   const [activeTab,   setActiveTab]   = useState<TabKey>('preview')
   const [bgKey,       setBgKey]       = useState<BgKey>('nextbyte')
   const [lensWszedzie, setLensWszedzie] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
 
-  /* Klasa na <html> steruje zasięgiem soczewki */
+  /* Klasa na <html> steruje trybem Liquid Glass oraz zasięgiem soczewki */
   useEffect(() => {
+    document.documentElement.classList.toggle('is-glass', isGlass)
+    document.documentElement.classList.toggle('nb-glass-active', isGlass)
     document.documentElement.classList.toggle('nb-refrakcja-chrome', !lensWszedzie)
-  }, [lensWszedzie])
+  }, [isGlass, lensWszedzie])
 
   const cycleBg = () => {
     const idx = BG_OPTIONS.findIndex(b => b.key === bgKey)
@@ -260,7 +262,7 @@ function AppInner() {
           {/* Main workspace container */}
           <main className={cn(
             "flex-1 overflow-y-auto",
-            activeTab === 'preview' ? 'p-0' : 'p-6 max-w-7xl mx-auto w-full'
+            activeTab === 'preview' ? 'p-0' : 'p-6 w-full'
           )}>
             {sectionMap[activeTab]}
           </main>
@@ -334,6 +336,23 @@ function AppInner() {
                   </button>
                 </div>
               )}
+
+              {/* Tryb Treści (Z napisami / Czysty Szablon) */}
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground/80">Podgląd treści</span>
+                <button
+                  onClick={toggleContent}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-all duration-200',
+                    showContent
+                      ? 'border-emerald-400/60 bg-emerald-950/80 text-emerald-300'
+                      : 'border-border bg-card text-foreground/70'
+                  )}
+                >
+                  <span className={cn('h-1.5 w-1.5 rounded-full transition-colors', showContent ? 'bg-emerald-400' : 'bg-foreground/30')} />
+                  {showContent ? 'Z napisami (Work)' : 'Czysty szablon'}
+                </button>
+              </div>
 
               {/* Background patterns cycler */}
               <div className="flex items-center justify-between text-xs">

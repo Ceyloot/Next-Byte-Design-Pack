@@ -1,408 +1,777 @@
-import React from 'react'
-import { 
-  Grid, Sparkles, MessageSquare, Terminal, Brain, ShieldAlert, 
-  TrendingUp, Camera, Video, Calendar, CheckSquare, FileText, 
-  LayoutGrid, Briefcase, Bell, Settings, Search, Plus, Award, 
-  Image as ImageIcon, FileCode, ChevronRight, Activity, ArrowUpRight,
-  TrendingDown, Download, Filter, MoreHorizontal, Navigation, PanelTop, Loader, Palette, Layers
+import React, { useState } from 'react'
+import {
+  Grid, Sparkles, MessageSquare, Terminal, Brain, ShieldAlert,
+  Camera, Video, Bell, Search, Plus, ChevronRight, Activity,
+  Zap, Users, Clock, Share2, MoreHorizontal, TrendingUp,
+  CheckSquare, Square, PieChart, ArrowUpRight,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
+import { useLiquidGlassScroll } from '@/hooks/useLiquidGlassScroll'
+import { Tile, TileRow, TilePill, TileAction } from '@/components/Tile'
 
-// ── Mock Data ────────────────────────────────────────────────────
-const STATS = [
-  { label: 'Zużycie Tokenów', value: '2,410,320', trend: '+14.2%', isPositive: true, subtext: 'w tym miesiącu' },
-  { label: 'Aktywne Zadania', value: '18', trend: '-2', isPositive: false, subtext: '3 w toku' },
-  { label: 'Wygenerowane Grafiki', value: '4,305', trend: '+8.4%', isPositive: true, subtext: 'w tym tygodniu' },
-  { label: 'Współczynnik Trafności AI', value: '98.9%', trend: '+0.4%', isPositive: true, subtext: 'średnia p99' },
+// ── Data (pure layout definitions without copy/text content) ─────
+
+import { useGlass } from '@/lib/glass-context'
+
+// ── NextByte Real SaaS Data (from official screenshot) ─────────────
+
+const SAAS_SIDEBAR_SECTIONS = [
+  {
+    title: 'AI',
+    items: [
+      { name: 'Personalny Asystent', icon: Sparkles, active: true },
+      { name: 'Chat AI',             icon: MessageSquare },
+      { name: 'PromptEx',            icon: Terminal },
+      { name: 'Pamięć AI',           icon: Brain },
+      { name: 'Red Zone',            icon: ShieldAlert, badge: 'OFF' },
+    ],
+  },
+  {
+    title: 'PRZYPIĘTE MODUŁY',
+    items: [
+      { name: 'Trend',        icon: TrendingUp },
+      { name: 'Studio Zdjęć', icon: Camera },
+      { name: 'Studio Video', icon: Video },
+    ],
+  },
+  {
+    title: 'PRACA',
+    items: [
+      { name: 'Kalendarz', icon: Clock },
+      { name: 'Zadania',   icon: CheckSquare },
+      { name: 'Notatki',   icon: Square },
+      { name: 'Tablice',   icon: Grid },
+      { name: 'Firma',     icon: Users },
+    ],
+  },
 ]
 
-const TRANSACTIONS = [
-  { id: '#04910', task: 'Projekt logo dla NextByte', module: 'Studio Zdjęć', status: 'Sukces', qty: 12, cost: '1,450 Byte' },
-  { id: '#04911', task: 'Analiza rynku i konkurencji', module: 'Chat AI', status: 'Sukces', qty: 20, cost: '820 Byte' },
-  { id: '#04912', task: 'Generowanie video promocyjnego', module: 'Studio Video', status: 'Oczekuje', qty: 1, cost: '5,000 Byte' },
-  { id: '#04913', task: 'Trening modelu na dokumentach', module: 'Pamięć AI', status: 'Błąd', qty: 8, cost: '320 Byte' },
+const RECENT_WORK = [
+  { title: 'Jakie umiejętności potrzebuję aby bez p...', type: 'Rozmowa', time: '31 lip', icon: MessageSquare },
+  { title: 'zamień D na J',                              type: 'Studio Zdjęć', time: '30 lip', icon: Camera },
+  { title: 'Jaki VR do lm najlepszy an',                 type: 'Rozmowa', time: '30 lip', icon: MessageSquare },
+  { title: 'mazda miata z popupami w kolorze syre...',  type: 'Studio Zdjęć', time: '28 lip', icon: Camera },
+  { title: 'Firmy pod wprowadzenie ich na nextby...',   type: 'Rozmowa', time: '27 lip', icon: MessageSquare },
+  { title: 'Scenariusz TikTok B2C: Jak ogarnąć ż...',   type: 'Dokument', time: '24 lip', icon: Square },
 ]
 
-const LIVE_ACTIVITIES = [
-  { title: 'Generowanie obrazu: "mazda miata z popupami..."', time: '5 min temu', type: 'img' },
-  { title: 'Chat AI: "Jakie umiejętności potrzebuje..."', time: '12 min temu', type: 'chat' },
-  { title: 'Edycja dokumentu B2C TikTok', time: '1 godz temu', type: 'doc' },
+const LIVE_ACTIVITY = [
+  { title: 'Prośba o zdjęcie z zadania', time: '57min temu', isNew: false },
+  { title: 'Prośba o zdjęcie z zadania', time: '57min temu', isNew: true },
+  { title: 'Prośba o zdjęcie z zadania', time: '57min temu', isNew: false },
+  { title: 'Rozmowa: Jakie umiejętności potrzebuję...', time: '31.07', isNew: false },
+  { title: 'Wygenerowany obraz: zamień D na J', time: '30.07', isNew: false },
 ]
 
-// Status Badge Component
-function StatusBadge({ status }: { status: string }) {
-  let style = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-  if (status === 'Oczekuje') style = 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-  if (status === 'Błąd') style = 'bg-destructive/10 text-destructive border-destructive/20'
+const NAV_MAIN = [
+  { icon: Grid,          active: true  },
+  { icon: Sparkles,      active: false },
+  { icon: MessageSquare, active: false },
+  { icon: Brain,         active: false },
+  { icon: Activity,      active: false },
+]
+
+const NAV_SECTIONS = [
+  {
+    items: [
+      { icon: Camera },
+      { icon: Video },
+      { icon: Terminal },
+    ],
+  },
+  {
+    items: [
+      { icon: PieChart },
+      { icon: ShieldAlert },
+    ],
+  },
+]
+
+const WEEKLY_VALS = [1200, 1850, 1540, 2180, 1920, 820, 2847]
+
+const DONUT_SEGMENTS = [
+  { pct: 41, color: 'hsl(var(--primary))' },
+  { pct: 28, color: 'hsl(var(--primary) / 0.55)' },
+  { pct: 19, color: 'hsl(var(--primary) / 0.32)' },
+  { pct: 12, color: 'hsl(var(--foreground) / 0.14)' },
+]
+
+const ACTIVE_SESSIONS = [
+  { icon: MessageSquare },
+  { icon: Camera },
+]
+
+const TASK_QUEUE = [
+  { done: true,  width: '75%' },
+  { done: true,  width: '60%' },
+  { done: false, width: '85%' },
+  { done: false, width: '50%' },
+]
+
+const RECENT_PROJECTS = [
+  { ok: true  },
+  { ok: false },
+  { ok: false },
+]
+
+// ── SVG Charts ────────────────────────────────────────────────────
+
+function WeekChart() {
+  const W = 320, H = 140
+  const max = Math.max(...WEEKLY_VALS)
+  const pts = WEEKLY_VALS.map((v, i) => ({
+    x: (i / (WEEKLY_VALS.length - 1)) * W,
+    y: H - 12 - (v / max) * (H - 30),
+  }))
+  const polyline = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const area = [
+    `M ${pts[0].x.toFixed(1)},${H}`,
+    ...pts.map(p => `L ${p.x.toFixed(1)},${p.y.toFixed(1)}`),
+    `L ${pts[pts.length - 1].x.toFixed(1)},${H} Z`,
+  ].join(' ')
+  const last = pts[pts.length - 1]
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${style}`}>
-      <span className={`w-1 h-1 rounded-full ${status === 'Sukces' ? 'bg-emerald-500' : status === 'Oczekuje' ? 'bg-amber-500' : 'bg-destructive'}`} />
-      {status}
-    </span>
-  )
-}
-
-// ── Sidebar Item ─────────────────────────────────────────────────
-interface SItemProps {
-  icon: React.ReactNode
-  label: string
-  active?: boolean
-  dot?: boolean
-  count?: number
-}
-
-function SItem({ icon, label, active, dot, count }: SItemProps) {
-  return (
-    <div className={`
-      group flex items-center gap-2.5 px-3 py-1.5 rounded-nb-sm cursor-pointer text-xs transition-all duration-150 relative
-      ${active 
-        ? 'bg-primary/10 text-primary font-medium' 
-        : 'text-foreground/60 hover:text-foreground hover:bg-foreground/[0.03]'}
-    `}>
-      {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-primary rounded-r" />}
-      <span className={`transition-transform duration-150 ${active ? 'scale-105' : 'group-hover:scale-105 opacity-80 group-hover:opacity-100'}`}>
-        {icon}
-      </span>
-      <span className="flex-1 truncate">{label}</span>
-      {dot && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-      {count !== undefined && (
-        <span className="text-[10px] font-mono opacity-50 bg-foreground/5 px-1.5 py-0.5 rounded border border-foreground/[0.03] group-hover:opacity-85 transition-opacity">
-          {count}
-        </span>
-      )}
+    <div className="w-full flex flex-col gap-3">
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none" className="w-full" style={{ height: H }}>
+        <defs>
+          <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="hsl(var(--primary))" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#wg)" />
+        <polyline
+          points={polyline}
+          stroke="hsl(var(--primary))"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx={last.x} cy={last.y} r="5" fill="hsl(var(--primary))" />
+        <circle cx={last.x} cy={last.y} r="10" fill="hsl(var(--primary))" fillOpacity="0.2" />
+      </svg>
+      <div className="flex justify-between px-1">
+        {WEEKLY_VALS.map((_, i) => (
+          <span key={i} className="w-2 h-2 rounded-full bg-foreground/20" />
+        ))}
+      </div>
     </div>
   )
 }
 
-function SLabel({ label }: { label: string }) {
+function DonutChart() {
+  const r = 55, cx = 70, cy = 70, sw = 14
+  const circ = 2 * Math.PI * r
+  let cum = 0
   return (
-    <div className="text-[9px] font-bold tracking-wider uppercase text-muted-foreground/45 px-3 pt-3.5 pb-1 select-none">
-      {label}
-    </div>
+    <svg width={140} height={140} viewBox="0 0 140 140" fill="none" className="shrink-0">
+      <circle cx={cx} cy={cy} r={r} stroke="hsl(var(--foreground) / 0.07)" strokeWidth={sw} />
+      {DONUT_SEGMENTS.map((seg, i) => {
+        const dash = (seg.pct / 100) * circ
+        const rotation = -90 + (cum / 100) * 360
+        cum += seg.pct
+        return (
+          <circle
+            key={i}
+            cx={cx} cy={cy} r={r}
+            stroke={seg.color}
+            strokeWidth={sw}
+            strokeDasharray={`${dash} ${circ - dash}`}
+            transform={`rotate(${rotation} ${cx} ${cy})`}
+            strokeLinecap="butt"
+          />
+        )
+      })}
+    </svg>
   )
 }
 
-// ── Main Component ───────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────
+
 interface PreviewSectionProps {
   onSelectTab?: (tabKey: string) => void
 }
 
 export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
+  const { showContent } = useGlass()
+  const [activeNav, setActiveNav] = useState(0)
+  const mainRef = React.useRef<HTMLElement>(null)
+  useLiquidGlassScroll(mainRef)
+
   return (
-    <div className="w-full h-[calc(100vh-56px)] flex font-sans antialiased text-foreground overflow-hidden bg-background relative">
-      
-      {/* Decorative radial gradients for high-end SaaS feel */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(var(--primary),0.05),transparent_50%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(var(--primary),0.02),transparent_60%)] pointer-events-none" />
+    <div
+      className="relative w-full h-screen flex font-sans antialiased overflow-hidden bg-transparent"
+      style={{ zIndex: 1 }}
+    >
+      <NbGlassFilters />
 
-      {/* ══ SIDEBAR (Linear/Craft Style) ══ */}
-      <aside className="w-56 shrink-0 border-r border-border/40 bg-card/15 backdrop-blur-md flex flex-col overflow-hidden relative z-10">
+      {/* ── Seamless Liquid Glass Sidebar (nb-szklo-plynne) ── */}
+      <aside className="w-64 shrink-0 flex flex-col nb-szklo-plynne border-r border-foreground/12 transition-all duration-300">
         
-        {/* Workspace dropdown selector */}
-        <div className="p-3 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer group">
-              <div className="w-6 h-6 rounded-nb-xs bg-primary flex items-center justify-center shadow-md shadow-primary/25 group-hover:scale-105 transition-transform duration-200">
-                <Activity className="h-3.5 w-3.5 text-primary-foreground stroke-[2.5]" />
-              </div>
-              <div>
-                <span className="text-xs font-semibold tracking-tight text-foreground block leading-none">Agencja</span>
-                <span className="text-[10px] text-muted-foreground/60">Artur Bącik Team</span>
-              </div>
-            </div>
-            <button className="text-foreground/45 hover:text-foreground p-1 hover:bg-foreground/[0.04] rounded-nb-xs transition-colors">
-              <Settings className="h-3.5 w-3.5" />
-            </button>
+        {/* Logo Header */}
+        <div className="px-5 pt-6 pb-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-[10px] bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
+            <Zap className="w-5 h-5 text-background" />
           </div>
+          {showContent ? (
+            <span className="text-base font-bold text-foreground tracking-tight">NextByte</span>
+          ) : (
+            <div className="h-4 w-28 bg-primary/40 rounded-[5px]" />
+          )}
+        </div>
 
-          {/* Quick Finder / Search bar */}
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-nb-sm bg-foreground/[0.02] border border-border/40 hover:bg-foreground/[0.04] hover:border-primary/30 transition-all cursor-pointer group">
-            <Search className="h-3.5 w-3.5 text-foreground/40 group-hover:text-foreground/60 transition-colors" />
-            <span className="flex-1 text-[11px] text-foreground/45 group-hover:text-foreground/60 transition-colors">Wyszukaj...</span>
-            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-sans font-medium bg-foreground/5 border border-border/60 rounded text-foreground/45 shadow-sm">⌘K</kbd>
+        {/* Global Search Input */}
+        <div className="px-4 py-2">
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-[10px] border border-foreground/12 bg-foreground/[0.05] cursor-pointer hover:border-primary/50 transition-all duration-200">
+            <Search className="w-4 h-4 text-primary shrink-0" />
+            {showContent ? (
+              <span className="text-xs text-foreground/60 flex-1 truncate">Wyszukaj... <kbd className="ml-auto text-[10px] opacity-50">⌘K</kbd></span>
+            ) : (
+              <div className="h-3 w-24 bg-foreground/30 rounded-[4px]" />
+            )}
           </div>
         </div>
 
-        {/* Navigation items */}
-        <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-[2px] scrollbar-none">
-          <SItem icon={<Grid className="h-3.5 w-3.5" />} label="Dashboard" active />
-          
-          <SLabel label="AI Workspace" />
-          <SItem icon={<Sparkles className="h-3.5 w-3.5" />} label="Personalny Asystent" />
-          <SItem icon={<MessageSquare className="h-3.5 w-3.5" />} label="Chat AI" />
-          <SItem icon={<Terminal className="h-3.5 w-3.5" />} label="PromptEx" />
-          <SItem icon={<Brain className="h-3.5 w-3.5" />} label="Pamięć AI" />
-          <SItem icon={<ShieldAlert className="h-3.5 w-3.5" />} label="Red Zone" dot />
-          
-          <SLabel label="Moduły" />
-          <SItem icon={<TrendingUp className="h-3.5 w-3.5" />} label="Trend" />
-          <SItem icon={<Camera className="h-3.5 w-3.5" />} label="Studio Zdjęć" />
-          <SItem icon={<Video className="h-3.5 w-3.5" />} label="Studio Video" />
-          
-          <SLabel label="Praca" />
-          <SItem icon={<Calendar className="h-3.5 w-3.5" />} label="Kalendarz" />
-          <SItem icon={<CheckSquare className="h-3.5 w-3.5" />} label="Zadania" count={7} />
-          <SItem icon={<FileText className="h-3.5 w-3.5" />} label="Notatki" />
-          <SItem icon={<LayoutGrid className="h-3.5 w-3.5" />} label="Tablice" />
-          <SItem icon={<Briefcase className="h-3.5 w-3.5" />} label="Firma" />
-
-          {onSelectTab && (
+        {/* Navigation Sections */}
+        <nav className="flex-1 px-3 py-2 flex flex-col gap-1 overflow-y-auto">
+          {showContent ? (
             <>
-              <SLabel label="Design Sandbox" />
-              <div onClick={() => onSelectTab('karty')}>
-                <SItem icon={<LayoutGrid className="h-3.5 w-3.5" />} label="Karty" />
-              </div>
-              <div onClick={() => onSelectTab('akcje')}>
-                <SItem icon={<Sparkles className="h-3.5 w-3.5" />} label="Akcje" />
-              </div>
-              <div onClick={() => onSelectTab('formularze')}>
-                <SItem icon={<Layers className="h-3.5 w-3.5" />} label="Formularze" />
-              </div>
-              <div onClick={() => onSelectTab('nawigacja')}>
-                <SItem icon={<Navigation className="h-3.5 w-3.5" />} label="Nawigacja" />
-              </div>
-              <div onClick={() => onSelectTab('nakładki')}>
-                <SItem icon={<PanelTop className="h-3.5 w-3.5" />} label="Nakładki" />
-              </div>
-              <div onClick={() => onSelectTab('dane')}>
-                <SItem icon={<Activity className="h-3.5 w-3.5" />} label="Dane" />
-              </div>
-              <div onClick={() => onSelectTab('stany')}>
-                <SItem icon={<Loader className="h-3.5 w-3.5" />} label="Stany" />
-              </div>
-              <div onClick={() => onSelectTab('paleta')}>
-                <SItem icon={<Palette className="h-3.5 w-3.5" />} label="Paleta" />
-              </div>
+              <button className="flex items-center gap-3 px-3 py-2 rounded-[10px] w-full text-left text-xs font-semibold bg-primary/20 text-primary border border-primary/40 shadow-sm backdrop-blur-md">
+                <Grid className="w-4 h-4 text-primary shrink-0" />
+                <span>Panel Główny</span>
+              </button>
+
+              {SAAS_SIDEBAR_SECTIONS.map((sec, sIdx) => (
+                <div key={sIdx} className="mt-4">
+                  <div className="text-[10px] font-bold tracking-wider uppercase text-foreground/40 px-3 pb-1.5 select-none">
+                    {sec.title}
+                  </div>
+                  <div className="space-y-0.5">
+                    {sec.items.map((item, i) => (
+                      <button
+                        key={i}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 rounded-[10px] w-full text-left text-xs font-medium transition-all duration-200',
+                          item.active
+                            ? 'bg-primary/25 text-primary border border-primary/50 font-semibold'
+                            : 'text-foreground/70 hover:text-foreground hover:bg-white/[0.06] border border-transparent',
+                        )}
+                      >
+                        <item.icon className="w-4 h-4 shrink-0 text-foreground/60" />
+                        <span className="truncate">{item.name}</span>
+                        {item.badge && (
+                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.2 rounded bg-foreground/10 text-foreground/50">{item.badge}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              {NAV_MAIN.map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveNav(i)}
+                  className={cn(
+                    'flex items-center gap-3.5 px-3.5 py-3 rounded-[10px] w-full text-left transition-all duration-200 text-[13px] font-medium',
+                    i === activeNav
+                      ? 'bg-primary/25 text-primary border border-primary/50 shadow-md shadow-primary/20 backdrop-blur-md'
+                      : 'text-foreground/60 hover:text-foreground hover:bg-white/[0.06] border border-transparent',
+                  )}
+                >
+                  <item.icon className="w-4.5 h-4.5 shrink-0 text-primary/80" />
+                  <div className={cn('h-3.5 rounded-[4px]', i === activeNav ? 'bg-primary/70 w-32' : 'bg-foreground/30 w-24')} />
+                </button>
+              ))}
+              {NAV_SECTIONS.map((section, sIdx) => (
+                <div key={sIdx} className="mt-5">
+                  <div className="h-2.5 w-14 bg-primary/30 rounded-[3px] mb-2 px-3.5" />
+                  {section.items.map((item, j) => (
+                    <button
+                      key={j}
+                      className="flex items-center gap-3.5 px-3.5 py-3 rounded-[10px] w-full text-left text-foreground/50 hover:text-foreground hover:bg-white/[0.06] transition-colors text-[13px] font-medium border border-transparent"
+                    >
+                      <item.icon className="w-4.5 h-4.5 shrink-0 text-foreground/50" />
+                      <div className="h-3.5 w-24 bg-foreground/30 rounded-[4px]" />
+                    </button>
+                  ))}
+                </div>
+              ))}
             </>
           )}
         </nav>
 
-        {/* User Account / Footer */}
-        <div className="p-3 border-t border-border/40 bg-card/10 flex items-center gap-2.5">
-          <div className="relative group cursor-pointer">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-primary/60 flex items-center justify-center text-[10px] font-bold text-primary-foreground shadow-sm">
+        {/* Sidebar Footer User Info */}
+        <div className="px-4 py-4 border-t border-foreground/12">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-[10px] border border-foreground/12 bg-foreground/[0.05]">
+            <div className="w-8 h-8 rounded-full bg-primary/25 flex items-center justify-center shrink-0 border border-primary/40 shadow-sm text-xs font-bold text-primary">
               AB
             </div>
-            <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-card" />
+            <div className="flex-1 min-w-0">
+              {showContent ? (
+                <>
+                  <div className="text-xs font-semibold text-foreground truncate">Artur Bącik</div>
+                  <div className="text-[10px] text-foreground/50 truncate">Konto Free</div>
+                </>
+              ) : (
+                <>
+                  <div className="h-3.5 w-24 bg-foreground/40 rounded-[4px] mb-1" />
+                  <div className="h-2.5 w-14 bg-foreground/30 rounded-[3px]" />
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-foreground truncate">Artur Bącik</div>
-            <div className="text-[10px] text-muted-foreground/60 truncate">Free · 0 Byte</div>
-          </div>
-          <button className="text-foreground/45 hover:text-foreground p-1.5 hover:bg-foreground/[0.04] rounded-full transition-colors relative">
-            <Bell className="h-3.5 w-3.5" />
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
-          </button>
         </div>
       </aside>
 
-      {/* ══ MAIN DASHBOARD AREA ══ */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-black/[0.18] z-10">
-        
-        {/* Header / Top bar */}
-        <header className="h-14 border-b border-border/30 px-6 flex items-center justify-between shrink-0 bg-card/20 backdrop-blur-sm">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Dashboard</span>
-            <ChevronRight className="h-3 w-3 opacity-60" />
-            <span className="text-foreground font-semibold">Overview</span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button className="h-8 px-3 rounded-nb-sm border border-border/50 bg-card/45 hover:bg-foreground/[0.03] text-foreground/75 hover:text-foreground text-xs font-medium flex items-center gap-1.5 transition-all">
-              <Download className="h-3.5 w-3.5" /> Eksportuj CSV
-            </button>
-            <button className="h-8 px-3 rounded-nb-sm bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg shadow-primary/10 hover:shadow-primary/20">
-              <Plus className="h-3.5 w-3.5 stroke-[2.5]" /> Nowy projekt
-            </button>
-          </div>
-        </header>
+      {/* ── Main Workspace ── */}
+      <main ref={mainRef} className="flex-1 flex flex-col gap-6 p-6 lg:p-8 min-w-0 overflow-y-auto h-full">
 
-        {/* Scrollable content container */}
-        <main className="flex-1 overflow-y-auto p-5 space-y-4">
-          
-          {/* Greeting section */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">Witaj z powrotem, Artur</h2>
-              <p className="text-xs text-muted-foreground mt-1">Monitoruj zużycie tokenów, zadania i procesy AI w czasie rzeczywistym.</p>
-            </div>
-            <div className="flex rounded-nb-sm border border-border/40 bg-card/40 p-0.5 font-mono text-[10px]">
-              {['Dzienny', 'Tygodniowy', 'Miesięczny'].map((opt, idx) => (
-                <button 
-                  key={opt} 
-                  className={`px-3 py-1 rounded-nb-xs transition-all ${idx === 1 ? 'bg-primary text-primary-foreground font-semibold shadow-sm' : 'text-foreground/50 hover:text-foreground'}`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {STATS.map((stat, i) => (
-              <div
-                key={stat.label}
-                className={`bg-card/80 border rounded-nb p-4 shadow-sm hover:shadow-md hover:bg-card/95 transition-all duration-300 flex flex-col justify-between ${stat.isPositive ? 'border-emerald-500/15 hover:border-emerald-500/30' : 'border-rose-500/15 hover:border-rose-500/30'}`}
-              >
-                {/* Colored top accent line */}
-                <div className={`absolute top-0 left-4 right-4 h-[1.5px] rounded-full ${stat.isPositive ? 'bg-emerald-500/40' : 'bg-rose-500/40'}`} style={{ position: 'absolute' }} />
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[11px] font-medium text-muted-foreground/80">{stat.label}</span>
-                  <span className={`inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${stat.isPositive ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
-                    {stat.trend}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between mt-2">
-                  <div>
-                    <span className="text-2xl font-bold tracking-tight text-foreground">{stat.value}</span>
-                    <span className="block text-[10px] text-muted-foreground/50 mt-0.5">{stat.subtext}</span>
+        {/* ══ TOP BANNER / SALDO BYTE WIDGET ══ */}
+        <Tile intencja="akcent" elewacja="uniesiona" className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          {showContent ? (
+            <>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-cyan-400 p-0.5 shadow-lg shadow-primary/30">
+                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center font-bold text-primary text-sm">
+                    AB
                   </div>
-                  <svg className={`w-14 h-8 ${stat.isPositive ? 'text-emerald-500' : 'text-rose-500'}`} viewBox="0 0 100 50">
-                    <defs>
-                      <linearGradient id={`sg${i}`} x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor="currentColor" stopOpacity="1"/>
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d={i % 2 === 0 ? "M 0 45 Q 25 15 50 30 T 100 5" : "M 0 5 Q 25 40 50 25 T 100 45"}
-                      fill="none" stroke={`url(#sg${i})`} strokeWidth="2.5" strokeLinecap="round"
-                    />
-                  </svg>
                 </div>
-              </div>
-            ))}
-          </section>
-
-          {/* Main Charts & Live Feed Section */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-
-            {/* Sales Trend / Performance block */}
-            <div className="bg-card/80 border border-border/30 rounded-nb p-5 shadow-sm lg:col-span-2 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Trend Zużycia Systemu</h3>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-xl font-bold text-foreground">20,320 Byte</span>
-                    <span className="text-[10px] text-emerald-400 font-mono font-semibold flex items-center gap-0.5 bg-emerald-500/5 px-1 rounded border border-emerald-500/10">
-                      <ArrowUpRight className="h-3 w-3" /> +12.4% vs wczoraj
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-foreground">Witaj, Artur Bącik</h2>
+                    <TilePill intencja="akcent">BETA 4.0.0</TilePill>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground/60 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Nowy użytkownik
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground/60 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-foreground/20" /> Powracający
-                  </span>
+                  <p className="text-xs text-foreground/60 mt-0.5">Brak zużycia w ostatnich 7 dniach</p>
                 </div>
               </div>
 
-              {/* Grid Bar Chart (Gradient & Line overlays) */}
-              <div className="h-48 flex items-end justify-between gap-2 pt-4 px-2 relative border-b border-border/30">
-                {/* Horizontal reference lines */}
-                <div className="absolute inset-x-0 top-[20%] border-t border-dashed border-border/10 pointer-events-none" />
-                <div className="absolute inset-x-0 top-[50%] border-t border-dashed border-border/10 pointer-events-none" />
-                <div className="absolute inset-x-0 top-[80%] border-t border-dashed border-border/10 pointer-events-none" />
-                
-                {[35, 65, 40, 90, 50, 75, 45, 60, 80, 55, 70, 85].map((h, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group/bar relative">
-                    {/* Tooltip */}
-                    <div className="absolute bottom-[105%] bg-foreground text-background text-[9px] font-semibold px-2 py-1 rounded opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md z-20 font-mono">
-                      {h * 240} Byte
-                    </div>
-                    {/* Bar with gradient and high contrast */}
-                    <div className="w-full rounded-t-nb-xs overflow-hidden flex flex-col justify-end h-full">
-                      <div 
-                        style={{ height: `${h}%` }} 
-                        className="bg-gradient-to-t from-primary/20 to-primary/80 group-hover/bar:from-primary/40 group-hover/bar:to-primary transition-all duration-300 rounded-t-[3px]"
-                      />
-                    </div>
-                    <span className="text-[9px] text-muted-foreground/60 font-mono mt-1.5 select-none font-medium">
-                      {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}
-                    </span>
+              {/* Saldo Timeline Widget */}
+              <div className="flex items-center gap-6 flex-1 max-w-xl mx-4">
+                <div className="text-center shrink-0">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">SALDO BYTE</div>
+                  <div className="text-xl font-black text-primary">0 <span className="text-xs font-normal">Byte</span></div>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="h-2 w-full bg-foreground/10 rounded-full overflow-hidden relative">
+                    <div className="h-full bg-primary rounded-full w-1/4 shadow-sm" />
                   </div>
+                  <div className="flex justify-between text-[10px] text-foreground/40 font-mono">
+                    <span>07.08</span>
+                    <span>10.08</span>
+                    <span>dziś (7d 30d 90d)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <TileAction rodzaj="glowna" ikona={Plus}>+ Doładuj</TileAction>
+                <TileAction rodzaj="wtorna">Wydatki</TileAction>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <div>
+                <div className="h-6 w-56 bg-primary/40 rounded-[8px]" />
+                <div className="h-3.5 w-40 bg-foreground/30 rounded-[5px] mt-2" />
+              </div>
+              <div className="flex items-center gap-3">
+                <button className="relative w-10 h-10 flex items-center justify-center rounded-[10px] border border-foreground/12 bg-foreground/[0.05] text-foreground/70 hover:bg-white/15 hover:text-foreground transition-all duration-200">
+                  <Bell className="w-4.5 h-4.5 text-primary" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-background" />
+                </button>
+                <button className="flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-primary text-background text-xs font-semibold hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/30">
+                  <Plus className="w-4 h-4" />
+                  <div className="h-3.5 w-12 bg-background/50 rounded-[4px]" />
+                </button>
+              </div>
+            </div>
+          )}
+        </Tile>
+
+        {/* Global Search Input Bar */}
+        {showContent && (
+          <div className="w-full">
+            <TileRow intencja="neutralna" className="py-3 px-4">
+              <Search className="w-4 h-4 text-primary shrink-0" />
+              <span className="text-xs text-foreground/60 flex-1">Szukaj w notatkach, zadaniach, kalendarzu...</span>
+              <kbd className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-foreground/10 text-foreground/50 border border-foreground/10">⌘K</kbd>
+            </TileRow>
+          </div>
+        )}
+
+        {/* ── ROW 1: Overview Card + Weekly Trend Chart + Donut Chart ── */}
+        <div className="grid gap-5 lg:gap-6" style={{ gridTemplateColumns: '1.9fr 2fr 1.2fr' }}>
+
+          {/* Card 1: Overview & Beta Tester Status */}
+          <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[280px]">
+            {showContent ? (
+              <div className="flex flex-col h-full justify-between space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Przegląd Statystyk</h3>
+                    <p className="text-xs text-foreground/50">Aktywność konta NextByte</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TileAction rodzaj="cicha" ikona={Share2} samaIkona />
+                    <TileAction rodzaj="cicha" ikona={MoreHorizontal} samaIkona />
+                  </div>
+                </div>
+
+                <div className="flex items-end gap-5">
+                  <div>
+                    <div className="text-3xl font-black text-foreground">2 847</div>
+                    <div className="text-xs text-foreground/50 mt-0.5">Wygenerowane zapytania</div>
+                  </div>
+                  <div className="pb-1">
+                    <TilePill intencja="akcent">
+                      <TrendingUp className="w-3.5 h-3.5 mr-1 text-primary" />
+                      +24%
+                    </TilePill>
+                    <div className="text-[10px] text-foreground/40 mt-1">vs zeszły tydzień</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mt-auto">
+                  <TileRow intencja="neutralna" className="flex-col justify-center items-center py-2">
+                    <span className="text-xs font-bold text-primary">v4.0</span>
+                    <span className="text-[10px] text-foreground/50">Wersja</span>
+                  </TileRow>
+                  <TileRow intencja="neutralna" className="flex-col justify-center items-center py-2">
+                    <span className="text-xs font-bold text-emerald-400">99.8%</span>
+                    <span className="text-[10px] text-foreground/50">Uptime</span>
+                  </TileRow>
+                  <TileRow intencja="neutralna" className="flex-col justify-center items-center py-2">
+                    <span className="text-xs font-bold text-amber-400">0 Byte</span>
+                    <span className="text-[10px] text-foreground/50">Zużycie</span>
+                  </TileRow>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between mb-5">
+                  <div>
+                    <div className="h-4 w-32 bg-primary/45 rounded-[5px] mb-1.5" />
+                    <div className="h-3 w-20 bg-foreground/30 rounded-[4px]" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TileAction rodzaj="cicha" ikona={Share2} samaIkona />
+                    <TileAction rodzaj="cicha" ikona={MoreHorizontal} samaIkona />
+                  </div>
+                </div>
+                <div className="flex items-end gap-5 mb-6">
+                  <div>
+                    <div className="h-10 w-36 bg-foreground/50 rounded-[8px] mb-1.5" />
+                    <div className="h-3 w-20 bg-foreground/30 rounded-[4px]" />
+                  </div>
+                  <div className="pb-1">
+                    <TilePill intencja="akcent">
+                      <TrendingUp className="w-3.5 h-3.5 mr-1 text-primary" />
+                      <div className="h-3 w-10 bg-primary/60 rounded-[3px]" />
+                    </TilePill>
+                    <div className="h-2.5 w-16 bg-foreground/30 rounded-[3px] mt-1.5" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mt-auto">
+                  {[1, 2, 3].map(s => (
+                    <TileRow key={s} intencja="neutralna" className="min-h-[58px] flex-col justify-center items-center">
+                      <div className="h-4.5 w-10 bg-primary/45 rounded-[4px] mb-1" />
+                      <div className="h-2.5 w-14 bg-foreground/30 rounded-[3px]" />
+                    </TileRow>
+                  ))}
+                </div>
+              </>
+            )}
+          </Tile>
+
+          {/* Card 2: Weekly Trend Chart (Wróć do roboty) */}
+          <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[280px]">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                {showContent ? (
+                  <>
+                    <h3 className="text-sm font-bold text-foreground">Wróć do roboty</h3>
+                    <p className="text-xs text-foreground/50">Ostatnie sesje ze wszystkich modułów</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-4 w-40 bg-primary/45 rounded-[5px] mb-1.5" />
+                    <div className="h-3 w-52 bg-foreground/30 rounded-[4px]" />
+                  </>
+                )}
+              </div>
+              <TilePill intencja="akcent">
+                <TrendingUp className="w-3.5 h-3.5 mr-1 text-primary" />
+                {showContent ? 'Live' : <div className="h-3 w-8 bg-primary/60 rounded-[3px]" />}
+              </TilePill>
+            </div>
+            <div className="flex-1 flex flex-col justify-end">
+              <WeekChart />
+            </div>
+          </Tile>
+
+          {/* Card 3: Donut Chart (Aktywność Modułów) */}
+          <Tile intencja="neutralna" elewacja="uniesiona" interaktywny className="min-h-[280px]">
+            <div className="flex items-start justify-between mb-4">
+              {showContent ? (
+                <h3 className="text-sm font-bold text-foreground">Aktywność Modułów</h3>
+              ) : (
+                <div className="h-4 w-24 bg-primary/45 rounded-[5px]" />
+              )}
+              <TileAction rodzaj="cicha" ikona={MoreHorizontal} samaIkona />
+            </div>
+            <div className="flex items-center gap-4 flex-1">
+              <DonutChart />
+              <div className="flex flex-col gap-2 flex-1">
+                {DONUT_SEGMENTS.map((seg, i) => (
+                  <TileRow key={i} intencja="neutralna" className="py-1 px-2">
+                    <span className="w-2 h-2 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: seg.color }} />
+                    {showContent ? (
+                      <>
+                        <span className="text-[10px] text-foreground/80 font-medium">{['AI Chat', 'Zdjęcia', 'Prompty', 'Inne'][i]}</span>
+                        <span className="text-[10px] font-bold text-primary ml-auto">{seg.pct}%</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="h-2.5 w-12 bg-foreground/40 rounded-[3px]" />
+                        <div className="h-2.5 w-7 bg-primary/50 rounded-[3px] ml-auto" />
+                      </>
+                    )}
+                  </TileRow>
                 ))}
               </div>
             </div>
+          </Tile>
+        </div>
 
-            {/* AI Modules Breakdown */}
-            <div className="bg-card/80 border border-border/30 rounded-nb p-5 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-4">Udział Modułów AI</h3>
-                <div className="space-y-4">
-                  {[
-                    { label: 'Chat AI & Modele Językowe', percentage: 48, cost: '12.4k Byte', color: 'bg-primary' },
-                    { label: 'Studio Generowania Grafiki', percentage: 28, cost: '7.1k Byte', color: 'bg-emerald-400' },
-                    { label: 'Studio Video & Klatkowanie', percentage: 14, cost: '3.6k Byte', color: 'bg-amber-400' },
-                    { label: 'Pamięć & Agenci Wektorowi', percentage: 10, cost: '2.5k Byte', color: 'bg-foreground/35' },
-                  ].map((mod) => (
-                    <div key={mod.label} className="text-xs space-y-1.5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-foreground/80 font-medium">{mod.label}</span>
-                        <span className="font-mono text-[10px] text-muted-foreground">{mod.cost} ({mod.percentage}%)</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-foreground/5 rounded-full overflow-hidden border border-border/20">
-                        <div style={{ width: `${mod.percentage}%` }} className={`h-full rounded-full ${mod.color}`} />
-                      </div>
-                    </div>
-                  ))}
+        {/* ── ROW 2: Tasks Queue + Active Sessions ── */}
+        <div className="grid grid-cols-3 gap-5 lg:gap-6">
+
+          {/* Card 1: Task Queue */}
+          <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[220px]">
+            <div className="flex items-center justify-between mb-4">
+              {showContent ? (
+                <>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/70">Lista Zadań</h3>
+                  <TilePill intencja="neutralna">4 ZADANIA</TilePill>
+                </>
+              ) : (
+                <>
+                  <div className="h-4 w-32 bg-primary/45 rounded-[5px]" />
+                  <TilePill intencja="neutralna"><div className="h-3 w-4 bg-foreground/40 rounded" /></TilePill>
+                </>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 flex-1 justify-center">
+              {showContent ? (
+                <>
+                  <TileRow intencja="akcent">
+                    <CheckSquare className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-xs text-foreground font-medium truncate">Prośba o zdjęcie z zadania</span>
+                  </TileRow>
+                  <TileRow intencja="akcent">
+                    <CheckSquare className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-xs text-foreground font-medium truncate">Zamień D na J w Studio Zdjęć</span>
+                  </TileRow>
+                  <TileRow intencja="neutralna">
+                    <Square className="w-3.5 h-3.5 text-foreground/50 shrink-0" />
+                    <span className="text-xs text-foreground/60 truncate">Konfiguracja Lokalnego AI (Ollama)</span>
+                  </TileRow>
+                  <TileRow intencja="neutralna">
+                    <Square className="w-3.5 h-3.5 text-foreground/50 shrink-0" />
+                    <span className="text-xs text-foreground/60 truncate">Scenariusz TikTok B2C</span>
+                  </TileRow>
+                </>
+              ) : (
+                TASK_QUEUE.map((t, i) => (
+                  <TileRow key={i} intencja={t.done ? 'akcent' : 'neutralna'}>
+                    {t.done
+                      ? <CheckSquare className="w-3.5 h-3.5 text-primary shrink-0" />
+                      : <Square className="w-3.5 h-3.5 text-foreground/50 shrink-0" />
+                    }
+                    <div
+                      className={cn('h-2.5 rounded-[4px]', t.done ? 'bg-primary/60' : 'bg-foreground/40')}
+                      style={{ width: t.width }}
+                    />
+                  </TileRow>
+                ))
+              )}
+            </div>
+          </Tile>
+
+          {/* Cards 2 & 3: Active Sessions */}
+          <div className="col-span-2 grid grid-cols-2 gap-5 lg:gap-6">
+            <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[220px]">
+              <div className="flex items-start justify-between mb-4">
+                <div
+                  className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 shadow-md shadow-primary/25"
+                  style={{ backgroundColor: 'hsl(var(--primary) / 0.25)', border: '1px solid hsl(var(--primary) / 0.50)' }}
+                >
+                  <MessageSquare className="w-5 h-5 text-primary" />
                 </div>
+                <TileAction rodzaj="cicha" ikona={MoreHorizontal} samaIkona />
               </div>
-              <div className="pt-4 border-t border-border/20 mt-4">
-                <button className="w-full py-2 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-border/60 text-foreground/80 hover:text-foreground text-xs font-semibold rounded-nb-sm flex items-center justify-center gap-1.5 transition-all">
-                  Analiza kosztów <ChevronRight className="h-3.5 w-3.5" />
-                </button>
+              {showContent ? (
+                <>
+                  <h4 className="text-sm font-bold text-foreground">Chat AI — Personalny Asystent</h4>
+                  <p className="text-xs text-foreground/50 mt-1">Rozmowa: Jakie umiejętności potrzebuję...</p>
+                </>
+              ) : (
+                <>
+                  <div className="h-4 w-44 bg-primary/45 rounded-[5px] mb-2" />
+                  <div className="h-3 w-28 bg-foreground/30 rounded-[4px]" />
+                </>
+              )}
+              <div className="flex items-center justify-between mt-auto pt-3">
+                <TilePill intencja="neutralna">
+                  <Clock className="w-3 h-3 mr-1 text-primary" />
+                  {showContent ? '31 lip' : <div className="h-2.5 w-12 bg-foreground/30 rounded-[3px]" />}
+                </TilePill>
+                <TilePill intencja="akcent">{showContent ? 'Aktywny' : 'Active'}</TilePill>
               </div>
-            </div>
-          </section>
+            </Tile>
 
-          {/* Transactions Table / Details */}
-          <section className="bg-card/80 border border-border/30 rounded-nb shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-border/30 flex items-center justify-between bg-card/25 shrink-0">
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Ostatnie Transakcje i Zadania</h3>
-              <div className="flex items-center gap-2">
-                <button className="p-1.5 rounded-nb-xs border border-border/60 hover:bg-foreground/[0.03] text-foreground/75 transition-all">
-                  <Filter className="h-3.5 w-3.5" />
-                </button>
-                <button className="p-1.5 rounded-nb-xs border border-border/60 hover:bg-foreground/[0.03] text-foreground/75 transition-all">
-                  <MoreHorizontal className="h-3.5 w-3.5" />
-                </button>
+            <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[220px]">
+              <div className="flex items-start justify-between mb-4">
+                <div
+                  className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 shadow-md shadow-primary/25"
+                  style={{ backgroundColor: 'hsl(var(--primary) / 0.25)', border: '1px solid hsl(var(--primary) / 0.50)' }}
+                >
+                  <Camera className="w-5 h-5 text-primary" />
+                </div>
+                <TileAction rodzaj="cicha" ikona={MoreHorizontal} samaIkona />
               </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border/30 bg-muted/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/65">
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Nazwa zadania</th>
-                    <th className="py-3 px-4">Moduł</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Ilość</th>
-                    <th className="py-3 px-4 text-right">Koszt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/20 text-xs">
-                  {TRANSACTIONS.map((t) => (
-                    <tr key={t.id} className="hover:bg-foreground/[0.02] transition-all duration-150">
-                      <td className="py-3.5 px-4 font-mono text-[10px] text-muted-foreground font-semibold">{t.id}</td>
-                      <td className="py-3.5 px-4 font-semibold text-foreground">{t.task}</td>
-                      <td className="py-3.5 px-4 text-muted-foreground/80 font-medium">{t.module}</td>
-                      <td className="py-3.5 px-4"><StatusBadge status={t.status} /></td>
-                      <td className="py-3.5 px-4 text-right font-mono text-muted-foreground/80 font-medium">{t.qty}</td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">{t.cost}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </main>
-        
-      </div>
+              {showContent ? (
+                <>
+                  <h4 className="text-sm font-bold text-foreground">Studio Zdjęć</h4>
+                  <p className="text-xs text-foreground/50 mt-1">Wygenerowany obraz: mazda miata...</p>
+                </>
+              ) : (
+                <>
+                  <div className="h-4 w-44 bg-primary/45 rounded-[5px] mb-2" />
+                  <div className="h-3 w-28 bg-foreground/30 rounded-[4px]" />
+                </>
+              )}
+              <div className="flex items-center justify-between mt-auto pt-3">
+                <TilePill intencja="neutralna">
+                  <Clock className="w-3 h-3 mr-1 text-primary" />
+                  {showContent ? '28 lip' : <div className="h-2.5 w-12 bg-foreground/30 rounded-[3px]" />}
+                </TilePill>
+                <TilePill intencja="akcent">{showContent ? 'Aktywny' : 'Active'}</TilePill>
+              </div>
+            </Tile>
+          </div>
+        </div>
+
+        {/* ── ROW 3: Recent Projects / Szybka Podróż ── */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            {showContent ? (
+              <>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/70">Ostatnie Projekty (Szybka Podróż)</h3>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-foreground/50">Zobacz wszystkie</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-foreground/50" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-4 w-40 bg-primary/45 rounded-[5px]" />
+                <div className="flex items-center gap-1.5">
+                  <div className="h-3.5 w-16 bg-foreground/30 rounded-[4px]" />
+                  <ChevronRight className="w-3.5 h-3.5 text-foreground/50" />
+                </div>
+              </>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-5 lg:gap-6">
+            <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[220px]">
+              <div className="flex items-start justify-between mb-4">
+                <TilePill intencja="akcent">
+                  <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-primary shadow-sm" />
+                  {showContent ? 'Platforma' : <div className="h-2.5 w-14 bg-foreground/30 rounded-[3px]" />}
+                </TilePill>
+                <ArrowUpRight className="w-4 h-4 text-primary" />
+              </div>
+              {showContent ? (
+                <>
+                  <h4 className="text-sm font-bold text-foreground mb-1">Co trzeba aw kambipo zrobic</h4>
+                  <p className="text-xs text-foreground/50">Analiza modułowa dla zespołu NextByte.</p>
+                </>
+              ) : (
+                <>
+                  <div className="h-4 w-44 bg-primary/45 rounded-[5px] mb-3" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3 w-full bg-foreground/25 rounded-[4px]" />
+                    <div className="h-3 w-10/12 bg-foreground/20 rounded-[4px]" />
+                  </div>
+                </>
+              )}
+              <div className="mt-auto pt-4 flex items-center justify-between border-t border-foreground/12">
+                <span className="text-[10px] text-foreground/40 font-mono">{showContent ? 'v4.0.0' : <div className="h-2.5 w-12 bg-foreground/30 rounded-[3px]" />}</span>
+                <TilePill intencja="akcent">BETA</TilePill>
+              </div>
+            </Tile>
+
+            <Tile intencja="neutralna" elewacja="uniesiona" interaktywny className="min-h-[220px]">
+              <div className="flex items-start justify-between mb-4">
+                <TilePill intencja="neutralna">
+                  <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-amber-400 shadow-sm" />
+                  {showContent ? 'Kalendarz' : <div className="h-2.5 w-14 bg-foreground/30 rounded-[3px]" />}
+                </TilePill>
+                <ArrowUpRight className="w-4 h-4 text-foreground/50" />
+              </div>
+              {showContent ? (
+                <>
+                  <h4 className="text-sm font-bold text-foreground mb-1">Terminy & Zaproszenia</h4>
+                  <p className="text-xs text-foreground/50">Brak zaplanowanych wydarzeń w 7d.</p>
+                </>
+              ) : (
+                <>
+                  <div className="h-4 w-44 bg-primary/45 rounded-[5px] mb-3" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3 w-full bg-foreground/25 rounded-[4px]" />
+                    <div className="h-3 w-10/12 bg-foreground/20 rounded-[4px]" />
+                  </div>
+                </>
+              )}
+              <div className="mt-auto pt-4 flex items-center justify-between border-t border-foreground/12">
+                <span className="text-[10px] text-foreground/40 font-mono">{showContent ? 'v2.4' : <div className="h-2.5 w-12 bg-foreground/30 rounded-[3px]" />}</span>
+                <TilePill intencja="neutralna">Active</TilePill>
+              </div>
+            </Tile>
+
+            <Tile intencja="neutralna" elewacja="uniesiona" interaktywny className="min-h-[220px]">
+              <div className="flex items-start justify-between mb-4">
+                <TilePill intencja="neutralna">
+                  <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-cyan-400 shadow-sm" />
+                  {showContent ? 'Nowości' : <div className="h-2.5 w-14 bg-foreground/30 rounded-[3px]" />}
+                </TilePill>
+                <ArrowUpRight className="w-4 h-4 text-foreground/50" />
+              </div>
+              {showContent ? (
+                <>
+                  <h4 className="text-sm font-bold text-foreground mb-1">Lokalny AI (Ollama)</h4>
+                  <p className="text-xs text-foreground/50">Twój model, Twoja prywatność offline.</p>
+                </>
+              ) : (
+                <>
+                  <div className="h-4 w-44 bg-primary/45 rounded-[5px] mb-3" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-3 w-full bg-foreground/25 rounded-[4px]" />
+                    <div className="h-3 w-10/12 bg-foreground/20 rounded-[4px]" />
+                  </div>
+                </>
+              )}
+            </Tile>
+          </div>
+        </div>
+
+      </main>
     </div>
   )
 }
