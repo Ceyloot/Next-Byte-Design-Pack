@@ -746,10 +746,10 @@ h2                  { letter-spacing: -0.026em; }
   --nb-p1-korpus:       0.05;   /* 95% krystalicznej czystości */
   --nb-p1-lsnienie:     0.22;
   --nb-p1-nasycenie:    1.35;
-  --nb-p1-obwodka:      0.20;
-  --nb-p1-obwodka-hover: 0.45;
-  --nb-p1-poswiata:     0.4;
-  --nb-p1-refleks:      0.50;
+  --nb-p1-obwodka:      0.07;
+  --nb-p1-obwodka-hover: 0.14;
+  --nb-p1-poswiata:     0.15;
+  --nb-p1-refleks:      0.10;
   --nb-p1-rozmycie:     4;      /* minimalny blur max 15% (4px) — krystaliczna ostrość tła */
   --nb-p1-uniesienie:   1.5;
 }
@@ -823,8 +823,8 @@ h2                  { letter-spacing: -0.026em; }
 
   /* Załamanie 5px na samej krawędzi daje efekt wygiętej cieczy */
   box-shadow:
-    inset 0 0 0 1px hsl(var(--foreground) / 0.06),
-    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.18)),
+    inset 0 0 0 1px hsl(var(--foreground) / 0.04),
+    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.08)),
     0 4px 16px -4px rgba(0, 0, 0, 0.20);
 
   transition: border-color 0.20s ease, box-shadow 0.20s ease, background-color 0.20s ease;
@@ -849,8 +849,8 @@ h2                  { letter-spacing: -0.026em; }
 .is-glass .glass-card:hover {
   border-color: hsl(var(--foreground) / calc(var(--nb-p1-obwodka, 0.06) * 2));
   box-shadow:
-    inset 0 0 0 1px hsl(var(--foreground) / 0.10),
-    inset 0 1.5px 0 0 hsl(var(--foreground) / calc(var(--nb-p1-refleks, 0.18) * 1.5)),
+    inset 0 0 0 1px hsl(var(--foreground) / 0.07),
+    inset 0 1.5px 0 0 hsl(var(--foreground) / calc(var(--nb-p1-refleks, 0.08) * 1.4)),
     0 6px 20px -4px rgba(0, 0, 0, 0.25);
 }
 

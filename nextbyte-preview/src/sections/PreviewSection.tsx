@@ -347,64 +347,127 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
       {/* ── Main Workspace ── */}
       <main ref={mainRef} className="flex-1 flex flex-col gap-4 px-4 lg:px-5 pt-0 pb-4 min-w-0 overflow-y-auto">
 
-        {/* ══ TOP BANNER / SALDO BYTE WIDGET ══ */}
-        <Tile intencja="akcent" elewacja="uniesiona" className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
+        {/* ══ TOP BANNER / AKTYWNOŚĆ + SALDO BYTE ══ */}
+        <Tile intencja="akcent" elewacja="uniesiona" className="p-5 flex flex-row gap-6 items-center">
           {showContent ? (
             <>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-cyan-400 p-0.5 shadow-lg shadow-primary/30">
-                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center font-bold text-primary text-sm">
-                    AB
+              {/* Left: Heatmap + Title */}
+              <div className="flex flex-col gap-2 shrink-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-foreground">📈 Aktywność</h2>
+                  <div className="text-[10px] text-foreground/50 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    <span>OSTATNIE 6 MIES.</span>
                   </div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-foreground">Witaj, Artur Bącik</h2>
-                    <TilePill intencja="akcent">BETA 4.0.0</TilePill>
+
+                {/* Heatmap Grid */}
+                <div className="flex gap-1.5">
+                  {/* Day labels */}
+                  <div className="flex flex-col gap-1 justify-end">
+                    <div className="w-6 h-4 text-[9px] text-foreground/50 flex items-center">Wt</div>
+                    <div className="w-6 h-4 text-[9px] text-foreground/50 flex items-center">Cz</div>
+                    <div className="w-6 h-4 text-[9px] text-foreground/50 flex items-center">So</div>
                   </div>
-                  <p className="text-xs text-foreground/60 mt-0.5">Brak zużycia w ostatnich 7 dniach</p>
+
+                  {/* Months */}
+                  {[
+                    { month: 'Lut', sq: [1,2,1,0,2,1,3] },
+                    { month: 'Mar', sq: [2,1,3,2,0,1,2] },
+                    { month: 'Kwi', sq: [3,4,2,1,2,3,1] },
+                    { month: 'Maj', sq: [2,1,4,3,2,1,4] },
+                    { month: 'Cze', sq: [1,2,3,2,1,0,2] },
+                    { month: 'Lip', sq: [2,3,4,2,1,2,3] },
+                    { month: 'Sie', sq: [3,4,1,2,3,0,1] },
+                  ].map(({ month, sq }) => (
+                    <div key={month} className="flex flex-col gap-1">
+                      <div className="w-8 h-4 text-[9px] text-foreground/50 flex items-center justify-center">{month}</div>
+                      <div className="flex flex-col gap-1">
+                        {sq.map((level, i) => (
+                          <div
+                            key={`${month}-${i}`}
+                            className={cn(
+                              'w-3.5 h-3.5 rounded-md transition-all hover:scale-125 cursor-pointer',
+                              level === 0 && 'bg-foreground/12',
+                              level === 1 && 'bg-primary/25',
+                              level === 2 && 'bg-primary/45',
+                              level === 3 && 'bg-primary/65',
+                              level === 4 && 'bg-primary',
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="flex items-center gap-6 flex-1 max-w-xl mx-4">
-                <div className="text-center shrink-0">
+              {/* Right: Saldo Byte */}
+              <div className="flex-1 flex items-center justify-between gap-6 pl-4 border-l border-foreground/10">
+                <div className="flex flex-col gap-2">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">SALDO BYTE</div>
-                  <div className="text-xl font-black text-primary">0 <span className="text-xs font-normal">Byte</span></div>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="h-2 w-full bg-foreground/10 rounded-full overflow-hidden relative">
-                    <div className="h-full bg-primary rounded-full w-1/4 shadow-sm" />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-foreground/40 font-mono">
+                  <div className="text-2xl font-black text-primary">0 <span className="text-xs font-normal text-foreground/60">Byte</span></div>
+                  <div className="flex gap-2 text-[10px] text-foreground/40">
                     <span>07.08</span>
-                    <span>10.08</span>
+                    <span>11.08</span>
                     <span>dziś (7d 30d 90d)</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <TileAction rodzaj="glowna" ikona={Plus}>+ Doładuj</TileAction>
-                <TileAction rodzaj="wtorna">Wydatki</TileAction>
+                <div className="flex-1 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary w-1/4" />
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <TileAction rodzaj="glowna" ikona={Plus}>+ Doładuj</TileAction>
+                  <TileAction rodzaj="wtorna">Wydatki</TileAction>
+                </div>
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-between w-full">
-              <div>
-                <div className="h-6 w-56 bg-primary/40 rounded-[8px]" />
-                <div className="h-3.5 w-40 bg-foreground/30 rounded-[5px] mt-2" />
+            <>
+              {/* Left: Skeleton Heatmap */}
+              <div className="flex flex-col gap-2 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-20 bg-foreground/25 rounded-full" />
+                  <div className="h-2.5 w-32 bg-foreground/20 rounded-full" />
+                </div>
+
+                {/* Skeleton Heatmap Grid */}
+                <div className="flex gap-1.5">
+                  <div className="flex flex-col gap-1 justify-end">
+                    <div className="w-6 h-4 bg-foreground/15 rounded-sm" />
+                    <div className="w-6 h-4 bg-foreground/15 rounded-sm" />
+                    <div className="w-6 h-4 bg-foreground/15 rounded-sm" />
+                  </div>
+
+                  {[1,2,3,4,5,6,7].map(m => (
+                    <div key={m} className="flex flex-col gap-1">
+                      <div className="w-8 h-4 bg-foreground/15 rounded-sm" />
+                      {[1,2,3,4,5,6,7].map(d => (
+                        <div key={`${m}-${d}`} className="w-3.5 h-3.5 bg-foreground/20 rounded-md" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <button className="relative w-10 h-10 flex items-center justify-center rounded-[10px] border border-foreground/12 bg-foreground/[0.05] text-foreground/70 hover:bg-white/15 hover:text-foreground transition-all duration-200">
-                  <Bell className="w-4.5 h-4.5 text-primary" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-background" />
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-primary text-background text-xs font-semibold hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/30">
-                  <Plus className="w-4 h-4" />
-                  <div className="h-3.5 w-12 bg-background/50 rounded-[4px]" />
-                </button>
+
+              {/* Right: Skeleton Saldo */}
+              <div className="flex-1 flex items-center justify-between gap-6 pl-4 border-l border-foreground/10">
+                <div className="flex flex-col gap-2">
+                  <div className="h-2.5 w-24 bg-foreground/20 rounded-full" />
+                  <div className="h-6 w-16 bg-foreground/25 rounded-lg" />
+                  <div className="h-2 w-32 bg-foreground/15 rounded-full" />
+                </div>
+
+                <div className="flex-1 h-1 bg-foreground/10 rounded-full" />
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="h-9 w-20 bg-primary/30 rounded-lg" />
+                  <div className="h-9 w-16 bg-foreground/20 rounded-lg" />
+                </div>
               </div>
-            </div>
+            </>
           )}
         </Tile>
 
@@ -448,6 +511,19 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
                     <div className="text-[10px] text-foreground/40 mt-1">vs zeszły tydzień</div>
                   </div>
                 </div>
+
+                {/* Mini Activity Bar Chart */}
+                <div className="flex items-end justify-between gap-1 h-16 px-1">
+                  {[35, 48, 32, 58, 42, 65, 78].map((height, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-primary/40 rounded-t-sm hover:bg-primary/60 transition-colors cursor-pointer"
+                      style={{ height: `${height}%` }}
+                      title={`${Math.round(height * 2.8)} zapytań`}
+                    />
+                  ))}
+                </div>
+
                 <div className="grid grid-cols-3 gap-2 mt-auto">
                   <TileRow intencja="neutralna" className="flex-col justify-center items-center py-2">
                     <span className="text-xs font-bold text-primary">v4.0</span>
