@@ -208,7 +208,7 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
       {/* ── Floating Megamenu Navbar ── */}
       <div
         ref={navRef}
-        className="px-4 lg:px-5 pt-4 pb-0 shrink-0 relative"
+        className="px-4 lg:px-5 pt-4 pb-4 shrink-0 relative"
         onMouseLeave={scheduleClose}
       >
         <header className={cn(
@@ -345,7 +345,7 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
       </div>
 
       {/* ── Main Workspace ── */}
-      <main ref={mainRef} className="flex-1 flex flex-col gap-4 px-4 lg:px-5 pt-4 pb-4 min-w-0 overflow-y-auto">
+      <main ref={mainRef} className="flex-1 flex flex-col gap-4 px-4 lg:px-5 pt-0 pb-4 min-w-0 overflow-y-auto">
 
         {/* ══ TOP BANNER / SALDO BYTE WIDGET ══ */}
         <Tile intencja="akcent" elewacja="uniesiona" className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
