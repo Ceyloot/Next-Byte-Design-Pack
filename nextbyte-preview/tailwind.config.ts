@@ -31,8 +31,8 @@ export default {
         'nb-lg': 'var(--r-lg)',   // 22px  modal, szuflada, navbar
       },
       fontFamily: {
-        sans: ['var(--font-body)', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        heading: ['var(--font-heading)', 'Space Grotesk', 'ui-sans-serif', 'sans-serif'],
+        sans: ['var(--font-body)', 'Outfit', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-heading)', 'Plus Jakarta Sans', 'ui-sans-serif', 'sans-serif'],
       },
       keyframes: {
         'spin-slow': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,8 +6,8 @@
 
 /* ── Czcionki + base reset ─────────────────────────────────── */
 :root {
-  --font-heading: 'Space Grotesk';
-  --font-body: 'Inter';
+  --font-heading: 'Plus Jakarta Sans';
+  --font-body: 'Outfit';
 }
 
 html, body {
@@ -809,7 +809,7 @@ h2                  { letter-spacing: -0.026em; }
   background-color: hsl(var(--card) / var(--nb-p1-korpus, 0.05));
 
   /* Delikatna translucencyjna obwódka */
-  border: 1px solid hsl(var(--foreground) / var(--nb-p1-obwodka, 0.20));
+  border: 1px solid hsl(var(--foreground) / var(--nb-p1-obwodka, 0.06));
 
   /* Refrakcja optyczna fali cieczy na dolnej krawędzi + gładki blur 4px */
   -webkit-backdrop-filter:
@@ -823,8 +823,8 @@ h2                  { letter-spacing: -0.026em; }
 
   /* Załamanie 5px na samej krawędzi daje efekt wygiętej cieczy */
   box-shadow:
-    inset 0 0 0 2.5px hsl(var(--foreground) / 0.22),
-    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.50)),
+    inset 0 0 0 1px hsl(var(--foreground) / 0.06),
+    inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.18)),
     0 4px 16px -4px rgba(0, 0, 0, 0.20);
 
   transition: border-color 0.20s ease, box-shadow 0.20s ease, background-color 0.20s ease;
@@ -847,10 +847,10 @@ h2                  { letter-spacing: -0.026em; }
 
 .is-glass .nb-szklo:hover,
 .is-glass .glass-card:hover {
-  border-color: hsl(var(--foreground) / calc(var(--nb-p1-obwodka, 0.20) * 1.6));
+  border-color: hsl(var(--foreground) / calc(var(--nb-p1-obwodka, 0.06) * 2));
   box-shadow:
-    inset 0 0 0 1.5px hsl(var(--foreground) / 0.30),
-    inset 0 1.5px 0 0 hsl(var(--foreground) / calc(var(--nb-p1-refleks, 0.50) * 1.4)),
+    inset 0 0 0 1px hsl(var(--foreground) / 0.10),
+    inset 0 1.5px 0 0 hsl(var(--foreground) / calc(var(--nb-p1-refleks, 0.18) * 1.5)),
     0 6px 20px -4px rgba(0, 0, 0, 0.25);
 }
 

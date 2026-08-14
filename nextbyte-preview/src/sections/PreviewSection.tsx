@@ -1,24 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
-  Grid, Sparkles, MessageSquare, Terminal, Brain, ShieldAlert,
-  Camera, Video, Bell, Search, Plus, ChevronRight, Activity,
+  Grid, Sparkles, MessageSquare, Terminal, Brain, ShieldAlert, Shield,
+  Camera, Video, Bell, Search, Plus, ChevronRight,
   Zap, Users, Clock, Share2, MoreHorizontal, TrendingUp,
-  CheckSquare, Square, PieChart, ArrowUpRight,
+  CheckSquare, Square, ArrowUpRight, ShoppingBag, GraduationCap, Type,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
 import { useLiquidGlassScroll } from '@/hooks/useLiquidGlassScroll'
 import { Tile, TileRow, TilePill, TileAction } from '@/components/Tile'
-
-// ── Data (pure layout definitions without copy/text content) ─────
-
 import { useGlass } from '@/lib/glass-context'
 
-// ── NextByte Real SaaS Data (from official screenshot) ─────────────
+// ── Navigation Data ───────────────────────────────────────────────
 
-const SAAS_SIDEBAR_SECTIONS = [
+const NAV_SECTIONS = [
   {
-    title: 'AI',
+    key: 'home',
+    label: 'Panel Główny',
+    icon: Grid,
+    items: [] as { name: string; icon: React.ComponentType<{ className?: string }>; active?: boolean; badge?: string }[],
+  },
+  {
+    key: 'ai',
+    label: 'AI',
+    icon: Sparkles,
     items: [
       { name: 'Personalny Asystent', icon: Sparkles, active: true },
       { name: 'Chat AI',             icon: MessageSquare },
@@ -28,7 +33,9 @@ const SAAS_SIDEBAR_SECTIONS = [
     ],
   },
   {
-    title: 'PRZYPIĘTE MODUŁY',
+    key: 'moduly',
+    label: 'Moduły',
+    icon: Camera,
     items: [
       { name: 'Trend',        icon: TrendingUp },
       { name: 'Studio Zdjęć', icon: Camera },
@@ -36,7 +43,9 @@ const SAAS_SIDEBAR_SECTIONS = [
     ],
   },
   {
-    title: 'PRACA',
+    key: 'praca',
+    label: 'Praca',
+    icon: CheckSquare,
     items: [
       { name: 'Kalendarz', icon: Clock },
       { name: 'Zadania',   icon: CheckSquare },
@@ -45,48 +54,20 @@ const SAAS_SIDEBAR_SECTIONS = [
       { name: 'Firma',     icon: Users },
     ],
   },
-]
-
-const RECENT_WORK = [
-  { title: 'Jakie umiejętności potrzebuję aby bez p...', type: 'Rozmowa', time: '31 lip', icon: MessageSquare },
-  { title: 'zamień D na J',                              type: 'Studio Zdjęć', time: '30 lip', icon: Camera },
-  { title: 'Jaki VR do lm najlepszy an',                 type: 'Rozmowa', time: '30 lip', icon: MessageSquare },
-  { title: 'mazda miata z popupami w kolorze syre...',  type: 'Studio Zdjęć', time: '28 lip', icon: Camera },
-  { title: 'Firmy pod wprowadzenie ich na nextby...',   type: 'Rozmowa', time: '27 lip', icon: MessageSquare },
-  { title: 'Scenariusz TikTok B2C: Jak ogarnąć ż...',   type: 'Dokument', time: '24 lip', icon: Square },
-]
-
-const LIVE_ACTIVITY = [
-  { title: 'Prośba o zdjęcie z zadania', time: '57min temu', isNew: false },
-  { title: 'Prośba o zdjęcie z zadania', time: '57min temu', isNew: true },
-  { title: 'Prośba o zdjęcie z zadania', time: '57min temu', isNew: false },
-  { title: 'Rozmowa: Jakie umiejętności potrzebuję...', time: '31.07', isNew: false },
-  { title: 'Wygenerowany obraz: zamień D na J', time: '30.07', isNew: false },
-]
-
-const NAV_MAIN = [
-  { icon: Grid,          active: true  },
-  { icon: Sparkles,      active: false },
-  { icon: MessageSquare, active: false },
-  { icon: Brain,         active: false },
-  { icon: Activity,      active: false },
-]
-
-const NAV_SECTIONS = [
   {
+    key: 'spolecznosc',
+    label: 'Społeczność',
+    icon: Users,
     items: [
-      { icon: Camera },
-      { icon: Video },
-      { icon: Terminal },
-    ],
-  },
-  {
-    items: [
-      { icon: PieChart },
-      { icon: ShieldAlert },
+      { name: 'Panel Twórcy', icon: Sparkles },
+      { name: 'Sklep',        icon: ShoppingBag },
+      { name: 'Akademia',     icon: GraduationCap },
+      { name: 'Zarząd',       icon: Shield, badge: '●' },
     ],
   },
 ]
+
+// ── Chart Data ────────────────────────────────────────────────────
 
 const WEEKLY_VALS = [1200, 1850, 1540, 2180, 1920, 820, 2847]
 
@@ -97,22 +78,11 @@ const DONUT_SEGMENTS = [
   { pct: 12, color: 'hsl(var(--foreground) / 0.14)' },
 ]
 
-const ACTIVE_SESSIONS = [
-  { icon: MessageSquare },
-  { icon: Camera },
-]
-
 const TASK_QUEUE = [
   { done: true,  width: '75%' },
   { done: true,  width: '60%' },
   { done: false, width: '85%' },
   { done: false, width: '50%' },
-]
-
-const RECENT_PROJECTS = [
-  { ok: true  },
-  { ok: false },
-  { ok: false },
 ]
 
 // ── SVG Charts ────────────────────────────────────────────────────
@@ -194,142 +164,188 @@ interface PreviewSectionProps {
   onSelectTab?: (tabKey: string) => void
 }
 
-export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
-  const { showContent } = useGlass()
-  const [activeNav, setActiveNav] = useState(0)
-  const mainRef = React.useRef<HTMLElement>(null)
+export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProps) {
+  const { showContent, isGlass } = useGlass()
+  const [activeSection, setActiveSection] = useState('home')
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [navCompact, setNavCompact] = useState(false)
+  const mainRef = useRef<HTMLElement>(null)
+  const navRef = useRef<HTMLDivElement>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useLiquidGlassScroll(mainRef)
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenMenu(null)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
+
+  const openMenuDelayed = (key: string | null) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    setOpenMenu(key)
+  }
+  const scheduleClose = () => {
+    closeTimer.current = setTimeout(() => setOpenMenu(null), 120)
+  }
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+  }
+
+  const openSection = NAV_SECTIONS.find(s => s.key === openMenu)
+  const megaItems = openSection?.items ?? []
 
   return (
     <div
-      className="relative w-full h-screen flex font-sans antialiased overflow-hidden bg-transparent"
+      className="relative w-full h-screen flex flex-col font-sans antialiased overflow-hidden bg-transparent"
       style={{ zIndex: 1 }}
     >
       <NbGlassFilters />
 
-      {/* ── Seamless Liquid Glass Sidebar (nb-szklo-plynne) ── */}
-      <aside className="w-64 shrink-0 flex flex-col nb-szklo-plynne border-r border-foreground/12 transition-all duration-300">
-        
-        {/* Logo Header */}
-        <div className="px-5 pt-6 pb-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-[10px] bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
-            <Zap className="w-5 h-5 text-background" />
-          </div>
-          {showContent ? (
-            <span className="text-base font-bold text-foreground tracking-tight">NextByte</span>
-          ) : (
-            <div className="h-4 w-28 bg-primary/40 rounded-[5px]" />
-          )}
-        </div>
+      {/* ── Floating Megamenu Navbar ── */}
+      <div
+        ref={navRef}
+        className="px-4 lg:px-6 pt-4 pb-0 shrink-0 relative"
+        onMouseLeave={scheduleClose}
+      >
+        <header className={cn(
+          isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+          'flex items-center gap-2 px-4 h-12 rounded-2xl border',
+        )}>
 
-        {/* Global Search Input */}
-        <div className="px-4 py-2">
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-[10px] border border-foreground/12 bg-foreground/[0.05] cursor-pointer hover:border-primary/50 transition-all duration-200">
-            <Search className="w-4 h-4 text-primary shrink-0" />
-            {showContent ? (
-              <span className="text-xs text-foreground/60 flex-1 truncate">Wyszukaj... <kbd className="ml-auto text-[10px] opacity-50">⌘K</kbd></span>
-            ) : (
-              <div className="h-3 w-24 bg-foreground/30 rounded-[4px]" />
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 shrink-0 pr-2">
+            <div className="w-7 h-7 rounded-[8px] bg-primary flex items-center justify-center shadow-md shadow-primary/30">
+              <Zap className="w-3.5 h-3.5 text-background" />
+            </div>
+            {!navCompact && (showContent
+              ? <span className="text-[13px] font-bold text-foreground tracking-tight">NextByte</span>
+              : <div className="h-3 w-14 bg-foreground/25 rounded-full" />
             )}
           </div>
-        </div>
 
-        {/* Navigation Sections */}
-        <nav className="flex-1 px-3 py-2 flex flex-col gap-1 overflow-y-auto">
-          {showContent ? (
-            <>
-              <button className="flex items-center gap-3 px-3 py-2 rounded-[10px] w-full text-left text-xs font-semibold bg-primary/20 text-primary border border-primary/40 shadow-sm backdrop-blur-md">
-                <Grid className="w-4 h-4 text-primary shrink-0" />
-                <span>Panel Główny</span>
-              </button>
-
-              {SAAS_SIDEBAR_SECTIONS.map((sec, sIdx) => (
-                <div key={sIdx} className="mt-4">
-                  <div className="text-[10px] font-bold tracking-wider uppercase text-foreground/40 px-3 pb-1.5 select-none">
-                    {sec.title}
-                  </div>
-                  <div className="space-y-0.5">
-                    {sec.items.map((item, i) => (
-                      <button
-                        key={i}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2 rounded-[10px] w-full text-left text-xs font-medium transition-all duration-200',
-                          item.active
-                            ? 'bg-primary/25 text-primary border border-primary/50 font-semibold'
-                            : 'text-foreground/70 hover:text-foreground hover:bg-white/[0.06] border border-transparent',
-                        )}
-                      >
-                        <item.icon className="w-4 h-4 shrink-0 text-foreground/60" />
-                        <span className="truncate">{item.name}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.2 rounded bg-foreground/10 text-foreground/50">{item.badge}</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            <>
-              {NAV_MAIN.map((item, i) => (
+          {/* Section pills */}
+          <nav className="flex-1 flex items-center justify-center gap-0.5">
+            {NAV_SECTIONS.map((sec) => {
+              const isActive = activeSection === sec.key
+              const isOpen = openMenu === sec.key
+              return (
                 <button
-                  key={i}
-                  onClick={() => setActiveNav(i)}
+                  key={sec.key}
+                  onClick={() => { setActiveSection(sec.key); openMenuDelayed(null) }}
+                  onMouseEnter={() => openMenuDelayed(sec.items.length > 0 ? sec.key : null)}
                   className={cn(
-                    'flex items-center gap-3.5 px-3.5 py-3 rounded-[10px] w-full text-left transition-all duration-200 text-[13px] font-medium',
-                    i === activeNav
-                      ? 'bg-primary/25 text-primary border border-primary/50 shadow-md shadow-primary/20 backdrop-blur-md'
-                      : 'text-foreground/60 hover:text-foreground hover:bg-white/[0.06] border border-transparent',
+                    'flex items-center rounded-full text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
+                    navCompact ? 'px-2.5 py-2' : 'gap-1.5 px-3 py-1.5',
+                    isActive || isOpen
+                      ? 'bg-primary/20 text-primary border border-primary/40 shadow-sm shadow-primary/10'
+                      : 'text-foreground/55 hover:text-foreground hover:bg-white/[0.06] border border-transparent',
                   )}
                 >
-                  <item.icon className="w-4.5 h-4.5 shrink-0 text-primary/80" />
-                  <div className={cn('h-3.5 rounded-[4px]', i === activeNav ? 'bg-primary/70 w-32' : 'bg-foreground/30 w-24')} />
+                  <sec.icon className="w-3.5 h-3.5 shrink-0" />
+                  {!navCompact && (showContent
+                    ? <span>{sec.label}</span>
+                    : <div className="h-2 w-9 bg-foreground/25 rounded-full" />
+                  )}
+                  {!navCompact && sec.items.length > 0 && (
+                    <ChevronRight className={cn('w-2.5 h-2.5 shrink-0 transition-transform duration-150',
+                      isOpen ? 'rotate-90' : 'opacity-40',
+                    )} />
+                  )}
                 </button>
-              ))}
-              {NAV_SECTIONS.map((section, sIdx) => (
-                <div key={sIdx} className="mt-5">
-                  <div className="h-2.5 w-14 bg-primary/30 rounded-[3px] mb-2 px-3.5" />
-                  {section.items.map((item, j) => (
-                    <button
-                      key={j}
-                      className="flex items-center gap-3.5 px-3.5 py-3 rounded-[10px] w-full text-left text-foreground/50 hover:text-foreground hover:bg-white/[0.06] transition-colors text-[13px] font-medium border border-transparent"
-                    >
-                      <item.icon className="w-4.5 h-4.5 shrink-0 text-foreground/50" />
-                      <div className="h-3.5 w-24 bg-foreground/30 rounded-[4px]" />
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </>
-          )}
-        </nav>
+              )
+            })}
+          </nav>
 
-        {/* Sidebar Footer User Info */}
-        <div className="px-4 py-4 border-t border-foreground/12">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-[10px] border border-foreground/12 bg-foreground/[0.05]">
-            <div className="w-8 h-8 rounded-full bg-primary/25 flex items-center justify-center shrink-0 border border-primary/40 shadow-sm text-xs font-bold text-primary">
+          {/* Right controls */}
+          <div className="flex items-center gap-1.5 shrink-0 pl-2">
+            {/* Text toggle */}
+            <button
+              onClick={() => setNavCompact(!navCompact)}
+              title={navCompact ? 'Pokaż etykiety' : 'Ukryj etykiety'}
+              className={cn(
+                'flex items-center gap-1 px-2 h-7 rounded-full border text-[11px] font-semibold transition-all duration-200',
+                navCompact
+                  ? 'border-primary/40 bg-primary/[0.15] text-primary'
+                  : 'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
+              )}
+            >
+              <Type className="w-3 h-3 shrink-0" />
+              {!navCompact && (showContent ? <span>Aa</span> : <div className="h-1.5 w-3 bg-foreground/25 rounded-full" />)}
+            </button>
+
+            {/* Search */}
+            {showContent && !navCompact ? (
+              <button className="flex items-center gap-1.5 px-2.5 py-[5px] rounded-full border border-foreground/10 bg-foreground/[0.04] text-[11px] text-foreground/45 hover:border-primary/40 transition-all duration-200">
+                <Search className="w-3 h-3 text-primary shrink-0" />
+                <span>Szukaj...</span>
+                <kbd className="text-[9px] font-mono px-1 rounded bg-foreground/10 text-foreground/40 ml-0.5">⌘K</kbd>
+              </button>
+            ) : (
+              <button className="w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all duration-200">
+                <Search className="w-3.5 h-3.5 text-primary" />
+              </button>
+            )}
+
+            {/* Bell */}
+            <button className="relative w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:bg-white/10 transition-all duration-200">
+              <Bell className="w-3.5 h-3.5 text-primary" />
+              <span className="absolute top-[5px] right-[5px] w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
+            </button>
+
+            {/* User avatar */}
+            <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[10px] font-bold text-primary shrink-0">
               AB
             </div>
-            <div className="flex-1 min-w-0">
-              {showContent ? (
-                <>
-                  <div className="text-xs font-semibold text-foreground truncate">Artur Bącik</div>
-                  <div className="text-[10px] text-foreground/50 truncate">Konto Free</div>
-                </>
-              ) : (
-                <>
-                  <div className="h-3.5 w-24 bg-foreground/40 rounded-[4px] mb-1" />
-                  <div className="h-2.5 w-14 bg-foreground/30 rounded-[3px]" />
-                </>
-              )}
+          </div>
+        </header>
+
+        {/* ── Megamenu dropdown (hover z debounce) ── */}
+        {megaItems.length > 0 && (
+          <div
+            className="absolute left-4 right-4 lg:left-6 lg:right-6 top-full mt-1 z-50"
+            onMouseEnter={cancelClose}
+            onMouseLeave={scheduleClose}
+          >
+            {/* bridge: wypełnia szczelinę między header a dropdownem */}
+            <div className="h-1 w-full" />
+            <div className={cn(
+              isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+              'p-2 rounded-2xl border flex flex-wrap gap-1.5',
+            )}>
+              {megaItems.map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setActiveSection(openMenu!); openMenuDelayed(null) }}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
+                    item.active
+                      ? 'bg-primary/20 text-primary border border-primary/40'
+                      : 'text-foreground/60 hover:text-foreground hover:bg-white/[0.06] border border-foreground/[0.08]',
+                  )}
+                >
+                  <item.icon className="w-3.5 h-3.5 shrink-0" />
+                  {showContent
+                    ? <span>{item.name}</span>
+                    : <div className="h-2 w-14 bg-foreground/25 rounded-full" />
+                  }
+                  {showContent && item.badge && (
+                    <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-bold',
+                      item.badge === '●' ? 'bg-primary/20 text-primary' : 'bg-foreground/10 text-foreground/40',
+                    )}>{item.badge}</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      </aside>
+        )}
+      </div>
 
       {/* ── Main Workspace ── */}
-      <main ref={mainRef} className="flex-1 flex flex-col gap-6 p-6 lg:p-8 min-w-0 overflow-y-auto h-full">
+      <main ref={mainRef} className="flex-1 flex flex-col gap-6 p-4 lg:p-6 min-w-0 overflow-y-auto">
 
         {/* ══ TOP BANNER / SALDO BYTE WIDGET ══ */}
         <Tile intencja="akcent" elewacja="uniesiona" className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
@@ -350,7 +366,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
                 </div>
               </div>
 
-              {/* Saldo Timeline Widget */}
               <div className="flex items-center gap-6 flex-1 max-w-xl mx-4">
                 <div className="text-center shrink-0">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">SALDO BYTE</div>
@@ -407,7 +422,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
         {/* ── ROW 1: Overview Card + Weekly Trend Chart + Donut Chart ── */}
         <div className="grid gap-5 lg:gap-6" style={{ gridTemplateColumns: '1.9fr 2fr 1.2fr' }}>
 
-          {/* Card 1: Overview & Beta Tester Status */}
           <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[280px]">
             {showContent ? (
               <div className="flex flex-col h-full justify-between space-y-3">
@@ -421,7 +435,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
                     <TileAction rodzaj="cicha" ikona={MoreHorizontal} samaIkona />
                   </div>
                 </div>
-
                 <div className="flex items-end gap-5">
                   <div>
                     <div className="text-3xl font-black text-foreground">2 847</div>
@@ -435,7 +448,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
                     <div className="text-[10px] text-foreground/40 mt-1">vs zeszły tydzień</div>
                   </div>
                 </div>
-
                 <div className="grid grid-cols-3 gap-2 mt-auto">
                   <TileRow intencja="neutralna" className="flex-col justify-center items-center py-2">
                     <span className="text-xs font-bold text-primary">v4.0</span>
@@ -488,7 +500,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
             )}
           </Tile>
 
-          {/* Card 2: Weekly Trend Chart (Wróć do roboty) */}
           <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[280px]">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -514,7 +525,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
             </div>
           </Tile>
 
-          {/* Card 3: Donut Chart (Aktywność Modułów) */}
           <Tile intencja="neutralna" elewacja="uniesiona" interaktywny className="min-h-[280px]">
             <div className="flex items-start justify-between mb-4">
               {showContent ? (
@@ -551,7 +561,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
         {/* ── ROW 2: Tasks Queue + Active Sessions ── */}
         <div className="grid grid-cols-3 gap-5 lg:gap-6">
 
-          {/* Card 1: Task Queue */}
           <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[220px]">
             <div className="flex items-center justify-between mb-4">
               {showContent ? (
@@ -603,7 +612,6 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
             </div>
           </Tile>
 
-          {/* Cards 2 & 3: Active Sessions */}
           <div className="col-span-2 grid grid-cols-2 gap-5 lg:gap-6">
             <Tile intencja="akcent" elewacja="uniesiona" interaktywny className="min-h-[220px]">
               <div className="flex items-start justify-between mb-4">
@@ -667,7 +675,7 @@ export function PreviewSection({ onSelectTab }: PreviewSectionProps) {
           </div>
         </div>
 
-        {/* ── ROW 3: Recent Projects / Szybka Podróż ── */}
+        {/* ── ROW 3: Recent Projects ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
             {showContent ? (
