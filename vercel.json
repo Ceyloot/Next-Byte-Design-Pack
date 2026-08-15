@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "cd nextbyte-preview && npm run build",
+  "outputDirectory": "nextbyte-preview/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
