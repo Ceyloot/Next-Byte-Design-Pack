@@ -4,7 +4,7 @@ import {
   Camera, Video, Bell, Search, Plus, ChevronRight, ChevronLeft,
   Zap, Users, Clock, Share2, MoreHorizontal, TrendingUp,
   CheckSquare, Square, ArrowUpRight, ShoppingBag, GraduationCap, Type, Receipt,
-  Check, Edit2, FileText, Layers, Folder, Calendar,
+  Check, Edit2, FileText, Layers, Folder, Calendar, BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
@@ -76,8 +76,8 @@ const WEEKLY_VALS = [1200, 1850, 1540, 2180, 1920, 820, 2847]
 
 const DONUT_SEGMENTS = [
   { pct: 41, color: 'hsl(var(--primary))', label: 'AI Chat', count: '1 167' },
-  { pct: 28, color: '#38bdf8', label: 'Studio Zdjęcia', count: '797' },
-  { pct: 19, color: '#a855f7', label: 'Prompty', count: '541' },
+  { pct: 28, color: 'hsl(var(--primary) / 0.70)', label: 'Studio Zdęć', count: '797' },
+  { pct: 19, color: 'hsl(var(--primary) / 0.40)', label: 'Prompty', count: '541' },
   { pct: 12, color: 'hsl(var(--foreground) / 0.25)', label: 'Inne', count: '342' },
 ]
 
@@ -134,8 +134,8 @@ function WeekChart() {
   )
 }
 
-function DonutChart({ size = 92 }: { size?: number }) {
-  const r = 36, cx = 46, cy = 46, sw = 10
+function DonutChart({ size = 135 }: { size?: number }) {
+  const r = 35, cx = 46, cy = 46, sw = 12
   const circ = 2 * Math.PI * r
   let cum = 0
 
@@ -254,7 +254,7 @@ const AKTUALNOSCI_ITEMS = [
     desc: 'Zwiększony limit współbieżnych zapytań dla pakietów Byte Pro.',
     time: '3 dni temu',
     badge: 'INFO',
-    badgeClass: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
     icon: Zap,
   },
 ]
@@ -267,7 +267,7 @@ const FEATURED_NEWS = [
     tag: 'Studio Zdęć v2.1',
     linkText: 'Otwórz Studio Zdęć',
     icon: Camera,
-    gradient: 'from-primary/30 via-purple-600/25 to-blue-600/20',
+    gradient: 'from-primary/30 via-sky-600/25 to-blue-600/20',
   },
   {
     id: 2,
@@ -613,43 +613,34 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
       {/* ── Main Workspace ── */}
       <main ref={mainRef} className="flex-1 flex flex-col gap-4 px-4 lg:px-5 pt-0 pb-4 min-w-0 overflow-y-auto">
 
-        {/* ══ TOP BANNER: UNIFIED SINGLE TILE (AKTYWNOŚĆ + SALDO BYTE SIDE-BY-SIDE) ══ */}
+        {/* ══ TOP BANNER: UNIFIED SINGLE TILE (SALDO BYTE & TIMELINE) ══ */}
         <Tile intencja="akcent" elewacja="uniesiona" className="py-2.5 px-3 md:px-4 border-white/[0.06] bg-card/40 transition-[box-shadow,border-color,background-color] duration-200">
 
-          <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:gap-4">
+          <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:gap-5">
 
-            {/* Column 1: Aktywność */}
-            <div className="min-w-0 flex-1 md:max-w-[380px]">
-              <GlassActivityGrid
-                weeksCount={26}
-                showContent={showContent}
-                showSummary={false}
-                showStreaks={false}
-                compact={true}
-              />
-            </div>
-
-            {/* Vertical Separator */}
-            <span className="hidden w-px self-stretch bg-white/[0.08] md:block" aria-hidden="true" />
-
-            {/* Column 2: Saldo Byte Amount */}
-            <div className="min-w-0 shrink-0">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Saldo Byte</p>
-              <p className="mt-0.5 text-xl font-bold leading-none tabular-nums text-foreground flex items-center">
-                0<span className="ml-1 text-sm text-primary font-normal">⟠</span>
-              </p>
-              <button type="button" aria-label="Wersja platformy Beta 4.0.0" className="mt-1 inline-flex rounded-full outline-none">
+            {/* Column 1: Saldo Byte Amount */}
+            <div className="min-w-0 shrink-0 flex items-center gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Saldo Byte</p>
+                <p className="mt-0.5 text-xl font-bold leading-none tabular-nums text-foreground flex items-center">
+                  4 820<span className="ml-1 text-sm text-primary font-normal">⟠</span>
+                </p>
+              </div>
+              <button type="button" aria-label="Wersja platformy Beta 4.0.0" className="inline-flex rounded-full outline-none">
                 <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border font-semibold uppercase tracking-wide border-primary/30 bg-primary/10 text-primary h-4 gap-1 px-1.5 text-[9px]">
                   Beta 4.0.0
                 </span>
               </button>
             </div>
 
-            {/* Column 3: Saldo Byte Timeline & Solid Single-Color Line */}
+            {/* Vertical Separator */}
+            <span className="hidden w-px self-stretch bg-white/[0.08] md:block" aria-hidden="true" />
+
+            {/* Column 2: Saldo Byte Timeline & Solid Single-Color Line */}
             <div className="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
               {/* Solid Single-Color Progress Line */}
               <div className="w-full h-1 bg-foreground/10 rounded-full relative overflow-hidden my-0.5">
-                <div className="h-full bg-primary rounded-full w-full shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
+                <div className="h-full bg-primary rounded-full w-[78%] shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
               </div>
 
               {/* Date timeline + Range buttons */}
@@ -670,22 +661,22 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
 
               {/* Subtext */}
               <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground/70">
-                Brak zużycia w ostatnich 7 dniach
+                Współczynnik zużycia w normie • Zużyto 180 BYTE w ostatnich 7 dniach
               </p>
             </div>
 
-            {/* Column 4: Action Buttons (Far Right) */}
-            <div className="grid w-full shrink-0 grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:flex-col">
+            {/* Column 3: Action Buttons (Far Right) */}
+            <div className="grid w-full shrink-0 grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:flex-row">
               <button
                 type="button"
-                className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-2.5 border-foreground/15 bg-white/[0.05] hover:bg-white/[0.1] text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-[110px]"
+                className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-3 border-foreground/15 bg-white/[0.05] hover:bg-white/[0.1] text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-auto"
               >
                 <Plus className="h-3 w-3 shrink-0 text-primary" />
                 Doładuj
               </button>
               <button
                 type="button"
-                className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-2.5 border-white/[0.08] hover:border-white/[0.15] text-muted-foreground hover:text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-[110px]"
+                className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-3 border-white/[0.08] hover:border-white/[0.15] text-muted-foreground hover:text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-auto"
               >
                 <Receipt className="h-3 w-3 shrink-0" />
                 Wydatki
@@ -695,7 +686,7 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
           </div>
         </Tile>
 
-        {/* Global Search Input Bar (Visible in both content and skeleton mode with 1:1 identical dimensions) */}
+        {/* Global Search Input Bar */}
         <div className="w-full flex items-center justify-end gap-4 z-20">
           <div className="flex items-center gap-4 w-full">
             <div className={cn(
@@ -723,55 +714,85 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
           </div>
         </div>
 
-        {/* ── MIDDLE SECTION: 3 EQUAL COLUMNS (33% / 33% / 33%) ── */}
+        {/* ── MIDDLE SECTION: 3 EQUAL COLUMNS (33% / 33% / 33%) - OPTION 1 ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 items-stretch min-w-0">
 
-          {/* COLUMN 1 (33%): Aktywność Modułów + Lista Zadań */}
+          {/* COLUMN 1 (33%): NOWOŚCI + Lista Zadań */}
           <div className="flex flex-col gap-3 h-full min-w-0">
 
-            {/* Card 1: Aktywność Modułów */}
+            {/* Card 1: NOWOŚCI (Top Left) */}
             <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between border-white/[0.06] bg-card/40">
               {showContent ? (
-                <>
+                <div className="flex flex-col gap-2.5">
+                  {/* Header */}
                   <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
-                    <h3 className="text-xs font-bold text-foreground">Aktywność Modułów</h3>
-                    <button type="button" className="text-foreground/40 hover:text-foreground transition-colors" title="Więcej opcji">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
+                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 animate-pulse" />
+                      NOWOŚCI
+                    </h3>
+                    <TilePill intencja="akcent" className="border-primary/30 bg-primary/15 text-primary text-[9px] font-bold">
+                      4 NOWE
+                    </TilePill>
                   </div>
 
-                  {/* Main Section: Donut Ring + Stacked Pill Rows */}
-                  <div className="flex items-center gap-3 py-2">
-                    <DonutChart size={84} />
-                    <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                      {DONUT_SEGMENTS.map((seg, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between px-2.5 py-1 rounded-full border border-primary/25 bg-primary/10 text-xs transition-colors hover:border-primary/40"
-                        >
-                          <span className="text-foreground/90 font-medium text-[10.5px] truncate">{seg.label}</span>
-                          <span className="text-primary font-bold text-xs shrink-0 ml-1.5">{seg.pct}%</span>
+                  {/* Featured News Card Banner (Horizontal Layout matching Screenshot 1) */}
+                  {(() => {
+                    const news = FEATURED_NEWS[activeNewsIndex] || FEATURED_NEWS[0]
+                    const NewsIcon = news.icon
+                    return (
+                      <div className="p-2.5 rounded-2xl border border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05] transition-all flex items-center gap-3 group shadow-sm">
+                        {/* Left Side: Thumbnail Preview Image */}
+                        <div className={cn("w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-br border border-white/15 shrink-0 flex items-center justify-center relative overflow-hidden shadow-md group-hover:scale-[1.02] transition-transform duration-200", news.gradient)}>
+                          <NewsIcon className="w-7 h-7 text-primary relative z-10 group-hover:scale-110 transition-transform duration-200" />
+                          <div className="absolute inset-0 bg-primary/20 blur-md" />
+                          <div className="absolute bottom-1 left-1.5 px-1.5 py-0.5 rounded bg-black/65 backdrop-blur border border-white/10 text-[7px] font-bold text-white uppercase tracking-wider">
+                            {news.tag}
+                          </div>
                         </div>
-                      ))}
-                    </div>
+
+                        {/* Right Side: Text & Action Link */}
+                        <div className="flex flex-col gap-1 min-w-0 flex-1 justify-center">
+                          <h4 className="text-xs sm:text-[12.5px] font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
+                            {news.title}
+                          </h4>
+                          <p className="text-[9.5px] text-foreground/60 leading-relaxed line-clamp-2">
+                            {news.desc}
+                          </p>
+                          <button type="button" className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 mt-0.5">
+                            {news.linkText} <ChevronRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Bottom Carousel Indicator Dots */}
+                  <div className="flex items-center justify-center gap-1.5 pt-1">
+                    {FEATURED_NEWS.map((_, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setActiveNewsIndex(idx)}
+                        className={cn(
+                          "transition-all duration-300 rounded-full cursor-pointer",
+                          activeNewsIndex === idx
+                            ? "w-5 h-1 bg-primary shadow-sm shadow-primary/40"
+                            : "w-1 h-1 bg-foreground/20 hover:bg-foreground/40"
+                        )}
+                        title={`Slajd ${idx + 1}`}
+                      />
+                    ))}
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="space-y-2 p-1 animate-pulse">
-                  <div className="h-4 w-32 bg-primary/45 rounded" />
-                  <div className="flex items-center gap-3 py-2">
-                    <div className="w-20 h-20 rounded-full border-4 border-foreground/15 shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 w-full bg-foreground/15 rounded" />
-                      <div className="h-3 w-4/5 bg-foreground/15 rounded" />
-                      <div className="h-3 w-3/4 bg-foreground/15 rounded" />
-                    </div>
-                  </div>
+                  <div className="h-4 w-24 bg-primary/45 rounded" />
+                  <div className="h-20 w-full bg-foreground/15 rounded-xl" />
                 </div>
               )}
             </Tile>
 
-            {/* Card 2: Lista Zadań */}
+            {/* Card 2: Lista Zadań (Bottom Left) */}
             <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 border-white/[0.06] bg-card/40">
               <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-white/[0.06]">
                 {showContent ? (
@@ -817,7 +838,7 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
                         Twoje ostatnie sesje ze wszystkich modułów
                       </p>
                     </div>
-                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[9px] shrink-0">5 SESJI</TilePill>
+                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[9px] shrink-0">6 SESJI</TilePill>
                   </div>
 
                   {/* Filter Pills Bar */}
@@ -837,9 +858,9 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
                     </button>
                   </div>
 
-                  {/* Recent Items List - 5 Items */}
+                  {/* Recent Items List - 6 Items packed tightly */}
                   <div className="flex flex-col gap-1.5">
-                    {RECENT_ITEMS.slice(0, 5).map((item) => (
+                    {RECENT_ITEMS.slice(0, 6).map((item) => (
                       <div
                         key={item.id}
                         className="group flex items-center justify-between gap-2.5 p-1.5 px-2 rounded-xl border border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.08] transition-all duration-150 cursor-pointer"
@@ -876,7 +897,7 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
                   <div className="h-5 w-6 bg-foreground/10 rounded-lg" />
                 </div>
                 <div className="space-y-1.5 pt-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
+                  {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-2 p-1.5 rounded-xl border border-white/[0.04] bg-white/[0.02]">
                       <div className="w-6 h-6 rounded-lg bg-foreground/15 shrink-0" />
                       <div className="flex-1 space-y-1">
@@ -890,142 +911,111 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
             )}
           </Tile>
 
-          {/* COLUMN 3 (33%): NOWOŚCI with Top Image Banner & Carousel */}
+          {/* COLUMN 3 (33%): GRAND STATISTICS & ACTIVITY HUB (Donut Chart + Activity Heatmap Grid + Hero Metrics) */}
           <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between min-w-0 border-white/[0.06] bg-card/40 h-full">
             {showContent ? (
-              <div className="flex flex-col justify-between h-full">
-                <div className="flex flex-col gap-2">
-                  {/* Header with Nav Controls */}
-                  <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
-                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 animate-pulse" />
-                      NOWOŚCI
+              <div className="flex flex-col justify-between h-full gap-2.5">
+                {/* Header Row matching Screenshot 3 */}
+                <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
+                  <div>
+                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                      <BarChart3 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      Przegląd Statystyk
                     </h3>
-                    <div className="flex items-center gap-1">
-                      <TilePill intencja="akcent" className="border-primary/20 bg-primary/10 text-[9px] mr-0.5">
-                        {activeNewsIndex + 1} z {FEATURED_NEWS.length}
-                      </TilePill>
-                      <button
-                        type="button"
-                        onClick={() => setActiveNewsIndex((prev) => (prev > 0 ? prev - 1 : FEATURED_NEWS.length - 1))}
-                        className="p-1 rounded-md text-foreground/50 hover:text-foreground hover:bg-white/10 border border-white/5 transition-colors"
-                        title="Poprzedni slajd"
-                      >
-                        <ChevronLeft className="w-3 h-3" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveNewsIndex((prev) => (prev < FEATURED_NEWS.length - 1 ? prev + 1 : 0))}
-                        className="p-1 rounded-md text-foreground/50 hover:text-foreground hover:bg-white/10 border border-white/5 transition-colors"
-                        title="Następny slajd"
-                      >
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <p className="text-[10px] text-foreground/50 font-medium leading-tight">Aktywność konta NextByte</p>
+                  </div>
+                  <TilePill intencja="akcent" className="border-primary/20 bg-primary/10 text-[9px] font-bold">
+                    342 AKCJI
+                  </TilePill>
+                </div>
+
+                {/* Big Metric Section matching Screenshot 3: 2 847 Wygenerowane zapytania (+24%) */}
+                <div className="flex flex-col gap-0.5 pt-0.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl font-extrabold text-foreground tracking-tight">2 847</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full shadow-sm">
+                      <TrendingUp className="w-2.5 h-2.5" /> +24%
+                      <span className="text-[9px] text-foreground/50 font-normal">vs zeszły tydzień</span>
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-foreground/60 font-medium">Wygenerowane zapytania</p>
+                </div>
+
+                {/* Section A: Split 2-Column Layout (Left: Enlarged Donut Ring, Right: Responsive Percentage Pills) */}
+                <div className="flex items-center justify-between gap-3 py-1 min-w-0">
+                  {/* Left Side: Enlarged Centered Donut Chart Ring */}
+                  <div className="flex items-center justify-center shrink-0">
+                    <DonutChart size={140} />
                   </div>
 
-                  {/* Featured Highlight Card with Top Image Banner (Image on Top, Text & Link Below) */}
-                  {(() => {
-                    const news = FEATURED_NEWS[activeNewsIndex] || FEATURED_NEWS[0]
-                    const NewsIcon = news.icon
-                    return (
+                  {/* Right Side: Responsive Percentage Pills matching Theme Colors */}
+                  <div className="flex flex-col gap-1.5 w-[140px] shrink-0">
+                    {DONUT_SEGMENTS.map((seg, i) => (
                       <div
-                        key={news.id}
-                        className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-all flex flex-col gap-2 group shadow-sm"
+                        key={i}
+                        className="flex items-center justify-between px-2.5 py-1 rounded-full border border-primary/20 bg-primary/[0.06] text-xs transition-colors hover:border-primary/40 shadow-sm"
                       >
-                        {/* Top Image Preview Banner */}
-                        <div className={cn("h-20 w-full rounded-lg bg-gradient-to-br border border-white/15 flex items-center justify-center relative overflow-hidden group shadow-inner", news.gradient)}>
-                          <NewsIcon className="w-8 h-8 text-primary relative z-10 group-hover:scale-110 transition-transform duration-200" />
-                          <div className="absolute inset-0 bg-primary/20 blur-md" />
-                          <div className="absolute bottom-1.5 left-2 px-1.5 py-0.5 rounded bg-black/50 backdrop-blur border border-white/10 text-[8px] font-bold text-white uppercase tracking-wider">
-                            {news.tag}
-                          </div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: seg.color }}
+                          />
+                          <span className="text-foreground/90 font-medium text-[10px] truncate">{seg.label}</span>
                         </div>
-
-                        {/* Text & Details Below Banner */}
-                        <div className="flex flex-col gap-1">
-                          <h4 className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
-                            {news.title}
-                          </h4>
-                          <p className="text-[9.5px] text-foreground/55 leading-snug line-clamp-2">
-                            {news.desc}
-                          </p>
-                        </div>
-
-                        {/* Footer Action Link */}
-                        <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
-                          <span className="text-[8.5px] text-foreground/40 font-medium">Oficjalna aktualizacja</span>
-                          <button type="button" className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1">
-                            {news.linkText} <ChevronRight className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })()}
-
-                  {/* Additional Sub-News Feed */}
-                  <div className="flex flex-col gap-1.5">
-                    {AKTUALNOSCI_ITEMS.map((item) => (
-                      <div
-                        key={item.id}
-                        className="group flex items-center justify-between gap-2 p-1.5 px-2 rounded-xl border border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.05] transition-all cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <div className="w-5 h-5 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                            <item.icon className="w-2.5 h-2.5 text-primary" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-[10.5px] font-semibold text-foreground truncate group-hover:text-primary transition-colors leading-tight">
-                              {item.title}
-                            </h4>
-                          </div>
-                        </div>
-                        <span className={cn("text-[7.5px] font-bold px-1.5 py-0.5 rounded border shrink-0 uppercase tracking-wide", item.badgeClass)}>
-                          {item.badge}
+                        <span
+                          className="font-bold text-[10.5px] shrink-0 ml-1"
+                          style={{ color: seg.color }}
+                        >
+                          {seg.pct}%
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Bottom Carousel Indicator Dots */}
-                <div className="flex items-center justify-center gap-1.5 pt-1.5">
-                  {FEATURED_NEWS.map((_, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setActiveNewsIndex(idx)}
-                      className={cn(
-                        "transition-all duration-300 rounded-full cursor-pointer",
-                        activeNewsIndex === idx
-                          ? "w-5 h-1 bg-primary shadow-sm shadow-primary/40"
-                          : "w-1 h-1 bg-foreground/20 hover:bg-foreground/40"
-                      )}
-                      title={`Slajd ${idx + 1}`}
-                    />
-                  ))}
+                {/* Section B: Thin Horizontal Divider Line */}
+                <div className="w-full border-t border-white/[0.06]" />
+
+                {/* Section C: GlassActivityGrid (Full Size Heatmap Matrix filling lower card) */}
+                <div className="w-full flex items-center justify-center overflow-hidden py-0.5">
+                  <GlassActivityGrid
+                    weeksCount={18}
+                    showContent={showContent}
+                    showSummary={false}
+                    showStreaks={false}
+                    compact={false}
+                    hideHeader={true}
+                  />
+                </div>
+
+                {/* Bottom Status Pills Row matching Screenshot 3 */}
+                <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-white/[0.06]">
+                  <div className="flex items-center justify-center px-1.5 py-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] text-[9.5px] text-foreground/70">
+                    <span className="font-bold text-primary mr-1">v4.0</span> Wersja
+                  </div>
+                  <div className="flex items-center justify-center px-1.5 py-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] text-[9.5px] text-foreground/70">
+                    <span className="font-bold text-emerald-400 mr-1">99.8%</span> Uptime
+                  </div>
+                  <div className="flex items-center justify-center px-1.5 py-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] text-[9.5px] text-foreground/70">
+                    <span className="font-bold text-amber-400 mr-1">0 Byte</span> Zużycie
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-3 p-0.5 animate-pulse">
                 <div className="flex justify-between items-center">
-                  <div className="h-4 w-24 bg-primary/45 rounded" />
+                  <div className="h-4 w-36 bg-primary/45 rounded" />
                   <div className="h-3.5 w-12 bg-foreground/20 rounded-full" />
                 </div>
-                <div className="h-24 w-full bg-foreground/10 rounded-xl p-2.5 space-y-2">
-                  <div className="flex gap-2.5">
-                    <div className="w-10 h-10 bg-foreground/20 rounded-lg shrink-0" />
-                    <div className="space-y-1 flex-1">
-                      <div className="h-3 w-3/4 bg-foreground/20 rounded" />
-                      <div className="h-2 w-full bg-foreground/15 rounded" />
-                    </div>
+                <div className="grid grid-cols-2 gap-3 items-center py-1">
+                  <div className="w-20 h-20 rounded-full border-4 border-foreground/15 justify-self-center shrink-0" />
+                  <div className="space-y-1.5">
+                    <div className="h-2.5 w-full bg-foreground/15 rounded" />
+                    <div className="h-2.5 w-4/5 bg-foreground/15 rounded" />
+                    <div className="h-2.5 w-3/4 bg-foreground/15 rounded" />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <div className="h-6 w-full bg-foreground/10 rounded-xl" />
-                  <div className="h-6 w-full bg-foreground/10 rounded-xl" />
-                  <div className="h-6 w-full bg-foreground/10 rounded-xl" />
-                </div>
+                <div className="h-20 w-full bg-foreground/10 rounded-xl" />
               </div>
             )}
           </Tile>

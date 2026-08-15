@@ -175,6 +175,7 @@ export interface GlassActivityGridProps {
   title?: string
   badgeText?: string
   compact?: boolean
+  hideHeader?: boolean
 }
 
 export function GlassActivityGrid({
@@ -187,55 +188,58 @@ export function GlassActivityGrid({
   title = "📈 Aktywność",
   badgeText = "OSTATNIE 6 MIES.",
   compact = false,
+  hideHeader = false,
 }: GlassActivityGridProps) {
   const [hoveredCell, setHoveredCell] = useState<{ day: ActivityDay; x: number; y: number } | null>(null)
 
   const data = useMemo(() => generateActivityData(weeksCount), [weeksCount])
 
   return (
-    <div className={cn("flex flex-col relative select-none", compact ? "gap-2 py-0" : "gap-4 py-1", className)}>
+    <div className={cn("flex flex-col relative select-none", compact ? "gap-2 py-0" : "gap-2.5 py-1", className)}>
       {/* Header */}
-      <div className={cn("flex flex-wrap items-center justify-between gap-2", compact ? "h-5" : "h-6")}>
-        <div className={cn("flex items-center gap-2", compact ? "h-5" : "h-6")}>
-          <h2 className={cn("font-bold text-foreground flex items-center gap-1.5 leading-none", compact ? "text-xs" : "text-sm")}>
-            {showContent ? (
-              title
-            ) : (
-              <span className={cn("inline-block bg-foreground/25 rounded-md animate-pulse", compact ? "h-3 w-16" : "h-3.5 w-20")} />
-            )}
-          </h2>
-          <div className={cn("font-semibold text-foreground/50 flex items-center gap-1 px-2 rounded-full bg-foreground/5 border border-foreground/10", compact ? "text-[9px] h-4" : "text-[10px] h-5")}>
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" />
-            {showContent ? (
-              <span>{badgeText}</span>
-            ) : (
-              <span className="inline-block h-2 w-16 bg-foreground/20 rounded animate-pulse" />
-            )}
+      {!hideHeader && (
+        <div className={cn("flex flex-wrap items-center justify-between gap-2", compact ? "h-5" : "h-6")}>
+          <div className={cn("flex items-center gap-2", compact ? "h-5" : "h-6")}>
+            <h2 className={cn("font-bold text-foreground flex items-center gap-1.5 leading-none", compact ? "text-xs" : "text-sm")}>
+              {showContent ? (
+                title
+              ) : (
+                <span className={cn("inline-block bg-foreground/25 rounded-md animate-pulse", compact ? "h-3 w-16" : "h-3.5 w-20")} />
+              )}
+            </h2>
+            <div className={cn("font-semibold text-foreground/50 flex items-center gap-1 px-2 rounded-full bg-foreground/5 border border-foreground/10", compact ? "text-[9px] h-4" : "text-[10px] h-5")}>
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" />
+              {showContent ? (
+                <span>{badgeText}</span>
+              ) : (
+                <span className="inline-block h-2 w-16 bg-foreground/20 rounded animate-pulse" />
+              )}
+            </div>
           </div>
-        </div>
 
-        {showStreaks && (
-          <div className="flex items-center gap-3 text-[11px] text-foreground/60">
-            {showContent ? (
-              <>
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-foreground/5 border border-foreground/8 text-[10px]">
-                  <span className="text-amber-400">🔥</span>
-                  <span>Bieżąca seria: <strong className="text-foreground">{data.currentStreak} dni</strong></span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-foreground/5 border border-foreground/8 text-[10px]">
-                  <span className="text-primary">⚡</span>
-                  <span>Max: <strong className="text-foreground">{data.maxStreak} dni</strong></span>
-                </div>
-                <div className="text-[11px] text-foreground/50 tabular-nums">
-                  <span className="font-semibold text-foreground">{data.totalCount.toLocaleString('pl-PL')}</span> zapytań
-                </div>
-              </>
-            ) : (
-              <div className="h-4 w-32 bg-foreground/15 rounded-full animate-pulse" />
-            )}
-          </div>
-        )}
-      </div>
+          {showStreaks && (
+            <div className="flex items-center gap-3 text-[11px] text-foreground/60">
+              {showContent ? (
+                <>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-foreground/5 border border-foreground/8 text-[10px]">
+                    <span className="text-amber-400">🔥</span>
+                    <span>Bieżąca seria: <strong className="text-foreground">{data.currentStreak} dni</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-foreground/5 border border-foreground/8 text-[10px]">
+                    <span className="text-primary">⚡</span>
+                    <span>Max: <strong className="text-foreground">{data.maxStreak} dni</strong></span>
+                  </div>
+                  <div className="text-[11px] text-foreground/50 tabular-nums">
+                    <span className="font-semibold text-foreground">{data.totalCount.toLocaleString('pl-PL')}</span> zapytań
+                  </div>
+                </>
+              ) : (
+                <div className="h-4 w-32 bg-foreground/15 rounded-full animate-pulse" />
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Grid container with scroll if needed */}
       <div className="relative overflow-x-auto pb-0.5 pt-0.5 scrollbar-none">
