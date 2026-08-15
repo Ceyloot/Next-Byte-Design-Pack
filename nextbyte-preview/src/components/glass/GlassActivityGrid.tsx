@@ -174,6 +174,7 @@ export interface GlassActivityGridProps {
   showContent?: boolean
   title?: string
   badgeText?: string
+  compact?: boolean
 }
 
 export function GlassActivityGrid({
@@ -185,29 +186,30 @@ export function GlassActivityGrid({
   showContent = true,
   title = "📈 Aktywność",
   badgeText = "OSTATNIE 6 MIES.",
+  compact = false,
 }: GlassActivityGridProps) {
   const [hoveredCell, setHoveredCell] = useState<{ day: ActivityDay; x: number; y: number } | null>(null)
 
   const data = useMemo(() => generateActivityData(weeksCount), [weeksCount])
 
   return (
-    <div className={cn("flex flex-col gap-4 relative select-none py-1", className)}>
+    <div className={cn("flex flex-col relative select-none", compact ? "gap-2 py-0" : "gap-4 py-1", className)}>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 h-6">
-        <div className="flex items-center gap-2.5 h-6">
-          <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5 leading-none">
+      <div className={cn("flex flex-wrap items-center justify-between gap-2", compact ? "h-5" : "h-6")}>
+        <div className={cn("flex items-center gap-2", compact ? "h-5" : "h-6")}>
+          <h2 className={cn("font-bold text-foreground flex items-center gap-1.5 leading-none", compact ? "text-xs" : "text-sm")}>
             {showContent ? (
               title
             ) : (
-              <span className="inline-block h-3.5 w-20 bg-foreground/25 rounded-md animate-pulse" />
+              <span className={cn("inline-block bg-foreground/25 rounded-md animate-pulse", compact ? "h-3 w-16" : "h-3.5 w-20")} />
             )}
           </h2>
-          <div className="text-[10px] font-semibold text-foreground/50 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-foreground/5 border border-foreground/10 h-5">
+          <div className={cn("font-semibold text-foreground/50 flex items-center gap-1 px-2 rounded-full bg-foreground/5 border border-foreground/10", compact ? "text-[9px] h-4" : "text-[10px] h-5")}>
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" />
             {showContent ? (
               <span>{badgeText}</span>
             ) : (
-              <span className="inline-block h-2.5 w-20 bg-foreground/20 rounded animate-pulse" />
+              <span className="inline-block h-2 w-16 bg-foreground/20 rounded animate-pulse" />
             )}
           </div>
         </div>
@@ -236,16 +238,16 @@ export function GlassActivityGrid({
       </div>
 
       {/* Grid container with scroll if needed */}
-      <div className="relative overflow-x-auto pb-1.5 pt-1 scrollbar-none">
-        <div className="flex flex-col gap-1.5 min-w-max">
+      <div className="relative overflow-x-auto pb-0.5 pt-0.5 scrollbar-none">
+        <div className="flex flex-col gap-1 min-w-max">
 
           {/* Month labels row */}
-          <div className="flex pl-7 text-[10px] font-medium text-foreground/50 h-5 relative">
+          <div className={cn("flex text-foreground/50 font-medium relative", compact ? "pl-5 text-[9px] h-3.5" : "pl-7 text-[10px] h-5")}>
             {data.monthLabels.map(({ month, weekIndex }) => (
               <div
                 key={`${month}-${weekIndex}`}
                 className="absolute"
-                style={{ left: `${28 + weekIndex * 16}px` }}
+                style={{ left: compact ? `${20 + weekIndex * 12}px` : `${28 + weekIndex * 16}px` }}
               >
                 {month}
               </div>
@@ -253,20 +255,20 @@ export function GlassActivityGrid({
           </div>
 
           {/* Days grid row */}
-          <div className="flex gap-1 items-start">
+          <div className={cn("flex items-start", compact ? "gap-[2.5px]" : "gap-1")}>
             {/* Day labels column */}
-            <div className="flex flex-col gap-1 pt-0 pr-1 shrink-0 text-[9px] font-medium text-foreground/40">
+            <div className={cn("flex flex-col pt-0 pr-0.5 shrink-0 text-foreground/40 font-medium", compact ? "gap-[2.5px] text-[8px]" : "gap-1 text-[9px]")}>
               {DAY_LABELS_PL.map((label, idx) => (
-                <div key={idx} className="w-5 h-3.5 flex items-center justify-end leading-none">
+                <div key={idx} className={cn("flex items-center justify-end leading-none", compact ? "w-4 h-2.5" : "w-5 h-3.5")}>
                   {label}
                 </div>
               ))}
             </div>
 
             {/* Weeks columns */}
-            <div className="flex gap-1">
+            <div className={cn("flex", compact ? "gap-[2.5px]" : "gap-1")}>
               {data.weeks.map((week, wIdx) => (
-                <div key={wIdx} className="flex flex-col gap-1">
+                <div key={wIdx} className={cn("flex flex-col", compact ? "gap-[2.5px]" : "gap-1")}>
                   {week.map((day, dIdx) => (
                     <div
                       key={`${wIdx}-${dIdx}`}
@@ -281,7 +283,8 @@ export function GlassActivityGrid({
                       }}
                       onMouseLeave={() => setHoveredCell(null)}
                       className={cn(
-                        "w-3.5 h-3.5 rounded-[3px] transition-all duration-150 cursor-pointer hover:scale-125 hover:z-20 hover:ring-2 hover:ring-primary/60",
+                        "transition-all duration-150 cursor-pointer hover:scale-125 hover:z-20 hover:ring-2 hover:ring-primary/60",
+                        compact ? "w-2.5 h-2.5 rounded-[2px]" : "w-3.5 h-3.5 rounded-[3px]",
                         !showContent && "bg-foreground/12 animate-pulse",
                         showContent && day.level === 0 && "bg-foreground/[0.08] hover:bg-foreground/20",
                         showContent && day.level === 1 && "bg-primary/30 hover:bg-primary/45 border border-primary/20",
