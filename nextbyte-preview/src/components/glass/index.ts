@@ -24,3 +24,5 @@ export { GlassSpinner, GlassSpinnerDots, GlassSpinnerBar, GlassLoadingOverlay } 
 export { GlassEmpty }      from './GlassEmpty'
 export { GlassAccordion, GlassAccordionItem, GlassCollapsible } from './GlassAccordion'
 export { GlassDrawer }     from './GlassDrawer'
+export { GlassActivityGrid } from './GlassActivityGrid'
+

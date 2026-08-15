@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,12 +6,23 @@
 
 /* ── Czcionki + base reset ─────────────────────────────────── */
 :root {
-  --font-heading: 'Plus Jakarta Sans';
-  --font-body: 'Outfit';
+  --font-heading: 'DM Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
-html, body {
+html,
+body {
   background-color: hsl(var(--background));
+  font-family: var(--font-body), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  color: hsl(var(--foreground));
+}
+
+.font-heading {
+  font-family: var(--font-heading), 'DM Sans', ui-sans-serif, sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-body), 'Inter', ui-sans-serif, sans-serif;
 }
 
 /* ── TAFLE — warstwy głębi w trybie normalnym ─────────────────────────
@@ -26,13 +37,15 @@ html, body {
   border: 1px solid transparent;
   box-shadow: var(--cien-plaski);
   -webkit-backdrop-filter: blur(10px) saturate(1.05);
-          backdrop-filter: blur(10px) saturate(1.05);
+  backdrop-filter: blur(10px) saturate(1.05);
 }
+
 .nb-tafla-2 {
   background-color: hsl(var(--tafla-2) / .78);
   border: 1px solid hsl(var(--border) / .7);
   box-shadow: var(--swiatlo-gorne);
 }
+
 .nb-tafla-3 {
   background-color: hsl(var(--tafla-3) / .82);
   border: 1px solid hsl(var(--border) / .55);
@@ -45,15 +58,18 @@ html, body {
   background-color: hsl(var(--foreground) / .04);
   border: 1px solid hsl(var(--foreground) / .07);
 }
+
 .nb-wglobienie-gnizado {
   /* Wersja dla gniazd ikon: mniejsza, ciemniejsza, bez „primary/color pop" */
   background-color: hsl(var(--foreground) / .06);
   border: 1px solid hsl(var(--foreground) / .09);
 }
+
 /* Uniesienie na hover — tylko dla elementów klikalnych */
 .nb-tafla-int {
   transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
+
 .nb-tafla-int:hover {
   background-color: hsl(var(--tafla-2));
   border-color: hsl(var(--border) / 1);
@@ -67,17 +83,36 @@ html, body {
    zamiast pływać). Treść: normalna waga, luźniejsza interlinia.
    Kontrast niesie WAGA i ROZMIAR, nie uppercase i nie letter-spacing. */
 
-h1, h2, h3, h4, h5, h6, .nb-naglowek {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.nb-naglowek {
   font-family: var(--font-heading), ui-sans-serif, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.021em;   /* ciasno — grotesk lubi zwarcie */
+  letter-spacing: -0.021em;
+  /* ciasno — grotesk lubi zwarcie */
   text-wrap: balance;
 }
-h1, .nb-naglowek-xl { letter-spacing: -0.032em; font-weight: 700; }
-h2                  { letter-spacing: -0.026em; }
+
+h1,
+.nb-naglowek-xl {
+  letter-spacing: -0.032em;
+  font-weight: 700;
+}
+
+h2 {
+  letter-spacing: -0.026em;
+}
 
 /* Cyfry w kolumnach mają się zgadzać w pionie */
-.nb-liczby, table, [data-liczby] { font-variant-numeric: tabular-nums; }
+.nb-liczby,
+table,
+[data-liczby] {
+  font-variant-numeric: tabular-nums;
+}
 
 /* Etykieta sekcji — hairline + zwykły tekst.
    Zastępuje mono/uppercase/tracking-widest, który zdradzał generator. */
@@ -89,6 +124,7 @@ h2                  { letter-spacing: -0.026em; }
   font-weight: 500;
   color: hsl(var(--foreground) / 0.45);
 }
+
 .nb-etykieta::after {
   content: '';
   flex: 1;
@@ -109,13 +145,17 @@ h2                  { letter-spacing: -0.026em; }
    promień rodzica − własny odstęp. Narożniki są wtedy współśrodkowe,
    zamiast „pływać" jeden w drugim. Do tego służy calc() niżej. */
 :root {
-  --r-xs: 4px;    /* badge, chip, tag, kropka statusu        */
-  --r-sm: 6px;    /* przycisk, input, select, mały kontrolek */
-  --r-md: 8px;    /* karta, panel, wiersz listy, akordeon    */
-  --r-lg: 12px;   /* modal, szuflada, navbar, duża tafla     */
+  --r-xs: 4px;
+  /* badge, chip, tag, kropka statusu        */
+  --r-sm: 6px;
+  /* przycisk, input, select, mały kontrolek */
+  --r-md: 8px;
+  /* karta, panel, wiersz listy, akordeon    */
+  --r-lg: 12px;
+  /* modal, szuflada, navbar, duża tafla     */
 
   /* Tailwind czyta --radius dla lg/md/sm */
-  --radius:    var(--r-md);
+  --radius: var(--r-md);
   --radius-sm: var(--r-sm);
 }
 
@@ -165,12 +205,15 @@ h2                  { letter-spacing: -0.026em; }
      tle, jedna ramka, zero wymiaru. Nowoczesny ciemny interfejs buduje
      głębię schodkami jasności powierzchni + hairline u górnej krawędzi
      (światło pada z góry). Każdy stopień to +2–3% jasności. */
-  --tafla-1: 215 13% 8%;    /* karta na tle              */
-  --tafla-2: 215 12% 11%;   /* element wewnątrz karty    */
-  --tafla-3: 215 12% 14%;   /* element wewnątrz tafli-2  */
+  --tafla-1: 215 13% 8%;
+  /* karta na tle              */
+  --tafla-2: 215 12% 11%;
+  /* element wewnątrz karty    */
+  --tafla-3: 215 12% 14%;
+  /* element wewnątrz tafli-2  */
 
   --swiatlo-gorne: inset 0 1px 0 0 hsl(210 40% 100% / .055);
-  --cien-plaski:   0 1px 2px -1px hsl(215 40% 2% / .5);
+  --cien-plaski: 0 1px 2px -1px hsl(215 40% 2% / .5);
   --cien-uniesiony:
     0 1px 2px -1px hsl(215 40% 2% / .45),
     0 8px 22px -12px hsl(215 40% 2% / .6);
@@ -191,13 +234,15 @@ h2                  { letter-spacing: -0.026em; }
   --popover: 230 20% 10%;
   --popover-foreground: 30 24% 94%;
 
-  --primary: 14 90% 65%;              /* koral — Claude-warm, Revolut-electric */
+  --primary: 14 90% 65%;
+  /* koral — Claude-warm, Revolut-electric */
   --primary-foreground: 20 20% 8%;
   --brand-primary: 14 90% 65%;
   --brand-primary-dark: 12 84% 56%;
   --brand-primary-light: 18 94% 74%;
 
-  --accent: 165 58% 58%;              /* mięta — Fitatu-fresh */
+  --accent: 165 58% 58%;
+  /* mięta — Fitatu-fresh */
   --accent-foreground: 165 40% 8%;
 
   --secondary: 230 16% 14%;
@@ -208,13 +253,14 @@ h2                  { letter-spacing: -0.026em; }
   --border: 230 14% 20%;
   --ring: 14 90% 65%;
 
-  --destructive: 348 82% 62%;         /* róż-czerwony spójny z korala */
+  --destructive: 348 82% 62%;
+  /* róż-czerwony spójny z korala */
   --destructive-foreground: 30 24% 96%;
 
-  --brand-text-muted:     230 8% 64%;
-  --brand-text-primary:   30 24% 98%;
+  --brand-text-muted: 230 8% 64%;
+  --brand-text-primary: 30 24% 98%;
   --brand-text-secondary: 30 18% 90%;
-  --brand-text-tertiary:  30 12% 78%;
+  --brand-text-tertiary: 30 12% 78%;
 
   --sidebar: 230 20% 10%;
   --sidebar-accent: 14 50% 20%;
@@ -236,7 +282,7 @@ h2                  { letter-spacing: -0.026em; }
 
   /* Cienie mają odrobinę koloru primary — koralowy rzut na krawędzi */
   --swiatlo-gorne: inset 0 1px 0 0 hsl(30 60% 100% / .07);
-  --cien-plaski:   0 1px 2px -1px hsl(230 40% 2% / .55);
+  --cien-plaski: 0 1px 2px -1px hsl(230 40% 2% / .55);
   --cien-uniesiony:
     0 1px 2px -1px hsl(230 40% 2% / .5),
     0 12px 32px -14px hsl(14 60% 20% / .55);
@@ -646,15 +692,19 @@ h2                  { letter-spacing: -0.026em; }
 
 /* ─── Scandinavian ☀ (darmowy) — ciepły kremowy editorial ─── */
 [data-theme="scandinavian"] {
-  --background: 46 20% 95%;          /* #f6f3e8 — ciepła lekko żółta biel */
-  --foreground: 42 14% 12%;          /* prawie-czarny z żółto-ciepłym odcieniem */
+  --background: 46 20% 95%;
+  /* #f6f3e8 — ciepła lekko żółta biel */
+  --foreground: 42 14% 12%;
+  /* prawie-czarny z żółto-ciepłym odcieniem */
 
-  --card: 46 16% 99%;                /* #fefdf8 — bardzo ciepła biała karta */
+  --card: 46 16% 99%;
+  /* #fefdf8 — bardzo ciepła biała karta */
   --card-foreground: 42 14% 12%;
   --popover: 0 0% 100%;
   --popover-foreground: 38 12% 12%;
 
-  --primary: 161 22% 40%;            /* szałwiowa zieleń — #4c6e63 */
+  --primary: 161 22% 40%;
+  /* szałwiowa zieleń — #4c6e63 */
   --primary-foreground: 0 0% 100%;
   --brand-primary: 161 22% 40%;
   --brand-primary-dark: 161 22% 30%;
@@ -674,10 +724,10 @@ h2                  { letter-spacing: -0.026em; }
   --destructive: 0 72% 52%;
   --destructive-foreground: 0 0% 100%;
 
-  --brand-text-muted:     38 6% 52%;
-  --brand-text-primary:   38 12% 10%;
+  --brand-text-muted: 38 6% 52%;
+  --brand-text-primary: 38 12% 10%;
   --brand-text-secondary: 38 8% 26%;
-  --brand-text-tertiary:  38 6% 42%;
+  --brand-text-tertiary: 38 6% 42%;
 
   --sidebar: 38 8% 93%;
   --sidebar-accent: 161 14% 86%;
@@ -697,8 +747,8 @@ h2                  { letter-spacing: -0.026em; }
   --tafla-2: 38 8% 97%;
   --tafla-3: 38 8% 94%;
 
-  --swiatlo-gorne:  inset 0 1px 0 0 hsl(0 0% 100% / .90);
-  --cien-plaski:    0 1px 3px -1px hsl(38 20% 20% / .10);
+  --swiatlo-gorne: inset 0 1px 0 0 hsl(0 0% 100% / .90);
+  --cien-plaski: 0 1px 3px -1px hsl(38 20% 20% / .10);
   --cien-uniesiony:
     0 1px 2px -1px hsl(38 20% 20% / .08),
     0 8px 22px -12px hsl(38 20% 20% / .14);
@@ -741,17 +791,19 @@ h2                  { letter-spacing: -0.026em; }
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --nb-p1-cien:         0.25;
-  --nb-p1-czas:         0.32;
-  --nb-p1-korpus:       0.05;   /* 95% krystalicznej czystości */
-  --nb-p1-lsnienie:     0.22;
-  --nb-p1-nasycenie:    1.35;
-  --nb-p1-obwodka:      0.07;
+  --nb-p1-cien: 0.25;
+  --nb-p1-czas: 0.32;
+  --nb-p1-korpus: 0.05;
+  /* 95% krystalicznej czystości */
+  --nb-p1-lsnienie: 0.22;
+  --nb-p1-nasycenie: 1.35;
+  --nb-p1-obwodka: 0.07;
   --nb-p1-obwodka-hover: 0.14;
-  --nb-p1-poswiata:     0.15;
-  --nb-p1-refleks:      0.10;
-  --nb-p1-rozmycie:     4;      /* minimalny blur max 15% (4px) — krystaliczna ostrość tła */
-  --nb-p1-uniesienie:   1.5;
+  --nb-p1-poswiata: 0.15;
+  --nb-p1-refleks: 0.10;
+  --nb-p1-rozmycie: 4;
+  /* minimalny blur max 15% (4px) — krystaliczna ostrość tła */
+  --nb-p1-uniesienie: 1.5;
 }
 
 /* ── Light Mode Glass (Apple iOS 26 Style — Ostre, Wyraziste, Krystaliczne) ── */
@@ -759,38 +811,39 @@ h2                  { letter-spacing: -0.026em; }
 [data-theme="nextbyte-light"],
 [data-theme="future-theme"],
 [data-theme="scandinavian"] {
-  --nb-p1-korpus:       0.55;   /* Krystalicznie czysta jasna tafla z wyrazistym kontrastem */
-  --nb-p1-lsnienie:     0.45;
-  --nb-p1-obwodka:      0.65;
-  --nb-p1-refleks:      0.80;
-  --nb-p1-nasycenie:    1.60;
-  --nb-p1-rozmycie:     12;
+  --nb-p1-korpus: 0.55;
+  /* Krystalicznie czysta jasna tafla z wyrazistym kontrastem */
+  --nb-p1-lsnienie: 0.45;
+  --nb-p1-obwodka: 0.65;
+  --nb-p1-refleks: 0.80;
+  --nb-p1-nasycenie: 1.60;
+  --nb-p1-rozmycie: 12;
 }
 
 /* ── Tło aplikacji — czyste CSS gradients ──────────────────────────────── */
 .nb-app-bg {
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59,130,246,.32) 0%, transparent 68%),
-    radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139,92,246,.28) 0%, transparent 68%),
-    radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34,211,238,.24) 0%, transparent 68%),
-    radial-gradient(ellipse 50% 44% at 12% 80%, rgba(52,211,153,.20) 0%, transparent 68%),
-    radial-gradient(ellipse 46% 40% at 82% 78%, rgba(251,191,36,.18) 0%, transparent 68%),
-    radial-gradient(ellipse 38% 34% at 48% 54%, rgba(251,113,133,.16) 0%, transparent 68%);
+    radial-gradient(ellipse 68% 58% at 14% 24%, rgba(59, 130, 246, .32) 0%, transparent 68%),
+    radial-gradient(ellipse 60% 52% at 78% 16%, rgba(139, 92, 246, .28) 0%, transparent 68%),
+    radial-gradient(ellipse 54% 48% at 90% 70%, rgba(34, 211, 238, .24) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 44% at 12% 80%, rgba(52, 211, 153, .20) 0%, transparent 68%),
+    radial-gradient(ellipse 46% 40% at 82% 78%, rgba(251, 191, 36, .18) 0%, transparent 68%),
+    radial-gradient(ellipse 38% 34% at 48% 54%, rgba(251, 113, 133, .16) 0%, transparent 68%);
 }
 
-[data-theme="light-apple"]    .nb-app-bg,
+[data-theme="light-apple"] .nb-app-bg,
 [data-theme="nextbyte-light"] .nb-app-bg,
-[data-theme="future-theme"]   .nb-app-bg {
+[data-theme="future-theme"] .nb-app-bg {
   background-image:
-    radial-gradient(ellipse 70% 60% at 15% 20%, rgba(59,130,246,.30) 0%, transparent 68%),
-    radial-gradient(ellipse 65% 55% at 80% 20%, rgba(14,165,233,.25) 0%, transparent 68%),
-    radial-gradient(ellipse 55% 50% at 90% 75%, rgba(99,102,241,.22) 0%, transparent 68%);
+    radial-gradient(ellipse 70% 60% at 15% 20%, rgba(59, 130, 246, .30) 0%, transparent 68%),
+    radial-gradient(ellipse 65% 55% at 80% 20%, rgba(14, 165, 233, .25) 0%, transparent 68%),
+    radial-gradient(ellipse 55% 50% at 90% 75%, rgba(99, 102, 241, .22) 0%, transparent 68%);
 }
 
 /* Gwarancja: Wszystkie teksty, ikony i nagłówki kafelka leżą bezpiecznie NAD refrakcją ramki (z-index: 1) */
-.nb-szklo > *,
-.glass-card > * {
+.nb-szklo>*,
+.glass-card>* {
   position: relative;
   z-index: 1;
 }
@@ -813,13 +866,9 @@ h2                  { letter-spacing: -0.026em; }
 
   /* Refrakcja optyczna fali cieczy na dolnej krawędzi + gładki blur 4px */
   -webkit-backdrop-filter:
-    url(#nb-refrakcja-delikatne)
-    blur(calc(var(--nb-p1-rozmycie, 4) * 1px))
-    saturate(var(--nb-p1-nasycenie, 1.35));
+    url(#nb-refrakcja-delikatne) blur(calc(var(--nb-p1-rozmycie, 4) * 1px)) saturate(var(--nb-p1-nasycenie, 1.35));
   backdrop-filter:
-    url(#nb-refrakcja-delikatne)
-    blur(calc(var(--nb-p1-rozmycie, 4) * 1px))
-    saturate(var(--nb-p1-nasycenie, 1.35));
+    url(#nb-refrakcja-delikatne) blur(calc(var(--nb-p1-rozmycie, 4) * 1px)) saturate(var(--nb-p1-nasycenie, 1.35));
 
   /* Załamanie 5px na samej krawędzi daje efekt wygiętej cieczy */
   box-shadow:
@@ -842,7 +891,7 @@ h2                  { letter-spacing: -0.026em; }
     inset 0 0 0 1.5px rgba(255, 255, 255, 0.50),
     0 8px 30px -8px rgba(0, 0, 0, 0.12) !important;
   -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
-          backdrop-filter: blur(12px) saturate(180%) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
 }
 
 .is-glass .nb-szklo:hover,
@@ -854,18 +903,19 @@ h2                  { letter-spacing: -0.026em; }
     0 6px 20px -4px rgba(0, 0, 0, 0.25);
 }
 
-.nb-szklo:active, .glass-card:active { transform: none; }
+.nb-szklo:active,
+.glass-card:active {
+  transform: none;
+}
 
 /* ── SZKŁO PŁYNNE ────────────────────────────────────────────────────────── */
 .nb-szklo-plynne {
   background:
     hsl(var(--card) / calc(var(--nb-p1-korpus, 0.28) * 0.5));
   -webkit-backdrop-filter:
-    blur(calc(var(--nb-p1-rozmycie, 20) * 2px))
-    saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
+    blur(calc(var(--nb-p1-rozmycie, 20) * 2px)) saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
   backdrop-filter:
-    blur(calc(var(--nb-p1-rozmycie, 20) * 2px))
-    saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
+    blur(calc(var(--nb-p1-rozmycie, 20) * 2px)) saturate(calc(var(--nb-p1-nasycenie, 1.6) * 1.1));
   box-shadow:
     inset 0 1px 0 0 hsl(var(--foreground) / var(--nb-p1-refleks, 0.16)),
     0 8px 32px -8px hsl(0 0% 0% / calc(var(--nb-p1-cien, 0.34) * 0.7));
@@ -883,62 +933,103 @@ h2                  { letter-spacing: -0.026em; }
    ale zdejmują filtr SVG dla maksymalnej płynności 60FPS. */
 html.nb-refrakcja-chrome .nb-szklo:not(.nb-powierzchnia) {
   -webkit-backdrop-filter: saturate(135%) blur(4px);
-          backdrop-filter: saturate(135%) blur(4px);
+  backdrop-filter: saturate(135%) blur(4px);
 }
 
 /* ── SZKŁO WYRAŹNE — mocniejsza refrakcja dla elementów wyróżnionych ────── */
 .nb-szklo-wyrazne {
   -webkit-backdrop-filter: url(#nb-refrakcja-wyrazne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
-          backdrop-filter: url(#nb-refrakcja-wyrazne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+  backdrop-filter: url(#nb-refrakcja-wyrazne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
 }
 
 /* Soczewka działa również podczas przewijania — bez podmiany filtra w locie. */
 
 /* ── SHIMMER — połysk przebiegający po szkieletach ładowania ────────────── */
 @keyframes nb-shimmer-przesuw {
-  100% { transform: translateX(100%); }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .nb-shimmer {
   position: relative;
   overflow: hidden;
 }
+
 .nb-shimmer::after {
   content: '';
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    hsl(var(--foreground) / 0.08) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      hsl(var(--foreground) / 0.08) 50%,
+      transparent 100%);
   animation: nb-shimmer-przesuw 1.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nb-shimmer::after { animation: none; }
+  .nb-shimmer::after {
+    animation: none;
+  }
 }
 
 /* ── SPINNER — pierścień i kropki ────────────────────────────────────────── */
-@keyframes nb-obrot { to { transform: rotate(360deg); } }
-@keyframes nb-skok {
-  0%, 80%, 100% { transform: translateY(0);     opacity: .45; }
-  40%           { transform: translateY(-35%);  opacity: 1;   }
-}
-@keyframes nb-pasek {
-  0%   { transform: translateX(-100%) scaleX(.4); }
-  50%  { transform: translateX(0)     scaleX(.7); }
-  100% { transform: translateX(100%)  scaleX(.4); }
+@keyframes nb-obrot {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.nb-spin      { animation: nb-obrot 0.7s linear infinite; }
-.nb-dot-skok  { animation: nb-skok  1.1s ease-in-out infinite; }
-.nb-pasek-nieokr { animation: nb-pasek 1.3s ease-in-out infinite; transform-origin: left center; }
+@keyframes nb-skok {
+
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: .45;
+  }
+
+  40% {
+    transform: translateY(-35%);
+    opacity: 1;
+  }
+}
+
+@keyframes nb-pasek {
+  0% {
+    transform: translateX(-100%) scaleX(.4);
+  }
+
+  50% {
+    transform: translateX(0) scaleX(.7);
+  }
+
+  100% {
+    transform: translateX(100%) scaleX(.4);
+  }
+}
+
+.nb-spin {
+  animation: nb-obrot 0.7s linear infinite;
+}
+
+.nb-dot-skok {
+  animation: nb-skok 1.1s ease-in-out infinite;
+}
+
+.nb-pasek-nieokr {
+  animation: nb-pasek 1.3s ease-in-out infinite;
+  transform-origin: left center;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .nb-spin, .nb-dot-skok, .nb-pasek-nieokr { animation-duration: 3s; }
+
+  .nb-spin,
+  .nb-dot-skok,
+  .nb-pasek-nieokr {
+    animation-duration: 3s;
+  }
 }
 
 /* ── PIGUŁKA — aktywna zakładka ─────────────────────────────────────────── */
@@ -947,34 +1038,47 @@ html.nb-refrakcja-chrome .nb-szklo:not(.nb-powierzchnia) {
   initial-value: 0deg;
   inherits: false;
 }
-@keyframes nb-spin { to { --nb-spin: 360deg; } }
+
+@keyframes nb-spin {
+  to {
+    --nb-spin: 360deg;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  .nb-tab-pill-spin { animation: nb-spin 3s linear infinite; }
+  .nb-tab-pill-spin {
+    animation: nb-spin 3s linear infinite;
+  }
 }
 
 .nb-pigulka-rant {
-  background: conic-gradient(
-    from var(--nb-spin, 0deg),
-    hsl(var(--primary)),
-    hsl(var(--primary) / 0.3),
-    hsl(var(--primary) / 0.1),
-    hsl(var(--primary) / 0.3),
-    hsl(var(--primary))
-  );
+  background: conic-gradient(from var(--nb-spin, 0deg),
+      hsl(var(--primary)),
+      hsl(var(--primary) / 0.3),
+      hsl(var(--primary) / 0.1),
+      hsl(var(--primary) / 0.3),
+      hsl(var(--primary)));
 }
 
 .nb-pigulka-szklo {
   background: hsl(var(--card) / 0.82);
   -webkit-backdrop-filter: blur(8px) saturate(1.5);
-          backdrop-filter: blur(8px) saturate(1.5);
+  backdrop-filter: blur(8px) saturate(1.5);
   box-shadow:
-    inset 0  1px 0 hsl(var(--foreground) / 0.14),
-    inset 0 -1px 0 hsl(var(--primary)    / 0.06);
+    inset 0 1px 0 hsl(var(--foreground) / 0.14),
+    inset 0 -1px 0 hsl(var(--primary) / 0.06);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nb-szklo, .nb-szklo::after { transition: none; }
-  .nb-szklo:hover { transform: none; }
+
+  .nb-szklo,
+  .nb-szklo::after {
+    transition: none;
+  }
+
+  .nb-szklo:hover {
+    transform: none;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1019,4 +1123,3 @@ html:not(.is-glass) .nb-szklo button.border {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-

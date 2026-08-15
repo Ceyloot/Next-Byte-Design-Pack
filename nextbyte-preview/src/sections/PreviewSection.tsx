@@ -3,13 +3,16 @@ import {
   Grid, Sparkles, MessageSquare, Terminal, Brain, ShieldAlert, Shield,
   Camera, Video, Bell, Search, Plus, ChevronRight,
   Zap, Users, Clock, Share2, MoreHorizontal, TrendingUp,
-  CheckSquare, Square, ArrowUpRight, ShoppingBag, GraduationCap, Type,
+  CheckSquare, Square, ArrowUpRight, ShoppingBag, GraduationCap, Type, Receipt,
+
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
 import { useLiquidGlassScroll } from '@/hooks/useLiquidGlassScroll'
 import { Tile, TileRow, TilePill, TileAction } from '@/components/Tile'
 import { useGlass } from '@/lib/glass-context'
+import { GlassActivityGrid } from '@/components/glass'
+
 
 // ── Navigation Data ───────────────────────────────────────────────
 
@@ -169,6 +172,7 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
   const [activeSection, setActiveSection] = useState('home')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [navCompact, setNavCompact] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const mainRef = useRef<HTMLElement>(null)
   const navRef = useRef<HTMLDivElement>(null)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -347,140 +351,114 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
       {/* ── Main Workspace ── */}
       <main ref={mainRef} className="flex-1 flex flex-col gap-4 px-4 lg:px-5 pt-0 pb-4 min-w-0 overflow-y-auto">
 
-        {/* ══ TOP BANNER / AKTYWNOŚĆ + SALDO BYTE ══ */}
-        <Tile intencja="akcent" elewacja="uniesiona" className="p-5 flex flex-row gap-6 items-center">
-          {showContent ? (
-            <>
-              {/* Left: Heatmap + Title */}
-              <div className="flex flex-col gap-2 shrink-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold text-foreground">📈 Aktywność</h2>
-                  <div className="text-[10px] text-foreground/50 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span>OSTATNIE 6 MIES.</span>
-                  </div>
-                </div>
+        {/* ══ TOP BANNER: UNIFIED SINGLE TILE (AKTYWNOŚĆ + SALDO BYTE SIDE-BY-SIDE) ══ */}
+        <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 md:p-4 transition-[box-shadow,border-color,background-color] duration-200">
 
-                {/* Heatmap Grid */}
-                <div className="flex gap-1.5">
-                  {/* Day labels */}
-                  <div className="flex flex-col gap-1 justify-end">
-                    <div className="w-6 h-4 text-[9px] text-foreground/50 flex items-center">Wt</div>
-                    <div className="w-6 h-4 text-[9px] text-foreground/50 flex items-center">Cz</div>
-                    <div className="w-6 h-4 text-[9px] text-foreground/50 flex items-center">So</div>
-                  </div>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
 
-                  {/* Months */}
-                  {[
-                    { month: 'Lut', sq: [1,2,1,0,2,1,3] },
-                    { month: 'Mar', sq: [2,1,3,2,0,1,2] },
-                    { month: 'Kwi', sq: [3,4,2,1,2,3,1] },
-                    { month: 'Maj', sq: [2,1,4,3,2,1,4] },
-                    { month: 'Cze', sq: [1,2,3,2,1,0,2] },
-                    { month: 'Lip', sq: [2,3,4,2,1,2,3] },
-                    { month: 'Sie', sq: [3,4,1,2,3,0,1] },
-                  ].map(({ month, sq }) => (
-                    <div key={month} className="flex flex-col gap-1">
-                      <div className="w-8 h-4 text-[9px] text-foreground/50 flex items-center justify-center">{month}</div>
-                      <div className="flex flex-col gap-1">
-                        {sq.map((level, i) => (
-                          <div
-                            key={`${month}-${i}`}
-                            className={cn(
-                              'w-3.5 h-3.5 rounded-md transition-all hover:scale-125 cursor-pointer',
-                              level === 0 && 'bg-foreground/12',
-                              level === 1 && 'bg-primary/25',
-                              level === 2 && 'bg-primary/45',
-                              level === 3 && 'bg-primary/65',
-                              level === 4 && 'bg-primary',
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {/* Column 1: Aktywność */}
+            <div className="min-w-0 flex-1 md:max-w-[440px]">
+              <GlassActivityGrid
+                weeksCount={26}
+                showContent={showContent}
+                showSummary={false}
+                showStreaks={false}
+              />
+            </div>
+
+            {/* Vertical Separator */}
+            <span className="hidden w-px self-stretch bg-border md:block" aria-hidden="true" />
+
+            {/* Column 2: Saldo Byte Amount */}
+            <div className="min-w-0 shrink-0">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Saldo Byte</p>
+              <p className="mt-0.5 text-[2rem] font-semibold leading-none tabular-nums text-foreground flex items-center">
+                0<span className="ml-1.5 text-[1.25rem] text-primary font-normal">⟠</span>
+              </p>
+              <button type="button" aria-label="Wersja platformy Beta 4.0.0" className="mt-2 inline-flex rounded-full outline-none">
+                <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border font-semibold uppercase tracking-wide border-primary/30 bg-primary/10 text-primary h-5 gap-1 px-2 text-[11px]">
+                  Beta 4.0.0
+                </span>
+              </button>
+            </div>
+
+            {/* Column 3: Saldo Byte Timeline & Solid Single-Color Line */}
+            <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
+              {/* Solid Single-Color Progress Line */}
+              <div className="w-full h-1.5 bg-foreground/10 rounded-full relative overflow-hidden my-1">
+                <div className="h-full bg-primary rounded-full w-full shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
               </div>
 
-              {/* Right: Saldo Byte */}
-              <div className="flex-1 flex items-center justify-between gap-6 pl-4 border-l border-foreground/10">
-                <div className="flex flex-col gap-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">SALDO BYTE</div>
-                  <div className="text-2xl font-black text-primary">0 <span className="text-xs font-normal text-foreground/60">Byte</span></div>
-                  <div className="flex gap-2 text-[10px] text-foreground/40">
-                    <span>07.08</span>
-                    <span>11.08</span>
-                    <span>dziś (7d 30d 90d)</span>
-                  </div>
-                </div>
-
-                <div className="flex-1 h-1 bg-foreground/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary w-1/4" />
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <TileAction rodzaj="glowna" ikona={Plus}>+ Doładuj</TileAction>
-                  <TileAction rodzaj="wtorna">Wydatki</TileAction>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Left: Skeleton Heatmap */}
-              <div className="flex flex-col gap-2 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-20 bg-foreground/25 rounded-full" />
-                  <div className="h-2.5 w-32 bg-foreground/20 rounded-full" />
-                </div>
-
-                {/* Skeleton Heatmap Grid */}
-                <div className="flex gap-1.5">
-                  <div className="flex flex-col gap-1 justify-end">
-                    <div className="w-6 h-4 bg-foreground/15 rounded-sm" />
-                    <div className="w-6 h-4 bg-foreground/15 rounded-sm" />
-                    <div className="w-6 h-4 bg-foreground/15 rounded-sm" />
-                  </div>
-
-                  {[1,2,3,4,5,6,7].map(m => (
-                    <div key={m} className="flex flex-col gap-1">
-                      <div className="w-8 h-4 bg-foreground/15 rounded-sm" />
-                      {[1,2,3,4,5,6,7].map(d => (
-                        <div key={`${m}-${d}`} className="w-3.5 h-3.5 bg-foreground/20 rounded-md" />
-                      ))}
-                    </div>
-                  ))}
-                </div>
+              {/* Date timeline + Range buttons */}
+              <div className="mt-0.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span className="flex flex-1 items-center justify-between tabular-nums">
+                  <span>09.08</span>
+                  <span className="hidden sm:inline">12.08</span>
+                  <span>dziś</span>
+                </span>
+                <span className="hidden sm:flex ml-2">
+                  <span className="flex shrink-0 items-center gap-0.5">
+                    <button type="button" className="rounded-md px-2 py-0.5 text-[10px] tabular-nums transition-colors bg-primary/15 text-primary font-semibold">7d</button>
+                    <button type="button" className="rounded-md px-2 py-0.5 text-[10px] tabular-nums transition-colors text-muted-foreground hover:text-foreground">30d</button>
+                    <button type="button" className="rounded-md px-2 py-0.5 text-[10px] tabular-nums transition-colors text-muted-foreground hover:text-foreground">90d</button>
+                  </span>
+                </span>
               </div>
 
-              {/* Right: Skeleton Saldo */}
-              <div className="flex-1 flex items-center justify-between gap-6 pl-4 border-l border-foreground/10">
-                <div className="flex flex-col gap-2">
-                  <div className="h-2.5 w-24 bg-foreground/20 rounded-full" />
-                  <div className="h-6 w-16 bg-foreground/25 rounded-lg" />
-                  <div className="h-2 w-32 bg-foreground/15 rounded-full" />
-                </div>
+              {/* Subtext */}
+              <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-muted-foreground">
+                Brak zużycia w ostatnich 7 dniach
+              </p>
+            </div>
 
-                <div className="flex-1 h-1 bg-foreground/10 rounded-full" />
+            {/* Column 4: Action Buttons (Far Right) */}
+            <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-col">
+              <button
+                type="button"
+                className="rounded-xl inline-flex items-center gap-1.5 border text-[14px] font-semibold px-3 border-foreground/15 bg-foreground/10 hover:bg-foreground/15 text-foreground transition-colors duration-200 h-11 w-full justify-center sm:h-9 sm:w-[128px]"
+              >
+                <Plus className="h-3.5 w-3.5 shrink-0 text-primary" />
+                Doładuj
+              </button>
+              <button
+                type="button"
+                className="rounded-xl inline-flex items-center gap-1.5 border text-[14px] font-semibold px-3 border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-colors duration-200 h-11 w-full justify-center sm:h-9 sm:w-[128px]"
+              >
+                <Receipt className="h-3.5 w-3.5 shrink-0" />
+                Wydatki
+              </button>
+            </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="h-9 w-20 bg-primary/30 rounded-lg" />
-                  <div className="h-9 w-16 bg-foreground/20 rounded-lg" />
-                </div>
-              </div>
-            </>
-          )}
+          </div>
         </Tile>
 
-        {/* Global Search Input Bar */}
-        {showContent && (
-          <div className="w-full">
-            <TileRow intencja="neutralna" className="py-3 px-4">
-              <Search className="w-4 h-4 text-primary shrink-0" />
-              <span className="text-xs text-foreground/60 flex-1">Szukaj w notatkach, zadaniach, kalendarzu...</span>
-              <kbd className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-foreground/10 text-foreground/50 border border-foreground/10">⌘K</kbd>
-            </TileRow>
+        {/* Global Search Input Bar (Visible in both content and skeleton mode with 1:1 identical dimensions) */}
+        <div className="w-full flex items-center justify-end gap-4 z-20">
+          <div className="flex items-center gap-4 w-full">
+            <div className={cn(
+              "nb-szklo nb-szklo-pigulka relative z-10 flex min-w-0 flex-1 items-center gap-3 rounded-full border border-foreground/15 transition-all duration-300 h-12 px-4 bg-card/55 shadow-md",
+              showContent ? "focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20" : "animate-pulse border-foreground/10"
+            )}>
+              <Search className={cn("w-4 h-4 shrink-0", showContent ? "text-primary" : "text-foreground/30")} />
+              <div className="relative flex-1 min-w-0 overflow-hidden">
+                {showContent ? (
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Szukaj w notatkach, zadaniach, kalendarzu..."
+                    className="w-full bg-transparent text-foreground outline-none ring-0 placeholder:text-muted-foreground/50 text-sm font-medium"
+                  />
+                ) : (
+                  <div className="h-3.5 w-64 bg-foreground/20 rounded-full" />
+                )}
+              </div>
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-foreground/10 border border-foreground/10 text-[10px] font-mono text-muted-foreground/60 flex-shrink-0 whitespace-nowrap">
+                <span>⌘</span>K
+              </kbd>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* ── ROW 1: Overview Card + Weekly Trend Chart + Donut Chart ── */}
         <div className="grid gap-5 lg:gap-6" style={{ gridTemplateColumns: '1.9fr 2fr 1.2fr' }}>
