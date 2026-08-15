@@ -1,6 +1,7 @@
 {
   "version": 2,
   "framework": "vite",
+  "installCommand": "cd nextbyte-preview && npm install",
   "buildCommand": "cd nextbyte-preview && npm run build",
   "outputDirectory": "nextbyte-preview/dist",
   "rewrites": [

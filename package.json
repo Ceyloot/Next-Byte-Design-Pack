@@ -1,0 +1,9 @@
+{
+  "name": "next-byte-design-pack-root",
+  "private": true,
+  "scripts": {
+    "install": "cd nextbyte-preview && npm install",
+    "postinstall": "cd nextbyte-preview && npm install",
+    "build": "cd nextbyte-preview && npm install && npm run build"
+  }
+}
