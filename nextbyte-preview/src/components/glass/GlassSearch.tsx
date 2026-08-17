@@ -40,7 +40,7 @@ export function GlassSearch({
   return (
     <div className={cn(
       isGlass ? 'nb-szklo' : 'border border-border bg-input',
-      'relative flex items-center rounded-nb',
+      'relative flex items-center rounded-full',
       sz.wrap,
       className,
     )}>

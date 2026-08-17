@@ -693,26 +693,18 @@ table,
 /* ─── Scandinavian ☀ (darmowy) — ciepły kremowy editorial ─── */
 [data-theme="scandinavian"] {
   --background: 46 20% 95%;
-  /* #f6f3e8 — ciepła lekko żółta biel */
   --foreground: 42 14% 12%;
-  /* prawie-czarny z żółto-ciepłym odcieniem */
-
   --card: 46 16% 99%;
-  /* #fefdf8 — bardzo ciepła biała karta */
   --card-foreground: 42 14% 12%;
   --popover: 0 0% 100%;
   --popover-foreground: 38 12% 12%;
-
   --primary: 161 22% 40%;
-  /* szałwiowa zieleń — #4c6e63 */
   --primary-foreground: 0 0% 100%;
   --brand-primary: 161 22% 40%;
   --brand-primary-dark: 161 22% 30%;
   --brand-primary-light: 161 20% 52%;
-
   --accent: 161 14% 88%;
   --accent-foreground: 161 22% 26%;
-
   --secondary: 38 8% 92%;
   --secondary-foreground: 38 12% 18%;
   --muted: 38 8% 93%;
@@ -720,15 +712,12 @@ table,
   --input: 38 8% 86%;
   --border: 38 8% 83%;
   --ring: 161 22% 40%;
-
   --destructive: 0 72% 52%;
   --destructive-foreground: 0 0% 100%;
-
   --brand-text-muted: 38 6% 52%;
   --brand-text-primary: 38 12% 10%;
   --brand-text-secondary: 38 8% 26%;
   --brand-text-tertiary: 38 6% 42%;
-
   --sidebar: 38 8% 93%;
   --sidebar-accent: 161 14% 86%;
   --sidebar-accent-foreground: 161 22% 28%;
@@ -737,16 +726,11 @@ table,
   --sidebar-primary: 161 22% 40%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-ring: 161 22% 40%;
-
-  /* Zaokrąglenia — nieco bardziej organiczne niż domyślne */
   --r-md: 14px;
   --r-lg: 20px;
-
-  /* Warstwy głębi (tryb jasny = cień w dół, nie hairline) */
   --tafla-1: 0 0% 100%;
   --tafla-2: 38 8% 97%;
   --tafla-3: 38 8% 94%;
-
   --swiatlo-gorne: inset 0 1px 0 0 hsl(0 0% 100% / .90);
   --cien-plaski: 0 1px 3px -1px hsl(38 20% 20% / .10);
   --cien-uniesiony:
@@ -839,6 +823,23 @@ table,
     radial-gradient(ellipse 70% 60% at 15% 20%, rgba(59, 130, 246, .30) 0%, transparent 68%),
     radial-gradient(ellipse 65% 55% at 80% 20%, rgba(14, 165, 233, .25) 0%, transparent 68%),
     radial-gradient(ellipse 55% 50% at 90% 75%, rgba(99, 102, 241, .22) 0%, transparent 68%);
+}
+
+
+/* ── Zmienne obwódki kafelka — ciemne vs jasne motywy ──────────────────── */
+/* Ciemne motywy: subtelna linia (foreground/primary z niską alfą)           */
+/* Jasne motywy: brak linii — karta definiowana wyłącznie cieniem            */
+:root {
+  --nb-tile-border:        hsl(var(--foreground) / 0.07);
+  --nb-tile-border-akcent: hsl(var(--primary) / 0.20);
+}
+
+[data-theme="light-apple"],
+[data-theme="nextbyte-light"],
+[data-theme="future-theme"],
+[data-theme="scandinavian"] {
+  --nb-tile-border:        transparent;
+  --nb-tile-border-akcent: transparent;
 }
 
 /* Gwarancja: Wszystkie teksty, ikony i nagłówki kafelka leżą bezpiecznie NAD refrakcją ramki (z-index: 1) */
@@ -1037,6 +1038,19 @@ html.nb-refrakcja-chrome .nb-szklo:not(.nb-powierzchnia) {
   syntax: '<angle>';
   initial-value: 0deg;
   inherits: false;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
 }
 
 @keyframes nb-spin {

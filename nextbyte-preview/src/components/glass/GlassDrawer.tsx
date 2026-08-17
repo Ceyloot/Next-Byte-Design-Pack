@@ -8,8 +8,8 @@ export type DrawerSide = 'right' | 'left' | 'bottom' | 'top'
 const PANEL: Record<DrawerSide, string> = {
   right:  'inset-y-0 right-0 h-full w-full max-w-md border-l',
   left:   'inset-y-0 left-0  h-full w-full max-w-md border-r',
-  bottom: 'inset-x-0 bottom-0 w-full max-h-[85vh] border-t rounded-t-nb-lg',
-  top:    'inset-x-0 top-0    w-full max-h-[85vh] border-b rounded-b-nb-lg',
+  bottom: 'inset-x-0 bottom-0 w-full max-h-[85vh] border-t rounded-t-3xl',
+  top:    'inset-x-0 top-0    w-full max-h-[85vh] border-b rounded-b-3xl',
 }
 
 /* Stan zamknięty — panel zsunięty poza krawędź */
@@ -104,7 +104,7 @@ export function GlassDrawer({
             <button
               onClick={onClose}
               aria-label="Zamknij"
-              className="shrink-0 rounded-nb-sm p-1 text-foreground/40 transition-colors hover:bg-foreground/10 hover:text-foreground"
+              className="shrink-0 rounded-lg p-1 text-foreground/40 transition-colors hover:bg-foreground/10 hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>

@@ -5,7 +5,7 @@ import { useGlass } from "@/lib/glass-context"
 
 const inputVariants = cva(
   [
-    "flex w-full rounded-nb border transition-colors duration-200",
+    "flex w-full rounded-xl border transition-colors duration-200",
     "bg-input text-foreground placeholder:text-muted-foreground",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "disabled:pointer-events-none disabled:opacity-50",

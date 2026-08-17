@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
-        "rounded-nb border border-border bg-card p-6",
+        "rounded-2xl border border-border bg-card p-6",
         "shadow-[0_2px_4px_0_rgb(0_0_0/0.08),0_16px_40px_-16px_rgb(0_0_0/0.4),inset_0_1px_0_0_rgb(255_255_255/0.06)]",
         "focus:outline-none",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -54,7 +54,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close className={cn(
-        "absolute right-4 top-4 rounded-nb-sm p-1.5",
+        "absolute right-4 top-4 rounded-lg p-1.5",
         "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06]",
         "transition-colors duration-150",
         "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card",
@@ -147,7 +147,7 @@ const AlertDialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
-        "rounded-nb border border-border bg-card p-6",
+        "rounded-2xl border border-border bg-card p-6",
         "shadow-[0_2px_4px_0_rgb(0_0_0/0.08),0_16px_40px_-16px_rgb(0_0_0/0.4),inset_0_1px_0_0_rgb(255_255_255/0.06)]",
         "focus:outline-none",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -209,7 +209,7 @@ const AlertDialogAction = React.forwardRef<
   <AlertDialogPrimitive.Action
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-nb px-4 text-sm font-semibold",
+      "inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold",
       "border border-destructive/40 bg-destructive/[0.06] text-destructive",
       "hover:border-destructive/70 hover:bg-destructive/[0.12]",
       "focus:outline-none focus:ring-2 focus:ring-destructive/60 focus:ring-offset-2 focus:ring-offset-card",
@@ -228,7 +228,7 @@ const AlertDialogCancel = React.forwardRef<
   <AlertDialogPrimitive.Cancel
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-nb px-4 text-sm font-semibold",
+      "inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold",
       "border border-border bg-foreground/[0.02] text-foreground",
       "hover:bg-foreground/[0.06]",
       "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card",

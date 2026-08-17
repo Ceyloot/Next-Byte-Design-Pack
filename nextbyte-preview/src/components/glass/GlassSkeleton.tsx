@@ -17,7 +17,7 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /** Pojedynczy blok — buduje wszystkie pozostałe warianty */
-export function GlassSkeleton({ radius = 'rounded-nb-sm', className, ...props }: SkeletonProps) {
+export function GlassSkeleton({ radius = 'rounded-lg', className, ...props }: SkeletonProps) {
   return <div className={cn(useBase(), radius, className)} {...props} />
 }
 
@@ -67,7 +67,7 @@ export function GlassSkeletonImage({
   className,
 }: { aspect?: string; className?: string }) {
   return (
-    <GlassSkeleton radius="rounded-nb" className={cn(aspect, 'w-full', className)} />
+    <GlassSkeleton radius="rounded-2xl" className={cn(aspect, 'w-full', className)} />
   )
 }
 
@@ -80,7 +80,7 @@ export function GlassSkeletonCard({
   return (
     <div
       className={cn(
-        'space-y-3 rounded-nb p-5',
+        'space-y-3 rounded-2xl p-5',
         isGlass ? 'nb-szklo' : 'border border-border bg-card',
         className,
       )}
@@ -105,7 +105,7 @@ export function GlassSkeletonTable({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-nb',
+        'overflow-hidden rounded-2xl',
         isGlass ? 'nb-szklo' : 'border border-border bg-card',
         className,
       )}
@@ -140,10 +140,10 @@ export function GlassSkeletonForm({
       {Array.from({ length: fields }).map((_, i) => (
         <div key={i} className="space-y-2">
           <GlassSkeleton className="h-2.5 w-24" />
-          <GlassSkeleton radius="rounded-nb" className="h-10 w-full" />
+          <GlassSkeleton radius="rounded-xl" className="h-10 w-full" />
         </div>
       ))}
-      <GlassSkeleton radius="rounded-nb" className="h-10 w-32" />
+      <GlassSkeleton radius="rounded-xl" className="h-10 w-32" />
     </div>
   )
 }

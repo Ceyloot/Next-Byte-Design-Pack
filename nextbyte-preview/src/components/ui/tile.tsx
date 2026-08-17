@@ -45,9 +45,9 @@ const ELEWACJA = {
    „czerwony tint" zjadłby bazę karty i kafelek przestałby być czytelny nad
    wzorem i tłem ustawionym przez użytkownika.                              */
 const INTENCJA = {
-  neutralna: { obwodka: 'border-border',            ikona: 'text-muted-foreground', chip: 'bg-muted/60' },
-  akcent:    { obwodka: 'border-primary/25',        ikona: 'text-primary',          chip: 'bg-primary/10' },
-  krytyczna: { obwodka: 'border-destructive/35',    ikona: 'text-destructive',      chip: 'bg-destructive/10' },
+  neutralna: { obwodka: '[border-color:var(--nb-tile-border)]',          ikona: 'text-muted-foreground', chip: 'bg-muted/60' },
+  akcent:    { obwodka: '[border-color:var(--nb-tile-border-akcent)]',   ikona: 'text-primary',          chip: 'bg-primary/10' },
+  krytyczna: { obwodka: 'border-destructive/35',                         ikona: 'text-destructive',      chip: 'bg-destructive/10' },
 } as const;
 
 export type Elewacja = keyof typeof ELEWACJA;
@@ -75,7 +75,7 @@ export function klasyKafelka(opcje?: {
 }): string {
   const { intencja = 'neutralna', elewacja = 'uniesiona', interaktywny, zwarty } = opcje ?? {};
   return cn(
-    PROMIEN.kafelek, 'border', INTENCJA[intencja].obwodka,
+    PROMIEN.kafelek, 'nb-tile-card border', INTENCJA[intencja].obwodka,
     // kolumna: pozwala dzieciom uzyc flex-1 i wypelnic karte, gdy siatka
     // wyrownuje wysokosci w rzedzie (h-full + items-stretch)
     'flex flex-col',

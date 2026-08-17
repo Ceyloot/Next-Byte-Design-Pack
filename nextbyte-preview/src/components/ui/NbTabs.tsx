@@ -75,7 +75,7 @@ export function NbTabs({ tabs, defaultTab, onChange, className }: NbTabsProps) {
       ref={containerRef}
       role="tablist"
       className={cn(
-        'relative flex flex-wrap items-center gap-0.5 rounded-nb border p-1',
+        'relative flex flex-wrap items-center gap-0.5 rounded-full border p-1',
         isGlass ? 'nb-szklo' : 'border-border bg-muted/20',
         className,
       )}

@@ -155,7 +155,7 @@ export function BgToggle({ bgKey, onCycle }: BgToggleProps) {
       onClick={onCycle}
       title="Zmień tło"
       className={cn(
-        'fixed right-4 top-4 z-[9999] flex items-center gap-2 rounded-nb-sm border',
+        'fixed right-4 top-4 z-[9999] flex items-center gap-2 rounded-lg border',
         'px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur-md transition-all duration-200',
         'border-border/60 bg-card/75 text-foreground/55 hover:bg-card/90 hover:text-foreground',
       )}

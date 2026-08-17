@@ -41,7 +41,7 @@ export function GlassDropdown({ trigger, items, align = 'left', className }: Gla
       {open && (
         <div
           className={cn(
-            'absolute z-50 mt-1.5 min-w-[180px] overflow-hidden rounded-nb border p-1',
+            'absolute z-50 mt-1.5 min-w-[180px] overflow-hidden rounded-2xl border p-1',
             align === 'right' ? 'right-0' : 'left-0',
             isGlass
               ? 'nb-szklo nb-szklo-plynne nb-powierzchnia border-foreground/12'
@@ -58,7 +58,7 @@ export function GlassDropdown({ trigger, items, align = 'left', className }: Gla
                 disabled={item.disabled}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  'flex w-full items-center gap-2.5 rounded-nb-sm px-3 py-2 text-sm font-medium',
+                  'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium',
                   'transition-colors duration-150 text-left',
                   item.danger
                     ? 'text-destructive hover:bg-destructive/10'
@@ -111,7 +111,7 @@ export function GlassDropdownSelect({
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex w-full items-center justify-between gap-2 rounded-nb border px-3 py-2.5 text-sm',
+          'flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm',
           'transition-all duration-200 cursor-pointer',
           isGlass
             ? cn('nb-szklo text-foreground')
@@ -127,7 +127,7 @@ export function GlassDropdownSelect({
       {open && (
         <div
           className={cn(
-            'absolute z-50 mt-1.5 w-full overflow-hidden rounded-nb border p-1',
+            'absolute z-50 mt-1.5 w-full overflow-hidden rounded-2xl border p-1',
             isGlass
               ? 'nb-szklo nb-szklo-plynne nb-powierzchnia border-foreground/12'
               : 'bg-card border-border shadow-xl',
@@ -138,7 +138,7 @@ export function GlassDropdownSelect({
               key={opt.value}
               onClick={() => { onChange?.(opt.value); setOpen(false) }}
               className={cn(
-                'flex w-full items-center justify-between rounded-nb-sm px-3 py-2 text-sm',
+                'flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm',
                 'transition-colors duration-150 cursor-pointer',
                 opt.value === value
                   ? 'bg-primary/12 text-primary font-medium'

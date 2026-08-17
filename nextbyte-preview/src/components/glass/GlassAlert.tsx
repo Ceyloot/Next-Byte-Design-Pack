@@ -65,7 +65,7 @@ export function GlassAlert({
   return (
     <div
       className={cn(
-        'relative flex gap-3 rounded-nb border px-4 py-3',
+        'relative flex gap-3 rounded-2xl border px-4 py-3',
         isGlass
           ? cn('nb-szklo', cfg.glass)
           : cn('border', cfg.normal),

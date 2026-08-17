@@ -60,9 +60,9 @@ export function GlassModal({
       <GlassCard
         role="dialog"
         aria-modal="true"
-        className={cn('relative z-10 w-full', width, 'rounded-nb-lg p-0 overflow-hidden', className)}
+        className={cn('relative z-10 w-full', width, 'rounded-2xl p-0 overflow-hidden', className)}
         padding="p-0"
-        radius="rounded-nb-lg"
+        radius="rounded-2xl"
       >
         {(title || description) && (
           <div className="flex items-start justify-between gap-4 border-b border-foreground/10 px-6 py-5">

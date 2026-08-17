@@ -29,7 +29,7 @@ export function GlassStat({
       <div className="flex items-start justify-between gap-2">
         <span className="text-xs font-medium text-foreground/60">{label}</span>
         {icon && (
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-nb-xs nb-wglobienie-gnizado text-foreground/70">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl nb-wglobienie-gnizado text-foreground/70">
             {icon}
           </span>
         )}

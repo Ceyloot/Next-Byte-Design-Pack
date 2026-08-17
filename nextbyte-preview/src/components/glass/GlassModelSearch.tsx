@@ -83,7 +83,7 @@ export function GlassModelSearch({ className, onSelect }: GlassModelSearchProps)
             {/* Nagłówek */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-nb-sm nb-szklo text-primary">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl nb-szklo text-primary">
                   {model.icon}
                 </span>
                 <div>

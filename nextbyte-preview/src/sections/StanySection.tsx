@@ -48,7 +48,7 @@ export function StanySection() {
         </div>
 
         {/* Nakładka — demonstrowana w kontenerze, nie na całym oknie */}
-        <div className="relative min-h-[140px] overflow-hidden rounded-nb">
+        <div className="relative min-h-[140px] overflow-hidden rounded-2xl">
           <GlassSkeletonCard image={false} />
           {overlay && <GlassLoadingOverlay fullScreen={false} label="Wczytywanie danych…" />}
         </div>

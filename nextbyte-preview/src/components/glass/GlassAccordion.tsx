@@ -47,6 +47,10 @@ interface ItemProps {
   icon?:      React.ReactNode
   badge?:     React.ReactNode
   disabled?:  boolean
+  /** Wymusza tryb solid niezależnie od Glass/Normal — dla dłuższych list
+   *  (FAQ, itd.), gdzie każda pozycja z drogim backdrop-filter SVG
+   *  realnie się sumuje. Patrz `forceMode` na GlassCard. */
+  forceMode?: 'auto' | 'solid'
   className?: string
   children:   React.ReactNode
 }
@@ -57,10 +61,12 @@ export function GlassAccordionItem({
   icon,
   badge,
   disabled = false,
+  forceMode = 'auto',
   className,
   children,
 }: ItemProps) {
-  const { isGlass } = useGlass()
+  const { isGlass: isGlassCtx } = useGlass()
+  const isGlass = forceMode === 'solid' ? false : isGlassCtx
   const ctx = useContext(Ctx)
   const auto = useId()
   const key = value ?? auto
@@ -73,7 +79,7 @@ export function GlassAccordionItem({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-nb',
+        'overflow-hidden rounded-2xl',
         isGlass ? 'nb-szklo' : 'border border-border bg-card',
         disabled && 'opacity-50',
         className,

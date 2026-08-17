@@ -9,8 +9,14 @@ const CIRC = 2 * Math.PI * R          // 251.33
 const ARC  = CIRC * (270 / 360)       // 188.50 — 270° gauge
 const GAP  = CIRC - ARC               // 62.83
 
+export interface GlassRingSegment {
+  pct: number
+  color: string
+}
+
 export interface GlassRingProps {
-  value: number                        // 0–100 (fill percentage)
+  value?: number                       // 0–100 (fill percentage) — tryb jednowartościowy
+  segments?: GlassRingSegment[]        // podział na kategorie — tryb wielosegmentowy (jak "full", z rounded-cap + poświatą)
   size?: number                        // px
   variant?: 'full' | 'gauge'
   label?: React.ReactNode              // center text (defaults to "${value}%")
@@ -22,7 +28,8 @@ export interface GlassRingProps {
 }
 
 export function GlassRing({
-  value,
+  value = 0,
+  segments,
   size = 120,
   variant = 'full',
   label,
@@ -41,6 +48,65 @@ export function GlassRing({
   const glowStyle = isGlass
     ? { filter: `drop-shadow(0 0 5px ${color})` }
     : {}
+
+  // ── Tryb wielosegmentowy — ta sama poświata i rounded-cap co gauge,
+  // tylko podzielone na kilka kategorii zamiast jednej wartości. Jeden
+  // spójny styl pierścienia w całej aplikacji (Preview i Dane). ──────
+  if (segments && segments.length > 0) {
+    const circ = 2 * Math.PI * R
+    let cum = 0
+    return (
+      <div className={cn('flex flex-col items-center', className)}>
+        <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="-rotate-90">
+          <circle cx={CX} cy={CY} r={R} stroke="hsl(var(--foreground) / 0.10)" strokeWidth={thickness} />
+          {segments.map((seg, i) => {
+            const gapDeg = segments.length > 1 ? 3 : 0
+            const segCirc = (seg.pct / 100) * circ
+            const dash = Math.max(0, segCirc - (gapDeg / 360) * circ)
+            const rotation = (cum / 100) * 360
+            cum += seg.pct
+            return (
+              <g key={i}>
+                {isGlass && (
+                  <circle
+                    cx={CX} cy={CY} r={R}
+                    stroke={seg.color}
+                    strokeWidth={thickness + 6}
+                    strokeDasharray={`${dash} ${circ - dash}`}
+                    strokeLinecap="round"
+                    transform={`rotate(${rotation} ${CX} ${CY})`}
+                    opacity={0.16}
+                    style={{ filter: 'blur(4px)' }}
+                  />
+                )}
+                <circle
+                  cx={CX} cy={CY} r={R}
+                  stroke={seg.color}
+                  strokeWidth={thickness}
+                  strokeDasharray={`${dash} ${circ - dash}`}
+                  strokeLinecap="round"
+                  transform={`rotate(${rotation} ${CX} ${CY})`}
+                  className="transition-all duration-300"
+                />
+              </g>
+            )
+          })}
+          <text
+            x="50" y="50"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="currentColor"
+            transform="rotate(90 50 50)"
+            style={{ fontSize, fontWeight: 700, fontFamily: 'inherit' }}
+          >
+            {labelStr}
+          </text>
+        </svg>
+        {sublabel && <p className="text-xs text-foreground/60 text-center mt-1">{sublabel}</p>}
+        {subtext && <p className="text-[11px] text-foreground/40 text-center mt-0.5">{subtext}</p>}
+      </div>
+    )
+  }
 
   if (variant === 'gauge') {
     const fillLen = (pct / 100) * ARC

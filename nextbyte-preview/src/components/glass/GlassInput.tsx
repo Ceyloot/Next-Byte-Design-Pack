@@ -37,7 +37,7 @@ export function GlassInput({
           isGlass
             ? 'nb-szklo bg-transparent'
             : 'border border-border bg-input',
-          'w-full rounded-nb outline-none',
+          'w-full rounded-xl outline-none',
           'text-foreground placeholder:text-foreground/40',
           'transition-[border-color,box-shadow] duration-200',
           'focus:border-primary/50 focus:ring-2 focus:ring-primary/20',

@@ -287,14 +287,14 @@ export function GlassActivityGrid({
                       }}
                       onMouseLeave={() => setHoveredCell(null)}
                       className={cn(
-                        "transition-all duration-150 cursor-pointer hover:scale-125 hover:z-20 hover:ring-2 hover:ring-primary/60",
-                        compact ? "w-2.5 h-2.5 rounded-[2px]" : "w-3.5 h-3.5 rounded-[3px]",
+                        "transition-all duration-150 cursor-pointer hover:scale-115 hover:z-20 hover:ring-1.5 hover:ring-primary hover:shadow-sm",
+                        compact ? "w-2.5 h-2.5 rounded-[2px]" : "w-3.5 h-3.5 rounded-[2.5px]",
                         !showContent && "bg-foreground/12 animate-pulse",
-                        showContent && day.level === 0 && "bg-foreground/[0.08] hover:bg-foreground/20",
-                        showContent && day.level === 1 && "bg-primary/30 hover:bg-primary/45 border border-primary/20",
-                        showContent && day.level === 2 && "bg-primary/55 hover:bg-primary/70 border border-primary/30",
-                        showContent && day.level === 3 && "bg-primary/80 hover:bg-primary/95 border border-primary/40",
-                        showContent && day.level === 4 && "bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)] border border-primary"
+                        showContent && day.level === 0 && "bg-foreground/[0.07] hover:bg-foreground/20",
+                        showContent && day.level === 1 && "bg-primary/25 hover:bg-primary/40",
+                        showContent && day.level === 2 && "bg-primary/50 hover:bg-primary/65",
+                        showContent && day.level === 3 && "bg-primary/75 hover:bg-primary/90",
+                        showContent && day.level === 4 && "bg-primary hover:bg-primary/90"
                       )}
                     />
                   ))}
@@ -332,11 +332,11 @@ export function GlassActivityGrid({
           {/* Color Legend */}
           <div className="flex items-center gap-1.5 text-[10px] text-foreground/45 shrink-0 ml-auto">
             <span>Mniej</span>
-            <span className="w-3 h-3 rounded-[2.5px] bg-foreground/[0.08]" />
-            <span className="w-3 h-3 rounded-[2.5px] bg-primary/30" />
-            <span className="w-3 h-3 rounded-[2.5px] bg-primary/55" />
-            <span className="w-3 h-3 rounded-[2.5px] bg-primary/80" />
-            <span className="w-3 h-3 rounded-[2.5px] bg-primary shadow-sm" />
+            <span className="w-3 h-3 rounded-[2px] bg-foreground/[0.07]" />
+            <span className="w-3 h-3 rounded-[2px] bg-primary/25" />
+            <span className="w-3 h-3 rounded-[2px] bg-primary/50" />
+            <span className="w-3 h-3 rounded-[2px] bg-primary/75" />
+            <span className="w-3 h-3 rounded-[2px] bg-primary" />
             <span>Więcej</span>
           </div>
         </div>

@@ -67,8 +67,8 @@ export function GlassEmpty({
         'flex flex-col items-center justify-center text-center',
         compact ? 'gap-2 px-5 py-8' : 'gap-3 px-6 py-14',
         bordered && (isGlass
-          ? 'nb-szklo rounded-nb'
-          : 'rounded-nb border border-dashed border-border bg-card/40'),
+          ? 'nb-szklo rounded-2xl'
+          : 'rounded-2xl border border-dashed border-border bg-card/40'),
         className,
       )}
     >

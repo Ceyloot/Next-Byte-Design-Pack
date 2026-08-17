@@ -25,4 +25,7 @@ export { GlassEmpty }      from './GlassEmpty'
 export { GlassAccordion, GlassAccordionItem, GlassCollapsible } from './GlassAccordion'
 export { GlassDrawer }     from './GlassDrawer'
 export { GlassActivityGrid } from './GlassActivityGrid'
+export { GlassFeatureRow } from './GlassFeatureRow'
+export { GlassCompareTable } from './GlassCompareTable'
+export type { CompareCellValue } from './GlassCompareTable'
 

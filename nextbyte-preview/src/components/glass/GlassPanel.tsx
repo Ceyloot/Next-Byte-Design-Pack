@@ -17,8 +17,8 @@ export function GlassPanel({
     <div
       className={cn(
         isGlass
-          ? 'nb-szklo nb-szklo-plynne nb-powierzchnia rounded-nb-lg'
-          : 'border border-border bg-muted/30 rounded-nb-lg',
+          ? 'nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl'
+          : 'border border-border bg-muted/30 rounded-2xl',
         'flex items-center gap-2 p-2',
         direction === 'col' && 'flex-col',
         className,

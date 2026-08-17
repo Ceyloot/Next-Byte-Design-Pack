@@ -17,7 +17,7 @@ export function GlassNav({
     <nav
       className={cn(
         isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-        'flex items-center gap-3 rounded-nb-lg border px-4 py-2',
+        'flex items-center gap-3 rounded-2xl border px-4 py-2',
         position === 'top' && 'sticky top-4 z-50',
         className,
       )}

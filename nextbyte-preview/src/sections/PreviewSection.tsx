@@ -5,80 +5,96 @@ import {
   Zap, Users, Clock, Share2, MoreHorizontal, TrendingUp,
   CheckSquare, Square, ArrowUpRight, ShoppingBag, GraduationCap, Type, Receipt,
   Check, Edit2, FileText, Layers, Folder, Calendar, BarChart3,
+  MonitorPlay, LayoutGrid, Navigation as NavIcon, BarChart2, Loader, Palette, Tag,
+  PanelTop, PanelLeft, PanelBottom, PanelRight, Settings, GripVertical, GripHorizontal, Move,
+  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon,
 } from 'lucide-react'
+import type { NavPosition } from '@/App'
 import { cn } from '@/lib/utils'
 import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
 import { useLiquidGlassScroll } from '@/hooks/useLiquidGlassScroll'
 import { Tile, TileRow, TilePill, TileAction } from '@/components/Tile'
 import { useGlass } from '@/lib/glass-context'
-import { GlassActivityGrid } from '@/components/glass'
+import { GlassActivityGrid, GlassRing } from '@/components/glass'
+import { AkcjeSection } from '@/sections/AkcjeSection'
+import { FormularzeSection } from '@/sections/FormularzeSection'
+import { KartySection } from '@/sections/KartySection'
+import { NawigacjaSection } from '@/sections/NawigacjaSection'
+import { NakladkiSection } from '@/sections/NakladkiSection'
+import { PaletaSection } from '@/sections/PaletaSection'
+import { DaneSection } from '@/sections/DaneSection'
+import { StanySection } from '@/sections/StanySection'
+import { CennikSection } from '@/sections/CennikSection'
 
 
-// ── Navigation Data ───────────────────────────────────────────────
+// ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-const NAV_SECTIONS = [
-  {
-    key: 'home',
-    label: 'Panel Główny',
-    icon: Grid,
-    items: [] as { name: string; icon: React.ComponentType<{ className?: string }>; active?: boolean; badge?: string }[],
-  },
-  {
-    key: 'ai',
-    label: 'AI',
-    icon: Sparkles,
-    items: [
-      { name: 'Personalny Asystent', icon: Sparkles, active: true },
-      { name: 'Chat AI',             icon: MessageSquare },
-      { name: 'PromptEx',            icon: Terminal },
-      { name: 'Pamięć AI',           icon: Brain },
-      { name: 'Red Zone',            icon: ShieldAlert, badge: 'OFF' },
-    ],
-  },
-  {
-    key: 'moduly',
-    label: 'Moduły',
-    icon: Camera,
-    items: [
-      { name: 'Trend',        icon: TrendingUp },
-      { name: 'Studio Zdjęć', icon: Camera },
-      { name: 'Studio Video', icon: Video },
-    ],
-  },
-  {
-    key: 'praca',
-    label: 'Praca',
-    icon: CheckSquare,
-    items: [
-      { name: 'Kalendarz', icon: Clock },
-      { name: 'Zadania',   icon: CheckSquare },
-      { name: 'Notatki',   icon: Square },
-      { name: 'Tablice',   icon: Grid },
-      { name: 'Firma',     icon: Users },
-    ],
-  },
-  {
-    key: 'spolecznosc',
-    label: 'Społeczność',
-    icon: Users,
-    items: [
-      { name: 'Panel Twórcy', icon: Sparkles },
-      { name: 'Sklep',        icon: ShoppingBag },
-      { name: 'Akademia',     icon: GraduationCap },
-      { name: 'Zarząd',       icon: Shield, badge: '●' },
-    ],
-  },
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string }
+
+const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
+  { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [] },
+  { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
+    { name: 'Podstawowe',       icon: Square },
+    { name: 'Z nagłówkiem',     icon: Layers },
+    { name: 'Interaktywne',     icon: Zap },
+    { name: 'Zwarty widok',     icon: BarChart3 },
+  ]},
+  { key: 'akcje',      label: 'Akcje',      icon: Sparkles,     items: [
+    { name: 'Przyciski',        icon: Sparkles },
+    { name: 'Tagi i pigułki',   icon: Tag },
+    { name: 'Toggle',           icon: ToggleLeft },
+  ]},
+  { key: 'formularze', label: 'Formularze', icon: SlidersHorizontal, items: [
+    { name: 'Input / Textarea', icon: FileText },
+    { name: 'Select',           icon: ChevronRight },
+    { name: 'Checkbox / Radio', icon: CheckSquare },
+  ]},
+  { key: 'nawigacja',  label: 'Nawigacja',  icon: NavIcon,      items: [
+    { name: 'Górna',            icon: PanelTop },
+    { name: 'Dolna',            icon: PanelBottom },
+    { name: 'Lewa / Prawa',     icon: PanelLeft },
+    { name: 'Dropdown',         icon: ChevronRight },
+    { name: 'Glass',            icon: Sparkles, badge: 'NEW' },
+  ]},
+  { key: 'nakładki',   label: 'Nakładki',   icon: PanelTop,     items: [
+    { name: 'Modal / Dialog',   icon: Square },
+    { name: 'Toast',            icon: Bell },
+    { name: 'Tooltip',          icon: MessageSquare },
+    { name: 'Drawer',           icon: PanelRight },
+  ]},
+  { key: 'dane',       label: 'Dane',       icon: BarChart2,    items: [
+    { name: 'Tabela',           icon: Database },
+    { name: 'Wykres liniowy',   icon: BarChart },
+    { name: 'Donut / Kołowy',   icon: BarChart3 },
+    { name: 'Heatmapa',         icon: Grid },
+  ]},
+  { key: 'stany',      label: 'Stany',      icon: Loader,       items: [
+    { name: 'Ładowanie',        icon: Loader },
+    { name: 'Błąd',            icon: AlertCircle },
+    { name: 'Pusty widok',     icon: Square },
+    { name: 'Szkielet (Skeleton)', icon: Square },
+  ]},
+  { key: 'paleta',     label: 'Paleta',     icon: Palette,      items: [
+    { name: 'Kolory motywu',    icon: Palette },
+    { name: 'Typografia',       icon: Type },
+    { name: 'Ikony',            icon: Sparkles },
+  ]},
+  { key: 'cennik',     label: 'Cennik',     icon: TagIcon,      items: [] },
 ]
 
 // ── Chart Data ────────────────────────────────────────────────────
 
 const WEEKLY_VALS = [1200, 1850, 1540, 2180, 1920, 820, 2847]
 
+// Paleta kategorialna zwalidowana narzędziem dataviz (CVD ΔE, kontrast,
+// pasmo jasności) względem tła karty #121417 — 3 barwy jednoznacznie
+// odróżnialne zamiast wariantów opacity jednego koloru, które zlewały się
+// w jedną szaro-niebieską plamę. "Inne" celowo zostaje neutralnym szarym.
 const DONUT_SEGMENTS = [
-  { pct: 41, color: 'hsl(var(--primary))', label: 'AI Chat', count: '1 167' },
-  { pct: 28, color: 'hsl(var(--primary) / 0.70)', label: 'Studio Zdęć', count: '797' },
-  { pct: 19, color: 'hsl(var(--primary) / 0.40)', label: 'Prompty', count: '541' },
-  { pct: 12, color: 'hsl(var(--foreground) / 0.25)', label: 'Inne', count: '342' },
+  { pct: 41, color: '#3987e5', label: 'AI Chat', count: '1 167' },
+  { pct: 28, color: '#d95926', label: 'Studio Zdęć', count: '797' },
+  { pct: 19, color: '#199e70', label: 'Prompty', count: '541' },
+  { pct: 12, color: '#71717a', label: 'Inne', count: '342' },
 ]
 
 const TASK_QUEUE = [
@@ -134,34 +150,17 @@ function WeekChart() {
   )
 }
 
+// Ten sam pierścień co GlassRing w Danych ("Wykorzystanie zasobów") —
+// rounded-cap + poświata w trybie glass, jeden spójny komponent zamiast
+// dwóch osobnych implementacji SVG dla tego samego typu wykresu.
 function DonutChart({ size = 135 }: { size?: number }) {
-  const r = 35, cx = 46, cy = 46, sw = 12
-  const circ = 2 * Math.PI * r
-  let cum = 0
-
   return (
-    <div className="relative flex items-center justify-center shrink-0">
-      <svg width={size} height={size} viewBox="0 0 92 92" fill="none" className="shrink-0 -rotate-90">
-        <circle cx={cx} cy={cy} r={r} stroke="hsl(var(--foreground) / 0.08)" strokeWidth={sw} />
-        {DONUT_SEGMENTS.map((seg, i) => {
-          const dash = (seg.pct / 100) * circ
-          const rotation = (cum / 100) * 360
-          cum += seg.pct
-          return (
-            <circle
-              key={i}
-              cx={cx} cy={cy} r={r}
-              stroke={seg.color}
-              strokeWidth={sw}
-              strokeDasharray={`${dash} ${circ - dash}`}
-              transform={`rotate(${rotation} ${cx} ${cy})`}
-              strokeLinecap="butt"
-              className="transition-all duration-300"
-            />
-          )
-        })}
-      </svg>
-    </div>
+    <GlassRing
+      segments={DONUT_SEGMENTS.map(s => ({ pct: s.pct, color: s.color }))}
+      size={size}
+      thickness={12}
+      label=""
+    />
   )
 }
 
@@ -303,20 +302,36 @@ const QUICK_SHORTCUTS = [
     id: 1,
     title: 'Co trzeba w kambipo zro...',
     category: 'PLATFORMA',
+    shortcut: '⌘1',
     icon: MessageSquare,
     isAdd: false,
   },
   {
     id: 2,
-    title: 'Kalendarz',
+    title: 'Kalendarz wydatków',
     category: 'PLATFORMA',
+    shortcut: '⌘2',
     icon: Calendar,
     isAdd: false,
   },
-  { id: 3, title: 'Dodaj skrót', category: '', icon: null, isAdd: true },
-  { id: 4, title: 'Dodaj skrót', category: '', icon: null, isAdd: true },
-  { id: 5, title: 'Dodaj skrót', category: '', icon: null, isAdd: true },
-  { id: 6, title: 'Dodaj skrót', category: '', icon: null, isAdd: true },
+  {
+    id: 3,
+    title: 'Studio Zdęć v2.1',
+    category: 'STUDIO',
+    shortcut: '⌘3',
+    icon: Camera,
+    isAdd: false,
+  },
+  {
+    id: 4,
+    title: 'Prompty AI Master',
+    category: 'PROMPTY',
+    shortcut: '⌘4',
+    icon: Terminal,
+    isAdd: false,
+  },
+  { id: 5, title: 'Dodaj skrót', category: '', shortcut: '+', icon: null, isAdd: true },
+  { id: 6, title: 'Dodaj skrót', category: '', shortcut: '+', icon: null, isAdd: true },
 ]
 
 function CircularGauge({
@@ -416,12 +431,32 @@ function CustomCheckbox({
 
 interface PreviewSectionProps {
   onSelectTab?: (tabKey: string) => void
+  onToggleSettings?: () => void
+  activeTab?: string
+  navPosition?: NavPosition
+  onNavPositionChange?: (pos: NavPosition) => void
 }
 
-export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProps) {
+function renderSection(key: string): React.ReactNode {
+  switch (key) {
+    case 'karty':      return <KartySection />
+    case 'akcje':      return <AkcjeSection />
+    case 'formularze': return <FormularzeSection />
+    case 'nawigacja':  return <NawigacjaSection />
+    case 'nakładki':   return <NakladkiSection />
+    case 'dane':       return <DaneSection />
+    case 'stany':      return <StanySection />
+    case 'paleta':     return <PaletaSection />
+    case 'cennik':     return <CennikSection />
+    default:           return null
+  }
+}
+
+export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
   const { showContent, isGlass } = useGlass()
-  const [activeSection, setActiveSection] = useState('home')
+  const [activeSection, setActiveSection] = useState('preview')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [flyoutY, setFlyoutY] = useState(0)
   const [navCompact, setNavCompact] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeNewsIndex, setActiveNewsIndex] = useState(0)
@@ -434,7 +469,79 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
   const mainRef = useRef<HTMLElement>(null)
   const navRef = useRef<HTMLDivElement>(null)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tabRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [menuPos, setMenuPos] = useState<{ left: number; top?: number; bottom?: number }>({ left: 0 })
+  const sidebarTabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [sidebarMenuTop, setSidebarMenuTop] = useState(16)
   useLiquidGlassScroll(mainRef)
+
+  // ── Drag & Drop Navbar Docking System ──
+  const [isDraggingNav, setIsDraggingNav] = useState(false)
+  const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null)
+  const [targetDock, setTargetDock] = useState<NavPosition | null>(null)
+
+  const handleDragStart = (e: React.PointerEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingNav(true)
+    setDragCoords({ x: e.clientX, y: e.clientY })
+
+    const handlePointerMove = (moveEv: PointerEvent) => {
+      const x = moveEv.clientX
+      const y = moveEv.clientY
+      setDragCoords({ x, y })
+
+      const w = window.innerWidth
+      const h = window.innerHeight
+
+      let dock: NavPosition = navPosition
+      if (x < w * 0.22) {
+        dock = 'left'
+      } else if (x > w * 0.78) {
+        dock = 'right'
+      } else if (y > h * 0.78) {
+        dock = 'bottom'
+      } else if (y < h * 0.22) {
+        dock = 'top'
+      } else {
+        const dLeft = x
+        const dRight = w - x
+        const dTop = y
+        const dBottom = h - y
+        const minDist = Math.min(dLeft, dRight, dTop, dBottom)
+
+        if (minDist === dLeft) dock = 'left'
+        else if (minDist === dRight) dock = 'right'
+        else if (minDist === dTop) dock = 'top'
+        else dock = 'bottom'
+      }
+      setTargetDock(dock)
+    }
+
+    const handlePointerUp = (upEv: PointerEvent) => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+
+      const x = upEv.clientX
+      const y = upEv.clientY
+      const w = window.innerWidth
+      const h = window.innerHeight
+
+      let finalPos: NavPosition = navPosition
+      if (x < w * 0.25) finalPos = 'left'
+      else if (x > w * 0.75) finalPos = 'right'
+      else if (y > h * 0.75) finalPos = 'bottom'
+      else if (y < h * 0.25) finalPos = 'top'
+
+      onNavPositionChange?.(finalPos)
+      setIsDraggingNav(false)
+      setDragCoords(null)
+      setTargetDock(null)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
 
   const toggleTask = (id: number) => {
     setTaskList(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
@@ -454,6 +561,33 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
     if (closeTimer.current) clearTimeout(closeTimer.current)
     setOpenMenu(key)
   }
+  // HorizontalNav dropdown musi renderować się POZA <header nb-szklo> —
+  // `contain: layout paint` na kafelkach glass obcina malowanie potomków
+  // do granic headera, więc dropdown zagnieżdżony w środku znika, gdy
+  // wychodzi poza jego dolną krawędź (mimo z-50). Renderujemy go jako
+  // rodzeństwo headera i pozycjonujemy ręcznie zmierzonym offsetem.
+  const openHorizontalMenu = (key: string | null) => {
+    if (key && navRef.current && tabRefs.current[key]) {
+      const btnRect = tabRefs.current[key]!.getBoundingClientRect()
+      const navRect = navRef.current.getBoundingClientRect()
+      setMenuPos(
+        navPosition === 'bottom'
+          ? { left: btnRect.left - navRect.left, bottom: navRect.bottom - btnRect.top + 8 }
+          : { left: btnRect.left - navRect.left, top: btnRect.bottom - navRect.top + 8 },
+      )
+    }
+    openMenuDelayed(key)
+  }
+  // Flyout w SidebarNav ma się wysuwać od zaznaczonej ikony, nie zawsze
+  // od góry paska — mierzymy pozycję zahoverowanej ikony względem navRef.
+  const openSidebarMenu = (key: string | null) => {
+    if (key && navRef.current && sidebarTabRefs.current[key]) {
+      const btnRect = sidebarTabRefs.current[key]!.getBoundingClientRect()
+      const navRect = navRef.current.getBoundingClientRect()
+      setSidebarMenuTop(btnRect.top - navRect.top)
+    }
+    openMenuDelayed(key)
+  }
   const scheduleClose = () => {
     closeTimer.current = setTimeout(() => setOpenMenu(null), 120)
   }
@@ -461,159 +595,296 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
     if (closeTimer.current) clearTimeout(closeTimer.current)
   }
 
-  const openSection = NAV_SECTIONS.find(s => s.key === openMenu)
+  const openSection = DESIGN_TABS.find(s => s.key === openMenu)
   const megaItems = openSection?.items ?? []
 
-  return (
-    <div
-      className="relative w-full h-screen flex flex-col font-sans antialiased overflow-hidden bg-transparent"
-      style={{ zIndex: 1 }}
-    >
-      <NbGlassFilters />
+  const isSidebar = navPosition === 'left' || navPosition === 'right'
 
-      {/* ── Floating Megamenu Navbar ── */}
-      <div
-        ref={navRef}
-        className="px-4 lg:px-5 pt-4 pb-4 shrink-0 relative"
-        onMouseLeave={scheduleClose}
+  // ── Shared horizontal controls (settings, Aa, search, bell, avatar) ──
+  const NavControls = () => (
+    <div className="flex items-center gap-1.5 shrink-0 pl-2">
+      <button
+        onClick={onToggleSettings}
+        title="Ustawienia wyglądu"
+        className={cn(
+          'flex items-center gap-1 px-2 h-7 rounded-full border text-[11px] font-semibold transition-all duration-200',
+          'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
+        )}
       >
-        <header className={cn(
-          isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-          'flex items-center gap-2 px-4 h-12 rounded-2xl border',
-        )}>
+        <Settings className="w-3 h-3 shrink-0" />
+        {showContent ? <span className="hidden sm:inline">Ustawienia</span> : <div className="h-1.5 w-8 bg-foreground/25 rounded-full" />}
+      </button>
+      <button
+        onClick={() => setNavCompact(!navCompact)}
+        title={navCompact ? 'Pokaż etykiety' : 'Ukryj etykiety'}
+        className={cn(
+          'flex items-center gap-1 px-2 h-7 rounded-full border text-[11px] font-semibold transition-all duration-200',
+          navCompact ? 'border-primary/40 bg-primary/[0.15] text-primary' : 'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
+        )}
+      >
+        <Type className="w-3 h-3 shrink-0" />
+        {!navCompact && (showContent ? <span>Aa</span> : <div className="h-1.5 w-3 bg-foreground/25 rounded-full" />)}
+      </button>
+      <button className="w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:border-foreground/20 transition-all duration-200">
+        <Search className="w-3.5 h-3.5 text-primary" />
+      </button>
+      <button className="relative w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:bg-foreground/[0.08] transition-all duration-200">
+        <Bell className="w-3.5 h-3.5 text-primary" />
+        <span className="absolute top-[5px] right-[5px] w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
+      </button>
+      <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[10px] font-bold text-primary shrink-0">AB</div>
+    </div>
+  )
 
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 shrink-0 pr-2">
-            <div className="w-7 h-7 rounded-[8px] bg-primary flex items-center justify-center shadow-md shadow-primary/30">
-              <Zap className="w-3.5 h-3.5 text-background" />
-            </div>
-            {!navCompact && (showContent
-              ? <span className="text-[13px] font-bold text-foreground tracking-tight">NextByte</span>
-              : <div className="h-3 w-14 bg-foreground/25 rounded-full" />
-            )}
+  // ── Horizontal navbar (top / bottom) ─────────────────────────────
+  const HorizontalNav = () => (
+    <div
+      ref={navRef}
+      // z-40 na całym kontenerze (nie tylko na dropdownie) — nb-szklo ma
+      // `isolation: isolate`, więc header tworzy własny kontekst
+      // stackowania. Bez z-index tutaj <main> (idący w DOM później)
+      // renderuje się nad dropdownem mimo jego z-50 w środku.
+      className={cn('relative z-40 px-4 lg:px-5 shrink-0', navPosition === 'bottom' ? 'pt-2 pb-4' : 'pt-4 pb-2')}
+      onMouseLeave={scheduleClose}
+    >
+      <header className={cn(
+        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+        'flex items-center gap-2 px-4 h-12 rounded-2xl border shadow-lg backdrop-blur-md',
+      )}>
+        <div className="flex items-center gap-1.5 shrink-0 pr-2">
+          <button
+            type="button"
+            onPointerDown={handleDragStart}
+            title="Złap i przeciągnij, aby przypiąć nawigację (góra / dół / lewo / prawo)"
+            className="flex items-center justify-center w-6 h-6 rounded-lg text-foreground/40 hover:text-primary hover:bg-primary/10 transition-colors cursor-grab active:cursor-grabbing shrink-0 -ml-1"
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-7 h-7 rounded-[8px] bg-primary flex items-center justify-center shadow-md shadow-primary/30">
+            <Zap className="w-3.5 h-3.5 text-background" />
           </div>
+          {!navCompact && (showContent
+            ? <span className="text-[13px] font-bold text-foreground tracking-tight">NextByte</span>
+            : <div className="h-3 w-14 bg-foreground/25 rounded-full" />
+          )}
+        </div>
 
-          {/* Section pills */}
-          <nav className="flex-1 flex items-center justify-center gap-0.5">
-            {NAV_SECTIONS.map((sec) => {
-              const isActive = activeSection === sec.key
-              const isOpen = openMenu === sec.key
-              return (
+        <nav className="flex-1 flex items-center justify-center gap-0.5">
+          {DESIGN_TABS.map((tab) => {
+            const isActive = activeTab === tab.key
+            const isOpen = openMenu === tab.key
+            const hasItems = tab.items.length > 0
+            return (
+              <div key={tab.key} className="relative" ref={(el) => { tabRefs.current[tab.key] = el }}>
                 <button
-                  key={sec.key}
-                  onClick={() => { setActiveSection(sec.key); openMenuDelayed(null) }}
-                  onMouseEnter={() => openMenuDelayed(sec.items.length > 0 ? sec.key : null)}
+                  onClick={() => { setActiveSection(tab.key); onSelectTab?.(tab.key); openHorizontalMenu(isOpen ? null : hasItems ? tab.key : null) }}
+                  onMouseEnter={() => openHorizontalMenu(hasItems ? tab.key : null)}
                   className={cn(
                     'flex items-center rounded-full text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
                     navCompact ? 'px-2.5 py-2' : 'gap-1.5 px-3 py-1.5',
                     isActive || isOpen
                       ? 'bg-primary/20 text-primary border border-primary/40 shadow-sm shadow-primary/10'
-                      : 'text-foreground/55 hover:text-foreground hover:bg-white/[0.06] border border-transparent',
+                      : 'text-foreground/55 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent',
                   )}
                 >
-                  <sec.icon className="w-3.5 h-3.5 shrink-0" />
-                  {!navCompact && (showContent
-                    ? <span>{sec.label}</span>
-                    : <div className="h-2 w-9 bg-foreground/25 rounded-full" />
+                  <tab.icon className="w-3.5 h-3.5 shrink-0" />
+                  {!navCompact && (showContent ? <span>{tab.label}</span> : <div className="h-2 w-9 bg-foreground/25 rounded-full" />)}
+                  {!navCompact && hasItems && (
+                    <ChevronRight className={cn('w-2.5 h-2.5 shrink-0 transition-transform duration-200', isOpen ? 'rotate-90' : 'opacity-40')} />
                   )}
-                  {!navCompact && sec.items.length > 0 && (
-                    <ChevronRight className={cn('w-2.5 h-2.5 shrink-0 transition-transform duration-150',
-                      isOpen ? 'rotate-90' : 'opacity-40',
-                    )} />
+                </button>
+              </div>
+            )
+          })}
+        </nav>
+
+        <NavControls/>
+      </header>
+
+      {/* Dropdown — rodzeństwo <header>, nie dziecko, żeby uciec spod
+          `contain: layout paint` (patrz komentarz przy openHorizontalMenu). */}
+      {openMenu && megaItems.length > 0 && (
+        <div
+          className="absolute z-50 min-w-[190px]"
+          style={{ left: menuPos.left, top: menuPos.top, bottom: menuPos.bottom }}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+        >
+          <div className={cn(
+            isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+            'p-1.5 rounded-2xl border flex flex-col gap-0.5',
+            'animate-in fade-in-0 zoom-in-[0.98] duration-150',
+            navPosition === 'bottom' ? 'slide-in-from-bottom-1' : 'slide-in-from-top-1',
+          )}>
+            {megaItems.map((item, i) => (
+              <button
+                key={i}
+                onClick={() => { onSelectTab?.(openMenu!); openMenuDelayed(null) }}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap w-full text-left text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent hover:border-foreground/[0.08]"
+              >
+                <item.icon className="w-3.5 h-3.5 shrink-0" />
+                {showContent ? <span>{item.name}</span> : <div className="h-2 w-14 bg-foreground/25 rounded-full" />}
+                {showContent && item.badge && (
+                  <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  // ── Vertical sidebar (left / right) — połączony navbar w jedną ciągłą linię z unormowanym spacingiem ──
+  const SidebarNav = () => (
+    <div
+      ref={navRef}
+      onMouseLeave={scheduleClose}
+      // z-40 na całym kontenerze — patrz komentarz w HorizontalNav:
+      // bez tego <main> renderuje się nad flyoutem mimo jego z-50 w środku.
+      className={cn(
+        'shrink-0 flex flex-col py-4 relative z-40 h-full',
+        navPosition === 'right' ? 'pr-4 pl-2' : 'pl-4 pr-2',
+      )}
+    >
+      {/* Pojedyncza, spójna linia nawigacyjna od góry do dołu */}
+      <div className={cn(
+        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+        'rounded-2xl border w-12 h-full flex flex-col items-center justify-between py-3 px-2 shadow-xl backdrop-blur-md',
+      )}>
+        {/* Górny sekcja: Logo i Zakładki */}
+        <div className="flex flex-col items-center gap-1.5 w-full">
+          <button
+            type="button"
+            onPointerDown={handleDragStart}
+            title="Złap i przeciągnij, aby przypiąć nawigację (góra / dół / lewo / prawo)"
+            className="flex items-center justify-center w-6 h-6 rounded-lg text-foreground/40 hover:text-primary hover:bg-primary/10 transition-colors cursor-grab active:cursor-grabbing shrink-0 mb-0.5"
+          >
+            <GripHorizontal className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-7 h-7 rounded-[8px] bg-primary flex items-center justify-center shadow-md shadow-primary/30 shrink-0 mb-1">
+            <Zap className="w-3.5 h-3.5 text-background" />
+          </div>
+
+          <div className="w-full border-t border-white/[0.08] mb-1 shrink-0" />
+
+          <nav className="flex flex-col items-center gap-1.5 w-full">
+            {DESIGN_TABS.map((tab) => {
+              const isActive = activeTab === tab.key
+              return (
+                <button
+                  key={tab.key}
+                  ref={(el) => { sidebarTabRefs.current[tab.key] = el }}
+                  title={tab.label}
+                  onClick={() => { setActiveSection(tab.key); onSelectTab?.(tab.key) }}
+                  onMouseEnter={() => openSidebarMenu(tab.items.length > 0 ? tab.key : null)}
+                  className={cn(
+                    'w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150',
+                    isActive
+                      ? 'bg-primary/20 text-primary border border-primary/40 shadow-sm shadow-primary/10'
+                      : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent',
                   )}
+                >
+                  <tab.icon className="w-3.5 h-3.5 shrink-0" />
                 </button>
               )
             })}
           </nav>
+        </div>
 
-          {/* Right controls */}
-          <div className="flex items-center gap-1.5 shrink-0 pl-2">
-            {/* Text toggle */}
-            <button
-              onClick={() => setNavCompact(!navCompact)}
-              title={navCompact ? 'Pokaż etykiety' : 'Ukryj etykiety'}
-              className={cn(
-                'flex items-center gap-1 px-2 h-7 rounded-full border text-[11px] font-semibold transition-all duration-200',
-                navCompact
-                  ? 'border-primary/40 bg-primary/[0.15] text-primary'
-                  : 'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
-              )}
-            >
-              <Type className="w-3 h-3 shrink-0" />
-              {!navCompact && (showContent ? <span>Aa</span> : <div className="h-1.5 w-3 bg-foreground/25 rounded-full" />)}
-            </button>
-
-            {/* Search */}
-            {showContent && !navCompact ? (
-              <button className="flex items-center gap-1.5 px-2.5 py-[5px] rounded-full border border-foreground/10 bg-foreground/[0.04] text-[11px] text-foreground/45 hover:border-primary/40 transition-all duration-200">
-                <Search className="w-3 h-3 text-primary shrink-0" />
-                <span>Szukaj...</span>
-                <kbd className="text-[9px] font-mono px-1 rounded bg-foreground/10 text-foreground/40 ml-0.5">⌘K</kbd>
-              </button>
-            ) : (
-              <button className="w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] text-foreground/50 hover:text-foreground hover:border-foreground/20 transition-all duration-200">
-                <Search className="w-3.5 h-3.5 text-primary" />
-              </button>
-            )}
-
-            {/* Bell */}
-            <button className="relative w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:bg-white/10 transition-all duration-200">
-              <Bell className="w-3.5 h-3.5 text-primary" />
-              <span className="absolute top-[5px] right-[5px] w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
-            </button>
-
-            {/* User avatar */}
-            <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[10px] font-bold text-primary shrink-0">
-              AB
-            </div>
-          </div>
-        </header>
-
-        {/* ── Megamenu dropdown (hover z debounce) ── */}
-        {megaItems.length > 0 && (
-          <div
-            className="absolute left-4 right-4 lg:left-6 lg:right-6 top-full mt-1 z-50"
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
+        {/* Dolna sekcja: Kontrolki systemowe i profil (taki sam spacing góra-dół) */}
+        <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-white/[0.08] shrink-0">
+          <button
+            title="Ustawienia"
+            onClick={onToggleSettings}
+            className="w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:border-foreground/10 hover:bg-foreground/[0.06] hover:text-foreground text-foreground/45 transition-all"
           >
-            {/* bridge: wypełnia szczelinę między header a dropdownem */}
-            <div className="h-1 w-full" />
-            <div className={cn(
-              isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-              'p-2 rounded-2xl border flex flex-wrap gap-1.5',
-            )}>
-              {megaItems.map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setActiveSection(openMenu!); openMenuDelayed(null) }}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
-                    item.active
-                      ? 'bg-primary/20 text-primary border border-primary/40'
-                      : 'text-foreground/60 hover:text-foreground hover:bg-white/[0.06] border border-foreground/[0.08]',
-                  )}
-                >
-                  <item.icon className="w-3.5 h-3.5 shrink-0" />
-                  {showContent
-                    ? <span>{item.name}</span>
-                    : <div className="h-2 w-14 bg-foreground/25 rounded-full" />
-                  }
-                  {showContent && item.badge && (
-                    <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-bold',
-                      item.badge === '●' ? 'bg-primary/20 text-primary' : 'bg-foreground/10 text-foreground/40',
-                    )}>{item.badge}</span>
-                  )}
-                </button>
-              ))}
-            </div>
+            <Settings className="w-3.5 h-3.5" />
+          </button>
+          <button className="w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:border-foreground/10 hover:bg-foreground/[0.06] transition-all text-foreground/45 hover:text-foreground">
+            <Search className="w-3.5 h-3.5" />
+          </button>
+          <button className="relative w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:border-foreground/10 hover:bg-foreground/[0.06] transition-all text-foreground/45 hover:text-foreground">
+            <Bell className="w-3.5 h-3.5" />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
+          </button>
+          <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[10px] font-bold text-primary shrink-0 mt-0.5">
+            AB
           </div>
-        )}
+        </div>
       </div>
 
+      {/* Sidebar flyout panel — wysuwa się od zaznaczonej ikony (sidebarMenuTop),
+          nie zawsze od góry paska. */}
+      {megaItems.length > 0 && (
+        <div
+          className={cn(
+            'absolute z-50',
+            navPosition === 'left' ? 'left-full ml-1' : 'right-full mr-1',
+          )}
+          style={{ top: sidebarMenuTop }}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+        >
+          <div className={cn(
+            isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+            'p-2 rounded-2xl border flex flex-col gap-0.5 min-w-[168px]',
+          )}>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 px-2.5 pb-1 pt-0.5">
+              {openSection?.label}
+            </div>
+            <div className="w-full border-t border-foreground/[0.06] mb-1" />
+            {megaItems.map((item, i) => (
+              <button
+                key={i}
+                onClick={() => { onSelectTab?.(openMenu!); openMenuDelayed(null) }}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap w-full text-left text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent hover:border-foreground/[0.08]"
+              >
+                <item.icon className="w-3.5 h-3.5 shrink-0" />
+                {showContent ? <span>{item.name}</span> : <div className="h-2 w-14 bg-foreground/25 rounded-full" />}
+                {showContent && item.badge && (
+                  <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div
+      className={cn(
+        'relative w-full h-screen font-sans antialiased overflow-hidden bg-transparent',
+        isSidebar ? 'flex flex-row' : 'flex flex-col',
+        navPosition === 'right' && 'flex-row-reverse',
+      )}
+      style={{ zIndex: 1 }}
+    >
+      <NbGlassFilters />
+
+      {/* ── Navbar — pozycja zależna od navPosition ── */}
+      {isSidebar ? <SidebarNav /> : navPosition === 'bottom'
+        ? null  /* bottom: renderowany po <main> */
+        : <HorizontalNav />
+      }
+
       {/* ── Main Workspace ── */}
-      <main ref={mainRef} className="flex-1 flex flex-col gap-4 px-4 lg:px-5 pt-0 pb-4 min-w-0 overflow-y-auto">
+      <main ref={mainRef} className={cn(
+        'flex-1 min-w-0 overflow-y-auto flex flex-col',
+        activeTab !== 'preview'
+          ? 'p-6 w-full'
+          : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
+      )}>
+
+        {/* ── Non-preview section content ── */}
+        {activeTab !== 'preview' && renderSection(activeTab)}
 
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE (SALDO BYTE & TIMELINE) ══ */}
+        {activeTab === 'preview' && <>
+
+
         <Tile intencja="akcent" elewacja="uniesiona" className="py-2.5 px-3 md:px-4 border-white/[0.06] bg-card/40 transition-[box-shadow,border-color,background-color] duration-200">
 
           <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:gap-5">
@@ -638,13 +909,8 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
 
             {/* Column 2: Saldo Byte Timeline & Solid Single-Color Line */}
             <div className="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
-              {/* Solid Single-Color Progress Line */}
-              <div className="w-full h-1 bg-foreground/10 rounded-full relative overflow-hidden my-0.5">
-                <div className="h-full bg-primary rounded-full w-[78%] shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
-              </div>
-
-              {/* Date timeline + Range buttons */}
-              <div className="mt-0.5 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+              {/* Date timeline + Range buttons — above the bar as scale */}
+              <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
                 <span className="flex flex-1 items-center justify-between tabular-nums">
                   <span>09.08</span>
                   <span className="hidden sm:inline">12.08</span>
@@ -657,6 +923,11 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
                     <button type="button" className="rounded-md px-1.5 py-0.5 text-[9px] tabular-nums transition-colors text-muted-foreground hover:text-foreground">90d</button>
                   </span>
                 </span>
+              </div>
+
+              {/* Solid Single-Color Progress Line */}
+              <div className="w-full h-1 bg-foreground/10 rounded-full relative overflow-hidden">
+                <div className="h-full bg-primary rounded-full w-[78%] shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
               </div>
 
               {/* Subtext */}
@@ -944,7 +1215,7 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
                 {/* Section A: Split 2-Column Layout (Left: Enlarged Donut Ring, Right: Responsive Percentage Pills) */}
                 <div className="flex items-center justify-between gap-3 py-1 min-w-0">
                   {/* Left Side: Enlarged Centered Donut Chart Ring */}
-                  <div className="flex items-center justify-center shrink-0">
+                  <div className="flex-1 flex items-center justify-center">
                     <DonutChart size={140} />
                   </div>
 
@@ -1022,15 +1293,16 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
 
         </div>
 
-        {/* ── ROW 3: SZYBKA PODRÓŻ (Ostatnie Projekty) ── */}
+        {/* ── ROW 3: SZYBKA PODRÓŻ (Ostatnie Projekty & Skróty) ── */}
         <div className="flex flex-col gap-2 pt-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/60">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/60 flex items-center gap-1.5">
+              <Zap className="w-3 h-3 text-primary" />
               SZYBKA PODRÓŻ
             </span>
             <button type="button" className="inline-flex items-center gap-1 text-xs text-foreground/50 hover:text-foreground transition-colors">
               <Edit2 className="w-3 h-3" />
-              Edytuj
+              Edytuj skróty
             </button>
           </div>
 
@@ -1042,24 +1314,27 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
                 elewacja="uniesiona"
                 interaktywny
                 className={cn(
-                  "p-3 min-h-[80px] flex flex-col justify-between transition-all duration-150",
-                  sc.isAdd && "border-dashed border-foreground/20 hover:border-foreground/40 flex items-center justify-center"
+                  "p-3 min-h-[92px] flex flex-col justify-between transition-all duration-150 group",
+                  sc.isAdd && "border-dashed border-foreground/20 hover:border-primary/50 hover:bg-primary/[0.02] flex items-center justify-center"
                 )}
               >
                 {sc.isAdd ? (
-                  <div className="flex flex-col items-center justify-center gap-1 text-foreground/40 hover:text-foreground/70 transition-colors">
-                    <Plus className="w-4 h-4 text-foreground/40" />
+                  <div className="flex flex-col items-center justify-center gap-1 text-foreground/40 group-hover:text-primary transition-colors">
+                    <Plus className="w-4 h-4 text-foreground/40 group-hover:text-primary transition-colors" />
                     <span className="text-[11px] font-medium">{sc.title}</span>
                   </div>
                 ) : (
                   <>
                     <div className="flex items-start justify-between">
-                      <div className="w-6 h-6 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
+                      <div className="w-6 h-6 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
                         {sc.icon && <sc.icon className="w-3.5 h-3.5" />}
                       </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-foreground/50 font-bold">
+                        {sc.shortcut}
+                      </span>
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-foreground truncate mt-1">
+                      <h4 className="text-xs font-bold text-foreground truncate mt-1 group-hover:text-primary transition-colors">
                         {sc.title}
                       </h4>
                       <span className="text-[9px] uppercase tracking-wider font-semibold text-foreground/40 mt-0.5 block">
@@ -1073,7 +1348,73 @@ export function PreviewSection({ onSelectTab: _onSelectTab }: PreviewSectionProp
           </div>
         </div>
 
+        </> /* end activeTab === 'preview' */}
+
       </main>
+
+      {/* Bottom navbar — renderowany po <main> żeby był na dole */}
+      {!isSidebar && navPosition === 'bottom' && <HorizontalNav />}
+
+      {/* ── DRAG TO DOCK OVERLAY ZONES ── */}
+      {isDraggingNav && (
+        <div className="fixed inset-0 z-[9999] pointer-events-none bg-background/60 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in-0">
+          {/* Top Dock Zone */}
+          <div className={cn(
+            'fixed top-3 inset-x-12 h-16 rounded-2xl border-2 border-dashed flex items-center justify-center gap-3 transition-all duration-200',
+            targetDock === 'top'
+              ? 'bg-primary/25 border-primary text-primary shadow-[0_0_40px_hsl(var(--primary)/0.6)] scale-[1.01]'
+              : 'bg-card/40 border-border/80 text-muted-foreground/60'
+          )}>
+            <PanelTop className="w-5 h-5" />
+            <span className="text-xs font-bold uppercase tracking-wider">Upuść tutaj — Przypnij na górze</span>
+          </div>
+
+          {/* Bottom Dock Zone */}
+          <div className={cn(
+            'fixed bottom-3 inset-x-12 h-16 rounded-2xl border-2 border-dashed flex items-center justify-center gap-3 transition-all duration-200',
+            targetDock === 'bottom'
+              ? 'bg-primary/25 border-primary text-primary shadow-[0_0_40px_hsl(var(--primary)/0.6)] scale-[1.01]'
+              : 'bg-card/40 border-border/80 text-muted-foreground/60'
+          )}>
+            <PanelBottom className="w-5 h-5" />
+            <span className="text-xs font-bold uppercase tracking-wider">Upuść tutaj — Przypnij na dole</span>
+          </div>
+
+          {/* Left Dock Zone */}
+          <div className={cn(
+            'fixed left-3 inset-y-12 w-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all duration-200',
+            targetDock === 'left'
+              ? 'bg-primary/25 border-primary text-primary shadow-[0_0_40px_hsl(var(--primary)/0.6)] scale-[1.01]'
+              : 'bg-card/40 border-border/80 text-muted-foreground/60'
+          )}>
+            <PanelLeft className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-center px-1">Przypnij po lewej</span>
+          </div>
+
+          {/* Right Dock Zone */}
+          <div className={cn(
+            'fixed right-3 inset-y-12 w-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all duration-200',
+            targetDock === 'right'
+              ? 'bg-primary/25 border-primary text-primary shadow-[0_0_40px_hsl(var(--primary)/0.6)] scale-[1.01]'
+              : 'bg-card/40 border-border/80 text-muted-foreground/60'
+          )}>
+            <PanelRight className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-center px-1">Przypnij po prawej</span>
+          </div>
+
+          {/* Ghost preview cursor tracker */}
+          {dragCoords && (
+            <div
+              className="fixed pointer-events-none z-[10000] -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 px-4 h-11 rounded-2xl bg-card/95 border-2 border-primary shadow-[0_0_35px_hsl(var(--primary)/0.6)] text-primary font-bold text-xs backdrop-blur-2xl animate-pulse"
+              style={{ left: dragCoords.x, top: dragCoords.y }}
+            >
+              <Zap className="w-4 h-4 text-primary" />
+              <span>Nawigacja NextByte</span>
+              <span className="text-[10px] opacity-75 uppercase">({targetDock ?? 'PRZECIĄGAJ'})</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

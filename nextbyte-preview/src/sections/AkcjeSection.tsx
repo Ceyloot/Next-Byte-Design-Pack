@@ -279,7 +279,7 @@ export function AkcjeSection() {
               <GlassDropdown
                 trigger={
                   <div className={cn(
-                    'flex items-center gap-2.5 cursor-pointer rounded-nb border px-3 py-2 transition-all',
+                    'flex items-center gap-2.5 cursor-pointer rounded-xl border px-3 py-2 transition-all',
                     isGlass ? 'nb-szklo' : 'border-border bg-muted/30 hover:bg-muted/50',
                   )}>
                     <GlassAvatar name="Anna Kowalska" size="sm" status="online" />

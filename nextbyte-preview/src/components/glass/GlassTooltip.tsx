@@ -45,7 +45,7 @@ export function GlassTooltip({
           role="tooltip"
           className={cn(
             'pointer-events-none absolute z-50 whitespace-nowrap px-3 py-1.5 text-xs font-medium',
-            'rounded-nb-sm border',
+            'rounded-lg border',
             cfg.pos,
             isGlass
               ? 'nb-szklo text-foreground border-foreground/15'

@@ -196,6 +196,27 @@
     inset 0 -1px 0 0 hsl(var(--primary) / 0.06);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   JASNE MOTYWY — korekta zmiennych szkła
+   W jasnych motywach --card jest biały, więc:
+   • korpus musi być wyższy (więcej krycia, mniej mleczności)
+   • lsnienie musi być niższe (--foreground jest ciemny, shimmer wychodziłby
+     jako ciemna plama zamiast jasnego refleksu)
+   • cien i refleks miększe (jasne tło nie niesie głębokich cieni)
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="light-apple"],
+[data-theme="nextbyte-light"],
+[data-theme="future-theme"],
+[data-theme="scandinavian"] {
+  --nb-p1-korpus:       0.88;
+  --nb-p1-lsnienie:     0.025;
+  --nb-p1-refleks:      0.07;
+  --nb-p1-cien:         0.10;
+  --nb-p1-obwodka:      0.12;
+  --nb-p1-obwodka-hover: 0.24;
+  --nb-p1-poswiata:     0.18;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nb-szklo,
   .nb-szklo::before,
