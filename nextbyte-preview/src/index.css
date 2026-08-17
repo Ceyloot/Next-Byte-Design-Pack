@@ -362,6 +362,11 @@ table,
   --sidebar-primary: 207 90% 54%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-ring: 207 90% 54%;
+  --chart-1: 211 100% 50%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 0 72% 51%;
 }
 
 /* ─── Lime (darmowy) ─── */
@@ -430,6 +435,11 @@ table,
   --ring: 213 60% 50%;
   --secondary: 225 15% 90%;
   --secondary-foreground: 222 47% 11%;
+  --chart-1: 213 60% 50%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
 }
 
 /* ─── Przyszły motyw ☀ (darmowy) ─── */
@@ -550,6 +560,11 @@ table,
   --ring: 280 100% 60%;
   --secondary: 0 0% 8%;
   --secondary-foreground: 0 0% 90%;
+  --chart-1: 280 100% 60%;
+  --chart-2: 200 100% 60%;
+  --chart-3: 120 100% 50%;
+  --chart-4: 60 100% 50%;
+  --chart-5: 0 100% 60%;
 }
 
 /* ─── Aurora (150 Byte) ─── */
@@ -576,6 +591,11 @@ table,
   --ring: 190 85% 50%;
   --secondary: 187 90% 56%;
   --secondary-foreground: 190 25% 95%;
+  --chart-1: 190 85% 50%;
+  --chart-2: 187 90% 56%;
+  --chart-3: 193 72% 36%;
+  --chart-4: 196 60% 26%;
+  --chart-5: 190 85% 66%;
 }
 
 /* ─── Fioletowy (150 Byte) ─── */
@@ -602,6 +622,11 @@ table,
   --ring: 253 84% 67%;
   --secondary: 248 87% 61%;
   --secondary-foreground: 250 30% 95%;
+  --chart-1: 253 84% 67%;
+  --chart-2: 248 87% 61%;
+  --chart-3: 249 60% 41%;
+  --chart-4: 249 49% 30%;
+  --chart-5: 253 84% 75%;
 }
 
 /* ─── NextByte Lekki (150 Byte) ─── */
@@ -628,6 +653,11 @@ table,
   --ring: 225 84% 68%;
   --secondary: 225 38% 55%;
   --secondary-foreground: 210 20% 95%;
+  --chart-1: 225 84% 68%;
+  --chart-2: 191 42% 71%;
+  --chart-3: 225 38% 55%;
+  --chart-4: 205 15% 35%;
+  --chart-5: 191 42% 55%;
 }
 
 /* ─── Smoczy (150 Byte) ─── */
@@ -762,6 +792,11 @@ table,
   --ring: 39 39% 58%;
   --secondary: 39 34% 47%;
   --secondary-foreground: 0 0% 95%;
+  --chart-1: 39 39% 58%;
+  --chart-2: 39 34% 47%;
+  --chart-3: 39 45% 68%;
+  --chart-4: 30 15% 30%;
+  --chart-5: 39 50% 55%;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

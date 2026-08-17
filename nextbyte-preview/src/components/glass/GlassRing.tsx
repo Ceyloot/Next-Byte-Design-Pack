@@ -46,7 +46,7 @@ export function GlassRing({
   const fontSize = labelStr.length > 4 ? 14 : labelStr.length > 2 ? 18 : 22
 
   const glowStyle = isGlass
-    ? { filter: `drop-shadow(0 0 5px ${color})` }
+    ? { filter: `drop-shadow(0 0 3px ${color})` }
     : {}
 
   // ── Tryb wielosegmentowy — ta sama poświata i rounded-cap co gauge,
@@ -60,7 +60,7 @@ export function GlassRing({
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="-rotate-90">
           <circle cx={CX} cy={CY} r={R} stroke="hsl(var(--foreground) / 0.10)" strokeWidth={thickness} />
           {segments.map((seg, i) => {
-            const gapDeg = segments.length > 1 ? 3 : 0
+            const gapDeg = segments.length > 1 ? 1.5 : 0
             const segCirc = (seg.pct / 100) * circ
             const dash = Math.max(0, segCirc - (gapDeg / 360) * circ)
             const rotation = (cum / 100) * 360
@@ -71,12 +71,12 @@ export function GlassRing({
                   <circle
                     cx={CX} cy={CY} r={R}
                     stroke={seg.color}
-                    strokeWidth={thickness + 6}
+                    strokeWidth={thickness + 3}
                     strokeDasharray={`${dash} ${circ - dash}`}
-                    strokeLinecap="round"
+                    strokeLinecap="butt"
                     transform={`rotate(${rotation} ${CX} ${CY})`}
-                    opacity={0.16}
-                    style={{ filter: 'blur(4px)' }}
+                    opacity={0.08}
+                    style={{ filter: 'blur(3px)' }}
                   />
                 )}
                 <circle
@@ -84,7 +84,7 @@ export function GlassRing({
                   stroke={seg.color}
                   strokeWidth={thickness}
                   strokeDasharray={`${dash} ${circ - dash}`}
-                  strokeLinecap="round"
+                  strokeLinecap="butt"
                   transform={`rotate(${rotation} ${CX} ${CY})`}
                   className="transition-all duration-300"
                 />
@@ -127,12 +127,12 @@ export function GlassRing({
             <circle
               cx={CX} cy={CY} r={R}
               stroke={color}
-              strokeWidth={thickness + 6}
+              strokeWidth={thickness + 4}
               strokeDasharray={`${fillLen} ${CIRC}`}
               strokeLinecap="round"
               transform="rotate(135 50 50)"
-              opacity={0.18}
-              style={{ filter: 'blur(4px)' }}
+              opacity={0.10}
+              style={{ filter: 'blur(3px)' }}
             />
           )}
           {/* Fill */}
@@ -184,12 +184,12 @@ export function GlassRing({
           <circle
             cx={CX} cy={CY} r={R}
             stroke={color}
-            strokeWidth={thickness + 6}
+            strokeWidth={thickness + 4}
             strokeDasharray={`${fillLen} ${CIRC}`}
             strokeLinecap="round"
             transform="rotate(-90 50 50)"
-            opacity={0.18}
-            style={{ filter: 'blur(4px)' }}
+            opacity={0.10}
+            style={{ filter: 'blur(3px)' }}
           />
         )}
         {/* Fill */}

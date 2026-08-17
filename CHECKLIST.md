@@ -1,7 +1,7 @@
 # NB Design Pack — Master Checklist
 
 > Aktualizowany przez Claude w miarę budowania. Synchronizuj między komputerami przez `git pull / git push`.
-> Ostatnia aktualizacja: 2026-08-09
+> Ostatnia aktualizacja: 2026-08-17
 
 ---
 
@@ -230,61 +230,61 @@
 - [ ] Ripple effect button
 
 ## 10 · Formularze
-- [ ] Text input (basic)
-- [ ] Input z label
-- [ ] Input z hint text
-- [ ] Input z błędem (error state)
+- [x] Text input (basic) — `Input` ✓
+- [x] Input z label — `Field` ✓
+- [x] Input z hint text — `Field hint` ✓
+- [x] Input z błędem (error state) — `Input variant=error` ✓
 - [ ] Input z sukcesem
-- [ ] Input z prefixem (icon/tekst)
-- [ ] Input z suffixem (icon/tekst)
-- [ ] Input — password (masked)
-- [ ] Input — phone (masked)
-- [ ] Input — credit card (masked)
-- [ ] Input — number
-- [ ] Input — email
-- [ ] Input — URL
-- [ ] Input — search (z clear)
-- [ ] Textarea (fixed)
-- [ ] Textarea (auto-resize)
-- [ ] Textarea z licznikiem znaków
-- [ ] Select (native)
-- [ ] Select (custom styled)
+- [x] Input z prefixem (icon/tekst) — `Input iconLeft` ✓
+- [x] Input z suffixem (icon/tekst) — `Input iconRight` ✓
+- [x] Input — password (masked) — `Input type=password` ✓
+- [x] Input — phone (masked) — `Input type=tel` ✓
+- [x] Input — credit card (masked) — `Input` (demo, bez maski liczb) ✓
+- [x] Input — number — `Input type=number` ✓
+- [x] Input — email — `Input type=email` ✓
+- [x] Input — URL — `Input type=url` ✓
+- [x] Input — search (z clear) — `GlassSearch` ✓
+- [x] Textarea (fixed) — `Textarea` ✓
+- [x] Textarea (auto-resize) — `Textarea autoGrow` ✓
+- [x] Textarea z licznikiem znaków — `Textarea showCount` ✓
+- [x] Select (native) — `<select>` natywny ✓
+- [x] Select (custom styled) — `Select` ✓
 - [ ] Multi-select
 - [ ] Combobox / Autocomplete
-- [ ] Checkbox (basic)
-- [ ] Checkbox — indeterminate
-- [ ] Checkbox group
-- [ ] Radio button
-- [ ] Radio group (pionowy)
-- [ ] Radio group (poziomy)
-- [ ] Radio card (klikalny kafelek)
+- [x] Checkbox (basic) — `Checkbox` ✓
+- [x] Checkbox — indeterminate — `Checkbox checked="indeterminate"` ✓
+- [x] Checkbox group — `CheckboxField` ✓
+- [x] Radio button — `RadioGroupItem` ✓
+- [x] Radio group (pionowy) — `RadioGroup + RadioField` ✓
+- [x] Radio group (poziomy) — `RadioGroup flex-row` ✓
+- [x] Radio card (klikalny kafelek) — `RadioCard` ✓
 - [x] Switch / Toggle — `switch.tsx` ✓
-- [ ] Switch z etykietą
-- [ ] Slider (single)
-- [ ] Slider (range)
-- [ ] Slider z wartością
+- [x] Switch z etykietą — `SwitchField` ✓
+- [x] Slider (single) — `Slider` ✓
+- [x] Slider (range) — `Slider` (2 uchwyty) ✓
+- [x] Slider z wartością — `Slider showValue` ✓
 - [ ] Date picker (input)
 - [ ] Date picker (calendar popup)
 - [ ] Time picker
 - [ ] Date-time picker
 - [ ] Date range picker
 - [ ] Color picker (swatch + hex)
-- [ ] File upload (button)
-- [ ] File upload (drag & drop)
-- [ ] File upload (multi + preview)
-- [ ] Rating (gwiazdki)
-- [ ] Rating (emoji)
-- [ ] OTP / PIN input (6 pól)
-- [ ] Tag input / token input
+- [x] File upload (button) — `FileUploadButton` ✓
+- [x] File upload (drag & drop) — `FileDropzone` ✓
+- [x] File upload (multi + preview) — `FileList` ✓
+- [x] Rating (gwiazdki) — `Rating` ✓
+- [x] Rating (emoji) — `EmojiRating` ✓
+- [x] OTP / PIN input (6 pól) — `OtpInput` ✓
+- [x] Tag input / token input — `TagInput` ✓
 - [ ] Rich text editor (WYSIWYG)
 - [ ] Markdown editor
-- [ ] Form layout — 1 kolumna
-- [ ] Form layout — 2 kolumny
-- [ ] Form sekcja z nagłówkiem
-- [ ] Form divider
-- [ ] Form submit area (button + cancel)
+- [x] Form layout — 1 kolumna — `FormRow columns=1` ✓
+- [x] Form layout — 2 kolumny — `FormRow columns=2` ✓
+- [x] Form sekcja z nagłówkiem — `FormSection` ✓
+- [x] Form divider — `FormDivider` ✓
+- [x] Form submit area (button + cancel) — `FormActions` ✓
 - [ ] Form stepper (wielokrokowy)
-- [ ] Field group (powiązane pola)
+- [x] Field group (powiązane pola) — `FieldGroup` ✓
 - [ ] Address form
 - [ ] Payment form
 - [ ] Kontakt form
@@ -864,7 +864,7 @@
 | Layout | 0 | 20 |
 | Nawigacja | 7 | 30 |
 | Przyciski & Akcje | 10 | 26 |
-| Formularze | 1 | 60 |
+| Formularze | 42 | 60 |
 | Karty & Kontenery | 11 | 32 |
 | Nakładki | 11 | 26 |
 | Feedback & Stany | 25 | 42 |
@@ -885,6 +885,6 @@
 | Utilities & Misc | 0 | 25 |
 | Tła Profilowe & Wzory | 1 | 10 |
 | Brandbook & Styleguide | 0 | 20 |
-| **RAZEM** | **91** | **783** |
+| **RAZEM** | **132** | **783** |
 
-**Postęp: 11.6%**
+**Postęp: 16.9%**

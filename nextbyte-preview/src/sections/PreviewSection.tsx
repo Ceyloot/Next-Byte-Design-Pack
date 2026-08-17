@@ -15,7 +15,8 @@ import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
 import { useLiquidGlassScroll } from '@/hooks/useLiquidGlassScroll'
 import { Tile, TileRow, TilePill, TileAction } from '@/components/Tile'
 import { useGlass } from '@/lib/glass-context'
-import { GlassActivityGrid, GlassRing } from '@/components/glass'
+import { GlassActivityGrid } from '@/components/glass'
+import { TINT_1, TINT_2, TINT_3, TINT_4, tintFaded } from '@/lib/chart-colors'
 import { AkcjeSection } from '@/sections/AkcjeSection'
 import { FormularzeSection } from '@/sections/FormularzeSection'
 import { KartySection } from '@/sections/KartySection'
@@ -91,10 +92,10 @@ const WEEKLY_VALS = [1200, 1850, 1540, 2180, 1920, 820, 2847]
 // odróżnialne zamiast wariantów opacity jednego koloru, które zlewały się
 // w jedną szaro-niebieską plamę. "Inne" celowo zostaje neutralnym szarym.
 const DONUT_SEGMENTS = [
-  { pct: 41, color: '#3987e5', label: 'AI Chat', count: '1 167' },
-  { pct: 28, color: '#d95926', label: 'Studio Zdęć', count: '797' },
-  { pct: 19, color: '#199e70', label: 'Prompty', count: '541' },
-  { pct: 12, color: '#71717a', label: 'Inne', count: '342' },
+  { pct: 41, color: TINT_1, label: 'AI Chat', count: '1 167' },
+  { pct: 28, color: TINT_2, label: 'Studio Zdęć', count: '797' },
+  { pct: 19, color: TINT_3, label: 'Prompty', count: '541' },
+  { pct: 12, color: TINT_4, label: 'Inne', count: '342' },
 ]
 
 const TASK_QUEUE = [
@@ -150,17 +151,51 @@ function WeekChart() {
   )
 }
 
-// Ten sam pierścień co GlassRing w Danych ("Wykorzystanie zasobów") —
-// rounded-cap + poświata w trybie glass, jeden spójny komponent zamiast
-// dwóch osobnych implementacji SVG dla tego samego typu wykresu.
-function DonutChart({ size = 135 }: { size?: number }) {
+// Donut jako pojedynczy conic-gradient zamiast wielu okręgów SVG na
+// stroke-dasharray — ten drugi podejście zawsze zostawia szew (linię)
+// na styku dwóch segmentów przez anti-aliasing niezależnych kształtów.
+// conic-gradient to jeden gradient, więc granica koloru jest idealnie
+// czysta. Udziały sumują się do 100%, więc koło jest w pełni wypełnione
+// dookoła — bez pustego "gauge" wycinka na dole.
+function DonutChart({ size = 135, thickness = 16 }: { size?: number; thickness?: number }) {
+  const top = DONUT_SEGMENTS[0]
+  let acc = 0
+  const stops = DONUT_SEGMENTS
+    .map((seg) => {
+      const start = acc
+      acc += seg.pct
+      return `${seg.color} ${start}% ${acc}%`
+    })
+    .join(', ')
+  const inner = size / 2 - thickness
+  const maskImg = `radial-gradient(circle, transparent ${inner}px, black ${inner + 1}px)`
+
   return (
-    <GlassRing
-      segments={DONUT_SEGMENTS.map(s => ({ pct: s.pct, color: s.color }))}
-      size={size}
-      thickness={12}
-      label=""
-    />
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <div
+        className="absolute inset-0 -z-10 rounded-full blur-2xl opacity-20"
+        style={{ backgroundColor: top.color }}
+      />
+      <div
+        className="absolute inset-0 rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.25)]"
+        style={{
+          background: `conic-gradient(${stops})`,
+          WebkitMask: maskImg,
+          mask: maskImg,
+        }}
+      />
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <span
+          className="nb-liczby text-2xl font-extrabold leading-none tracking-tight"
+          style={{ color: top.color }}
+        >
+          {top.pct}%
+        </span>
+        <span className="mt-1 text-[10px] font-semibold text-foreground/55 uppercase tracking-wide">
+          {top.label}
+        </span>
+      </div>
+    </div>
   )
 }
 
@@ -1224,12 +1259,16 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                     {DONUT_SEGMENTS.map((seg, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between px-2.5 py-1 rounded-full border border-primary/20 bg-primary/[0.06] text-xs transition-colors hover:border-primary/40 shadow-sm"
+                        className="flex items-center justify-between px-2.5 py-1 rounded-full border text-xs transition-all duration-200 hover:brightness-110 shadow-sm"
+                        style={{
+                          borderColor: tintFaded(seg.color, 30),
+                          backgroundColor: tintFaded(seg.color, 8),
+                        }}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span
                             className="w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: seg.color }}
+                            style={{ backgroundColor: seg.color, boxShadow: `0 0 6px ${tintFaded(seg.color, 70)}` }}
                           />
                           <span className="text-foreground/90 font-medium text-[10px] truncate">{seg.label}</span>
                         </div>

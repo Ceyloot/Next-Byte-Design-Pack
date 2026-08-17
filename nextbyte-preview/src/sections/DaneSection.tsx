@@ -1,17 +1,18 @@
 import React from 'react'
 import { RefreshCw, Database, HardDrive, Users, Zap, FileStack, Table2, TicketCheck } from 'lucide-react'
 import { GlassCard, GlassPanel, GlassBadge, GlassButton, GlassRing, GlassProgress } from '@/components/glass'
+import { CHART_1, CHART_2, CHART_3, CHART_4, CHART_NEUTRAL } from '@/lib/chart-colors'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-3">{children}</p>
 }
 
 const PLATFORM_STATS = [
-  { label: 'Użytkownicy',      value: 37,  label2: '74',   icon: Users,      sub: 'z 200 limitu' },
-  { label: 'Subskrypcje',      value: 80,  label2: '8',    icon: Zap,        sub: 'z 10 limitu'  },
-  { label: 'Plików w magazynie', value: 14, label2: '7067', icon: FileStack,  sub: 'z 50 000'     },
-  { label: 'Tabel w bazie',    value: 98,  label2: '490',  icon: Table2,     sub: 'z 500 limitu' },
-  { label: 'Otwarte tickety',  value: 0,   label2: '0',    icon: TicketCheck, sub: 'brak'         },
+  { label: 'Użytkownicy',      value: 37,  label2: '74',   icon: Users,      sub: 'z 200 limitu', color: CHART_1       },
+  { label: 'Subskrypcje',      value: 80,  label2: '8',    icon: Zap,        sub: 'z 10 limitu',  color: CHART_2       },
+  { label: 'Plików w magazynie', value: 14, label2: '7067', icon: FileStack,  sub: 'z 50 000',     color: CHART_3       },
+  { label: 'Tabel w bazie',    value: 98,  label2: '490',  icon: Table2,     sub: 'z 500 limitu', color: CHART_4       },
+  { label: 'Otwarte tickety',  value: 0,   label2: '0',    icon: TicketCheck, sub: 'brak',         color: CHART_NEUTRAL },
 ]
 
 const RESOURCE_GAUGES = [
@@ -19,21 +20,21 @@ const RESOURCE_GAUGES = [
     label:   'Baza danych',
     value:   11,
     subtext: '905 MB z 8.0 GB',
-    color:   'hsl(var(--primary))',
+    color:   CHART_1,
     icon:    Database,
   },
   {
     label:   'Magazyn plików',
     value:   11,
     subtext: '10.6 GB ze 100.0 GB',
-    color:   'hsl(var(--primary))',
+    color:   CHART_2,
     icon:    HardDrive,
   },
   {
     label:   'Aktywni / MAU',
     value:   0.022,
     subtext: '22 ze 100 000',
-    color:   'hsl(var(--primary))',
+    color:   CHART_3,
     icon:    Users,
   },
 ]
@@ -66,13 +67,14 @@ export function DaneSection() {
           </div>
 
           <div className="grid grid-cols-5 divide-x divide-foreground/8 border-t border-foreground/8">
-            {PLATFORM_STATS.map(({ label, value, label2, sub }) => (
+            {PLATFORM_STATS.map(({ label, value, label2, color }) => (
               <div key={label} className="flex flex-col items-center gap-1 py-6 px-3">
                 <GlassRing
                   value={value}
                   label={label2}
                   size={96}
                   thickness={7}
+                  color={color}
                 />
                 <p className="text-[11px] text-foreground/55 text-center mt-1">{label}</p>
               </div>
