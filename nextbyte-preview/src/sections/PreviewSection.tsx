@@ -28,7 +28,6 @@ import { StanySection } from '@/sections/StanySection'
 import { CennikSection } from '@/sections/CennikSection'
 import { StudioSection } from '@/sections/StudioSection'
 import { CzatSection } from '@/sections/CzatSection'
-import { CodeCopyButton } from '@/components/ui/CodeExporterModal'
 
 
 
@@ -215,7 +214,7 @@ function DonutChart({ size = 135, thickness = 16 }: { size?: number; thickness?:
         >
           {top.pct}%
         </span>
-        <span className="mt-1 text-[10px] font-semibold text-foreground/55 uppercase tracking-wide">
+        <span className="mt-1 text-[11px] font-semibold text-foreground/55 uppercase tracking-wide">
           {top.label}
         </span>
       </div>
@@ -437,7 +436,7 @@ function CircularGauge({
           {value}
         </span>
       </div>
-      <span className="text-[10px] text-foreground/60 font-medium text-center truncate max-w-[85px]">
+      <span className="text-[11px] text-foreground/60 font-medium text-center truncate max-w-[85px]">
         {label}
       </span>
     </div>
@@ -521,6 +520,14 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   const [navCompact, setNavCompact] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeNewsIndex, setActiveNewsIndex] = useState(0)
+  const [newsPaused, setNewsPaused] = useState(false)
+  const nextNews = () => setActiveNewsIndex((i) => (i + 1) % FEATURED_NEWS.length)
+  const prevNews = () => setActiveNewsIndex((i) => (i - 1 + FEATURED_NEWS.length) % FEATURED_NEWS.length)
+  useEffect(() => {
+    if (newsPaused) return
+    const id = setInterval(nextNews, 5000)
+    return () => clearInterval(id)
+  }, [newsPaused, activeNewsIndex])
   const [taskList, setTaskList] = useState([
     { id: 1, label: 'Prośba o zdjęcie z zadania', done: true },
     { id: 2, label: 'Zamień D na J w Studio Zdjęć', done: true },
@@ -664,11 +671,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   // ── Shared horizontal controls (settings, Aa, search, bell, avatar) ──
   const NavControls = () => (
     <div className="flex items-center gap-1.5 shrink-0 pl-2">
-      <CodeCopyButton snippetId="button" label="Kod TSX" className="h-7 border-primary/30" />
       <button
         onClick={onToggleSettings}
         title="Ustawienia wyglądu"
-        className="flex items-center gap-1 px-2 h-7 rounded-full text-[11px] font-semibold transition-all duration-200 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10]"
+        className={cn(
+          'flex items-center gap-1 px-2 h-7 rounded-full border text-[12px] font-semibold transition-all duration-200',
+          'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
+        )}
       >
         <Settings className="w-3 h-3 shrink-0" />
         {showContent ? <span className="hidden sm:inline">Ustawienia</span> : <div className="h-1.5 w-8 bg-foreground/25 rounded-full" />}
@@ -677,8 +686,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         onClick={() => setNavCompact(!navCompact)}
         title={navCompact ? 'Pokaż etykiety' : 'Ukryj etykiety'}
         className={cn(
-          'flex items-center gap-1 px-2 h-7 rounded-full text-[11px] font-semibold transition-all duration-200',
-          navCompact ? 'bg-primary/[0.15] text-primary' : 'bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10]',
+          'flex items-center gap-1 px-2 h-7 rounded-full border text-[12px] font-semibold transition-all duration-200',
+          navCompact ? 'border-primary/40 bg-primary/[0.15] text-primary' : 'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
         )}
       >
         <Type className="w-3 h-3 shrink-0" />
@@ -691,7 +700,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         <Bell className="w-3.5 h-3.5 text-primary" />
         <span className="absolute top-[5px] right-[5px] w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
       </button>
-      <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[10px] font-bold text-primary shrink-0">AB</div>
+      <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[11px] font-bold text-primary shrink-0">AB</div>
     </div>
   )
 
@@ -792,7 +801,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 <item.icon className="w-3.5 h-3.5 shrink-0" />
                 {showContent ? <span>{item.name}</span> : <div className="h-2 w-14 bg-foreground/25 rounded-full" />}
                 {showContent && item.badge && (
-                  <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
                 )}
               </button>
             ))}
@@ -875,7 +884,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             <Bell className="w-3.5 h-3.5" />
             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
           </button>
-          <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[10px] font-bold text-primary shrink-0 mt-0.5">
+          <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[11px] font-bold text-primary shrink-0 mt-0.5">
             AB
           </div>
         </div>
@@ -897,7 +906,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
             'p-2 rounded-2xl border flex flex-col gap-0.5 min-w-[168px]',
           )}>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 px-2.5 pb-1 pt-0.5">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/50 px-2.5 pb-1 pt-0.5">
               {openSection?.label}
             </div>
             <div className="w-full border-t border-foreground/[0.06] mb-1" />
@@ -910,7 +919,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 <item.icon className="w-3.5 h-3.5 shrink-0" />
                 {showContent ? <span>{item.name}</span> : <div className="h-2 w-14 bg-foreground/25 rounded-full" />}
                 {showContent && item.badge && (
-                  <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
                 )}
               </button>
             ))}
@@ -959,7 +968,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             {/* Column 1: Saldo Byte Amount */}
             <div className="min-w-0 shrink-0 flex items-center gap-3">
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Saldo Byte</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Saldo Byte</p>
                 <p className="mt-0.5 text-xl font-bold leading-none tabular-nums text-foreground flex items-center">
                   {showContent
                     ? <>{`4 820`}<span className="ml-1 text-sm text-primary font-normal">⟠</span></>
@@ -969,7 +978,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               </div>
               {showContent && (
                 <button type="button" aria-label="Wersja platformy Beta 4.0.0" className="inline-flex rounded-full outline-none">
-                  <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border font-semibold uppercase tracking-wide border-primary/30 bg-primary/10 text-primary h-4 gap-1 px-1.5 text-[9px]">
+                  <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border font-semibold uppercase tracking-wide border-primary/30 bg-primary/10 text-primary h-4 gap-1 px-1.5 text-[10px]">
                     Beta 4.0.0
                   </span>
                 </button>
@@ -982,7 +991,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             {/* Column 2: Saldo Byte Timeline & Solid Single-Color Line */}
             <div className="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
               {/* Date timeline + Range buttons — above the bar as scale */}
-              <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+              <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
                 {showContent ? (
                   <span className="flex flex-1 items-center justify-between tabular-nums">
                     <span>09.08</span>
@@ -998,9 +1007,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 )}
                 <span className="hidden sm:flex ml-2">
                   <span className="flex shrink-0 items-center gap-0.5">
-                    <button type="button" className="rounded-md px-1.5 py-0.5 text-[9px] tabular-nums transition-colors bg-primary/15 text-primary font-semibold">7d</button>
-                    <button type="button" className="rounded-md px-1.5 py-0.5 text-[9px] tabular-nums transition-colors text-muted-foreground hover:text-foreground">30d</button>
-                    <button type="button" className="rounded-md px-1.5 py-0.5 text-[9px] tabular-nums transition-colors text-muted-foreground hover:text-foreground">90d</button>
+                    <button type="button" className="rounded-md px-1.5 py-0.5 text-[10px] tabular-nums transition-colors bg-primary/15 text-primary font-semibold">7d</button>
+                    <button type="button" className="rounded-md px-1.5 py-0.5 text-[10px] tabular-nums transition-colors text-muted-foreground hover:text-foreground">30d</button>
+                    <button type="button" className="rounded-md px-1.5 py-0.5 text-[10px] tabular-nums transition-colors text-muted-foreground hover:text-foreground">90d</button>
                   </span>
                 </span>
               </div>
@@ -1012,7 +1021,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
 
               {/* Subtext */}
               {showContent ? (
-                <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground/70">
+                <p className="mt-0.5 line-clamp-1 text-[12px] leading-snug text-muted-foreground/70">
                   Współczynnik zużycia w normie • Zużyto 180 BYTE w ostatnich 7 dniach
                 </p>
               ) : (
@@ -1062,7 +1071,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                   <div className="h-3 w-64 bg-foreground/20 rounded-full" />
                 )}
               </div>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-mono text-muted-foreground/60 flex-shrink-0 whitespace-nowrap">
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-muted-foreground/60 flex-shrink-0 whitespace-nowrap">
                 <span>⌘</span>K
               </kbd>
             </div>
@@ -1085,57 +1094,94 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                       <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 animate-pulse" />
                       NOWOŚCI
                     </h3>
-                    <TilePill intencja="akcent" className="border-primary/30 bg-primary/15 text-primary text-[9px] font-bold">
+                    <TilePill intencja="akcent" className="border-primary/30 bg-primary/15 text-primary text-[10px] font-bold">
                       4 NOWE
                     </TilePill>
                   </div>
 
-                  {/* Featured News Card Banner (Horizontal Layout matching Screenshot 1) */}
-                  {(() => {
-                    const news = FEATURED_NEWS[activeNewsIndex] || FEATURED_NEWS[0]
-                    const NewsIcon = news.icon
-                    return (
-                      <div className="p-2.5 rounded-2xl border border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05] transition-all flex items-center gap-3 group shadow-sm">
-                        {/* Left Side: Thumbnail Preview Image */}
-                        <div className={cn("w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-br border border-white/15 shrink-0 flex items-center justify-center relative overflow-hidden shadow-md group-hover:scale-[1.02] transition-transform duration-200", news.gradient)}>
-                          <NewsIcon className="w-7 h-7 text-primary relative z-10 group-hover:scale-110 transition-transform duration-200" />
-                          <div className="absolute inset-0 bg-primary/20 blur-md" />
-                          <div className="absolute bottom-1 left-1.5 px-1.5 py-0.5 rounded bg-black/65 backdrop-blur border border-white/10 text-[7px] font-bold text-white uppercase tracking-wider">
-                            {news.tag}
-                          </div>
-                        </div>
+                  {/* Featured News Carousel — strzałki na zewnątrz kafelka, prawdziwe przewijanie (translateX) */}
+                  <div
+                    className="flex items-center gap-1.5"
+                    onMouseEnter={() => setNewsPaused(true)}
+                    onMouseLeave={() => setNewsPaused(false)}
+                  >
+                    <button
+                      type="button"
+                      onClick={prevNews}
+                      aria-label="Poprzednia aktualność"
+                      className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-foreground/40 hover:border-foreground/10 hover:bg-foreground/[0.04] hover:text-foreground transition-all duration-200"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
 
-                        {/* Right Side: Text & Action Link */}
-                        <div className="flex flex-col gap-1 min-w-0 flex-1 justify-center">
-                          <h4 className="text-xs sm:text-[12.5px] font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
-                            {news.title}
-                          </h4>
-                          <p className="text-[9.5px] text-foreground/60 leading-relaxed line-clamp-2">
-                            {news.desc}
-                          </p>
-                          <button type="button" className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 mt-0.5">
-                            {news.linkText} <ChevronRight className="w-3 h-3" />
-                          </button>
-                        </div>
+                    <div className="flex-1 min-w-0 overflow-hidden rounded-2xl">
+                      <div
+                        className="flex transition-transform duration-500 ease-out"
+                        style={{ transform: `translateX(-${activeNewsIndex * 100}%)` }}
+                      >
+                        {FEATURED_NEWS.map((news) => {
+                          const NewsIcon = news.icon
+                          return (
+                            <div
+                              key={news.id}
+                              className="w-full shrink-0 p-2.5 bg-white/[0.025] hover:bg-white/[0.05] transition-all flex items-center gap-3 group"
+                            >
+                              <div className={cn("w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-br shrink-0 flex items-center justify-center relative overflow-hidden shadow-md group-hover:scale-[1.02] transition-transform duration-200", news.gradient)}>
+                                <NewsIcon className="w-7 h-7 text-primary relative z-10 group-hover:scale-110 transition-transform duration-200" />
+                                <div className="absolute inset-0 bg-primary/20 blur-md" />
+                              </div>
+                              <div className="flex flex-col gap-1 min-w-0 flex-1 justify-center">
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{news.tag}</span>
+                                <h4 className="text-xs sm:text-[12.5px] font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
+                                  {news.title}
+                                </h4>
+                                <p className="text-[10px] text-foreground/60 leading-relaxed line-clamp-2">
+                                  {news.desc}
+                                </p>
+                                <button type="button" className="text-[12px] font-bold text-primary hover:underline flex items-center gap-1 mt-0.5">
+                                  {news.linkText} <ChevronRight className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
-                    )
-                  })()}
+                    </div>
 
-                  {/* Bottom Carousel Indicator Dots */}
-                  <div className="flex items-center justify-center gap-1.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={nextNews}
+                      aria-label="Następna aktualność"
+                      className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full border border-transparent text-foreground/40 hover:border-foreground/10 hover:bg-foreground/[0.04] hover:text-foreground transition-all duration-200"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Pasek postępu auto-play — pokazuje ile czasu zostało do zmiany slajdu, każdy segment to skrót do slajdu */}
+                  <div className="flex items-center gap-1 px-0.5">
                     {FEATURED_NEWS.map((_, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => setActiveNewsIndex(idx)}
-                        className={cn(
-                          "transition-all duration-300 rounded-full cursor-pointer",
-                          activeNewsIndex === idx
-                            ? "w-5 h-1 bg-primary shadow-sm shadow-primary/40"
-                            : "w-1 h-1 bg-foreground/20 hover:bg-foreground/40"
+                        aria-label={`Slajd ${idx + 1}`}
+                        className="relative flex-1 h-1 rounded-full bg-foreground/12 overflow-hidden cursor-pointer"
+                      >
+                        {idx < activeNewsIndex && (
+                          <div className="absolute inset-0 bg-primary/70 rounded-full" />
                         )}
-                        title={`Slajd ${idx + 1}`}
-                      />
+                        {idx === activeNewsIndex && (
+                          <div
+                            key={activeNewsIndex}
+                            className="absolute inset-y-0 left-0 bg-primary rounded-full"
+                            style={{
+                              animation: 'nb-carousel-fill 5000ms linear forwards',
+                              animationPlayState: newsPaused ? 'paused' : 'running',
+                            }}
+                          />
+                        )}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1153,7 +1199,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 {showContent ? (
                   <>
                     <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Lista Zadań</h3>
-                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[9px]">4 ZADANIA</TilePill>
+                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[10px]">4 ZADANIA</TilePill>
                   </>
                 ) : (
                   <>
@@ -1189,16 +1235,32 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                         <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
                         Wróć do roboty
                       </h3>
-                      <p className="text-[10px] text-foreground/50 mt-0.5">
+                      <p className="text-[11px] text-foreground/50 mt-0.5">
                         Twoje ostatnie sesje ze wszystkich modułów
                       </p>
                     </div>
-                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[9px] shrink-0">6 SESJI</TilePill>
+                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[11px] shrink-0">6 SESJI</TilePill>
+                  </div>
+
+                  {/* Quick Stats Strip — balansuje kolumnę wobec sąsiadek (2 karty każda) */}
+                  <div className="grid grid-cols-3 gap-1.5 mb-2">
+                    <div className="flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg bg-foreground/[0.04]">
+                      <span className="text-sm font-bold text-foreground">18</span>
+                      <span className="text-[10px] text-foreground/50">Notatki</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg bg-foreground/[0.04]">
+                      <span className="text-sm font-bold text-foreground">42</span>
+                      <span className="text-[10px] text-foreground/50">Rozmowy</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg bg-foreground/[0.04]">
+                      <span className="text-sm font-bold text-foreground">9</span>
+                      <span className="text-[10px] text-foreground/50">Zdjęcia</span>
+                    </div>
                   </div>
 
                   {/* Filter Pills Bar */}
                   <div className="flex items-center gap-1 mb-2 overflow-x-auto pb-0.5 scrollbar-none">
-                    <button type="button" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium bg-primary/20 text-primary border border-primary/30 shrink-0">
+                    <button type="button" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-primary/20 text-primary border border-primary/30 shrink-0">
                       <Layers className="w-3 h-3" />
                       Wszystko
                     </button>
@@ -1218,17 +1280,17 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                     {RECENT_ITEMS.slice(0, 6).map((item) => (
                       <div
                         key={item.id}
-                        className="group flex items-center justify-between gap-2.5 p-1.5 px-2 rounded-xl border border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.08] transition-all duration-150 cursor-pointer"
+                        className="group flex items-center justify-between gap-2.5 p-1.5 px-2 rounded-xl bg-white/[0.025] hover:bg-white/[0.06] transition-all duration-150 cursor-pointer"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <div className="w-6 h-6 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 group-hover:border-primary/40 group-hover:text-primary transition-colors">
+                          <div className="w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 group-hover:text-primary transition-colors">
                             <item.icon className="w-3 h-3 text-foreground/70 group-hover:text-primary" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h4 className="text-[11px] font-semibold text-foreground truncate group-hover:text-primary transition-colors leading-tight">
+                            <h4 className="text-[12px] font-semibold text-foreground truncate group-hover:text-primary transition-colors leading-tight">
                               {item.title}
                             </h4>
-                            <p className="text-[9px] text-foreground/45 mt-0.5 flex items-center gap-1.5">
+                            <p className="text-[10px] text-foreground/45 mt-0.5 flex items-center gap-1.5">
                               <span>{item.type}</span>
                               <span>•</span>
                               <span>{item.time}</span>
@@ -1266,125 +1328,139 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             )}
           </Tile>
 
-          {/* COLUMN 3 (33%): GRAND STATISTICS & ACTIVITY HUB (Donut Chart + Activity Heatmap Grid + Hero Metrics) */}
-          <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between min-w-0 border-white/[0.06] bg-card/40 h-full">
-            {showContent ? (
-              <div className="flex flex-col justify-between h-full gap-2.5">
-                {/* Header Row matching Screenshot 3 */}
-                <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
-                  <div>
-                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
-                      <BarChart3 className="w-3.5 h-3.5 text-primary shrink-0" />
-                      Przegląd Statystyk
-                    </h3>
-                    <p className="text-[10px] text-foreground/50 font-medium leading-tight">Aktywność konta NextByte</p>
-                  </div>
-                  <TilePill intencja="akcent" className="border-primary/20 bg-primary/10 text-[9px] font-bold">
-                    342 AKCJI
-                  </TilePill>
-                </div>
+          {/* COLUMN 3 (33%): rozbite na 2 karty — ten sam rytm co Kolumna 1, żeby żadna karta nie musiała dźwigać 5 różnych typów treści naraz */}
+          <div className="flex flex-col gap-3 h-full min-w-0">
 
-                {/* Big Metric Section matching Screenshot 3: 2 847 Wygenerowane zapytania (+24%) */}
-                <div className="flex flex-col gap-0.5 pt-0.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl font-extrabold text-foreground tracking-tight">2 847</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full shadow-sm">
-                      <TrendingUp className="w-2.5 h-2.5" /> +24%
-                      <span className="text-[9px] text-foreground/50 font-normal">vs zeszły tydzień</span>
-                    </span>
-                  </div>
-                  <p className="text-[10.5px] text-foreground/60 font-medium">Wygenerowane zapytania</p>
-                </div>
-
-                {/* Section A: Split 2-Column Layout (Left: Enlarged Donut Ring, Right: Responsive Percentage Pills) */}
-                <div className="flex items-center justify-between gap-3 py-1 min-w-0">
-                  {/* Left Side: Enlarged Centered Donut Chart Ring */}
-                  <div className="flex-1 flex items-center justify-center">
-                    <DonutChart size={140} />
+            {/* Card A: Przegląd Statystyk — nagłówek + metryka + donut/legenda */}
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col min-w-0 border-white/[0.06] bg-card/40">
+              {showContent ? (
+                <div className="flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                        <BarChart3 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        Przegląd Statystyk
+                      </h3>
+                      <p className="text-[12px] text-foreground/50 font-medium leading-tight">Aktywność konta NextByte</p>
+                    </div>
+                    <TilePill intencja="akcent" className="border-primary/20 bg-primary/10 text-[11px] font-bold">
+                      342 AKCJI
+                    </TilePill>
                   </div>
 
-                  {/* Right Side: Responsive Percentage Pills matching Theme Colors */}
-                  <div className="flex flex-col gap-1.5 w-[140px] shrink-0">
-                    {DONUT_SEGMENTS.map((seg, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between px-2.5 py-1 rounded-full border text-xs transition-all duration-200 hover:brightness-110 shadow-sm"
-                        style={{
-                          borderColor: tintFaded(seg.color, 30),
-                          backgroundColor: tintFaded(seg.color, 8),
-                        }}
-                      >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span
-                            className="w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: seg.color, boxShadow: `0 0 6px ${tintFaded(seg.color, 70)}` }}
-                          />
-                          <span className="text-foreground/90 font-medium text-[10px] truncate">{seg.label}</span>
-                        </div>
-                        <span
-                          className="font-bold text-[10.5px] shrink-0 ml-1"
-                          style={{ color: seg.color }}
+                  {/* Big Metric */}
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl font-extrabold text-foreground tracking-tight">2 847</span>
+                      <span className="inline-flex items-center gap-1 text-[12px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full shadow-sm">
+                        <TrendingUp className="w-2.5 h-2.5" /> +24%
+                        <span className="text-[11px] text-foreground/50 font-normal">vs zeszły tydzień</span>
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-foreground/60 font-medium">Wygenerowane zapytania</p>
+                  </div>
+
+                  {/* Donut + legenda */}
+                  <div className="flex items-center justify-between gap-3 min-w-0">
+                    <div className="flex-1 flex items-center justify-center">
+                      <DonutChart size={140} />
+                    </div>
+                    <div className="flex flex-col gap-1.5 w-[140px] shrink-0">
+                      {DONUT_SEGMENTS.map((seg, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between px-2.5 py-1 rounded-full border text-xs transition-all duration-200 hover:brightness-110 shadow-sm"
+                          style={{
+                            borderColor: tintFaded(seg.color, 30),
+                            backgroundColor: tintFaded(seg.color, 8),
+                          }}
                         >
-                          {seg.pct}%
-                        </span>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              className="w-1.5 h-1.5 rounded-full shrink-0"
+                              style={{ backgroundColor: seg.color, boxShadow: `0 0 6px ${tintFaded(seg.color, 70)}` }}
+                            />
+                            <span className="text-foreground/90 font-medium text-[12px] truncate">{seg.label}</span>
+                          </div>
+                          <span className="font-bold text-[12px] shrink-0 ml-1" style={{ color: seg.color }}>
+                            {seg.pct}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              ) : (
+                <div className="space-y-3 p-0.5 animate-pulse">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-36 bg-primary/45 rounded" />
+                    <div className="h-3.5 w-12 bg-foreground/20 rounded-full" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 items-center py-1">
+                    <div className="w-20 h-20 rounded-full border-4 border-foreground/15 justify-self-center shrink-0" />
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full bg-foreground/15 rounded" />
+                      <div className="h-2.5 w-4/5 bg-foreground/15 rounded" />
+                      <div className="h-2.5 w-3/4 bg-foreground/15 rounded" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Tile>
 
-                {/* Section B: Thin Horizontal Divider Line */}
-                <div className="w-full border-t border-white/[0.06]" />
+            {/* Card B: Aktywność — heatmapa + status systemu */}
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 min-w-0 border-white/[0.06] bg-card/40">
+              {showContent ? (
+                <div className="flex flex-col gap-2.5 h-full justify-between">
+                  <div>
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Aktywność</h3>
+                    <p className="text-[12px] text-foreground/50 font-medium leading-tight mt-0.5">Ostatnie 18 tygodni</p>
+                  </div>
 
-                {/* Section C: GlassActivityGrid (Full Size Heatmap Matrix filling lower card) */}
-                <div className="w-full flex items-center justify-center overflow-hidden py-0.5">
-                  <GlassActivityGrid
-                    weeksCount={18}
-                    showContent={showContent}
-                    showSummary={false}
-                    showStreaks={false}
-                    compact={false}
-                    hideHeader={true}
-                  />
-                </div>
+                  <div className="w-full flex items-center justify-center overflow-hidden">
+                    <GlassActivityGrid
+                      weeksCount={18}
+                      showContent={showContent}
+                      showSummary={false}
+                      showStreaks={false}
+                      compact={false}
+                      hideHeader={true}
+                    />
+                  </div>
 
-                {/* Bottom Status Pills Row matching Screenshot 3 */}
-                <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-white/[0.06]">
-                  <div className="flex items-center justify-center px-1.5 py-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] text-[9.5px] text-foreground/70">
-                    <span className="font-bold text-primary mr-1">v4.0</span> Wersja
-                  </div>
-                  <div className="flex items-center justify-center px-1.5 py-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] text-[9.5px] text-foreground/70">
-                    <span className="font-bold text-emerald-400 mr-1">99.8%</span> Uptime
-                  </div>
-                  <div className="flex items-center justify-center px-1.5 py-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] text-[9.5px] text-foreground/70">
-                    <span className="font-bold text-amber-400 mr-1">0 Byte</span> Zużycie
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3 p-0.5 animate-pulse">
-                <div className="flex justify-between items-center">
-                  <div className="h-4 w-36 bg-primary/45 rounded" />
-                  <div className="h-3.5 w-12 bg-foreground/20 rounded-full" />
-                </div>
-                <div className="grid grid-cols-2 gap-3 items-center py-1">
-                  <div className="w-20 h-20 rounded-full border-4 border-foreground/15 justify-self-center shrink-0" />
-                  <div className="space-y-1.5">
-                    <div className="h-2.5 w-full bg-foreground/15 rounded" />
-                    <div className="h-2.5 w-4/5 bg-foreground/15 rounded" />
-                    <div className="h-2.5 w-3/4 bg-foreground/15 rounded" />
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <div className="flex items-center justify-center px-1.5 py-1.5 rounded-lg bg-foreground/[0.04] text-[11px] text-foreground/70">
+                      <span className="font-bold text-primary mr-1">v4.0</span> Wersja
+                    </div>
+                    <div className="flex items-center justify-center px-1.5 py-1.5 rounded-lg bg-foreground/[0.04] text-[11px] text-foreground/70">
+                      <span className="font-bold text-emerald-400 mr-1">99.8%</span> Uptime
+                    </div>
+                    <div className="flex items-center justify-center px-1.5 py-1.5 rounded-lg bg-foreground/[0.04] text-[11px] text-foreground/70">
+                      <span className="font-bold text-amber-400 mr-1">0 Byte</span> Zużycie
+                    </div>
                   </div>
                 </div>
-                <div className="h-20 w-full bg-foreground/10 rounded-xl" />
-              </div>
-            )}
-          </Tile>
+              ) : (
+                <div className="space-y-2.5 p-0.5 animate-pulse">
+                  <div className="h-4 w-24 bg-primary/45 rounded" />
+                  <div className="h-20 w-full bg-foreground/10 rounded-xl" />
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <div className="h-7 bg-foreground/10 rounded-lg" />
+                    <div className="h-7 bg-foreground/10 rounded-lg" />
+                    <div className="h-7 bg-foreground/10 rounded-lg" />
+                  </div>
+                </div>
+              )}
+            </Tile>
+
+          </div>
 
         </div>
 
         {/* ── ROW 3: SZYBKA PODRÓŻ (Ostatnie Projekty & Skróty) ── */}
         <div className="flex flex-col gap-2 pt-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/60 flex items-center gap-1.5">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-foreground/60 flex items-center gap-1.5">
               <Zap className="w-3 h-3 text-primary" />
               {showContent ? 'SZYBKA PODRÓŻ' : <div className="h-2.5 w-24 bg-foreground/25 rounded-full" />}
             </span>
@@ -1411,7 +1487,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 {sc.isAdd ? (
                   <div className="flex flex-col items-center justify-center gap-1 text-foreground/40 group-hover:text-primary transition-colors">
                     <Plus className="w-4 h-4 text-foreground/40 group-hover:text-primary transition-colors" />
-                    {showContent && <span className="text-[11px] font-medium">{sc.title}</span>}
+                    {showContent && <span className="text-[12px] font-medium">{sc.title}</span>}
                   </div>
                 ) : (
                   <>
@@ -1420,7 +1496,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                         {sc.icon && <sc.icon className="w-3.5 h-3.5" />}
                       </div>
                       {showContent && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-foreground/50 font-bold">
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-foreground/50 font-bold">
                           {sc.shortcut}
                         </span>
                       )}
@@ -1431,7 +1507,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                           <h4 className="text-xs font-bold text-foreground truncate mt-1 group-hover:text-primary transition-colors">
                             {sc.title}
                           </h4>
-                          <span className="text-[9px] uppercase tracking-wider font-semibold text-foreground/40 mt-0.5 block">
+                          <span className="text-[10px] uppercase tracking-wider font-semibold text-foreground/40 mt-0.5 block">
                             {sc.category}
                           </span>
                         </>
@@ -1489,7 +1565,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               : 'bg-card/40 border-border/80 text-muted-foreground/60'
           )}>
             <PanelLeft className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-center px-1">Przypnij po lewej</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-center px-1">Przypnij po lewej</span>
           </div>
 
           {/* Right Dock Zone */}
@@ -1500,7 +1576,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               : 'bg-card/40 border-border/80 text-muted-foreground/60'
           )}>
             <PanelRight className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-center px-1">Przypnij po prawej</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-center px-1">Przypnij po prawej</span>
           </div>
 
           {/* Ghost preview cursor tracker */}
@@ -1511,7 +1587,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             >
               <Zap className="w-4 h-4 text-primary" />
               <span>Nawigacja NextByte</span>
-              <span className="text-[10px] opacity-75 uppercase">({targetDock ?? 'PRZECIĄGAJ'})</span>
+              <span className="text-[11px] opacity-75 uppercase">({targetDock ?? 'PRZECIĄGAJ'})</span>
             </div>
           )}
         </div>

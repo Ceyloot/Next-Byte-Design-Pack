@@ -262,7 +262,7 @@ export function GlassActivityGrid({
           {/* Days grid row */}
           <div className={cn("flex items-start", compact ? "gap-[2.5px]" : "gap-1")}>
             {/* Day labels column */}
-            <div className={cn("flex flex-col pt-0 pr-0.5 shrink-0 text-foreground/40 font-medium", compact ? "gap-[2.5px] text-[8px]" : "gap-1 text-[9px]")}>
+            <div className={cn("flex flex-col pt-0 pr-0.5 shrink-0 text-foreground/40 font-medium", compact ? "gap-[2.5px] text-[8px]" : "gap-1 text-[10px]")}>
               {DAY_LABELS_PL.map((label, idx) => (
                 <div key={idx} className={cn("flex items-center justify-end leading-none", compact ? "w-4 h-2.5" : "w-5 h-3.5")}>
                   {label}

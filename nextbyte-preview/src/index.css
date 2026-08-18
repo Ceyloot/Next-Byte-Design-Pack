@@ -1172,3 +1172,10 @@ html:not(.is-glass) .nb-szklo button.border {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+/* Segment postępu karuzeli (auto-play) — wypełnia się w tempie interwału,
+   zatrzymuje przez animation-play-state gdy użytkownik hoveruje/pauzuje. */
+@keyframes nb-carousel-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
