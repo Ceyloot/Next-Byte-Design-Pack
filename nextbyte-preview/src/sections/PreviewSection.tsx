@@ -28,6 +28,8 @@ import { StanySection } from '@/sections/StanySection'
 import { CennikSection } from '@/sections/CennikSection'
 import { StudioSection } from '@/sections/StudioSection'
 import { CzatSection } from '@/sections/CzatSection'
+import { CodeCopyButton } from '@/components/ui/CodeExporterModal'
+
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
@@ -662,6 +664,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   // ── Shared horizontal controls (settings, Aa, search, bell, avatar) ──
   const NavControls = () => (
     <div className="flex items-center gap-1.5 shrink-0 pl-2">
+      <CodeCopyButton snippetId="button" label="Kod TSX" className="h-7 border-primary/30" />
       <button
         onClick={onToggleSettings}
         title="Ustawienia wyglądu"

@@ -277,10 +277,14 @@ function AppInner() {
 }
 
 // ── ROOT ───────────────────────────────────────────────────────────
+import { InspectorProvider } from '@/components/ui/ComponentInspector'
+
 export default function App() {
   return (
     <GlassProvider>
-      <AppInner />
+      <InspectorProvider>
+        <AppInner />
+      </InspectorProvider>
     </GlassProvider>
   )
 }

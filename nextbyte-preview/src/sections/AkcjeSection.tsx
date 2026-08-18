@@ -7,7 +7,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { GlassButton, GlassBadge, GlassAlert, GlassChip, GlassAvatar, GlassAvatarGroup, GlassTooltip, GlassDropdown, GlassDropdownSelect, GlassToggle, GlassCard } from '@/components/glass'
 import { useGlass } from '@/lib/glass-context'
-import { cn } from '@/lib/utils'
+import { CodeCopyButton } from '@/components/ui/CodeExporterModal'
+import { Inspectable } from '@/components/ui/ComponentInspector'
+
+
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-4">{children}</p>
@@ -57,18 +60,34 @@ export function AkcjeSection() {
 
       {/* ═══ PRZYCISKI GLASS ═══════════════════════════════════════════════ */}
       <section className="space-y-6">
-        <h3 id="przyciski" className="text-sm font-semibold text-foreground/70">Przyciski (Button)</h3>
+        <div className="flex items-center justify-between">
+          <h3 id="przyciski" className="text-sm font-semibold text-foreground/70">Przyciski (Button)</h3>
+          <CodeCopyButton snippetId="button" label="Kopiuj Kod TSX" />
+        </div>
 
-        <Block label="Warianty glass — Glass / Normal automatycznie">
-          <div className="flex flex-wrap items-center gap-3">
-            <GlassButton variant="primary"><Sparkles className="h-4 w-4" />Primary</GlassButton>
-            <GlassButton variant="solid">Solid</GlassButton>
-            <GlassButton variant="outline">Outline</GlassButton>
-            <GlassButton variant="ghost">Ghost</GlassButton>
-            <GlassButton variant="success"><Zap className="h-4 w-4" />Sukces</GlassButton>
-            <GlassButton variant="danger"><Trash2 className="h-4 w-4" />Usuń</GlassButton>
-            <GlassButton variant="solid" disabled>Wyłączony</GlassButton>
-          </div>
+        <Block label="Warianty glass — Glass / Normal automatycznie (Prawy przycisk myszy = Kopiuj Kod)">
+          <Inspectable
+            title="Warianty Przycisku Glass"
+            category="Akcje"
+            description="Przyciski szklane automatycznie przełączają się pomiędzy trybem Liquid Glass a standardowym."
+            importPath="import { GlassButton } from '@/components/glass'"
+            tsx={`<GlassButton variant="primary"><Sparkles className="h-4 w-4" />Primary</GlassButton>
+<GlassButton variant="solid">Solid</GlassButton>
+<GlassButton variant="outline">Outline</GlassButton>
+<GlassButton variant="ghost">Ghost</GlassButton>
+<GlassButton variant="success"><Zap className="h-4 w-4" />Sukces</GlassButton>
+<GlassButton variant="danger"><Trash2 className="h-4 w-4" />Usuń</GlassButton>`}
+          >
+            <div className="flex flex-wrap items-center gap-3 p-2">
+              <GlassButton variant="primary"><Sparkles className="h-4 w-4" />Primary</GlassButton>
+              <GlassButton variant="solid">Solid</GlassButton>
+              <GlassButton variant="outline">Outline</GlassButton>
+              <GlassButton variant="ghost">Ghost</GlassButton>
+              <GlassButton variant="success"><Zap className="h-4 w-4" />Sukces</GlassButton>
+              <GlassButton variant="danger"><Trash2 className="h-4 w-4" />Usuń</GlassButton>
+              <GlassButton variant="solid" disabled>Wyłączony</GlassButton>
+            </div>
+          </Inspectable>
         </Block>
 
         <Block label="Z ikonami">

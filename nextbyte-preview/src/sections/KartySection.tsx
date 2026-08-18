@@ -6,6 +6,8 @@ import {
 } from '@/components/glass'
 import type { CompareCellValue } from '@/components/glass'
 import { cn } from '@/lib/utils'
+import { CodeCopyButton } from '@/components/ui/CodeExporterModal'
+import { Inspectable } from '@/components/ui/ComponentInspector'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-3">{children}</p>
@@ -23,66 +25,138 @@ export function KartySection() {
 
       {/* KARTY PODSTAWOWE */}
       <div className="space-y-4">
-        <h3 id="karta" className="text-sm font-semibold text-foreground/70">Karta (Card)</h3>
-        <SectionLabel>Warianty zawartości</SectionLabel>
+        <div className="flex items-center justify-between">
+          <h3 id="karta" className="text-sm font-semibold text-foreground/70">Karta (Card & Tile)</h3>
+          <CodeCopyButton snippetId="glass-card" label="Kopiuj Kod Karty" />
+        </div>
+        <SectionLabel>Warianty zawartości (Prawy przycisk myszy = Inspekcja Kodu)</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
           {/* Wariant A — liczba prowadzi, ikona schodzi do roli podpisu.
               Hierarchia niesiona rozmiarem, nie ozdobnikiem. */}
-          <GlassCard className="flex flex-col justify-between gap-5">
-            <div className="space-y-1">
-              <p className="text-3xl font-semibold tracking-tight text-foreground nb-liczby">2,41 M</p>
-              <p className="text-xs text-foreground/50">tokenów przetworzonych w tym miesiącu</p>
-            </div>
-            <div className="flex items-center justify-between border-t border-foreground/[0.08] pt-3">
-              <span className="flex items-center gap-1.5 text-xs text-foreground/45">
-                <BarChart3 className="h-3.5 w-3.5" />Analityka
-              </span>
-              <span className="flex cursor-pointer items-center gap-1 text-xs font-medium text-primary">
-                Szczegóły <ArrowRight className="h-3 w-3" />
-              </span>
-            </div>
-          </GlassCard>
+          <Inspectable
+            title="Karta Analityczna (GlassCard)"
+            category="Karty"
+            description="Szklana karta z zakresem analitycznym i przyciskiem akcji."
+            importPath="import { GlassCard } from '@/components/glass'"
+            tsx={`<GlassCard className="flex flex-col justify-between gap-5">
+  <div className="space-y-1">
+    <p className="text-3xl font-semibold tracking-tight text-foreground nb-liczby">2,41 M</p>
+    <p className="text-xs text-foreground/50">tokenów przetworzonych w tym miesiącu</p>
+  </div>
+  <div className="flex items-center justify-between border-t border-foreground/[0.08] pt-3">
+    <span className="flex items-center gap-1.5 text-xs text-foreground/45">
+      <BarChart3 className="h-3.5 w-3.5" />Analityka
+    </span>
+    <span className="flex cursor-pointer items-center gap-1 text-xs font-medium text-primary">
+      Szczegóły <ArrowRight className="h-3 w-3" />
+    </span>
+  </div>
+</GlassCard>`}
+          >
+            <GlassCard className="flex flex-col justify-between gap-5 h-full">
+              <div className="space-y-1">
+                <p className="text-3xl font-semibold tracking-tight text-foreground nb-liczby">2,41 M</p>
+                <p className="text-xs text-foreground/50">tokenów przetworzonych w tym miesiącu</p>
+              </div>
+              <div className="flex items-center justify-between border-t border-foreground/[0.08] pt-3">
+                <span className="flex items-center gap-1.5 text-xs text-foreground/45">
+                  <BarChart3 className="h-3.5 w-3.5" />Analityka
+                </span>
+                <span className="flex cursor-pointer items-center gap-1 text-xs font-medium text-primary">
+                  Szczegóły <ArrowRight className="h-3 w-3" />
+                </span>
+              </div>
+            </GlassCard>
+          </Inspectable>
 
           {/* Wariant B — lista danych bez zagnieżdżonego pudełka.
               Rytm buduje hairline między wierszami. */}
-          <GlassCard className="space-y-3.5">
-            <div className="flex items-baseline justify-between">
-              <p className="text-sm font-semibold text-foreground">Status systemu</p>
-              <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />operacyjny
-              </span>
-            </div>
-            <div className="divide-y divide-foreground/[0.07]">
-              {[['API Gateway', '99,98%'], ['Model Router', '99,95%'], ['Vector DB', '99,99%']].map(([s, v]) => (
-                <div key={s} className="flex items-center justify-between py-2 text-xs first:pt-0 last:pb-0">
-                  <span className="text-foreground/60">{s}</span>
-                  <span className="font-medium text-foreground/85 nb-liczby">{v}</span>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
+          <Inspectable
+            title="Karta Statusu Systemu (GlassCard)"
+            category="Karty"
+            description="Karta ze wskaźnikami gotowości usług."
+            importPath="import { GlassCard } from '@/components/glass'"
+            tsx={`<GlassCard className="space-y-3.5">
+  <div className="flex items-baseline justify-between">
+    <p className="text-sm font-semibold text-foreground">Status systemu</p>
+    <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />operacyjny
+    </span>
+  </div>
+  <div className="divide-y divide-foreground/[0.07]">
+    {[['API Gateway', '99,98%'], ['Model Router', '99,95%'], ['Vector DB', '99,99%']].map(([s, v]) => (
+      <div key={s} className="flex items-center justify-between py-2 text-xs">
+        <span className="text-foreground/60">{s}</span>
+        <span className="font-medium text-foreground/85 nb-liczby">{v}</span>
+      </div>
+    ))}
+  </div>
+</GlassCard>`}
+          >
+            <GlassCard className="space-y-3.5 h-full">
+              <div className="flex items-baseline justify-between">
+                <p className="text-sm font-semibold text-foreground">Status systemu</p>
+                <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />operacyjny
+                </span>
+              </div>
+              <div className="divide-y divide-foreground/[0.07]">
+                {[['API Gateway', '99,98%'], ['Model Router', '99,95%'], ['Vector DB', '99,99%']].map(([s, v]) => (
+                  <div key={s} className="flex items-center justify-between py-2 text-xs first:pt-0 last:pb-0">
+                    <span className="text-foreground/60">{s}</span>
+                    <span className="font-medium text-foreground/85 nb-liczby">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          </Inspectable>
 
           {/* Wariant C — pasek istotności zamiast badge'a w rogu.
               Stan czyta się z formy, nie tylko z koloru tekstu. */}
-          <GlassCard className="space-y-3.5">
-            <div className="flex items-baseline justify-between">
-              <p className="text-sm font-semibold text-foreground">Bezpieczeństwo</p>
-              <span className="text-xs text-foreground/45 nb-liczby">3 zdarzenia</span>
-            </div>
-            <div className="space-y-2">
-              {[
-                ['Nieautoryzowany dostęp',   'bg-destructive',   'text-foreground/85'],
-                ['Podejrzane logowania',     'bg-primary',       'text-foreground/85'],
-                ['Sprawdzenie certyfikatów', 'bg-foreground/25', 'text-foreground/50'],
-              ].map(([t, bar, tone]) => (
-                <div key={t} className="flex items-stretch gap-2.5">
-                  <span className={cn('w-0.5 shrink-0 rounded-full', bar)} />
-                  <span className={cn('py-0.5 text-xs', tone)}>{t}</span>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
+          <Inspectable
+            title="Karta Bezpieczeństwa (GlassCard)"
+            category="Karty"
+            description="Karta zdarzeń bezpieczeństwa z paskami ważności."
+            importPath="import { GlassCard } from '@/components/glass'"
+            tsx={`<GlassCard className="space-y-3.5">
+  <div className="flex items-baseline justify-between">
+    <p className="text-sm font-semibold text-foreground">Bezpieczeństwo</p>
+    <span className="text-xs text-foreground/45 nb-liczby">3 zdarzenia</span>
+  </div>
+  <div className="space-y-2">
+    {[
+      ['Nieautoryzowany dostęp',   'bg-destructive',   'text-foreground/85'],
+      ['Podejrzane logowania',     'bg-primary',       'text-foreground/85'],
+      ['Sprawdzenie certyfikatów', 'bg-foreground/25', 'text-foreground/50'],
+    ].map(([t, bar, tone]) => (
+      <div key={t} className="flex items-stretch gap-2.5">
+        <span className={cn('w-0.5 shrink-0 rounded-full', bar)} />
+        <span className={cn('py-0.5 text-xs', tone)}>{t}</span>
+      </div>
+    ))}
+  </div>
+</GlassCard>`}
+          >
+            <GlassCard className="space-y-3.5 h-full">
+              <div className="flex items-baseline justify-between">
+                <p className="text-sm font-semibold text-foreground">Bezpieczeństwo</p>
+                <span className="text-xs text-foreground/45 nb-liczby">3 zdarzenia</span>
+              </div>
+              <div className="space-y-2">
+                {[
+                  ['Nieautoryzowany dostęp',   'bg-destructive',   'text-foreground/85'],
+                  ['Podejrzane logowania',     'bg-primary',       'text-foreground/85'],
+                  ['Sprawdzenie certyfikatów', 'bg-foreground/25', 'text-foreground/50'],
+                ].map(([t, bar, tone]) => (
+                  <div key={t} className="flex items-stretch gap-2.5">
+                    <span className={cn('w-0.5 shrink-0 rounded-full', bar)} />
+                    <span className={cn('py-0.5 text-xs', tone)}>{t}</span>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          </Inspectable>
         </div>
       </div>
 
