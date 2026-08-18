@@ -79,6 +79,60 @@ export function PaletaSection() {
         </div>
 
         <div className="max-w-2xl space-y-2 pt-2">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/40 mb-3">Grubość (font-weight)</p>
+          <div className="flex flex-wrap gap-4">
+            {[
+              { cls: 'font-normal',   label: '400 · normal' },
+              { cls: 'font-medium',   label: '500 · medium' },
+              { cls: 'font-semibold', label: '600 · semibold' },
+              { cls: 'font-bold',     label: '700 · bold' },
+              { cls: 'font-extrabold', label: '800 · extrabold' },
+              { cls: 'font-black',    label: '900 · black' },
+            ].map((w) => (
+              <div key={w.label} className="flex flex-col items-start gap-0.5">
+                <span className={`text-base text-foreground ${w.cls}`}>NextByte</span>
+                <code className="text-[9px] font-mono text-foreground/40">{w.label}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-2xl space-y-2 pt-2">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/40 mb-3">Interlinia (line-height)</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              { cls: 'leading-none',   label: 'leading-none · 1' },
+              { cls: 'leading-snug',   label: 'leading-snug · 1.375' },
+              { cls: 'leading-relaxed', label: 'leading-relaxed · 1.625' },
+            ].map((l) => (
+              <div key={l.label} className="rounded-xl border border-border bg-card/60 p-3">
+                <p className={`text-xs text-foreground/80 ${l.cls}`}>
+                  Kompaktowy tekst UI zawija się do dwóch lub trzech linii w karcie.
+                </p>
+                <code className="text-[9px] font-mono text-foreground/40 mt-1.5 block">{l.label}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-2xl space-y-2 pt-2">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/40 mb-3">Rozstaw liter (letter-spacing)</p>
+          <div className="flex flex-wrap gap-4">
+            {[
+              { cls: 'tracking-tight', label: 'tracking-tight' },
+              { cls: 'tracking-normal', label: 'tracking-normal' },
+              { cls: 'tracking-wide',  label: 'tracking-wide' },
+              { cls: 'tracking-widest', label: 'tracking-widest (uppercase etykiety)' },
+            ].map((t) => (
+              <div key={t.label} className="flex flex-col items-start gap-0.5">
+                <span className={`text-sm font-semibold text-foreground uppercase ${t.cls}`}>NextByte</span>
+                <code className="text-[9px] font-mono text-foreground/40">{t.label}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-2xl space-y-2 pt-2">
           <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/40 mb-3">Fonty systemowe</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-1">
@@ -97,6 +151,160 @@ export function PaletaSection() {
               <p className="text-xs text-foreground/40">Metryki, cyfry w UI</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── SEMANTYCZNE KOLORY ── */}
+      <div id="semantyczne" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Kolory semantyczne</h3>
+        <p className="text-xs text-foreground/50">
+          Stałe niezależnie od motywu — sukces/ostrzeżenie/błąd muszą znaczyć to samo wszędzie.
+          Używane m.in. w <code className="text-[10px] bg-foreground/8 px-1 rounded">GlassBadge</code>.
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { label: 'success', cls: 'bg-emerald-400', text: 'text-emerald-400' },
+            { label: 'warning', cls: 'bg-amber-400',   text: 'text-amber-400' },
+            { label: 'danger',  cls: 'bg-red-400',     text: 'text-red-400' },
+            { label: 'info',    cls: 'bg-sky-400',     text: 'text-sky-400' },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center gap-2 rounded-xl border border-border bg-card/60 p-2">
+              <div className={`h-8 w-8 shrink-0 rounded-lg ${s.cls}`} />
+              <div className="min-w-0">
+                <p className={`text-xs font-semibold ${s.text}`}>{s.label}</p>
+                <p className="font-mono text-[9px] text-muted-foreground">Tailwind *-400</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── SKALA ODSTĘPÓW (4pt grid) ── */}
+      <div id="odstepy" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Skala odstępów (4pt grid)</h3>
+        <p className="text-xs text-foreground/50">Każdy odstęp w systemie jest wielokrotnością 4px — Tailwind spacing scale.</p>
+        <div className="flex flex-wrap items-end gap-3">
+          {[1, 2, 3, 4, 5, 6, 8, 10, 12, 16].map((n) => (
+            <div key={n} className="flex flex-col items-center gap-1.5">
+              <div className="bg-primary/60 rounded" style={{ width: `${n * 4}px`, height: `${n * 4}px` }} />
+              <code className="text-[9px] font-mono text-foreground/40">{n * 4}px</code>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── PROMIENIE OBRAMOWANIA ── */}
+      <div id="promienie" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Promienie obramowania</h3>
+        <div className="flex flex-wrap gap-3">
+          {[
+            { cls: 'rounded-none', label: 'none' },
+            { cls: 'rounded-sm',   label: 'sm · 2px' },
+            { cls: 'rounded-md',   label: 'md · 6px' },
+            { cls: 'rounded-lg',   label: 'lg · 8px' },
+            { cls: 'rounded-xl',   label: 'xl · 12px' },
+            { cls: 'rounded-2xl',  label: '2xl · 16px' },
+            { cls: 'rounded-3xl',  label: '3xl · 24px' },
+            { cls: 'rounded-full', label: 'full' },
+          ].map((r) => (
+            <div key={r.label} className="flex flex-col items-center gap-1.5">
+              <div className={`h-12 w-12 bg-primary/15 border border-primary/40 ${r.cls}`} />
+              <code className="text-[9px] font-mono text-foreground/40">{r.label}</code>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CIENIE / ELEWACJA — realna 3-stopniowa skala z tile.tsx ── */}
+      <div id="cienie" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Cienie / elewacja</h3>
+        <p className="text-xs text-foreground/50">
+          Tylko 3 stopnie — nie wolno dopisywać czwartego. Definicja w <code className="text-[10px] bg-foreground/8 px-1 rounded">tile.tsx</code>.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { label: 'plaska', desc: 'w płaszczyźnie strony — tylko obramowanie', cls: 'shadow-none' },
+            { label: 'uniesiona', desc: 'domyślny kafelek', cls: 'shadow-[0_1px_2px_0_rgb(0_0_0/0.06),0_8px_24px_-12px_rgb(0_0_0/0.28),inset_0_1px_0_0_rgb(255_255_255/0.06)]' },
+            { label: 'wyżej', desc: 'kafelek pod kursorem, panel nakładany', cls: 'shadow-[0_2px_4px_0_rgb(0_0_0/0.08),0_16px_40px_-16px_rgb(0_0_0/0.4),inset_0_1px_0_0_rgb(255_255_255/0.1)]' },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-2xl border border-border bg-card p-4 ${s.cls}`}>
+              <p className="text-xs font-semibold text-foreground">{s.label}</p>
+              <p className="text-[10px] text-foreground/50 mt-0.5">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── SKALA NIEPRZEZROCZYSTOŚCI ── */}
+      <div id="opacity" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Nieprzezroczystość</h3>
+        <div className="flex flex-wrap gap-3">
+          {[10, 20, 40, 60, 80, 100].map((o) => (
+            <div key={o} className="flex flex-col items-center gap-1.5">
+              <div className="h-10 w-10 rounded-lg bg-primary" style={{ opacity: o / 100 }} />
+              <code className="text-[9px] font-mono text-foreground/40">{o}%</code>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── BREAKPOINTY ── */}
+      <div id="breakpointy" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Breakpointy</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {[
+            { key: 'sm', px: '640px' },
+            { key: 'md', px: '768px' },
+            { key: 'lg', px: '1024px' },
+            { key: 'xl', px: '1280px' },
+            { key: '2xl', px: '1536px' },
+          ].map((b) => (
+            <div key={b.key} className="rounded-xl border border-border bg-card/60 p-2.5 text-center">
+              <p className="text-xs font-bold text-primary font-mono">{b.key}</p>
+              <p className="text-[10px] text-foreground/50 font-mono mt-0.5">{b.px}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CZAS ANIMACJI I EASING ── */}
+      <div id="animacje-tokeny" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Czas animacji i easing</h3>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: 'duration-150', ms: '150ms — mikro-interakcje (hover, focus)' },
+            { label: 'duration-200', ms: '200ms — domyślne przejścia (border, bg)' },
+            { label: 'duration-300', ms: '300ms — otwieranie nakładek' },
+            { label: 'duration-500', ms: '500ms — przewijanie karuzeli/slajdów' },
+            { label: 'ease-out',     ms: 'cubic-bezier(0,0,0.2,1) — domyślny easing' },
+          ].map((a) => (
+            <div key={a.label} className="rounded-xl border border-border bg-card/60 px-3 py-2">
+              <code className="text-[10px] font-mono text-primary">{a.label}</code>
+              <p className="text-[10px] text-foreground/50 mt-0.5">{a.ms}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Z-INDEX ── */}
+      <div id="z-index" className="space-y-4 pt-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Warstwy (z-index)</h3>
+        <div className="flex flex-col gap-1.5 max-w-md">
+          {[
+            { label: 'base',         z: '0',    desc: 'treść strony' },
+            { label: 'sticky',       z: '20',   desc: 'sticky header/navbar' },
+            { label: 'dropdown',     z: '50',   desc: 'dropdown, popover, tooltip' },
+            { label: 'overlay',      z: '9999', desc: 'modal, drawer, drag-overlay' },
+            { label: 'toast',        z: '10000', desc: 'powiadomienia — zawsze na wierzchu' },
+          ].map((l) => (
+            <div key={l.label} className="flex items-center justify-between rounded-lg border border-border/50 bg-card/40 px-3 py-1.5">
+              <span className="text-xs font-medium text-foreground/80">{l.label}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-foreground/40">{l.desc}</span>
+                <code className="text-[10px] font-mono text-primary shrink-0">z-{l.z}</code>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -461,7 +461,7 @@ function CustomCheckbox({
         "group flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-150 cursor-pointer select-none border",
         checked
           ? "border-primary/30 bg-primary/10 text-foreground"
-          : "border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.08] text-foreground/70"
+          : "border-foreground/[0.04] bg-white/[0.02] hover:bg-white/[0.05] hover:border-foreground/[0.08] text-foreground/70"
       )}
     >
       <div
@@ -469,7 +469,7 @@ function CustomCheckbox({
           "w-4 h-4 rounded-[5px] border flex items-center justify-center shrink-0 transition-colors",
           checked
             ? "border-primary bg-primary/20 text-primary shadow-[0_0_8px_hsl(var(--primary)/0.4)]"
-            : "border-white/20 bg-white/[0.03] group-hover:border-white/40"
+            : "border-foreground/20 bg-white/[0.03] group-hover:border-foreground/40"
         )}
       >
         {checked && <Check className="w-3 h-3 text-primary stroke-[3]" />}
@@ -842,7 +842,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             <Zap className="w-3.5 h-3.5 text-background" />
           </div>
 
-          <div className="w-full border-t border-white/[0.08] mb-1 shrink-0" />
+          <div className="w-full border-t border-foreground/[0.08] mb-1 shrink-0" />
 
           <nav className="flex flex-col items-center gap-1.5 w-full">
             {DESIGN_TABS.map((tab) => {
@@ -869,7 +869,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         </div>
 
         {/* Dolna sekcja: Kontrolki systemowe i profil (taki sam spacing góra-dół) */}
-        <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-white/[0.08] shrink-0">
+        <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-foreground/[0.08] shrink-0">
           <button
             title="Ustawienia"
             onClick={onToggleSettings}
@@ -961,7 +961,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         {activeTab === 'preview' && <>
 
 
-        <Tile intencja="akcent" elewacja="uniesiona" className="py-2.5 px-3 md:px-4 border-white/[0.06] bg-card/40 transition-[box-shadow,border-color,background-color] duration-200">
+        <Tile intencja="akcent" elewacja="uniesiona" className="py-2.5 px-3 md:px-4 border-foreground/[0.06] bg-card/40 transition-[box-shadow,border-color,background-color] duration-200">
 
           <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:gap-5">
 
@@ -1040,7 +1040,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               </button>
               <button
                 type="button"
-                className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-3 border-white/[0.08] hover:border-white/[0.15] text-muted-foreground hover:text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-auto"
+                className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-3 border-foreground/[0.08] hover:border-foreground/[0.15] text-muted-foreground hover:text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-auto"
               >
                 <Receipt className="h-3 w-3 shrink-0" />
                 {showContent ? 'Wydatki' : <div className="h-2 w-10 bg-foreground/25 rounded-full" />}
@@ -1054,7 +1054,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         <div className="w-full flex items-center justify-end gap-4 z-20">
           <div className="flex items-center gap-4 w-full">
             <div className={cn(
-              "nb-szklo nb-szklo-pigulka relative z-10 flex min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/[0.08] transition-all duration-300 h-10 px-3.5 bg-card/40 shadow-sm",
+              "nb-szklo nb-szklo-pigulka relative z-10 flex min-w-0 flex-1 items-center gap-2.5 rounded-full border border-foreground/[0.08] transition-all duration-300 h-10 px-3.5 bg-card/40 shadow-sm",
               showContent ? "focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20" : "animate-pulse border-foreground/10"
             )}>
               <Search className={cn("w-3.5 h-3.5 shrink-0", showContent ? "text-primary" : "text-foreground/30")} />
@@ -1071,7 +1071,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                   <div className="h-3 w-64 bg-foreground/20 rounded-full" />
                 )}
               </div>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-muted-foreground/60 flex-shrink-0 whitespace-nowrap">
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-foreground/10 text-[10px] font-mono text-muted-foreground/60 flex-shrink-0 whitespace-nowrap">
                 <span>⌘</span>K
               </kbd>
             </div>
@@ -1085,11 +1085,11 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           <div className="flex flex-col gap-3 h-full min-w-0">
 
             {/* Card 1: NOWOŚCI (Top Left) */}
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between border-white/[0.06] bg-card/40">
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between border-foreground/[0.06] bg-card/40">
               {showContent ? (
                 <div className="flex flex-col gap-2.5">
                   {/* Header */}
-                  <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-foreground/[0.06]">
                     <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 animate-pulse" />
                       NOWOŚCI
@@ -1194,12 +1194,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             </Tile>
 
             {/* Card 2: Lista Zadań (Bottom Left) */}
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 border-white/[0.06] bg-card/40">
-              <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-white/[0.06]">
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 border-foreground/[0.06] bg-card/40">
+              <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-foreground/[0.06]">
                 {showContent ? (
                   <>
                     <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Lista Zadań</h3>
-                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[10px]">4 ZADANIA</TilePill>
+                    <TilePill intencja="neutralna" className="border-foreground/10 bg-white/5 text-[10px]">4 ZADANIA</TilePill>
                   </>
                 ) : (
                   <>
@@ -1224,12 +1224,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           </div>
 
           {/* COLUMN 2 (33%): Wróć do roboty */}
-          <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between min-w-0 border-white/[0.06] bg-card/40 h-full">
+          <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between min-w-0 border-foreground/[0.06] bg-card/40 h-full">
             {showContent ? (
               <div className="flex flex-col justify-between h-full">
                 <div>
                   {/* Header */}
-                  <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-white/[0.06]">
+                  <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-foreground/[0.06]">
                     <div>
                       <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -1239,7 +1239,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                         Twoje ostatnie sesje ze wszystkich modułów
                       </p>
                     </div>
-                    <TilePill intencja="neutralna" className="border-white/10 bg-white/5 text-[11px] shrink-0">6 SESJI</TilePill>
+                    <TilePill intencja="neutralna" className="border-foreground/10 bg-white/5 text-[11px] shrink-0">6 SESJI</TilePill>
                   </div>
 
                   {/* Quick Stats Strip — balansuje kolumnę wobec sąsiadek (2 karty każda) */}
@@ -1315,7 +1315,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 </div>
                 <div className="space-y-1.5 pt-1">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-2 p-1.5 rounded-xl border border-white/[0.04] bg-white/[0.02]">
+                    <div key={i} className="flex items-center gap-2 p-1.5 rounded-xl border border-foreground/[0.04] bg-white/[0.02]">
                       <div className="w-6 h-6 rounded-lg bg-foreground/15 shrink-0" />
                       <div className="flex-1 space-y-1">
                         <div className="h-2.5 w-32 bg-foreground/20 rounded" />
@@ -1332,7 +1332,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           <div className="flex flex-col gap-3 h-full min-w-0">
 
             {/* Card A: Przegląd Statystyk — nagłówek + metryka + donut/legenda */}
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col min-w-0 border-white/[0.06] bg-card/40">
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col min-w-0 border-foreground/[0.06] bg-card/40">
               {showContent ? (
                 <div className="flex flex-col gap-2.5">
                   <div className="flex items-center justify-between">
@@ -1409,7 +1409,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             </Tile>
 
             {/* Card B: Aktywność — heatmapa + status systemu */}
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 min-w-0 border-white/[0.06] bg-card/40">
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 min-w-0 border-foreground/[0.06] bg-card/40">
               {showContent ? (
                 <div className="flex flex-col gap-2.5 h-full justify-between">
                   <div>
@@ -1496,7 +1496,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                         {sc.icon && <sc.icon className="w-3.5 h-3.5" />}
                       </div>
                       {showContent && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-foreground/50 font-bold">
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-foreground/10 text-foreground/50 font-bold">
                           {sc.shortcut}
                         </span>
                       )}

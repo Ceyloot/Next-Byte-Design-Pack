@@ -6,25 +6,25 @@
 ---
 
 ## 01 · Design Tokens
-- [ ] Color scale (primary)
+- [x] Color scale (primary) — `PaletaSection` 22 zmienne kontraktu ✓
 - [ ] Color scale (secondary)
 - [ ] Color scale (neutral/gray)
-- [ ] Semantic colors (success, warning, error, info)
-- [ ] Typography scale (font-size)
-- [ ] Typography scale (font-weight)
-- [ ] Typography scale (line-height)
-- [ ] Typography scale (letter-spacing)
-- [ ] Spacing scale (4pt grid)
-- [ ] Border radius scale
-- [ ] Shadow / Elevation scale
-- [ ] Z-index scale
-- [ ] Breakpoints (sm/md/lg/xl/2xl)
-- [ ] Opacity scale
-- [ ] Animation duration & easing
+- [x] Semantic colors (success, warning, error, info) — `PaletaSection` ✓
+- [x] Typography scale (font-size) — `PaletaSection` ✓
+- [x] Typography scale (font-weight) — `PaletaSection` ✓
+- [x] Typography scale (line-height) — `PaletaSection` ✓
+- [x] Typography scale (letter-spacing) — `PaletaSection` ✓
+- [x] Spacing scale (4pt grid) — `PaletaSection` ✓
+- [x] Border radius scale — `PaletaSection` ✓
+- [x] Shadow / Elevation scale — `PaletaSection` (3 stopnie z tile.tsx) ✓
+- [x] Z-index scale — `PaletaSection` ✓
+- [x] Breakpoints (sm/md/lg/xl/2xl) — `PaletaSection` ✓
+- [x] Opacity scale — `PaletaSection` ✓
+- [x] Animation duration & easing — `PaletaSection` ✓
 - [ ] Grid system (columns/gutter/margin)
 - [ ] Dark mode token map
 - [ ] Light mode token map
-- [ ] CSS custom properties (vars)
+- [x] CSS custom properties (vars) — `PaletaSection` (żywe wartości z getComputedStyle) ✓
 - [ ] Token documentation page
 
 ## 02 · Logo & Identyfikacja
@@ -405,20 +405,20 @@
 - [ ] List item z ikoną
 - [ ] List item z akcją
 - [ ] List — wirtualizowany (długi)
-- [ ] Tabela — podstawowa
-- [ ] Tabela — z sortowaniem
-- [ ] Tabela — z filtrami
-- [ ] Tabela — z paginacją
-- [ ] Tabela — z zaznaczaniem
-- [ ] Tabela — responsive (scroll)
-- [ ] Tabela — sticky nagłówek
+- [x] Tabela — podstawowa — `GlassTable` ✓
+- [x] Tabela — z sortowaniem — `GlassTable sortable` ✓
+- [x] Tabela — z filtrami — `GlassTable` + `Input` (Dane) ✓
+- [x] Tabela — z paginacją — `GlassTable + GlassPagination` ✓
+- [x] Tabela — z zaznaczaniem — `GlassTable selectable` ✓
+- [x] Tabela — responsive (scroll) — `GlassTable` (overflow-x-auto) ✓
+- [x] Tabela — sticky nagłówek — `GlassTable stickyHeader` ✓
 - [ ] Tabela — zagnieżdżone wiersze
 - [ ] Data grid (edytowalny)
 - [ ] Key-value pair
 - [ ] Definition list (dl)
 - [x] Stat / KPI card — `GlassStat` ✓
-- [ ] Stats group (3–4 liczby)
-- [ ] Metric z trendem (↑↓)
+- [x] Stats group (3–4 liczby) — `GlassStat` grid (Dane) ✓
+- [x] Metric z trendem (↑↓) — sparkline KPI cards (Dane) ✓
 - [ ] Number ticker / count-up
 - [x] Badge — status — `GlassBadge` ✓
 - [ ] Badge — kategoria
@@ -428,10 +428,10 @@
 - [x] Chip / tag — `GlassChip` ✓
 - [x] Chip removable — `GlassChip onRemove` ✓
 - [ ] Tag cloud
-- [ ] Timeline (pionowa)
-- [ ] Timeline (pozioma)
-- [ ] Activity feed
-- [ ] Feed item (avatar + akcja)
+- [x] Timeline (pionowa) — `GlassTimeline` ✓
+- [x] Timeline (pozioma) — `GlassTimeline orientation=horizontal` ✓
+- [x] Activity feed — `GlassActivityFeed` ✓
+- [x] Feed item (avatar + akcja) — `GlassActivityFeed` (ikona/inicjały + akcja) ✓
 - [ ] Log / console view
 - [ ] JSON viewer
 - [ ] Code diff viewer
@@ -444,36 +444,36 @@
 - [ ] Calendar heatmap
 
 ## 15 · Wizualizacja Danych
-- [ ] Bar chart — pionowy
-- [ ] Bar chart — poziomy
-- [ ] Bar chart — grupowany
-- [ ] Bar chart — stacked
-- [ ] Line chart
-- [ ] Line chart z obszarem (area)
+- [x] Bar chart — pionowy — `GlassBarChart` ✓
+- [x] Bar chart — poziomy — `GlassBarChart orientation=horizontal` ✓
+- [x] Bar chart — grupowany — `GlassBarChart` ✓
+- [x] Bar chart — stacked — `GlassBarChart mode=stacked` ✓
+- [x] Line chart — `GlassLineChart` ✓
+- [x] Line chart z obszarem (area) — `GlassLineChart showArea` ✓
 - [ ] Area chart — stacked
 - [ ] Pie chart
-- [ ] Donut chart
+- [x] Donut chart — `GlassRing segments` (Dane + Preview) ✓
 - [ ] Scatter plot
 - [ ] Bubble chart
-- [ ] Heatmap
+- [x] Heatmap — `GlassActivityGrid` ✓
 - [ ] Treemap
 - [ ] Funnel chart
-- [ ] Gauge / Dial
-- [ ] Sparkline (inline)
+- [x] Gauge / Dial — `GlassRing variant=gauge` ✓
+- [x] Sparkline (inline) — `GlassSparkline` ✓
 - [ ] Candlestick (finansowy)
 - [ ] Radar / Spider chart
 - [x] Progress ring (kołowy) — `GlassRing` ✓
-- [ ] Mini bar (inline w tabeli)
-- [ ] Legenda wykresu
+- [x] Mini bar (inline w tabeli) — `GlassSparkline variant=bar` ✓
+- [x] Legenda wykresu — `GlassLineChart` / `GlassBarChart seriesLabels` ✓
 - [ ] Tooltip wykresu
 - [ ] Empty state wykresu
-- [ ] Axis labels
-- [ ] Grid lines
+- [x] Axis labels — `GlassBarChart showAxisLabels` / `GlassLineChart showYLabels` ✓
+- [x] Grid lines — `GlassLineChart` (poziome linie siatki) ✓
 - [ ] Highlight / annotation na wykresie
 - [ ] Chart controls (zoom, filter)
 - [ ] Map (choropleth)
-- [ ] Sparkline tabelaryczny
-- [ ] Trend arrow + %, KPI tile
+- [x] Sparkline tabelaryczny — `GlassSparkline` w wierszach (Dane) ✓
+- [x] Trend arrow + %, KPI tile — sparkline KPI cards (Dane) ✓
 
 ## 16 · Media & Zasoby
 - [ ] Obraz — responsive (srcset)
@@ -769,13 +769,13 @@
 - [ ] CSS gradient animate
 
 ## 27 · Dostępność (A11y)
-- [ ] Skip navigation link
-- [ ] Focus trap (modal/drawer)
-- [ ] ARIA live region (toast)
-- [ ] Screen reader only text (sr-only)
+- [x] Skip navigation link — `SkipLink` ✓
+- [x] Focus trap (modal/drawer) — `useFocusTrap` ✓
+- [x] ARIA live region (toast) — `LiveRegion` ✓
+- [x] Screen reader only text (sr-only) — `SrOnly` ✓
 - [ ] High contrast mode support
-- [ ] Reduced motion (@media)
-- [ ] Keyboard shortcut legend
+- [x] Reduced motion (@media) — `useReducedMotion` ✓
+- [x] Keyboard shortcut legend — `GlassKbd` ✓
 - [ ] Focus visible ring (global)
 - [ ] Label powiązany z inputem
 - [ ] Error powiązany z inputem (aria-describedby)
@@ -855,7 +855,7 @@
 
 | Kategoria | Gotowe | Razem |
 |-----------|--------|-------|
-| Design Tokens | 0 | 20 |
+| Design Tokens | 14 | 20 |
 | Logo & Identyfikacja | 0 | 21 |
 | Typografia | 0 | 27 |
 | Ikony | 0 | 18 |
@@ -868,8 +868,8 @@
 | Karty & Kontenery | 11 | 32 |
 | Nakładki | 11 | 26 |
 | Feedback & Stany | 25 | 42 |
-| Wyświetlanie Danych | 4 | 44 |
-| Wizualizacja Danych | 1 | 30 |
+| Wyświetlanie Danych | 17 | 44 |
+| Wizualizacja Danych | 17 | 30 |
 | Media & Zasoby | 5 | 26 |
 | Stany Ładowania | 15 | 19 |
 | Marketing & Landing | 0 | 42 |
@@ -881,10 +881,10 @@
 | Kalendarz & Czas | 0 | 14 |
 | Mobile Patterns | 0 | 17 |
 | Animacje & Przejścia | 0 | 32 |
-| Dostępność (A11y) | 0 | 17 |
+| Dostępność (A11y) | 6 | 17 |
 | Utilities & Misc | 0 | 25 |
 | Tła Profilowe & Wzory | 1 | 10 |
 | Brandbook & Styleguide | 0 | 20 |
-| **RAZEM** | **132** | **783** |
+| **RAZEM** | **181** | **783** |
 
-**Postęp: 16.9%**
+**Postęp: 23.1%**

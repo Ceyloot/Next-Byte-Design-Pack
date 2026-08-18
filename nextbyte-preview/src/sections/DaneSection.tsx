@@ -1,7 +1,7 @@
 import React from 'react'
 import {
   RefreshCw, Database, HardDrive, Users, Zap, FileStack, Table2, TicketCheck,
-  GitCommit, Rocket, ShieldCheck, AlertTriangle, CheckCircle2, Upload, MessageSquare, Camera,
+  GitCommit, Rocket, ShieldCheck, AlertTriangle, CheckCircle2, Upload, MessageSquare, Camera, Search,
 } from 'lucide-react'
 import {
   GlassCard, GlassPanel, GlassBadge, GlassButton, GlassRing, GlassProgress, GlassTable,
@@ -9,6 +9,7 @@ import {
   GlassTimeline, GlassActivityFeed,
 } from '@/components/glass'
 import type { GlassTableColumn, TimelineEvent, FeedItem } from '@/components/glass'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { CHART_1, CHART_2, CHART_3, CHART_4, CHART_NEUTRAL, TINT_1, TINT_2, TINT_3, TINT_4 } from '@/lib/chart-colors'
 
@@ -156,6 +157,12 @@ const FEED: FeedItem[] = [
 
 export function DaneSection() {
   const [tablePage, setTablePage] = React.useState(1)
+  const [selectedRows, setSelectedRows] = React.useState<Array<string | number>>([])
+  const [modelFilter, setModelFilter] = React.useState('')
+  const filteredModels = MODEL_ROWS.filter((r) =>
+    r.model.toLowerCase().includes(modelFilter.toLowerCase()) ||
+    r.provider.toLowerCase().includes(modelFilter.toLowerCase()),
+  )
   return (
     <div className="space-y-8">
 
@@ -307,16 +314,39 @@ export function DaneSection() {
       {/* TABELA */}
       <div className="space-y-4">
         <h3 id="tabela" className="text-sm font-semibold text-foreground/70">Tabela danych (Table)</h3>
-        <SectionLabel>Sortowalna — kliknij nagłówek kolumny · Glass / Normal automatycznie</SectionLabel>
+
+        <SectionLabel>Z filtrem i zaznaczaniem wierszy — kliknij nagłówek by sortować</SectionLabel>
+        <Input
+          value={modelFilter}
+          onChange={(e) => setModelFilter(e.target.value)}
+          placeholder="Filtruj po modelu lub dostawcy..."
+          iconLeft={<Search className="h-3.5 w-3.5" />}
+          className="max-w-xs"
+        />
         <GlassTable
           caption="Dostępne modele AI — ceny za 1M tokenów"
           columns={MODEL_COLS}
-          data={MODEL_ROWS}
+          data={filteredModels}
+          rowKey={(row) => row.model}
+          selectable
+          selectedKeys={selectedRows}
+          onSelectionChange={setSelectedRows}
         />
         <div className="flex items-center justify-between">
-          <span className="text-xs text-foreground/40">{MODEL_ROWS.length} wyników · strona {tablePage} z 4</span>
+          <span className="text-xs text-foreground/40">
+            {filteredModels.length} wyników{selectedRows.length > 0 ? ` · ${selectedRows.length} zaznaczonych` : ''} · strona {tablePage} z 4
+          </span>
           <GlassPagination page={tablePage} total={4} onChange={setTablePage} />
         </div>
+
+        <SectionLabel>Sticky nagłówek — przewiń w pionie</SectionLabel>
+        <GlassTable
+          columns={MODEL_COLS}
+          data={MODEL_ROWS}
+          stickyHeader
+          maxHeight="180px"
+        />
+
         <SectionLabel>Wariant kompaktowy</SectionLabel>
         <GlassTable
           compact
