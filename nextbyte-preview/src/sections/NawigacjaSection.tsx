@@ -66,7 +66,7 @@ export function NawigacjaSection() {
 
       {/* ── GÓRNA NAWIGACJA ──────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Górna nawigacja (Horizontal Nav)</h3>
+        <h3 id="nav-gorna" className="text-sm font-semibold text-foreground/70">Górna nawigacja (Horizontal Nav)</h3>
         <SectionLabel>Logo + pigułki zakładek + klaster akcji — 1:1 z paskiem głównym Preview</SectionLabel>
         <header className={cn(
           isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
@@ -129,7 +129,7 @@ export function NawigacjaSection() {
 
       {/* ── DOLNA NAWIGACJA ──────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Dolna nawigacja (Bottom Nav)</h3>
+        <h3 id="nav-dolna" className="text-sm font-semibold text-foreground/70">Dolna nawigacja (Bottom Nav)</h3>
         <SectionLabel>5 zakładek z ikonami i etykietami — mobilowa konwencja</SectionLabel>
         <div className={cn(
           isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
@@ -166,7 +166,7 @@ export function NawigacjaSection() {
 
       {/* ── BOCZNA NAWIGACJA ─────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Boczna nawigacja (Sidebar Nav)</h3>
+        <h3 id="nav-boczna" className="text-sm font-semibold text-foreground/70">Boczna nawigacja (Sidebar Nav)</h3>
         <SectionLabel>Ikony z tooltipami — zwijany sidebar · Glass / Normal automatycznie</SectionLabel>
         <div className="flex items-start gap-6">
           {/* Icon-only sidebar */}
@@ -247,7 +247,7 @@ export function NawigacjaSection() {
 
       {/* ── DROPDOWN ─────────────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Dropdown nav</h3>
+        <h3 id="nav-dropdown" className="text-sm font-semibold text-foreground/70">Dropdown nav</h3>
         <SectionLabel>Menu wysuwa się pod triggerem — Glass / Normal automatycznie</SectionLabel>
         <div className="flex flex-wrap items-start gap-6">
           <div className="flex flex-col gap-1.5">
@@ -286,7 +286,7 @@ export function NawigacjaSection() {
 
       {/* ── NBTABS ───────────────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">NbTabs — liquid glass z animowaną pigułką</h3>
+        <h3 id="nav-tabs" className="text-sm font-semibold text-foreground/70">NbTabs — liquid glass z animowaną pigułką</h3>
         <SectionLabel>Spinning conic-gradient na aktywnej zakładce</SectionLabel>
         <NbTabs tabs={NB_TABS_DATA} className="w-fit" />
       </div>

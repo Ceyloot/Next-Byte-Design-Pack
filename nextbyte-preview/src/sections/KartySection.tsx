@@ -1,6 +1,9 @@
 import React from 'react'
-import { BarChart3, Users, Activity, Shield, Zap, Layers, ArrowRight, Sparkles, Brain, Database, Globe, Lock, Cpu, Star } from 'lucide-react'
-import { GlassCard, GlassStat, GlassPanel, GlassBadge, GlassButton, GlassModelSearch, GlassFeatureRow, GlassCompareTable } from '@/components/glass'
+import { BarChart3, Users, Activity, Shield, Zap, Layers, ArrowRight, Sparkles, Brain, Database, Globe, Lock, Cpu, Star, Camera, FileText, Headphones, Package } from 'lucide-react'
+import {
+  GlassCard, GlassStat, GlassPanel, GlassBadge, GlassButton, GlassModelSearch,
+  GlassFeatureRow, GlassCompareTable, GlassMediaCard, GlassProductCard, GlassProfileCard,
+} from '@/components/glass'
 import type { CompareCellValue } from '@/components/glass'
 import { cn } from '@/lib/utils'
 
@@ -20,7 +23,7 @@ export function KartySection() {
 
       {/* KARTY PODSTAWOWE */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Karta (Card)</h3>
+        <h3 id="karta" className="text-sm font-semibold text-foreground/70">Karta (Card)</h3>
         <SectionLabel>Warianty zawartości</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
@@ -97,7 +100,7 @@ export function KartySection() {
 
       {/* PANEL */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Panel (GlassPanel)</h3>
+        <h3 id="panel" className="text-sm font-semibold text-foreground/70">Panel (GlassPanel)</h3>
         <SectionLabel>Toolbar + lista statusów</SectionLabel>
         <GlassPanel className="flex-wrap p-3">
           <GlassBadge intent="success" dot>API v2</GlassBadge>
@@ -110,14 +113,14 @@ export function KartySection() {
 
       {/* MODEL SEARCH */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Wybór modelu AI (GlassModelSearch)</h3>
+        <h3 id="model-search" className="text-sm font-semibold text-foreground/70">Wybór modelu AI (GlassModelSearch)</h3>
         <SectionLabel>Komponent złożony — wyszukiwanie + karty modeli</SectionLabel>
         <GlassModelSearch />
       </div>
 
       {/* FEATURE ROW */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Wiersz cechy (GlassFeatureRow)</h3>
+        <h3 id="feature-row" className="text-sm font-semibold text-foreground/70">Wiersz cechy (GlassFeatureRow)</h3>
         <SectionLabel>Lista funkcji planu — ikona + opis + odznaka · Glass / Normal automatycznie</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-2">
           <GlassCard className="divide-y divide-foreground/[0.06] !p-0 overflow-hidden">
@@ -172,6 +175,153 @@ export function KartySection() {
             { label: 'SLA',                     values: ['Brak',      '99.9%',      '99.99%'      ] as CompareCellValue[] },
           ]}
         />
+      </div>
+
+      {/* KARTY Z MEDIAMI */}
+      <div className="space-y-4">
+        <h3 id="karta-media" className="text-sm font-semibold text-foreground/70">Karta z obrazkiem (Media Card)</h3>
+
+        <SectionLabel>Pionowa — miniatura nad treścią</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <GlassMediaCard
+            title="Grok Image — kosmiczny realizm"
+            description="Najmocniejsze odwzorowanie ludzi i fotorealizm. Twarze, skóra, światło."
+            meta="Studio Zdjęć · 2 dni temu"
+            badge="NOWOŚĆ"
+            icon={Camera}
+            onClick={() => {}}
+          />
+          <GlassMediaCard
+            title="Model Chat AI 4.0"
+            description="O 300% szybsza generacja kodu i automatyczna synteza instrukcji."
+            meta="Chat AI · 5 dni temu"
+            icon={Brain}
+            gradient="from-cyan-500/30 via-blue-600/25 to-indigo-600/20"
+            onClick={() => {}}
+          />
+          <GlassMediaCard
+            title="Wprowadzenie do PromptEx"
+            description="Jak pisać instrukcje, które model naprawdę rozumie."
+            meta="Akademia · 12:48"
+            video
+            duration="12:48"
+            gradient="from-amber-500/30 via-orange-600/25 to-red-600/20"
+            onClick={() => {}}
+          />
+        </div>
+
+        <SectionLabel>Pozioma — miniatura z boku, do list i kanałów</SectionLabel>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <GlassMediaCard
+            horizontal
+            title="Raport miesięczny — sierpień"
+            description="Zużycie Byte, najczęstsze modele, koszty per projekt."
+            meta="PDF · 2.4 MB"
+            icon={FileText}
+            onClick={() => {}}
+          />
+          <GlassMediaCard
+            horizontal
+            title="Podcast: AI w małej firmie"
+            description="Rozmowa o tym, co realnie przyspiesza pracę zespołu."
+            meta="Audio · 38 min"
+            icon={Headphones}
+            gradient="from-emerald-500/30 via-teal-600/25 to-cyan-600/20"
+            onClick={() => {}}
+          />
+        </div>
+      </div>
+
+      {/* KARTY PRODUKTU */}
+      <div className="space-y-4">
+        <h3 id="karta-produkt" className="text-sm font-semibold text-foreground/70">Karta produktu (Product Card)</h3>
+        <SectionLabel>Z ceną, oceną, odznaką i stanem „niedostępny”</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <GlassProductCard
+            name="Pakiet 950 Byte"
+            price="179 zł"
+            oldPrice="219 zł"
+            badge="-18%"
+            rating={5}
+            reviews={412}
+            icon={Zap}
+          />
+          <GlassProductCard
+            name="Pakiet 1500 Byte"
+            price="269 zł"
+            badge="BESTSELLER"
+            rating={4}
+            reviews={287}
+            icon={Package}
+            gradient="from-emerald-500/30 via-teal-600/25 to-cyan-600/20"
+          />
+          <GlassProductCard
+            name="Pakiet 2450 Byte"
+            price="349 zł"
+            rating={5}
+            reviews={156}
+            icon={Database}
+            gradient="from-amber-500/30 via-orange-600/25 to-red-600/20"
+          />
+          <GlassProductCard
+            name="Pakiet 6070 Byte"
+            price="849 zł"
+            rating={4}
+            reviews={38}
+            icon={Cpu}
+            soldOut
+          />
+        </div>
+      </div>
+
+      {/* KARTY PROFILU */}
+      <div className="space-y-4">
+        <h3 id="karta-profil" className="text-sm font-semibold text-foreground/70">Karta profilu (Profile Card)</h3>
+
+        <SectionLabel>Kompaktowa — avatar, rola, akcja</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <GlassProfileCard
+            name="Anna Wiśniewska"
+            role="Twórczyni treści"
+            online
+            actions={<GlassButton size="sm" variant="ghost">Napisz</GlassButton>}
+          />
+          <GlassProfileCard
+            name="Michał Kowalski"
+            role="Deweloper · Plan Ultimate"
+            actions={<GlassBadge intent="primary" size="sm">ULTIMATE</GlassBadge>}
+          />
+        </div>
+
+        <SectionLabel>Pełna — z okładką, bio i statystykami</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <GlassProfileCard
+            cover
+            name="Tomasz Rybak"
+            role="Właściciel małej firmy"
+            bio="Przeniosłem cały zespół na NextByte. Wspólna pula Byte i jedno rozliczenie oszczędzają nam realny czas."
+            online
+            stats={[
+              { label: 'Projekty', value: '24' },
+              { label: 'Zapytania', value: '8.4k' },
+              { label: 'Od', value: '2024' },
+            ]}
+            actions={<GlassButton size="sm" className="w-full">Zobacz profil</GlassButton>}
+          />
+          <GlassProfileCard
+            cover
+            name="Karolina Nowak"
+            role="Freelancerka · Design"
+            bio="Priorytetowa kolejka robi różnicę w godzinach szczytu — moje zapytania po prostu nie czekają."
+            gradient="from-emerald-500/35 via-teal-600/25 to-cyan-600/20"
+            stats={[
+              { label: 'Projekty', value: '61' },
+              { label: 'Zapytania', value: '19k' },
+              { label: 'Od', value: '2023' },
+            ]}
+            actions={<GlassButton size="sm" variant="ghost" className="w-full">Obserwuj</GlassButton>}
+          />
+        </div>
       </div>
 
     </div>

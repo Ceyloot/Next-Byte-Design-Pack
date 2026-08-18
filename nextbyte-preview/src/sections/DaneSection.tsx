@@ -1,7 +1,15 @@
 import React from 'react'
-import { RefreshCw, Database, HardDrive, Users, Zap, FileStack, Table2, TicketCheck } from 'lucide-react'
-import { GlassCard, GlassPanel, GlassBadge, GlassButton, GlassRing, GlassProgress, GlassTable, GlassLineChart, GlassActivityGrid, GlassPagination } from '@/components/glass'
-import type { GlassTableColumn } from '@/components/glass'
+import {
+  RefreshCw, Database, HardDrive, Users, Zap, FileStack, Table2, TicketCheck,
+  GitCommit, Rocket, ShieldCheck, AlertTriangle, CheckCircle2, Upload, MessageSquare, Camera,
+} from 'lucide-react'
+import {
+  GlassCard, GlassPanel, GlassBadge, GlassButton, GlassRing, GlassProgress, GlassTable,
+  GlassLineChart, GlassActivityGrid, GlassPagination, GlassBarChart, GlassSparkline,
+  GlassTimeline, GlassActivityFeed,
+} from '@/components/glass'
+import type { GlassTableColumn, TimelineEvent, FeedItem } from '@/components/glass'
+import { cn } from '@/lib/utils'
 import { CHART_1, CHART_2, CHART_3, CHART_4, CHART_NEUTRAL, TINT_1, TINT_2, TINT_3, TINT_4 } from '@/lib/chart-colors'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -95,6 +103,55 @@ const PROGRESS_BARS = [
   { label: 'Magazyn plików',            value: 11,    valueLabel: <>10.6 GB ze 100.0 GB <strong className="text-foreground">11%</strong></> },
   { label: 'Aktywni miesięcznie (MAU)', value: 0.022, valueLabel: <>22 z 100 000 <strong className="text-foreground">&lt;1%</strong></> },
   { label: 'Transfer wychodzący',       value: 0,     valueLabel: <span className="text-foreground/40">niemierzalny</span> },
+]
+
+// ── Dane do wykresu słupkowego ────────────────────────────────────
+const BAR_SIMPLE = DAYS.map((label, i) => ({ label, values: [1200, 1850, 1540, 2180, 1920, 820, 2847][i] }))
+
+const BAR_GROUPED = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze'].map((label, i) => ({
+  label,
+  values: [
+    [420, 680, 590, 940, 1150, 1380][i],
+    [310, 520, 640, 700, 890, 1120][i],
+    [180, 290, 350, 480, 610, 790][i],
+  ],
+}))
+
+const BAR_HORIZONTAL = [
+  { label: 'GPT-4o',      values: 2847 },
+  { label: 'Claude 4',    values: 2140 },
+  { label: 'Gemini 1.5',  values: 1680 },
+  { label: 'Llama 3',     values: 940 },
+  { label: 'Mistral',     values: 520 },
+]
+
+// ── Dane do sparkline ─────────────────────────────────────────────
+const SPARK_UP   = [12, 18, 15, 24, 22, 31, 28, 42, 48]
+const SPARK_DOWN = [48, 42, 45, 33, 36, 28, 24, 19, 14]
+const SPARK_FLAT = [24, 27, 25, 28, 26, 29, 27, 30, 28]
+
+// ── Dane do osi czasu ─────────────────────────────────────────────
+const TIMELINE: TimelineEvent[] = [
+  { title: 'Wdrożenie v4.0',        description: 'Nowy model AI i przebudowany panel statystyk.', time: '14:32', status: 'done',    icon: Rocket },
+  { title: 'Migracja bazy danych',  description: 'Przeniesiono 2.4 mln rekordów bez przestoju.',  time: '13:05', status: 'done',    icon: Database },
+  { title: 'Audyt bezpieczeństwa',  description: 'Skan zależności w toku — 0 krytycznych.',       time: '11:48', status: 'active',  icon: ShieldCheck },
+  { title: 'Przegląd limitów API',  description: 'Zaplanowane na najbliższy sprint.',             time: '09:20', status: 'pending', icon: AlertTriangle },
+]
+
+const TIMELINE_H: TimelineEvent[] = [
+  { title: 'Zamówienie',  time: '09:00', status: 'done',    icon: CheckCircle2 },
+  { title: 'Płatność',    time: '09:04', status: 'done',    icon: CheckCircle2 },
+  { title: 'Pakowanie',   time: '11:20', status: 'active',  icon: FileStack },
+  { title: 'Wysyłka',     time: '—',     status: 'pending', icon: Upload },
+  { title: 'Dostawa',     time: '—',     status: 'pending', icon: Rocket },
+]
+
+const FEED: FeedItem[] = [
+  { actor: 'Anna Wiśniewska', action: 'wygenerowała obraz w',      target: 'Studio Zdjęć',  time: '2 minuty temu',  icon: Camera },
+  { actor: 'Michał Kowalski', action: 'rozpoczął rozmowę w',       target: 'Chat AI',       time: '18 minut temu',  icon: MessageSquare },
+  { actor: 'System',          action: 'wdrożył wersję',            target: 'v4.0.1',        time: '1 godzinę temu', icon: GitCommit },
+  { actor: 'Tomasz Rybak',    action: 'przesłał 12 plików do',     target: 'Bazy Danych',   time: '3 godziny temu', icon: Upload },
+  { actor: 'Karolina Nowak',  action: 'przekroczyła 80% limitu',   target: 'Byte',          time: '5 godzin temu',  icon: Zap },
 ]
 
 export function DaneSection() {
@@ -215,7 +272,7 @@ export function DaneSection() {
 
       {/* DONUT — wielosegmentowy GlassRing */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Donut / Kołowy (GlassRing — segments)</h3>
+        <h3 id="donut" className="text-sm font-semibold text-foreground/70">Donut / Kołowy (GlassRing — segments)</h3>
         <SectionLabel>Kategorialny podział — każdy segment ma inny kolor, zwalidowany pod CVD</SectionLabel>
         <GlassCard className="flex flex-col sm:flex-row items-center gap-8">
           <GlassRing
@@ -249,7 +306,7 @@ export function DaneSection() {
 
       {/* TABELA */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Tabela danych (Table)</h3>
+        <h3 id="tabela" className="text-sm font-semibold text-foreground/70">Tabela danych (Table)</h3>
         <SectionLabel>Sortowalna — kliknij nagłówek kolumny · Glass / Normal automatycznie</SectionLabel>
         <GlassTable
           caption="Dostępne modele AI — ceny za 1M tokenów"
@@ -273,7 +330,7 @@ export function DaneSection() {
 
       {/* WYKRES LINIOWY */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Wykres liniowy (Line Chart)</h3>
+        <h3 id="wykres" className="text-sm font-semibold text-foreground/70">Wykres liniowy (Line Chart)</h3>
 
         <SectionLabel>Seria pojedyncza z obszarem — aktywność w tygodniu</SectionLabel>
         <GlassCard>
@@ -308,7 +365,7 @@ export function DaneSection() {
 
       {/* HEATMAPA */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Heatmapa aktywności</h3>
+        <h3 id="heatmapa" className="text-sm font-semibold text-foreground/70">Heatmapa aktywności</h3>
         <SectionLabel>Siatka aktywności — 26 tygodni · najedź na dzień by zobaczyć tooltip</SectionLabel>
         <GlassCard padding="p-5">
           <GlassActivityGrid weeksCount={26} showSummary showStreaks />
@@ -316,6 +373,130 @@ export function DaneSection() {
         <SectionLabel>Wariant kompaktowy — 12 tygodni</SectionLabel>
         <GlassCard padding="p-4">
           <GlassActivityGrid weeksCount={12} compact showSummary={false} showStreaks={false} hideHeader />
+        </GlassCard>
+      </div>
+
+      {/* WYKRES SŁUPKOWY */}
+      <div className="space-y-4">
+        <h3 id="slupkowy" className="text-sm font-semibold text-foreground/70">Wykres słupkowy (Bar Chart)</h3>
+
+        <SectionLabel>Pionowy — pojedyncza seria z wartościami</SectionLabel>
+        <GlassCard>
+          <GlassBarChart data={BAR_SIMPLE} height={200} showValues />
+        </GlassCard>
+
+        <SectionLabel>Pionowy grupowany — trzy serie obok siebie</SectionLabel>
+        <GlassCard>
+          <GlassBarChart
+            data={BAR_GROUPED}
+            height={210}
+            seriesLabels={['Chat AI', 'Studio Zdjęć', 'Prompty']}
+            colors={[TINT_1, TINT_2, TINT_3]}
+          />
+        </GlassCard>
+
+        <SectionLabel>Pionowy skumulowany (stacked) — udział w sumie</SectionLabel>
+        <GlassCard>
+          <GlassBarChart
+            data={BAR_GROUPED}
+            mode="stacked"
+            height={210}
+            seriesLabels={['Chat AI', 'Studio Zdjęć', 'Prompty']}
+            colors={[TINT_1, TINT_2, TINT_3]}
+          />
+        </GlassCard>
+
+        <SectionLabel>Poziomy — ranking, gdy etykiety są długie</SectionLabel>
+        <GlassCard>
+          <GlassBarChart data={BAR_HORIZONTAL} orientation="horizontal" height={190} showValues />
+        </GlassCard>
+      </div>
+
+      {/* SPARKLINE */}
+      <div className="space-y-4">
+        <h3 id="sparkline" className="text-sm font-semibold text-foreground/70">Sparkline (mini wykres inline)</h3>
+        <SectionLabel>W kafelkach KPI — kolor wynika automatycznie ze znaku trendu</SectionLabel>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { label: 'Zapytania',   value: '2 847', delta: '+24%', data: SPARK_UP,   up: true  },
+            { label: 'Błędy API',   value: '14',    delta: '−71%', data: SPARK_DOWN, up: false },
+            { label: 'Czas odp.',   value: '182ms', delta: '+2%',  data: SPARK_FLAT, up: true  },
+          ].map((k) => (
+            <GlassCard key={k.label} padding="p-3.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wide text-foreground/45">{k.label}</p>
+                  <p className="mt-1 text-xl font-bold text-foreground tabular-nums">{k.value}</p>
+                  <p className={cn('mt-0.5 text-[10px] font-bold', k.up ? 'text-emerald-400' : 'text-red-400')}>
+                    {k.delta}
+                  </p>
+                </div>
+                <GlassSparkline data={k.data} autoTrendColor width={80} height={40} />
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+
+        <SectionLabel>Warianty — linia z obszarem, linia bez obszaru, słupki</SectionLabel>
+        <GlassCard className="flex flex-wrap items-center gap-8">
+          {[
+            { label: 'line + area', node: <GlassSparkline data={SPARK_UP} width={110} height={34} /> },
+            { label: 'line',        node: <GlassSparkline data={SPARK_UP} showArea={false} width={110} height={34} /> },
+            { label: 'bar',         node: <GlassSparkline data={SPARK_UP} variant="bar" width={110} height={34} /> },
+          ].map((v) => (
+            <div key={v.label} className="flex flex-col gap-1.5">
+              {v.node}
+              <code className="font-mono text-[9px] text-foreground/35">{v.label}</code>
+            </div>
+          ))}
+        </GlassCard>
+
+        <SectionLabel>W wierszu tabeli — trend obok wartości</SectionLabel>
+        <GlassCard padding="p-0" className="overflow-hidden">
+          {[
+            { model: 'GPT-4o',      req: '2 847', data: SPARK_UP },
+            { model: 'Claude 4',    req: '2 140', data: SPARK_FLAT },
+            { model: 'Gemini 1.5',  req: '1 680', data: SPARK_DOWN },
+          ].map((r, i) => (
+            <div
+              key={r.model}
+              className={cn('flex items-center gap-4 px-4 py-2.5', i !== 2 && 'border-b border-foreground/[0.06]')}
+            >
+              <span className="flex-1 text-xs font-medium text-foreground/80">{r.model}</span>
+              <GlassSparkline data={r.data} autoTrendColor width={70} height={22} showArea={false} />
+              <span className="w-14 text-right font-mono text-xs font-semibold text-foreground tabular-nums">{r.req}</span>
+            </div>
+          ))}
+        </GlassCard>
+      </div>
+
+      {/* OŚ CZASU */}
+      <div className="space-y-4">
+        <h3 id="timeline" className="text-sm font-semibold text-foreground/70">Oś czasu (Timeline)</h3>
+
+        <SectionLabel>Pionowa — statusy done / active / pending, kolor niesie stan</SectionLabel>
+        <GlassCard>
+          <GlassTimeline events={TIMELINE} />
+        </GlassCard>
+
+        <SectionLabel>Pozioma — tracker etapów zamówienia</SectionLabel>
+        <GlassCard>
+          <GlassTimeline events={TIMELINE_H} orientation="horizontal" />
+        </GlassCard>
+
+        <SectionLabel>Wariant kompaktowy — do paneli bocznych</SectionLabel>
+        <GlassCard className="max-w-sm">
+          <GlassTimeline events={TIMELINE.slice(0, 3)} compact />
+        </GlassCard>
+      </div>
+
+      {/* KANAŁ AKTYWNOŚCI */}
+      <div className="space-y-4">
+        <h3 id="feed" className="text-sm font-semibold text-foreground/70">Kanał aktywności (Activity Feed)</h3>
+        <SectionLabel>Kto · co zrobił · gdzie · kiedy</SectionLabel>
+        <GlassCard padding="p-2" className="max-w-xl">
+          <GlassActivityFeed items={FEED} />
         </GlassCard>
       </div>
 

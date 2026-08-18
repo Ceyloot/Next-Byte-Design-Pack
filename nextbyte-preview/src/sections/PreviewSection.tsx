@@ -7,7 +7,7 @@ import {
   Check, Edit2, FileText, Layers, Folder, Calendar, BarChart3,
   MonitorPlay, LayoutGrid, Navigation as NavIcon, BarChart2, Loader, Palette, Tag,
   PanelTop, PanelLeft, PanelBottom, PanelRight, Settings, GripVertical, GripHorizontal, Move,
-  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon,
+  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon, Activity,
 } from 'lucide-react'
 import type { NavPosition } from '@/App'
 import { cn } from '@/lib/utils'
@@ -26,61 +26,83 @@ import { PaletaSection } from '@/sections/PaletaSection'
 import { DaneSection } from '@/sections/DaneSection'
 import { StanySection } from '@/sections/StanySection'
 import { CennikSection } from '@/sections/CennikSection'
+import { StudioSection } from '@/sections/StudioSection'
+import { CzatSection } from '@/sections/CzatSection'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string }
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string }
 
 const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
   { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
-    { name: 'Podstawowe',       icon: Square },
-    { name: 'Z nagłówkiem',     icon: Layers },
-    { name: 'Interaktywne',     icon: Zap },
-    { name: 'Zwarty widok',     icon: BarChart3 },
+    { name: 'Podstawowe',       icon: Square,        scrollId: 'karta' },
+    { name: 'Z nagłówkiem',     icon: Layers,        scrollId: 'panel' },
+    { name: 'Interaktywne',     icon: Zap,           scrollId: 'model-search' },
+    { name: 'Zwarty widok',     icon: BarChart3,     scrollId: 'feature-row' },
+    { name: 'Z obrazkiem',      icon: Camera,        scrollId: 'karta-media' },
+    { name: 'Produktowa',       icon: ShoppingBag,   scrollId: 'karta-produkt' },
+    { name: 'Profilowa',        icon: Users,         scrollId: 'karta-profil' },
   ]},
   { key: 'akcje',      label: 'Akcje',      icon: Sparkles,     items: [
-    { name: 'Przyciski',        icon: Sparkles },
-    { name: 'Tagi i pigułki',   icon: Tag },
-    { name: 'Toggle',           icon: ToggleLeft },
+    { name: 'Przyciski',        icon: Sparkles,      scrollId: 'przyciski' },
+    { name: 'Tagi i pigułki',   icon: Tag,           scrollId: 'badge' },
+    { name: 'Toggle',           icon: ToggleLeft,    scrollId: 'toggle' },
   ]},
   { key: 'formularze', label: 'Formularze', icon: SlidersHorizontal, items: [
-    { name: 'Input / Textarea', icon: FileText },
-    { name: 'Select',           icon: ChevronRight },
-    { name: 'Checkbox / Radio', icon: CheckSquare },
+    { name: 'Input / Textarea', icon: FileText,      scrollId: 'input' },
+    { name: 'Select',           icon: ChevronRight,  scrollId: 'select' },
+    { name: 'Checkbox / Radio', icon: CheckSquare,   scrollId: 'checkbox' },
+    { name: 'Combobox',         icon: Search,        scrollId: 'combobox' },
+    { name: 'Kalendarz / data', icon: Calendar,      scrollId: 'kalendarz' },
+    { name: 'Stepper',          icon: ArrowUpRight,  scrollId: 'stepper' },
   ]},
   { key: 'nawigacja',  label: 'Nawigacja',  icon: NavIcon,      items: [
-    { name: 'Górna',            icon: PanelTop },
-    { name: 'Dolna',            icon: PanelBottom },
-    { name: 'Lewa / Prawa',     icon: PanelLeft },
-    { name: 'Dropdown',         icon: ChevronRight },
-    { name: 'Glass',            icon: Sparkles, badge: 'NEW' },
+    { name: 'Górna',            icon: PanelTop,      scrollId: 'nav-gorna' },
+    { name: 'Dolna',            icon: PanelBottom,   scrollId: 'nav-dolna' },
+    { name: 'Lewa / Prawa',     icon: PanelLeft,     scrollId: 'nav-boczna' },
+    { name: 'Dropdown',         icon: ChevronRight,  scrollId: 'nav-dropdown' },
+    { name: 'Glass',            icon: Sparkles, badge: 'NEW', scrollId: 'nav-tabs' },
   ]},
   { key: 'nakładki',   label: 'Nakładki',   icon: PanelTop,     items: [
-    { name: 'Modal / Dialog',   icon: Square },
-    { name: 'Toast',            icon: Bell },
-    { name: 'Tooltip',          icon: MessageSquare },
-    { name: 'Drawer',           icon: PanelRight },
+    { name: 'Modal / Dialog',   icon: Square,        scrollId: 'modal' },
+    { name: 'Toast',            icon: Bell,          scrollId: 'toast' },
+    { name: 'Tooltip',          icon: MessageSquare, scrollId: 'tooltip' },
+    { name: 'Drawer',           icon: PanelRight,    scrollId: 'drawer' },
+    { name: 'Paleta poleceń',   icon: Terminal,      scrollId: 'command-palette' },
   ]},
   { key: 'dane',       label: 'Dane',       icon: BarChart2,    items: [
-    { name: 'Tabela',           icon: Database },
-    { name: 'Wykres liniowy',   icon: BarChart },
-    { name: 'Donut / Kołowy',   icon: BarChart3 },
-    { name: 'Heatmapa',         icon: Grid },
+    { name: 'Tabela',           icon: Database,      scrollId: 'tabela' },
+    { name: 'Wykres liniowy',   icon: BarChart,      scrollId: 'wykres' },
+    { name: 'Wykres słupkowy',  icon: BarChart3,     scrollId: 'slupkowy' },
+    { name: 'Sparkline',        icon: TrendingUp,    scrollId: 'sparkline' },
+    { name: 'Donut / Kołowy',   icon: BarChart3,     scrollId: 'donut' },
+    { name: 'Heatmapa',         icon: Grid,          scrollId: 'heatmapa' },
+    { name: 'Oś czasu',         icon: Clock,         scrollId: 'timeline' },
+    { name: 'Kanał aktywności', icon: Activity,      scrollId: 'feed' },
+  ]},
+  { key: 'czat',       label: 'Czat',       icon: MessageSquare, items: [
+    { name: 'Wątek',            icon: MessageSquare, scrollId: 'czat-watek' },
+    { name: 'Bąbel',            icon: Square,        scrollId: 'czat-babel' },
+    { name: 'Wskaźnik pisania', icon: MoreHorizontal, scrollId: 'czat-typing' },
+    { name: 'Nagłówek',         icon: PanelTop,      scrollId: 'czat-naglowek' },
+    { name: 'Pasek wpisywania', icon: Type,          scrollId: 'czat-input' },
   ]},
   { key: 'stany',      label: 'Stany',      icon: Loader,       items: [
-    { name: 'Ładowanie',        icon: Loader },
-    { name: 'Błąd',            icon: AlertCircle },
-    { name: 'Pusty widok',     icon: Square },
-    { name: 'Szkielet (Skeleton)', icon: Square },
+    { name: 'Ładowanie',           icon: Loader,        scrollId: 'ladowanie' },
+    { name: 'Błąd',               icon: AlertCircle,   scrollId: 'blad' },
+    { name: 'Pusty widok',        icon: Square,        scrollId: 'pusty-widok' },
+    { name: 'Szkielet (Skeleton)', icon: Square,        scrollId: 'szkielet' },
   ]},
   { key: 'paleta',     label: 'Paleta',     icon: Palette,      items: [
-    { name: 'Kolory motywu',    icon: Palette },
-    { name: 'Typografia',       icon: Type },
-    { name: 'Ikony',            icon: Sparkles },
+    { name: 'Kolory motywu',    icon: Palette,       scrollId: 'kolory' },
+    { name: 'Typografia',       icon: Type,          scrollId: 'typografia' },
+    { name: 'Ikony',            icon: Sparkles,      scrollId: 'ikony' },
+    { name: 'Dostępność (a11y)', icon: Shield,       scrollId: 'a11y' },
   ]},
   { key: 'cennik',     label: 'Cennik',     icon: TagIcon,      items: [] },
+  { key: 'studio',     label: 'Studio',     icon: Layers,       items: [] },
 ]
 
 // ── Chart Data ────────────────────────────────────────────────────
@@ -483,6 +505,8 @@ function renderSection(key: string): React.ReactNode {
     case 'stany':      return <StanySection />
     case 'paleta':     return <PaletaSection />
     case 'cennik':     return <CennikSection />
+    case 'studio':     return <StudioSection />
+    case 'czat':       return <CzatSection />
     default:           return null
   }
 }
@@ -751,7 +775,15 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             {megaItems.map((item, i) => (
               <button
                 key={i}
-                onClick={() => { onSelectTab?.(openMenu!); openMenuDelayed(null) }}
+                onClick={() => {
+                  onSelectTab?.(openMenu!)
+                  openMenuDelayed(null)
+                  if (item.scrollId) {
+                    setTimeout(() => {
+                      document.getElementById(item.scrollId!)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }, 120)
+                  }
+                }}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap w-full text-left text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent hover:border-foreground/[0.08]"
               >
                 <item.icon className="w-3.5 h-3.5 shrink-0" />
@@ -926,14 +958,19 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Saldo Byte</p>
                 <p className="mt-0.5 text-xl font-bold leading-none tabular-nums text-foreground flex items-center">
-                  4 820<span className="ml-1 text-sm text-primary font-normal">⟠</span>
+                  {showContent
+                    ? <>{`4 820`}<span className="ml-1 text-sm text-primary font-normal">⟠</span></>
+                    : <span className="h-5 w-16 bg-foreground/25 rounded-md inline-block animate-pulse" />
+                  }
                 </p>
               </div>
-              <button type="button" aria-label="Wersja platformy Beta 4.0.0" className="inline-flex rounded-full outline-none">
-                <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border font-semibold uppercase tracking-wide border-primary/30 bg-primary/10 text-primary h-4 gap-1 px-1.5 text-[9px]">
-                  Beta 4.0.0
-                </span>
-              </button>
+              {showContent && (
+                <button type="button" aria-label="Wersja platformy Beta 4.0.0" className="inline-flex rounded-full outline-none">
+                  <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border font-semibold uppercase tracking-wide border-primary/30 bg-primary/10 text-primary h-4 gap-1 px-1.5 text-[9px]">
+                    Beta 4.0.0
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Vertical Separator */}
@@ -943,11 +980,19 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             <div className="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
               {/* Date timeline + Range buttons — above the bar as scale */}
               <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
-                <span className="flex flex-1 items-center justify-between tabular-nums">
-                  <span>09.08</span>
-                  <span className="hidden sm:inline">12.08</span>
-                  <span>dziś</span>
-                </span>
+                {showContent ? (
+                  <span className="flex flex-1 items-center justify-between tabular-nums">
+                    <span>09.08</span>
+                    <span className="hidden sm:inline">12.08</span>
+                    <span>dziś</span>
+                  </span>
+                ) : (
+                  <span className="flex flex-1 items-center justify-between">
+                    <div className="h-2 w-8 bg-foreground/20 rounded-full" />
+                    <div className="h-2 w-8 bg-foreground/20 rounded-full hidden sm:block" />
+                    <div className="h-2 w-6 bg-foreground/20 rounded-full" />
+                  </span>
+                )}
                 <span className="hidden sm:flex ml-2">
                   <span className="flex shrink-0 items-center gap-0.5">
                     <button type="button" className="rounded-md px-1.5 py-0.5 text-[9px] tabular-nums transition-colors bg-primary/15 text-primary font-semibold">7d</button>
@@ -963,9 +1008,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               </div>
 
               {/* Subtext */}
-              <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground/70">
-                Współczynnik zużycia w normie • Zużyto 180 BYTE w ostatnich 7 dniach
-              </p>
+              {showContent ? (
+                <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground/70">
+                  Współczynnik zużycia w normie • Zużyto 180 BYTE w ostatnich 7 dniach
+                </p>
+              ) : (
+                <div className="mt-0.5 h-2.5 w-56 bg-foreground/15 rounded-full" />
+              )}
             </div>
 
             {/* Column 3: Action Buttons (Far Right) */}
@@ -975,14 +1024,14 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-3 border-foreground/15 bg-white/[0.05] hover:bg-white/[0.1] text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-auto"
               >
                 <Plus className="h-3 w-3 shrink-0 text-primary" />
-                Doładuj
+                {showContent ? 'Doładuj' : <div className="h-2 w-10 bg-foreground/25 rounded-full" />}
               </button>
               <button
                 type="button"
                 className="rounded-lg inline-flex items-center gap-1 border text-xs font-semibold px-3 border-white/[0.08] hover:border-white/[0.15] text-muted-foreground hover:text-foreground transition-colors duration-200 h-8 w-full justify-center sm:h-7.5 sm:w-auto"
               >
                 <Receipt className="h-3 w-3 shrink-0" />
-                Wydatki
+                {showContent ? 'Wydatki' : <div className="h-2 w-10 bg-foreground/25 rounded-full" />}
               </button>
             </div>
 
@@ -1334,12 +1383,14 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/60 flex items-center gap-1.5">
               <Zap className="w-3 h-3 text-primary" />
-              SZYBKA PODRÓŻ
+              {showContent ? 'SZYBKA PODRÓŻ' : <div className="h-2.5 w-24 bg-foreground/25 rounded-full" />}
             </span>
-            <button type="button" className="inline-flex items-center gap-1 text-xs text-foreground/50 hover:text-foreground transition-colors">
-              <Edit2 className="w-3 h-3" />
-              Edytuj skróty
-            </button>
+            {showContent && (
+              <button type="button" className="inline-flex items-center gap-1 text-xs text-foreground/50 hover:text-foreground transition-colors">
+                <Edit2 className="w-3 h-3" />
+                Edytuj skróty
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -1357,7 +1408,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 {sc.isAdd ? (
                   <div className="flex flex-col items-center justify-center gap-1 text-foreground/40 group-hover:text-primary transition-colors">
                     <Plus className="w-4 h-4 text-foreground/40 group-hover:text-primary transition-colors" />
-                    <span className="text-[11px] font-medium">{sc.title}</span>
+                    {showContent && <span className="text-[11px] font-medium">{sc.title}</span>}
                   </div>
                 ) : (
                   <>
@@ -1365,17 +1416,28 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                       <div className="w-6 h-6 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
                         {sc.icon && <sc.icon className="w-3.5 h-3.5" />}
                       </div>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-foreground/50 font-bold">
-                        {sc.shortcut}
-                      </span>
+                      {showContent && (
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-foreground/50 font-bold">
+                          {sc.shortcut}
+                        </span>
+                      )}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-foreground truncate mt-1 group-hover:text-primary transition-colors">
-                        {sc.title}
-                      </h4>
-                      <span className="text-[9px] uppercase tracking-wider font-semibold text-foreground/40 mt-0.5 block">
-                        {sc.category}
-                      </span>
+                      {showContent ? (
+                        <>
+                          <h4 className="text-xs font-bold text-foreground truncate mt-1 group-hover:text-primary transition-colors">
+                            {sc.title}
+                          </h4>
+                          <span className="text-[9px] uppercase tracking-wider font-semibold text-foreground/40 mt-0.5 block">
+                            {sc.category}
+                          </span>
+                        </>
+                      ) : (
+                        <div className="space-y-1.5 mt-1">
+                          <div className="h-2.5 w-full bg-foreground/20 rounded-full" />
+                          <div className="h-2 w-10 bg-foreground/15 rounded-full" />
+                        </div>
+                      )}
                     </div>
                   </>
                 )}

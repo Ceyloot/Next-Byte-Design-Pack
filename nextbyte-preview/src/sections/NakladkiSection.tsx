@@ -1,9 +1,27 @@
 import React, { useState } from 'react'
-import { Sparkles, ArrowRight, AlertTriangle, Info, Copy, Settings, PanelRight, PanelLeft, PanelBottom, PanelTop } from 'lucide-react'
+import {
+  Sparkles, ArrowRight, AlertTriangle, Info, Copy, Settings, PanelRight, PanelLeft, PanelBottom, PanelTop,
+  Camera, MessageSquare, Terminal, FileText, Calendar, Database, Zap, LogOut, Command,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { GlassModal, GlassButton, GlassInput, GlassSearch, GlassBadge, GlassStat, GlassTooltip, GlassDrawer, GlassSkeletonForm } from '@/components/glass'
-import type { DrawerSide } from '@/components/glass/GlassDrawer'
+import {
+  GlassModal, GlassButton, GlassInput, GlassSearch, GlassBadge, GlassStat, GlassTooltip,
+  GlassDrawer, GlassSkeletonForm, GlassCommandPalette, useCommandPalette, GlassKbd,
+} from '@/components/glass'
+import type { DrawerSide, CommandItem } from '@/components/glass'
 import { toast } from '@/components/ui/toaster'
+
+const COMMANDS: CommandItem[] = [
+  { id: 'chat',    label: 'Nowa rozmowa AI',        group: 'Akcje',     icon: MessageSquare, shortcut: '⌘1' },
+  { id: 'studio',  label: 'Otwórz Studio Zdjęć',    group: 'Akcje',     icon: Camera,        shortcut: '⌘2' },
+  { id: 'prompt',  label: 'Uruchom PromptEx',       group: 'Akcje',     icon: Terminal,      shortcut: '⌘3' },
+  { id: 'note',    label: 'Nowa notatka',           group: 'Utwórz',    icon: FileText },
+  { id: 'event',   label: 'Nowe wydarzenie',        group: 'Utwórz',    icon: Calendar },
+  { id: 'sheet',   label: 'Nowy arkusz w bazie',    group: 'Utwórz',    icon: Database },
+  { id: 'topup',   label: 'Doładuj pakiet Byte',    group: 'Konto',     icon: Zap,           hint: '4 820 ⟠' },
+  { id: 'settings',label: 'Ustawienia',             group: 'Konto',     icon: Settings,      shortcut: '⌘,' },
+  { id: 'logout',  label: 'Wyloguj się',            group: 'Konto',     icon: LogOut },
+]
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-3">{children}</p>
@@ -14,13 +32,17 @@ export function NakladkiSection() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [modelOpen, setModelOpen] = useState(false)
   const [drawer, setDrawer] = useState<DrawerSide | null>(null)
+  const palette = useCommandPalette()
+
+  const withToast = (items: CommandItem[]) =>
+    items.map((c) => ({ ...c, onRun: () => toast.info(`Polecenie: ${c.label}`) }))
 
   return (
     <div className="space-y-10">
 
       {/* DIALOG / MODAL */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Dialog / Modal</h3>
+        <h3 id="modal" className="text-sm font-semibold text-foreground/70">Dialog / Modal</h3>
         <SectionLabel>Okna dialogowe z różną zawartością</SectionLabel>
         <div className="flex flex-wrap gap-3">
           <Button variant="default" onClick={() => setModalOpen(true)}>
@@ -98,7 +120,7 @@ export function NakladkiSection() {
 
       {/* TOASTY */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Toast / Powiadomienia</h3>
+        <h3 id="toast" className="text-sm font-semibold text-foreground/70">Toast / Powiadomienia</h3>
         <SectionLabel>Typy powiadomień</SectionLabel>
         <div className="flex flex-wrap gap-3">
           {[
@@ -114,7 +136,7 @@ export function NakladkiSection() {
 
       {/* TOOLTIP */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Tooltip</h3>
+        <h3 id="tooltip" className="text-sm font-semibold text-foreground/70">Tooltip</h3>
         <SectionLabel>Cztery kierunki — najedź kursorem</SectionLabel>
         <div className="flex flex-wrap items-center gap-6 py-6">
           <GlassTooltip content="Góra — top" side="top">
@@ -140,7 +162,7 @@ export function NakladkiSection() {
 
       {/* DRAWER */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Szuflada (Drawer)</h3>
+        <h3 id="drawer" className="text-sm font-semibold text-foreground/70">Szuflada (Drawer)</h3>
         <SectionLabel>Cztery kierunki — dolna z uchwytem · Glass / Normal automatycznie</SectionLabel>
         <div className="flex flex-wrap gap-2.5">
           <GlassButton size="sm" variant="outline" onClick={() => setDrawer('right')}>
@@ -178,6 +200,38 @@ export function NakladkiSection() {
             <GlassSkeletonForm fields={3} />
           </div>
         </GlassDrawer>
+      </div>
+
+      {/* PALETA POLECEŃ */}
+      <div className="space-y-4">
+        <h3 id="command-palette" className="text-sm font-semibold text-foreground/70">Paleta poleceń (Command Palette)</h3>
+        <SectionLabel>
+          Naciśnij <GlassKbd keys={['⌘', 'K']} /> lub <GlassKbd keys={['Ctrl', 'K']} /> · strzałki nawigują, Enter wybiera, Esc zamyka
+        </SectionLabel>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <GlassButton onClick={() => palette.setOpen(true)} className="gap-2">
+            <Command className="h-3.5 w-3.5" />
+            Otwórz paletę
+          </GlassButton>
+          <span className="text-xs text-foreground/45">…albo użyj skrótu klawiaturowego z dowolnego miejsca strony</span>
+        </div>
+
+        <GlassCommandPalette
+          open={palette.open}
+          onClose={palette.close}
+          items={withToast(COMMANDS)}
+        />
+
+        <SectionLabel>Wariant osadzony (inline) — ta sama paleta bez nakładki</SectionLabel>
+        <div className="max-w-lg">
+          <GlassCommandPalette
+            inline
+            open
+            onClose={() => {}}
+            items={withToast(COMMANDS)}
+          />
+        </div>
       </div>
 
     </div>

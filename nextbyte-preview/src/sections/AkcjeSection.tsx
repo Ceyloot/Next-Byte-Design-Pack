@@ -57,7 +57,7 @@ export function AkcjeSection() {
 
       {/* ═══ PRZYCISKI GLASS ═══════════════════════════════════════════════ */}
       <section className="space-y-6">
-        <h3 className="text-sm font-semibold text-foreground/70">Przyciski (Button)</h3>
+        <h3 id="przyciski" className="text-sm font-semibold text-foreground/70">Przyciski (Button)</h3>
 
         <Block label="Warianty glass — Glass / Normal automatycznie">
           <div className="flex flex-wrap items-center gap-3">
@@ -112,7 +112,7 @@ export function AkcjeSection() {
 
       {/* ═══ BADGE ═══════════════════════════════════════════════════════ */}
       <section className="space-y-6">
-        <h3 className="text-sm font-semibold text-foreground/70">Znaczniki (Badge)</h3>
+        <h3 id="badge" className="text-sm font-semibold text-foreground/70">Znaczniki (Badge)</h3>
 
         <Block label="Intencje">
           <div className="flex flex-wrap items-center gap-3">
@@ -306,7 +306,7 @@ export function AkcjeSection() {
 
       {/* ═══ TOGGLE ══════════════════════════════════════════════════════ */}
       <section className="space-y-6">
-        <h3 className="text-sm font-semibold text-foreground/70">Toggle (GlassToggle)</h3>
+        <h3 id="toggle" className="text-sm font-semibold text-foreground/70">Toggle (GlassToggle)</h3>
 
         <Block label="Rozmiary">
           <div className="flex flex-wrap items-center gap-6">

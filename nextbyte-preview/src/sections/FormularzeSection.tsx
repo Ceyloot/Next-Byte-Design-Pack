@@ -3,7 +3,12 @@ import { Mail, Lock, User, Phone, Hash, Link2, CreditCard } from 'lucide-react'
 import { Input, Field } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { GlassSearch, GlassCard } from '@/components/glass'
+import {
+  GlassSearch, GlassCard, GlassCalendar, GlassDatePicker, GlassCombobox,
+  GlassStepper, GlassProgressSteps, GlassButton,
+} from '@/components/glass'
+import type { DateRange, ComboOption } from '@/components/glass'
+import { Cpu, Brain, Sparkles as SparkIcon, Bot, User as UserIcon, CreditCard as CardIcon, PackageCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox, CheckboxField } from '@/components/ui/checkbox'
 import { RadioGroup, RadioField, RadioCard } from '@/components/ui/radio-group'
@@ -20,9 +25,30 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-3">{children}</p>
 }
 
+const MODEL_OPTIONS: ComboOption[] = [
+  { value: 'gpt4o',    label: 'GPT-4o',            hint: '128k', icon: SparkIcon },
+  { value: 'claude4',  label: 'Claude Sonnet 4',   hint: '200k', icon: Brain },
+  { value: 'gemini',   label: 'Gemini 1.5 Flash',  hint: '1M',   icon: Bot },
+  { value: 'llama3',   label: 'Llama 3 70B',       hint: '128k', icon: Cpu },
+  { value: 'mistral',  label: 'Mistral Large',     hint: '128k', icon: Cpu },
+  { value: 'command',  label: 'Command R+',        hint: '128k', icon: Bot, disabled: true },
+]
+
+const CHECKOUT_STEPS = [
+  { label: 'Koszyk',    description: '3 produkty',    icon: PackageCheck },
+  { label: 'Dane',      description: 'Adres wysyłki', icon: UserIcon },
+  { label: 'Płatność',  description: 'BLIK / karta',  icon: CardIcon },
+  { label: 'Gotowe',    description: 'Potwierdzenie', icon: SparkIcon },
+]
+
 export function FormularzeSection() {
   const [searchVal, setSearchVal] = useState('')
   const [tags, setTags] = useState(['react', 'typescript'])
+  const [singleDate, setSingleDate] = useState<Date | null>(null)
+  const [rangeDate, setRangeDate] = useState<DateRange>({ from: null, to: null })
+  const [comboSingle, setComboSingle] = useState<string>('claude4')
+  const [comboMulti, setComboMulti] = useState<string[]>(['gpt4o', 'gemini'])
+  const [step, setStep] = useState(1)
   const [files, setFiles] = useState<UploadedFile[]>([
     { name: 'roadmapa-studio.pdf', size: 245000 },
     { name: 'okladka.png', size: 1200000, progress: 62 },
@@ -33,7 +59,7 @@ export function FormularzeSection() {
 
       {/* INPUTS */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Pola tekstowe (Input)</h3>
+        <h3 id="input" className="text-sm font-semibold text-foreground/70">Pola tekstowe (Input)</h3>
 
         <SectionLabel>Warianty</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -81,7 +107,7 @@ export function FormularzeSection() {
 
       {/* CHECKBOX */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Checkbox</h3>
+        <h3 id="checkbox" className="text-sm font-semibold text-foreground/70">Checkbox</h3>
         <SectionLabel>Rozmiary i stany</SectionLabel>
         <div className="flex flex-wrap items-center gap-6">
           <Checkbox checkboxSize="sm" defaultChecked />
@@ -124,7 +150,7 @@ export function FormularzeSection() {
 
       {/* SELECT */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Wybór (Select)</h3>
+        <h3 id="select" className="text-sm font-semibold text-foreground/70">Wybór (Select)</h3>
         <SectionLabel>Rozmiary i stany</SectionLabel>
         <div className="flex flex-col gap-3 max-w-sm">
           <Select>
@@ -173,6 +199,111 @@ export function FormularzeSection() {
         <GlassSlider defaultValue={[20, 70]} max={100} step={1} showValue formatValue={(v) => `${v} Byte`} className="max-w-sm" />
         <SectionLabel>ui/Slider — wariant bazowy (bez glass glow)</SectionLabel>
         <Slider defaultValue={[60]} max={100} step={1} showValue className="max-w-sm" />
+      </div>
+
+      {/* COMBOBOX */}
+      <div className="space-y-4">
+        <h3 id="combobox" className="text-sm font-semibold text-foreground/70">Combobox / Autocomplete</h3>
+        <SectionLabel>Pojedynczy wybór z wyszukiwaniem — strzałki + Enter, Esc zamyka</SectionLabel>
+        <GlassCombobox
+          options={MODEL_OPTIONS}
+          value={comboSingle}
+          onChange={(v) => setComboSingle(v as string)}
+          placeholder="Wybierz model AI..."
+        />
+
+        <SectionLabel>Multi-select — wybrane jako chipy, Backspace zdejmuje ostatni</SectionLabel>
+        <GlassCombobox
+          multiple
+          options={MODEL_OPTIONS}
+          value={comboMulti}
+          onChange={(v) => setComboMulti(v as string[])}
+          placeholder="Wybierz modele do porównania..."
+        />
+
+        <SectionLabel>Stan pusty i zablokowany</SectionLabel>
+        <div className="flex flex-wrap gap-3">
+          <GlassCombobox options={[]} placeholder="Brak dostępnych opcji" emptyText="Nic tu nie ma" />
+          <GlassCombobox options={MODEL_OPTIONS} disabled placeholder="Zablokowane" />
+        </div>
+      </div>
+
+      {/* KALENDARZ / DATA */}
+      <div className="space-y-4">
+        <h3 id="kalendarz" className="text-sm font-semibold text-foreground/70">Kalendarz i wybór daty</h3>
+
+        <SectionLabel>Date picker — pojedyncza data</SectionLabel>
+        <GlassDatePicker
+          value={singleDate}
+          onChange={(v) => setSingleDate(v as Date)}
+          placeholder="Wybierz datę"
+        />
+
+        <SectionLabel>Date range picker — zakres z podglądem przy najechaniu</SectionLabel>
+        <GlassDatePicker
+          mode="range"
+          value={rangeDate}
+          onChange={(v) => setRangeDate(v as DateRange)}
+          placeholder="Wybierz zakres dat"
+          className="min-w-[260px]"
+        />
+
+        <SectionLabel>Kalendarz osadzony — widok miesiąca</SectionLabel>
+        <div className="flex flex-wrap items-start gap-4">
+          <GlassCalendar
+            value={singleDate}
+            onChange={(v) => setSingleDate(v as Date)}
+          />
+          <div className="flex flex-col gap-2">
+            <SectionLabel>Wariant kompaktowy (widget)</SectionLabel>
+            <GlassCalendar compact value={singleDate} onChange={(v) => setSingleDate(v as Date)} />
+          </div>
+        </div>
+
+        <SectionLabel>Kalendarz zakresu — z ograniczeniem do przyszłości</SectionLabel>
+        <GlassCalendar
+          mode="range"
+          value={rangeDate}
+          onChange={(v) => setRangeDate(v as DateRange)}
+          minDate={new Date()}
+        />
+      </div>
+
+      {/* STEPPER */}
+      <div className="space-y-4">
+        <h3 id="stepper" className="text-sm font-semibold text-foreground/70">Stepper / Kroki</h3>
+
+        <SectionLabel>Poziomy — kliknij krok, żeby przeskoczyć</SectionLabel>
+        <GlassCard>
+          <GlassStepper steps={CHECKOUT_STEPS} current={step} onStepClick={setStep} />
+          <div className="mt-6 flex justify-between gap-2">
+            <GlassButton size="sm" variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
+              Wstecz
+            </GlassButton>
+            <GlassButton size="sm" onClick={() => setStep((s) => Math.min(CHECKOUT_STEPS.length - 1, s + 1))} disabled={step === CHECKOUT_STEPS.length - 1}>
+              Dalej
+            </GlassButton>
+          </div>
+        </GlassCard>
+
+        <SectionLabel>Poziomy ze stanem błędu na kroku bieżącym</SectionLabel>
+        <GlassCard>
+          <GlassStepper steps={CHECKOUT_STEPS} current={2} error />
+        </GlassCard>
+
+        <SectionLabel>Pionowy — kreator z opisami</SectionLabel>
+        <GlassCard className="max-w-sm">
+          <GlassStepper steps={CHECKOUT_STEPS} orientation="vertical" current={step} onStepClick={setStep} />
+        </GlassCard>
+
+        <SectionLabel>Pasek postępu — bez opisów, do nagłówka kreatora</SectionLabel>
+        <GlassCard className="max-w-md">
+          <GlassProgressSteps
+            total={CHECKOUT_STEPS.length}
+            current={step}
+            labels={CHECKOUT_STEPS.map((s) => s.label)}
+          />
+        </GlassCard>
       </div>
 
       {/* RATING */}

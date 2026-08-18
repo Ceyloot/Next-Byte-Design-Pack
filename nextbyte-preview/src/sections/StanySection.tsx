@@ -8,7 +8,7 @@ import {
   GlassSkeletonCard, GlassSkeletonTable, GlassSkeletonForm, GlassSkeletonImage,
   GlassSpinner, GlassSpinnerDots, GlassSpinnerBar, GlassLoadingOverlay,
   GlassEmpty, GlassAccordion, GlassAccordionItem, GlassCollapsible,
-  GlassDrawer, GlassButton, GlassBadge, GlassCard,
+  GlassDrawer, GlassButton, GlassBadge, GlassCard, GlassAlert,
 } from '@/components/glass'
 import type { DrawerSide } from '@/components/glass/GlassDrawer'
 
@@ -25,7 +25,7 @@ export function StanySection() {
 
       {/* ── SPINNERY ────────────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Wskaźniki ładowania</h3>
+        <h3 id="ladowanie" className="text-sm font-semibold text-foreground/70">Wskaźniki ładowania</h3>
         <SectionLabel>Pierścień · kropki · pasek nieokreślony</SectionLabel>
 
         <GlassCard className="flex flex-wrap items-center gap-x-10 gap-y-6">
@@ -60,7 +60,7 @@ export function StanySection() {
 
       {/* ── SZKIELETY ───────────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Szkielety (Skeleton)</h3>
+        <h3 id="szkielet" className="text-sm font-semibold text-foreground/70">Szkielety (Skeleton)</h3>
         <SectionLabel>Zastępują treść na czas wczytywania</SectionLabel>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -112,9 +112,30 @@ export function StanySection() {
         </div>
       </div>
 
+      {/* ── BŁĘDY ───────────────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <h3 id="blad" className="text-sm font-semibold text-foreground/70">Stany błędu (Error state)</h3>
+        <SectionLabel>GlassAlert — warianty błędu, ostrzeżenia i informacji</SectionLabel>
+
+        <div className="space-y-3 max-w-xl">
+          <GlassAlert variant="error" title="Błąd krytyczny" description="Nie udało się połączyć z serwerem. Sprawdź połączenie i spróbuj ponownie." />
+          <GlassAlert variant="warning" title="Przekroczono limit" description="Zużyto 90% miesięcznej puli Byte. Rozważ doładowanie konta." />
+          <GlassAlert variant="info" title="Zaplanowana przerwa techniczna" description="Serwis będzie niedostępny 20.08 w godz. 02:00–04:00." />
+          <GlassAlert variant="success" title="Operacja zakończona" description="Dane zostały pomyślnie zsynchronizowane z bazą." />
+        </div>
+
+        <SectionLabel>GlassEmpty — wariant błędu z akcją</SectionLabel>
+        <GlassEmpty
+          variant="blad"
+          title="Nie udało się załadować danych"
+          desc="Serwer zwrócił błąd 503. Odśwież stronę lub skontaktuj się z pomocą techniczną."
+          action={<GlassButton size="sm" variant="ghost"><RefreshCw className="h-3.5 w-3.5" />Spróbuj ponownie</GlassButton>}
+        />
+      </div>
+
       {/* ── STANY PUSTE ─────────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground/70">Stany puste (Empty state)</h3>
+        <h3 id="pusty-widok" className="text-sm font-semibold text-foreground/70">Stany puste (Empty state)</h3>
         <SectionLabel>Cztery warianty · z akcją i bez</SectionLabel>
 
         <div className="grid gap-4 md:grid-cols-2">
