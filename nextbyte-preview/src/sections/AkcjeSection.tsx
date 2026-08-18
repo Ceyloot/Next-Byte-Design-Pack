@@ -5,7 +5,7 @@ import {
   ChevronDown, User, Shield, FileText, RefreshCw, Send,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { GlassButton, GlassBadge, GlassAlert, GlassChip, GlassAvatar, GlassAvatarGroup, GlassTooltip, GlassDropdown, GlassDropdownSelect } from '@/components/glass'
+import { GlassButton, GlassBadge, GlassAlert, GlassChip, GlassAvatar, GlassAvatarGroup, GlassTooltip, GlassDropdown, GlassDropdownSelect, GlassToggle, GlassCard } from '@/components/glass'
 import { useGlass } from '@/lib/glass-context'
 import { cn } from '@/lib/utils'
 
@@ -301,6 +301,52 @@ export function AkcjeSection() {
               />
             </div>
           </div>
+        </Block>
+      </section>
+
+      {/* ═══ TOGGLE ══════════════════════════════════════════════════════ */}
+      <section className="space-y-6">
+        <h3 className="text-sm font-semibold text-foreground/70">Toggle (GlassToggle)</h3>
+
+        <Block label="Rozmiary">
+          <div className="flex flex-wrap items-center gap-6">
+            <GlassToggle size="sm" defaultChecked label="Mały sm" />
+            <GlassToggle size="md" defaultChecked label="Domyślny md" />
+            <GlassToggle size="lg" defaultChecked label="Duży lg" />
+          </div>
+        </Block>
+
+        <Block label="Stany — włączony / wyłączony / zablokowany">
+          <div className="flex flex-wrap items-center gap-6">
+            <GlassToggle defaultChecked />
+            <GlassToggle />
+            <GlassToggle defaultChecked disabled />
+            <GlassToggle disabled />
+          </div>
+        </Block>
+
+        <Block label="Z opisem — lista ustawień">
+          <GlassCard className="max-w-sm space-y-4">
+            <GlassToggle
+              defaultChecked
+              label="Powiadomienia push"
+              description="Alerty w czasie rzeczywistym"
+            />
+            <GlassToggle
+              label="Tryb ciemny"
+              description="Zmień wygląd interfejsu"
+            />
+            <GlassToggle
+              defaultChecked
+              label="Eksport automatyczny"
+              description="Eksportuj dane co 24h"
+            />
+            <GlassToggle
+              defaultChecked
+              label="Telemetria"
+              description="Udostępniaj dane do analityki"
+            />
+          </GlassCard>
         </Block>
       </section>
 

@@ -641,10 +641,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       <button
         onClick={onToggleSettings}
         title="Ustawienia wyglądu"
-        className={cn(
-          'flex items-center gap-1 px-2 h-7 rounded-full border text-[11px] font-semibold transition-all duration-200',
-          'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
-        )}
+        className="flex items-center gap-1 px-2 h-7 rounded-full text-[11px] font-semibold transition-all duration-200 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10]"
       >
         <Settings className="w-3 h-3 shrink-0" />
         {showContent ? <span className="hidden sm:inline">Ustawienia</span> : <div className="h-1.5 w-8 bg-foreground/25 rounded-full" />}
@@ -653,8 +650,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         onClick={() => setNavCompact(!navCompact)}
         title={navCompact ? 'Pokaż etykiety' : 'Ukryj etykiety'}
         className={cn(
-          'flex items-center gap-1 px-2 h-7 rounded-full border text-[11px] font-semibold transition-all duration-200',
-          navCompact ? 'border-primary/40 bg-primary/[0.15] text-primary' : 'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
+          'flex items-center gap-1 px-2 h-7 rounded-full text-[11px] font-semibold transition-all duration-200',
+          navCompact ? 'bg-primary/[0.15] text-primary' : 'bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10]',
         )}
       >
         <Type className="w-3 h-3 shrink-0" />

@@ -9,6 +9,7 @@ import { Checkbox, CheckboxField } from '@/components/ui/checkbox'
 import { RadioGroup, RadioField, RadioCard } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
+import { GlassSlider } from '@/components/glass'
 import { Rating, EmojiRating } from '@/components/ui/rating'
 import { OtpInput } from '@/components/ui/otp-input'
 import { TagInput } from '@/components/ui/tag-input'
@@ -166,10 +167,12 @@ export function FormularzeSection() {
       {/* SLIDER */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-foreground/70">Slider</h3>
-        <SectionLabel>Pojedynczy, z wartością</SectionLabel>
-        <Slider defaultValue={[40]} max={100} step={1} showValue className="max-w-sm" />
-        <SectionLabel>Zakres (range)</SectionLabel>
-        <Slider defaultValue={[20, 70]} max={100} step={1} showValue formatValue={(v) => `${v} Byte`} className="max-w-sm" />
+        <SectionLabel>GlassSlider — pojedynczy, z wartością · Glass / Normal automatycznie</SectionLabel>
+        <GlassSlider defaultValue={[40]} max={100} step={1} showValue className="max-w-sm" />
+        <SectionLabel>GlassSlider — zakres (range)</SectionLabel>
+        <GlassSlider defaultValue={[20, 70]} max={100} step={1} showValue formatValue={(v) => `${v} Byte`} className="max-w-sm" />
+        <SectionLabel>ui/Slider — wariant bazowy (bez glass glow)</SectionLabel>
+        <Slider defaultValue={[60]} max={100} step={1} showValue className="max-w-sm" />
       </div>
 
       {/* RATING */}

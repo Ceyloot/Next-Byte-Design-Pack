@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { Flame, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ActivityDay {
@@ -185,7 +186,7 @@ export function GlassActivityGrid({
   showStreaks = true,
   quote = "Zużyłeś ~374× więcej tokenów niż „Folwark zwierzęcy”.",
   showContent = true,
-  title = "📈 Aktywność",
+  title = "Aktywność",
   badgeText = "OSTATNIE 6 MIES.",
   compact = false,
   hideHeader = false,
@@ -222,11 +223,11 @@ export function GlassActivityGrid({
               {showContent ? (
                 <>
                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-foreground/5 border border-foreground/8 text-[10px]">
-                    <span className="text-amber-400">🔥</span>
+                    <Flame className="h-3.5 w-3.5 text-amber-400" />
                     <span>Bieżąca seria: <strong className="text-foreground">{data.currentStreak} dni</strong></span>
                   </div>
                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-foreground/5 border border-foreground/8 text-[10px]">
-                    <span className="text-primary">⚡</span>
+                    <Zap className="h-3.5 w-3.5 text-primary" />
                     <span>Max: <strong className="text-foreground">{data.maxStreak} dni</strong></span>
                   </div>
                   <div className="text-[11px] text-foreground/50 tabular-nums">

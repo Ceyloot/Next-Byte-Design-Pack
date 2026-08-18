@@ -1,6 +1,7 @@
 import React from 'react'
-import { BarChart3, Users, Activity, Shield, Zap, Layers, ArrowRight, Sparkles } from 'lucide-react'
-import { GlassCard, GlassStat, GlassPanel, GlassBadge, GlassButton, GlassModelSearch } from '@/components/glass'
+import { BarChart3, Users, Activity, Shield, Zap, Layers, ArrowRight, Sparkles, Brain, Database, Globe, Lock, Cpu, Star } from 'lucide-react'
+import { GlassCard, GlassStat, GlassPanel, GlassBadge, GlassButton, GlassModelSearch, GlassFeatureRow, GlassCompareTable } from '@/components/glass'
+import type { CompareCellValue } from '@/components/glass'
 import { cn } from '@/lib/utils'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -112,6 +113,65 @@ export function KartySection() {
         <h3 className="text-sm font-semibold text-foreground/70">Wybór modelu AI (GlassModelSearch)</h3>
         <SectionLabel>Komponent złożony — wyszukiwanie + karty modeli</SectionLabel>
         <GlassModelSearch />
+      </div>
+
+      {/* FEATURE ROW */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Wiersz cechy (GlassFeatureRow)</h3>
+        <SectionLabel>Lista funkcji planu — ikona + opis + odznaka · Glass / Normal automatycznie</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <GlassCard className="divide-y divide-foreground/[0.06] !p-0 overflow-hidden">
+            <div className="px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">Plan Pro</p>
+              <p className="text-xs text-foreground/50 mt-0.5">Wszystko z Free + więcej</p>
+            </div>
+            <div className="px-2 py-2">
+              <GlassFeatureRow icon={Brain}    label="Claude Sonnet 4"        desc="Najnowszy model Anthropic"       badge="NEW" highlight />
+              <GlassFeatureRow icon={Database} label="200k kontekst"           desc="Do 200 000 tokenów na prompt" />
+              <GlassFeatureRow icon={Globe}    label="Dostęp do internetu"      desc="Przeszukiwanie w czasie rzeczywistym" />
+              <GlassFeatureRow icon={Lock}     label="Prywatne projekty"        desc="Pełna izolacja danych" />
+              <GlassFeatureRow icon={Cpu}      label="Priority compute"         desc="Brak kolejki w godzinach szczytu" badge="PRO" />
+              <GlassFeatureRow icon={Star}     label="Wsparcie priorytetowe"    desc="Czas odpowiedzi < 2h" />
+            </div>
+          </GlassCard>
+
+          <GlassCard className="divide-y divide-foreground/[0.06] !p-0 overflow-hidden">
+            <div className="px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">Plan Free</p>
+              <p className="text-xs text-foreground/50 mt-0.5">Na dobry początek</p>
+            </div>
+            <div className="px-2 py-2">
+              <GlassFeatureRow icon={Brain}    label="GPT-4o mini"             desc="Szybki model do prostych zadań" />
+              <GlassFeatureRow icon={Database} label="8k kontekst"              desc="Do 8 000 tokenów na prompt" />
+              <GlassFeatureRow icon={Globe}    label="Brak internetu"           desc="Tylko dane z treningu" />
+              <GlassFeatureRow icon={Lock}     label="Projekty publiczne"       desc="Widoczne dla innych" />
+              <GlassFeatureRow icon={Cpu}      label="Shared compute"           desc="Wspólna kolejka" />
+              <GlassFeatureRow icon={Star}     label="Wsparcie community"       desc="Forum i dokumentacja" />
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+
+      {/* COMPARE TABLE */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-foreground/70">Tabela porównawcza (GlassCompareTable)</h3>
+        <SectionLabel>Podświetlona ostatnia kolumna — do porównania planów / wariantów</SectionLabel>
+        <GlassCompareTable
+          columns={['Free', 'Pro', 'Ultimate']}
+          highlightLast
+          rows={[
+            { label: 'Tokeny / miesiąc',       values: ['50 000',    '2 000 000',  'Bez limitu'  ] as CompareCellValue[] },
+            { label: 'Modele AI',               values: ['3 modele',  '8 modeli',   'Wszystkie'   ] as CompareCellValue[] },
+            { label: 'Kontekst',                values: ['8k',        '200k',       '1M+'         ] as CompareCellValue[] },
+            { label: 'Dostęp do internetu',     values: ['no',        'yes',        'yes'         ] as CompareCellValue[] },
+            { label: 'Studio Zdęć',             values: ['no',        'yes',        'yes'         ] as CompareCellValue[] },
+            { label: 'API access',              values: ['no',        'yes',        'yes'         ] as CompareCellValue[] },
+            { label: 'Prywatne projekty',       values: ['no',        'yes',        'yes'         ] as CompareCellValue[] },
+            { label: 'Priority compute',        values: ['no',        'no',         'yes'         ] as CompareCellValue[] },
+            { label: 'Dedykowany manager',      values: ['no',        'no',         'yes'         ] as CompareCellValue[] },
+            { label: 'SLA',                     values: ['Brak',      '99.9%',      '99.99%'      ] as CompareCellValue[] },
+          ]}
+        />
       </div>
 
     </div>

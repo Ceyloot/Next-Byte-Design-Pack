@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Sparkles, ArrowRight, Star, Zap, Brain, Image } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useGlass } from '@/lib/glass-context'
 import { GlassCard } from './GlassCard'
 import { GlassSearch } from './GlassSearch'
 import { GlassBadge } from './GlassBadge'
@@ -44,6 +45,7 @@ interface GlassModelSearchProps {
 
 /** Gotowy przykład użycia biblioteki Glass — wybór modelu AI */
 export function GlassModelSearch({ className, onSelect }: GlassModelSearchProps) {
+  const { isGlass } = useGlass()
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -83,7 +85,7 @@ export function GlassModelSearch({ className, onSelect }: GlassModelSearchProps)
             {/* Nagłówek */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl nb-szklo text-primary">
+                <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-primary', isGlass ? 'nb-szklo' : 'nb-wglobienie-gnizado')}>
                   {model.icon}
                 </span>
                 <div>
