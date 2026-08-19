@@ -1,9 +1,13 @@
 import React from 'react'
-import { Sparkles, Bot, MoreHorizontal } from 'lucide-react'
+import {
+  Sparkles, Bot, MoreHorizontal, Zap, Brain, Crown, Server, Rocket, FileText, Image as ImageIcon, Globe,
+} from 'lucide-react'
 import {
   GlassCard, GlassChatBubble, GlassChatTyping, GlassChatHeader,
   GlassChatInput, GlassChatThread, GlassBadge, GlassButton,
+  GlassChatComposer, GlassModelPicker,
 } from '@/components/glass'
+import type { ComposerToggle, ModelPickerGroup, ModelPickerDetail, ModelPickerItem } from '@/components/glass'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-3">{children}</p>
@@ -19,9 +23,55 @@ const SEED: Msg[] = [
   { id: 5, role: 'assistant', text: 'W takim razie proponuję granat jako bazę, jeden nasycony akcent (cyjan albo fiolet) i neutralną szarość na tła. Kolor semantyczny tylko tam, gdzie niesie znaczenie — saldo, alerty, statusy.', time: '14:03' },
 ]
 
+const COMPOSER_TOGGLES: ComposerToggle[] = [
+  { id: 'docs',   label: 'Dokumenty', icon: FileText },
+  { id: 'images', label: 'Obrazy',    icon: ImageIcon },
+  { id: 'web',    label: 'WEB',       icon: Globe, active: true },
+]
+
+const MODEL_GROUPS: ModelPickerGroup[] = [
+  {
+    label: 'NextByte',
+    items: [
+      { id: 'lokalny', name: 'Lokalny', description: 'Najpierw przetestuj połączenie', icon: Server, needsSetup: true },
+      { id: 'szybki',  name: 'Szybki',  description: 'Błyskawiczne odpowiedzi do prostych zadań', icon: Zap, cost: 1 },
+      { id: 'pro',     name: 'Pro',     description: 'Zaawansowane rozumowanie i analiza', icon: Sparkles, cost: 2 },
+      { id: 'ultra',   name: 'Ultra',   description: 'Najwyższa jakość — szybkość i inteligencja', icon: Crown, cost: 2 },
+    ],
+  },
+  {
+    label: 'Inne modele',
+    items: [
+      { id: 'grok',  name: 'Grok 4.3',       description: 'xAI — agentic reasoning, 1M kontekst', icon: Rocket, cost: 2 },
+      { id: 'gpt',   name: 'GPT-5.4',        description: 'OpenAI — uniwersalny model do zadań mieszanych', icon: Sparkles, cost: 2 },
+      { id: 'opus',  name: 'Claude Opus 5',  description: 'Anthropic — długie konteksty i praca z kodem', icon: Crown, cost: 3 },
+    ],
+  },
+]
+
+const MODEL_DETAIL: ModelPickerDetail = {
+  name: 'Pro',
+  badge: 'NEXTBYTE',
+  description: 'Gemini 3.1 Pro Preview — zaawansowane rozumowanie i analiza do bardziej złożonych zadań (2 Byte).',
+  contextLabel: 'Kontekst: 1M tokenów',
+  metrics: [
+    { label: 'Inteligencja', value: 8 },
+    { label: 'Szybkość',     value: 7 },
+    { label: 'Kontekst',     value: 10 },
+    { label: 'Koszt',        value: 9 },
+  ],
+  messageCost: 2,
+  reasoningLevels: ['Niski', 'Średni', 'Wysoki'],
+  activeReasoningLevel: 'Średni',
+}
+
 export function CzatSection() {
   const [messages, setMessages] = React.useState<Msg[]>(SEED)
   const [typing, setTyping] = React.useState(false)
+  const [toggles, setToggles] = React.useState(COMPOSER_TOGGLES)
+  const [composerVal, setComposerVal] = React.useState('')
+  const [activeModel, setActiveModel] = React.useState('szybki')
+  const [reasoningLevel, setReasoningLevel] = React.useState('Średni')
 
   function send(text: string) {
     const now = new Date()
@@ -178,6 +228,48 @@ export function CzatSection() {
           <GlassChatInput disabled placeholder="Brak środków — doładuj pakiet Byte" />
           <GlassButton size="sm" className="gap-1.5">Doładuj Byte</GlassButton>
         </GlassCard>
+      </div>
+
+      {/* PASEK CZATU (COMPOSER) */}
+      <div className="space-y-4">
+        <h3 id="czat-composer" className="text-sm font-semibold text-foreground/70">Pasek czatu (Composer)</h3>
+        <SectionLabel>Pigułka modelu z neutralną obwódką, przełączniki źródeł z łukiem-podświetleniem, narzędzia, licznik tokenów i wysyłka</SectionLabel>
+        <GlassChatComposer
+          modelName="Szybki"
+          modelIcon={Zap}
+          modelCost={1}
+          toggles={toggles}
+          onToggle={(id) => setToggles((t) => t.map((x) => x.id === id ? { ...x, active: !x.active } : x))}
+          value={composerVal}
+          onChange={setComposerVal}
+          placeholder="Szukaj w internecie..."
+          tokenCount="4.2k"
+          sendCost={2}
+          onSend={() => setComposerVal('')}
+        />
+
+        <SectionLabel>Zablokowany — brak środków</SectionLabel>
+        <GlassChatComposer
+          modelName="Szybki"
+          modelIcon={Zap}
+          modelCost={1}
+          placeholder="Doładuj Byte, żeby kontynuować..."
+          disabled
+        />
+      </div>
+
+      {/* WYBÓR MODELU */}
+      <div className="space-y-4">
+        <h3 id="czat-model-picker" className="text-sm font-semibold text-foreground/70">Wybór modelu (Model Picker)</h3>
+        <SectionLabel>Lista pogrupowana po lewej, karta szczegółów z metrykami segmentowymi po prawej</SectionLabel>
+        <GlassModelPicker
+          groups={MODEL_GROUPS}
+          activeId={activeModel}
+          peekId="pro"
+          onSelect={(item: ModelPickerItem) => setActiveModel(item.id)}
+          detail={{ ...MODEL_DETAIL, activeReasoningLevel: reasoningLevel }}
+          onReasoningLevelChange={setReasoningLevel}
+        />
       </div>
 
     </div>

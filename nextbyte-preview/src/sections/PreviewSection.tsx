@@ -28,15 +28,20 @@ import { StanySection } from '@/sections/StanySection'
 import { CennikSection } from '@/sections/CennikSection'
 import { StudioSection } from '@/sections/StudioSection'
 import { CzatSection } from '@/sections/CzatSection'
-
+import { StronaGlownaSection } from '@/sections/StronaGlownaSection'
+import { StronaGlownaNewSection } from '@/sections/StronaGlownaNewSection'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string }
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'homepage' }
 
 const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
-  { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [] },
+  { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [
+    { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
+    { name: 'Strona główna', icon: Zap,        badge: 'nextbyte.space', subView: 'homepage' },
+    { name: 'Strona główna NEW', icon: Sparkles, badge: 'NEW', subView: 'homepage-new' },
+  ] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
     { name: 'Podstawowe',       icon: Square,        scrollId: 'karta' },
     { name: 'Z nagłówkiem',     icon: Layers,        scrollId: 'panel' },
@@ -89,6 +94,8 @@ const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ cla
     { name: 'Wskaźnik pisania', icon: MoreHorizontal, scrollId: 'czat-typing' },
     { name: 'Nagłówek',         icon: PanelTop,      scrollId: 'czat-naglowek' },
     { name: 'Pasek wpisywania', icon: Type,          scrollId: 'czat-input' },
+    { name: 'Pasek czatu',      icon: Sparkles,      scrollId: 'czat-composer' },
+    { name: 'Wybór modelu',     icon: Search,        scrollId: 'czat-model-picker' },
   ]},
   { key: 'stany',      label: 'Stany',      icon: Loader,       items: [
     { name: 'Ładowanie',           icon: Loader,        scrollId: 'ladowanie' },
@@ -515,6 +522,7 @@ function renderSection(key: string): React.ReactNode {
 export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
+  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'homepage' | 'homepage-new'>('dashboard')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [flyoutY, setFlyoutY] = useState(0)
   const [navCompact, setNavCompact] = useState(false)
@@ -789,6 +797,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 key={i}
                 onClick={() => {
                   onSelectTab?.(openMenu!)
+                  if (openMenu === 'preview' && item.subView) {
+                    setPreviewSubView(item.subView)
+                  }
                   openMenuDelayed(null)
                   if (item.scrollId) {
                     setTimeout(() => {
@@ -913,7 +924,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             {megaItems.map((item, i) => (
               <button
                 key={i}
-                onClick={() => { onSelectTab?.(openMenu!); openMenuDelayed(null) }}
+                onClick={() => {
+                  onSelectTab?.(openMenu!)
+                  if (openMenu === 'preview' && item.subView) {
+                    setPreviewSubView(item.subView)
+                  }
+                  openMenuDelayed(null)
+                }}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap w-full text-left text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent hover:border-foreground/[0.08]"
               >
                 <item.icon className="w-3.5 h-3.5 shrink-0" />
@@ -946,6 +963,43 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         : <HorizontalNav />
       }
 
+      {/* ── Homepage Sub-Nav (sticky outside overflow container) ── */}
+      {activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new') && (
+        <header className="nb-szklo nb-szklo-plynne nb-powierzchnia border-b border-foreground/[0.06] z-50 relative shrink-0">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent_0%,hsl(var(--primary)/0.55)_50%,transparent_100%)]" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+            <button type="button" className="hidden md:inline-flex items-center gap-2.5 cursor-pointer group">
+              <span className="inline-block w-[6px] h-[6px] rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)),0_0_16px_hsl(var(--primary)/0.6)]" />
+              <span className="font-mono uppercase text-foreground/85 group-hover:text-foreground transition-colors text-[12px] tracking-[0.28em] font-bold">NEXTBYTE</span>
+            </button>
+            <nav className="flex items-center rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-1">
+              {[
+                { label: 'Strona główna', id: 'home' },
+                { label: 'Cennik', id: 'cennik' },
+                { label: 'Dla firm', id: 'b2b' },
+                { label: 'Historia', id: 'historia' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={cn(
+                    'relative flex items-center justify-center rounded-xl transition-all duration-300 h-9 px-4 cursor-pointer text-[12px] font-medium tracking-wide',
+                    item.id === 'home'
+                      ? 'bg-foreground/[0.08] border border-foreground/[0.1] text-foreground shadow-sm'
+                      : 'border border-transparent text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04]'
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            <button className="inline-flex items-center gap-2 rounded-xl font-mono text-[10px] tracking-[0.2em] uppercase px-4 py-2.5 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all cursor-pointer">
+              <span className="hidden md:inline">[ Przejdź na platformę ]</span>
+            </button>
+          </div>
+        </header>
+      )}
+
       {/* ── Main Workspace ── */}
       <main ref={mainRef} className={cn(
         'flex-1 min-w-0 overflow-y-auto flex flex-col',
@@ -957,8 +1011,15 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         {/* ── Non-preview section content ── */}
         {activeTab !== 'preview' && renderSection(activeTab)}
 
-        {/* ══ TOP BANNER: UNIFIED SINGLE TILE (SALDO BYTE & TIMELINE) ══ */}
-        {activeTab === 'preview' && <>
+        {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
+        {activeTab === 'preview' && (
+          <div className="space-y-4 w-full flex-1 flex flex-col min-h-0">
+            {previewSubView === 'homepage' ? (
+              <StronaGlownaSection />
+            ) : previewSubView === 'homepage-new' ? (
+              <StronaGlownaNewSection />
+            ) : (
+              <>
 
 
         <Tile intencja="akcent" elewacja="uniesiona" className="py-2.5 px-3 md:px-4 border-foreground/[0.06] bg-card/40 transition-[box-shadow,border-color,background-color] duration-200">
@@ -1209,7 +1270,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 )}
               </div>
               <div className="flex flex-col gap-1.5 flex-1 justify-center">
-                {taskList.map((t) => (
+                {taskList.slice(0, navPosition === 'top' ? 3 : 4).map((t) => (
                   <CustomCheckbox
                     key={t.id}
                     checked={t.done}
@@ -1275,9 +1336,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                     </button>
                   </div>
 
-                  {/* Recent Items List - 6 Items packed tightly */}
+                  {/* Recent Items List */}
                   <div className="flex flex-col gap-1.5">
-                    {RECENT_ITEMS.slice(0, 6).map((item) => (
+                    {RECENT_ITEMS.slice(0, navPosition === 'top' ? 4 : 6).map((item) => (
                       <div
                         key={item.id}
                         className="group flex items-center justify-between gap-2.5 p-1.5 px-2 rounded-xl bg-white/[0.025] hover:bg-white/[0.06] transition-all duration-150 cursor-pointer"
@@ -1328,65 +1389,82 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             )}
           </Tile>
 
-          {/* COLUMN 3 (33%): rozbite na 2 karty — ten sam rytm co Kolumna 1, żeby żadna karta nie musiała dźwigać 5 różnych typów treści naraz */}
+          {/* COLUMN 3 (33%): połączona karta Statystyk i Aktywności (dla oszczędności miejsca) */}
           <div className="flex flex-col gap-3 h-full min-w-0">
-
-            {/* Card A: Przegląd Statystyk — nagłówek + metryka + donut/legenda */}
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col min-w-0 border-foreground/[0.06] bg-card/40">
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 min-w-0 border-foreground/[0.06] bg-card/40">
               {showContent ? (
-                <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col h-full justify-between gap-2">
+                  
+                  {/* Przegląd Statystyk */}
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
                         <BarChart3 className="w-3.5 h-3.5 text-primary shrink-0" />
                         Przegląd Statystyk
                       </h3>
-                      <p className="text-[12px] text-foreground/50 font-medium leading-tight">Aktywność konta NextByte</p>
                     </div>
-                    <TilePill intencja="akcent" className="border-primary/20 bg-primary/10 text-[11px] font-bold">
+                    <TilePill intencja="akcent" className="border-primary/20 bg-primary/10 text-[11px] font-bold shrink-0">
                       342 AKCJI
                     </TilePill>
                   </div>
 
-                  {/* Big Metric */}
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2.5">
+                  {navPosition !== 'top' && (
+                    <div className="flex items-center gap-2.5 mt-1">
                       <span className="text-2xl font-extrabold text-foreground tracking-tight">2 847</span>
                       <span className="inline-flex items-center gap-1 text-[12px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full shadow-sm">
                         <TrendingUp className="w-2.5 h-2.5" /> +24%
-                        <span className="text-[11px] text-foreground/50 font-normal">vs zeszły tydzień</span>
                       </span>
                     </div>
-                    <p className="text-[12px] text-foreground/60 font-medium">Wygenerowane zapytania</p>
-                  </div>
+                  )}
 
-                  {/* Donut + legenda */}
-                  <div className="flex items-center justify-between gap-3 min-w-0">
+                  <div className="flex items-center justify-between gap-2 min-w-0 pb-2 mb-1 border-b border-foreground/[0.06]">
                     <div className="flex-1 flex items-center justify-center">
-                      <DonutChart size={140} />
+                      <DonutChart size={navPosition === 'top' ? 100 : 120} />
                     </div>
-                    <div className="flex flex-col gap-1.5 w-[140px] shrink-0">
+                    <div className="flex flex-col gap-1.5 w-[130px] shrink-0">
                       {DONUT_SEGMENTS.map((seg, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between px-2.5 py-1 rounded-full border text-xs transition-all duration-200 hover:brightness-110 shadow-sm"
+                          className="flex items-center justify-between px-2.5 py-1 rounded-full border text-[11px] transition-all duration-200 hover:brightness-110 shadow-sm"
                           style={{
                             borderColor: tintFaded(seg.color, 30),
                             backgroundColor: tintFaded(seg.color, 8),
                           }}
                         >
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span
-                              className="w-1.5 h-1.5 rounded-full shrink-0"
-                              style={{ backgroundColor: seg.color, boxShadow: `0 0 6px ${tintFaded(seg.color, 70)}` }}
-                            />
-                            <span className="text-foreground/90 font-medium text-[12px] truncate">{seg.label}</span>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                            <span className="text-foreground/90 font-medium truncate">{seg.label}</span>
                           </div>
-                          <span className="font-bold text-[12px] shrink-0 ml-1" style={{ color: seg.color }}>
-                            {seg.pct}%
-                          </span>
+                          <span className="font-bold shrink-0 ml-1" style={{ color: seg.color }}>{seg.pct}%</span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Aktywność */}
+                  <div>
+                    <h3 className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider mb-1.5">Aktywność (18 tyg.)</h3>
+                    <div className="w-full flex items-center justify-center overflow-hidden">
+                      <GlassActivityGrid
+                        weeksCount={18}
+                        showContent={showContent}
+                        showSummary={false}
+                        showStreaks={false}
+                        compact={true}
+                        hideHeader={true}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5 mt-1">
+                    <div className="flex items-center justify-center px-1 py-1 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
+                      <span className="font-bold text-primary mr-1">v4.0</span> Wersja
+                    </div>
+                    <div className="flex items-center justify-center px-1 py-1 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
+                      <span className="font-bold text-emerald-400 mr-1">99.8%</span> Uptime
+                    </div>
+                    <div className="flex items-center justify-center px-1 py-1 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
+                      <span className="font-bold text-amber-400 mr-1">0 Byte</span> Zużycie
                     </div>
                   </div>
                 </div>
@@ -1394,65 +1472,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 <div className="space-y-3 p-0.5 animate-pulse">
                   <div className="flex justify-between items-center">
                     <div className="h-4 w-36 bg-primary/45 rounded" />
-                    <div className="h-3.5 w-12 bg-foreground/20 rounded-full" />
                   </div>
-                  <div className="grid grid-cols-2 gap-3 items-center py-1">
-                    <div className="w-20 h-20 rounded-full border-4 border-foreground/15 justify-self-center shrink-0" />
-                    <div className="space-y-1.5">
-                      <div className="h-2.5 w-full bg-foreground/15 rounded" />
-                      <div className="h-2.5 w-4/5 bg-foreground/15 rounded" />
-                      <div className="h-2.5 w-3/4 bg-foreground/15 rounded" />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Tile>
-
-            {/* Card B: Aktywność — heatmapa + status systemu */}
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 min-w-0 border-foreground/[0.06] bg-card/40">
-              {showContent ? (
-                <div className="flex flex-col gap-2.5 h-full justify-between">
-                  <div>
-                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Aktywność</h3>
-                    <p className="text-[12px] text-foreground/50 font-medium leading-tight mt-0.5">Ostatnie 18 tygodni</p>
-                  </div>
-
-                  <div className="w-full flex items-center justify-center overflow-hidden">
-                    <GlassActivityGrid
-                      weeksCount={18}
-                      showContent={showContent}
-                      showSummary={false}
-                      showStreaks={false}
-                      compact={false}
-                      hideHeader={true}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <div className="flex items-center justify-center px-1.5 py-1.5 rounded-lg bg-foreground/[0.04] text-[11px] text-foreground/70">
-                      <span className="font-bold text-primary mr-1">v4.0</span> Wersja
-                    </div>
-                    <div className="flex items-center justify-center px-1.5 py-1.5 rounded-lg bg-foreground/[0.04] text-[11px] text-foreground/70">
-                      <span className="font-bold text-emerald-400 mr-1">99.8%</span> Uptime
-                    </div>
-                    <div className="flex items-center justify-center px-1.5 py-1.5 rounded-lg bg-foreground/[0.04] text-[11px] text-foreground/70">
-                      <span className="font-bold text-amber-400 mr-1">0 Byte</span> Zużycie
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2.5 p-0.5 animate-pulse">
-                  <div className="h-4 w-24 bg-primary/45 rounded" />
+                  <div className="h-24 w-full bg-foreground/15 rounded-xl" />
                   <div className="h-20 w-full bg-foreground/10 rounded-xl" />
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <div className="h-7 bg-foreground/10 rounded-lg" />
-                    <div className="h-7 bg-foreground/10 rounded-lg" />
-                    <div className="h-7 bg-foreground/10 rounded-lg" />
-                  </div>
                 </div>
               )}
             </Tile>
-
           </div>
 
         </div>
@@ -1523,9 +1548,11 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               </Tile>
             ))}
           </div>
+          <div className="h-6 sm:h-8 shrink-0" />
         </div>
-
-        </> /* end activeTab === 'preview' */}
+        </>)}
+          </div>
+        )}
 
       </main>
 
