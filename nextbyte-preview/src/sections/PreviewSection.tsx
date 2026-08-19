@@ -965,7 +965,15 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
 
       {/* ── Homepage Sub-Nav (sticky outside overflow container) ── */}
       {activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new') && (
-        <header className="nb-szklo nb-szklo-plynne nb-powierzchnia border-b border-foreground/[0.06] z-50 relative shrink-0">
+        <header
+          className="nb-homepage-nav border-b border-foreground/[0.06] z-[200] shrink-0"
+          style={{
+            position: 'fixed',
+            top: isSidebar || navPosition === 'bottom' ? 0 : '64px',
+            left: isSidebar ? '64px' : 0,
+            right: 0,
+          }}
+        >
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent_0%,hsl(var(--primary)/0.55)_50%,transparent_100%)]" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
             <button type="button" className="hidden md:inline-flex items-center gap-2.5 cursor-pointer group">
@@ -1006,7 +1014,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         activeTab !== 'preview'
           ? 'p-6 w-full'
           : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
-      )}>
+      )}
+      style={(
+        activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new')
+          ? { paddingTop: isSidebar || navPosition === 'bottom' ? '56px' : '120px' }
+          : {}
+      )}
+      >
 
         {/* ── Non-preview section content ── */}
         {activeTab !== 'preview' && renderSection(activeTab)}
@@ -1017,9 +1031,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             {previewSubView === 'homepage' ? (
               <StronaGlownaSection />
             ) : previewSubView === 'homepage-new' ? (
-              <StronaGlownaNewSection />
+              <StronaGlownaNewSection onNavigateToCennik={() => { setActiveSection('cennik'); onSelectTab?.('cennik') }} />
             ) : (
-              <>
+              <div className="flex flex-col gap-3.5 flex-1 min-h-0">
 
 
         <Tile intencja="akcent" elewacja="uniesiona" className="py-2.5 px-3 md:px-4 border-foreground/[0.06] bg-card/40 transition-[box-shadow,border-color,background-color] duration-200">
@@ -1139,14 +1153,14 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           </div>
         </div>
 
-        {/* ── MIDDLE SECTION: 3 EQUAL COLUMNS (33% / 33% / 33%) - OPTION 1 ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 items-stretch min-w-0">
+        {/* ── MIDDLE SECTION: 3 EQUAL COLUMNS (33% / 33% / 33%) ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 min-w-0" style={{ flex: '1 1 0', minHeight: 0, alignItems: 'stretch', gridTemplateRows: 'minmax(0, 1fr)' }}>
 
           {/* COLUMN 1 (33%): NOWOŚCI + Lista Zadań */}
-          <div className="flex flex-col gap-3 h-full min-w-0">
+          <div className="flex flex-col gap-3 min-w-0 overflow-hidden" style={{ height: '100%' }}>
 
             {/* Card 1: NOWOŚCI (Top Left) */}
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between border-foreground/[0.06] bg-card/40">
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col border-foreground/[0.06] bg-card/40">
               {showContent ? (
                 <div className="flex flex-col gap-2.5">
                   {/* Header */}
@@ -1285,7 +1299,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           </div>
 
           {/* COLUMN 2 (33%): Wróć do roboty */}
-          <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between min-w-0 border-foreground/[0.06] bg-card/40 h-full">
+          <div className="flex flex-col gap-3 min-w-0 overflow-hidden" style={{ height: '100%' }}>
+          <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between min-w-0 border-foreground/[0.06] bg-card/40" style={{ height: '100%' }}>
             {showContent ? (
               <div className="flex flex-col justify-between h-full">
                 <div>
@@ -1388,97 +1403,106 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               </div>
             )}
           </Tile>
+          </div>
 
-          {/* COLUMN 3 (33%): połączona karta Statystyk i Aktywności (dla oszczędności miejsca) */}
-          <div className="flex flex-col gap-3 h-full min-w-0">
-            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col justify-between flex-1 min-w-0 border-foreground/[0.06] bg-card/40">
+          {/* COLUMN 3 (33%): połączona karta Statystyk i Aktywności */}
+          <div className="flex flex-col gap-3 min-w-0 min-h-0" style={{ flex: '1 1 0' }}>
+            <Tile intencja="akcent" elewacja="uniesiona" className="p-3.5 flex flex-col min-w-0 border-foreground/[0.06] bg-card/40" style={{ flex: '1 1 0', minHeight: 0 }}>
               {showContent ? (
-                <div className="flex flex-col h-full justify-between gap-2">
-                  
-                  {/* Przegląd Statystyk */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
-                        <BarChart3 className="w-3.5 h-3.5 text-primary shrink-0" />
-                        Przegląd Statystyk
-                      </h3>
-                    </div>
+                <div className="flex flex-col gap-3" style={{ flex: '1 1 0', minHeight: 0 }}>
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between shrink-0">
+                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                      <BarChart3 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      Przegląd Statystyk
+                    </h3>
                     <TilePill intencja="akcent" className="border-primary/20 bg-primary/10 text-[11px] font-bold shrink-0">
                       342 AKCJI
                     </TilePill>
                   </div>
 
-                  {navPosition !== 'top' && (
-                    <div className="flex items-center gap-2.5 mt-1">
-                      <span className="text-2xl font-extrabold text-foreground tracking-tight">2 847</span>
-                      <span className="inline-flex items-center gap-1 text-[12px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full shadow-sm">
-                        <TrendingUp className="w-2.5 h-2.5" /> +24%
-                      </span>
-                    </div>
-                  )}
+                  {/* Big metric */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-2xl font-extrabold text-foreground tracking-tight">2 847</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+                      <TrendingUp className="w-2.5 h-2.5" /> +24%
+                    </span>
+                    <span className="text-[11px] text-foreground/40 font-medium">zapytań</span>
+                  </div>
 
-                  <div className="flex items-center justify-between gap-2 min-w-0 pb-2 mb-1 border-b border-foreground/[0.06]">
-                    <div className="flex-1 flex items-center justify-center">
-                      <DonutChart size={navPosition === 'top' ? 100 : 120} />
+                  {/* Donut — mniejszy */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    {/* Chart */}
+                    <div className="flex items-center justify-center flex-1">
+                    <DonutChart size={navPosition === 'top' ? 160 : 180} thickness={24} />
                     </div>
-                    <div className="flex flex-col gap-1.5 w-[130px] shrink-0">
+
+                    {/* Legend — pionowa lista */}
+                    <div className="flex flex-col gap-1.5 shrink-0 w-[110px]">
                       {DONUT_SEGMENTS.map((seg, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between px-2.5 py-1 rounded-full border text-[11px] transition-all duration-200 hover:brightness-110 shadow-sm"
+                          className="flex items-center justify-between px-2 py-1.5 rounded-lg border text-[10px] transition-all duration-200 hover:brightness-110"
                           style={{
                             borderColor: tintFaded(seg.color, 30),
-                            backgroundColor: tintFaded(seg.color, 8),
+                            backgroundColor: tintFaded(seg.color, 10),
                           }}
                         >
-                          <div className="flex items-center gap-1 min-w-0">
-                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-                            <span className="text-foreground/90 font-medium truncate">{seg.label}</span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: seg.color, boxShadow: `0 0 6px ${tintFaded(seg.color, 70)}` }}
+                            />
+                            <span className="text-foreground/90 font-medium truncate text-[10px]">{seg.label}</span>
                           </div>
-                          <span className="font-bold shrink-0 ml-1" style={{ color: seg.color }}>{seg.pct}%</span>
+                          <span className="font-bold shrink-0 ml-1 text-[11px]" style={{ color: seg.color }}>{seg.pct}%</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Aktywność */}
-                  <div>
-                    <h3 className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider mb-1.5">Aktywność (18 tyg.)</h3>
-                    <div className="w-full flex items-center justify-center overflow-hidden">
+                  {/* Aktywność — poniżej, większa */}
+                  <div className="flex flex-col gap-1.5 flex-1 min-h-0">
+                    <h3 className="text-[10px] font-bold text-foreground/60 uppercase tracking-wider">Aktywność (18 tyg.)</h3>
+                    <div className="w-full flex items-center justify-center overflow-hidden flex-1">
                       <GlassActivityGrid
-                        weeksCount={18}
+                        weeksCount={20}
                         showContent={showContent}
                         showSummary={false}
                         showStreaks={false}
-                        compact={true}
+                        compact={false}
                         hideHeader={true}
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-1.5 mt-1">
-                    <div className="flex items-center justify-center px-1 py-1 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
+                  {/* Status bar */}
+                  <div className="grid grid-cols-3 gap-1.5 shrink-0">
+                    <div className="flex items-center justify-center px-1 py-1.5 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
                       <span className="font-bold text-primary mr-1">v4.0</span> Wersja
                     </div>
-                    <div className="flex items-center justify-center px-1 py-1 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
+                    <div className="flex items-center justify-center px-1 py-1.5 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
                       <span className="font-bold text-emerald-400 mr-1">99.8%</span> Uptime
                     </div>
-                    <div className="flex items-center justify-center px-1 py-1 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
+                    <div className="flex items-center justify-center px-1 py-1.5 rounded-lg bg-foreground/[0.04] text-[10px] text-foreground/70">
                       <span className="font-bold text-amber-400 mr-1">0 Byte</span> Zużycie
                     </div>
                   </div>
+
                 </div>
               ) : (
-                <div className="space-y-3 p-0.5 animate-pulse">
+                <div className="space-y-3 p-0.5 animate-pulse flex-1">
                   <div className="flex justify-between items-center">
                     <div className="h-4 w-36 bg-primary/45 rounded" />
                   </div>
-                  <div className="h-24 w-full bg-foreground/15 rounded-xl" />
+                  <div className="h-40 w-full bg-foreground/15 rounded-xl" />
                   <div className="h-20 w-full bg-foreground/10 rounded-xl" />
                 </div>
               )}
             </Tile>
           </div>
+
 
         </div>
 
@@ -1505,7 +1529,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 elewacja="uniesiona"
                 interaktywny
                 className={cn(
-                  "p-3 min-h-[92px] flex flex-col justify-between transition-all duration-150 group",
+                  "p-3 min-h-[76px] flex flex-col justify-between transition-all duration-150 group",
                   sc.isAdd && "border-dashed border-foreground/20 hover:border-primary/50 hover:bg-primary/[0.02] flex items-center justify-center"
                 )}
               >
@@ -1548,9 +1572,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               </Tile>
             ))}
           </div>
-          <div className="h-6 sm:h-8 shrink-0" />
         </div>
-        </>)}
+        </div>
+        )}
           </div>
         )}
 

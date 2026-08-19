@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import {
   Sparkles, MessageSquare, Lock,
   ImagePlus, FileSearch, MessagesSquare, Database, BarChart3, ZoomIn,
@@ -73,6 +73,88 @@ function byteToStats(byte: number) {
 
 // ── Odznaka planu ("★ NAJLEPSZA OFERTA") — jeden wiersz, ta sama wysokość
 // we wszystkich trzech kartach (niewidoczne odznaki zachowują spacing). ──
+// ── Billing Toggle with sliding pill ─────────────────────────────────
+function BillingToggle({ billing, onChange, isGlass }: { billing: Billing; onChange: (b: Billing) => void; isGlass: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const monthRef    = useRef<HTMLButtonElement>(null)
+  const yearRef     = useRef<HTMLButtonElement>(null)
+  const [pillStyle, setPillStyle] = useState<{ left: number; width: number }>({ left: 4, width: 0 })
+  const [ready, setReady] = useState(false)
+
+  const measure = () => {
+    const container = containerRef.current
+    const activeBtn = billing === 'monthly' ? monthRef.current : yearRef.current
+    if (!container || !activeBtn) return
+    const cRect = container.getBoundingClientRect()
+    const bRect = activeBtn.getBoundingClientRect()
+    if (bRect.width === 0) return   // not visible yet
+    setPillStyle({ left: bRect.left - cRect.left, width: bRect.width })
+    setReady(true)
+  }
+
+  useLayoutEffect(() => {
+    measure()
+    // retry after paint if not yet visible
+    const raf = requestAnimationFrame(measure)
+    return () => cancelAnimationFrame(raf)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billing])
+
+  return (
+    <div className="relative z-10 flex justify-center">
+      {/* outer shell — nb-szklo for glass effect only */}
+      <div className={cn('rounded-full p-1', isGlass ? 'nb-szklo nb-szklo-plynne' : 'nb-tafla')}>
+        {/* inner container — grandchild of nb-szklo, so .nb-szklo>* won't apply position:relative to the pill */}
+        <div ref={containerRef} className="relative inline-flex items-center rounded-full">
+          {/* sliding pill */}
+          <span
+            aria-hidden
+            className="pointer-events-none rounded-full overflow-hidden"
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: pillStyle.left,
+              width: pillStyle.width,
+              opacity: ready ? 1 : 0,
+              transition: 'left 300ms cubic-bezier(0.34,1.56,0.64,1), width 300ms cubic-bezier(0.34,1.56,0.64,1)',
+            }}
+          >
+            <span className="absolute inset-0 rounded-full nb-pigulka-rant nb-tab-pill-spin" />
+            <span className="absolute inset-[1px] rounded-full nb-pigulka-szklo" />
+          </span>
+
+          <button
+            ref={monthRef}
+            type="button"
+            onClick={() => onChange('monthly')}
+            className={cn(
+              'relative z-10 shrink-0 cursor-pointer rounded-full font-medium transition-colors duration-200 h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base',
+              billing === 'monthly' ? 'text-foreground' : 'text-foreground/45 hover:text-foreground/70',
+            )}
+          >
+            Miesięcznie
+          </button>
+          <button
+            ref={yearRef}
+            type="button"
+            onClick={() => onChange('yearly')}
+            className={cn(
+              'relative z-10 shrink-0 cursor-pointer rounded-full font-medium transition-colors duration-200 h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base',
+              billing === 'yearly' ? 'text-foreground' : 'text-foreground/45 hover:text-foreground/70',
+            )}
+          >
+            <span className="flex items-center gap-1.5">
+              Rocznie
+              <GlassBadge intent="primary" size="sm">do -17%</GlassBadge>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PlanBadge({ visible, savings }: { visible: boolean; savings?: string }) {
   return (
     <div className="mb-3 flex items-center justify-between h-7">
@@ -377,48 +459,7 @@ export function CennikSection() {
       </div>
 
       {/* ── Billing Switcher ── */}
-      <div className="relative z-10 flex justify-center">
-        <div className={cn(
-          'inline-flex items-center rounded-full p-1',
-          isGlass ? 'nb-szklo nb-szklo-plynne' : 'nb-tafla',
-        )}>
-          <button
-            type="button"
-            onClick={() => setBilling('monthly')}
-            className={cn(
-              'relative shrink-0 cursor-pointer rounded-full font-medium transition-colors h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base',
-              billing === 'monthly' ? 'text-foreground' : 'text-foreground/45 hover:text-foreground/70',
-            )}
-          >
-            {billing === 'monthly' && (
-              <span className="absolute inset-0 rounded-full overflow-hidden">
-                <span className="absolute inset-0 rounded-full nb-pigulka-rant nb-tab-pill-spin" />
-                <span className="absolute inset-[1px] rounded-full nb-pigulka-szklo" />
-              </span>
-            )}
-            <span className="relative z-20">Miesięcznie</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setBilling('yearly')}
-            className={cn(
-              'relative shrink-0 cursor-pointer rounded-full font-medium transition-colors h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base',
-              billing === 'yearly' ? 'text-foreground' : 'text-foreground/45 hover:text-foreground/70',
-            )}
-          >
-            {billing === 'yearly' && (
-              <span className="absolute inset-0 rounded-full overflow-hidden">
-                <span className="absolute inset-0 rounded-full nb-pigulka-rant nb-tab-pill-spin" />
-                <span className="absolute inset-[1px] rounded-full nb-pigulka-szklo" />
-              </span>
-            )}
-            <span className="relative z-20 flex items-center gap-1.5">
-              Rocznie
-              <GlassBadge intent="primary" size="sm">do -17%</GlassBadge>
-            </span>
-          </button>
-        </div>
-      </div>
+      <BillingToggle billing={billing} onChange={setBilling} isGlass={isGlass} />
 
       {/* ── Plan Cards ── */}
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
