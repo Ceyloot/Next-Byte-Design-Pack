@@ -62,13 +62,13 @@ export function PaletaSection() {
 
         <div className="space-y-3 max-w-2xl">
           {[
-            { cls: 'text-4xl font-black',    label: 'text-4xl / font-black',    sample: 'NextByte Design' },
-            { cls: 'text-3xl font-bold',      label: 'text-3xl / font-bold',     sample: 'Tytuł sekcji' },
-            { cls: 'text-2xl font-semibold',  label: 'text-2xl / font-semibold', sample: 'Nagłówek karty' },
-            { cls: 'text-xl font-semibold',   label: 'text-xl / font-semibold',  sample: 'Podtytuł' },
-            { cls: 'text-base font-medium',   label: 'text-base / font-medium',  sample: 'Tekst podstawowy' },
-            { cls: 'text-sm',                 label: 'text-sm',                  sample: 'Opis komponentu lub etykieta pola' },
-            { cls: 'text-xs text-foreground/60', label: 'text-xs / muted',       sample: 'Podpis, hint, metadane, czas' },
+            { cls: 'text-4xl font-black font-landing', label: 'text-4xl / font-black', sample: 'NextByte Design' },
+            { cls: 'text-3xl font-bold font-landing', label: 'text-3xl / font-bold', sample: 'Tytuł sekcji' },
+            { cls: 'text-2xl font-semibold font-landing', label: 'text-2xl / font-semibold', sample: 'Nagłówek karty' },
+            { cls: 'text-xl font-semibold font-landing', label: 'text-xl / font-semibold', sample: 'Podtytuł' },
+            { cls: 'text-base font-medium', label: 'text-base / font-medium', sample: 'Tekst podstawowy' },
+            { cls: 'text-sm font-medium text-primary bg-primary/10 border border-primary/20 px-2 py-1 rounded-lg', label: 'text-sm / czcionka do pisania w UI (Domyślna)', sample: 'Opis komponentu lub etykieta pola (Standardowy rozmiar pisania UI)' },
+            { cls: 'text-xs text-foreground/60', label: 'text-xs / muted', sample: 'Podpis, hint, metadane, czas' },
             { cls: 'text-[10px] uppercase tracking-widest font-bold text-foreground/40', label: 'nb-etykieta / uppercase', sample: 'ETYKIETA SEKCJI' },
           ].map((row) => (
             <div key={row.label} className="flex items-baseline gap-4 border-b border-border/40 pb-3">
@@ -134,11 +134,16 @@ export function PaletaSection() {
 
         <div className="max-w-2xl space-y-2 pt-2">
           <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/40 mb-3">Fonty systemowe</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 space-y-1">
+              <p className="text-xs text-primary font-mono font-bold">font-landing / heading</p>
+              <p className="text-sm font-bold font-landing text-foreground">Plus Jakarta Sans</p>
+              <p className="text-xs text-foreground/50">Nagłówki i strona główna</p>
+            </div>
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-1">
-              <p className="text-xs text-foreground/50 font-mono">font-sans</p>
+              <p className="text-xs text-foreground/50 font-mono">font-sans (text-sm)</p>
               <p className="text-sm font-medium">Inter / system-ui</p>
-              <p className="text-xs text-foreground/40">Podstawowy interfejs</p>
+              <p className="text-xs text-foreground/40">Czcionka pisania i pól UI</p>
             </div>
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-1">
               <p className="text-xs text-foreground/50 font-mono">font-mono</p>

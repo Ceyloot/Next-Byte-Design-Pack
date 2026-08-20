@@ -30,6 +30,8 @@ import { StudioSection } from '@/sections/StudioSection'
 import { CzatSection } from '@/sections/CzatSection'
 import { StronaGlownaSection } from '@/sections/StronaGlownaSection'
 import { StronaGlownaNewSection } from '@/sections/StronaGlownaNewSection'
+import type { HomePageId } from '@/sections/StronaGlownaNewSection'
+import { STRONY as HOME_NEW_STRONY } from '@/sections/home-new/types'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
@@ -523,6 +525,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
   const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'homepage' | 'homepage-new'>('dashboard')
+  /** Aktywna podstrona publicznej witryny (Strona główna NEW) */
+  const [homeNewPage, setHomeNewPage] = useState<HomePageId>('home')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [flyoutY, setFlyoutY] = useState(0)
   const [navCompact, setNavCompact] = useState(false)
@@ -648,8 +652,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       const navRect = navRef.current.getBoundingClientRect()
       setMenuPos(
         navPosition === 'bottom'
-          ? { left: btnRect.left - navRect.left, bottom: navRect.bottom - btnRect.top + 8 }
-          : { left: btnRect.left - navRect.left, top: btnRect.bottom - navRect.top + 8 },
+          ? { left: btnRect.left, bottom: window.innerHeight - btnRect.top + 8 }
+          : { left: btnRect.left, top: btnRect.bottom + 8 },
       )
     }
     openMenuDelayed(key)
@@ -723,10 +727,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       className={cn('relative z-40 px-4 lg:px-5 shrink-0', navPosition === 'bottom' ? 'pt-2 pb-4' : 'pt-4 pb-2')}
       onMouseLeave={scheduleClose}
     >
-      <header className={cn(
-        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-        'flex items-center gap-2 px-4 h-12 rounded-2xl border shadow-lg backdrop-blur-md',
-      )}>
+      <header
+        className={cn(
+          isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+          'flex items-center gap-2 px-4 h-12 rounded-2xl border shadow-lg backdrop-blur-md',
+        )}
+        style={{ background: 'hsl(var(--card) / 0.72)' }}
+      >
         <div className="flex items-center gap-1.5 shrink-0 pr-2">
           <button
             type="button"
@@ -777,11 +784,11 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         <NavControls/>
       </header>
 
-      {/* Dropdown — rodzeństwo <header>, nie dziecko, żeby uciec spod
-          `contain: layout paint` (patrz komentarz przy openHorizontalMenu). */}
+      {/* Dropdown — fixed z-[300] żeby bić ponad fixed sub-nav (z-[200])
+          i uciec spod stacking context zewnętrznego kontenera (zIndex:1). */}
       {openMenu && megaItems.length > 0 && (
         <div
-          className="absolute z-50 min-w-[190px]"
+          className="fixed z-[300] min-w-[190px]"
           style={{ left: menuPos.left, top: menuPos.top, bottom: menuPos.bottom }}
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
@@ -966,12 +973,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       {/* ── Homepage Sub-Nav (sticky outside overflow container) ── */}
       {activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new') && (
         <header
-          className="nb-homepage-nav border-b border-foreground/[0.06] z-[200] shrink-0"
+          className="nb-homepage-nav border-b border-foreground/[0.06] z-[200] shrink-0 backdrop-blur-md"
           style={{
             position: 'fixed',
             top: isSidebar || navPosition === 'bottom' ? 0 : '64px',
             left: isSidebar ? '64px' : 0,
             right: 0,
+            background: 'hsl(var(--card) / 0.85)',
           }}
         >
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent_0%,hsl(var(--primary)/0.55)_50%,transparent_100%)]" />
@@ -981,25 +989,34 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               <span className="font-mono uppercase text-foreground/85 group-hover:text-foreground transition-colors text-[12px] tracking-[0.28em] font-bold">NEXTBYTE</span>
             </button>
             <nav className="flex items-center rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-1">
-              {[
-                { label: 'Strona główna', id: 'home' },
-                { label: 'Cennik', id: 'cennik' },
-                { label: 'Dla firm', id: 'b2b' },
-                { label: 'Historia', id: 'historia' },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={cn(
-                    'relative flex items-center justify-center rounded-xl transition-all duration-300 h-9 px-4 cursor-pointer text-[12px] font-medium tracking-wide',
-                    item.id === 'home'
-                      ? 'bg-foreground/[0.08] border border-foreground/[0.1] text-foreground shadow-sm'
-                      : 'border border-transparent text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04]'
-                  )}
-                >
-                  {item.label}
-                </button>
-              ))}
+              {(previewSubView === 'homepage-new'
+                ? HOME_NEW_STRONY
+                : [
+                    { label: 'Strona główna', id: 'home' as HomePageId },
+                    { label: 'Cennik', id: 'cennik' as HomePageId },
+                    { label: 'Dla firm', id: 'b2b' as HomePageId },
+                    { label: 'Historia', id: 'historia' as HomePageId },
+                  ]
+              ).map((item) => {
+                const aktywna = previewSubView === 'homepage-new'
+                  ? homeNewPage === item.id
+                  : item.id === 'home'
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => previewSubView === 'homepage-new' && setHomeNewPage(item.id)}
+                    className={cn(
+                      'relative flex items-center justify-center rounded-xl transition-all duration-300 h-9 px-4 cursor-pointer text-[12px] font-medium tracking-wide',
+                      aktywna
+                        ? 'bg-foreground/[0.08] border border-foreground/[0.1] text-foreground shadow-sm'
+                        : 'border border-transparent text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04]'
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                )
+              })}
             </nav>
             <button className="inline-flex items-center gap-2 rounded-xl font-mono text-[10px] tracking-[0.2em] uppercase px-4 py-2.5 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all cursor-pointer">
               <span className="hidden md:inline">[ Przejdź na platformę ]</span>
@@ -1017,7 +1034,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       )}
       style={(
         activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new')
-          ? { paddingTop: isSidebar || navPosition === 'bottom' ? '56px' : '120px' }
+          ? { paddingTop: isSidebar || navPosition === 'bottom' ? '56px' : '48px' }
           : {}
       )}
       >
@@ -1031,7 +1048,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             {previewSubView === 'homepage' ? (
               <StronaGlownaSection />
             ) : previewSubView === 'homepage-new' ? (
-              <StronaGlownaNewSection onNavigateToCennik={() => { setActiveSection('cennik'); onSelectTab?.('cennik') }} />
+              <StronaGlownaNewSection page={homeNewPage} onPageChange={setHomeNewPage} />
             ) : (
               <div className="flex flex-col gap-3.5 flex-1 min-h-0">
 

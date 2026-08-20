@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,6 +7,7 @@
 /* ── Czcionki + base reset ─────────────────────────────────── */
 :root {
   --font-heading: 'DM Sans', sans-serif;
+  --font-landing: 'DM Sans', sans-serif;
   --font-body: 'Inter', sans-serif;
 }
 
@@ -17,12 +18,18 @@ body {
   color: hsl(var(--foreground));
 }
 
-.font-heading {
-  font-family: var(--font-heading), 'DM Sans', ui-sans-serif, sans-serif;
+.font-heading,
+.font-landing,
+.font-landing h1,
+.font-landing h2,
+.font-landing h3,
+.font-landing h4,
+h1, h2, h3, h4 {
+  font-family: 'DM Sans', ui-sans-serif, sans-serif !important;
 }
 
 .font-body {
-  font-family: var(--font-body), 'Inter', ui-sans-serif, sans-serif;
+  font-family: 'Inter', ui-sans-serif, sans-serif;
 }
 
 /* ── TAFLE — warstwy głębi w trybie normalnym ─────────────────────────
