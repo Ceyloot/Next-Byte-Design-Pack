@@ -12,9 +12,9 @@ export const MODULY = [
     id: 'chat',
     icon: Brain,
     color: AKCENT.chat,
-    tag: '01 // CORE',
+    tag: '01 // CHAT AI',
     title: 'Chat AI z wszystkimi topowymi modelami',
-    lead: 'Gemini 2.5 Pro, GPT-4o / GPT-5, Claude 3.7 Sonnet & Opus, Grok — przełączasz model w trakcie jednej rozmowy bez utraty wątku i historii.',
+    lead: 'Gemini 3.5, GPT-5, Claude Opus/Sonnet, Grok — wszystkie w jednym oknie. Projekty, wiedza, artefakty, przełączanie modeli w locie.',
     bullets: [
       'Wspólny kontekst dla wszystkich dostawców — koniec z przeklejaniem promptów',
       'Tryb porównawczy: dwie odpowiedzi obok siebie, aby natychmiast wybrać najlepszą',
@@ -28,12 +28,31 @@ export const MODULY = [
     ],
   },
   {
+    id: 'studio',
+    icon: Camera,
+    color: AKCENT.studio,
+    tag: '02 // KREACJA GRAFICZNA',
+    title: 'Studio Zdjęć i generowanie materiałów 4K',
+    lead: 'Imagen 3 Pro, GPT Image, Grok Image — generacja, edycja i retusz obrazów w jednym miejscu. Upscale 4K, Face Swap, usuwanie tła.',
+    bullets: [
+      'Dostęp do topowych silników obrazu bez płacenia osobnego abonamentu Midjourney',
+      'Gotowe narzędzia biznesowe: Face Swap, Upscale 4K, Usuwanie tła, Mockupy B2B',
+      'Równoległe generowanie: do 3 grafik jednocześnie w planie Premium, do 5 w Ultimate',
+      'Eksport w formatach WebP, PNG i wektorowych z pełnymi prawami komercyjnymi',
+    ],
+    metryki: [
+      { label: 'Silniki', value: 'Imagen · GPT Image · Grok' },
+      { label: 'Maks. jakość', value: '4K Ultra HD' },
+      { label: 'Prawa autorskie', value: '100% komercyjne' },
+    ],
+  },
+  {
     id: 'notes',
     icon: NotebookPen,
     color: AKCENT.notes,
     tag: '03 // BAZA WIEDZY',
     title: 'Notatki AI i inteligentna baza wiedzy',
-    lead: 'Edytor TipTap z automatycznym zapisem, który łączy Twoje firmowe materiały w aktywną bazę wiedzy zasilającą odpowiedzi asystenta.',
+    lead: 'Edytor TipTap, folder-sync jako źródło wiedzy dla czatu, autoanalizy per token.',
     bullets: [
       'Wyszukiwanie semantyczne — AI rozumie intencję i sens, nie tylko słowa kluczowe',
       'Głęboka integracja z Chat AI — zadajesz pytania bezpośrednio do swoich notatek',
@@ -52,7 +71,7 @@ export const MODULY = [
     color: AKCENT.notes,
     tag: '04 // ORGANIZACJA',
     title: 'Kalendarz AI i asystent zadań',
-    lead: 'Inteligentne planowanie harmonogramu, synchronizacja ze spotkaniami i tablicami Kanban, by żaden termin w zespole nie uciekł.',
+    lead: 'Wydarzenia, RRULE, snap 15 min, sync ze spotkaniami i zadaniami zespołu.',
     bullets: [
       'Automatyczne przekształcanie wniosków z czatu w konkretne terminy i zadania',
       'Dwukierunkowy sync z Kalendarzem Google i przypomnienia w czasie rzeczywistym',
@@ -71,7 +90,7 @@ export const MODULY = [
     color: AKCENT.auto,
     tag: '05 // STUDIO WIDEO',
     title: 'Studio Wideo — generowanie klipów AI',
-    lead: 'Twórz krótkie filmy, animacje i wideo produktowe z promptu tekstowego lub zdjęcia w kilkadziesiąt sekund — bez montażu.',
+    lead: 'Wiodące silniki wideo AI — generuj klipy z tekstu lub obrazu w kilkadziesiąt sekund w jakości kinowej. Bez montażu, bez studia.',
     bullets: [
       'Generowanie wideo z tekstu i obrazu: Runway, Kling, Hailuo w jednym miejscu',
       'Automatyczne napisy, dubbing AI i eksport w formacie MP4 / WebM',
@@ -81,26 +100,7 @@ export const MODULY = [
     metryki: [
       { label: 'Długość klipu', value: 'do 2 min' },
       { label: 'Rozdzielczość', value: '4K / 1080p' },
-      { label: 'Silniki', value: 'Runway · Kling' },
-    ],
-  },
-  {
-    id: 'studio',
-    icon: Camera,
-    color: AKCENT.studio,
-    tag: '02 // KREACJA GRAFICZNA',
-    title: 'Studio Zdjęć i generowanie materiałów 4K',
-    lead: 'Profesjonalne generowanie grafik, retusz, usuwanie tła i warianty produktowe na silnikach Flux Pro, Grok Image i Stable Diffusion.',
-    bullets: [
-      'Dostęp do topowych silników obrazu bez płacenia osobnego abonamentu Midjourney',
-      'Gotowe narzędzia biznesowe: Face Swap, Upscale 4K, Usuwanie tła, Mockupy B2B',
-      'Równoległe generowanie: do 3 grafik jednocześnie w planie Premium, do 5 w Ultimate',
-      'Eksport w formatach WebP, PNG i wektorowych z pełnymi prawami komercyjnymi',
-    ],
-    metryki: [
-      { label: 'Silniki', value: 'Flux, Grok, SD' },
-      { label: 'Maks. jakość', value: '4K Ultra HD' },
-      { label: 'Prawa autorskie', value: '100% komercyjne' },
+      { label: 'Silniki', value: 'Wiodące modele AI' },
     ],
   },
   {
@@ -109,7 +109,7 @@ export const MODULY = [
     color: AKCENT.auto,
     tag: '06 // INTERAKCJA GŁOSOWA',
     title: 'Głos AI i automatyczna transkrypcja',
-    lead: 'Płynna konwersacja głosowa w języku polskim z opóźnieniem poniżej 300 ms oraz precyzyjne spisywanie nagrań ze spotkań.',
+    lead: 'ElevenLabs WebSocket, polski głos, rozmowy w czasie rzeczywistym — opóźnienie poniżej 300 ms.',
     bullets: [
       'Naturalnie brzmiące polskie głosy zasilane technologią ElevenLabs WebSocket',
       'Transkrypcja audio i wideo z automatycznym podziałem na role i listą ustaleń',
@@ -128,7 +128,7 @@ export const MODULY = [
     color: AKCENT.local,
     tag: '07 // AUTOPILOT',
     title: 'Autonomiczne Agenty i Pętle 24/7',
-    lead: 'Własne agenty AI działające w tle, które monitorują dane, analizują konkurencję i wysyłają gotowe powiadomienia na Slacka lub maila.',
+    lead: 'Własne agenty z webhookami, pętle 24/7, integracje z n8n i zewnętrznymi API.',
     bullets: [
       'Praca 24/7 bez Twojej obecności — agent bada rynek i raportuje tylko ważne zmiany',
       'Bezproblemowa integracja z n8n, Make oraz zewnętrznymi webhookami i API',
@@ -153,20 +153,20 @@ export const TECH_PARTNERZY = [
 export const WARTOSCI_FILARY = [
   {
     tag: '// SYGNAŁ ZAMIAST SZUMU',
-    title: 'Codziennie pojawia się 50 nowych narzędzi AI. Znaczenie dla zysku mają 2.',
-    desc: 'NextByte selekcjonuje i integruje tylko sprawdzone rozwiązania, które realnie podnoszą produktywność — z przejrzystą instrukcją wdrożenia po polsku.',
+    title: 'Codziennie wychodzi 50 „przełomowych" narzędzi AI. Znaczenie mają 2.',
+    desc: 'NextByte testuje je za Ciebie i pokazuje tylko to, co realnie przyspiesza pracę — z instrukcją krok po kroku, po polsku.',
     accent: '#70BEFA',
   },
   {
-    tag: '// PROMPTY, KTÓRE GENERUJĄ WYNIKI',
-    title: 'Koniec z przypadkowymi promptami. Sprawdzone szablony zoptymalizowane pod konwersję.',
-    desc: 'Otrzymujesz bibliotekę gotowych struktur pod analizę prawną, oferty B2B, copywriting i kodowanie. Każdy szablon z instrukcją, jak dopasować go do Twojej branży.',
+    tag: '// PROMPTY, KTÓRE DZIAŁAJĄ',
+    title: 'Zero „magicznych promptów" z TikToka.',
+    desc: 'Dostajesz sprawdzone szablony pod konkretne zadania: research, treści, automatyzacje, kod. Każdy prompt z kontekstem: kiedy użyć, co zmienić pod siebie, czego się spodziewać.',
     accent: '#C084FC',
   },
   {
-    tag: '// PEŁNE PRZEPŁYWY ZAMIAST POJEDYNCZYCH TRIKÓW',
-    title: 'Kompletne systemy od pomysłu do gotowej realizacji.',
-    desc: 'Brief z czatu generuje grafikę 4K w Studio, wpisuje zadanie do tablicy Kanban i planuje publikację w Kalendarzu. Bez ręcznego przepisywania danych.',
+    tag: '// GOTOWE PRZEPŁYWY',
+    title: 'Nie pojedyncze triki, tylko całe systemy.',
+    desc: 'Od pomysłu do wyniku — z rozpisanymi narzędziami i kolejnością kroków. Kopiujesz, podmieniasz dane, działa. Tego samego dnia.',
     accent: '#34D399',
   },
 ] as const
@@ -174,8 +174,8 @@ export const WARTOSCI_FILARY = [
 /* ══════════════ TELEMETRIA / KLUCZOWE WSKAŹNIKI ══════════════ */
 export const STATY = [
   { value: '10+',     label: 'Modeli AI w 1 panelu', sub: 'Gemini · GPT · Claude · Grok · Mistral', icon: Brain },
-  { value: '1',       label: 'Przejrzysty abonament', sub: 'Zamiast 5 osobnych subskrypcji w USD', icon: Layers },
-  { value: '100%',    label: 'Polska platforma i VAT', sub: 'Polska faktura VAT 23% i wsparcie PL', icon: Shield },
+  { value: '1',       label: 'Subskrypcja', sub: 'Zamiast pięciu osobnych', icon: Layers },
+  { value: '100%',    label: 'Po polsku', sub: 'Interfejs, prompty, wsparcie', icon: Shield },
   { value: '24/7',    label: 'Autonomiczne agenty', sub: 'Zautomatyzowane procesy w tle',        icon: Sparkles },
 ] as const
 
@@ -199,17 +199,19 @@ export const KROKI = [
 
 /* ══════════════ PORÓWNANIE Z KONKURENCJĄ ══════════════ */
 export const POROWNANIE = {
-  kolumny: ['NextByte', 'ChatGPT Plus', 'Perplexity Pro', 'Midjourney'],
+  kolumny: ['NextByte', 'ChatGPT Plus', 'Midjourney Std', 'Notion AI'],
   wiersze: [
-    { f: 'Wszystkie topowe modele (Gemini, Claude, GPT, Grok)', v: [true, false, 'część', false] },
-    { f: 'Studio grafiki 4K (Flux Pro, Grok Image, Upscale)',    v: [true, 'limit', false, true] },
-    { f: 'Zintegrowany Kanban i harmonogram w Kalendarzu',      v: [true, false, false, false] },
-    { f: 'Baza wiedzy z notatkami i wyszukiwaniem semantycznym', v: [true, false, false, false] },
-    { f: 'Autonomiczne pętle agentów AI 24/7',                   v: [true, false, false, false] },
-    { f: 'Lokalny AI offline (100% poufności / RODO / zero kosztu)', v: [true, false, false, false] },
-    { f: 'Płatność w PLN i polska faktura VAT 23%',             v: [true, false, false, false] },
-    { f: 'Elastyczna pula Byte (niewykorzystane środki nie przepadają)', v: [true, false, false, false] },
-    { f: 'Koszt startowy na start',                              v: ['0 zł (Free)', '~89 zł ($20)', '~89 zł ($20)', '~45 zł ($10)'] },
+    { f: 'Chat z wieloma modelami (GPT-5, Claude, Gemini, Grok)', v: [true, 'Tylko GPT-5', false, 'Tylko OpenAI'] },
+    { f: 'Generowanie grafik 4K (Flux Pro, Grok Image)',          v: [true, 'DALL-E (limit)', true, false] },
+    { f: 'Generowanie wideo AI (Runway, Kling)',                  v: [true, false, false, false] },
+    { f: 'Głos AI i transkrypcja spotkań',                        v: [true, 'podstawowy', false, 'Meeting Notes'] },
+    { f: 'Notatki AI i semantyczna baza wiedzy',                  v: [true, false, false, true] },
+    { f: 'Kanban, zadania i Kalendarz AI',                        v: [true, false, false, true] },
+    { f: 'Autonomiczne agenty AI działające 24/7',                v: [true, false, false, false] },
+    { f: 'Lokalny AI offline — zero transferu (Ollama / LM Studio)', v: [true, false, false, false] },
+    { f: 'Serwery w UE · pełna zgodność z RODO',                 v: [true, false, false, false] },
+    { f: 'Płatność w PLN · polska faktura VAT 23%',              v: [true, false, false, false] },
+    { f: 'Cena miesięczna',                                       v: ['od 0 zł', '~80 zł ($20)', '~120 zł ($30)', '~95 zł ($24/os.)'] },
   ],
 } as const
 
