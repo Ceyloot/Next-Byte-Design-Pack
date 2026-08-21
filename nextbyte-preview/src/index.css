@@ -4,6 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes tab-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-tab-in {
+  animation: tab-in 0.22s ease-out both;
+}
+
 /* ── Czcionki + base reset ─────────────────────────────────── */
 :root {
   --font-heading: 'DM Sans', sans-serif;

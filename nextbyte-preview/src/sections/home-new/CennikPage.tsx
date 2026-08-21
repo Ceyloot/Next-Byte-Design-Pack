@@ -476,7 +476,7 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                   <td className="px-5 py-3.5 text-[13px] font-medium text-foreground/65">{r.f}</td>
                   {r.v.map((v, vi) => (
                     <td key={vi} className={cn('px-4 py-3.5 text-center', vi === 0 && 'bg-primary/[0.035]')}>
-                      {v === true ? <CircleCheck className="mx-auto h-[18px] w-[18px] text-emerald-400" />
+                      {v === true ? <CircleCheck className="mx-auto h-[18px] w-[18px] text-primary" />
                         : v === false ? <Minus className="mx-auto h-4 w-4 text-foreground/15" />
                         : <span className={cn('text-[12.5px] font-semibold', vi === 0 ? 'text-primary' : 'text-foreground/45')}>{v}</span>}
                     </td>

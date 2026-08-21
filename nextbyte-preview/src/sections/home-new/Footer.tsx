@@ -30,7 +30,7 @@ export function Footer({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="flex items-center gap-1.5 rounded-lg border border-foreground/[0.07] bg-foreground/[0.02] px-2.5 py-1.5 text-[10.5px] text-foreground/40">
-                <Shield className="h-3 w-3 text-emerald-400/70" /> Dane w UE
+                <Shield className="h-3 w-3 text-primary/70" /> Dane w UE
               </span>
               <span className="flex items-center gap-1.5 rounded-lg border border-foreground/[0.07] bg-foreground/[0.02] px-2.5 py-1.5 text-[10.5px] text-foreground/40">
                 <Coins className="h-3 w-3 text-primary/70" /> Faktura VAT w PLN

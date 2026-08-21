@@ -225,24 +225,12 @@ export function GlowButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden rounded-2xl font-mono',
-        'bg-primary font-bold text-background whitespace-nowrap uppercase',
-        'transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0',
-        size === 'lg' ? 'h-[52px] px-8 text-[12px] tracking-[0.18em]' : 'h-11 px-6 text-[11px] tracking-[0.18em]',
+        'group relative inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden rounded-2xl font-grotesk',
+        'border border-primary/40 bg-primary/10 text-primary font-semibold whitespace-nowrap backdrop-blur-sm',
+        'transition-all duration-200 hover:bg-primary/20 hover:border-primary/60 hover:-translate-y-0.5 active:translate-y-0',
+        size === 'lg' ? 'h-[52px] px-8 text-[14px] tracking-normal' : 'h-11 px-6 text-[13px] tracking-normal',
         className,
       )}
-      style={{
-        boxShadow: '0 0 0 1px hsl(var(--primary)/0.5), 0 8px 30px -6px hsl(var(--primary)/0.5)',
-        ...(size === 'lg' ? {} : {}),
-      }}
-      onMouseEnter={e => {
-        const el = e.currentTarget
-        el.style.boxShadow = '0 0 0 1px hsl(var(--primary)/0.8), 0 16px 50px -8px hsl(var(--primary)/0.8), 0 0 0 4px hsl(var(--primary)/0.15)'
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget
-        el.style.boxShadow = '0 0 0 1px hsl(var(--primary)/0.5), 0 8px 30px -6px hsl(var(--primary)/0.5)'
-      }}
     >
       {/* subtle inner shine */}
       <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit]"
@@ -269,11 +257,11 @@ export function GhostButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'group inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl font-mono uppercase',
+        'group inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl font-grotesk',
         'border border-foreground/[0.10] bg-foreground/[0.02] backdrop-blur-sm',
-        'font-semibold text-foreground/75',
+        'font-medium text-foreground/75',
         'transition-all duration-200 hover:border-foreground/25 hover:bg-foreground/[0.05] hover:text-foreground',
-        size === 'lg' ? 'px-6 text-[11px] tracking-[0.18em]' : 'h-11 px-5 text-[10px] tracking-[0.18em]',
+        size === 'lg' ? 'px-6 text-[14px] tracking-normal' : 'h-11 px-5 text-[13px] tracking-normal',
         className,
       )}
       style={size === 'lg' ? { height: 52 } : undefined}
@@ -385,7 +373,7 @@ export function Stars({ n = 5, size = 14 }: { n?: number; size?: number }) {
   return (
     <span className="inline-flex gap-0.5">
       {Array.from({ length: n }).map((_, i) => (
-        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className="text-amber-400">
+        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className="text-primary">
           <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
         </svg>
       ))}

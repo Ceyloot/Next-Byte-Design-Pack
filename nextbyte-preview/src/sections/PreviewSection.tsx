@@ -970,59 +970,50 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         : <HorizontalNav />
       }
 
-      {/* ── Homepage Sub-Nav (sticky outside overflow container) ── */}
+      {/* ── Homepage Sub-Nav — kafelki ── */}
       {activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new') && (
-        <header
-          className="nb-homepage-nav border-b border-foreground/[0.06] z-[200] shrink-0 backdrop-blur-md"
+        <div
+          className="nb-homepage-nav z-[200] shrink-0 border-b border-foreground/[0.06]"
           style={{
             position: 'fixed',
             top: isSidebar || navPosition === 'bottom' ? 0 : '64px',
             left: isSidebar ? '64px' : 0,
             right: 0,
-            background: 'hsl(var(--card) / 0.85)',
+            background: 'hsl(var(--background) / 0.92)',
+            backdropFilter: 'blur(12px)',
           }}
         >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent_0%,hsl(var(--primary)/0.55)_50%,transparent_100%)]" />
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-            <button type="button" className="hidden md:inline-flex items-center gap-2.5 cursor-pointer group">
-              <span className="inline-block w-[6px] h-[6px] rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)),0_0_16px_hsl(var(--primary)/0.6)]" />
-              <span className="font-mono uppercase text-foreground/85 group-hover:text-foreground transition-colors text-[12px] tracking-[0.28em] font-bold">NEXTBYTE</span>
-            </button>
-            <nav className="flex items-center rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-1">
-              {(previewSubView === 'homepage-new'
-                ? HOME_NEW_STRONY
-                : [
-                    { label: 'Strona główna', id: 'home' as HomePageId },
-                    { label: 'Cennik', id: 'cennik' as HomePageId },
-                    { label: 'Dla firm', id: 'b2b' as HomePageId },
-                    { label: 'Historia', id: 'historia' as HomePageId },
-                  ]
-              ).map((item) => {
-                const aktywna = previewSubView === 'homepage-new'
-                  ? homeNewPage === item.id
-                  : item.id === 'home'
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => previewSubView === 'homepage-new' && setHomeNewPage(item.id)}
-                    className={cn(
-                      'relative flex items-center justify-center rounded-xl transition-all duration-300 h-9 px-4 cursor-pointer text-[12px] font-medium tracking-wide',
-                      aktywna
-                        ? 'bg-foreground/[0.08] border border-foreground/[0.1] text-foreground shadow-sm'
-                        : 'border border-transparent text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04]'
-                    )}
-                  >
-                    {item.label}
-                  </button>
-                )
-              })}
-            </nav>
-            <button className="inline-flex items-center gap-2 rounded-xl font-mono text-[10px] tracking-[0.2em] uppercase px-4 py-2.5 border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all cursor-pointer">
-              <span className="hidden md:inline">[ Przejdź na platformę ]</span>
-            </button>
+          <div className="flex items-center justify-center gap-1.5 px-4 h-12">
+            {(previewSubView === 'homepage-new'
+              ? HOME_NEW_STRONY
+              : [
+                  { label: 'Strona główna', id: 'home' as HomePageId },
+                  { label: 'Cennik', id: 'cennik' as HomePageId },
+                  { label: 'Dla firm', id: 'b2b' as HomePageId },
+                  { label: 'Historia', id: 'historia' as HomePageId },
+                ]
+            ).map((item) => {
+              const aktywna = previewSubView === 'homepage-new'
+                ? homeNewPage === item.id
+                : item.id === 'home'
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => previewSubView === 'homepage-new' && setHomeNewPage(item.id)}
+                  className={cn(
+                    'h-8 px-4 rounded-lg font-sans text-[13px] font-medium transition-all duration-200 cursor-pointer',
+                    aktywna
+                      ? 'bg-primary/15 border border-primary/30 text-primary'
+                      : 'text-foreground/45 hover:text-foreground/75 hover:bg-foreground/[0.05]'
+                  )}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
           </div>
-        </header>
+        </div>
       )}
 
       {/* ── Main Workspace ── */}
@@ -1034,7 +1025,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       )}
       style={(
         activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new')
-          ? { paddingTop: isSidebar || navPosition === 'bottom' ? '56px' : '48px' }
+          ? { paddingTop: '48px' }
           : {}
       )}
       >

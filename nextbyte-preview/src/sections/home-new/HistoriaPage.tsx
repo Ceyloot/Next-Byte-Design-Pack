@@ -105,9 +105,9 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
                         </span>
                       )}
                       {najnowszy && (
-                        <span className="ml-auto flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/[0.08] px-2.5 py-1">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-emerald-400">
+                        <span className="ml-auto flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.08] px-2.5 py-1">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-primary">
                             Aktualna
                           </span>
                         </span>

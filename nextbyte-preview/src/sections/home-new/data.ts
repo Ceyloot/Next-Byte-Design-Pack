@@ -52,7 +52,7 @@ export const MODULY = [
     color: AKCENT.notes,
     tag: '03 // BAZA WIEDZY',
     title: 'Notatki AI i inteligentna baza wiedzy',
-    lead: 'Edytor TipTap, folder-sync jako źródło wiedzy dla czatu, autoanalizy per token.',
+    lead: 'Zaawansowany edytor z AI, folder-sync jako źródło wiedzy dla czatu, autoanalizy per token.',
     bullets: [
       'Wyszukiwanie semantyczne — AI rozumie intencję i sens, nie tylko słowa kluczowe',
       'Głęboka integracja z Chat AI — zadajesz pytania bezpośrednio do swoich notatek',
@@ -360,24 +360,28 @@ export const OPINIE = [
 /* ══════════════ FAQ — ROZWIĄZYWANIE REALNYCH OBAW KLIENTA ══════════════ */
 export const FAQ = [
   {
-    q: 'Czym NextByte różni się od ChatGPT Plus lub Perplexity?',
-    a: 'ChatGPT to tylko jeden model w odizolowanym oknie. NextByte to kompletne środowisko pracy: daje Ci dostęp do wszystkich wiodących modeli (Gemini 2.5, GPT-4o/5, Claude 3.7, Grok), profesjonalnego Studia Zdjęć 4K, bazy wiedzy, tablicy Kanban i Kalendarza — z jedną fakturą VAT w PLN i polskim wsparciem.',
+    q: 'Czym NextByte różni się od ChatGPT lub Perplexity?',
+    a: 'NextByte to nie kolejny czat. To platforma: chat z 10+ modelami, notatki AI, kalendarz, panel firmowy, obrazy, wideo, głos i agenty — pod jednym logowaniem, po polsku, z jedną fakturą.',
   },
   {
-    q: 'Jak działa system rozliczeń w Byte i czy środki przepadają?',
-    a: 'Byte to uniwersalna jednostka mocy obliczeniowej. Każda operacja ma jawny, z góry znany koszt (np. 1 Byte za standardową wiadomość czatu, 3 Byte za grafikę 4K, 0 Byte za model lokalny). W przeciwieństwie do zagranicznych platform, niewykorzystane Byte z subskrypcji przechodzą na kolejny miesiąc (do 3-krotności puli), a Byte z doładowań nigdy nie wygasają.',
+    q: 'Które modele AI dostaję w subskrypcji?',
+    a: 'Gemini 3 Pro, GPT-5, Claude Opus/Sonnet, Grok, Mistral, ElevenLabs, Runware. Przełączasz je w locie w tym samym oknie czatu.',
   },
   {
-    q: 'Jak chronione są moje dane firmowe i czy są zgodne z RODO?',
-    a: 'Wszystkie dane przetwarzamy wyłącznie na serwerach w Unii Europejskiej w ścisłej zgodzie z RODO. Gwarantujemy, że Twoje zapytania, dokumenty i kody nigdy nie są wykorzystywane do trenowania publicznych modeli AI. Dla materiałów objętych bezwzględną tajemnicą zawodową udostępniamy tryb Lokalny AI (Ollama/LM Studio), w którym dane w ogóle nie opuszczają Twojego urządzenia.',
+    q: 'Co to są Byte i jak je liczycie?',
+    a: '1 Byte = jednostka rozliczeniowa AI (koszt tokenów + operacje). Każda wiadomość pokazuje koszt przed wysłaniem, koszt zaokrąglamy w górę do całych Byte i pobieramy z Twojej puli.',
   },
   {
-    q: 'Czy mogę zrezygnować z subskrypcji w dowolnym momencie?',
-    a: 'Tak, w 100% bezproblemowo. Nie stosujemy umów lojalnościowych ani ukrytych okresów wypowiedzenia. Rezygnujesz jednym kliknięciem w panelu klienta, zachowując dostęp do końca opłaconego okresu.',
+    q: 'Czy mogę wyjść w każdej chwili?',
+    a: 'Tak. Rezygnacja jednym kliknięciem w panelu. Bez umów, bez okresu wypowiedzenia, bez rozmów z konsultantem.',
   },
   {
-    q: 'Czy mogę przetestować platformę bez podawania karty kredytowej?',
-    a: 'Tak. Plan Bezpłatny jest całkowicie darmowy i nie wymaga podawania karty. Możesz bez ograniczeń korzystać z Notatek, Kalendarza, Zadań oraz darmowych modeli lokalnych offline.',
+    q: 'Czy jest wersja dla firm i zespołów?',
+    a: 'Tak — panel firmowy z uprawnieniami granularnymi, plany JDG, One, Pro i Infinite. Wspólna pula Byte, wspólne projekty, faktura VAT.',
+  },
+  {
+    q: 'Co z prywatnością i RODO?',
+    a: 'Serwery w UE (Supabase, Vercel), RLS na każdym obiekcie, izolacja per firma i per użytkownik, opcja lokalnych modeli AI (LM Studio, Ollama) dla wrażliwych danych.',
   },
 ] as const
 
@@ -415,7 +419,7 @@ export const HISTORIA = [
   {
     rok: '2026',
     tytul: 'Autonomiczne Agenty i Kalendarz AI',
-    opis: 'Pełna automatyzacja: integracje 24/7 z webhookami, tablicami Kanban, edytorem TipTap i synchronizacją ze spotkaniami.',
+    opis: 'Pełna automatyzacja: integracje 24/7 z webhookami, tablicami Kanban i synchronizacją ze spotkaniami.',
   },
 ] as const
 
