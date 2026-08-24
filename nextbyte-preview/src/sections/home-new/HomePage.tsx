@@ -2,16 +2,22 @@ import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import {
   ArrowRight, Play, Check, ChevronDown, Sparkles, Coins, Shield,
-  Zap, CircleCheck, Minus, Quote,
+  Zap, CircleCheck, X, Quote,
   Brain, Camera, NotebookPen, Workflow, Cpu, Calendar, Rocket,
   Users, Star, Clock, Lock, Layers, Gauge, CpuIcon, Activity, FileText,
   KeyRound, Mic, Bot, Repeat, CheckCircle2, Globe,
+  Building2, WifiOff, LogOut,
+  Clapperboard,
+  AudioLines,
+  Folder, Search, Type, MonitorPlay, Move,
+  type LucideIcon,
 } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton,
   Panel, IconTile, StepNumber, Stars, Glow,
   HairLine, AKCENT, akcentTlo, AnimStyles, FadeIn,
 } from './shared'
+import { TilePill } from '@/components/Tile'
 import {
   MODULY, KROKI, POROWNANIE, PLANY, OPINIE, FAQ, LOGOTYPY,
   TECH_PARTNERZY, WARTOSCI_FILARY, STATY,
@@ -23,6 +29,51 @@ import interiorImg from '@/assets/studio/interior.jpg'
 import carImg from '@/assets/studio/car.jpg'
 import landscapeImg from '@/assets/studio/landscape.jpg'
 import animalImg from '@/assets/studio/animal.jpg'
+
+/* ------------------------------------------------------------------
+   LOGA MODELI AI — do rozpoznania marki jednym rzutem oka (bez tekstu)
+   ------------------------------------------------------------------ */
+type BrandIconProps = { className?: string; style?: React.CSSProperties }
+
+function OpenAIIcon({ className, style }: BrandIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} style={style} fill="currentColor">
+      <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.677l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387 2.02-1.165a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.412-.666zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z" />
+    </svg>
+  )
+}
+
+function AnthropicIcon({ className, style }: BrandIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} style={style} fill="currentColor">
+      <path d="M13.827 3.52h3.603L24 20.521h-3.603zm-7.258 0h3.767L16.906 20.521H13.28l-1.435-3.899H5.588l-1.435 3.899H0Zm2.976 5.18-1.997 5.43h3.995z" />
+    </svg>
+  )
+}
+
+function GeminiIcon({ className, style }: BrandIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} style={style} fill="currentColor">
+      <path d="M11.9968 0C11.1394 6.97318 6.97318 11.1394 0 11.9968C6.97318 12.8542 11.1394 17.0205 11.9968 24C12.8542 17.0205 17.0205 12.8542 24 11.9968C17.0205 11.1394 12.8542 6.97318 11.9968 0Z" />
+    </svg>
+  )
+}
+
+function XaiIcon({ className, style }: BrandIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} style={style} fill="currentColor">
+      <path d="M12.6144 13.8505 19.4637 22H16.3727L10.7916 14.9354 4.54546 22H1L8.89393 12.7276 2.53636 5H5.62738L10.7154 11.5372 16.4545 5H20ZM17.3455 20.2837H19.0182L6.70909 6.65671H4.98182Z" />
+    </svg>
+  )
+}
+
+function GoogleIcon({ className, style }: BrandIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} style={style} fill="currentColor">
+      <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053z" />
+    </svg>
+  )
+}
 
 /* ------------------------------------------------------------------
    1. MANIFEST INTERACTIVE COMPARISON (5 APPS CHAOS VS NEXTBYTE)
@@ -89,13 +140,16 @@ function ChaosVsUnifiedCard() {
               </div>
               <ul className="font-sans divide-y divide-foreground/[0.05]">
                 {[
-                  ['ChatGPT Plus', '~85 zł/mc'],
-                  ['Claude Pro', '~85 zł/mc'],
-                  ['Midjourney', '~125 zł/mc'],
-                  ['Notion / Todoist', '~65 zł/mc'],
-                ].map(([name, price]) => (
+                  { name: 'ChatGPT Plus', price: '~85 zł/mc', icon: OpenAIIcon },
+                  { name: 'Claude Pro', price: '~85 zł/mc', icon: AnthropicIcon },
+                  { name: 'Midjourney', price: '~125 zł/mc', icon: Camera },
+                  { name: 'Notion / Todoist', price: '~65 zł/mc', icon: NotebookPen },
+                ].map(({ name, price, icon: RowIcon }) => (
                   <li key={name} className="flex items-center justify-between py-2.5">
-                    <span className="text-[13px] text-foreground/65">{name}</span>
+                    <span className="flex items-center gap-2 text-[13px] text-foreground/65">
+                      <RowIcon className="h-3.5 w-3.5 text-foreground/35 shrink-0" />
+                      {name}
+                    </span>
                     <span className="text-[13px] font-medium text-foreground/50">{price}</span>
                   </li>
                 ))}
@@ -123,27 +177,28 @@ function ChaosVsUnifiedCard() {
                 <li className="flex items-center gap-2.5 py-2.5">
                   <Check className="h-4 w-4 text-primary shrink-0" />
                   <div className="flex items-center gap-2 text-primary/90">
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.677l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387 2.02-1.165a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.412-.666zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor"><path d="M13.827 3.52h3.603L24 20.521h-3.603zm-7.258 0h3.767L16.906 20.521H13.28l-1.435-3.899H5.588l-1.435 3.899H0Zm2.976 5.18-1.997 5.43h3.995z"/></svg>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor"><path d="M11.9968 0C11.1394 6.97318 6.97318 11.1394 0 11.9968C6.97318 12.8542 11.1394 17.0205 11.9968 24C12.8542 17.0205 17.0205 12.8542 24 11.9968C17.0205 11.1394 12.8542 6.97318 11.9968 0Z"/></svg>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor"><path d="M12.6144 13.8505 19.4637 22H16.3727L10.7916 14.9354 4.54546 22H1L8.89393 12.7276 2.53636 5H5.62738L10.7154 11.5372 16.4545 5H20ZM17.3455 20.2837H19.0182L6.70909 6.65671H4.98182Z"/></svg>
+                    <OpenAIIcon className="h-4 w-4 shrink-0" />
+                    <AnthropicIcon className="h-4 w-4 shrink-0" />
+                    <GeminiIcon className="h-4 w-4 shrink-0" />
+                    <XaiIcon className="h-4 w-4 shrink-0" />
                     <span className="text-[13px] text-foreground/85 whitespace-nowrap ml-1">+ 6 innych</span>
                   </div>
                 </li>
                 {[
-                  'Studio zdjęć 4K i Wideo AI',
-                  'Notatki AI i Kalendarz',
-                  'Lokalny AI za 0 zł',
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2.5 py-2.5">
+                  { text: 'Studio zdjęć 4K i Wideo AI', icon: Camera },
+                  { text: 'Notatki AI i Kalendarz', icon: Calendar },
+                  { text: 'Lokalny AI za 0 zł', icon: Cpu },
+                ].map(({ text, icon: RowIcon }) => (
+                  <li key={text} className="flex items-center gap-2.5 py-2.5">
                     <Check className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-[13px] text-foreground/85 whitespace-nowrap">{item}</span>
+                    <RowIcon className="h-3.5 w-3.5 text-primary/60 shrink-0" />
+                    <span className="text-[13px] text-foreground/85 whitespace-nowrap">{text}</span>
                   </li>
                 ))}
               </ul>
             </div>
             <div className="relative z-10 border-t border-primary/30 pt-4">
-              <p className="font-heading text-[22px] font-bold text-primary whitespace-nowrap">od 0 zł / elastycznie</p>
+              <p className="font-heading text-[22px] font-bold text-primary whitespace-nowrap">Od 0zł/mc</p>
               <p className="mt-1.5 text-[11px] text-primary/60 leading-snug">1 faktura VAT · po polsku · Serwery UE</p>
             </div>
           </div>
@@ -335,35 +390,33 @@ function HemisphereArchSection() {
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 text-left">
           {[
             {
-              num: '01',
+              icon: Repeat,
               title: 'Przełącz model w locie',
               desc: 'GPT, Claude, Gemini, Grok — zmieniasz model bez utraty kontekstu rozmowy.',
               tag: '10+ modeli',
             },
             {
-              num: '02',
+              icon: Clock,
               title: 'Historia zawsze przy Tobie',
               desc: 'Wszystkie sesje zapisane. Wracasz do rozmowy sprzed tygodnia jednym kliknięciem.',
               tag: 'Nielimitowana',
             },
             {
-              num: '03',
+              icon: NotebookPen,
               title: 'Notatki rosną same',
               desc: 'To co ważne z czatu trafia prosto do Twoich notatek AI bez kopiowania.',
               tag: 'Auto-zapis',
             },
           ].map((item) => (
             <div
-              key={item.num}
+              key={item.title}
               className="group relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/40 backdrop-blur-sm p-6 pt-5 flex flex-col gap-2.5 transition-all duration-300 hover:border-primary/30 hover:bg-card/70 hover:-translate-y-1"
             >
-              {/* watermark number */}
-              <span
+              {/* watermark icon */}
+              <item.icon
                 aria-hidden
-                className="pointer-events-none absolute right-3 top-3 font-heading font-bold text-[64px] leading-none text-foreground/[0.05] select-none transition-colors duration-300 group-hover:text-primary/[0.08]"
-              >
-                {item.num}
-              </span>
+                className="pointer-events-none absolute right-3 top-3 h-16 w-16 text-foreground/[0.05] transition-colors duration-300 group-hover:text-primary/[0.08]"
+              />
 
               <span className="relative z-10 inline-flex w-fit items-center rounded-full border border-primary/25 bg-primary/[0.08] px-2.5 py-1 font-mono text-[10px] tracking-[1.5px] text-primary uppercase">
                 {item.tag}
@@ -720,11 +773,10 @@ function KanbanTasksView({
       </div>
 
       {/* Bottom Drag & Drop Helper */}
-      <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <span className="text-primary font-bold">📸 Drag &amp; Drop:</span>
-          <span>Chwyć dowolną kartę i przeciągnij ją pomiędzy kolumnami lub kliknij menu ··· aby zmienić stan.</span>
-        </span>
+      <div className="pt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Move className="h-3.5 w-3.5 text-primary shrink-0" />
+        <span className="text-primary font-bold">Drag &amp; Drop:</span>
+        <span>Chwyć dowolną kartę i przeciągnij ją pomiędzy kolumnami lub kliknij menu ··· aby zmienić stan.</span>
       </div>
     </div>
   )
@@ -740,6 +792,8 @@ function HeroAppMockup() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [bytesUsed, setBytesUsed] = useState(74)
   const [studioSubTab, setStudioSubTab] = useState('gpt2')
+  const [isStudioGenerating, setIsStudioGenerating] = useState(false)
+  const [studioJustGenerated, setStudioJustGenerated] = useState(false)
   const [webSearchEnabled, setWebSearchEnabled] = useState(true)
   const [docsModeEnabled, setDocsModeEnabled] = useState(false)
   const [imagesModeEnabled, setImagesModeEnabled] = useState(false)
@@ -851,6 +905,18 @@ function HeroAppMockup() {
       ])
       setIsGenerating(false)
     }, 800)
+  }
+
+  const handleStudioGenerate = () => {
+    if (isStudioGenerating) return
+    setIsStudioGenerating(true)
+    setStudioJustGenerated(false)
+    setBytesUsed(prev => prev + 4)
+    setTimeout(() => {
+      setIsStudioGenerating(false)
+      setStudioJustGenerated(true)
+      setTimeout(() => setStudioJustGenerated(false), 2200)
+    }, 900)
   }
 
   const moveTask = (fromCol: string, toCol: string, taskId: string) => {
@@ -1021,7 +1087,7 @@ function HeroAppMockup() {
 
                     {/* MODEL DROPDOWN — otwiera się W GÓRĘ */}
                     {modelDropdownOpen && (
-                      <div className="absolute left-0 bottom-full mb-2 w-56 rounded-xl border border-primary/30 bg-card/98 p-1.5 shadow-2xl backdrop-blur-2xl z-50 font-sans animate-tab-in origin-bottom">
+                      <div className="absolute left-0 bottom-full mb-2 w-56 rounded-xl border border-primary/30 bg-card p-1.5 shadow-2xl backdrop-blur-md z-50 font-sans animate-tab-in origin-bottom">
                         {MODELS.map(m => {
                           const isSelected = selectedModel === m.id
                           return (
@@ -1134,7 +1200,7 @@ function HeroAppMockup() {
           )}
 
           {/* =========================================================================
-              VIEW 2: REAL NEXTBYTE STUDIO ZDJĘÓ†
+              VIEW 2: REAL NEXTBYTE STUDIO ZDJĘĆ
               ========================================================================= */}
           {activeTab === 'studio' && (
             <div className="flex-1 flex flex-col justify-between p-4 sm:p-5 animate-tab-in">
@@ -1235,6 +1301,19 @@ function HeroAppMockup() {
                       </span>
                     </div>
 
+                    {/* Feedback: generowanie / świeżo gotowe (tylko na pierwszym kafelku) */}
+                    {idx === 0 && isStudioGenerating && (
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/70 backdrop-blur-sm">
+                        <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                        <span className="font-mono text-[10.5px] font-bold text-primary animate-pulse">Generowanie...</span>
+                      </div>
+                    )}
+                    {idx === 0 && studioJustGenerated && (
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-primary/20 backdrop-blur-sm ring-2 ring-primary animate-tab-in">
+                        <CheckCircle2 className="h-6 w-6 text-primary" />
+                        <span className="font-mono text-[10.5px] font-bold text-primary">Gotowe · 4K</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1258,11 +1337,12 @@ function HeroAppMockup() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleSend('Wygeneruj nową serię grafik w jakości 4K (-4 Byte)')}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-[12px] font-bold text-background shadow-md transition-all hover:brightness-110"
+                    onClick={handleStudioGenerate}
+                    disabled={isStudioGenerating}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-[12px] font-bold text-background shadow-md transition-all hover:brightness-110 disabled:opacity-60"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>Generuj (★ 4)</span>
+                    <Sparkles className={cn('h-3.5 w-3.5', isStudioGenerating && 'animate-pulse')} />
+                    <span>{isStudioGenerating ? 'Generowanie...' : 'Generuj (⟠ 4)'}</span>
                   </button>
                 </div>
               </div>
@@ -1286,107 +1366,84 @@ function HeroAppMockup() {
 /* ------------------------------------------------------------------
    4. KARTA MODUŁU
    ------------------------------------------------------------------ */
-function ModuleCard({ mod, large, delay = 0 }: { mod: (typeof MODULY)[number]; large?: boolean; delay?: number }) {
-  const Icon = mod.icon
-  const color = mod.color
+const METRIC_ICONS: Record<string, [LucideIcon, LucideIcon, LucideIcon]> = {
+  chat: [CpuIcon, Zap, Layers],
+  studio: [Sparkles, Gauge, Lock],
+  notes: [Clock, FileText, Layers],
+  calendar: [Clock, Zap, Repeat],
+  video: [Clock, Gauge, CpuIcon],
+  voice: [Zap, CheckCircle2, Mic],
+}
 
-  const visual = (() => {
+function getModuleVisual(mod: (typeof MODULY)[number], color: string) {
     if (mod.id === 'chat') return (
       <div className="mt-4 space-y-3">
-        {/* model logos grid */}
         <div className="grid grid-cols-4 gap-2">
           {[
-            { name: 'GPT-5.4', svg: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.677l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387 2.02-1.165a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.412-.666zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg> },
-            { name: 'Claude', svg: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M13.827 3.52h3.603L24 20.521h-3.603zm-7.258 0h3.767L16.906 20.521H13.28l-1.435-3.899H5.588l-1.435 3.899H0Zm2.976 5.18-1.997 5.43h3.995z"/></svg> },
-            { name: 'Gemini', svg: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M11.9968 0C11.1394 6.97318 6.97318 11.1394 0 11.9968C6.97318 12.8542 11.1394 17.0205 11.9968 24C12.8542 17.0205 17.0205 12.8542 24 11.9968C17.0205 11.1394 12.8542 6.97318 11.9968 0Z"/></svg> },
-            { name: 'Grok', svg: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12.6144 13.8505 19.4637 22H16.3727L10.7916 14.9354 4.54546 22H1L8.89393 12.7276 2.53636 5H5.62738L10.7154 11.5372 16.4545 5H20ZM17.3455 20.2837H19.0182L6.70909 6.65671H4.98182Z"/></svg> },
+            { name: 'GPT', svg: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.677l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387 2.02-1.165a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.412-.666zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg> },
+            { name: 'Claude', svg: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M13.827 3.52h3.603L24 20.521h-3.603zm-7.258 0h3.767L16.906 20.521H13.28l-1.435-3.899H5.588l-1.435 3.899H0Zm2.976 5.18-1.997 5.43h3.995z"/></svg> },
+            { name: 'Gemini', svg: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M11.9968 0C11.1394 6.97318 6.97318 11.1394 0 11.9968C6.97318 12.8542 11.1394 17.0205 11.9968 24C12.8542 17.0205 17.0205 12.8542 24 11.9968C17.0205 11.1394 12.8542 6.97318 11.9968 0Z"/></svg> },
+            { name: 'Grok', svg: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M12.6144 13.8505 19.4637 22H16.3727L10.7916 14.9354 4.54546 22H1L8.89393 12.7276 2.53636 5H5.62738L10.7154 11.5372 16.4545 5H20ZM17.3455 20.2837H19.0182L6.70909 6.65671H4.98182Z"/></svg> },
           ].map(({ name, svg }) => (
-            <div key={name} className="flex flex-col items-center gap-1.5 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] py-2.5">
+            <div key={name} className="flex flex-col items-center gap-1.5 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] py-3">
               <span className="text-foreground/80">{svg}</span>
-              <span className="font-sans text-[10px] font-medium text-foreground/55">{name}</span>
+              <span className="font-sans text-[10.5px] font-medium text-foreground/55">{name}</span>
             </div>
           ))}
         </div>
-        {/* shared context bar */}
-        <div className="flex items-center gap-2.5 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] px-3 py-2.5">
-          <span className="font-sans text-[11px] font-medium text-foreground/70 shrink-0">Wspólny kontekst</span>
+        <div className="flex items-center gap-2.5 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] px-3.5 py-3">
+          <Layers className="h-4 w-4 shrink-0" style={{ color }} />
+          <span className="font-sans text-[12px] font-medium text-foreground/70 shrink-0">Wspólny kontekst</span>
           <div className="h-1.5 flex-1 rounded-full overflow-hidden bg-foreground/[0.08]">
             <div className="h-full w-[72%] rounded-full" style={{ background: color, opacity: 0.8 }} />
           </div>
-          <span className="font-grotesk text-[11px] font-bold text-foreground shrink-0">1M tok</span>
-        </div>
-        {/* comparison mode preview */}
-        <div className="rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3">
-          <span className="font-sans text-[11px] font-medium text-foreground/70 mb-2 block">Tryb porównawczy</span>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: 'Claude', text: 'Zwięzła, konkretna odpowiedź B2B...', pick: true },
-              { label: 'GPT-5.4', text: 'Rozbudowana propozycja z detalami...', pick: false },
-            ].map((r) => (
-              <div key={r.label} className={cn('rounded-lg border p-2.5', r.pick ? 'border-primary/35 bg-primary/[0.06]' : 'border-foreground/[0.06] bg-foreground/[0.02]')}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-sans text-[10px] font-semibold text-foreground/70">{r.label}</span>
-                  {r.pick && <Check className="h-3 w-3 text-primary" />}
-                </div>
-                <p className="text-[10px] leading-relaxed text-foreground/40 font-light">{r.text}</p>
-              </div>
-            ))}
-          </div>
+          <span className="font-grotesk text-[12px] font-bold text-foreground shrink-0">1M tok</span>
         </div>
       </div>
     )
     if (mod.id === 'studio') return (
       <div className="mt-4 space-y-3">
-        <div className="grid grid-cols-4 gap-1.5 rounded-xl border border-foreground/[0.07] bg-black/40 p-1.5">
+        <div className="grid grid-cols-3 gap-2">
           {[
-            { img: interiorImg, title: 'Wnętrze' },
-            { img: carImg, title: 'Hypercar' },
-            { img: landscapeImg, title: 'Krajobraz' },
-            { img: animalImg, title: 'Irbis 4K' },
-          ].map((pic, pi) => (
-            <div key={pi} className="group/pic relative rounded-lg overflow-hidden border border-foreground/[0.1]" style={{ aspectRatio: '3/4' }}>
-              <img src={pic.img} alt={pic.title} className="h-full w-full object-cover transition-transform duration-300 group-hover/pic:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1">
-                <span className="text-[7.5px] font-mono text-white/70 leading-none">{pic.title}</span>
-              </div>
+            { name: 'Imagen', svg: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053z"/></svg> },
+            { name: 'GPT Image', svg: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.677l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387 2.02-1.165a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.412-.666zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg> },
+            { name: 'Grok', svg: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M12.6144 13.8505 19.4637 22H16.3727L10.7916 14.9354 4.54546 22H1L8.89393 12.7276 2.53636 5H5.62738L10.7154 11.5372 16.4545 5H20ZM17.3455 20.2837H19.0182L6.70909 6.65671H4.98182Z"/></svg> },
+          ].map(({ name, svg }) => (
+            <div key={name} className="flex flex-col items-center gap-1.5 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] py-3">
+              <span className="text-foreground/80">{svg}</span>
+              <span className="font-sans text-[10.5px] font-medium text-foreground/55">{name}</span>
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { name: 'Imagen', svg: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053z"/></svg> },
-            { name: 'GPT Image', svg: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.677l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387 2.02-1.165a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.412-.666zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg> },
-            { name: 'Grok Image', svg: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12.6144 13.8505 19.4637 22H16.3727L10.7916 14.9354 4.54546 22H1L8.89393 12.7276 2.53636 5H5.62738L10.7154 11.5372 16.4545 5H20ZM17.3455 20.2837H19.0182L6.70909 6.65671H4.98182Z"/></svg> },
-          ].map(({ name, svg }) => (
-            <div key={name} className="flex flex-col items-center gap-1.5 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] py-2.5">
-              <span className="text-foreground/80">{svg}</span>
-              <span className="font-sans text-[10px] font-medium text-foreground/55">{name}</span>
-            </div>
-          ))}
+        <div className="flex items-center gap-2.5 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] px-3.5 py-3">
+          <Sparkles className="h-4 w-4 shrink-0" style={{ color }} />
+          <span className="font-sans text-[12px] font-medium text-foreground/70 shrink-0">Czas generowania</span>
+          <div className="h-1.5 flex-1 rounded-full overflow-hidden bg-foreground/[0.08]">
+            <div className="h-full w-[85%] rounded-full" style={{ background: color, opacity: 0.8 }} />
+          </div>
+          <span className="font-grotesk text-[12px] font-bold text-foreground shrink-0">~6 s</span>
         </div>
       </div>
     )
     if (mod.id === 'notes') return (
-      <div className="mt-3 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3">
-        {/* search bar */}
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5">
         <div className="flex items-center gap-2 rounded-lg border border-foreground/[0.08] bg-background/40 px-3 py-2 mb-3">
           <span className="text-foreground/35 text-[13px]">⌕</span>
-          <span className="font-sans text-[12.5px] text-foreground/55">czego szukamy: "kontrakt Q3"</span>
+          <span className="font-sans text-[12.5px] text-foreground/55">"kontrakt Q3"</span>
         </div>
-        {/* highlighted result snippet */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="font-sans text-[12.5px] font-semibold text-foreground/80">Strategia Q3 2025.pdf</span>
-            <span className="rounded px-1.5 py-0.5 font-mono text-[9px] font-bold" style={{ background: `${color}22`, color }}>trafienie</span>
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${color}18`, color }}>
+            <FileText className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <span className="font-sans text-[12.5px] font-semibold text-foreground/85 truncate block">Strategia Q3 2025.pdf</span>
+            <span className="text-[10.5px] text-foreground/40">znaleziono w treści · sync AI</span>
           </div>
-          <p className="text-[12px] leading-relaxed text-foreground/50 font-light">
-            "...odnowienie <span style={{ color, opacity: 0.95 }} className="font-medium">kontraktu</span> zaplanowane na <span style={{ color, opacity: 0.95 }} className="font-medium">Q3</span>, budżet przenieś do kalendarza..."
-          </p>
         </div>
       </div>
     )
     if (mod.id === 'calendar') return (
-      <div className="mt-3 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3">
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5">
         <div className="relative pl-4">
           <div className="absolute left-[5px] top-1 bottom-1 w-px bg-foreground/[0.08]" />
           {[
@@ -1400,24 +1457,24 @@ function ModuleCard({ mod, large, delay = 0 }: { mod: (typeof MODULY)[number]; l
                 style={{ borderColor: color, background: done ? color : 'hsl(var(--background))', opacity: done ? 0.9 : 0.6 }}
               />
               <span className="font-mono text-[11px] text-foreground/45 w-11 shrink-0">{time}</span>
-              <span className={cn('font-sans text-[12.5px]', done ? 'text-foreground/40 line-through' : 'text-foreground/80')}>{title}</span>
+              <span className={cn('font-sans text-[12.5px] truncate', done ? 'text-foreground/40 line-through' : 'text-foreground/80')}>{title}</span>
             </div>
           ))}
         </div>
       </div>
     )
     if (mod.id === 'video') return (
-      <div className="mt-3 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3 space-y-2.5">
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-3">
         {[
           { label: 'Klip produktowy 4K', pct: 100, dur: '0:42' },
           { label: 'Reklama social 9:16', pct: 100, dur: '0:15' },
           { label: 'Cinematic opener', pct: 46, dur: '—' },
         ].map(({ label, pct, dur }) => (
           <div key={label} className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-sans text-[12.5px] text-foreground/75">{label}</span>
-              <span className="font-mono text-[10.5px] font-semibold" style={{ color: pct === 100 ? color : 'hsl(var(--foreground)/0.4)' }}>
-                {pct === 100 ? dur : `render ${pct}%`}
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-sans text-[12.5px] text-foreground/75 truncate">{label}</span>
+              <span className="font-mono text-[10.5px] font-semibold shrink-0" style={{ color: pct === 100 ? color : 'hsl(var(--foreground)/0.4)' }}>
+                {pct === 100 ? dur : `${pct}%`}
               </span>
             </div>
             <div className="h-1.5 rounded-full overflow-hidden bg-foreground/[0.07]">
@@ -1428,21 +1485,20 @@ function ModuleCard({ mod, large, delay = 0 }: { mod: (typeof MODULY)[number]; l
       </div>
     )
     if (mod.id === 'voice') return (
-      <div className="mt-3 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3">
-        {/* waveform */}
-        <div className="flex items-center gap-[3px] h-10 mb-2.5">
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5">
+        <div className="flex items-center gap-[3px] h-10 mb-3">
           {[6,14,9,22,15,28,18,32,20,26,12,24,17,30,14,20,8,16,10,6].map((h, i) => (
             <div key={i} className="flex-1 rounded-full" style={{ height: `${h}px`, background: color, opacity: i < 13 ? 0.85 : 0.25 }} />
           ))}
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-foreground/[0.06] bg-background/30 px-2.5 py-1.5">
+        <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full shrink-0 animate-pulse" style={{ background: color }} />
-          <span className="font-sans text-[12px] text-foreground/65 truncate">"...prześlij briefing zespołowi do piątku..."</span>
+          <span className="font-sans text-[11.5px] text-foreground/55 truncate">na żywo · transkrypcja PL</span>
         </div>
       </div>
     )
     if (mod.id === 'agents') return (
-      <div className="mt-3 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3">
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5">
         <div className="flex items-center gap-1.5">
           {[
             { label: 'Trigger', done: true },
@@ -1451,7 +1507,7 @@ function ModuleCard({ mod, large, delay = 0 }: { mod: (typeof MODULY)[number]; l
             { label: 'Powiadom', done: false },
           ].map((step, i, arr) => (
             <React.Fragment key={step.label}>
-              <div className="flex flex-col items-center gap-1.5">
+              <div className="flex flex-col items-center gap-1.5 shrink-0">
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-[10px] font-bold"
                   style={{
@@ -1463,7 +1519,7 @@ function ModuleCard({ mod, large, delay = 0 }: { mod: (typeof MODULY)[number]; l
                 >
                   {step.done ? <Check className="h-4 w-4" /> : i + 1}
                 </div>
-                <span className="font-sans text-[10.5px] font-medium text-foreground/55 whitespace-nowrap">{step.label}</span>
+                <span className="font-sans text-[9.5px] font-medium text-foreground/50 whitespace-nowrap">{step.label}</span>
               </div>
               {i < arr.length - 1 && (
                 <div className="h-px flex-1 -mt-5" style={{ background: color, opacity: step.done ? 0.4 : 0.12 }} />
@@ -1471,45 +1527,95 @@ function ModuleCard({ mod, large, delay = 0 }: { mod: (typeof MODULY)[number]; l
             </React.Fragment>
           ))}
         </div>
-        <p className="mt-3 text-[12px] leading-relaxed text-foreground/50 font-light">Agent uruchamia się automatycznie po nowym leadzie i czeka na Twoje zatwierdzenie ostatniego kroku.</p>
       </div>
     )
     return null
-  })()
+}
+
+/* ------------------------------------------------------------------
+   4b. MODULES SHOWCASE — interactive selector (list + detail panel)
+   ------------------------------------------------------------------ */
+function ModulesShowcase() {
+  const [activeId, setActiveId] = useState(MODULY[0].id)
+  const active = MODULY.find(m => m.id === activeId) ?? MODULY[0]
+  const ActiveIcon = active.icon
+  const metricIcons = METRIC_ICONS[active.id] ?? [Gauge, Gauge, Gauge]
 
   return (
-    <FadeIn delay={delay}>
-      <Panel hover className={cn('group flex h-full flex-col p-5 font-landing', large && 'lg:p-7')}>
+    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+      {/* left: module list */}
+      <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+        {MODULY.map((m) => {
+          const ModIcon = m.icon
+          const isActive = m.id === active.id
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => setActiveId(m.id)}
+              className={cn(
+                'group flex shrink-0 lg:shrink items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all duration-200 min-w-[220px] lg:min-w-0',
+                isActive
+                  ? 'border-primary/35 bg-primary/[0.07]'
+                  : 'border-foreground/[0.07] bg-foreground/[0.02] hover:border-foreground/[0.15] hover:bg-foreground/[0.04]'
+              )}
+            >
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+                style={{ background: isActive ? `${m.color}22` : 'hsl(var(--foreground)/0.05)', color: isActive ? m.color : 'hsl(var(--foreground)/0.45)' }}
+              >
+                <ModIcon className="h-4.5 w-4.5" />
+              </span>
+              <span className={cn('font-landing text-[13.5px] font-semibold leading-tight', isActive ? 'text-foreground' : 'text-foreground/60')}>
+                {m.title.split(' — ')[0].split(' i ')[0]}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* right: detail panel */}
+      <Panel key={active.id} className="relative overflow-hidden p-6 sm:p-8 animate-tab-in">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px transition-opacity duration-300 group-hover:opacity-100 opacity-0"
-          style={{ background: `linear-gradient(90deg, transparent, ${akcentTlo(color, 70)}, transparent)` }}
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${akcentTlo(active.color, 70)}, transparent)` }}
         />
-        <div className="relative z-10 flex flex-1 flex-col">
-          <div className="mb-3 flex items-center gap-2.5">
-            <IconTile icon={Icon} color={color} size={large ? 'lg' : 'md'} />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color }}>
-              {mod.tag}
+        <div className="relative z-10">
+          <div className="mb-4 flex items-center gap-3">
+            <IconTile icon={ActiveIcon} color={active.color} size="lg" />
+            <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.2em]" style={{ color: active.color }}>
+              {active.tag}
             </span>
           </div>
-          <h3 className={cn('font-landing font-bold leading-snug tracking-tight text-foreground', large ? 'text-[19px] mb-1.5' : 'text-[15px] mb-1')}>
-            {mod.title}
+          <h3 className="font-heading text-[22px] sm:text-[26px] font-bold leading-snug tracking-tight text-foreground mb-2">
+            {active.title}
           </h3>
-          <p className="text-[12.5px] leading-relaxed text-foreground/50 font-landing font-light">
-            {mod.lead}
+          <p className="text-[14px] leading-relaxed text-foreground/55 font-landing font-light max-w-xl">
+            {active.lead}
           </p>
-          {visual}
-          <div className="mt-auto pt-5 flex gap-6 border-t border-foreground/[0.06]">
-            {mod.metryki.slice(0, 3).map(m => (
-              <div key={m.label} className="flex flex-col gap-1">
-                <span className="font-grotesk text-[13px] font-bold text-foreground">{m.value}</span>
-                <span className="text-[10px] text-foreground/40 font-medium">{m.label}</span>
-              </div>
-            ))}
+
+          {getModuleVisual(active, active.color)}
+
+          <div className="mt-6 pt-6 grid grid-cols-3 gap-4 border-t border-foreground/[0.07]">
+            {active.metryki.slice(0, 3).map((m, mi) => {
+              const MetricIcon = metricIcons[mi]
+              return (
+                <div key={m.label} className="flex items-start gap-2.5 min-w-0">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${active.color}18`, color: active.color }}>
+                    <MetricIcon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex flex-col gap-0.5">
+                    <span className="font-grotesk text-[14px] font-bold text-foreground leading-tight truncate" title={m.value}>{m.value}</span>
+                    <span className="text-[10px] text-foreground/40 font-medium leading-tight truncate" title={m.label}>{m.label}</span>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </Panel>
-    </FadeIn>
+    </div>
   )
 }
 
@@ -1541,13 +1647,64 @@ function SecRule({ label }: { label: string }) {
   )
 }
 
+/** Wrapper renderujący plik logo NextByte tym samym interfejsem co ikony marek */
+/** Logo NextByte "N" jako SVG — kontury wyekstrahowane bezpośrednio z pliku nextbyte-mark.png (kanał alfa, analiza pikseli) */
+function NextByteMarkIcon({ className, style }: BrandIconProps) {
+  return (
+    <svg viewBox="278.5 45.5 642 775" className={className} style={style} fill="currentColor">
+      <path d="M299,65.5 L298,225 L900,800.5 L900,641 Z" />
+      <path d="M784,68 L900,68 L900,460 L784,460 Z" />
+      <path d="M299,264 L416,377 L415,797 L298,797 Z" />
+      <path d="M900,489 L784.5,490 L900,600.5 Z" />
+    </svg>
+  )
+}
+
+type Chip = { icon: React.ComponentType<{ className?: string }>; label: string; highlight?: boolean }
+
+/* Jeden spójny wzorzec dla wszystkich 7 kart: ikona + krótka etykieta, zero diagramów */
+const CHIP_DATA: Record<string, Chip[]> = {
+  chat: [
+    { icon: OpenAIIcon, label: 'GPT' },
+    { icon: AnthropicIcon, label: 'Claude' },
+    { icon: GeminiIcon, label: 'Gemini' },
+    { icon: XaiIcon, label: 'Grok' },
+    { icon: NextByteMarkIcon, label: 'Wspólny kontekst', highlight: true },
+  ],
+  studio: [
+    { icon: GoogleIcon, label: 'Imagen 3' },
+    { icon: OpenAIIcon, label: 'GPT Image' },
+    { icon: XaiIcon, label: 'Grok Image' },
+  ],
+  notes: [
+    { icon: Folder, label: 'Folder-sync' },
+    { icon: Brain, label: 'Analiza AI' },
+    { icon: Search, label: 'Wyszukiwanie' },
+  ],
+  calendar: [
+    { icon: Calendar, label: 'Wydarzenia' },
+    { icon: Repeat, label: 'Cykliczne' },
+    { icon: Users, label: 'Sync zespołu' },
+  ],
+  video: [
+    { icon: Type, label: 'Tekst / obraz' },
+    { icon: Clapperboard, label: 'Generacja' },
+    { icon: MonitorPlay, label: 'Gotowy klip' },
+  ],
+  voice: [
+    { icon: Mic, label: 'Nagranie' },
+    { icon: AudioLines, label: 'Analiza fali' },
+    { icon: FileText, label: 'Transkrypt' },
+  ],
+}
+
+/* Siatka 3×2 — wszystkie 6 kart tej samej szerokości, pełna symetria */
+
 /* ------------------------------------------------------------------
    MAIN HOMEPAGE COMPONENT (AUTHENTIC NEXTBYTE.SPACE SOURCE OF TRUTH)
    ------------------------------------------------------------------ */
 export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(0)
-  const glowne = MODULY.filter(m => m.id === 'chat' || m.id === 'studio')
-  const reszta = MODULY.filter(m => m.id !== 'chat' && m.id !== 'studio')
 
   return (
     <div className="flex w-full flex-col font-landing text-foreground">
@@ -1696,19 +1853,100 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
           <h2 className="font-heading text-[clamp(32px,4.5vw,52px)] font-light leading-[1.06] text-foreground mb-3 tracking-[-2px]">
             Jedno logowanie. <span className="text-primary font-normal">Cały stack AI.</span>
           </h2>
-          <p className="font-mono text-[11px] text-foreground/45 mb-12 tracking-[1.5px]">
+          <p className="font-mono text-[11px] text-foreground/45 mb-8 tracking-[1.5px]">
             // Wszystkie modele w jednym miejscu · Twoja subskrypcja to Twoja pula
           </p>
+          <div className="flex flex-wrap items-center gap-x-10 gap-y-4 mb-12 pb-8 border-b border-foreground/[0.07]">
+            {[
+              { value: '10+', label: 'modeli w jednym miejscu' },
+              { value: '1', label: 'logowanie' },
+              { value: '0', label: 'żonglowania subskrypcjami' },
+            ].map((s) => (
+              <div key={s.label} className="flex items-baseline gap-2">
+                <span className="font-heading text-[26px] font-extrabold leading-none tracking-tight text-primary">
+                  {s.value}
+                </span>
+                <span className="text-[12.5px] text-foreground/50 font-light">{s.label}</span>
+              </div>
+            ))}
+          </div>
         </FadeIn>
-        <div className="grid gap-4 lg:grid-cols-2">
-          {glowne.map((m, i) => (
-            <ModuleCard key={m.id} mod={m} large delay={i * 100} />
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          {reszta.map((m, i) => (
-            <ModuleCard key={m.id} mod={m} delay={i * 80} />
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {MODULY.map((m, i) => {
+            const Icon = m.icon
+            return (
+              <FadeIn key={m.id} delay={i * 70}>
+                <Panel hover className="group h-full p-7 flex flex-col">
+                  {/* GÓRA: Ikona modułu z poświatą na hover */}
+                  <div className="relative mb-5 w-fit">
+                    <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <Glow
+                        className="left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                        size={64}
+                        opacity={0.5}
+                        color={m.color}
+                      />
+                    </div>
+                    <IconTile
+                      icon={Icon}
+                      color={m.color}
+                      size="lg"
+                      className="relative transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
+                    />
+                  </div>
+
+                  {/* TYTUŁ */}
+                  <h3 className="font-heading text-[20px] font-bold text-foreground leading-tight mb-2 tracking-[-0.3px]">
+                    {m.title}
+                  </h3>
+
+                  {/* KRÓTKI OPIS */}
+                  {m.lead && (
+                    <p className="text-[13px] text-foreground/50 leading-relaxed font-light line-clamp-2 mb-6">
+                      {m.lead}
+                    </p>
+                  )}
+
+                  {/* ŚRODEK: Chipy — ikona + krótka etykieta, czytelne w 3 sekundy */}
+                  <div className="flex flex-wrap gap-1.5 mb-6">
+                    {CHIP_DATA[m.id].map((chip, idx) => {
+                      const ChipIcon = chip.icon
+                      return (
+                        <TilePill
+                          key={idx}
+                          intencja={chip.highlight ? 'akcent' : 'neutralna'}
+                          className={cn(
+                            'gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold shadow-sm',
+                            chip.highlight ? 'border-primary/40' : 'border-foreground/15',
+                          )}
+                        >
+                          <ChipIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="whitespace-nowrap">{chip.label}</span>
+                        </TilePill>
+                      )
+                    })}
+                  </div>
+
+                  {/* DÓŁ: METRYKI */}
+                  {m.metryki && m.metryki.length > 0 && (
+                    <div className="mt-auto pt-5 border-t border-foreground/[0.07] grid grid-cols-2 gap-x-3 gap-y-2">
+                      {m.metryki.slice(0, 2).map((metric, idx) => {
+                        const MetricIcon = METRIC_ICONS[m.id][idx % 3]
+                        return (
+                          <div key={idx} className="flex items-center gap-2 min-w-0">
+                            <MetricIcon className="h-3.5 w-3.5 text-primary/70 shrink-0" />
+                            <span className="text-[13px] font-bold text-primary truncate">
+                              {metric.value}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </Panel>
+              </FadeIn>
+            )
+          })}
         </div>
       </Section>
 
@@ -1826,12 +2064,7 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
                   {POROWNANIE.kolumny.map((k, i) => (
                     <th key={k} className="px-4 py-5 text-center">
                       {i === 0 ? (
-                        <span className="inline-flex flex-col items-center gap-1">
-                          <span className="font-heading text-[14px] font-semibold text-primary">{k}</span>
-                          <span className="rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[8.5px] font-bold uppercase text-primary">
-                            Polecany
-                          </span>
-                        </span>
+                        <span className="font-heading text-[14px] font-semibold text-primary">{k}</span>
                       ) : (
                         <span className="font-heading text-[12.5px] font-medium text-foreground/40">{k}</span>
                       )}
@@ -1854,7 +2087,7 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
                         {v === true ? (
                           <CircleCheck className="mx-auto h-[18px] w-[18px] text-primary" />
                         ) : v === false ? (
-                          <Minus className="mx-auto h-4 w-4 text-foreground/15" />
+                          <X className="mx-auto h-5 w-5 text-foreground/25 font-bold" />
                         ) : (
                           <span className={cn('font-sans text-[12.5px] font-semibold', vi === 0 ? 'text-primary' : 'text-foreground/50')}>
                             {v}
@@ -1869,12 +2102,28 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
           </Panel>
         </FadeIn>
         <FadeIn delay={200}>
-          <div className="mt-6 rounded-2xl border border-primary/25 bg-primary/[0.06] px-8 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mt-6 rounded-2xl border border-primary/25 bg-primary/[0.06] px-8 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="font-sans">
               <span className="font-mono text-[10px] text-primary/70 uppercase tracking-[2px]">// PRZELICZ SAMEMU</span>
-              <p className="font-heading text-[17px] font-semibold text-foreground mt-2 max-w-xl leading-snug">
-                ChatGPT Plus + Midjourney + Notion + Claude Pro to <span className="text-primary">~360 zł/mies.</span> — bez wideo, agentów i lokalnego AI. NextByte daje Ci to wszystko w jednej cenie.
-              </p>
+              <div className="flex items-center flex-wrap gap-5 mt-5">
+                <div className="flex items-center gap-3.5 text-foreground/50">
+                  <OpenAIIcon className="h-10 w-10" />
+                  <AnthropicIcon className="h-10 w-10" />
+                  <Camera className="h-10 w-10" />
+                  <NotebookPen className="h-10 w-10" />
+                </div>
+                <span className="font-heading text-[28px] font-semibold text-foreground/35 line-through decoration-2 decoration-destructive/50">
+                  ~360 zł
+                </span>
+                <ArrowRight className="h-8 w-8 text-primary/40" />
+                <NextByteMarkIcon className="h-11 w-11 text-foreground" />
+                <span className="font-heading text-[48px] font-black text-primary leading-none drop-shadow-[0_0_24px_hsl(var(--primary)/0.5)]">
+                  99 zł
+                </span>
+                <span className="rounded-full border border-primary/40 bg-primary/15 px-4 py-2 font-mono text-[14px] font-bold uppercase tracking-[0.5px] text-primary">
+                  −73% taniej
+                </span>
+              </div>
             </div>
             <GlowButton onClick={() => onNavigate('cennik')} className="shrink-0">Zobacz plan NextByte →</GlowButton>
           </div>
@@ -1898,17 +2147,22 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
               </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { num: '01', title: 'Serwery w UE', desc: 'Dane przechowujemy na własnej infrastrukturze w Unii Europejskiej. Pełna zgodność z RODO.' },
-                  { num: '02', title: 'Zero trenowania na Twoich danych', desc: 'Twoje rozmowy, dokumenty i kod są tylko Twoje. Nikt — ani OpenAI, ani Google, ani my — nie szkoli na nich modeli.' },
-                  { num: '03', title: 'Zero wglądu z zewnątrz', desc: 'Lokalny tryb AI (Ollama / LM Studio) — dane nie opuszczają Twojego urządzenia w ogóle.' },
-                  { num: '04', title: 'Rezygnujesz kiedy chcesz', desc: 'Bez umów lojalnościowych. Jedno kliknięcie, koniec — dane usuwamy na żądanie w 30 dni.' },
-                ].map((item) => (
-                  <div key={item.num} className="rounded-xl border border-foreground/[0.07] bg-card/50 p-5">
-                    <span className="font-mono text-[10px] text-primary/60 font-bold">// {item.num}</span>
-                    <h3 className="font-heading text-[15px] font-semibold text-foreground mt-1.5 mb-2">{item.title}</h3>
-                    <p className="font-sans text-[12.5px] text-foreground/50 font-light leading-relaxed">{item.desc}</p>
-                  </div>
-                ))}
+                  { icon: Building2, title: 'Serwery w UE', sentence: 'Dane w Unii Europejskiej, pełna zgodność z RODO.' },
+                  { icon: Lock, title: 'Zero trenowania', sentence: 'Nikt nie szkoli modeli na Twoich danych.' },
+                  { icon: WifiOff, title: 'Zero wglądu z zewnątrz', sentence: 'Lokalny AI — dane nie opuszczają urządzenia.' },
+                  { icon: LogOut, title: 'Rezygnujesz kiedy chcesz', sentence: 'Jedno kliknięcie — dane usunięte w 30 dni.' },
+                ].map((item) => {
+                  const ItemIcon = item.icon
+                  return (
+                    <div key={item.title} className="group flex flex-col items-center text-center gap-3 rounded-xl border border-foreground/[0.07] bg-card/50 p-6 transition-all hover:border-primary/30 hover:bg-card/70">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary transition-all group-hover:bg-primary/15 group-hover:border-primary/30">
+                        <ItemIcon className="h-7 w-7" />
+                      </div>
+                      <h3 className="font-heading text-[14.5px] font-semibold text-foreground leading-snug">{item.title}</h3>
+                      <p className="font-sans text-[12px] text-foreground/50 font-light leading-snug">{item.sentence}</p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>

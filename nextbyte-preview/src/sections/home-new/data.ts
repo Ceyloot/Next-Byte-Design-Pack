@@ -14,7 +14,8 @@ export const MODULY = [
     color: AKCENT.chat,
     tag: '01 // CHAT AI',
     title: 'Chat AI z wszystkimi topowymi modelami',
-    lead: 'Gemini 3.5, GPT-5, Claude Opus/Sonnet, Grok — wszystkie w jednym oknie. Projekty, wiedza, artefakty, przełączanie modeli w locie.',
+    lead: 'Gemini 3.5, GPT-5, Claude, Grok — wszystkie w jednym oknie, bez utraty kontekstu.',
+    models: ['Gemini', 'GPT', 'Claude', 'Grok'],
     bullets: [
       'Wspólny kontekst dla wszystkich dostawców — koniec z przeklejaniem promptów',
       'Tryb porównawczy: dwie odpowiedzi obok siebie, aby natychmiast wybrać najlepszą',
@@ -22,8 +23,8 @@ export const MODULY = [
       'Prywatny tryb lokalny (Ollama / LM Studio) — dane w 100% na Twoim dysku',
     ],
     metryki: [
-      { label: 'Dostępne modele', value: '10+ wiodących' },
-      { label: 'Czas reakcji', value: '< 1 sekundy' },
+      { label: 'Dostępne modele', value: '10+ modeli AI' },
+      { label: 'Czas reakcji', value: 'Odpowiedź < 1s' },
       { label: 'Okno kontekstu', value: 'do 1M tokenów' },
     ],
   },
@@ -33,7 +34,8 @@ export const MODULY = [
     color: AKCENT.studio,
     tag: '02 // KREACJA GRAFICZNA',
     title: 'Studio Zdjęć i generowanie materiałów 4K',
-    lead: 'Imagen 3 Pro, GPT Image, Grok Image — generacja, edycja i retusz obrazów w jednym miejscu. Upscale 4K, Face Swap, usuwanie tła.',
+    lead: 'Imagen 3 Pro, GPT Image, Grok Image — generacja i edycja obrazów w jednym miejscu, do 4K.',
+    models: ['Imagen 3', 'GPT Image', 'Grok'],
     bullets: [
       'Dostęp do topowych silników obrazu bez płacenia osobnego abonamentu Midjourney',
       'Gotowe narzędzia biznesowe: Face Swap, Upscale 4K, Usuwanie tła, Mockupy B2B',
@@ -41,7 +43,7 @@ export const MODULY = [
       'Eksport w formatach WebP, PNG i wektorowych z pełnymi prawami komercyjnymi',
     ],
     metryki: [
-      { label: 'Silniki', value: 'Imagen · GPT Image · Grok' },
+      { label: 'Silniki', value: '3 silniki obrazu' },
       { label: 'Maks. jakość', value: '4K Ultra HD' },
       { label: 'Prawa autorskie', value: '100% komercyjne' },
     ],
@@ -53,6 +55,7 @@ export const MODULY = [
     tag: '03 // BAZA WIEDZY',
     title: 'Notatki AI i inteligentna baza wiedzy',
     lead: 'Zaawansowany edytor z AI, folder-sync jako źródło wiedzy dla czatu, autoanalizy per token.',
+    models: ['Claude', 'Gemini', 'Embeddings'],
     bullets: [
       'Wyszukiwanie semantyczne — AI rozumie intencję i sens, nie tylko słowa kluczowe',
       'Głęboka integracja z Chat AI — zadajesz pytania bezpośrednio do swoich notatek',
@@ -60,7 +63,7 @@ export const MODULY = [
       'Bezpieczny eksport do Markdown, PDF oraz synchronizacja w czasie rzeczywistym',
     ],
     metryki: [
-      { label: 'Indeksacja', value: 'W czasie rzecz.' },
+      { label: 'Indeksacja', value: 'Indeksacja na bieżąco' },
       { label: 'Formaty', value: 'MD, PDF, DOCX' },
       { label: 'Pojemność', value: 'UNLIMITED' },
     ],
@@ -72,6 +75,7 @@ export const MODULY = [
     tag: '04 // ORGANIZACJA',
     title: 'Kalendarz AI i asystent zadań',
     lead: 'Wydarzenia, RRULE, snap 15 min, sync ze spotkaniami i zadaniami zespołu.',
+    models: ['Claude', 'GPT', 'Gemini'],
     bullets: [
       'Automatyczne przekształcanie wniosków z czatu w konkretne terminy i zadania',
       'Dwukierunkowy sync z Kalendarzem Google i przypomnienia w czasie rzeczywistym',
@@ -79,8 +83,8 @@ export const MODULY = [
       'Poranne briefy i podsumowania dnia generowane automatycznie przez AI',
     ],
     metryki: [
-      { label: 'Widok', value: 'Dzień / Tydzień / Sprint' },
-      { label: 'Sync spotkań', value: 'Błyskawiczny' },
+      { label: 'Widok', value: 'Dzień / Tydzień' },
+      { label: 'Sync spotkań', value: 'Szybki sync' },
       { label: 'Limit zadań', value: 'UNLIMITED' },
     ],
   },
@@ -90,7 +94,8 @@ export const MODULY = [
     color: AKCENT.auto,
     tag: '05 // STUDIO WIDEO',
     title: 'Studio Wideo — generowanie klipów AI',
-    lead: 'Wiodące silniki wideo AI — generuj klipy z tekstu lub obrazu w kilkadziesiąt sekund w jakości kinowej. Bez montażu, bez studia.',
+    lead: 'Wiodące silniki wideo AI — generuj klipy z tekstu lub obrazu w kilkadziesiąt sekund, bez montażu i bez studia.',
+    models: ['Runway', 'Kling', 'Hailuo'],
     bullets: [
       'Generowanie wideo z tekstu i obrazu: Runway, Kling, Hailuo w jednym miejscu',
       'Automatyczne napisy, dubbing AI i eksport w formacie MP4 / WebM',
@@ -110,6 +115,7 @@ export const MODULY = [
     tag: '06 // INTERAKCJA GŁOSOWA',
     title: 'Głos AI i automatyczna transkrypcja',
     lead: 'ElevenLabs WebSocket, polski głos, rozmowy w czasie rzeczywistym — opóźnienie poniżej 300 ms.',
+    models: ['ElevenLabs', 'Whisper', 'WebSocket'],
     bullets: [
       'Naturalnie brzmiące polskie głosy zasilane technologią ElevenLabs WebSocket',
       'Transkrypcja audio i wideo z automatycznym podziałem na role i listą ustaleń',
@@ -117,28 +123,9 @@ export const MODULY = [
       'Notatki z rozmów automatycznie synchronizowane z projektami w platformie',
     ],
     metryki: [
-      { label: 'Opóźnienie mowy', value: '< 300 ms' },
+      { label: 'Opóźnienie mowy', value: '< 300ms' },
       { label: 'Jakość transkrypcji', value: '99,2% precyzji' },
       { label: 'Silnik', value: 'ElevenLabs' },
-    ],
-  },
-  {
-    id: 'agents',
-    icon: Bot,
-    color: AKCENT.local,
-    tag: '07 // AUTOPILOT',
-    title: 'Autonomiczne Agenty i Pętle 24/7',
-    lead: 'Własne agenty z webhookami, pętle 24/7, integracje z n8n i zewnętrznymi API.',
-    bullets: [
-      'Praca 24/7 bez Twojej obecności — agent bada rynek i raportuje tylko ważne zmiany',
-      'Bezproblemowa integracja z n8n, Make oraz zewnętrznymi webhookami i API',
-      'Twarde limity kosztowe: pełna kontrola nad maksymalnym zużyciem Byte per zadanie',
-      'Automatyzacja powtarzalnych procesów ofertowania, obsługi i researchu',
-    ],
-    metryki: [
-      { label: 'Działanie', value: 'Ciągłe 24/7' },
-      { label: 'Integracje', value: 'REST / Webhooks' },
-      { label: 'Kontrola budżetu', value: '100% przejrzysta' },
     ],
   },
 ] as const
