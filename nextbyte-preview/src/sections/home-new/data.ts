@@ -14,7 +14,7 @@ export const MODULY = [
     color: AKCENT.chat,
     tag: '01 // CHAT AI',
     title: 'Chat AI z wszystkimi topowymi modelami',
-    lead: 'Gemini 3.5, GPT-5, Claude, Grok — wszystkie w jednym oknie, bez utraty kontekstu.',
+    lead: 'Gemini 3.1 Pro Preview, GPT-5.4, Claude, Grok — wszystkie w jednym oknie, bez utraty kontekstu.',
     models: ['Gemini', 'GPT', 'Claude', 'Grok'],
     bullets: [
       'Wspólny kontekst dla wszystkich dostawców — koniec z przeklejaniem promptów',
@@ -24,8 +24,8 @@ export const MODULY = [
     ],
     metryki: [
       { label: 'Dostępne modele', value: '10+ modeli AI' },
-      { label: 'Czas reakcji', value: 'Odpowiedź < 1s' },
-      { label: 'Okno kontekstu', value: 'do 1M tokenów' },
+      { label: 'Czas reakcji', value: 'Pierwsze słowa w 3 s' },
+      { label: 'Okno kontekstu', value: 'do 200k tokenów' },
     ],
   },
   {
@@ -34,13 +34,13 @@ export const MODULY = [
     color: AKCENT.studio,
     tag: '02 // KREACJA GRAFICZNA',
     title: 'Studio Zdjęć i generowanie materiałów 4K',
-    lead: 'Imagen 3 Pro, GPT Image, Grok Image — generacja i edycja obrazów w jednym miejscu, do 4K.',
-    models: ['Imagen 3', 'GPT Image', 'Grok'],
+    lead: 'Nano Banana, GPT Image 2.0, Grok Imagine — generacja i edycja obrazów w jednym miejscu, do 4K.',
+    models: ['Nano Banana', 'GPT Image 2.0', 'Grok Imagine'],
     bullets: [
       'Dostęp do topowych silników obrazu bez płacenia osobnego abonamentu Midjourney',
-      'Gotowe narzędzia biznesowe: Face Swap, Upscale 4K, Usuwanie tła, Mockupy B2B',
+      'Gotowe narzędzia biznesowe: podmiana twarzy, Upscale 4K, usuwanie tła, mockupy B2B',
       'Równoległe generowanie: do 3 grafik jednocześnie w planie Premium, do 5 w Ultimate',
-      'Eksport w formatach WebP, PNG i wektorowych z pełnymi prawami komercyjnymi',
+      'Eksport w formatach WebP, PNG i JPG z pełnymi prawami komercyjnymi',
     ],
     metryki: [
       { label: 'Silniki', value: '3 silniki obrazu' },
@@ -54,18 +54,18 @@ export const MODULY = [
     color: AKCENT.notes,
     tag: '03 // BAZA WIEDZY',
     title: 'Notatki AI i inteligentna baza wiedzy',
-    lead: 'Zaawansowany edytor z AI, folder-sync jako źródło wiedzy dla czatu, autoanalizy per token.',
+    lead: 'Edytor z AI, który czyta Twoje foldery i staje się źródłem wiedzy dla czatu.',
     models: ['Claude', 'Gemini', 'Embeddings'],
     bullets: [
       'Wyszukiwanie semantyczne — AI rozumie intencję i sens, nie tylko słowa kluczowe',
       'Głęboka integracja z Chat AI — zadajesz pytania bezpośrednio do swoich notatek',
       'Automatyczne podsumowania, ekstrakcja wniosków i synteza długich raportów',
-      'Bezpieczny eksport do Markdown, PDF oraz synchronizacja w czasie rzeczywistym',
+      'Bezpieczny eksport do Markdown, PDF i DOCX oraz synchronizacja na bieżąco',
     ],
     metryki: [
       { label: 'Indeksacja', value: 'Indeksacja na bieżąco' },
       { label: 'Formaty', value: 'MD, PDF, DOCX' },
-      { label: 'Pojemność', value: 'UNLIMITED' },
+      { label: 'Pojemność', value: 'Bez limitu' },
     ],
   },
   {
@@ -74,7 +74,7 @@ export const MODULY = [
     color: AKCENT.notes,
     tag: '04 // ORGANIZACJA',
     title: 'Kalendarz AI i asystent zadań',
-    lead: 'Wydarzenia, RRULE, snap 15 min, sync ze spotkaniami i zadaniami zespołu.',
+    lead: 'Wydarzenia cykliczne, planowanie co 15 minut, sync ze spotkaniami i zadaniami zespołu.',
     models: ['Claude', 'GPT', 'Gemini'],
     bullets: [
       'Automatyczne przekształcanie wniosków z czatu w konkretne terminy i zadania',
@@ -85,7 +85,7 @@ export const MODULY = [
     metryki: [
       { label: 'Widok', value: 'Dzień / Tydzień' },
       { label: 'Sync spotkań', value: 'Szybki sync' },
-      { label: 'Limit zadań', value: 'UNLIMITED' },
+      { label: 'Limit zadań', value: 'Bez limitu' },
     ],
   },
   {
@@ -95,17 +95,17 @@ export const MODULY = [
     tag: '05 // STUDIO WIDEO',
     title: 'Studio Wideo — generowanie klipów AI',
     lead: 'Wiodące silniki wideo AI — generuj klipy z tekstu lub obrazu w kilkadziesiąt sekund, bez montażu i bez studia.',
-    models: ['Runway', 'Kling', 'Hailuo'],
+    models: ['Runware', 'Kling', 'Hailuo'],
     bullets: [
-      'Generowanie wideo z tekstu i obrazu: Runway, Kling, Hailuo w jednym miejscu',
-      'Automatyczne napisy, dubbing AI i eksport w formacie MP4 / WebM',
+      'Generowanie wideo z tekstu i obrazu: Runware, Kling, Hailuo w jednym miejscu',
+      'Eksport w formacie MP4 / WebM, gotowy pod social media',
       'Tworzenie reklam produktowych, reelsów i filmów explainer bez studia',
       'Integracja z Studio Zdjęć — użyj własnej grafiki 4K jako klatki startowej',
     ],
     metryki: [
-      { label: 'Długość klipu', value: 'do 2 min' },
+      { label: 'Długość klipu', value: 'Klipy 5–10 s' },
       { label: 'Rozdzielczość', value: '4K / 1080p' },
-      { label: 'Silniki', value: 'Wiodące modele AI' },
+      { label: 'Silniki', value: 'Runware · Kling · Hailuo' },
     ],
   },
   {
@@ -124,7 +124,7 @@ export const MODULY = [
     ],
     metryki: [
       { label: 'Opóźnienie mowy', value: '< 300ms' },
-      { label: 'Jakość transkrypcji', value: '99,2% precyzji' },
+      { label: 'Jakość transkrypcji', value: 'Transkrypcja PL' },
       { label: 'Silnik', value: 'ElevenLabs' },
     ],
   },
@@ -163,7 +163,7 @@ export const STATY = [
   { value: '10+',     label: 'Modeli AI w 1 panelu', sub: 'Gemini · GPT · Claude · Grok · Mistral', icon: Brain },
   { value: '1',       label: 'Subskrypcja', sub: 'Zamiast pięciu osobnych', icon: Layers },
   { value: '100%',    label: 'Po polsku', sub: 'Interfejs, prompty, wsparcie', icon: Shield },
-  { value: '24/7',    label: 'Autonomiczne agenty', sub: 'Zautomatyzowane procesy w tle',        icon: Sparkles },
+  { value: '0 zł',    label: 'Modele lokalne', sub: 'Ollama i LM Studio bez opłat',        icon: Sparkles },
 ] as const
 
 export const KROKI = [
@@ -188,13 +188,12 @@ export const KROKI = [
 export const POROWNANIE = {
   kolumny: ['NextByte', 'ChatGPT Plus', 'Midjourney Std', 'Notion AI'],
   wiersze: [
-    { f: 'Chat z wieloma modelami (GPT-5, Claude, Gemini, Grok)', v: [true, 'Tylko GPT-5', false, 'Tylko OpenAI'] },
-    { f: 'Generowanie grafik 4K (Flux Pro, Grok Image)',          v: [true, 'DALL-E (limit)', true, false] },
-    { f: 'Generowanie wideo AI (Runway, Kling)',                  v: [true, false, false, false] },
+    { f: 'Chat z wieloma modelami (GPT-5.4, Claude, Gemini, Grok)', v: [true, 'Tylko GPT-5.4', false, 'Tylko OpenAI'] },
+    { f: 'Generowanie grafik 4K (Nano Banana, GPT Image 2.0)',     v: [true, 'DALL-E (limit)', true, false] },
+    { f: 'Generowanie wideo AI (Runware, Kling)',                  v: [true, false, false, false] },
     { f: 'Głos AI i transkrypcja spotkań',                        v: [true, 'podstawowy', false, 'Meeting Notes'] },
     { f: 'Notatki AI i semantyczna baza wiedzy',                  v: [true, false, false, true] },
     { f: 'Kanban, zadania i Kalendarz AI',                        v: [true, false, false, true] },
-    { f: 'Autonomiczne agenty AI działające 24/7',                v: [true, false, false, false] },
     { f: 'Lokalny AI offline — zero transferu (Ollama / LM Studio)', v: [true, false, false, false] },
     { f: 'Serwery w UE · pełna zgodność z RODO',                 v: [true, false, false, false] },
     { f: 'Płatność w PLN · polska faktura VAT 23%',              v: [true, false, false, false] },
@@ -229,7 +228,7 @@ export const PLANY: Plan[] = [
       'Wszystkie modele komercyjne — płatne elastycznie z paczek Byte',
       'Płacisz wyłącznie za realne zużycie — bez stałej opłaty miesięcznej',
       'Modele lokalne (Ollama / LM Studio) całkowicie za darmo i offline',
-      'Kalendarz, Zadania i Notatki bez ograniczeń (UNLIMITED)',
+      'Kalendarz, Zadania i Notatki bez żadnych limitów',
       'Bezpieczne szyfrowanie danych End-to-End (E2EE)',
     ],
     cta: 'Zacznij za darmo',
@@ -252,7 +251,6 @@ export const PLANY: Plan[] = [
       'Lokalny AI z gwarancją 100% prywatności pod poufne dane',
       'Tryb Ultra AI & Deep Research do wieloetapowych analiz biznesowych',
       'Do 3 równoległych generacji obrazów jednocześnie',
-      'Do 3 autonomicznych pętli AI monitorujących dane 24/7',
       'Priorytetowe wsparcie mailowe z czasem odpowiedzi do 24h',
     ],
     cta: 'Wybierz Premium',
@@ -274,7 +272,6 @@ export const PLANY: Plan[] = [
       'Priorytetowa kolejka wykonywania operacji (FAST queue)',
       'Do 5 równoległych generacji grafik i materiałów wideo',
       'Ekskluzywny, wczesny dostęp do premierowych modeli AI',
-      'Do 5 autonomicznych agentów AI pracujących bez przerwy 24/7',
       'Przesyłanie dużych plików do 100 MB i kontekst do 200k tokenów',
       'Bezpośrednie wsparcie na dedykowanym kanale w czasie rzeczywistym',
     ],
@@ -316,59 +313,56 @@ export const B2B_KORZYSCI = [
   },
 ] as const
 
-/* ══════════════ AUTENTYCZNE OPINIE Z RYNKU ══════════════ */
+/* ══════════════ AUTENTYCZNE OPINIE UŻYTKOWNIKÓW ══════════════ */
 export const OPINIE = [
   {
-    id: 'T-001',
-    imie: 'Michał K.',
-    rola: 'Freelancer · Marketing',
-    firma: 'Warszawa',
-    tekst: 'W końcu jedno miejsce zamiast pięciu subskrypcji. Chat AI z modelami premium, notatki i kalendarz w jednym.',
-    metryka: '5 subskrypcji → 1',
+    id: '01',
+    autor: 'Krzysztof M.',
+    rola: 'Twórca cyfrowy & programista',
+    tekst: 'Zamiast skakać po 4 różnych kartach z Claude, GPT i generatorami grafik — mam wszystko pod ręką w jednym oknie. Zadania i notatki synchronizują się same z rozmowy. Oszczędzam minimum 2 godziny dziennie.',
+    metryka: '2h oszczędności dziennie',
   },
   {
-    id: 'T-002',
-    imie: 'Anna S.',
-    rola: 'COO · Agencja',
-    firma: 'Kraków',
-    tekst: 'Panel firmowy z uprawnieniami i zadaniami zastąpił nam Notion i Trello. Zespół 12 osób, jedna platforma.',
-    metryka: 'Zespół 12 osób · 1 panel',
+    id: '02',
+    autor: 'Anna W.',
+    rola: 'Autorka treści & strateg',
+    tekst: 'Prywatny tryb z modelem Llama i Ollama to dla mnie absolutny przełom przy pracy z poufnymi materiałami. Do tego polski interfejs, brak uciążliwych przewalutowań w USD i jedna elastyczna pula.',
+    metryka: '100% poufności · 0 zł za lokalne AI',
   },
   {
-    id: 'T-003',
-    imie: 'Krzysztof P.',
-    rola: 'Product Owner',
-    firma: 'Wrocław',
-    tekst: 'Agenty AI odpalone raz działają w tle. Cotygodniowe raporty same się generują z naszych źródeł.',
-    metryka: 'Raporty bez ręcznej pracy',
+    id: '03',
+    autor: 'Tomasz K.',
+    rola: 'Projektant & twórca',
+    tekst: 'Studio zdjęć 4K i natychmiastowe przełączanie modeli w trakcie pracy to dokładnie to, czego brakowało na rynku. Mniej rozpraszaczy, czysta głowa i po prostu więcej zrobionej roboty.',
+    metryka: 'Wszystkie modele w 1 oknie',
   },
 ] as const
 
 /* ══════════════ FAQ — ROZWIĄZYWANIE REALNYCH OBAW KLIENTA ══════════════ */
 export const FAQ = [
   {
-    q: 'Czym NextByte różni się od ChatGPT lub Perplexity?',
-    a: 'NextByte to nie kolejny czat. To platforma: chat z 10+ modelami, notatki AI, kalendarz, panel firmowy, obrazy, wideo, głos i agenty — pod jednym logowaniem, po polsku, z jedną fakturą.',
+    q: 'Czym NextByte różni się od płacenia za ChatGPT, Claude czy Midjourney osobno?',
+    a: 'Zamiast płacić 5 osobnych abonamentów po $20-$30 każdy (ponad 450 zł/mc) i ciągle kopiować prompty między kartami, w NextByte masz dostęp do wszystkich topowych modeli (GPT-5, Claude, Gemini, Grok, Nano Banana, wideo, głos) w jednym panelu, z jedną elastyczną pulą Byte i po polsku.',
   },
   {
-    q: 'Które modele AI dostaję w subskrypcji?',
-    a: 'Gemini 3 Pro, GPT-5, Claude Opus/Sonnet, Grok, Mistral, ElevenLabs, Runware. Przełączasz je w locie w tym samym oknie czatu.',
+    q: 'Jak działa tryb prywatny i modele lokalne (Llama / Ollama)?',
+    a: 'Możesz podłączyć darmowe programy takie jak Ollama czy LM Studio i uruchamiać modele (np. Llama, Mistral, Gemma) bezpośrednio na swoim komputerze. Żadne dane nie wychodzą do sieci, pracujesz nawet offline, a za lokalne generacje nie zużywasz ani jednego Byte.',
   },
   {
-    q: 'Co to są Byte i jak je liczycie?',
-    a: '1 Byte = jednostka rozliczeniowa AI (koszt tokenów + operacje). Każda wiadomość pokazuje koszt przed wysłaniem, koszt zaokrąglamy w górę do całych Byte i pobieramy z Twojej puli.',
+    q: 'Czym są jednostki Byte i jak działają?',
+    a: 'Byte to elastyczna waluta platformy. Płacisz tylko za to, co faktycznie wygenerujesz (widzisz dokładny koszt przed wysłaniem zapytania). W planach abonamentowych niewykorzystane Byte przechodzą na kolejny miesiąc — nic nie przepada.',
   },
   {
-    q: 'Czy mogę wyjść w każdej chwili?',
-    a: 'Tak. Rezygnacja jednym kliknięciem w panelu. Bez umów, bez okresu wypowiedzenia, bez rozmów z konsultantem.',
+    q: 'Czy muszę podawać kartę płatniczą przy rejestracji?',
+    a: 'Nie. Możesz założyć konto za 0 zł i od razu korzystać z interfejsu, notatek, kalendarza oraz modeli lokalnych offline bez podawania jakichkolwiek danych płatniczych.',
   },
   {
-    q: 'Czy jest wersja dla firm i zespołów?',
-    a: 'Tak — panel firmowy z uprawnieniami granularnymi, plany JDG, One, Pro i Infinite. Wspólna pula Byte, wspólne projekty, faktura VAT.',
+    q: 'Czy mogę zrezygnować w dowolnym momencie?',
+    a: 'Tak, w każdym momencie jednym kliknięciem w ustawieniach konta. Bez okresów wypowiedzenia, bez ukrytych opłat i bez zbędnych formalności.',
   },
   {
-    q: 'Co z prywatnością i RODO?',
-    a: 'Serwery w UE (Supabase, Vercel), RLS na każdym obiekcie, izolacja per firma i per użytkownik, opcja lokalnych modeli AI (LM Studio, Ollama) dla wrażliwych danych.',
+    q: 'Jak dbacie o bezpieczeństwo moich danych i prywatność?',
+    a: 'Nasza infrastruktura oparta jest na serwerach w Unii Europejskiej z pełną zgodnością z RODO i szyfrowaniem E2EE. Żadne Twoje rozmowy ani dokumenty nie są wykorzystywane do trenowania publicznych modeli AI.',
   },
 ] as const
 
@@ -405,8 +399,8 @@ export const HISTORIA = [
   },
   {
     rok: '2026',
-    tytul: 'Autonomiczne Agenty i Kalendarz AI',
-    opis: 'Pełna automatyzacja: integracje 24/7 z webhookami, tablicami Kanban i synchronizacją ze spotkaniami.',
+    tytul: 'Kalendarz AI, Studio Wideo i Głos AI',
+    opis: 'Pełny zestaw twórcy: generowanie klipów, transkrypcje spotkań i kalendarz spięty z tablicami Kanban.',
   },
 ] as const
 
@@ -425,7 +419,7 @@ export const STOPKA = [
   },
   {
     tytul: 'Kontakt',
-    linki: ['Wsparcie techniczne', 'Umów demo dla firmy', 'kontakt@nextbyte.space'],
+    linki: ['Wsparcie techniczne', 'Porozmawiaj z nami', 'kontakt@nextbyte.space'],
   },
 ] as const
 

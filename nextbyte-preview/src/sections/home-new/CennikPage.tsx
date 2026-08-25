@@ -283,15 +283,11 @@ function PlanCard({ plan, okres }: { plan: Plan; okres: Okres }) {
         <button
           type="button"
           className={cn(
-            'mt-6 h-12 w-full rounded-xl text-[13px] font-bold transition-all duration-200',
+            'mt-6 h-12 w-full rounded-2xl text-[13.5px] font-heading font-bold transition-all duration-200 cursor-pointer select-none',
             plan.polecany
-              ? 'text-background hover:-translate-y-0.5'
-              : 'border border-foreground/[0.10] text-foreground/70 hover:border-foreground/25 hover:text-foreground',
+              ? 'bg-gradient-to-r from-primary via-[hsl(var(--primary))] to-sky-300 text-background shadow-[0_0_24px_-2px_hsl(var(--primary)/0.55),0_8px_20px_-6px_rgba(0,0,0,0.5)] hover:scale-[1.02] hover:shadow-[0_0_32px_2px_hsl(var(--primary)/0.75)] active:scale-[0.98]'
+              : 'border border-foreground/[0.14] bg-card/75 backdrop-blur-md text-foreground hover:border-primary/50 hover:bg-primary/[0.08] hover:text-foreground active:scale-[0.98]',
           )}
-          style={plan.polecany ? {
-            background: plan.kolor,
-            boxShadow: `0 8px 30px -8px ${akcentTlo(plan.kolor, 80)}`,
-          } : undefined}
         >
           {plan.cta}
         </button>

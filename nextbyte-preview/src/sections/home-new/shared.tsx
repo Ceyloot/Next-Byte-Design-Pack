@@ -143,6 +143,92 @@ export function Glow({
   )
 }
 
+/** Świetlny łuk — miękka kopuła nad sekcją (wariant: górny lub dolny) */
+export function ArcGlow({
+  className, flip = false, opacity = 0.5,
+}: { className?: string; flip?: boolean; opacity?: number }) {
+  const id = React.useId()
+  return (
+    <div
+      aria-hidden
+      className={cn('pointer-events-none absolute left-1/2 -translate-x-1/2 w-full max-w-5xl', className)}
+      style={{ opacity, transform: flip ? 'translateX(-50%) rotate(180deg)' : undefined }}
+    >
+      <svg viewBox="0 0 1000 320" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id={`arc-${id}`} x1="0%" y1="100%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+          </linearGradient>
+          <filter id={`arcblur-${id}`} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="7" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <path d="M 40 300 C 200 60, 800 60, 960 300" stroke={`url(#arc-${id})`} strokeWidth="1.5" filter={`url(#arcblur-${id})`} />
+      </svg>
+    </div>
+  )
+}
+
+/** Ukośna smuga światła — subtelny akcent w tle sekcji */
+export function BeamGlow({
+  className, angle = -18, opacity = 0.16,
+}: { className?: string; angle?: number; opacity?: number }) {
+  return (
+    <div
+      aria-hidden
+      className={cn('pointer-events-none absolute inset-0 overflow-hidden', className)}
+      style={{
+        opacity,
+        maskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%)',
+      }}
+    >
+      <div
+        className="absolute top-1/2 left-1/2 h-[140%] w-[52%]"
+        style={{
+          transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+          background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.5), transparent)',
+          filter: 'blur(80px)',
+        }}
+      />
+    </div>
+  )
+}
+
+/** Ciągła warstwa świetlna dla całej strony — jasność zmienia się płynnie,
+ *  bez skoków na granicach sekcji (efekty nie są przypisane do pojedynczej sekcji). */
+export function PageAmbience() {
+  const spots = [
+    { top: '12%', left: '-10%', size: 900, opacity: 0.07 },
+    { top: '30%', left: '75%',  size: 760, opacity: 0.06 },
+    { top: '48%', left: '10%',  size: 820, opacity: 0.05 },
+    { top: '66%', left: '68%',  size: 700, opacity: 0.06 },
+    { top: '84%', left: '20%',  size: 880, opacity: 0.05 },
+  ]
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {spots.map((s, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            top: s.top,
+            left: s.left,
+            width: s.size,
+            height: s.size * 0.55,
+            background: 'hsl(var(--primary))',
+            opacity: s.opacity,
+            filter: 'blur(130px)',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 /* ── SEKCJA ─────────────────────────────────────────────────── */
 export function Section({
   children, className, wide, id,
@@ -225,19 +311,30 @@ export function GlowButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden rounded-2xl font-grotesk',
-        'border border-primary/40 bg-primary/10 text-primary font-semibold whitespace-nowrap backdrop-blur-sm',
-        'transition-all duration-200 hover:bg-primary/20 hover:border-primary/60 hover:-translate-y-0.5 active:translate-y-0',
-        size === 'lg' ? 'h-[52px] px-8 text-[14px] tracking-normal' : 'h-11 px-6 text-[13px] tracking-normal',
+        'group relative inline-flex shrink-0 items-center justify-center gap-2.5 overflow-hidden rounded-2xl font-heading font-bold',
+        'bg-gradient-to-r from-primary via-[hsl(var(--primary))] to-sky-300 text-background select-none cursor-pointer',
+        'shadow-[0_0_24px_-2px_hsl(var(--primary)/0.55),0_8px_20px_-6px_rgba(0,0,0,0.5)]',
+        'border border-white/30',
+        'transition-all duration-200 ease-out hover:scale-[1.025] hover:shadow-[0_0_36px_2px_hsl(var(--primary)/0.75),0_12px_28px_-6px_rgba(0,0,0,0.6)] active:scale-[0.98]',
+        size === 'lg' ? 'h-[52px] px-8 text-[14.5px] tracking-wide' : 'h-11 px-6 text-[13.5px] tracking-wide',
         className,
       )}
     >
-      {/* subtle inner shine */}
-      <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit]"
-        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 60%)' }} />
-      <span className="relative z-10 flex items-center gap-2 font-landing">
+      {/* Top inner specular highlight line */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-80"
+      />
+
+      {/* Shimmer sweep effect */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -translate-x-[120%] bg-gradient-to-r from-transparent via-white/35 to-transparent skew-x-[-20deg] transition-transform duration-700 ease-in-out group-hover:translate-x-[220%]"
+      />
+
+      <span className="relative z-10 flex items-center gap-2 text-background font-heading font-extrabold uppercase tracking-[0.5px]">
         {children}
-        {icon && <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />}
+        {icon && <ArrowRight className="h-4 w-4 stroke-[2.5] transition-transform duration-200 group-hover:translate-x-1.5 text-background" />}
       </span>
     </button>
   )
@@ -257,17 +354,25 @@ export function GhostButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'group inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl font-grotesk',
-        'border border-foreground/[0.10] bg-foreground/[0.02] backdrop-blur-sm',
-        'font-medium text-foreground/75',
-        'transition-all duration-200 hover:border-foreground/25 hover:bg-foreground/[0.05] hover:text-foreground',
-        size === 'lg' ? 'px-6 text-[14px] tracking-normal' : 'h-11 px-5 text-[13px] tracking-normal',
+        'group relative inline-flex shrink-0 items-center justify-center gap-2.5 overflow-hidden rounded-2xl font-heading font-semibold',
+        'border border-foreground/[0.14] bg-card/75 backdrop-blur-md text-foreground select-none cursor-pointer',
+        'shadow-[0_4px_16px_-4px_rgba(0,0,0,0.3)]',
+        'transition-all duration-200 ease-out hover:border-primary/60 hover:bg-primary/[0.12] hover:text-foreground hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.35)] hover:scale-[1.015] active:scale-[0.98]',
+        size === 'lg' ? 'px-7 text-[14px] tracking-normal' : 'h-11 px-5 text-[13px] tracking-normal',
         className,
       )}
       style={size === 'lg' ? { height: 52 } : undefined}
     >
-      {Icon && <Icon className="h-4 w-4 text-primary" />}
-      {children}
+      {/* Subtle top edge glow on hover */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent group-hover:via-primary/70 transition-all duration-300"
+      />
+
+      <span className="relative z-10 flex items-center gap-2">
+        {Icon && <Icon className="h-4 w-4 text-primary transition-transform duration-200 group-hover:scale-110" />}
+        {children}
+      </span>
     </button>
   )
 }
