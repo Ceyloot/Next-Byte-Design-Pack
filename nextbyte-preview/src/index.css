@@ -900,14 +900,15 @@ table,
 }
 
 /* ── SZKŁO LIQUID GLASS — Refrakcja Fali Cieczy na Dolnej Krawędzi ── */
+.is-glass .nb-szklo:not(header):not(nav):not(.nb-nav-nocontain),
+.is-glass .glass-card:not(header):not(nav) {
+  position: relative;
+  isolation: isolate;
+  contain: layout paint;
+}
 .is-glass .nb-szklo,
 .is-glass .glass-card {
   position: relative;
-  isolation: isolate;
-  /* Each tile's expensive backdrop-filter repaint stays scoped to itself —
-     without this, a change on one glass tile (hover, scroll) can force the
-     browser to reconsider paint for the others too. */
-  contain: layout paint;
 
   /* Czyste półprzezroczyste tło */
   background-color: hsl(var(--card) / var(--nb-p1-korpus, 0.05));
@@ -979,23 +980,16 @@ table,
     0 8px 32px -8px hsl(0 0% 0% / calc(var(--nb-p1-cien, 0.34) * 0.7));
 }
 
-/* ── SZKŁO STRONY GŁÓWNEJ — działa zawsze, niezależnie od trybu is-glass ── */
-/* Refrakcja via filter: url() na ::before — działa w Chrome (backdrop-filter  */
-/* z url() działa tylko w Firefox; filter: url() na pseudo-el działa wszędzie) */
+/* ── SZKŁO STRONY GŁÓWNEJ — czysty CSS bez wadliwego filtra SVG ── */
 .nb-homepage-nav {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
-  /* Przezroczyste — efekt szkła pochodzi z ::before i backdrop-filter */
-  background: hsl(var(--card) / 0.06) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(160%) brightness(0.9) !important;
-  backdrop-filter: blur(20px) saturate(160%) brightness(0.9) !important;
-  /* Górny refleks krawędzi szkła */
+  background: hsl(var(--background) / 0.55) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  backdrop-filter: blur(32px) saturate(180%) !important;
   box-shadow:
-    inset 0 0 0 1px hsl(var(--foreground) / 0.05),
-    inset 0 1.5px 0 0 hsl(var(--foreground) / 0.22),
-    inset 0 -1px 0 0 hsl(var(--foreground) / 0.04),
-    0 8px 40px -8px hsl(0 0% 0% / 0.4) !important;
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.08),
+    0 4px 20px -4px hsl(0 0% 0% / 0.3) !important;
   border-bottom: 1px solid hsl(var(--foreground) / 0.08) !important;
   border-top: none !important;
   border-left: none !important;
@@ -1003,27 +997,11 @@ table,
   transform: none !important;
 }
 
-/* Warstwa refrakcji SVG — pełny filter: url() na pseudo-elemencie */
-/* Ten trick działa w Chrome: filter na elemencie, nie backdrop-filter */
 .nb-homepage-nav::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  /* Gradient imitujący "soczewkę" — jaśniejsze na środku, ciemniejsze na krawędziach */
-  background:
-    radial-gradient(ellipse 80% 60% at 50% -20%,
-      hsl(var(--primary) / 0.06) 0%,
-      transparent 70%),
-    linear-gradient(180deg,
-      hsl(var(--foreground) / 0.04) 0%,
-      transparent 100%);
-  /* Refrakcja SVG — przesuwa piksele jak soczewka */
-  filter: url(#nb-refrakcja-wyrazne);
-  pointer-events: none;
+  display: none !important;
 }
 
-/* Refleks świetlny na górnej krawędzi — biała linia jak krawędź szyby */
+/* Refleks świetlny na górnej krawędzi */
 .nb-homepage-nav::after {
   content: '';
   position: absolute;
@@ -1034,9 +1012,9 @@ table,
   background: linear-gradient(
     90deg,
     transparent 0%,
-    hsl(var(--foreground) / 0.35) 30%,
-    hsl(var(--foreground) / 0.5) 50%,
-    hsl(var(--foreground) / 0.35) 70%,
+    hsl(var(--foreground) / 0.25) 30%,
+    hsl(var(--foreground) / 0.4) 50%,
+    hsl(var(--foreground) / 0.25) 70%,
     transparent 100%
   );
   pointer-events: none;

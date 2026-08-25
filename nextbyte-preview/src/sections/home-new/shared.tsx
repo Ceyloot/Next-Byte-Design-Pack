@@ -143,6 +143,44 @@ export function Glow({
   )
 }
 
+/** Precyzyjny separator laserowy z rozmyciem bocznym i świecącym mikrowęzłem */
+export function TechDivider({ className }: { className?: string }) {
+  return (
+    <div aria-hidden className={cn('relative w-full flex items-center justify-center my-12 pointer-events-none', className)}>
+      <div className="h-px w-full max-w-5xl bg-gradient-to-r from-transparent via-foreground/[0.12] to-transparent" />
+      <div className="absolute h-1.5 w-1.5 rounded-full bg-primary/60 shadow-[0_0_8px_hsl(var(--primary))]" />
+    </div>
+  )
+}
+
+/** Znaczniki narożne stylistyki technicznej (+) */
+export function TechCornerMarks({ className }: { className?: string }) {
+  return (
+    <>
+      <span aria-hidden className={cn('pointer-events-none absolute -top-1.5 -left-1.5 font-mono text-[10px] text-primary/40 select-none', className)}>+</span>
+      <span aria-hidden className={cn('pointer-events-none absolute -top-1.5 -right-1.5 font-mono text-[10px] text-primary/40 select-none', className)}>+</span>
+      <span aria-hidden className={cn('pointer-events-none absolute -bottom-1.5 -left-1.5 font-mono text-[10px] text-primary/40 select-none', className)}>+</span>
+      <span aria-hidden className={cn('pointer-events-none absolute -bottom-1.5 -right-1.5 font-mono text-[10px] text-primary/40 select-none', className)}>+</span>
+    </>
+  )
+}
+
+/** Techniczna siatka akcentowa dla sekcji sprzętowej / lokalnej */
+export function MatrixAura({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn('pointer-events-none absolute inset-0 overflow-hidden opacity-30', className)}
+      style={{
+        backgroundImage: 'radial-gradient(circle, hsl(var(--primary)/0.25) 1px, transparent 1px)',
+        backgroundSize: '24px 24px',
+        maskImage: 'radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 80%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 80%)',
+      }}
+    />
+  )
+}
+
 /** Świetlny łuk — miękka kopuła nad sekcją (wariant: górny lub dolny) */
 export function ArcGlow({
   className, flip = false, opacity = 0.5,
@@ -302,7 +340,7 @@ export function GlowButton({
 }: {
   children: React.ReactNode
   onClick?: () => void
-  size?: 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg'
   className?: string
   icon?: boolean
 }) {
@@ -311,30 +349,25 @@ export function GlowButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative inline-flex shrink-0 items-center justify-center gap-2.5 overflow-hidden rounded-2xl font-heading font-bold',
-        'bg-gradient-to-r from-primary via-[hsl(var(--primary))] to-sky-300 text-background select-none cursor-pointer',
-        'shadow-[0_0_24px_-2px_hsl(var(--primary)/0.55),0_8px_20px_-6px_rgba(0,0,0,0.5)]',
-        'border border-white/30',
-        'transition-all duration-200 ease-out hover:scale-[1.025] hover:shadow-[0_0_36px_2px_hsl(var(--primary)/0.75),0_12px_28px_-6px_rgba(0,0,0,0.6)] active:scale-[0.98]',
-        size === 'lg' ? 'h-[52px] px-8 text-[14.5px] tracking-wide' : 'h-11 px-6 text-[13.5px] tracking-wide',
+        'group relative inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden rounded-xl font-sans font-semibold cursor-pointer select-none',
+        'border border-primary/60 bg-primary/20 backdrop-blur-xl text-white hover:bg-primary/30 hover:border-primary',
+        'shadow-[0_0_24px_-2px_hsl(var(--primary)/0.45),inset_0_1px_0_0_rgba(255,255,255,0.25)]',
+        'transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-[0_0_36px_0px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-[0.98]',
+        size === 'lg' ? 'h-12 px-7 text-[14.5px] tracking-[-0.2px]' : size === 'sm' ? 'h-8 px-3.5 text-xs' : 'h-10 px-5 text-sm',
         className,
       )}
     >
-      {/* Top inner specular highlight line */}
+      {/* Top subtle specular highlight */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-80"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
       />
 
-      {/* Shimmer sweep effect */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -translate-x-[120%] bg-gradient-to-r from-transparent via-white/35 to-transparent skew-x-[-20deg] transition-transform duration-700 ease-in-out group-hover:translate-x-[220%]"
-      />
-
-      <span className="relative z-10 flex items-center gap-2 text-background font-heading font-extrabold uppercase tracking-[0.5px]">
+      <span className="relative z-10 flex items-center gap-2 text-white font-semibold">
         {children}
-        {icon && <ArrowRight className="h-4 w-4 stroke-[2.5] transition-transform duration-200 group-hover:translate-x-1.5 text-background" />}
+        {icon && (
+          <ArrowRight className="h-4 w-4 stroke-[2.2] text-primary transition-transform duration-200 group-hover:translate-x-1 group-hover:text-white" />
+        )}
       </span>
     </button>
   )
@@ -346,7 +379,7 @@ export function GhostButton({
   children: React.ReactNode
   onClick?: () => void
   icon?: LucideIcon
-  size?: 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
   return (
@@ -354,21 +387,19 @@ export function GhostButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative inline-flex shrink-0 items-center justify-center gap-2.5 overflow-hidden rounded-2xl font-heading font-semibold',
-        'border border-foreground/[0.14] bg-card/75 backdrop-blur-md text-foreground select-none cursor-pointer',
-        'shadow-[0_4px_16px_-4px_rgba(0,0,0,0.3)]',
-        'transition-all duration-200 ease-out hover:border-primary/60 hover:bg-primary/[0.12] hover:text-foreground hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.35)] hover:scale-[1.015] active:scale-[0.98]',
-        size === 'lg' ? 'px-7 text-[14px] tracking-normal' : 'h-11 px-5 text-[13px] tracking-normal',
+        'group relative inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden rounded-xl font-sans font-semibold cursor-pointer select-none',
+        'border border-foreground/[0.14] bg-card/75 backdrop-blur-xl text-foreground/90 hover:text-white hover:border-foreground/[0.28] hover:bg-card',
+        'shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]',
+        'transition-all duration-200 ease-out hover:scale-[1.015] active:scale-[0.98]',
+        size === 'lg' ? 'h-12 px-6 text-[14.5px] tracking-[-0.2px]' : size === 'sm' ? 'h-8 px-3.5 text-xs' : 'h-10 px-5 text-sm',
         className,
       )}
-      style={size === 'lg' ? { height: 52 } : undefined}
     >
-      {/* Subtle top edge glow on hover */}
+      {/* Top subtle specular highlight */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent group-hover:via-primary/70 transition-all duration-300"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent group-hover:via-foreground/30 transition-all duration-200"
       />
-
       <span className="relative z-10 flex items-center gap-2">
         {Icon && <Icon className="h-4 w-4 text-primary transition-transform duration-200 group-hover:scale-110" />}
         {children}

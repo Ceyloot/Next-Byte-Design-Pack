@@ -127,7 +127,7 @@ function AppInner() {
       <div className="relative min-h-screen text-foreground font-sans flex flex-col" style={{ zIndex: 1 }}>
 
         {/* ══ CONTENT ══ */}
-        <main className="flex-1 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-0">
           <PreviewSection
             activeTab={activeTab}
             onSelectTab={(k) => setActiveTab(k as TabKey)}
@@ -135,7 +135,7 @@ function AppInner() {
             navPosition={navPosition}
             onNavPositionChange={setNavPosition}
           />
-        </main>
+        </div>
 
         {/* ══ SETTINGS PANEL ══ */}
         {showSettings && (

@@ -647,13 +647,19 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   // wychodzi poza jego dolną krawędź (mimo z-50). Renderujemy go jako
   // rodzeństwo headera i pozycjonujemy ręcznie zmierzonym offsetem.
   const openHorizontalMenu = (key: string | null) => {
-    if (key && navRef.current && tabRefs.current[key]) {
+    if (key && tabRefs.current[key]) {
       const btnRect = tabRefs.current[key]!.getBoundingClientRect()
-      const navRect = navRef.current.getBoundingClientRect()
+      // Wyśrodkowanie względem zakładki, przycięte do widocznego obszaru
+      // (menu jest position:fixed, więc liczymy we współrzędnych viewportu).
+      const half = 121
+      const left = Math.min(
+        Math.max(btnRect.left + btnRect.width / 2 - half, 8),
+        window.innerWidth - half * 2 - 8,
+      )
       setMenuPos(
         navPosition === 'bottom'
-          ? { left: btnRect.left, bottom: window.innerHeight - btnRect.top + 8 }
-          : { left: btnRect.left, top: btnRect.bottom + 8 },
+          ? { left, bottom: window.innerHeight - btnRect.top + 8 }
+          : { left, top: btnRect.bottom + 8 },
       )
     }
     openMenuDelayed(key)
@@ -716,23 +722,19 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
     </div>
   )
 
-  // ── Horizontal navbar (top / bottom) ─────────────────────────────
+  // ── Horizontal navbar (top / bottom) — kapsuła od lewej do prawej krawędzi ──
   const HorizontalNav = () => (
     <div
       ref={navRef}
-      // z-40 na całym kontenerze (nie tylko na dropdownie) — nb-szklo ma
-      // `isolation: isolate`, więc header tworzy własny kontekst
-      // stackowania. Bez z-index tutaj <main> (idący w DOM później)
-      // renderuje się nad dropdownem mimo jego z-50 w środku.
-      className={cn('relative z-40 px-4 lg:px-5 shrink-0', navPosition === 'bottom' ? 'pt-2 pb-4' : 'pt-4 pb-2')}
+      className={cn('relative z-[500] px-3 sm:px-4 w-full shrink-0', navPosition === 'bottom' ? 'pt-2 pb-3' : 'pt-3 pb-2')}
       onMouseLeave={scheduleClose}
     >
       <header
         className={cn(
-          isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-          'flex items-center gap-2 px-4 h-12 rounded-2xl border shadow-lg backdrop-blur-md',
+          isGlass ? 'nb-szklo nb-szklo-plynne nb-nav-nocontain' : 'border border-border/80 bg-card/90',
+          'flex items-center justify-between gap-3 px-4 h-12 rounded-2xl border shadow-2xl backdrop-blur-2xl w-full relative',
         )}
-        style={{ background: 'hsl(var(--card) / 0.72)' }}
+        style={{ contain: 'none', overflow: 'visible' }}
       >
         <div className="flex items-center gap-1.5 shrink-0 pr-2">
           <button
@@ -752,18 +754,35 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           )}
         </div>
 
-        <nav className="flex-1 flex items-center justify-center gap-0.5">
+        <nav className="flex-1 flex items-center justify-center gap-0.5 h-full">
           {DESIGN_TABS.map((tab) => {
             const isActive = activeTab === tab.key
             const isOpen = openMenu === tab.key
             const hasItems = tab.items.length > 0
             return (
-              <div key={tab.key} className="relative" ref={(el) => { tabRefs.current[tab.key] = el }}>
+              <div
+                key={tab.key}
+                ref={(el) => { tabRefs.current[tab.key] = el }}
+                className="relative h-full flex items-center"
+                onMouseEnter={() => {
+                  if (hasItems) {
+                    cancelClose()
+                    openHorizontalMenu(tab.key)
+                  }
+                }}
+                onMouseLeave={scheduleClose}
+              >
                 <button
-                  onClick={() => { setActiveSection(tab.key); onSelectTab?.(tab.key); openHorizontalMenu(isOpen ? null : hasItems ? tab.key : null) }}
-                  onMouseEnter={() => openHorizontalMenu(hasItems ? tab.key : null)}
+                  type="button"
+                  onClick={() => {
+                    setActiveSection(tab.key)
+                    onSelectTab?.(tab.key)
+                    if (hasItems) {
+                      setOpenMenu(isOpen ? null : tab.key)
+                    }
+                  }}
                   className={cn(
-                    'flex items-center rounded-full text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
+                    'flex items-center rounded-full text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer',
                     navCompact ? 'px-2.5 py-2' : 'gap-1.5 px-3 py-1.5',
                     isActive || isOpen
                       ? 'bg-primary/20 text-primary border border-primary/40 shadow-sm shadow-primary/10'
@@ -773,9 +792,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                   <tab.icon className="w-3.5 h-3.5 shrink-0" />
                   {!navCompact && (showContent ? <span>{tab.label}</span> : <div className="h-2 w-9 bg-foreground/25 rounded-full" />)}
                   {!navCompact && hasItems && (
-                    <ChevronRight className={cn('w-2.5 h-2.5 shrink-0 transition-transform duration-200', isOpen ? 'rotate-90' : 'opacity-40')} />
+                    <ChevronRight className={cn('w-2.5 h-2.5 shrink-0 transition-transform duration-200', isOpen ? 'rotate-90 text-primary' : 'opacity-40')} />
                   )}
                 </button>
+
               </div>
             )
           })}
@@ -784,39 +804,48 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         <NavControls/>
       </header>
 
-      {/* Dropdown — fixed z-[300] żeby bić ponad fixed sub-nav (z-[200])
-          i uciec spod stacking context zewnętrznego kontenera (zIndex:1). */}
+      {/* Dropdown renderowany POZA <header> — element z backdrop-filter tworzy
+          backdrop root, więc potomek rozmywałby tylko wnętrze headera (czyli nic).
+          Pozycja liczona ręcznie w openHorizontalMenu z getBoundingClientRect. */}
       {openMenu && megaItems.length > 0 && (
         <div
-          className="fixed z-[300] min-w-[190px]"
+          className="fixed min-w-[210px] z-[9999]"
           style={{ left: menuPos.left, top: menuPos.top, bottom: menuPos.bottom }}
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
         >
-          <div className={cn(
-            isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-            'p-1.5 rounded-2xl border flex flex-col gap-0.5',
-            'animate-in fade-in-0 zoom-in-[0.98] duration-150',
-            navPosition === 'bottom' ? 'slide-in-from-bottom-1' : 'slide-in-from-top-1',
-          )}>
+          <div
+            className={cn(
+              isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+              'p-1.5 rounded-2xl border shadow-[0_20px_60px_rgba(0,0,0,0.55)] animate-in fade-in-0 zoom-in-[0.98] duration-150 text-foreground',
+            )}
+            style={isGlass ? {
+              WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+              backdropFilter: 'blur(28px) saturate(1.6)',
+            } : undefined}
+          >
             {megaItems.map((item, i) => (
               <button
                 key={i}
-                onClick={() => {
-                  onSelectTab?.(openMenu!)
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
                   if (openMenu === 'preview' && item.subView) {
                     setPreviewSubView(item.subView)
                   }
-                  openMenuDelayed(null)
+                  setActiveSection(openMenu)
+                  onSelectTab?.(openMenu)
+                  setOpenMenu(null)
                   if (item.scrollId) {
                     setTimeout(() => {
                       document.getElementById(item.scrollId!)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                     }, 120)
                   }
                 }}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap w-full text-left text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent hover:border-foreground/[0.08]"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap w-full text-left text-foreground/75 hover:text-foreground hover:bg-foreground/[0.08] cursor-pointer"
               >
-                <item.icon className="w-3.5 h-3.5 shrink-0" />
+                <item.icon className="w-3.5 h-3.5 shrink-0 text-primary" />
                 {showContent ? <span>{item.name}</span> : <div className="h-2 w-14 bg-foreground/25 rounded-full" />}
                 {showContent && item.badge && (
                   <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
@@ -1021,7 +1050,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         'flex-1 min-w-0 overflow-y-auto flex flex-col',
         activeTab !== 'preview'
           ? 'p-6 w-full'
-          : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
+          : (previewSubView === 'homepage' || previewSubView === 'homepage-new')
+            ? 'p-0 w-full'
+            : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
       )}
       style={(
         activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new')
