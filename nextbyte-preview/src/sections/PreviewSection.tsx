@@ -32,17 +32,19 @@ import { StronaGlownaSection } from '@/sections/StronaGlownaSection'
 import { StronaGlownaNewSection } from '@/sections/StronaGlownaNewSection'
 import type { HomePageId } from '@/sections/StronaGlownaNewSection'
 import { STRONY as HOME_NEW_STRONY } from '@/sections/home-new/types'
+import { HomePage2 } from '@/sections/home-new/HomePage2'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'homepage' }
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'homepage' | 'homepage-new' | 'homepage-2' }
 
 const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
   { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [
     { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
     { name: 'Strona główna', icon: Zap,        badge: 'nextbyte.space', subView: 'homepage' },
     { name: 'Strona główna NEW', icon: Sparkles, badge: 'NEW', subView: 'homepage-new' },
+    { name: 'Strona główna 2', icon: Sparkles, badge: '2', subView: 'homepage-2' },
   ] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
     { name: 'Podstawowe',       icon: Square,        scrollId: 'karta' },
@@ -524,7 +526,7 @@ function renderSection(key: string): React.ReactNode {
 export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
-  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'homepage' | 'homepage-new'>('dashboard')
+  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'homepage' | 'homepage-new' | 'homepage-2'>('dashboard')
   /** Aktywna podstrona publicznej witryny (Strona główna NEW) */
   const [homeNewPage, setHomeNewPage] = useState<HomePageId>('home')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
@@ -1050,7 +1052,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         'flex-1 min-w-0 overflow-y-auto flex flex-col',
         activeTab !== 'preview'
           ? 'p-6 w-full'
-          : (previewSubView === 'homepage' || previewSubView === 'homepage-new')
+          : (previewSubView === 'homepage' || previewSubView === 'homepage-new' || previewSubView === 'homepage-2')
             ? 'p-0 w-full'
             : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
       )}
@@ -1071,6 +1073,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               <StronaGlownaSection />
             ) : previewSubView === 'homepage-new' ? (
               <StronaGlownaNewSection page={homeNewPage} onPageChange={setHomeNewPage} />
+            ) : previewSubView === 'homepage-2' ? (
+              // CTA prowadzi do gotowego Cennika ze "Strony głównej NEW" —
+              // ta strona jest samodzielną wizytówką, nie ma własnych podstron.
+              <HomePage2 onNavigate={(p) => { setHomeNewPage(p); setPreviewSubView('homepage-new') }} />
             ) : (
               <div className="flex flex-col gap-3.5 flex-1 min-h-0">
 

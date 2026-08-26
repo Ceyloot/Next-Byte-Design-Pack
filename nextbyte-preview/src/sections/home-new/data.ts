@@ -368,10 +368,23 @@ export const FAQ = [
 
 export const LOGOTYPY = TECH_PARTNERZY
 
-export function przelicznikByte(kwotaPln: number, progi = PLANY.find(p => p.id === 'ultimate')?.progi) {
-  if (!progi || progi.length === 0) return 0
-  const prog = [...progi].reverse().find(p => kwotaPln >= p.miesiecznie) || progi[0]
-  return prog.byte
+/* Orientacyjny koszt pojedynczej operacji w jednostkach Byte. */
+const KOSZT_BYTE = {
+  wiadomosc:    1,
+  grafika4k:    6,
+  minutaAudio:  2,
+} as const
+
+/**
+ * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
+ * Używane na karcie planu w cenniku — zwraca wiersze gotowe do wyrenderowania.
+ */
+export function przelicznikByte(byte: number) {
+  return [
+    { icon: MessageSquare, label: 'wiadomości w Chat AI', value: Math.round(byte / KOSZT_BYTE.wiadomosc) },
+    { icon: Camera,        label: 'grafik 4K w Studio',   value: Math.round(byte / KOSZT_BYTE.grafika4k) },
+    { icon: Mic,           label: 'minut transkrypcji',   value: Math.round(byte / KOSZT_BYTE.minutaAudio) },
+  ]
 }
 
 export const B2B_LICZBY = [
