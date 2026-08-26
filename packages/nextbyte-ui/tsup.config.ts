@@ -1,0 +1,42 @@
+import { defineConfig } from 'tsup'
+
+export default defineConfig([
+  {
+    entry: { index: 'src/index.ts' },
+    format: ['esm', 'cjs'],
+    dts: true,
+    sourcemap: true,
+    clean: true,
+    splitting: false,
+    treeshake: true,
+    tsconfig: './tsconfig.json',
+    external: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-radio-group',
+      '@radix-ui/react-select',
+      '@radix-ui/react-slider',
+      '@radix-ui/react-slot',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-tabs',
+      'class-variance-authority',
+      'clsx',
+      'lucide-react',
+      'ogl',
+      'sonner',
+      'tailwind-merge',
+    ],
+  },
+  {
+    entry: { 'tailwind-preset': 'src/tailwind-preset.ts' },
+    format: ['esm', 'cjs'],
+    dts: true,
+    sourcemap: false,
+    clean: false,
+    splitting: false,
+  },
+])

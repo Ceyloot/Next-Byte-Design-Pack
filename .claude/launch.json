@@ -7,6 +7,20 @@
       "runtimeArgs": ["run", "dev", "--prefix", "nextbyte-preview"],
       "port": 5190,
       "autoPort": false
+    },
+    {
+      "name": "nextbyte-ui-example",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "packages/nextbyte-ui-example", "--", "--port", "5199", "--strictPort"],
+      "port": 5199,
+      "autoPort": false
+    },
+    {
+      "name": "nextbyte-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "../nextbyte-app", "--", "--port", "5198", "--strictPort"],
+      "port": 5198,
+      "autoPort": false
     }
   ]
 }
