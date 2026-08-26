@@ -1,21 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import {
-  ArrowRight, Play, Check, ChevronDown, Sparkles, Coins, Shield,
-  Zap, CircleCheck, X, Quote,
-  Brain, Camera, NotebookPen, Workflow, Cpu, Calendar, Rocket,
-  Users, Star, Clock, Lock, Layers, Gauge, CpuIcon, Activity, FileText,
-  KeyRound, Mic, Bot, Repeat, CheckCircle2, Globe,
+  ArrowRight, Check, ChevronDown, Sparkles, Coins, Shield,
+  Zap, CircleCheck, X,
+  Brain, Camera, NotebookPen, Cpu, Calendar,
+  Users, Clock, Lock, Layers, Gauge, CpuIcon, FileText,
+  KeyRound, Mic, Repeat, CheckCircle2, Globe,
   Building2, WifiOff, LogOut,
   Clapperboard,
   AudioLines,
   Folder, Search, Type, MonitorPlay, Move,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton,
-  Panel, IconTile, StepNumber, Stars, Glow, PageAmbience,
-  HairLine, AKCENT, akcentTlo, AnimStyles, FadeIn,
+  Panel, IconTile, StepNumber, Glow, PageAmbience,
+  HairLine, akcentTlo, AnimStyles, FadeIn,
+  TechDivider, TechCornerMarks, MatrixAura,
 } from './shared'
 import {
   MODULY, POROWNANIE, OPINIE, FAQ,
@@ -81,6 +83,7 @@ function ChaosVsUnifiedCard() {
 
   return (
     <div className="relative mx-auto w-full max-w-xl overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/50 p-5 sm:p-6 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/80">
+      <TechCornerMarks />
       {/* Background radial highlight */}
       <div
         aria-hidden
@@ -92,7 +95,7 @@ function ChaosVsUnifiedCard() {
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-primary animate-ping" />
           <span className="font-mono text-[10.5px] uppercase font-bold tracking-[1.5px] text-primary">
-            // Policz samemu
+            Kalkulacja kosztów
           </span>
         </div>
         <div className="flex rounded-full border border-foreground/[0.1] bg-background/60 p-0.5">
@@ -161,44 +164,46 @@ function ChaosVsUnifiedCard() {
           </div>
 
           {/* PRAWA STRONA: NEXTBYTE */}
-          <div className="relative rounded-2xl border border-primary/40 bg-primary/[0.08] p-5 flex flex-col shadow-[0_0_30px_-10px_hsl(var(--primary)/0.3)]">
-            <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent rounded-2xl pointer-events-none" />
+          <div className="relative rounded-2xl border border-primary/25 bg-card/60 p-5 flex flex-col">
             <div className="relative z-10 flex-1">
               <div className="flex items-center justify-between mb-4">
-                <span className="font-sans text-[11px] font-semibold text-primary/80 tracking-wide">
+                <span className="font-sans text-[11px] font-semibold text-foreground/80 tracking-wide">
                   Ekosystem NextByte
                 </span>
-                <span className="rounded-lg bg-primary/20 text-primary border border-primary/40 px-2 py-1 font-sans text-[10px] font-semibold whitespace-nowrap">
+                <span className="rounded-lg bg-primary/15 text-primary border border-primary/25 px-2 py-1 font-sans text-[10px] font-semibold whitespace-nowrap">
                   All-in-one
                 </span>
               </div>
               <ul className="font-sans divide-y divide-foreground/[0.05]">
                 <li className="flex items-center gap-2.5 py-2.5">
                   <Check className="h-4 w-4 text-primary shrink-0" />
-                  <div className="flex items-center gap-2 text-primary/90">
-                    <OpenAIIcon className="h-4 w-4 shrink-0" />
-                    <AnthropicIcon className="h-4 w-4 shrink-0" />
-                    <GeminiIcon className="h-4 w-4 shrink-0" />
-                    <XaiIcon className="h-4 w-4 shrink-0" />
-                    <span className="text-[13px] text-foreground/85 whitespace-nowrap ml-1">+ 6 innych</span>
+                  <div className="flex items-center gap-2 text-foreground/80">
+                    <OpenAIIcon className="h-4 w-4 shrink-0 text-foreground/60" />
+                    <AnthropicIcon className="h-4 w-4 shrink-0 text-foreground/60" />
+                    <GeminiIcon className="h-4 w-4 shrink-0 text-foreground/60" />
+                    <XaiIcon className="h-4 w-4 shrink-0 text-foreground/60" />
+                    <span className="text-[13px] text-foreground/80 whitespace-nowrap ml-1">i wiele więcej</span>
                   </div>
                 </li>
                 {[
                   { text: 'Studio zdjęć 4K i Wideo AI', icon: Camera },
                   { text: 'Notatki AI i Kalendarz', icon: Calendar },
+                  { text: 'Głos i transkrypcja AI', icon: Mic },
                   { text: 'Lokalny AI za 0 zł', icon: Cpu },
                 ].map(({ text, icon: RowIcon }) => (
                   <li key={text} className="flex items-center gap-2.5 py-2.5">
                     <Check className="h-4 w-4 text-primary shrink-0" />
-                    <RowIcon className="h-3.5 w-3.5 text-primary/60 shrink-0" />
-                    <span className="text-[13px] text-foreground/85 whitespace-nowrap">{text}</span>
+                    <RowIcon className="h-3.5 w-3.5 text-foreground/45 shrink-0" />
+                    <span className="text-[13px] text-foreground/80 whitespace-nowrap">{text}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="relative z-10 border-t border-primary/30 pt-4">
-              <p className="font-heading text-[22px] font-bold text-primary whitespace-nowrap">Od 0zł/mc</p>
-              <p className="mt-1.5 text-[11px] text-primary/60 leading-snug">1 faktura VAT · po polsku · Serwery UE</p>
+            <div className="relative z-10 border-t border-foreground/[0.08] pt-4">
+              <p className="font-heading text-[22px] font-bold text-foreground whitespace-nowrap">
+                Od <span className="text-primary font-bold">0 zł</span><span className="text-[14px] text-foreground/50 font-normal"> / mc</span>
+              </p>
+              <p className="mt-1.5 text-[11px] text-foreground/45 leading-snug">1 faktura VAT · po polsku · Serwery UE</p>
             </div>
           </div>
         </div>
@@ -382,8 +387,8 @@ function HemisphereArchSection() {
           </span>
         </h2>
 
-        <p className="mx-auto max-w-xl text-[15.5px] leading-relaxed text-foreground/55 mb-14 font-light">
-          Przełączasz model jednym kliknięciem. Kontekst rozmowy zostaje. Historia sesji zawsze pod ręką.
+        <p className="mx-auto max-w-xl text-[15.5px] leading-relaxed text-foreground/60 mb-14 font-light">
+          Swobodne przełączanie między GPT, Claude, Gemini i Grok w tym samym wątku. Bez kopiowania promptów i bez utraty wypracowanego kontekstu.
         </p>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 text-left">
@@ -391,25 +396,22 @@ function HemisphereArchSection() {
             {
               icon: Repeat,
               title: 'Przełącz model w locie',
-              desc: 'GPT, Claude, Gemini, Grok — zmieniasz model bez utraty kontekstu rozmowy.',
-              tag: '10+ modeli',
+              desc: 'Zmieniasz silnik w trakcie rozmowy jednym kliknięciem, gdy potrzebujesz innej perspektywy lub głębszej logiki.',
             },
             {
               icon: Clock,
-              title: 'Historia zawsze przy Tobie',
-              desc: 'Wszystkie sesje zapisane. Wracasz do rozmowy sprzed tygodnia jednym kliknięciem.',
-              tag: 'Nielimitowana',
+              title: 'Historia zawsze pod ręką',
+              desc: 'Wszystkie sesje i wątki bezpiecznie zapisane. Błyskawiczny powrót do ustaleń sprzed tygodni bez utraty danych.',
             },
             {
               icon: NotebookPen,
               title: 'Notatki rosną same',
-              desc: 'To co ważne z czatu trafia prosto do Twoich notatek AI bez kopiowania.',
-              tag: 'Auto-zapis',
+              desc: 'Kluczowe wnioski i podsumowania z rozmów trafiają bezpośrednio do Twojej bazy wiedzy bez ręcznego przeklejania.',
             },
           ].map((item) => (
             <div
               key={item.title}
-              className="group relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/40 backdrop-blur-sm p-6 pt-5 flex flex-col gap-2.5 transition-all duration-300 hover:border-primary/30 hover:bg-card/70 hover:-translate-y-1"
+              className="group relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/40 backdrop-blur-sm p-6 pt-5 flex flex-col gap-3 transition-all duration-300 hover:border-primary/30 hover:bg-card/70 hover:-translate-y-1"
             >
               {/* watermark icon */}
               <item.icon
@@ -417,9 +419,12 @@ function HemisphereArchSection() {
                 className="pointer-events-none absolute right-3 top-3 h-16 w-16 text-foreground/[0.05] transition-colors duration-300 group-hover:text-primary/[0.08]"
               />
 
-              <span className="relative z-10 inline-flex w-fit items-center rounded-full border border-primary/25 bg-primary/[0.08] px-2.5 py-1 font-mono text-[10px] tracking-[1.5px] text-primary uppercase">
-                {item.tag}
-              </span>
+              <div className="relative z-10">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+                  <item.icon className="h-5 w-5" />
+                </span>
+              </div>
+
               <h3 className="relative z-10 font-heading text-[17px] font-semibold text-foreground leading-snug tracking-[-0.4px] mt-1">
                 {item.title}
               </h3>
@@ -874,7 +879,17 @@ function HeroAppMockup() {
   ]
 
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0]
+  const chatScrollRef = useRef<HTMLDivElement>(null)
 
+  // Automatyczne płynne przewijanie czatu w dół po wysłaniu wiadomości i odpowiedzi AI
+  useEffect(() => {
+    if (activeTab === 'chat' && chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: 'smooth',
+      })
+    }
+  }, [messages, isGenerating, activeTab])
 
   const handleSend = (customPrompt?: string) => {
     const textToSend = customPrompt || promptInput
@@ -929,7 +944,7 @@ function HeroAppMockup() {
   }
 
   return (
-    <div className="relative mx-auto mt-12 w-full max-w-5xl font-sans text-foreground text-left">
+    <div className="relative mx-auto w-full max-w-6xl font-sans text-foreground text-left">
       {/* Ambient glow behind workspace */}
       <div
         aria-hidden
@@ -996,9 +1011,9 @@ function HeroAppMockup() {
               VIEW 1: REAL NEXTBYTE CHAT AI
               ========================================================================= */}
           {activeTab === 'chat' && (
-            <div className="flex-1 flex flex-col justify-between p-4 sm:p-5 animate-tab-in">
-              {/* Message Feed */}
-              <div className="mx-auto w-full sm:w-[88%] space-y-4 max-h-[260px] overflow-y-auto pr-2">
+            <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 animate-tab-in">
+              {/* Message Feed — zoptymalizowana, wyśrodkowana szerokość max-w-[700px] ze scrollem */}
+              <div ref={chatScrollRef} className="mx-auto w-full max-w-2xl sm:max-w-[700px] space-y-4 max-h-[280px] overflow-y-auto pr-2 scroll-smooth">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
@@ -1024,7 +1039,7 @@ function HeroAppMockup() {
                     {/* Content Box */}
                     <div
                       className={cn(
-                        'max-w-[85%] sm:max-w-[78%] flex flex-col',
+                        'max-w-[85%] sm:max-w-[80%] flex flex-col',
                         msg.role === 'user' ? 'items-end' : 'items-start'
                       )}
                     >
@@ -1038,10 +1053,10 @@ function HeroAppMockup() {
                       >
                         <p>{msg.text}</p>
                         {msg.details && (
-                          <div className="mt-2.5 space-y-1 text-[12px] text-foreground/75 pt-2 border-t border-foreground/[0.06]">
+                          <div className="mt-2.5 pt-2 border-t border-border/30 space-y-1 text-[11.5px] text-muted-foreground">
                             {msg.details.map((d, di) => (
-                              <p key={di} className="leading-snug">
-                                {d}
+                              <p key={di} className="flex items-center gap-1.5">
+                                <span className="text-primary">•</span> {d}
                               </p>
                             ))}
                           </div>
@@ -1060,8 +1075,8 @@ function HeroAppMockup() {
                 )}
               </div>
 
-              {/* Real NextByte Chat Input Box */}
-              <div className="mt-4 mx-auto w-full sm:w-[88%] rounded-[1.5rem] border border-border/60 bg-card/70 p-2 shadow-xl focus-within:border-primary/50 focus-within:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)] transition-all">
+              {/* Real NextByte Chat Input Box — wyśrodkowany max-w-[700px] */}
+              <div className="mt-4 mx-auto w-full max-w-2xl sm:max-w-[700px] rounded-[1.5rem] border border-border/60 bg-card/70 p-2 shadow-xl focus-within:border-primary/50 focus-within:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)] transition-all">
                 {/* Top Toolbar: Streamlined Model Search Dropdown & Modifiers */}
                 <div className="flex flex-wrap items-center justify-between gap-2 px-2 pb-1.5 border-b border-border/20">
                   {/* MODEL SEARCH DROPDOWN TRIGGER */}
@@ -1622,43 +1637,40 @@ function NextByteMarkIcon({ className, style }: BrandIconProps) {
 
 type Chip = { icon: React.ComponentType<{ className?: string }>; label: string; highlight?: boolean }
 
-/* Jeden spójny wzorzec dla wszystkich 7 kart: ikona + krótka etykieta, zero diagramów */
+/* Jeden spójny wzorzec dla wszystkich kart: ikona + zwięzła etykieta */
 const CHIP_DATA: Record<string, Chip[]> = {
   chat: [
     { icon: OpenAIIcon, label: 'GPT' },
     { icon: AnthropicIcon, label: 'Claude' },
     { icon: GeminiIcon, label: 'Gemini' },
     { icon: XaiIcon, label: 'Grok' },
-    { icon: NextByteMarkIcon, label: 'Wspólny kontekst', highlight: true },
   ],
   studio: [
-    { icon: GoogleIcon, label: 'Nano Banana' },
-    { icon: OpenAIIcon, label: 'GPT Image 2.0' },
+    { icon: GoogleIcon, label: 'Imagen' },
+    { icon: OpenAIIcon, label: 'GPT Image' },
     { icon: XaiIcon, label: 'Grok Imagine' },
   ],
   notes: [
-    { icon: Folder, label: 'Folder-sync' },
+    { icon: Folder, label: 'Foldery' },
     { icon: Brain, label: 'Analiza AI' },
     { icon: Search, label: 'Wyszukiwanie' },
   ],
   calendar: [
-    { icon: Calendar, label: 'Wydarzenia' },
-    { icon: Repeat, label: 'Cykliczne' },
-    { icon: Users, label: 'Sync zespołu' },
+    { icon: Calendar, label: 'Terminy' },
+    { icon: Repeat, label: 'Zadania Kanban' },
+    { icon: Users, label: 'Google Sync' },
   ],
   video: [
-    { icon: Type, label: 'Tekst / obraz' },
-    { icon: Clapperboard, label: 'Generacja' },
-    { icon: MonitorPlay, label: 'Gotowy klip' },
+    { icon: Type, label: 'Tekst na wideo' },
+    { icon: Clapperboard, label: 'Obraz na wideo' },
+    { icon: MonitorPlay, label: 'Klip MP4' },
   ],
   voice: [
-    { icon: Mic, label: 'Nagranie' },
-    { icon: AudioLines, label: 'Analiza fali' },
-    { icon: FileText, label: 'Transkrypt' },
+    { icon: Mic, label: 'ElevenLabs' },
+    { icon: AudioLines, label: 'Whisper PL' },
+    { icon: FileText, label: 'Transkrypcja' },
   ],
 }
-
-/* Siatka 3×2 — wszystkie 6 kart tej samej szerokości, pełna symetria */
 
 /* ------------------------------------------------------------------
    MAIN HOMEPAGE COMPONENT (AUTHENTIC NEXTBYTE.SPACE SOURCE OF TRUTH)
@@ -1672,72 +1684,69 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
       <PageAmbience />
 
       {/* ══════════ HERO SECTION ══════════ */}
-      <section className="relative overflow-hidden px-4 pt-10 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden px-4 pt-8 pb-10 sm:px-6 lg:px-8">
+        {/* Subtle Ambient Matrix Grid & Diffuse Glow Effect in Background */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-35"
           style={{
-            backgroundImage: 'radial-gradient(circle, hsl(215 10% 30% / .22) 1px, transparent 1px)',
-            backgroundSize: '36px 36px',
-            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 30%, black 0%, transparent 80%)',
+            backgroundImage: 'radial-gradient(circle, hsl(var(--primary) / 0.16) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+            maskImage: 'radial-gradient(ellipse 75% 55% at 50% 32%, black 15%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 75% 55% at 50% 32%, black 15%, transparent 75%)',
           }}
         />
 
+        {/* Ambient Multi-Hue Pulsing Glow */}
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[-180px] -translate-x-1/2"
+          className="pointer-events-none absolute left-1/2 top-[-160px] -translate-x-1/2"
           style={{
             width: 1100,
             height: 550,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, hsl(204 91% 70% / 0.18) 0%, hsl(240 80% 70% / 0.06) 45%, transparent 75%)',
+            background: 'radial-gradient(ellipse at center, hsl(var(--primary) / 0.2) 0%, hsl(240 80% 70% / 0.06) 42%, transparent 72%)',
             filter: 'blur(90px)',
           }}
         />
 
-        <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center text-center pt-8">
-          <h1 className="font-heading text-[clamp(38px,6.2vw,80px)] tracking-[-2px] leading-[1.04] mb-7 font-light">
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center pt-4">
+          <h1 className="font-heading text-[clamp(36px,5.6vw,72px)] tracking-[-2px] leading-[1.05] mb-5 font-light">
             <span className="text-primary drop-shadow-[0_0_32px_rgba(105,179,240,0.45)] block font-normal">NextByte.</span>
-            <span className="text-foreground block font-light">Wszystkie modele AI. Twoje pomysły. Gotowe w sekundę.</span>
+            <span className="text-foreground block font-light">Twoje AI w jednym miejscu.</span>
           </h1>
 
-          <p className="mt-2 max-w-2xl font-sans text-[clamp(15px,1.2vw,17px)] leading-[1.65] text-foreground/75 mb-10 font-light">
-            GPT-5, Claude, Gemini, Grok, generowanie grafik 4K, wideo i notatki w jednym, płynnym ekosystemie. Bez żonglowania 5 abonamentami, w 100% po polsku i natychmiast gotowe do działania.
+          <p className="max-w-2xl font-sans text-[clamp(14.5px,1.15vw,16.5px)] leading-[1.6] text-foreground/75 mb-8 font-light">
+            Dostęp do GPT-5, Claude, Gemini i Groka, generowanie grafik 4K oraz inteligentna baza wiedzy w jednym spójnym panelu — w 100% po polsku, na serwerach w UE i od 0 zł.
           </p>
 
-          <div className="mt-2 flex flex-col items-center gap-3.5 sm:flex-row">
-            <GlowButton onClick={() => onNavigate('cennik')}>ZACZNIJ ZA DARMO</GlowButton>
-            <GhostButton onClick={() => onNavigate('cennik')}>SPRAWDŹ PLANY & CENNIK →</GhostButton>
+          <div className="flex flex-col items-center gap-3.5 sm:flex-row">
+            <GlowButton onClick={() => onNavigate('cennik')}>Rozpocznij za darmo</GlowButton>
+            <GhostButton onClick={() => onNavigate('cennik')}>Zobacz cennik i pakiety</GhostButton>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-4">
+          <div className="mt-6 flex items-center justify-center gap-3.5">
             <div className="flex">
               {['M', 'A', 'K', 'P'].map((ini, i) => (
                 <div
                   key={ini}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-card font-grotesk text-[12px] font-semibold text-primary shadow-sm"
-                  style={{ zIndex: 4 - i, marginLeft: i === 0 ? 0 : -10 }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/30 bg-card font-grotesk text-[11.5px] font-semibold text-primary shadow-sm"
+                  style={{ zIndex: 4 - i, marginLeft: i === 0 ? 0 : -9 }}
                 >
                   {ini}
                 </div>
               ))}
             </div>
-            <div className="flex flex-col gap-0.5">
-              <p className="font-sans text-[12.5px] text-foreground/60 leading-tight">
-                Dołącz do twórców i profesjonalistów, którzy <span className="text-foreground font-semibold">zamienili chaos narzędzi na jeden panel</span>
+            <div className="flex flex-col text-left">
+              <p className="font-sans text-[12px] text-foreground/65 leading-tight">
+                Dołącz do <span className="text-foreground font-semibold">tysięcy twórców i firm</span> pracujących z NextByte
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-5">
-            {['Bez karty kredytowej', 'Anulujesz w każdej chwili', 'Dane na serwerach w UE'].map(t => (
-              <span key={t} className="flex items-center gap-1.5 font-landing text-[12.5px] text-foreground/50">
-                <CircleCheck className="h-4 w-4 text-primary" />
-                {t}
-              </span>
-            ))}
-          </div>
-
+        {/* Poszerzony kontener Mockupa na max-w-6xl */}
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-2 sm:px-4 mt-8">
           <HeroAppMockup />
         </div>
 
@@ -1751,17 +1760,18 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
       <Section className="relative z-10 py-20 sm:py-24">
         <FadeIn>
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-start">
-            <div className="lg:col-span-6 space-y-6 lg:pt-2">
-              <div className="font-mono uppercase text-[11px] tracking-[3px] text-primary">
-                // MANIFEST & RACJA BYTU
+            <div className="lg:col-span-6 space-y-5 lg:pt-2">
+              <div className="font-mono uppercase text-[10.5px] tracking-[2px] text-foreground/45 font-medium">
+                Dlaczego NextByte
               </div>
               
-              <h2 className="font-heading text-[clamp(28px,4vw,42px)] font-normal leading-[1.15] tracking-[-1px] text-primary drop-shadow-[0_0_20px_rgba(105,179,240,0.35)]">
-                NextByte łączy to w jedną platformę.
+              <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.12] tracking-[-1.5px] text-foreground">
+                Jeden abonament zamiast <br />
+                <span className="text-primary font-normal">pięciu osobnych.</span>
               </h2>
 
-              <p className="font-sans text-[15px] text-foreground/65 leading-relaxed max-w-lg font-light pt-1">
-                Osobne appki do AI, notatek i kalendarza męczą — płacisz za pięć subskrypcji, używasz jednej. Chat AI, notatki, kalendarz, grafiki, wideo i głos. Jedno logowanie, polski interfejs.
+              <p className="font-sans text-[15px] text-foreground/60 leading-relaxed max-w-lg font-light">
+                Koniec z przepłacaniem za osobne konta w USD. Korzystaj z topowych modeli AI, studia grafik i bazy wiedzy w ramach jednej elastycznej puli Byte.
               </p>
 
               <div className="flex flex-wrap gap-2 pt-1">
@@ -1771,15 +1781,15 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
                   { icon: Cpu,      label: 'Lokalny AI za 0 zł' },
                   { icon: Lock,     label: 'Serwery w UE' },
                 ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-2 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] px-3 py-2">
-                    <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <div key={label} className="flex items-center gap-2 rounded-xl border border-foreground/[0.08] bg-foreground/[0.03] px-3 py-2">
+                    <Icon className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
                     <span className="font-sans text-[12.5px] font-medium text-foreground/70">{label}</span>
                   </div>
                 ))}
               </div>
 
               <div className="pt-2">
-                <GlowButton onClick={() => onNavigate('cennik')}>ZACZNIJ ZA DARMO</GlowButton>
+                <GlowButton onClick={() => onNavigate('cennik')}>Rozpocznij za darmo</GlowButton>
               </div>
             </div>
 
@@ -1797,32 +1807,15 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
         </FadeIn>
       </Section>
 
-{/* ══════════ MODUŁY (6 MODUŁÓW NEXTBYTE) ══════════ */}
+      {/* ══════════ MODUŁY (6 MODUŁÓW NEXTBYTE) ══════════ */}
       <Section className="relative z-10 py-20 sm:py-24">
         <FadeIn>
-          <div className="font-mono uppercase text-[11px] tracking-[3px] text-primary mb-2">
-            // PLATFORMA / MODUŁY
-          </div>
           <h2 className="font-heading text-[clamp(32px,4.5vw,52px)] font-light leading-[1.06] text-foreground mb-3 tracking-[-2px]">
             Najlepsze modele <span className="text-primary font-normal">do każdego zadania.</span>
           </h2>
-          <p className="font-sans text-[15px] text-foreground/55 leading-relaxed max-w-xl mb-8 font-light">
+          <p className="font-sans text-[15px] text-foreground/55 leading-relaxed max-w-xl mb-12 font-light">
             Sześć modułów, a pod każdym kilka silników AI — dobranych pod to, co faktycznie robisz. Wszystkie z jednej puli Byte.
           </p>
-          <div className="flex flex-wrap items-center gap-x-10 gap-y-4 mb-12 pb-8 border-b border-foreground/[0.07]">
-            {[
-              { value: '10+', label: 'modeli w jednym miejscu' },
-              { value: '1', label: 'logowanie' },
-              { value: '0', label: 'żonglowania subskrypcjami' },
-            ].map((s) => (
-              <div key={s.label} className="flex items-baseline gap-2">
-                <span className="font-heading text-[26px] font-extrabold leading-none tracking-tight text-primary">
-                  {s.value}
-                </span>
-                <span className="text-[12.5px] text-foreground/50 font-light">{s.label}</span>
-              </div>
-            ))}
-          </div>
         </FadeIn>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {MODULY.map((m, i) => {
@@ -1872,41 +1865,70 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
       <Section className="relative z-10 py-20 sm:py-24">
         <FadeIn>
           <div className="relative font-sans">
-            <Glow className="right-[-100px] top-[-80px]" size={480} opacity={0.10} />
+            <MatrixAura />
             <div className="relative z-10">
-              <div className="font-mono uppercase text-[11px] tracking-[3px] text-primary mb-2">
-                // LOKALNE AI · 100% PRYWATNOŚCI &amp; OFFLINE
-              </div>
               <h2 className="font-heading text-[clamp(32px,4.5vw,52px)] font-light leading-[1.06] text-foreground mb-3 max-w-2xl tracking-[-2px]">
-                Twoje dane należą tylko do Ciebie. <span className="text-primary font-normal">Prywatne AI na Twoim sprzęcie.</span>
+                Prywatne AI na Twoim sprzęcie.
               </h2>
-              <p className="font-sans text-[15px] text-foreground/65 leading-relaxed max-w-2xl mb-8 font-light">
-                Uruchamiaj najnowsze modele open-source (Llama, Mistral, Gemma, DeepSeek) bezpośrednio na swoim komputerze. Żadne zapytanie, plik ani prompt nie opuszczają Twojego urządzenia. Zero opłat w Byte, pełna dyskrecja i bezpieczna praca nawet bez dostępu do sieci.
+              <p className="font-sans text-[15px] text-foreground/65 leading-relaxed max-w-xl mb-10 font-light">
+                Llama, Mistral i DeepSeek bezpośrednio na Twoim GPU przez Ollama i LM Studio. 100% prywatności, zero opłat i nielimitowane działanie offline.
               </p>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-5 md:grid-cols-3">
                 {[
-                  { tag: '// 01', title: '100% na Twoim dysku', desc: 'Pliki i rozmowy przetwarza Twój procesor i karta graficzna. Żaden zewnętrzny serwer ani dostawca chmurowy ich nie widzi.' },
-                  { tag: '// 02', title: 'Działa z Llama i Ollama', desc: 'Pełna zgodność z darmowymi programami Ollama i LM Studio — podłączasz ulubiony model jednym kliknięciem.' },
-                  { tag: '// 03', title: 'Za 0 zł i bez internetu', desc: 'Pracuj w podróży, w pociągu, samolocie lub w odciętej sieci. Za lokalne modele nie zużywasz ani jednego Byte.' },
-                ].map((item, i) => (
-                  <FadeIn key={item.title} delay={i * 80}>
-                    <div className="rounded-xl border border-foreground/[0.08] bg-card/60 p-5 hover:border-primary/30 transition-all">
-                      <span className="font-mono text-[10px] text-primary font-bold">{item.tag}</span>
-                      <h3 className="font-heading text-[16px] font-semibold text-foreground mt-1.5 mb-2">{item.title}</h3>
-                      <p className="font-sans text-[13px] text-foreground/55 font-light leading-relaxed">{item.desc}</p>
-                    </div>
-                  </FadeIn>
-                ))}
+                  {
+                    icon: Shield,
+                    title: '100% na Twoim dysku',
+                    desc: 'Przetwarzanie lokalne przez procesor i kartę graficzną bez wysyłania danych do chmury.',
+                  },
+                  {
+                    icon: Cpu,
+                    title: 'Działa z Llama i Ollama',
+                    desc: 'Natywna integracja z darmowymi programami Ollama i LM Studio jednym kliknięciem.',
+                  },
+                  {
+                    icon: WifiOff,
+                    title: 'Za 0 zł i bez limitów',
+                    desc: 'Nielimitowana praca w trybie offline bez zużywania jednostek Byte i abonamentów.',
+                  },
+                ].map((item, i) => {
+                  const ItemIcon = item.icon
+                  return (
+                    <FadeIn key={item.title} delay={i * 80}>
+                      <div className="group relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/60 backdrop-blur-md p-6 flex flex-col gap-3 transition-all duration-300 hover:border-primary/40 hover:bg-card hover:-translate-y-1">
+                        {/* Background watermark icon */}
+                        <ItemIcon
+                          aria-hidden
+                          className="pointer-events-none absolute right-3 top-3 h-16 w-16 text-foreground/[0.04] transition-colors duration-300 group-hover:text-primary/[0.08]"
+                        />
+
+                        <div className="relative z-10">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+                            <ItemIcon className="h-5 w-5" />
+                          </span>
+                        </div>
+
+                        <h3 className="relative z-10 font-heading text-[17px] font-semibold text-foreground leading-snug tracking-[-0.3px] mt-1">
+                          {item.title}
+                        </h3>
+                        <p className="relative z-10 font-sans text-[13px] text-foreground/55 font-light leading-relaxed">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </FadeIn>
+                  )
+                })}
               </div>
 
-              <p className="mt-6 font-sans text-[13px] text-foreground/50 font-light">
-                Działa natywnie z <span className="text-foreground/80 font-medium">Ollama</span> oraz <span className="text-foreground/80 font-medium">LM Studio</span> — instalujesz na macOS, Windows lub Linux i cieszysz się prywatnym asystentem AI bez opłat.
+              <p className="mt-8 font-sans text-[13px] text-foreground/50 font-light">
+                Zgodność z <span className="text-foreground/80 font-medium">Ollama</span> oraz <span className="text-foreground/80 font-medium">LM Studio</span> na macOS, Windows i Linux.
               </p>
             </div>
           </div>
         </FadeIn>
       </Section>
+
+      <TechDivider />
 
       {/* ══════════ JAK TO DZIAŁA — 3 KROKI ══════════ */}
       <Section className="relative z-10 py-20">
@@ -1922,17 +1944,17 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
                 {[
                   {
                     title: 'Zakładasz konto za 0 zł',
-                    desc: 'Rejestracja w 30 sekund bez podawania karty kredytowej. Dostęp do platformy i modeli lokalnych jest natychmiastowy.',
+                    desc: 'Rejestracja w 30 sekund, bez karty.',
                     icon: KeyRound,
                   },
                   {
                     title: 'Wybierasz zadanie i model',
-                    desc: 'Chat AI, Studio grafik 4K, baza Notatek lub automatyzacja. Dobierasz model dopasowany do bieżącego zadania.',
+                    desc: 'Czat, grafiki 4K, notatki lub automatyzacja.',
                     icon: Layers,
                   },
                   {
                     title: 'Płacisz tylko za zużycie',
-                    desc: 'Każda akcja ma jawny koszt w Byte. Wiesz z góry ile wydasz — żadnych niespodzianek na koniec miesiąca.',
+                    desc: 'Jawny koszt w Byte, niewykorzystana pula przechodzi dalej.',
                     icon: Gauge,
                   },
                 ].map((k, i, arr) => (
@@ -1970,90 +1992,101 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
           </p>
         </FadeIn>
         <FadeIn delay={120}>
-          <Panel className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm font-sans">
-              <thead>
-                <tr className="border-b border-foreground/[0.07]">
-                  <th className="px-5 py-5 text-left text-[12px] font-medium text-foreground/40 font-mono">Funkcja</th>
-                  {POROWNANIE.kolumny.map((k, i) => (
-                    <th key={k} className="px-4 py-5 text-center">
-                      {i === 0 ? (
-                        <span className="font-heading text-[14px] font-semibold text-primary">{k}</span>
-                      ) : (
-                        <span className="font-heading text-[12.5px] font-medium text-foreground/40">{k}</span>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {POROWNANIE.wiersze.map((r, ri) => (
-                  <tr
-                    key={r.f}
-                    className={cn(
-                      'border-b border-foreground/[0.04] last:border-b-0 transition-colors hover:bg-foreground/[0.02]',
-                      ri % 2 === 0 && 'bg-foreground/[0.008]',
-                    )}
-                  >
-                    <td className="px-5 py-3.5 text-[13px] font-medium text-foreground/70 font-sans">{r.f}</td>
-                    {r.v.map((v, vi) => (
-                      <td key={vi} className={cn('px-4 py-3.5 text-center', vi === 0 && 'bg-primary/[0.035]')}>
-                        {v === true ? (
-                          <CircleCheck className="mx-auto h-[18px] w-[18px] text-primary" />
-                        ) : v === false ? (
-                          <X className="mx-auto h-5 w-5 text-foreground/25 font-bold" />
+          <div className="relative">
+            <TechCornerMarks />
+            <Panel className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm font-sans">
+                <thead>
+                  <tr className="border-b border-foreground/[0.07]">
+                    <th className="px-5 py-5 text-left text-[12px] font-medium text-foreground/40 font-mono">Funkcja</th>
+                    {POROWNANIE.kolumny.map((k, i) => (
+                      <th key={k} className="px-4 py-5 text-center">
+                        {i === 0 ? (
+                          <span className="font-heading text-[14px] font-semibold text-primary">{k}</span>
                         ) : (
-                          <span className={cn('font-sans text-[12.5px] font-semibold', vi === 0 ? 'text-primary' : 'text-foreground/50')}>
-                            {v}
-                          </span>
+                          <span className="font-heading text-[12.5px] font-medium text-foreground/40">{k}</span>
                         )}
-                      </td>
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </Panel>
+                </thead>
+                <tbody>
+                  {POROWNANIE.wiersze.map((r, ri) => (
+                    <tr
+                      key={r.f}
+                      className={cn(
+                        'border-b border-foreground/[0.04] last:border-b-0 transition-colors hover:bg-foreground/[0.02]',
+                        ri % 2 === 0 && 'bg-foreground/[0.008]',
+                      )}
+                    >
+                      <td className="px-5 py-3.5 text-[13px] font-medium text-foreground/70 font-sans">{r.f}</td>
+                      {r.v.map((v, vi) => (
+                        <td key={vi} className={cn('px-4 py-3.5 text-center', vi === 0 && 'bg-primary/[0.035]')}>
+                          {v === true ? (
+                            <CircleCheck className="mx-auto h-[18px] w-[18px] text-primary" />
+                          ) : v === false ? (
+                            <X className="mx-auto h-5 w-5 text-foreground/25 font-bold" />
+                          ) : (
+                            <span className={cn('font-sans text-[12.5px] font-semibold', vi === 0 ? 'text-primary' : 'text-foreground/50')}>
+                              {v}
+                            </span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Panel>
+          </div>
         </FadeIn>
         <FadeIn delay={200}>
-          <div className="mt-6 rounded-2xl border border-primary/25 bg-primary/[0.06] px-8 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            <div className="font-sans">
-              <span className="font-mono text-[10px] text-primary/70 uppercase tracking-[2px]">// PRZELICZ SAMEMU</span>
-              <div className="flex items-center flex-wrap gap-5 mt-5">
-                <div className="flex items-center gap-3.5 text-foreground/50">
-                  <OpenAIIcon className="h-10 w-10" />
-                  <AnthropicIcon className="h-10 w-10" />
-                  <Camera className="h-10 w-10" />
-                  <NotebookPen className="h-10 w-10" />
-                  <Mic className="h-10 w-10" />
+          <div className="mt-6 rounded-2xl border border-foreground/[0.08] bg-card/50 backdrop-blur-xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-wrap items-center gap-6 sm:gap-8">
+              {/* 5 tools stack */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 text-foreground/50">
+                  <OpenAIIcon className="h-7 w-7" />
+                  <AnthropicIcon className="h-7 w-7" />
+                  <Camera className="h-7 w-7" />
+                  <NotebookPen className="h-7 w-7" />
+                  <Mic className="h-7 w-7" />
                 </div>
-                <span className="font-heading text-[28px] font-semibold text-foreground/35 line-through decoration-2 decoration-destructive/50">
-                  ~450 zł
-                </span>
-                <ArrowRight className="h-8 w-8 text-primary/40" />
-                <NextByteMarkIcon className="h-11 w-11 text-foreground" />
-                <span className="font-heading text-[48px] font-black text-primary leading-none drop-shadow-[0_0_24px_hsl(var(--primary)/0.5)]">
-                  99 zł
-                </span>
-                <span className="rounded-full border border-primary/40 bg-primary/15 px-4 py-2 font-mono text-[14px] font-bold uppercase tracking-[0.5px] text-primary">
-                  −78% taniej
+                <span className="font-heading text-[17px] font-medium text-foreground/35 line-through decoration-destructive/60 ml-1">
+                  ~450 zł/mc
                 </span>
               </div>
+
+              <ArrowRight className="h-5 w-5 text-primary/40 shrink-0 hidden sm:block" />
+
+              {/* NextByte package */}
+              <div className="flex items-center gap-3">
+                <NextByteMarkIcon className="h-8 w-8 text-primary shrink-0" />
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-heading text-[26px] font-bold text-foreground leading-none">
+                    od <span className="text-primary">0 zł</span>
+                  </span>
+                  <span className="text-[12.5px] text-foreground/50 font-light">
+                    (lub 99 zł w pakiecie)
+                  </span>
+                </div>
+              </div>
             </div>
-            <GlowButton onClick={() => onNavigate('cennik')} className="shrink-0">Zobacz plan NextByte →</GlowButton>
+
+            <GlowButton onClick={() => onNavigate('cennik')} className="shrink-0 md:self-center">
+              Sprawdź cennik i pakiety
+            </GlowButton>
           </div>
         </FadeIn>
       </Section>
+
+      <TechDivider />
 
       {/* ══════════ BEZPIECZEŃSTWO DANYCH ══════════ */}
       <Section className="relative z-10 py-20">
         <FadeIn>
           <div className="relative">
-            <Glow className="left-[-80px] bottom-[-80px]" size={400} opacity={0.07} />
             <div className="relative z-10">
-              <div className="font-mono uppercase text-[11px] tracking-[3px] text-primary mb-2">
-                // PRYWATNOŚĆ & BEZPIECZEŃSTWO
-              </div>
               <h2 className="font-heading text-[clamp(28px,4vw,46px)] font-light leading-[1.1] text-foreground mb-3 tracking-[-2px] max-w-2xl">
                 Twoje dane są tylko <span className="text-primary font-normal">Twoje.</span>
               </h2>
@@ -2087,17 +2120,14 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
       {/* ══════════ OPINIE / Z POLA ══════════ */}
       <Section className="relative z-10 py-20">
         <FadeIn>
-          <div className="font-mono uppercase text-[11px] tracking-[3px] text-primary mb-2">
-            // WYNIKI &amp; OPINIE
-          </div>
           <h2 className="font-heading text-[clamp(32px,4.5vw,52px)] font-light leading-[1.06] text-foreground mb-3 tracking-[-2px]">
-            Mniej narzędzi. <span className="text-primary font-normal">Więcej zrobionej roboty.</span>
+            Sprawdzona efektywność <span className="text-primary font-normal">w codziennej pracy.</span>
           </h2>
           <p className="font-sans text-[15px] text-foreground/60 leading-relaxed max-w-xl mb-12 font-light">
-            Zobacz, jak codzienna praca staje się prostsza i szybsza, gdy wszystkie modele, grafiki i notatki masz w jednym spójnym oknie.
+            Zobacz, jak twórcy, programiści i zespoły optymalizują procesy dzięki połączeniu modeli AI, studia grafik i bazy wiedzy w jednym oknie.
           </p>
         </FadeIn>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-3">
           {OPINIE.map((o, i) => (
             <FadeIn key={o.id} delay={i * 100}>
               <div
@@ -2109,8 +2139,8 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
                 )}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="font-mono text-[10.5px] tracking-[2px] text-primary font-bold">
-                    // OPINIA {o.id}
+                  <span className="text-[12px] font-medium text-primary">
+                    {o.kategoria}
                   </span>
                   <div className="flex gap-0.5 text-primary text-[13px]">★★★★★</div>
                 </div>
@@ -2118,17 +2148,9 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
                   „{o.tekst}”
                 </p>
                 <div className="flex items-center justify-between gap-3 pt-4 border-t border-foreground/[0.07]">
-                  <div className="min-w-0">
-                    <p className="font-heading text-[13.5px] font-semibold text-foreground truncate">
-                      {o.autor}
-                    </p>
-                    <p className="text-[11.5px] text-foreground/50 font-light truncate">
-                      {o.rola}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-primary/10 border border-primary/25 px-2.5 py-1 font-mono text-[9.5px] font-bold text-primary shrink-0">
-                    {o.metryka}
-                  </span>
+                  <p className="font-heading text-[13.5px] font-semibold text-foreground/80 truncate">
+                    {o.rola}
+                  </p>
                 </div>
               </div>
             </FadeIn>
@@ -2138,18 +2160,23 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
 
       {/* ══════════ FAQ / ODPOWIEDZI ══════════ */}
       <Section className="relative z-10 py-20">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
           <FadeIn className="lg:sticky lg:top-32 lg:self-start">
-            <div className="font-mono uppercase text-[11px] tracking-[3px] text-primary mb-2">
-              // FAQ / ODPOWIEDZI
-            </div>
-            <h2 className="font-heading text-[2.2rem] font-light leading-[1.06] text-foreground mb-4 tracking-[-1.5px]">
-              Częste pytania.
+            <h2 className="font-heading text-[clamp(28px,3.8vw,42px)] font-light leading-[1.08] text-foreground mb-4 tracking-[-1.5px]">
+              Wszystko, co warto wiedzieć <br />
+              <span className="text-primary font-normal">przed startem.</span>
             </h2>
-            <p className="font-sans text-[14px] text-foreground/55 leading-relaxed mb-7 font-light">
-              Nie ma tu odpowiedzi na Twoje pytanie? Napisz do nas — odpowiadamy w ciągu jednego dnia roboczego.
+            <p className="font-sans text-[14.5px] text-foreground/60 leading-relaxed mb-7 font-light max-w-md">
+              Masz niestandardowe pytanie lub potrzebujesz dedykowanego wdrożenia dla zespołu? Jesteśmy do dyspozycji.
             </p>
-            <GhostButton size="md" onClick={() => onNavigate('cennik')}>Sprawdź pełny cennik →</GhostButton>
+            <div className="flex flex-col sm:flex-row lg:flex-col items-start gap-3">
+              <GlowButton size="md" onClick={() => onNavigate('cennik')}>
+                Zobacz plany i cennik
+              </GlowButton>
+              <GhostButton size="md" onClick={() => window.open('mailto:kontakt@nextbyte.space', '_blank')}>
+                Napisz do nas
+              </GhostButton>
+            </div>
           </FadeIn>
           <FadeIn delay={120} className="space-y-2.5">
             {FAQ.map((f, i) => (
@@ -2160,31 +2187,74 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
       </Section>
 
       {/* ══════════ FINAL CTA ══════════ */}
-      <Section className="relative z-10 py-20">
-        <HairLine className="mb-16" />
+      <Section className="relative z-10 py-24 sm:py-32 overflow-hidden">
+        {/* Luminous Atmospheric Horizon Arch & Pulsing Aura */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[420px] flex items-center justify-center overflow-visible"
+          style={{
+            maskImage: 'radial-gradient(ellipse 75% 65% at 50% 50%, black 25%, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 75% 65% at 50% 50%, black 25%, transparent 80%)',
+          }}
+        >
+          <div
+            className="absolute w-[820px] h-[360px] rounded-[100%] bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.3)_0%,hsl(var(--primary)/0.06)_50%,transparent_75%)] blur-3xl"
+          />
+          <svg
+            viewBox="0 0 1000 350"
+            className="relative w-full h-full opacity-80"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="finalCtaArchGlow" x1="0%" y1="100%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                <stop offset="20%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.95" />
+                <stop offset="80%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+              </linearGradient>
+              <filter id="finalCtaBlur" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="8" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <path
+              d="M 50 330 C 200 60, 800 60, 950 330"
+              stroke="url(#finalCtaArchGlow)"
+              strokeWidth="1.75"
+              filter="url(#finalCtaBlur)"
+            />
+          </svg>
+        </div>
+
         <FadeIn>
-          <div className="text-center flex flex-col items-center font-sans">
-            <div className="font-mono text-[11px] tracking-[3px] text-primary/80 mb-6 font-bold">
-              // TWÓJ OSOBISTY PANEL AI
-            </div>
+          <div className="relative mx-auto max-w-3xl text-center">
             <h2
-              className="font-heading font-light leading-[1.04] tracking-[-2px] text-foreground mb-2"
-              style={{ fontSize: 'clamp(2.5rem, 6vw, 4.2rem)' }}
+              className="font-heading font-light leading-[1.08] tracking-[-2px] text-foreground mb-4"
+              style={{ fontSize: 'clamp(2.4rem, 5.2vw, 4rem)' }}
             >
-              Wszystko, czego potrzebujesz.
+              Wszystkie modele AI. <br />
+              <span className="text-primary font-normal drop-shadow-[0_0_35px_rgba(105,179,240,0.5)]">
+                Jeden standard pracy.
+              </span>
             </h2>
-            <h2
-              className="font-heading font-normal leading-[1.04] tracking-[-2px] text-primary drop-shadow-[0_0_32px_rgba(105,179,240,0.4)] mb-8"
-              style={{ fontSize: 'clamp(2.5rem, 6vw, 4.2rem)' }}
-            >
-              W jednym, bezbłędnym miejscu.
-            </h2>
-            <p className="font-sans text-[16px] text-foreground/65 max-w-xl leading-relaxed mb-10 font-light">
-              Pisz, twórz grafiki, organizuj notatki i automatyzuj zadania z najmocniejszymi modelami AI na świecie. Zacznij za 0 zł bez karty kredytowej.
+
+            <p className="font-sans text-[15px] sm:text-[16px] text-foreground/65 max-w-md mx-auto leading-relaxed mb-8 font-light">
+              Topowe modele, studio grafik 4K i baza wiedzy w jednym oknie. Start za 0 zł bez karty.
             </p>
-            <div className="flex flex-col items-center gap-3.5 sm:flex-row">
-              <GlowButton onClick={() => onNavigate('cennik')}>ZACZNIJ ZA DARMO</GlowButton>
-              <GhostButton onClick={() => onNavigate('cennik')}>SPRAWDŹ PLANY &amp; CENNIK</GhostButton>
+
+            {/* CTA Action Buttons */}
+            <div className="flex flex-col items-center justify-center gap-3.5 sm:flex-row">
+              <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
+                Przejdź do platformy
+              </GlowButton>
+              <GhostButton size="lg" onClick={() => onNavigate('cennik')}>
+                Zobacz cennik i pakiety
+              </GhostButton>
             </div>
           </div>
         </FadeIn>
