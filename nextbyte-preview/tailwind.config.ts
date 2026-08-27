@@ -31,10 +31,10 @@ export default {
         'nb-lg': 'var(--r-lg)',   // 22px  modal, szuflada, navbar
       },
       fontFamily: {
-        sans: ['"DM Sans"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        heading: ['"DM Sans"', 'Inter', 'ui-sans-serif', 'sans-serif'],
-        landing: ['"DM Sans"', 'Inter', 'sans-serif'],
-        grotesk: ['"Space Grotesk"', '"DM Sans"', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', '"DM Sans"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        heading: ['"Plus Jakarta Sans"', '"DM Sans"', 'Inter', 'ui-sans-serif', 'sans-serif'],
+        landing: ['"Plus Jakarta Sans"', '"DM Sans"', 'Inter', 'sans-serif'],
+        grotesk: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
       },
       keyframes: {
         'spin-slow': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },

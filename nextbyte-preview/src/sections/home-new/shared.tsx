@@ -153,6 +153,16 @@ export function TechDivider({ className }: { className?: string }) {
   )
 }
 
+/** Znacznik sekcji z kreską laserową i etykietą monospace */
+export function SecRule({ label }: { label: string }) {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <span className="h-px w-5 bg-primary/40" />
+      <span className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/75">{label}</span>
+    </div>
+  )
+}
+
 /** Znaczniki narożne stylistyki technicznej (+) */
 export function TechCornerMarks({ className }: { className?: string }) {
   return (

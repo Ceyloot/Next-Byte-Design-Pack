@@ -14,15 +14,15 @@
 
 /* ── Czcionki + base reset ─────────────────────────────────── */
 :root {
-  --font-heading: 'DM Sans', sans-serif;
-  --font-landing: 'DM Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
+  --font-landing: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Inter', sans-serif;
 }
 
 html,
 body {
   background-color: hsl(var(--background));
-  font-family: var(--font-body), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-body), 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
   color: hsl(var(--foreground));
 }
 
@@ -33,11 +33,11 @@ body {
 .font-landing h3,
 .font-landing h4,
 h1, h2, h3, h4 {
-  font-family: 'DM Sans', ui-sans-serif, sans-serif !important;
+  font-family: 'Plus Jakarta Sans', 'DM Sans', ui-sans-serif, sans-serif !important;
 }
 
 .font-body {
-  font-family: 'Inter', ui-sans-serif, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif;
 }
 
 /* ── TAFLE — warstwy głębi w trybie normalnym ─────────────────────────
