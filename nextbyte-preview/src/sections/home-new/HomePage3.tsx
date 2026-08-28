@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Shield, Cpu, WifiOff,
   Building2, Lock, LogOut, CircleCheck, X,
-  Mic, Camera, NotebookPen, ArrowRight,
+  Mic, Camera, Video, NotebookPen, ArrowRight,
   Radar, Workflow, Sparkles, Brain, Calendar, Rocket, Check,
   Zap, Play, TrendingUp, Layers, Database, ArrowUpRight, MessageSquare
 } from 'lucide-react'
@@ -402,7 +402,7 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
   return (
     <div className="relative z-10 py-6 sm:py-8">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
-        
+
         {/* LEWA STRONA: Nagłówek, krótki opis i czytelny poziomy pasek statystyk */}
         <div className="lg:col-span-5 text-left space-y-5">
           <div className="space-y-3">
@@ -445,13 +445,13 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
         {/* PRAWA STRONA: ORGANICZNY POZIOMY SCHEMAT ŚWIATŁOWODOWY */}
         <div className="lg:col-span-7 flex items-center justify-center">
           <div className="relative mx-auto w-full max-w-[580px] h-[340px] flex items-center justify-center select-none">
-            
+
             {/* Subtelna poświata ambientowa w tle */}
             <div className="absolute inset-0 bg-primary/[0.04] blur-3xl rounded-full pointer-events-none" />
 
             {/* SKALOWANY KONTENER 580x320 */}
             <div className="relative w-[580px] h-[320px] shrink-0 scale-[0.62] xs:scale-[0.74] sm:scale-[0.9] md:scale-100 origin-center transition-transform">
-              
+
               {/* KRZYWE BEZIERA SVG Z PŁYNNYMI IMPULSAMI WPADAJĄCYMI DO ŚRODKA */}
               <svg viewBox="0 0 580 320" className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
                 <defs>
@@ -659,11 +659,13 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
     const updateProgress = () => {
       const rect = el.getBoundingClientRect()
 
-      // TRIGGER OD PUNKTU ZE ZRZUTU EKRANU:
-      // Do punktu ze zrzutu ekranu (rect.top >= 25px) -> progress = 0 (idealnie złożony na płasko!)
-      // Od rect.top = 25px do -340px -> płynne, dynamiczne rozsuwanie od 0.0 do 1.0
-      const startUnfold = 25
-      const fullUnfold = -340
+      // TRIGGER ROZSUWANIA:
+      // Rozpoczyna rozsuwanie gdy sekcja wchodzi na ekran (rect.top ≈ vh * 0.58)
+      // Osiąga 100% (rozwinięcie na maksa) dokładnie w momencie wyrównania w kadrze (rect.top ≈ vh * 0.16)
+      const vh = window.innerHeight || 800
+      const startUnfold = vh * 0.45
+      const fullUnfold = vh * 0.18
+
       const raw = (startUnfold - rect.top) / (startUnfold - fullUnfold)
       const clamped = Math.max(0, Math.min(1, raw))
       setScrollProgress(clamped)
@@ -681,7 +683,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
 
     window.addEventListener('scroll', updateProgress, { passive: true, capture: true })
     document.addEventListener('scroll', updateProgress, { passive: true, capture: true })
-    
+
     updateProgress()
 
     let rafId: number
@@ -707,13 +709,13 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
 
   return (
     <div ref={containerRef} className="relative z-10 py-16 sm:py-24 overflow-visible">
-      
+
       {/* 2-KOLUMNOWY UKŁAD NAPRZEMIENNY (CZYSTY, BEZ KAFELKÓW I BEZ CIĘŻKICH BLOKÓW) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-        
+
         {/* LEWA STRONA: 3D DIAGONAL ISOMETRIC WAFER STACK + LINIE PROWADZĄCE (LEADER LINES) */}
         <div className="lg:col-span-7 flex flex-col items-center justify-center relative select-none">
-          
+
           {/* Subtelna kwantowa poświata w tle */}
           <div
             aria-hidden
@@ -734,10 +736,10 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
           />
 
           {/* GŁÓWNY WIDOK IZOMETRYCZNY SVG ZE STOSEM WARSTW PROCESORA */}
-          <div className="relative w-full max-w-[620px] h-[560px] flex items-center justify-center">
-            
+          <div className="relative w-full max-w-[740px] h-[580px] flex items-center justify-center">
+
             <svg
-              viewBox="0 0 620 580"
+              viewBox="0 0 740 580"
               className="w-full h-full overflow-visible"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -767,9 +769,9 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                   PIONOWE PRZERYWANE LINIE PROJEKCYJNE (POJAWIAJĄ SIĘ PRZY ROZSUWANIU)
                   ───────────────────────────────────────────────────────────── */}
               {(() => {
-                const topCx = 310 - 2 * sepX
+                const topCx = 370 - 2 * sepX
                 const topCy = 290 - 2 * sepY
-                const botCx = 310 + 2 * sepX
+                const botCx = 370 + 2 * sepX
                 const botCy = 290 + 2 * sepY + 12
 
                 return (
@@ -795,7 +797,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                   id: 'w4-base',
                   offsetMul: 2,
                   icon: (
-                    /* 05 // PRYWATNOŚĆ & GPU - TARCZA 3D */
+                    /* 05 // PRYWATNOŚĆ I BEZPIECZEŃSTWO W CHMURZE - TARCZA 3D */
                     <g transform="scale(1, 0.5416) rotate(-45)">
                       <path
                         d="M 0 -24 L 22 -12 L 22 8 C 22 22, 0 28, 0 28 C 0 28, -22 22, -22 8 L -22 -12 Z"
@@ -812,7 +814,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                   id: 'w3-context',
                   offsetMul: 1,
                   icon: (
-                    /* 04 // WSPÓLNY KONTEKST 1M - RDZEŃ PAMIĘCI 3D */
+                    /* 04 // WSPÓLNY KONTEKST I PAMIĘĆ - RDZEŃ PAMIĘCI 3D */
                     <g transform="scale(1, 0.5416) rotate(-45)">
                       <rect x="-18" y="-18" width="36" height="36" rx="8" fill="#080d16" stroke="#38bdf8" strokeWidth="2.5" />
                       <circle cx="-26" cy="-26" r="3" fill="#38bdf8" />
@@ -823,23 +825,25 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                       <line x1="18" y1="-18" x2="24" y2="-24" stroke="#38bdf8" strokeWidth="2" />
                       <line x1="18" y1="18" x2="24" y2="24" stroke="#38bdf8" strokeWidth="2" />
                       <line x1="-18" y1="18" x2="-24" y2="24" stroke="#38bdf8" strokeWidth="2" />
-                      <text x="0" y="5" fill="#ffffff" fontSize="13" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">1M</text>
+                      <text x="0" y="5" fill="#ffffff" fontSize="11" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">CTX</text>
                     </g>
                   ),
                 },
                 {
-                  id: 'w2-voice',
+                  id: 'w2-reasoning',
                   offsetMul: 0,
                   icon: (
-                    /* 03 // GŁOS AI LIVE - SPEKTRUM DŹWIĘKOWE 3D */
+                    /* 03 // ROZUMOWANIE & PERSONY - SUWAKI I KONTROLA STYLU 3D */
                     <g transform="scale(1, 0.5416) rotate(-45)">
-                      <line x1="-24" y1="0" x2="-24" y2="0" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <line x1="-16" y1="-10" x2="-16" y2="10" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <line x1="-8" y1="-20" x2="-8" y2="20" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <line x1="0" y1="-28" x2="0" y2="28" stroke="#38bdf8" strokeWidth="3.5" strokeLinecap="round" />
-                      <line x1="8" y1="-18" x2="8" y2="18" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <line x1="16" y1="-9" x2="16" y2="9" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <line x1="24" y1="0" x2="24" y2="0" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
+                      <rect x="-24" y="-20" width="48" height="40" rx="6" fill="#080d16" stroke="#38bdf8" strokeWidth="2.5" />
+                      <line x1="-16" y1="-7" x2="16" y2="-7" stroke="#38bdf8" strokeWidth="2" strokeOpacity="0.4" />
+                      <circle cx="5" cy="-7" r="4.5" fill="#38bdf8" />
+                      <line x1="-16" y1="7" x2="16" y2="7" stroke="#38bdf8" strokeWidth="2" strokeOpacity="0.4" />
+                      <circle cx="-6" cy="7" r="4.5" fill="#38bdf8" />
+                      <circle cx="-16" cy="-7" r="1.5" fill="#38bdf8" />
+                      <circle cx="16" cy="-7" r="1.5" fill="#38bdf8" />
+                      <circle cx="-16" cy="7" r="1.5" fill="#38bdf8" />
+                      <circle cx="16" cy="7" r="1.5" fill="#38bdf8" />
                     </g>
                   ),
                 },
@@ -948,7 +952,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                   ),
                 },
               ].map((wafer) => {
-                const cx = 310 + wafer.offsetMul * sepX
+                const cx = 370 + wafer.offsetMul * sepX
                 const cy = 290 + wafer.offsetMul * sepY
                 const isTop = wafer.isTopAiChip
 
@@ -1003,117 +1007,144 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
               })}
 
               {/* ─────────────────────────────────────────────────────────────
-                  PRECYZYJNE LINIE WSKAŹNIKOWE CAD (POJAWIAJĄ SIĘ PRZY ROZWINIĘCIU)
+                  5 PRECYZYJNYCH LINII WSKAŹNIKOWYCH CAD (BEZPOŚREDNIO ZE ZNAKÓW TEKSTOWYCH)
                   ───────────────────────────────────────────────────────────── */}
-              {/* Lewa góra -> AI Neural Core (Wafer 0) */}
+              {/* 1. Lewa góra -> Modele AI (Wafer 0) */}
               <line
-                x1="40"
-                y1="70"
-                x2={310 - 2 * sepX - 120}
+                x1="170"
+                y1="42"
+                x2={370 - 2 * sepX - 120}
                 y2={290 - 2 * sepY}
                 stroke="#38bdf8"
-                strokeWidth="1"
+                strokeWidth="1.2"
                 strokeDasharray="3 3"
-                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.15) * 1.5))}
+                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.12) * 1.5))}
               />
-              <circle cx="40" cy="70" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.15) * 1.5))} />
+              <circle cx="170" cy="42" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.12) * 1.5))} />
 
-              {/* Prawa góra -> Dokumenty & PDF (Wafer 1) */}
+              {/* 2. Prawa góra -> Multimodal & Pliki (Wafer 1) */}
               <line
-                x1="580"
-                y1="160"
-                x2={310 - 1 * sepX + 120}
+                x1="570"
+                y1="127"
+                x2={370 - 1 * sepX + 120}
                 y2={290 - 1 * sepY}
                 stroke="#38bdf8"
-                strokeWidth="1"
+                strokeWidth="1.2"
                 strokeDasharray="3 3"
-                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.25) * 1.5))}
+                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.20) * 1.5))}
               />
-              <circle cx="580" cy="160" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.25) * 1.5))} />
+              <circle cx="570" cy="127" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.20) * 1.5))} />
 
-              {/* Prawa dół -> Wspólny Kontekst 1M (Wafer 3) */}
+              {/* 3. Lewy środek -> Dopasowanie Czatu (Wafer 2) */}
               <line
-                x1="580"
-                y1="420"
-                x2={310 + 1 * sepX + 120}
+                x1="170"
+                y1="282"
+                x2={370 - 120}
+                y2={290}
+                stroke="#38bdf8"
+                strokeWidth="1.2"
+                strokeDasharray="3 3"
+                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.28) * 1.5))}
+              />
+              <circle cx="170" cy="282" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.28) * 1.5))} />
+
+              {/* 4. Prawa dół -> Wspólny Kontekst (Wafer 3) */}
+              <line
+                x1="570"
+                y1="397"
+                x2={370 + 1 * sepX + 120}
                 y2={290 + 1 * sepY}
                 stroke="#38bdf8"
-                strokeWidth="1"
+                strokeWidth="1.2"
                 strokeDasharray="3 3"
-                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.35) * 1.5))}
+                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.36) * 1.5))}
               />
-              <circle cx="580" cy="420" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.35) * 1.5))} />
+              <circle cx="570" cy="397" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.36) * 1.5))} />
 
-              {/* Lewy dół -> Prywatność & GPU (Wafer 4) */}
+              {/* 5. Lewy dół -> Prywatność & RODO (Wafer 4) */}
               <line
-                x1="40"
-                y1="480"
-                x2={310 + 2 * sepX - 120}
+                x1="170"
+                y1="502"
+                x2={370 + 2 * sepX - 120}
                 y2={290 + 2 * sepY}
                 stroke="#38bdf8"
-                strokeWidth="1"
+                strokeWidth="1.2"
                 strokeDasharray="3 3"
-                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.45) * 1.5))}
+                opacity={Math.min(1, Math.max(0, (scrollProgress - 0.44) * 1.5))}
               />
-              <circle cx="40" cy="480" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.45) * 1.5))} />
+              <circle cx="170" cy="502" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.44) * 1.5))} />
             </svg>
 
             {/* ─────────────────────────────────────────────────────────────
-                PŁYNNIE ROZPISUJĄCE SIĘ ADNOTACJE BOCZNE (STOPNIOWY REVEAL)
+                5 CZYSTYCH ETYKIET CAD (BEZ ŻADNYCH KAFELKÓW, RAM I TŁA)
                 ───────────────────────────────────────────────────────────── */}
-            {/* Lewa góra: AI Chip Core & Modele */}
+            {/* 01. Lewa góra: Wiodące Modele AI */}
             <div
-              className="absolute left-0 top-6 max-w-[170px] text-left font-mono hidden sm:block transition-all duration-300"
+              className="absolute left-[10px] top-[24px] w-[155px] text-left hidden sm:block transition-all duration-300 pointer-events-none"
               style={{
-                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.15) * 1.6)),
-                transform: `translateX(${(1 - scrollProgress) * -16}px)`,
+                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.12) * 1.6)),
+                transform: `translateX(${(1 - scrollProgress) * -12}px)`,
               }}
             >
-              <p className="text-[11px] font-bold text-primary tracking-wider uppercase">// 01 MODELE & PERSONY</p>
-              <p className="text-[10px] text-foreground/55 font-sans mt-0.5 leading-snug">
-                GPT-5, Claude 3.7, Gemini i Grok + wybór charakteru czatu.
+              <p className="text-[12px] font-bold text-primary tracking-wide uppercase font-sans leading-none">// 01 MODELE AI</p>
+              <p className="text-[12px] text-foreground/80 font-sans mt-1 leading-snug">
+                Wiele modeli w jednym miejscu.
               </p>
             </div>
 
-            {/* Prawa góra: Dokumenty & PDF */}
+            {/* 02. Prawa góra: Multimodal & Pliki */}
             <div
-              className="absolute right-0 top-20 max-w-[170px] text-right font-mono hidden sm:block transition-all duration-300"
+              className="absolute right-[10px] top-[108px] w-[155px] text-right hidden sm:block transition-all duration-300 pointer-events-none"
               style={{
-                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.25) * 1.6)),
-                transform: `translateX(${(1 - scrollProgress) * 16}px)`,
+                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.20) * 1.6)),
+                transform: `translateX(${(1 - scrollProgress) * 12}px)`,
               }}
             >
-              <p className="text-[11px] font-bold text-primary tracking-wider uppercase">// 02 MULTIMODAL & PLIKI</p>
-              <p className="text-[10px] text-foreground/55 font-sans mt-0.5 leading-snug">
-                Analiza PDF, Excel, kodu i generowanie zaawansowanych dokumentów.
+              <p className="text-[12px] font-bold text-primary tracking-wide uppercase font-sans leading-none">// 02 MULTIMODAL</p>
+              <p className="text-[12px] text-foreground/80 font-sans mt-1 leading-snug">
+                Szybkie generowanie i analiza plików.
               </p>
             </div>
 
-            {/* Prawa dół: 1M Context Cache */}
+            {/* 03. Lewy środek: Wybór Rozumowania & Styl */}
             <div
-              className="absolute right-0 bottom-20 max-w-[170px] text-right font-mono hidden sm:block transition-all duration-300"
+              className="absolute left-[10px] top-[264px] w-[155px] text-left hidden sm:block transition-all duration-300 pointer-events-none"
               style={{
-                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.35) * 1.6)),
-                transform: `translateX(${(1 - scrollProgress) * 16}px)`,
+                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.28) * 1.6)),
+                transform: `translateX(${(1 - scrollProgress) * -12}px)`,
               }}
             >
-              <p className="text-[11px] font-bold text-primary tracking-wider uppercase">// 03 WSPÓLNY KONTEKST</p>
-              <p className="text-[10px] text-foreground/55 font-sans mt-0.5 leading-snug">
-                1 000 000 tokenów pamięci ciągłej bez utraty wątku i powtarzania promptu.
+              <p className="text-[12px] font-bold text-primary tracking-wide uppercase font-sans leading-none">// 03 DOPASOWANIE CZATU</p>
+              <p className="text-[12px] text-foreground/80 font-sans mt-1 leading-snug">
+                Dostosowanie stylu i tonu do Twoich potrzeb.
               </p>
             </div>
 
-            {/* Lewy dół: Privacy & GPU Base */}
+            {/* 04. Prawa dół: Wspólny Kontekst */}
             <div
-              className="absolute left-0 bottom-10 max-w-[170px] text-left font-mono hidden sm:block transition-all duration-300"
+              className="absolute right-[10px] top-[378px] w-[155px] text-right hidden sm:block transition-all duration-300 pointer-events-none"
               style={{
-                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.45) * 1.6)),
-                transform: `translateX(${(1 - scrollProgress) * -16}px)`,
+                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.36) * 1.6)),
+                transform: `translateX(${(1 - scrollProgress) * 12}px)`,
               }}
             >
-              <p className="text-[11px] font-bold text-primary tracking-wider uppercase">// 04 PRYWATNOŚĆ & GPU</p>
-              <p className="text-[10px] text-foreground/55 font-sans mt-0.5 leading-snug">
-                Lokalny silnik Ollama (0 zł) i serwery w 100% zgodne z RODO w UE.
+              <p className="text-[12px] font-bold text-primary tracking-wide uppercase font-sans leading-none">// 04 WSPÓLNY KONTEKST</p>
+              <p className="text-[12px] text-foreground/80 font-sans mt-1 leading-snug">
+                AI pamięta kontekst pomimo zmiany modelu.
+              </p>
+            </div>
+
+            {/* 05. Lewy dół: Bezpieczeństwo & RODO w UE */}
+            <div
+              className="absolute left-[10px] top-[484px] w-[155px] text-left hidden sm:block transition-all duration-300 pointer-events-none"
+              style={{
+                opacity: Math.min(1, Math.max(0, (scrollProgress - 0.44) * 1.6)),
+                transform: `translateX(${(1 - scrollProgress) * -12}px)`,
+              }}
+            >
+              <p className="text-[12px] font-bold text-primary tracking-wide uppercase font-sans leading-none">// 05 PRYWATNOŚĆ & RODO</p>
+              <p className="text-[12px] text-foreground/80 font-sans mt-1 leading-snug">
+                Serwery w UE i pełna izolacja danych.
               </p>
             </div>
 
@@ -1121,51 +1152,31 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
 
         </div>
 
-        {/* PRAWA STRONA: ZWIĘZŁA, PRZEJRZYSTA TYPOGRAFIA (BEZ ŚCIANY TEKSTU) */}
-        <div className="lg:col-span-5 text-left space-y-6">
-          <div className="space-y-3">
-            <SecRule label="01 // ARCHITEKTURA RDZENIA" />
+        {/* PRAWA STRONA: ULTRA-CZYSTA, MINIMALISTYCZNA TYPOGRAFIA (BEZ ZBĘDNEGO ROZPYCHANIA) */}
+        <div className="lg:col-span-5 text-left space-y-5">
+          <div className="space-y-2">
+            <SecRule label="01 // CHAT AI" />
             <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
-              Chat AI ze wszystkimi <br className="hidden sm:block" />
-              <span className="font-normal text-primary">modelami w 1 oknie.</span>
+              Wszystkie modele. <br className="hidden sm:block" />
+              <span className="font-normal text-primary">Jeden czat.</span>
             </h2>
             <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
-              Wszystkie topowe silniki AI zintegrowane w jednym procesorze neuronowym. Brak powtarzania promptów, błyskawiczne przełączanie w locie, rozmowy głosowe i pełna prywatność danych.
+              Błyskawiczne przełączanie między wiodącymi silnikami AI bez utraty wątku i ponawiania promptów.
             </p>
           </div>
 
-          {/* PUNKTY KORZYŚCI - DOKŁADNIE WEDŁUG WSKAZÓWEK */}
-          <div className="space-y-3 font-sans">
+          {/* 3 BŁYSKAWICZNIE CZYTELNE PUNKTY Z KROPKAMI CAD */}
+          <div className="space-y-2.5 font-sans pt-1">
             {[
-              'Wszystkie topowe modele: GPT-5, Claude 3.7, Gemini 2.5, Grok 3 w 1 oknie',
-              'Wspólny kontekst do 1 000 000 tokenów pamięci — brak konieczności powtarzania promptów',
-              'Analiza i tworzenie zaawansowanych dokumentów: PDF, arkusze Excel, kod i obrazy',
-              'Rozmowa głosowa w czasie rzeczywistym (Real-time Voice AI) oraz wybór charakteru i persony',
-              'Prywatny tryb lokalny (Ollama / LM Studio) — dane w 100% na Twoim dysku (0 zł)',
+              'Generowanie do 165 t/s',
+              'Wspólna pamięć kontekstu',
+              'Pełna prywatność i serwery w UE',
             ].map((bullet) => (
-              <div key={bullet} className="flex items-start gap-2.5 text-[13.5px] text-foreground/80 font-light">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-[10.5px] font-bold mt-0.5">
-                  ✓
-                </span>
+              <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
+                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
                 <span>{bullet}</span>
               </div>
             ))}
-          </div>
-
-          {/* POZIOMY PASEK TELEMETRII (CZYSTY, BEZ KAFELKÓW) */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-foreground/[0.08]">
-            <div className="space-y-0.5">
-              <p className="font-heading text-[18px] font-bold text-foreground">165 t/s</p>
-              <p className="text-[11.5px] text-foreground/50 font-light">Prędkość generacji</p>
-            </div>
-            <div className="space-y-0.5">
-              <p className="font-heading text-[18px] font-bold text-primary">&lt; 12 ms</p>
-              <p className="text-[11.5px] text-foreground/50 font-light">Opóźnienie routingu</p>
-            </div>
-            <div className="space-y-0.5">
-              <p className="font-heading text-[18px] font-bold text-foreground">1 000 000</p>
-              <p className="text-[11.5px] text-foreground/50 font-light">Pamięć kontekstu</p>
-            </div>
           </div>
 
           {/* PRZYCISK CTA */}
@@ -1183,15 +1194,677 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   SILNIK AKSONOMETRYCZNY 3D → SVG (rozstrzelony aparat)
+
+   Model aparatu żyje w prawdziwej przestrzeni (x, y, z):
+     +Z = oś optyczna (kierunek patrzenia obiektywu)
+     +Y = góra aparatu
+     +X = prawy bok korpusu
+   Całą scenę rzutuje JEDNA stała macierz ortogonalna (aksonometria), dzięki
+   czemu: okrąg zawsze staje się poprawną elipsą o identycznym nachyleniu,
+   rozsuwanie idzie DOKŁADNIE po osi optycznej, a perspektywa nie może się
+   „złamać”, bo nie jest liczona osobno dla każdego elementu — jest wspólna.
+   Kolejność rysowania wynika z realnej głębi (algorytm malarza).
+   ═══════════════════════════════════════════════════════════════════════ */
+type V3 = [number, number, number]
+const D2R = Math.PI / 180
+
+function rotX3(p: V3, a: number): V3 {
+  const c = Math.cos(a), s = Math.sin(a)
+  return [p[0], p[1] * c - p[2] * s, p[1] * s + p[2] * c]
+}
+function rotY3(p: V3, a: number): V3 {
+  const c = Math.cos(a), s = Math.sin(a)
+  return [p[0] * c + p[2] * s, p[1], -p[0] * s + p[2] * c]
+}
+
+/* Ustawienie sceny: aparat zadarty o 24°, obserwator 52° w bok i 30° w górę.
+   Efekt: widać front, prawy bok i górną płytę, a oś optyczna biegnie w lewo
+   delikatnie pod górę — klasyczne ujęcie rysunku rozstrzelonego. */
+const CAM = (() => {
+  const t = (v: V3) => rotX3(rotY3(rotX3(v, -24 * D2R), -52 * D2R), 30 * D2R)
+  const X = t([1, 0, 0]), Y = t([0, 1, 0]), Z = t([0, 0, 1])
+  return {
+    ux: X[0], uy: -X[1], ud: X[2],
+    vx: Y[0], vy: -Y[1], vd: Y[2],
+    wx: Z[0], wy: -Z[1], wd: Z[2],
+  }
+})()
+
+/** SVD macierzy 2×2 → obraz okręgu jednostkowego jako elipsa (rx, ry, kąt). */
+function circleToEllipse(a: number, b: number, c: number, d: number) {
+  const E = (a + d) / 2, F = (a - d) / 2, G = (b + c) / 2, H = (b - c) / 2
+  const q = Math.hypot(E, H), r = Math.hypot(F, G)
+  return { rx: q + r, ry: Math.abs(q - r), rot: ((Math.atan2(H, E) + Math.atan2(G, F)) / 2) / D2R }
+}
+/** Okrąg prostopadły do osi optycznej (soczewki, pierścienie tubusu). */
+const RING = circleToEllipse(CAM.ux, CAM.uy, CAM.vx, CAM.vy)
+/** Okrąg poziomy (pokrętła na górnej płycie). */
+const DIAL = circleToEllipse(CAM.ux, CAM.uy, CAM.wx, CAM.wy)
+
+/** Styczna sylwetka walca — liczona analitycznie, więc pas boczny tubusu
+    zawsze idealnie schodzi się z czaszami elips (zero „załamań”). */
+function silhouette(ax: number, ay: number, bx: number, by: number, dx: number, dy: number) {
+  const det = ax * by - bx * ay
+  const n0 = (by * dx - bx * dy) / det
+  const n1 = (-ay * dx + ax * dy) / det
+  const L = Math.hypot(n0, n1)
+  return { x: (ax * n1 - bx * n0) / L, y: (ay * n1 - by * n0) / L }
+}
+const SIL_Z = silhouette(CAM.ux, CAM.uy, CAM.vx, CAM.vy, CAM.wx, CAM.wy)
+const SIL_Y = silhouette(CAM.ux, CAM.uy, CAM.wx, CAM.wy, CAM.vx, CAM.vy)
+
+/* ── GEOMETRIA APARATU (jednostki modelu ≈ 0,5 mm) ──────────────────── */
+const BODY = { x: 92, y0: -58, y1: 46, z: 34 }
+const PLATE = { y0: 46, y1: 64 }
+const PRISM = { x0: -36, x1: 16, y0: 64, y1: 92, z0: -18, z1: 24 }
+const DOOR = { x: 86, y: 46, z0: -46, z1: -34 }
+const SENS = { x: 46, y: 28, z0: -30, z1: -24 }
+
+/* Sekcje tubusu — przy p=0 tworzą jeden ciągły obiektyw, przy p=1 rozjeżdżają
+   się równomiernie, zostawiając luki dokładnie na grupy optyczne. */
+const TUBES = [
+  { id: 'T1', z0: 34, z1: 52, r: 44, off: 10 },
+  { id: 'T2', z0: 52, z1: 82, r: 42, off: 78 },
+  { id: 'T3', z0: 82, z1: 122, r: 46, off: 144 },
+  { id: 'T4', z0: 122, z1: 156, r: 50, off: 210 },
+  { id: 'T5', z0: 156, z1: 176, r: 53, off: 276 },
+]
+const OPTICS = [
+  { id: 'G1', z: 62, r: 30, off: 37 },
+  { id: 'G2', z: 96, r: 36, off: 101 },
+  { id: 'G3', z: 132, r: 41, off: 170 },
+  { id: 'G4', z: 166, r: 47, off: 236 },
+]
+
+/* ═══════════════════════════════════════════════════════════════════════
+   4. MODUŁ 02: KREACJA WIZUALNA (STUDIO 4K & WIDEO AI)
+   Wizualizacja: APARAT W WIDOKU ROZSTRZELONYM, ROZKŁADANY SCROLLEM
+   ═══════════════════════════════════════════════════════════════════════ */
+function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [p, setP] = useState(0)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setP(1)
+      return
+    }
+
+    let rafId = 0
+    let last = -1
+
+    const read = () => {
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || 800
+      const start = vh * 0.88
+      const end = vh * 0.14
+      const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
+      const eased = t * t * (3 - 2 * t)
+      const q = Math.round(eased * 400) / 400
+      if (q !== last) { last = q; setP(q) }
+    }
+    const loop = () => { read(); rafId = requestAnimationFrame(loop) }
+
+    // rAF pracuje tylko gdy sekcja jest przy ekranie — zero pracy w tle.
+    const io = new IntersectionObserver((entries) => {
+      const inView = entries[0]?.isIntersecting ?? true
+      if (inView && !rafId) rafId = requestAnimationFrame(loop)
+      if (!inView && rafId) { cancelAnimationFrame(rafId); rafId = 0 }
+    }, { rootMargin: '260px 0px' })
+    io.observe(el)
+
+    read()
+    rafId = requestAnimationFrame(loop)
+    return () => { io.disconnect(); if (rafId) cancelAnimationFrame(rafId) }
+  }, [])
+
+  /* ── Kadr: STAŁA skala (aparat się nie kurczy — tylko rozsuwa). Przy p=0
+        bryła stoi po prawej, przy p=1 jest wyśrodkowana, więc rozsuw wypełnia
+        całą dostępną szerokość zamiast zjeżdżać poza kadr. ── */
+  const S = 1.46
+  const OX = 690 - p * 78
+  const OY = 318
+
+  const P3 = (x: number, y: number, z: number) => ({
+    x: OX + (x * CAM.ux + y * CAM.vx + z * CAM.wx) * S,
+    y: OY + (x * CAM.uy + y * CAM.vy + z * CAM.wy) * S,
+  })
+  const dep = (x: number, y: number, z: number) => x * CAM.ud + y * CAM.vd + z * CAM.wd
+  const poly = (pts: V3[]) =>
+    pts.map((q) => { const s = P3(q[0], q[1], q[2]); return `${s.x.toFixed(1)},${s.y.toFixed(1)}` }).join(' ')
+
+  /** Układ lokalny leżący NA ścianie bryły — detale rysujemy w milimetrach
+      modelu, a rzut sam nadaje im poprawne pochylenie. */
+  const plane = (px: number, py: number, pz: number, right: V3, down: V3) => {
+    const c = P3(px, py, pz)
+    const rx = (right[0] * CAM.ux + right[1] * CAM.vx + right[2] * CAM.wx) * S
+    const ry = (right[0] * CAM.uy + right[1] * CAM.vy + right[2] * CAM.wy) * S
+    const dx = (down[0] * CAM.ux + down[1] * CAM.vx + down[2] * CAM.wx) * S
+    const dy = (down[0] * CAM.uy + down[1] * CAM.vy + down[2] * CAM.wy) * S
+    return `matrix(${rx.toFixed(4)} ${ry.toFixed(4)} ${dx.toFixed(4)} ${dy.toFixed(4)} ${c.x.toFixed(1)} ${c.y.toFixed(1)})`
+  }
+  const FRONT: [V3, V3] = [[1, 0, 0], [0, -1, 0]]
+  const TOPF: [V3, V3] = [[1, 0, 0], [0, 0, -1]]
+  const SIDE: [V3, V3] = [[0, 0, -1], [0, -1, 0]]
+
+  /** Bryła — widoczne są dokładnie trzy ściany (+X bok, +Y góra, +Z front). */
+  const Box = (
+    x0: number, y0: number, z0: number, x1: number, y1: number, z1: number,
+    fSide: string, fTop: string, fFront: string, stroke: string, sw = 1.2,
+  ) => (
+    <>
+      <polygon points={poly([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]])} fill={fSide} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+      <polygon points={poly([[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]])} fill={fTop} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+      <polygon points={poly([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]])} fill={fFront} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+    </>
+  )
+
+  /** Ścieżka elipsy (sweep steruje kierunkiem obiegu → dziury w fillRule). */
+  const ellPath = (cx: number, cy: number, rx: number, ry: number, rot: number) => {
+    const a = rot * D2R, c = Math.cos(a), s = Math.sin(a)
+    const x0 = cx + rx * c, y0 = cy + rx * s
+    const x1 = cx - rx * c, y1 = cy - rx * s
+    const R = `${rx.toFixed(1)} ${ry.toFixed(1)} ${rot.toFixed(1)}`
+    return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${R} 1 1 ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} 1 1 ${x0.toFixed(1)} ${y0.toFixed(1)} Z`
+  }
+
+  /** Okrąg prostopadły do osi optycznej. */
+  const Ring = (z: number, r: number, props: Record<string, unknown>, key?: string) => {
+    const c = P3(0, 0, z)
+    return (
+      <ellipse
+        key={key} cx={0} cy={0} rx={r * RING.rx * S} ry={r * RING.ry * S}
+        transform={`translate(${c.x.toFixed(1)} ${c.y.toFixed(1)}) rotate(${RING.rot.toFixed(2)})`}
+        {...props}
+      />
+    )
+  }
+  /** Pierścień (kołnierz) z REALNYM otworem — przez środek widać element za nim. */
+  const Annulus = (z: number, rOut: number, rIn: number, props: Record<string, unknown>, key?: string) => {
+    const c = P3(0, 0, z)
+    const d = `${ellPath(c.x, c.y, rOut * RING.rx * S, rOut * RING.ry * S, RING.rot)} ${ellPath(c.x, c.y, rIn * RING.rx * S, rIn * RING.ry * S, RING.rot)}`
+    return <path key={key} d={d} fillRule="evenodd" {...props} />
+  }
+  /** Okrąg poziomy na wysokości y. */
+  const Disc = (x: number, y: number, z: number, r: number, props: Record<string, unknown>, key?: string) => {
+    const c = P3(x, y, z)
+    return (
+      <ellipse
+        key={key} cx={0} cy={0} rx={r * DIAL.rx * S} ry={r * DIAL.ry * S}
+        transform={`translate(${c.x.toFixed(1)} ${c.y.toFixed(1)}) rotate(${DIAL.rot.toFixed(2)})`}
+        {...props}
+      />
+    )
+  }
+  /** Punkt na obwodzie okręgu prostopadłego do osi optycznej (+ widoczność). */
+  const rim = (z: number, r: number, t: number) => {
+    const c = P3(0, 0, z)
+    return {
+      x: c.x + (Math.cos(t) * CAM.ux + Math.sin(t) * CAM.vx) * r * S,
+      y: c.y + (Math.cos(t) * CAM.uy + Math.sin(t) * CAM.vy) * r * S,
+      n: Math.cos(t) * CAM.ud + Math.sin(t) * CAM.vd,
+    }
+  }
+
+  /** DRĄŻONY tubus: pas boczny z wyciętym otworem + kołnierz-pierścień.
+      Otwór jest prawdziwą dziurą w ścieżce, więc widać przez niego optykę
+      stojącą za sekcją — dokładnie jak w prawdziwym korpusie obiektywu. */
+  const Tube = (z0: number, z1: number, r: number, o: {
+    band: string; cap: string; stroke?: string; sw?: number; bore?: number
+  }) => {
+    const a = P3(0, 0, z0), b = P3(0, 0, z1)
+    const ox = SIL_Z.x * r * S, oy = SIL_Z.y * r * S
+    const st = o.stroke ?? '#7d8ea6'
+    const sw = o.sw ?? 1.3
+    const bore = (o.bore ?? 0.60) * r
+    const quad = `M ${(a.x + ox).toFixed(1)} ${(a.y + oy).toFixed(1)} L ${(b.x + ox).toFixed(1)} ${(b.y + oy).toFixed(1)} L ${(b.x - ox).toFixed(1)} ${(b.y - oy).toFixed(1)} L ${(a.x - ox).toFixed(1)} ${(a.y - oy).toFixed(1)} Z`
+    const hole = ellPath(b.x, b.y, bore * RING.rx * S, bore * RING.ry * S, RING.rot)
+    return (
+      <>
+        {Annulus(z0, r, bore, { fill: o.band })}
+        <path d={`${quad} ${hole}`} fill={o.band} fillRule="evenodd" />
+        <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke={st} strokeWidth={sw} />
+        <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke={st} strokeWidth={sw} />
+        {/* ścianka wewnętrzna widoczna w głębi otworu */}
+        {Ring(z0, bore, { fill: 'none', stroke: '#243244', strokeWidth: 1.6, strokeOpacity: 0.8 })}
+        {Annulus(z1, r, bore, { fill: o.cap, stroke: st, strokeWidth: sw })}
+      </>
+    )
+  }
+
+  /** Walec pionowy (pokrętła na płycie). */
+  const VTube = (x: number, z: number, y0: number, y1: number, r: number, band: string, cap: string, st = '#9fb0c6', sw = 1.1) => {
+    const a = P3(x, y0, z), b = P3(x, y1, z)
+    const ox = SIL_Y.x * r * S, oy = SIL_Y.y * r * S
+    return (
+      <>
+        <polygon
+          points={`${(a.x + ox).toFixed(1)},${(a.y + oy).toFixed(1)} ${(b.x + ox).toFixed(1)},${(b.y + oy).toFixed(1)} ${(b.x - ox).toFixed(1)},${(b.y - oy).toFixed(1)} ${(a.x - ox).toFixed(1)},${(a.y - oy).toFixed(1)}`}
+          fill={band} stroke={st} strokeWidth={sw * 0.8}
+        />
+        {Disc(x, y1, z, r, { fill: cap, stroke: st, strokeWidth: sw })}
+      </>
+    )
+  }
+
+  /** Radełkowanie — żłobki tylko po widocznej połowie walca, z jasnością
+      rosnącą ku krawędzi sylwetki, jak na realnym toczonym metalu. */
+  const Knurl = (z0: number, z1: number, r: number, n: number, color = '#94a3b8') => {
+    const out = []
+    for (let i = 0; i < n; i++) {
+      const t = (i / n) * Math.PI * 2
+      const a = rim(z0, r, t)
+      if (a.n <= 0.04) continue
+      const b = rim(z1, r, t)
+      out.push(<line key={`k${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color} strokeWidth={0.85} opacity={0.1 + a.n * 0.42} />)
+    }
+    return out
+  }
+
+  /** Grupa optyczna — PRZEZROCZYSTE szkło: przez każdą soczewkę widać
+      element stojący za nią, tak jak w realnym układzie optycznym. */
+  const Optic = (z: number, r: number, th: number, fill: string, o: number) => {
+    const zb = z - th / 2, zf = z + th / 2
+    const a = P3(0, 0, zb), b = P3(0, 0, zf)
+    const ox = SIL_Z.x * r * S, oy = SIL_Z.y * r * S
+    const hi = rim(zf, r * 0.58, 2.5)
+    return (
+      <g opacity={o}>
+        {Ring(zb, r, { fill: 'none', stroke: '#7dd3fc', strokeWidth: 1, strokeOpacity: 0.32 })}
+        <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke="#9ad9fb" strokeWidth={1.2} strokeOpacity={0.55} />
+        <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke="#9ad9fb" strokeWidth={1.2} strokeOpacity={0.55} />
+        {Ring(zf, r, { fill, fillOpacity: 0.34, stroke: '#9ad9fb', strokeWidth: 1.5 })}
+        {Ring(zf, r * 0.84, { fill: 'none', stroke: '#e0f2fe', strokeWidth: 0.8, strokeOpacity: 0.3 })}
+        <ellipse
+          cx={0} cy={0} rx={r * RING.rx * S * 0.30} ry={r * RING.ry * S * 0.11}
+          transform={`translate(${hi.x.toFixed(1)} ${hi.y.toFixed(1)}) rotate(${(RING.rot + 24).toFixed(1)})`}
+          fill="#ffffff" opacity={0.4}
+        />
+      </g>
+    )
+  }
+
+  /** Przysłona irysowa: 9 listków — nonagonalny otwór, przez który też widać
+      to, co stoi za nią. Otwór przymyka się przy p=0, otwiera przy rozłożeniu. */
+  const Iris = (z: number, r: number, o: number) => {
+    const n = 9
+    const rin = r * (0.26 + p * 0.28)
+    const hole: string[] = []
+    const edges = []
+    for (let i = 0; i < n; i++) {
+      const t = (i / n) * Math.PI * 2 + 0.35
+      const a = rim(z, rin, t)
+      hole.push(`${a.x.toFixed(1)},${a.y.toFixed(1)}`)
+      const b = rim(z, r * 0.93, t + Math.PI / n)
+      edges.push(<line key={`ib${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#38bdf8" strokeWidth={0.9} opacity={0.45} />)
+    }
+    return (
+      <g opacity={o}>
+        {Tube(z - 5, z + 5, r, { band: 'url(#nbBarrel)', cap: '#0c1626', stroke: '#8ba0b8', sw: 1.3, bore: 0.93 })}
+        {edges}
+        <polygon points={hole.join(' ')} fill="#020a14" fillOpacity={0.55} stroke="#7dd3fc" strokeWidth={1.3} />
+      </g>
+    )
+  }
+
+  /* ── Przesunięcia podzespołów (offset × postęp scrolla) ────────────── */
+  const yPlate = p * 44     // górna płyta z pokrętłami — w górę
+  const yPrism = p * 62     // pryzmat / wizjer — najwyżej
+  const xPrism = -p * 40    // …i lekko w bok, żeby zwolnić róg na opis
+  const zDoor = -p * 66     // klapka tylna — do tyłu
+  const zSens = -p * 30     // matryca 4K — do tyłu…
+  const ySens = -p * 138    // …i w dół, żeby wyszła zza korpusu
+  const fade = (from: number, span = 0.2) => Math.max(0, Math.min(1, (p - from) / span))
+  const glassOn = fade(0.04, 0.18)
+
+  /* Kreskowany ślad montażowy — krótki, tylko przy podzespołach korpusu. */
+  const Trail = (a: { x: number; y: number }, b: { x: number; y: number }, o: number) => (
+    <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#38bdf8" strokeWidth={0.9} strokeDasharray="3 6" opacity={o * 0.35} />
+  )
+
+  /* Stos optyki sortowany realną głębią — kolejność zawsze fizycznie poprawna. */
+  const stack: { d: number; node: ReactNode }[] = [
+    ...TUBES.map((t) => {
+      const z0 = t.z0 + t.off * p, z1 = t.z1 + t.off * p
+      const zc = (z0 + z1) / 2
+      let inner: ReactNode = null
+
+      if (t.id === 'T1') {
+        inner = (
+          <>
+            {[0.35, 2.45, 4.55].map((a, i) => {
+              const q = rim(z1, t.r * 0.94, a), w = rim(z1, t.r * 0.78, a)
+              return <line key={`by${i}`} x1={q.x} y1={q.y} x2={w.x} y2={w.y} stroke="#cbd5e1" strokeWidth={2.6} opacity={0.6} />
+            })}
+          </>
+        )
+      } else if (t.id === 'T2') {
+        inner = (
+          <>
+            {Knurl(z0 + 3, z1 - 3, t.r, 46, '#64748b')}
+          </>
+        )
+      } else if (t.id === 'T3') {
+        inner = (
+          <>
+            {Knurl(z0 + 4, z1 - 4, t.r, 64, '#94a3b8')}
+            {Ring(z1 - 4, t.r * 1.01, { fill: 'none', stroke: '#cbd5e1', strokeWidth: 1, strokeOpacity: 0.4 })}
+          </>
+        )
+      } else if (t.id === 'T4') {
+        inner = (
+          <>
+            {Knurl(z0 + 3, z1 - 3, t.r, 54, '#94a3b8')}
+          </>
+        )
+      } else {
+        inner = (
+          <>
+            {Ring(z1, t.r * 0.90, { fill: 'none', stroke: '#cbd5e1', strokeWidth: 2.4, strokeOpacity: 0.55 })}
+          </>
+        )
+      }
+
+      return {
+        d: dep(0, 0, zc),
+        node: (
+          <g key={t.id}>
+            {Tube(z0, z1, t.r, {
+              band: t.id === 'T5' ? 'url(#nbBezel)' : 'url(#nbBarrel)',
+              cap: 'url(#nbCap)', stroke: '#8ba0b8', sw: 1.4,
+              bore: t.id === 'T1' ? 0.68 : 0.60,
+            })}
+            {inner}
+          </g>
+        ),
+      }
+    }),
+    ...OPTICS.map((g) => {
+      const z = g.z + g.off * p
+      return {
+        d: dep(0, 0, z),
+        node: (
+          <g key={g.id}>
+            {g.id === 'G2'
+              ? Iris(z, g.r, glassOn)
+              : Optic(z, g.r, g.id === 'G4' ? 16 : 11, g.id === 'G4' ? 'url(#nbGlassF)' : 'url(#nbGlassR)', glassOn)}
+          </g>
+        ),
+      }
+    }),
+  ].sort((a, b) => a.d - b.d)
+
+  /* ── Punkty zaczepienia opisów: 4 symetryczne, bezkolizyjne cele
+        (przednia soczewka, tubus optyczny, korpus/silniki na górze, matryca 4K na dole).
+        Linie wskaźnikowe i opisy są czyste, czytelne i nie nachodzą na elementy. ── */
+  const tOptic = rim(OPTICS[3].z + OPTICS[3].off * p, OPTICS[3].r * 0.98, -1.35)
+  const tFocus = rim((TUBES[2].z0 + TUBES[2].z1) / 2 + TUBES[2].off * p, TUBES[2].r * 0.98, 1.75)
+  const tPrism = P3(PRISM.x0 + xPrism + 6, PRISM.y0 + yPrism + 6, PRISM.z1)
+  const tSens = P3(SENS.x + 4, -SENS.y + ySens + 6, SENS.z1 + zSens)
+
+  const LABELS = [
+    { k: 'l1', num: '01', head: 'HIPERREALIZM 4K', sub: 'Fotorealizm w pełnym 3840 × 2160.', side: 'l', cls: 'left-[2%] top-[3%]', ax: 240, ay: 58, to: tOptic, at: 0.24 },
+    { k: 'l2', num: '02', head: 'NAJLEPSZE MODELE WIDEO', sub: 'Kling, Runway, PixVerse — fizyka 60 FPS.', side: 'l', cls: 'left-[2%] top-[77%]', ax: 240, ay: 490, to: tFocus, at: 0.40 },
+    { k: 'l3', num: '03', head: 'TOPOWE SILNIKI AI', sub: 'Nano Banana Pro, GPT Image, Grok.', side: 'r', cls: 'right-[2%] top-[3%]', ax: 660, ay: 58, to: tPrism, at: 0.30 },
+    { k: 'l4', num: '04', head: 'SENSOR 4K CMOS', sub: '100% praw komercyjnych, zero tantiem.', side: 'r', cls: 'right-[2%] top-[77%]', ax: 710, ay: 490, to: tSens, at: 0.46 },
+  ]
+
+  return (
+    <div ref={containerRef} className="relative z-10 py-8 sm:py-12 overflow-visible">
+
+      {/* 2-KOLUMNOWY UKŁAD ZIGZAG: TEKST PO LEWEJ, ROZKŁADANY APARAT PO PRAWEJ */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+
+        {/* LEWA STRONA: TYPOGRAFIA, PUNKTY I CTA */}
+        <div className="lg:col-span-5 text-left space-y-5">
+          <div className="space-y-2.5">
+            <SecRule label="02 // KREACJA WIZUALNA" />
+            <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.06] tracking-[-2px] text-foreground">
+              Zdjęcia & Wideo AI. <br className="hidden sm:block" />
+              <span className="font-normal text-primary">Hollywoodzka jakość na kliknięcie.</span>
+            </h2>
+            <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
+              Generuj zachwycające grafiki produktowe 4K oraz kinowe wideo w ułamku sekundy — bez drogich sesji zdjęciowych, aktorów i zewnętrznych studiów renderujących.
+            </p>
+          </div>
+
+          <div className="space-y-2.5 font-sans pt-1">
+            {[
+              'Szybkie generowanie zdjęć i grafik w ultrawysokiej rozdzielczości 4K',
+              'Kinowe ujęcia wideo 60 FPS z realistyczną fizyką ruchu i światła',
+              'Wszystkie wiodące silniki obrazu i wideo AI w jednym spójnym panelu',
+              '100% praw komercyjnych do każdego wygenerowanego kadru',
+            ].map((bullet) => (
+              <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
+                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                <span>{bullet}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-2">
+            <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
+              Wypróbuj Studio Zdjęć & Wideo →
+            </GlowButton>
+          </div>
+        </div>
+
+        {/* PRAWA STRONA: ROZSTRZELONY APARAT — AKSONOMETRIA 3D → SVG */}
+        <div className="lg:col-span-7 flex flex-col items-center justify-center relative select-none">
+
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[500px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
+            style={{ opacity: 0.5 + p * 0.4 }}
+          />
+
+          <div className="relative w-full max-w-[900px] aspect-[900/620]">
+            <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="nbSkinF" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#18222f" /><stop offset="55%" stopColor="#0b111c" /><stop offset="100%" stopColor="#05080e" />
+                </linearGradient>
+                <linearGradient id="nbSkinS" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#0d1522" /><stop offset="100%" stopColor="#03060b" />
+                </linearGradient>
+                <linearGradient id="nbSkinT" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#1d2734" /><stop offset="100%" stopColor="#090e16" />
+                </linearGradient>
+                <linearGradient id="nbMagT" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#dbe3ec" /><stop offset="42%" stopColor="#8b99aa" /><stop offset="100%" stopColor="#3d4959" />
+                </linearGradient>
+                <linearGradient id="nbMagF" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#a1aebe" /><stop offset="58%" stopColor="#4e5a6b" /><stop offset="100%" stopColor="#252f3d" />
+                </linearGradient>
+                <linearGradient id="nbMagS" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#68768a" /><stop offset="100%" stopColor="#1b2430" />
+                </linearGradient>
+                {/* Anodowany tubus — pas boczny walca oświetlony od góry */}
+                <linearGradient id="nbBarrel" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#48586f" /><stop offset="15%" stopColor="#95a7bd" />
+                  <stop offset="35%" stopColor="#1f2937" /><stop offset="72%" stopColor="#06090f" />
+                  <stop offset="92%" stopColor="#18212e" /><stop offset="100%" stopColor="#36445a" />
+                </linearGradient>
+                <linearGradient id="nbBezel" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#54637a" /><stop offset="16%" stopColor="#aebcce" />
+                  <stop offset="38%" stopColor="#1c2532" /><stop offset="74%" stopColor="#05080d" />
+                  <stop offset="94%" stopColor="#1d2632" /><stop offset="100%" stopColor="#41505f" />
+                </linearGradient>
+                <linearGradient id="nbCap" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#2b3646" /><stop offset="55%" stopColor="#0d1522" /><stop offset="100%" stopColor="#050a13" />
+                </linearGradient>
+                <radialGradient id="nbGlassR" cx="34%" cy="26%" r="80%">
+                  <stop offset="0%" stopColor="#cdeafd" /><stop offset="45%" stopColor="#0ea5e9" /><stop offset="100%" stopColor="#082c46" />
+                </radialGradient>
+                <radialGradient id="nbGlassF" cx="32%" cy="24%" r="82%">
+                  <stop offset="0%" stopColor="#e0f2fe" /><stop offset="34%" stopColor="#38bdf8" /><stop offset="100%" stopColor="#062032" />
+                </radialGradient>
+                <linearGradient id="nbSensor" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#1d4ed8" /><stop offset="48%" stopColor="#0b2036" /><stop offset="100%" stopColor="#334155" />
+                </linearGradient>
+                <radialGradient id="nbFloor" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#020617" stopOpacity="0.8" /><stop offset="100%" stopColor="#020617" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* ── CIEŃ KONTAKTOWY ── */}
+              {Disc(0, -86, 16, 128, { fill: 'url(#nbFloor)', opacity: 0.85 })}
+
+              {/* ── 1. KLAPKA TYLNA (odjeżdża do tyłu) ── */}
+              <g>
+                {Trail(P3(0, 0, DOOR.z1), P3(0, 0, DOOR.z0 + zDoor), fade(0.08))}
+                {Box(-DOOR.x, -DOOR.y, DOOR.z0 + zDoor, DOOR.x, DOOR.y, DOOR.z1 + zDoor,
+                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', '#3f5064', 1.2)}
+                <g transform={plane(0, 0, DOOR.z1 + zDoor, ...FRONT)}>
+                  <rect x={-74} y={-34} width={148} height={68} rx={4} fill="#070d17" stroke="#1e293b" strokeWidth={0.8} />
+                  <rect x={-58} y={-22} width={116} height={44} rx={3} fill="none" stroke="#38bdf8" strokeWidth={0.5} strokeOpacity={0.28} strokeDasharray="3 3" />
+                </g>
+              </g>
+
+              {/* ── 2. PŁYTKA MATRYCY 4K CMOS (do tyłu i w dół) — rysowana przed
+                     korpusem, więc przy złożeniu jest poprawnie w nim schowana ── */}
+              <g opacity={0.3 + fade(0.05, 0.2) * 0.7}>
+                {Trail(P3(0, 0, SENS.z1), P3(0, ySens, SENS.z0 + zSens), fade(0.06))}
+                {Box(-SENS.x, -SENS.y + ySens, SENS.z0 + zSens, SENS.x, SENS.y + ySens, SENS.z1 + zSens,
+                  '#0b1a2b', '#14324d', 'url(#nbSensor)', '#7dd3fc', 1.2)}
+                <g transform={plane(0, ySens, SENS.z1 + zSens, ...FRONT)}>
+                  <rect x={-32} y={-18} width={64} height={36} fill="#05101c" stroke="#9ad9fb" strokeWidth={0.9} />
+                  {[-12, -4, 4, 12].map((yy) => <line key={yy} x1={-30} y1={yy} x2={30} y2={yy} stroke="#38bdf8" strokeWidth={0.4} strokeOpacity={0.35} />)}
+                  {[-24, -12, 0, 12, 24].map((xx) => <line key={xx} x1={xx} y1={-16} x2={xx} y2={16} stroke="#38bdf8" strokeWidth={0.4} strokeOpacity={0.35} />)}
+                  <text x={0} y={3.5} fill="#ffffff" fontSize={12} fontFamily="sans-serif" fontWeight="900" textAnchor="middle">4K</text>
+                  {[-40, 40].map((xx) => <rect key={xx} x={xx - 1.5} y={-14} width={3} height={28} fill="#94a3b8" opacity={0.6} />)}
+                </g>
+              </g>
+              {/* ── 3. KORPUS (skórzana obudowa) ── */}
+              <g>
+                {Box(-BODY.x, BODY.y0, -BODY.z, BODY.x, BODY.y1, BODY.z,
+                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', '#42536a', 1.5)}
+
+                <g transform={plane(0, -6, BODY.z, ...FRONT)}>
+                  <rect x={-88} y={-46} width={176} height={92} rx={5} fill="#060b14" stroke="#1b2532" strokeWidth={0.7} />
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <line key={`vt${i}`} x1={-82 + i * 15} y1={-42} x2={-82 + i * 15} y2={42} stroke="#5b7796" strokeWidth={0.3} strokeOpacity={0.13} />
+                  ))}
+                  <g transform="translate(-66 12)">
+                    <circle r={11} fill="#0c1421" stroke="#8798ad" strokeWidth={0.9} />
+                    <path d="M 0 0 L 8 -7" stroke="#cbd5e1" strokeWidth={2.4} strokeLinecap="round" />
+                  </g>
+                  <circle cx={64} cy={0} r={6} fill="#121d2c" stroke="#8798ad" strokeWidth={0.9} />
+                </g>
+
+                <g transform={plane(BODY.x, -6, 0, ...SIDE)}>
+                  <rect x={-28} y={-44} width={56} height={88} rx={4} fill="#05080f" stroke="#1b2532" strokeWidth={0.7} />
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <line key={i} x1={-24} y1={-36 + i * 8} x2={24} y2={-36 + i * 8} stroke="#5b7796" strokeWidth={0.6} strokeOpacity={0.18} />
+                  ))}
+                </g>
+              </g>
+
+              {/* ── 4. GÓRNA PŁYTA MAGNEZOWA Z POKRĘTŁAMI (unosi się) ── */}
+              <g>
+                {Trail(P3(0, PLATE.y0, 0), P3(0, PLATE.y1 + yPlate, 0), fade(0.08))}
+                {Box(-BODY.x, PLATE.y0 + yPlate, -BODY.z, BODY.x, PLATE.y1 + yPlate, BODY.z,
+                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', '#c3d0e0', 1.3)}
+
+                <g transform={plane(0, PLATE.y0 + yPlate + 9, BODY.z, ...FRONT)}>
+                  <rect x={-74} y={-6} width={26} height={12} rx={2} fill="#08131d" stroke="#b9c7d8" strokeWidth={0.8} />
+                  <rect x={30} y={-6} width={20} height={12} rx={2} fill="#08131d" stroke="#b9c7d8" strokeWidth={0.8} />
+                  <circle cx={-61} cy={0} r={3.4} fill="#7dd3fc" opacity={0.42} />
+                </g>
+
+                {VTube(48, -2, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 11, 19, '#3a465a', 'url(#nbMagT)', '#dbe3ec', 1.2)}
+                {Array.from({ length: 18 }, (_, i) => {
+                  const t = (i / 18) * Math.PI * 2
+                  const c0 = P3(48 + Math.cos(t) * 15, PLATE.y1 + yPlate + 11, -2 + Math.sin(t) * 15)
+                  const c1 = P3(48 + Math.cos(t) * 18.6, PLATE.y1 + yPlate + 11, -2 + Math.sin(t) * 18.6)
+                  return <line key={`sd${i}`} x1={c0.x} y1={c0.y} x2={c1.x} y2={c1.y} stroke="#46536a" strokeWidth={1} opacity={0.75} />
+                })}
+
+                {VTube(-58, -4, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 9, 15, '#3a465a', 'url(#nbMagT)', '#dbe3ec', 1.1)}
+
+                {VTube(22, 8, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 6, 7.5, '#4a5768', '#c3d0e0', '#dbe3ec', 1)}
+
+                {Box(-14, PLATE.y1 + yPlate, -14, 12, PLATE.y1 + yPlate + 6, 4,
+                  '#131e2c', '#212d3c', '#0c1621', '#8798ad', 0.9)}
+
+                <g transform={plane(0, PLATE.y1 + yPlate + 0.4, 0, ...TOPF)}>
+                  <path d="M 66 16 L 88 20 L 92 12 L 70 8 Z" fill="#8b99aa" stroke="#dbe3ec" strokeWidth={0.6} />
+                </g>
+              </g>
+
+              {/* ── 4. PRYZMAT / WIZJER (unosi się) ── */}
+              <g opacity={0.45 + fade(0.04, 0.2) * 0.55}>
+                {Trail(P3(-10, PRISM.y0, 4), P3(-10 + xPrism, PRISM.y0 + yPrism, 4), fade(0.06))}
+                {Box(PRISM.x0 + xPrism, PRISM.y0 + yPrism, PRISM.z0, PRISM.x1 + xPrism, PRISM.y1 + yPrism, PRISM.z1,
+                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', '#c3d0e0', 1.3)}
+                <g transform={plane(-10 + xPrism, PRISM.y0 + yPrism + 14, PRISM.z1, ...FRONT)}>
+                  <rect x={-17} y={-9} width={34} height={18} rx={2} fill="#06121c" stroke="#7dd3fc" strokeWidth={0.9} />
+                  <path d="M -14 7 L 0 -6 L 14 7 Z" fill="#38bdf8" fillOpacity={0.3} stroke="#9ad9fb" strokeWidth={0.7} />
+                </g>
+                {Box(-24 + xPrism, PRISM.y0 + yPrism + 6, PRISM.z0 - 10, 4 + xPrism, PRISM.y1 + yPrism - 6, PRISM.z0,
+                  '#0f1826', '#1d2836', '#0b1320', '#6d7c92', 0.9)}
+              </g>
+
+
+              {/* ── 6. UKŁAD OPTYCZNY — posortowany realną głębią ── */}
+              {stack.map((s, i) => <g key={`st${i}`}>{s.node}</g>)}
+
+              {/* ── 7. LINIE WSKAŹNIKOWE DO OPISÓW ── */}
+              <g className="hidden sm:block">
+                {LABELS.map((L) => {
+                  const o = Math.max(0, Math.min(1, (p - L.at) / 0.18))
+                  if (o <= 0.01) return null
+                  return (
+                    <g key={L.k} opacity={o}>
+                      <line x1={L.ax} y1={L.ay} x2={L.to.x} y2={L.to.y} stroke="#38bdf8" strokeWidth={1.1} strokeDasharray="4 4" opacity={0.75} />
+                      <circle cx={L.to.x} cy={L.to.y} r={3.2} fill="none" stroke="#38bdf8" strokeWidth={1.4} />
+                      <circle cx={L.ax} cy={L.ay} r={2.6} fill="#38bdf8" />
+                    </g>
+                  )
+                })}
+              </g>
+            </svg>
+
+            {/* ── 8. OPISY (HTML — ta sama czytelność co w module czatu AI) ── */}
+            {LABELS.map((L) => (
+              <div
+                key={L.k}
+                className={`absolute w-[218px] hidden sm:block pointer-events-none transition-opacity duration-300 ${L.cls} ${L.side === 'r' ? 'text-right' : 'text-left'}`}
+                style={{
+                  opacity: Math.max(0, Math.min(1, (p - L.at) / 0.18)),
+                  transform: `translateX(${(1 - p) * (L.side === 'r' ? 14 : -14)}px)`,
+                }}
+              >
+                <p className="text-[12.5px] font-bold text-primary tracking-wide uppercase font-sans leading-none">
+                  {`// ${L.num} ${L.head}`}
+                </p>
+                <p className="text-[12.5px] text-foreground/80 font-sans mt-1.5 leading-snug">{L.sub}</p>
+              </div>
+            ))}
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  )
+}
+/* ═══════════════════════════════════════════════════════════════════════
    GŁÓWNY KOMPONENT: HomePage3 (KOMPLETNY, ZBALANSOWANY LEJEK 10 SEKCJI)
    ═══════════════════════════════════════════════════════════════════════ */
-export function HomePage3({ onNavigate = () => {} }: { onNavigate?: (p: HomePageId) => void }) {
+export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePageId) => void }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(0)
 
   return (
     <div className="relative flex w-full flex-col font-landing text-foreground">
       <AnimStyles />
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes nbElectricCurrent {
           0% { stroke-dashoffset: 100; }
           100% { stroke-dashoffset: 0; }
@@ -1233,7 +1906,7 @@ export function HomePage3({ onNavigate = () => {} }: { onNavigate?: (p: HomePage
         </section>
 
         {/* ══════════ 2. JEDNA PLATFORMA: ZUNIFIKOWANY RDZEŃ AI ══════════ */}
-        <Section className="relative z-10 py-16 sm:py-24">
+        <Section className="relative z-10 py-12 sm:py-16">
           <FadeIn>
             <UnifiedAIPlatformConvergence onNavigate={onNavigate} />
           </FadeIn>
@@ -1243,9 +1916,18 @@ export function HomePage3({ onNavigate = () => {} }: { onNavigate?: (p: HomePage
       <TechDivider />
 
       {/* ══════════ 3. MODUŁ 01: CHAT AI (ZIGZAG 3D EXPLODED HUD) ══════════ */}
-      <Section className="relative z-10 py-16 sm:py-24">
+      <Section className="relative z-10 py-4 sm:py-8">
         <FadeIn>
           <Module01ChatAiZigzagSection onNavigate={onNavigate} />
+        </FadeIn>
+      </Section>
+
+      <TechDivider />
+
+      {/* ══════════ 4. MODUŁ 02: KREACJA WIZUALNA (ZDJĘCIA 4K & WIDEO AI) ══════════ */}
+      <Section className="relative z-10 py-4 sm:py-8">
+        <FadeIn>
+          <Module02VisualCreationZigzagSection onNavigate={onNavigate} />
         </FadeIn>
       </Section>
 
@@ -1388,7 +2070,7 @@ export function HomePage3({ onNavigate = () => {} }: { onNavigate?: (p: HomePage
       <Section className="relative z-10 overflow-hidden py-16 sm:py-24">
         <BigBackdropText className="top-6">BYTE</BigBackdropText>
         <Glow className="left-1/2 top-1/3 -translate-x-1/2" size={800} opacity={0.1} />
-        
+
         <FadeIn>
           <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
             <SecRule label="Kalkulacja kosztów" />
