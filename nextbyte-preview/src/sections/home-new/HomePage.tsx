@@ -1432,75 +1432,75 @@ export function getModuleVisual(mod: (typeof MODULY)[number], color: string) {
         </div>
       </div>
     )
-    if (mod.id === 'notes') return (
-      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5">
-        <div className="flex items-center gap-2 rounded-lg border border-foreground/[0.08] bg-background/40 px-3 py-2 mb-3">
-          <span className="text-foreground/35 text-[13px]">⌕</span>
-          <span className="font-sans text-[12.5px] text-foreground/55">"kontrakt Q3"</span>
+    if (mod.id === 'assistant') return (
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-2.5">
+        <div className="flex items-center gap-2 rounded-lg border border-foreground/[0.08] bg-background/40 px-3 py-2">
+          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+          <span className="font-sans text-[12px] text-foreground/75 font-medium">Asystent: Auto-organizacja zadań</span>
         </div>
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${color}18`, color }}>
-            <FileText className="h-4 w-4" />
-          </span>
-          <div className="min-w-0">
-            <span className="font-sans text-[12.5px] font-semibold text-foreground/85 truncate block">Strategia Q3 2025.pdf</span>
-            <span className="text-[10.5px] text-foreground/40">znaleziono w treści · sync AI</span>
+        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-foreground/60">
+          <div className="rounded-lg bg-foreground/[0.03] p-2 border border-foreground/[0.05]">
+            <span className="text-primary block font-bold">14:30 Sync</span>
+            <span>zapisano termin</span>
+          </div>
+          <div className="rounded-lg bg-foreground/[0.03] p-2 border border-foreground/[0.05]">
+            <span className="text-emerald-400 block font-bold">Zadania + Sync</span>
+            <span>utworzono w agendzie</span>
           </div>
         </div>
       </div>
     )
-    if (mod.id === 'calendar') return (
-      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5">
-        <div className="relative pl-4">
-          <div className="absolute left-[5px] top-1 bottom-1 w-px bg-foreground/[0.08]" />
-          {[
-            { time: '09:00', title: 'Standup zespołu', done: true },
-            { time: '11:30', title: 'Review PRD z AI', done: true },
-            { time: '14:00', title: 'Demo klienta', done: false },
-          ].map(({ time, title, done }) => (
-            <div key={time} className="relative flex items-center gap-3 py-1.5">
-              <span
-                className="absolute left-[-16px] h-2.5 w-2.5 rounded-full border-2"
-                style={{ borderColor: color, background: done ? color : 'hsl(var(--background))', opacity: done ? 0.9 : 0.6 }}
-              />
-              <span className="font-mono text-[11px] text-foreground/45 w-11 shrink-0">{time}</span>
-              <span className={cn('font-sans text-[12.5px] truncate', done ? 'text-foreground/40 line-through' : 'text-foreground/80')}>{title}</span>
-            </div>
-          ))}
+    if (mod.id === 'research') return (
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-2.5">
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-sans text-[12px] text-foreground/80 font-medium">Deep Research: 34 źródła</span>
         </div>
-      </div>
-    )
-    if (mod.id === 'video') return (
-      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-3">
-        {[
-          { label: 'Klip produktowy 4K', pct: 100, dur: '0:42' },
-          { label: 'Reklama social 9:16', pct: 100, dur: '0:15' },
-          { label: 'Cinematic opener', pct: 46, dur: '—' },
-        ].map(({ label, pct, dur }) => (
-          <div key={label} className="space-y-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-sans text-[12.5px] text-foreground/75 truncate">{label}</span>
-              <span className="font-mono text-[10.5px] font-semibold shrink-0" style={{ color: pct === 100 ? color : 'hsl(var(--foreground)/0.4)' }}>
-                {pct === 100 ? dur : `${pct}%`}
-              </span>
-            </div>
-            <div className="h-1.5 rounded-full overflow-hidden bg-foreground/[0.07]">
-              <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color, opacity: pct === 100 ? 0.85 : 0.5 }} />
-            </div>
+        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-foreground/60">
+          <div className="rounded-lg bg-foreground/[0.03] p-2 border border-foreground/[0.05]">
+            <span className="text-primary block font-bold">42 ms</span>
+            <span>czas weryfikacji</span>
           </div>
-        ))}
+          <div className="rounded-lg bg-foreground/[0.03] p-2 border border-foreground/[0.05]">
+            <span className="text-emerald-400 block font-bold">Raport PDF</span>
+            <span>gotowy do pobrania</span>
+          </div>
+        </div>
       </div>
     )
-    if (mod.id === 'voice') return (
-      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5">
-        <div className="flex items-center gap-[3px] h-10 mb-3">
-          {[6,14,9,22,15,28,18,32,20,26,12,24,17,30,14,20,8,16,10,6].map((h, i) => (
-            <div key={i} className="flex-1 rounded-full" style={{ height: `${h}px`, background: color, opacity: i < 13 ? 0.85 : 0.25 }} />
-          ))}
+    if (mod.id === 'creator') return (
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="font-sans text-[12px] font-bold text-foreground">Panel Twórcy & Sklep</span>
+          <span className="font-mono text-[11px] text-emerald-400 font-semibold">+2 450 PLN / mc</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full shrink-0 animate-pulse" style={{ background: color }} />
-          <span className="font-sans text-[11.5px] text-foreground/55 truncate">na żywo · transkrypcja PL</span>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11.5px] text-foreground/70">
+            <span>Kurs: Wdrożenia AI w B2B</span>
+            <span className="font-mono text-primary">48 kursantów</span>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden bg-foreground/[0.07]">
+            <div className="h-full rounded-full bg-primary w-[78%]" />
+          </div>
+        </div>
+      </div>
+    )
+    if (mod.id === 'workspace') return (
+      <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-2">
+        <div className="grid grid-cols-3 gap-1.5 text-center">
+          <div className="rounded-lg border border-primary/30 bg-primary/10 py-1.5 px-1 text-[11px] font-medium text-foreground">
+            📐 Tablice
+          </div>
+          <div className="rounded-lg border border-foreground/[0.08] bg-foreground/[0.03] py-1.5 px-1 text-[11px] font-medium text-foreground/70">
+            📝 Notatki
+          </div>
+          <div className="rounded-lg border border-foreground/[0.08] bg-foreground/[0.03] py-1.5 px-1 text-[11px] font-medium text-foreground/70">
+            📅 Kalendarz
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-1 text-[11px] text-foreground/50">
+          <span>Wspólny stan danych</span>
+          <span className="text-emerald-400 font-mono">100% sync</span>
         </div>
       </div>
     )

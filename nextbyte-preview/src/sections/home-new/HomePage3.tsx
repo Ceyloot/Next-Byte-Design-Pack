@@ -1623,23 +1623,22 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
         {/* LEWA STRONA: TYPOGRAFIA, PUNKTY I CTA */}
         <div className="lg:col-span-5 text-left space-y-5">
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <SecRule label="02 // OBRAZY I WIDEO" />
-            <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.06] tracking-[-2px] text-foreground">
-              Obrazy i Wideo. <br className="hidden sm:block" />
-              <span className="font-normal text-primary">Bez sesji, bez ekipy, bez czekania.</span>
+            <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
+              Studio Kreacji. <br className="hidden sm:block" />
+              <span className="font-normal text-primary">Zdjęcia 4K i wideo AI.</span>
             </h2>
-            <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
-              Opisujesz kadr — dostajesz gotowe zdjęcie produktowe albo klip reklamowy. Poprawka to kolejny prompt, a nie kolejna sesja i kolejna faktura.
+            <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
+              Fotorealistyczne grafiki produktowe i natychmiastowa zamiana pojedynczego zdjęcia w płynny klip wideo.
             </p>
           </div>
 
           <div className="space-y-2.5 font-sans pt-1">
             {[
-              'Zdjęcia produktowe prosto do sklepu, oferty i reklamy',
-              'Własna postać — ta sama twarz hiperrealistycznie w każdym kadrze',
-              'Klipy pod social media z opisu albo jednego zdjęcia',
-              'Pełne prawa komercyjne do każdego kadru — zero tantiem',
+              'Generowanie grafik w jakości 4K bez limitu kolejek',
+              'Automatyczna zamiana kadru w ruchome wideo',
+              'Pełne prawa komercyjne do każdego materiału',
             ].map((bullet) => (
               <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
                 <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
@@ -1650,7 +1649,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
           <div className="pt-2">
             <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
-              Zobacz Obrazy i Wideo →
+              Zobacz Studio Kreacji →
             </GlowButton>
           </div>
         </div>
@@ -1857,16 +1856,416 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
   )
 }
 /* ═══════════════════════════════════════════════════════════════════════
-   SZKIELET MODUŁÓW 03–06 (ZIGZAG)
+   MODUŁ 03: ASYSTENT NEXTBYTE
+   Wizualizacja: POPIERSIE Z WARSTWIC + KARTY NA SPIRALI KĄTA ZŁOTEGO
 
-   Moduły 01 (Czat AI) i 02 (Obrazy i Wideo) mają własne, autorskie
-   wizualizacje SVG. Pozostałe czekają na swoje — do tego czasu wchodzi
-   `ModuleVisualSlot`, żeby rytm scrollowania i kadr były już finalne,
-   a grafika wpinała się później jednym propem `visual`.
+   Trzy decyzje, które trzymają to po stronie designu, a nie infografiki:
+   • Popiersie to kilkanaście REALNYCH okręgów poziomych na różnych
+     wysokościach — model warstwicowy, nie siatka i nie płaska sylwetka.
+   • Karty rozkręcają się co 137,5° (kąt złoty). Podział nigdy się nie
+     powtarza, więc oko nie łapie rytmu i nie czyta tego jako wykresu.
+   • Jedno źródło światła na całą scenę: jasność każdej karty wynika
+     z kąta jej normalnej do wektora światła, więc spirala czyta się
+     jak bryła, a nie jak naklejone prostokąty.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Własne ustawienie sceny: obserwator 30° w bok i 20° nad poziomem.
+   Łagodniej niż przy aparacie — popiersie ma być zwrócone do widza. */
+const ASSIST_CAM = (() => {
+  const t = (v: V3) => rotX3(rotY3(v, -30 * D2R), 20 * D2R)
+  const X = t([1, 0, 0]), Y = t([0, 1, 0]), Z = t([0, 0, 1])
+  return {
+    ux: X[0], uy: -X[1], ud: X[2],
+    vx: Y[0], vy: -Y[1], vd: Y[2],
+    wx: Z[0], wy: -Z[1], wd: Z[2],
+  }
+})()
+
+/** Kierunek światła sceny (przestrzeń modelu) — wspólny dla wszystkich płaszczyzn. */
+const ASSIST_LIGHT = (() => {
+  const v: V3 = [-0.38, 0.5, 0.78]
+  const L = Math.hypot(v[0], v[1], v[2])
+  return [v[0] / L, v[1] / L, v[2] / L] as V3
+})()
+
+/** Warstwice popiersia: [wysokość, półoś w X, półoś w Z, przesunięcie w Z].
+    Ramiona są szerokie i płytkie, szyja wąska, głowa niemal okrągła
+    i lekko wysunięta do przodu — sylwetka czyta się bez rysowania twarzy. */
+const BUST_CONTOURS: [number, number, number, number][] = [
+  [0, 64, 26, 0],
+  [8, 63, 25, 0],
+  [16, 60, 24, 1],
+  [24, 54, 23, 1],
+  [31, 45, 21, 2],
+  [37, 35, 19, 2],
+  [43, 25, 16, 3],
+  [48, 18, 14, 3],
+  [53, 16, 14, 4],
+  [58, 16, 14, 4],
+  [63, 19, 18, 5],
+  [69, 24, 23, 5],
+  [75, 26, 26, 5],
+  [82, 26, 26, 4],
+  [88, 24, 24, 4],
+  [94, 19, 20, 3],
+  [99, 12, 14, 2],
+  [103, 5, 7, 1],
+]
+
+/** Karty krążące wokół postaci. `at` to próg scrolla, przy którym karta
+    wychodzi zza popiersia; `lab` oznacza te, które dostają opis CAD. */
+const ASSIST_CARDS = [
+  { id: 'c1', at: 0.00, rEnd: 62, yEnd: 38, glyph: 'note', lab: '01' },
+  { id: 'c2', at: 0.13, rEnd: 76, yEnd: 66, glyph: 'cal', lab: '02' },
+  { id: 'c3', at: 0.27, rEnd: 88, yEnd: 94, glyph: 'search', lab: '03' },
+  { id: 'c4', at: 0.41, rEnd: 98, yEnd: 122, glyph: 'task', lab: '04' },
+  { id: 'c5', at: 0.55, rEnd: 106, yEnd: 148, glyph: 'pen', lab: null },
+  { id: 'c6', at: 0.69, rEnd: 112, yEnd: 172, glyph: 'dot', lab: null },
+]
+
+const GOLDEN = 137.507764
+
+function AssistantOrbitVisual() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [p, setP] = useState(0)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setP(1); return }
+
+    let rafId = 0
+    let last = -1
+    const read = () => {
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || 800
+      const start = vh * 0.88
+      const end = vh * 0.14
+      const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
+      const eased = t * t * (3 - 2 * t)
+      const q = Math.round(eased * 400) / 400
+      if (q !== last) { last = q; setP(q) }
+    }
+    const loop = () => { read(); rafId = requestAnimationFrame(loop) }
+    const io = new IntersectionObserver((entries) => {
+      const inView = entries[0]?.isIntersecting ?? true
+      if (inView && !rafId) rafId = requestAnimationFrame(loop)
+      if (!inView && rafId) { cancelAnimationFrame(rafId); rafId = 0 }
+    }, { rootMargin: '260px 0px' })
+    io.observe(el)
+    read()
+    rafId = requestAnimationFrame(loop)
+    return () => { io.disconnect(); if (rafId) cancelAnimationFrame(rafId) }
+  }, [])
+
+  const C = ASSIST_CAM
+  const S = 1.60
+  const OX = 450
+  const OY = 455
+
+  const P3 = (x: number, y: number, z: number) => ({
+    x: OX + (x * C.ux + y * C.vx + z * C.wx) * S,
+    y: OY + (x * C.uy + y * C.vy + z * C.wy) * S,
+  })
+  const dep = (x: number, y: number, z: number) => x * C.ud + y * C.vd + z * C.wd
+
+  /* Elipsa poziomego przekroju o półosiach rx (wzdłuż X) i rz (wzdłuż Z). */
+  const contourEllipse = (rx: number, rz: number) =>
+    circleToEllipse(rx * C.ux * S, rx * C.uy * S, rz * C.wx * S, rz * C.wy * S)
+
+  /* Punkt na obwodzie przekroju — używany do łuku światła i do kotwic opisów. */
+  const contourPt = (y: number, rx: number, rz: number, cz: number, t: number) => {
+    const x = Math.cos(t) * rx
+    const z = Math.sin(t) * rz + cz
+    return P3(x, y, z)
+  }
+
+  /** Układ lokalny leżący NA płaszczyźnie karty — pozwala rysować grafikę
+      karty w jej własnych milimetrach, a rzut sam nadaje pochylenie. */
+  const cardPlane = (cx: number, cy: number, cz: number, ux: number, uz: number) => {
+    const c = P3(cx, cy, cz)
+    const rx = (ux * C.ux + uz * C.wx) * S
+    const ry = (ux * C.uy + uz * C.wy) * S
+    const dx = -C.vx * S
+    const dy = -C.vy * S
+    return `matrix(${rx.toFixed(4)} ${ry.toFixed(4)} ${dx.toFixed(4)} ${dy.toFixed(4)} ${c.x.toFixed(1)} ${c.y.toFixed(1)})`
+  }
+
+  const CW = 36   // półszerokość karty
+  const CH = 25   // półwysokość karty
+
+  /* ── Karty: pozycja, oświetlenie, głębia ─────────────────────────── */
+  const cards = ASSIST_CARDS.map((card, i) => {
+    const span = Math.max(0.18, 0.9 - card.at)
+    const q = Math.max(0, Math.min(1, (p - card.at) / span))
+    const ease = q * q * (3 - 2 * q)
+
+    const theta = (-46 + i * GOLDEN) * D2R
+    const r = 30 + ease * (card.rEnd - 30)
+    const y = 52 + ease * (card.yEnd - 52)
+
+    const cx = Math.cos(theta) * r
+    const cz = Math.sin(theta) * r
+    // Styczna do spirali — karta jest zwrócona licem na zewnątrz.
+    const ux = -Math.sin(theta)
+    const uz = Math.cos(theta)
+    // Normalna karty i jej oświetlenie wspólnym światłem sceny.
+    const nx = Math.cos(theta)
+    const nz = Math.sin(theta)
+    const lit = Math.max(0, nx * ASSIST_LIGHT[0] + nz * ASSIST_LIGHT[2])
+
+    return {
+      ...card, i, cx, cy: y, cz, ux, uz, lit,
+      o: Math.min(1, ease * 3.2),
+      d: dep(cx, y, cz),
+    }
+  })
+
+  /* ── Kotwice opisów: prawy górny róg karty ───────────────────────── */
+  const anchorOf = (c: typeof cards[number]) =>
+    P3(c.cx + c.ux * CW, c.cy + CH, c.cz + c.uz * CW)
+
+  const CORNERS = [
+    { cls: 'left-[2%] top-[4%]', side: 'l', ax: 222, ay: 64 },
+    { cls: 'left-[2%] top-[76%]', side: 'l', ax: 222, ay: 500 },
+    { cls: 'right-[1.5%] top-[4%]', side: 'r', ax: 678, ay: 64 },
+    { cls: 'right-[1.5%] top-[76%]', side: 'r', ax: 678, ay: 500 },
+  ]
+  const labelled = cards.filter((c) => c.lab)
+  // Dopasowanie karta ↔ róg po KĄCIE wokół środka sceny, nie po odległości.
+  // Obie listy sortujemy tym samym kątem i łączymy po kolei — zachowanie
+  // porządku cyklicznego matematycznie wyklucza przecięcia linii.
+  const HUB = { x: 450, y: 400 }
+  const ang = (x: number, y: number) => {
+    const a = Math.atan2(y - HUB.y, x - HUB.x)
+    return a < 0 ? a + Math.PI * 2 : a
+  }
+  const anchors = labelled.map((c) => P3(c.cx + c.ux * CW, c.cy + CH, c.cz + c.uz * CW))
+  const byAngle = anchors
+    .map((a, j) => ({ j, t: ang(a.x, a.y) }))
+    .sort((a, b) => a.t - b.t)
+  const cornersByAngle = CORNERS
+    .map((k, j) => ({ j, t: ang(k.ax, k.ay) }))
+    .sort((a, b) => a.t - b.t)
+
+  // Sam porządek kątowy nie wystarcza — trzeba jeszcze trafić w przesunięcie
+  // cyklu. Sprawdzamy wszystkie rotacje i bierzemy tę o najkrótszych liniach:
+  // porządek gwarantuje brak przecięć, rotacja — że linie są krótkie.
+  const N = cornersByAngle.length
+  let bestRot = 0
+  let bestCost = Infinity
+  for (let r = 0; r < N; r++) {
+    let cost = 0
+    byAngle.forEach((c, i) => {
+      const k = CORNERS[cornersByAngle[(i + r) % N]!.j]!
+      const a = anchors[c.j]!
+      cost += Math.hypot(k.ax - a.x, k.ay - a.y)
+    })
+    if (cost < bestCost) { bestCost = cost; bestRot = r }
+  }
+  const cornerFor: (typeof CORNERS[number] | undefined)[] = []
+  byAngle.forEach((c, i) => { cornerFor[c.j] = CORNERS[cornersByAngle[(i + bestRot) % N]!.j] })
+  const LABELS = [
+    { k: 'a1', num: '01', head: 'NOTATKI', sub: 'Zapisuje ustalenia, zanim zdążysz o nich zapomnieć.' },
+    { k: 'a2', num: '02', head: 'KALENDARZ', sub: 'Terminy same trafiają na właściwy dzień.' },
+    { k: 'a3', num: '03', head: 'WYSZUKIWANIE', sub: 'Sprawdza w sieci i podaje źródło.' },
+    { k: 'a4', num: '04', head: 'ZADANIA', sub: 'Rozbija projekt na kroki i pilnuje ich.' },
+  ].map((L, i) => ({ ...L, card: labelled[i], ...(cornerFor[i] ?? CORNERS[i]) }))
+
+  /* ── Grafika na licu karty — jeden hairline'owy znak, nic więcej ── */
+  const glyphOf = (kind: string) => {
+    const st = { stroke: '#cbd5e1', strokeWidth: 1.4, strokeLinecap: 'round' as const, fill: 'none' }
+    switch (kind) {
+      case 'note':
+        return <><line x1={-9} y1={-3} x2={9} y2={-3} {...st} /><line x1={-9} y1={3} x2={3} y2={3} {...st} /></>
+      case 'cal':
+        return <>{[-7, 0, 7].map((x) => [-4, 4].map((y) => (
+          <circle key={`${x}_${y}`} cx={x} cy={y} r={1.5} fill="#cbd5e1" />
+        )))}</>
+      case 'search':
+        return <><circle cx={-2} cy={-1} r={6} {...st} /><line x1={2.5} y1={3.5} x2={8} y2={9} {...st} /></>
+      case 'task':
+        return <><path d="M -9 0 L -4 5 L 6 -6" {...st} /></>
+      case 'pen':
+        return <><line x1={-8} y1={7} x2={8} y2={-7} {...st} /><path d="M -8 7 L -9 10 L -6 9 Z" fill="#cbd5e1" /></>
+      default:
+        return <circle cx={0} cy={0} r={2.4} fill="#7dd3fc" />
+    }
+  }
+
+  /* ── Scena posortowana realną głębią ─────────────────────────────── */
+  const scene: { d: number; node: ReactNode }[] = [
+    // popiersie jako jeden obiekt na głębi swojej osi
+    {
+      d: dep(0, 55, 3),
+      node: (
+        <g key="bust">
+          {(() => {
+            // Bryła obrotowa zawsze czyta się jak przedmiot toczony, bo popiersie
+            // nie jest obrotowe — ramiona to płaska płyta, nie stożek. Dlatego
+            // sylwetka to realny obrys głowa+ramiona, a warstwice kładziemy
+            // NA niej jako linie skanu (przycięte maską do konturu).
+            const base = P3(0, 0, 0)
+            const k = S
+            const d = [
+              'M -66 0',
+              'C -60 -22 -40 -30 -17 -40',
+              'L -15 -54',
+              'C -30 -58 -30 -78 -22 -90',
+              'C -16 -100 -6 -106 0 -106',
+              'C 6 -106 16 -100 22 -90',
+              'C 30 -78 30 -58 15 -54',
+              'L 17 -40',
+              'C 40 -30 60 -22 66 0',
+              'Z',
+            ].join(' ')
+            const tr = `translate(${base.x.toFixed(1)} ${base.y.toFixed(1)}) scale(${k.toFixed(3)})`
+            return (
+              <g transform={tr}>
+                <clipPath id="nbAsClip"><path d={d} /></clipPath>
+                <path d={d} fill="url(#nbAsBody)" stroke="#3a4c66" strokeWidth={1.1 / k} strokeLinejoin="round" />
+                {/* Linie skanu — faktura, nie kontur */}
+                <g clipPath="url(#nbAsClip)" stroke="#7f96b2" strokeWidth={0.9 / k}>
+                  {Array.from({ length: 22 }, (_, i) => {
+                    const y = -104 + i * 4.8
+                    return <line key={i} x1={-70} y1={y} x2={70} y2={y} opacity={0.14 + (i / 22) * 0.16} />
+                  })}
+                </g>
+                {/* Światło po prawej krawędzi — ta sama logika co na aparacie */}
+                <path
+                  d="M 0 -106 C 6 -106 16 -100 22 -90 C 30 -78 30 -58 15 -54 L 17 -40 C 40 -30 60 -22 66 0"
+                  fill="none" stroke="#c3d3e6" strokeWidth={2 / k} strokeLinecap="round" opacity={0.6}
+                />
+              </g>
+            )
+          })()}
+
+          {/* Rdzeń obecności — jedyny cyan na postaci */}
+          {(() => {
+            const c = P3(0, 74, 0)
+            return (
+              <>
+                <circle cx={c.x} cy={c.y} r={4} fill="#38bdf8" opacity={0.9} />
+                <circle cx={c.x} cy={c.y} r={9} fill="none" stroke="#38bdf8" strokeWidth={1} opacity={0.32} />
+              </>
+            )
+          })()}
+        </g>
+      ),
+    },
+    ...cards.map((c) => {
+      // Jasność lica z kąta do światła sceny — jedno światło na całą scenę.
+      const face = 12 + c.lit * 26
+      const edge = 40 + c.lit * 55
+      return {
+        d: c.d,
+        node: (
+          <g key={c.id} opacity={c.o}>
+            <polygon
+              points={[
+                P3(c.cx - c.ux * CW, c.cy + CH, c.cz - c.uz * CW),
+                P3(c.cx + c.ux * CW, c.cy + CH, c.cz + c.uz * CW),
+                P3(c.cx + c.ux * CW, c.cy - CH, c.cz + c.uz * CW),
+                P3(c.cx - c.ux * CW, c.cy - CH, c.cz - c.uz * CW),
+              ].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
+              fill={`rgb(${face} ${face + 6} ${face + 14})`}
+              stroke={`rgb(${edge} ${edge + 14} ${edge + 28})`}
+              strokeWidth={1.2}
+              strokeLinejoin="round"
+            />
+            <g transform={cardPlane(c.cx, c.cy, c.cz, c.ux, c.uz)} opacity={0.5 + c.lit * 0.5}>
+              {glyphOf(c.glyph)}
+            </g>
+          </g>
+        ),
+      }
+    }),
+  ].sort((a, b) => a.d - b.d)
+
+  return (
+    <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.12)_0%,transparent_70%)] blur-3xl"
+        style={{ opacity: 0.5 + p * 0.4 }}
+      />
+
+      <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="nbAsBody" x1="0%" y1="0%" x2="100%" y2="60%">
+            <stop offset="0%" stopColor="#0a121e" />
+            <stop offset="55%" stopColor="#111b2a" />
+            <stop offset="100%" stopColor="#1c2a3d" />
+          </linearGradient>
+          <radialGradient id="nbAsFloor" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#020617" stopOpacity="0.75" />
+            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Cień kontaktowy — sadza scenę na podłożu */}
+        {(() => {
+          const e = contourEllipse(150, 150)
+          const c = P3(0, -6, 0)
+          return (
+            <ellipse
+              cx={0} cy={0} rx={e.rx} ry={e.ry}
+              transform={`translate(${c.x.toFixed(1)} ${c.y.toFixed(1)}) rotate(${e.rot.toFixed(2)})`}
+              fill="url(#nbAsFloor)"
+            />
+          )
+        })()}
+
+        {scene.map((sc, i) => <g key={`sc${i}`}>{sc.node}</g>)}
+
+        {/* Linie wskaźnikowe do opisów */}
+        <g className="hidden sm:block">
+          {LABELS.map((L) => {
+            if (!L.card) return null
+            const o = Math.min(1, Math.max(0, (p - L.card.at - 0.14) / 0.18)) * L.card.o
+            if (o <= 0.01) return null
+            const a = anchorOf(L.card)
+            return (
+              <g key={L.k} opacity={o}>
+                <line x1={L.ax} y1={L.ay} x2={a.x} y2={a.y} stroke="#38bdf8" strokeWidth={1.1} strokeDasharray="4 4" opacity={0.7} />
+                <circle cx={a.x} cy={a.y} r={3} fill="none" stroke="#38bdf8" strokeWidth={1.3} />
+                <circle cx={L.ax} cy={L.ay} r={2.6} fill="#38bdf8" />
+              </g>
+            )
+          })}
+        </g>
+      </svg>
+
+      {/* OPISY — ta sama typografia co w module 02 */}
+      {LABELS.map((L) => {
+        if (!L.card) return null
+        const o = Math.min(1, Math.max(0, (p - L.card.at - 0.14) / 0.18)) * L.card.o
+        return (
+          <div
+            key={L.k}
+            className={cn(
+              'absolute w-[200px] hidden sm:block pointer-events-none transition-opacity duration-300',
+              L.cls, L.side === 'r' ? 'text-right' : 'text-left',
+            )}
+            style={{ opacity: o, transform: `translateX(${(1 - p) * (L.side === 'r' ? 14 : -14)}px)` }}
+          >
+            <p className="text-[12.5px] font-bold uppercase tracking-wide text-primary font-sans leading-none">
+              {`// ${L.num} ${L.head}`}
+            </p>
+            <p className="mt-1.5 text-[12.5px] leading-snug text-foreground/80 font-sans">{L.sub}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SZKIELET MODUŁÓW 03–06 (ASYSTENT, DEEP RESEARCH, AKADEMIA, WORKSPACE)
    ═══════════════════════════════════════════════════════════════════════ */
 
 /** Miejsce na wizualizację modułu — trzyma dokładnie ten sam kadr
-    (900 × 620) co gotowe moduły, więc podmiana nic nie przesunie. */
+    (900 × 620) co gotowe moduły 01 i 02, więc podmiana nic nie przesunie. */
 function ModuleVisualSlot({ num, tag }: { num: string; tag: string }) {
   return (
     <div className="relative w-full max-w-[900px] aspect-[900/620]">
@@ -1925,13 +2324,13 @@ function ModuleZigzagSection({
 
         {/* KOLUMNA TEKSTU */}
         <div className={cn('lg:col-span-5 text-left space-y-5', left && 'lg:order-2')}>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <SecRule label={`${copy.num} // ${copy.tag}`} />
-            <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.06] tracking-[-2px] text-foreground">
+            <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
               {copy.titleLead} <br className="hidden sm:block" />
               <span className="font-normal text-primary">{copy.titleAccent}</span>
             </h2>
-            <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
+            <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
               {copy.lead}
             </p>
           </div>
@@ -1965,69 +2364,67 @@ function ModuleZigzagSection({
   )
 }
 
-/* Zigzag naprzemienny: 01 grafika po lewej, 02 po prawej, 03 po lewej… */
+/* Moduły 03–06: Spójne, krótkie, sprzedażowe */
 const MODULE_COPY: ModuleCopy[] = [
   {
-    id: 'notes',
+    id: 'assistant',
     num: '03',
-    tag: 'NOTATKI AI',
-    titleLead: 'Notatki AI.',
-    titleAccent: 'Twoje dokumenty w końcu odpowiadają.',
-    lead: 'Wrzucasz raporty, umowy i notatki ze spotkań. Pytasz normalnym zdaniem. Dostajesz odpowiedź ze swoich plików — nie z internetu.',
+    tag: 'ASYSTENT NEXTBYTE',
+    titleLead: 'Twój asystent.',
+    titleAccent: 'Działa sam.',
+    lead: 'Zlecasz zadanie, a asystent sam przeszukuje pliki, ustala terminy w kalendarzu i pilnuje projektów.',
     bullets: [
-      'Wyszukiwanie po sensie, nie po słowie kluczowym',
-      'Pytania zadajesz wprost do własnej bazy wiedzy',
-      'Automatyczne podsumowania i wnioski z długich raportów',
-      'Eksport do Markdown, PDF i DOCX',
+      'Wnioski z rozmów same stają się terminami',
+      'Automatyczne tworzenie i przypisywanie zadań',
+      'Błyskawiczna analiza Twoich dokumentów i plików',
     ],
-    cta: 'Zobacz Notatki AI →',
-    visualLeft: true,
+    cta: 'Poznaj Asystenta NextByte →',
+    visualLeft: false,
   },
   {
-    id: 'calendar',
+    id: 'research',
     num: '04',
-    tag: 'KALENDARZ AI',
-    titleLead: 'Kalendarz AI.',
-    titleAccent: 'Ustalenia same stają się terminami.',
-    lead: 'Co ustalisz na czacie, ląduje w kalendarzu jako zadanie z datą i osobą odpowiedzialną. Bez przepisywania i bez zapominania.',
+    tag: 'DEEP RESEARCH',
+    titleLead: 'Deep Research.',
+    titleAccent: 'Analiza setek źródeł w locie.',
+    lead: 'Autonomiczny radar sieci: przeszukuje dziesiątki baz, weryfikuje fakty i sporządza wyczerpujący raport w 30 sekund.',
     bullets: [
-      'Wnioski z rozmowy stają się terminami i zadaniami',
-      'Dwukierunkowa synchronizacja z Kalendarzem Google',
-      'Karty Kanban spięte z projektami i notatkami',
-      'Powiadomienia o spotkaniach zawsze na czas',
+      'Równoległa eksploracja do 40 źródeł w czasie rzeczywistym',
+      'Krzyżowa weryfikacja faktów eliminująca halucynacje',
+      'Gotowy raport executive z tabelami i cytowaniami',
     ],
-    cta: 'Zobacz Kalendarz AI →',
-  },
-  {
-    id: 'voice',
-    num: '05',
-    tag: 'GŁOS AI',
-    titleLead: 'Głos AI.',
-    titleAccent: 'Mów. Reszta zapisze się sama.',
-    lead: 'Naturalny polski głos i transkrypcja nagrań. Spotkanie zamienia się w listę ustaleń, zanim zdążysz wrócić do biurka.',
-    bullets: [
-      'Naturalnie brzmiące polskie głosy na silniku ElevenLabs',
-      'Transkrypcja nagrań z podziałem na wypowiedzi',
-      'Burza mózgów głosowo — w aucie i na spacerze',
-      'Notatki z rozmów same trafiają do projektów',
-    ],
-    cta: 'Zobacz Głos AI →',
+    cta: 'Uruchom Deep Research →',
     visualLeft: true,
   },
   {
-    id: 'memory',
-    num: '06',
-    tag: 'PAMIĘĆ AI',
-    titleLead: 'Pamięć AI.',
-    titleAccent: 'Platforma pamięta, kim jesteś.',
-    lead: 'Twój kontekst, styl i ustalenia żyją między modułami. Nie tłumaczysz wszystkiego od nowa przy każdej rozmowie, grafice i notatce.',
+    id: 'creator',
+    num: '05',
+    tag: 'AKADEMIA I PANEL TWÓRCY',
+    titleLead: 'Akademia i Panel Twórcy.',
+    titleAccent: 'Ucz się i zarabiaj na wiedzy.',
+    lead: 'Certyfikowane kursy AI po polsku oraz dedykowany panel, w którym wystawiasz własne materiały i zarabiasz w PLN.',
     bullets: [
-      'Wspólny kontekst dla czatu, notatek i kalendarza',
-      'Zna Twoją firmę, produkty i ton komunikacji',
-      'Wraca do ustaleń sprzed tygodni bez przypominania',
-      'Pamięć przejrzysz i wyczyścisz w każdej chwili',
+      'Panel Twórcy: twórz i sprzedawaj własne kursy oraz szablony',
+      'Sklep z gotowymi promptami i workflow biznesowymi',
+      'Wypłata zysków bezpośrednio w PLN z fakturą VAT 23%',
     ],
-    cta: 'Zobacz Pamięć AI →',
+    cta: 'Odkryj Akademię i Twórców →',
+    visualLeft: false,
+  },
+  {
+    id: 'workspace',
+    num: '06',
+    tag: 'ZINTEGROWANY WORKSPACE',
+    titleLead: 'Zintegrowany Workspace.',
+    titleAccent: 'Wszystko w jednym rdzeniu.',
+    lead: 'Tablice wizualne, notatki semantyczne, kalendarz i zadania Kanban połączone w jeden płynny organizm.',
+    bullets: [
+      'Tablice: nieskończone płótno do szkiców i map myśli',
+      'Notatki AI odpowiadające na bazie Twoich dokumentów',
+      'Wspólny stan danych bez kopiowania między aplikacjami',
+    ],
+    cta: 'Zobacz Zintegrowany Workspace →',
+    visualLeft: true,
   },
 ]
 
@@ -2040,13 +2437,6 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
   return (
     <div className="relative flex w-full flex-col font-landing text-foreground">
       <AnimStyles />
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @keyframes nbElectricCurrent {
-          0% { stroke-dashoffset: 100; }
-          100% { stroke-dashoffset: 0; }
-        }
-      ` }} />
       <PageAmbience />
 
       {/* ══════════ 1. HERO + JEDYNA KARUZELA (MODEL ECOSYSTEM BRIDGE) ══════════ */}
@@ -2108,15 +2498,17 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
         </FadeIn>
       </Section>
 
-      {/* ══════════ 5. MODUŁY 03–06: NOTATKI, KALENDARZ, GŁOS, PAMIĘĆ ══════════
-          Kadr i rytm są już finalne — brakuje wyłącznie autorskich wizualizacji
-          SVG. Każda wpina się później przez prop `visual`, bez ruszania układu. */}
+      {/* ══════════ 5. MODUŁY 03–06: ASYSTENT, DEEP RESEARCH, AKADEMIA, WORKSPACE ══════════ */}
       {MODULE_COPY.map((copy) => (
         <div key={copy.id}>
           <TechDivider />
           <Section className="relative z-10 py-4 sm:py-8">
             <FadeIn>
-              <ModuleZigzagSection copy={copy} onNavigate={onNavigate} />
+              <ModuleZigzagSection
+                copy={copy}
+                onNavigate={onNavigate}
+                visual={copy.id === 'assistant' ? <AssistantOrbitVisual /> : undefined}
+              />
             </FadeIn>
           </Section>
         </div>
