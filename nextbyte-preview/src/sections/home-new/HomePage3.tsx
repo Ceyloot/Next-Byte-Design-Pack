@@ -2006,12 +2006,19 @@ function AssistantOrbitVisual() {
 
     const cx = Math.cos(theta) * r
     const cz = Math.sin(theta) * r
-    // Styczna do spirali — karta jest zwrócona licem na zewnątrz.
-    const ux = -Math.sin(theta)
-    const uz = Math.cos(theta)
-    // Normalna karty i jej oświetlenie wspólnym światłem sceny.
-    const nx = Math.cos(theta)
-    const nz = Math.sin(theta)
+    // Kierunek patrzenia rzutowany na płaszczyznę poziomą.
+    const vlen = Math.hypot(C.ud, C.wd)
+    const vx = C.ud / vlen
+    const vz = C.wd / vlen
+    // Normalna = mieszanka promienia i kierunku widza (0.34 / 0.66), dzięki
+    // czemu karta nigdy nie ustawia się krawędzią i ikona zostaje czytelna.
+    const bx = Math.cos(theta) * 0.34 + vx * 0.66
+    const bz = Math.sin(theta) * 0.34 + vz * 0.66
+    const blen = Math.hypot(bx, bz) || 1
+    const nx = bx / blen
+    const nz = bz / blen
+    const ux = -nz
+    const uz = nx
     const lit = Math.max(0, nx * ASSIST_LIGHT[0] + nz * ASSIST_LIGHT[2])
 
     return {
@@ -2074,20 +2081,59 @@ function AssistantOrbitVisual() {
 
   /* ── Grafika na licu karty — jeden hairline'owy znak, nic więcej ── */
   const glyphOf = (kind: string) => {
-    const st = { stroke: '#cbd5e1', strokeWidth: 1.4, strokeLinecap: 'round' as const, fill: 'none' }
+    const st = { stroke: '#e8eef6', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' }
+    const thin = { ...st, strokeWidth: 1.45 }
     switch (kind) {
-      case 'note':
-        return <><line x1={-9} y1={-3} x2={9} y2={-3} {...st} /><line x1={-9} y1={3} x2={3} y2={3} {...st} /></>
-      case 'cal':
-        return <>{[-7, 0, 7].map((x) => [-4, 4].map((y) => (
-          <circle key={`${x}_${y}`} cx={x} cy={y} r={1.5} fill="#cbd5e1" />
-        )))}</>
-      case 'search':
-        return <><circle cx={-2} cy={-1} r={6} {...st} /><line x1={2.5} y1={3.5} x2={8} y2={9} {...st} /></>
-      case 'task':
-        return <><path d="M -9 0 L -4 5 L 6 -6" {...st} /></>
+      case 'note': // kartka z zagiętym rogiem i tekstem
+        return (
+          <>
+            <path d="M -9 -12 L 4 -12 L 10 -6 L 10 12 L -9 12 Z" {...st} />
+            <path d="M 4 -12 L 4 -6 L 10 -6" {...st} />
+            <line x1={-5} y1={-2} x2={6} y2={-2} {...thin} />
+            <line x1={-5} y1={3} x2={6} y2={3} {...thin} />
+            <line x1={-5} y1={8} x2={1} y2={8} {...thin} />
+          </>
+        )
+      case 'cal': // kalendarz: oczka, belka nagłówka, siatka dni
+        return (
+          <>
+            <line x1={-6} y1={-14} x2={-6} y2={-9} {...st} />
+            <line x1={6} y1={-14} x2={6} y2={-9} {...st} />
+            <rect x={-12} y={-11} width={24} height={22} rx={2.5} {...st} />
+            <line x1={-12} y1={-4} x2={12} y2={-4} {...st} />
+            {[-6, 0, 6].map((x) => [1, 6].map((y) => (
+              <circle key={`${x}_${y}`} cx={x} cy={y} r={1.4} fill="#e8eef6" />
+            )))}
+          </>
+        )
+      case 'search': // lupa nad dokumentem — research, nie zwykłe szukanie
+        return (
+          <>
+            <circle cx={-1} cy={-2} r={9} {...st} />
+            <line x1={5.5} y1={4.5} x2={11} y2={10} strokeWidth={2.6} stroke="#e8eef6" strokeLinecap="round" />
+            <line x1={-6} y1={-4} x2={4} y2={-4} {...thin} opacity={0.7} />
+            <line x1={-6} y1={0} x2={2} y2={0} {...thin} opacity={0.7} />
+          </>
+        )
+      case 'task': // lista zadań z odhaczonymi polami
+        return (
+          <>
+            {[-8, 0, 8].map((y, i) => (
+              <g key={y}>
+                <rect x={-12} y={y - 3.5} width={7} height={7} rx={1.5} {...thin} />
+                {i < 2 && <path d={`M -10.5 ${y} L -9 ${y + 1.8} L -6.5 ${y - 2.2}`} {...thin} />}
+                <line x1={-2} y1={y} x2={11} y2={y} {...thin} />
+              </g>
+            ))}
+          </>
+        )
       case 'pen':
-        return <><line x1={-8} y1={7} x2={8} y2={-7} {...st} /><path d="M -8 7 L -9 10 L -6 9 Z" fill="#cbd5e1" /></>
+        return (
+          <>
+            <path d="M -9 9 L 6 -6 L 9 -3 L -6 12 Z" {...thin} />
+            <path d="M -9 9 L -10 12 L -6 12" {...thin} />
+          </>
+        )
       default:
         return <circle cx={0} cy={0} r={2.4} fill="#7dd3fc" />
     }
@@ -2108,15 +2154,15 @@ function AssistantOrbitVisual() {
             const base = P3(0, 0, 0)
             const k = S
             const d = [
-              'M -66 0',
-              'C -60 -22 -40 -30 -17 -40',
-              'L -15 -54',
-              'C -30 -58 -30 -78 -22 -90',
-              'C -16 -100 -6 -106 0 -106',
-              'C 6 -106 16 -100 22 -90',
-              'C 30 -78 30 -58 15 -54',
-              'L 17 -40',
-              'C 40 -30 60 -22 66 0',
+              'M -68 0',
+              'C -62 -18 -40 -28 -17 -38',   // linia ramienia w górę do szyi
+              'L -14 -50',                   // szyja
+              'C -25 -54 -27 -64 -27 -75',   // policzek — owal głowy
+              'C -27 -93 -16 -106 0 -106',   // czubek
+              'C 16 -106 27 -93 27 -75',
+              'C 27 -64 25 -54 14 -50',
+              'L 17 -38',
+              'C 40 -28 62 -18 68 0',
               'Z',
             ].join(' ')
             const tr = `translate(${base.x.toFixed(1)} ${base.y.toFixed(1)}) scale(${k.toFixed(3)})`
@@ -2133,7 +2179,7 @@ function AssistantOrbitVisual() {
                 </g>
                 {/* Światło po prawej krawędzi — ta sama logika co na aparacie */}
                 <path
-                  d="M 0 -106 C 6 -106 16 -100 22 -90 C 30 -78 30 -58 15 -54 L 17 -40 C 40 -30 60 -22 66 0"
+                  d="M 0 -106 C 16 -106 27 -93 27 -75 C 27 -64 25 -54 14 -50 L 17 -38 C 40 -28 62 -18 68 0"
                   fill="none" stroke="#c3d3e6" strokeWidth={2 / k} strokeLinecap="round" opacity={0.6}
                 />
               </g>
@@ -2155,8 +2201,8 @@ function AssistantOrbitVisual() {
     },
     ...cards.map((c) => {
       // Jasność lica z kąta do światła sceny — jedno światło na całą scenę.
-      const face = 12 + c.lit * 26
-      const edge = 40 + c.lit * 55
+      const face = 17 + c.lit * 30
+      const edge = 52 + c.lit * 62
       return {
         d: c.d,
         node: (
@@ -2256,6 +2302,601 @@ function AssistantOrbitVisual() {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WSPÓLNE NARZĘDZIA SCEN 3D (moduły 04–07)
+   Ta sama kamera co przy asystencie, więc wszystkie sceny na stronie
+   ogląda się z jednego, spójnego ustawienia.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/** Deterministyczny szum — bez Math.random, żeby układ był zawsze ten sam
+    i dało się go zestroić raz na zawsze. */
+const noise = (i: number) => {
+  const x = Math.sin(i * 127.1 + 311.7) * 43758.5453
+  return x - Math.floor(x)
+}
+
+/** Fabryka rzutu dla sceny: własna skala i środek, wspólna kamera. */
+function makeScene(S: number, OX: number, OY: number) {
+  const C = ASSIST_CAM
+  const P3 = (x: number, y: number, z: number) => ({
+    x: OX + (x * C.ux + y * C.vx + z * C.wx) * S,
+    y: OY + (x * C.uy + y * C.vy + z * C.wy) * S,
+  })
+  const dep = (x: number, y: number, z: number) => x * C.ud + y * C.vd + z * C.wd
+  const poly = (pts: V3[]) =>
+    pts.map((q) => { const s = P3(q[0], q[1], q[2]); return `${s.x.toFixed(1)},${s.y.toFixed(1)}` }).join(' ')
+  /** Układ lokalny leżący NA ścianie — detale rysujemy w milimetrach modelu. */
+  const plane = (px: number, py: number, pz: number, right: V3, down: V3) => {
+    const c = P3(px, py, pz)
+    const rx = (right[0] * C.ux + right[1] * C.vx + right[2] * C.wx) * S
+    const ry = (right[0] * C.uy + right[1] * C.vy + right[2] * C.wy) * S
+    const dx = (down[0] * C.ux + down[1] * C.vx + down[2] * C.wx) * S
+    const dy = (down[0] * C.uy + down[1] * C.vy + down[2] * C.wy) * S
+    return `matrix(${rx.toFixed(4)} ${ry.toFixed(4)} ${dx.toFixed(4)} ${dy.toFixed(4)} ${c.x.toFixed(1)} ${c.y.toFixed(1)})`
+  }
+  const Box = (
+    x0: number, y0: number, z0: number, x1: number, y1: number, z1: number,
+    fSide: string, fTop: string, fFront: string, stroke: string, sw = 1.2,
+  ) => (
+    <>
+      <polygon points={poly([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]])} fill={fSide} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+      <polygon points={poly([[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]])} fill={fTop} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+      <polygon points={poly([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]])} fill={fFront} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+    </>
+  )
+  return { C, P3, dep, poly, plane, Box }
+}
+
+/** Wspólny hook postępu scrolla dla scen. */
+function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
+  const [p, setP] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setP(1); return }
+    let rafId = 0
+    let last = -1
+    const read = () => {
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || 800
+      const t = Math.max(0, Math.min(1, (vh * 0.88 - rect.top) / (vh * 0.74)))
+      const eased = t * t * (3 - 2 * t)
+      const q = Math.round(eased * 400) / 400
+      if (q !== last) { last = q; setP(q) }
+    }
+    const loop = () => { read(); rafId = requestAnimationFrame(loop) }
+    const io = new IntersectionObserver((entries) => {
+      const inView = entries[0]?.isIntersecting ?? true
+      if (inView && !rafId) rafId = requestAnimationFrame(loop)
+      if (!inView && rafId) { cancelAnimationFrame(rafId); rafId = 0 }
+    }, { rootMargin: '260px 0px' })
+    io.observe(el)
+    read()
+    rafId = requestAnimationFrame(loop)
+    return () => { io.disconnect(); if (rafId) cancelAnimationFrame(rafId) }
+  }, [ref])
+  return p
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODUŁ 04: DEEP RESEARCH
+   Wizualizacja: SIEĆ NEURONOWA WYRASTAJĄCA Z LAPTOPA
+
+   Zamiast rzadkiego drzewka — gęsta, warstwowa siatka: cztery warstwy
+   węzłów, każdy spięty z kilkoma z warstwy następnej. Krawędzie zapalają
+   się falami w miarę scrolla, na końcu wszystko schodzi się do raportu.
+   Kształt węzła nadal niesie typ źródła, więc widać CO zostało przeszukane.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+type NeuroNode = { x: number; y: number; z: number; lvl: number; kind: number }
+
+/** Warstwy sieci: liczba węzłów, wysokość, rozpiętość w poziomie. */
+const NEURO = (() => {
+  const layers = [
+    { n: 7, y: 74, spread: 168, dz: 46 },
+    { n: 10, y: 140, spread: 236, dz: 60 },
+    { n: 8, y: 206, spread: 200, dz: 52 },
+  ]
+  const nodes: NeuroNode[] = []
+  const index: number[][] = []
+  layers.forEach((L, li) => {
+    const ids: number[] = []
+    for (let i = 0; i < L.n; i++) {
+      const u = L.n === 1 ? 0.5 : i / (L.n - 1)
+      const seed = li * 50 + i
+      nodes.push({
+        x: (u - 0.5) * 2 * L.spread + (noise(seed) - 0.5) * 22,
+        y: L.y + (noise(seed + 7) - 0.5) * 20,
+        z: (noise(seed + 13) - 0.5) * 2 * L.dz,
+        lvl: li + 1,
+        kind: (i + li) % 4,
+      })
+      ids.push(nodes.length - 1)
+    }
+    index.push(ids)
+  })
+
+  // Krawędzie: każdy węzeł łączy się z 2–3 najbliższymi w poziomie z warstwy
+  // wyżej. Nie „każdy z każdym” — inaczej robi się plątanina zamiast siatki.
+  const edges: { a: number; b: number; at: number }[] = []
+  for (let li = 0; li < index.length - 1; li++) {
+    index[li]!.forEach((ai) => {
+      const cand = index[li + 1]!
+        .map((bi) => ({ bi, d: Math.abs(nodes[bi]!.x - nodes[ai]!.x) }))
+        .sort((p1, p2) => p1.d - p2.d)
+      const k = 2 + (noise(ai * 3 + li) > 0.55 ? 1 : 0)
+      cand.slice(0, k).forEach((c, j) => {
+        edges.push({ a: ai, b: c.bi, at: 0.2 + li * 0.2 + j * 0.02 + noise(ai + j) * 0.05 })
+      })
+    })
+  }
+  // Warstwa wejściowa spięta z laptopem
+  index[0]!.forEach((ai, i) => edges.push({ a: -1, b: ai, at: 0.05 + i * 0.02 }))
+  // Ostatnia warstwa spięta z raportem
+  index[index.length - 1]!.forEach((ai, i) => edges.push({ a: ai, b: -2, at: 0.72 + i * 0.015 }))
+
+  return { nodes, edges }
+})()
+
+const NEURO_APEX: V3 = [0, 34, -24]
+const NEURO_OUT: V3 = [0, 274, -4]
+
+function DeepResearchVisual() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const p = useScrollProgress(containerRef)
+  const { P3, poly } = makeScene(1.18, 450, 552)
+
+  const pos = (i: number): V3 => {
+    if (i === -1) return NEURO_APEX
+    if (i === -2) return NEURO_OUT
+    const n = NEURO.nodes[i]!
+    return [n.x, n.y, n.z]
+  }
+  const nodeT = (i: number) => {
+    const n = NEURO.nodes[i]!
+    const at = 0.08 + (n.lvl - 1) * 0.2
+    const q = Math.max(0, Math.min(1, (p - at) / 0.18))
+    return q * q * (3 - 2 * q)
+  }
+
+  /** Krawędź rysowana częściowo — realnie „narasta”, zamiast mrugać. */
+  const edgePts = (a: V3, b: V3, t: number, bow: number) => {
+    const pts: string[] = []
+    const N = 12
+    for (let i = 0; i <= N; i++) {
+      const u = (i / N) * t
+      const v = 1 - u
+      const mid = 4 * u * v
+      const x = a[0] + (b[0] - a[0]) * u
+      const y = a[1] + (b[1] - a[1]) * u + mid * bow
+      const z = a[2] + (b[2] - a[2]) * u
+      const q = P3(x, y, z)
+      pts.push(`${q.x.toFixed(1)},${q.y.toFixed(1)}`)
+    }
+    return pts.join(' ')
+  }
+
+  const glyph = (kind: number, x: number, y: number, k: number) => {
+    const st = { stroke: '#7dd3fc', strokeWidth: 1.2, fill: '#07131f' }
+    const r = 4.6 * k
+    if (kind === 0) return <circle cx={x} cy={y} r={r} {...st} />
+    if (kind === 1) return <rect x={x - r * 0.9} y={y - r * 1.15} width={r * 1.8} height={r * 2.3} rx={1} {...st} />
+    if (kind === 2) return (
+      <>
+        <rect x={x - r * 1.1} y={y - r * 0.85} width={r * 2.2} height={r * 1.7} rx={1} {...st} />
+        <line x1={x - r * 1.1} y1={y} x2={x + r * 1.1} y2={y} stroke="#7dd3fc" strokeWidth={0.7} />
+      </>
+    )
+    return <polygon points={`${x},${y - r * 1.25} ${x + r},${y} ${x},${y + r * 1.25} ${x - r},${y}`} {...st} />
+  }
+
+  const shown = NEURO.nodes.filter((_, i) => nodeT(i) > 0.02).length
+  const outT = Math.max(0, Math.min(1, (p - 0.78) / 0.18))
+
+  return (
+    <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[470px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.15)_0%,transparent_70%)] blur-3xl"
+        style={{ opacity: 0.45 + p * 0.45 }}
+      />
+      <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="nbRsBase" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#8b9bb1" /><stop offset="100%" stopColor="#3a4759" />
+          </linearGradient>
+          <radialGradient id="nbRsFloor" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+          </radialGradient>
+          <filter id="nbRsGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        {/* ── KRAWĘDZIE SIECI ── */}
+        <g>
+          {NEURO.edges.map((e, i) => {
+            const q = Math.max(0, Math.min(1, (p - e.at) / 0.2))
+            const t = q * q * (3 - 2 * q)
+            if (t <= 0.01) return null
+            const out = e.b === -2
+            return (
+              <polyline
+                key={`e${i}`}
+                points={edgePts(pos(e.a), pos(e.b), t, out ? -16 : 10)}
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth={out ? 0.9 : 1}
+                strokeDasharray={out ? '3 5' : undefined}
+                opacity={(out ? 0.4 : 0.3) * t}
+                strokeLinecap="round"
+              />
+            )
+          })}
+        </g>
+
+        {/* ── LAPTOP: mała kotwica sceny ── */}
+        <g>
+          {(() => { const e = P3(0, -2, 0); return <ellipse cx={e.x} cy={e.y} rx={98} ry={24} fill="url(#nbRsFloor)" /> })()}
+          <polygon points={poly([[-34, 0, 21], [34, 0, 21], [28, 0, -23], [-28, 0, -23]])} fill="url(#nbRsBase)" stroke="#c3d0e0" strokeWidth={1.1} strokeLinejoin="round" />
+          <polygon points={poly([[-34, 0, 21], [34, 0, 21], [34, -3, 21], [-34, -3, 21]])} fill="#2b3646" stroke="#7d8ea6" strokeWidth={1} />
+          <polygon points={poly([[-28, 0, -23], [28, 0, -23], [25, 33, -32], [-25, 33, -32]])} fill="#0b1622" stroke="#c3d0e0" strokeWidth={1.2} strokeLinejoin="round" />
+          <polygon points={poly([[-23, 4, -25], [23, 4, -25], [21, 29, -32], [-21, 29, -32]])} fill="#07121d" stroke="#38bdf8" strokeWidth={0.9} strokeOpacity={0.55} />
+        </g>
+
+        {/* ── WĘZŁY ── */}
+        <g>
+          {NEURO.nodes.map((n, i) => {
+            const t = nodeT(i)
+            if (t <= 0.02) return null
+            const q = P3(n.x, n.y, n.z)
+            return (
+              <g key={`n${i}`} opacity={t}>
+                <circle cx={q.x} cy={q.y} r={9} fill="#38bdf8" opacity={0.09} />
+                {glyph(n.kind, q.x, q.y, n.lvl === 2 ? 1.05 : 0.92)}
+              </g>
+            )
+          })}
+        </g>
+
+        {/* ── RAPORT: jedna odpowiedź na wyjściu sieci ── */}
+        {outT > 0.01 && (() => {
+          const c = P3(NEURO_OUT[0], NEURO_OUT[1], NEURO_OUT[2])
+          const w = 60, h = 38
+          return (
+            <g opacity={outT} filter="url(#nbRsGlow)">
+              <rect x={c.x - w} y={c.y - h} width={w * 2} height={h * 2} rx={4} fill="#0a1726" stroke="#7dd3fc" strokeWidth={1.6} />
+              {[-17, -7, 3, 13].map((dy, i) => (
+                <line key={dy} x1={c.x - w + 15} y1={c.y + dy} x2={c.x + w - (i === 3 ? 38 : 15)} y2={c.y + dy} stroke="#9fc9e4" strokeWidth={1.4} opacity={0.7} />
+              ))}
+            </g>
+          )
+        })()}
+        {outT > 0.01 && (() => {
+          const c = P3(NEURO_OUT[0], NEURO_OUT[1], NEURO_OUT[2])
+          return (
+            <text x={c.x} y={c.y + 58} fill="#7dd3fc" fontSize={12} fontFamily="monospace" fontWeight="bold" textAnchor="middle" letterSpacing="1.5" opacity={outT}>
+              RAPORT
+            </text>
+          )
+        })()}
+
+        <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
+          <text x={28} y={596} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+            {`PRZESZUKANO ${String(shown * 9).padStart(3, '0')} ŹRÓDEŁ`}
+          </text>
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODUŁ 05: AKADEMIA
+   Wizualizacja: ŚCIEŻKA, KTÓRA BUDUJE SIĘ W GÓRĘ
+
+   Każdy stopień to etap nauki. Przy scrollu schody dobudowują się kolejno,
+   a po nich wędruje znacznik postępu. Ruch narastający w górę — nie ma go
+   w żadnym innym module.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const ACADEMY_STEPS = [
+  { t: 'PODSTAWY' },
+  { t: 'PROMPTY' },
+  { t: 'OBRAZ' },
+  { t: 'ASYSTENT' },
+  { t: 'AUTOMATY' },
+]
+
+function AcademyVisual() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const p = useScrollProgress(containerRef)
+  const { P3, poly, plane } = makeScene(2.30, 424, 432)
+
+  const SW = 52   // szerokość stopnia wzdłuż X
+  const SH = 15   // wysokość podstopnia
+  const SD = 62   // głębokość stopnia
+  const stepAt = (i: number) => i * 0.15
+
+  // Środek górnej płaszczyzny stopnia i — po tym wędruje znacznik.
+  const topOf = (i: number): V3 => [-118 + i * SW + SW / 2, (i + 1) * SH, 0]
+
+  const marker = (() => {
+    const q = Math.max(0, Math.min(1, (p - 0.1) / 0.8)) * (ACADEMY_STEPS.length - 1)
+    const i = Math.min(ACADEMY_STEPS.length - 2, Math.floor(q))
+    const f = q - i
+    const a = topOf(i), b = topOf(i + 1)
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f + 13, a[2]] as V3
+  })()
+
+  return (
+    <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[440px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.12)_0%,transparent_70%)] blur-3xl"
+        style={{ opacity: 0.45 + p * 0.45 }}
+      />
+      <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="nbAcTop" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#5c6d84" /><stop offset="100%" stopColor="#26303f" />
+          </linearGradient>
+          <linearGradient id="nbAcFront" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#1a2534" /><stop offset="100%" stopColor="#0a1119" />
+          </linearGradient>
+          <radialGradient id="nbAcFloor" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#020617" stopOpacity="0.65" />
+            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {(() => { const e = P3(0, -4, 0); return <ellipse cx={e.x} cy={e.y} rx={230} ry={44} fill="url(#nbAcFloor)" /> })()}
+
+        {ACADEMY_STEPS.map((st, i) => {
+          const q = Math.max(0, Math.min(1, (p - stepAt(i)) / 0.2))
+          const t = q * q * (3 - 2 * q)
+          if (t <= 0.01) return null
+          const x0 = -118 + i * SW
+          const x1 = x0 + SW
+          const y1 = (i + 1) * SH
+          // Stopień wjeżdża od dołu na swoje miejsce.
+          const lift = (1 - t) * -34
+          return (
+            <g key={st.t} opacity={t}>
+              <polygon points={poly([[x1, lift, -SD / 2], [x1, lift, SD / 2], [x1, y1 + lift, SD / 2], [x1, y1 + lift, -SD / 2]])} fill="#0d1622" stroke="#3f5169" strokeWidth={1.1} strokeLinejoin="round" />
+              <polygon points={poly([[x0, y1 + lift, SD / 2], [x1, y1 + lift, SD / 2], [x1, y1 + lift, -SD / 2], [x0, y1 + lift, -SD / 2]])} fill="url(#nbAcTop)" stroke="#8ea0b8" strokeWidth={1.2} strokeLinejoin="round" />
+              <polygon points={poly([[x0, lift, SD / 2], [x1, lift, SD / 2], [x1, y1 + lift, SD / 2], [x0, y1 + lift, SD / 2]])} fill="url(#nbAcFront)" stroke="#3f5169" strokeWidth={1.1} strokeLinejoin="round" />
+              {/* Numer i nazwa etapu na czole stopnia */}
+              <g transform={plane((x0 + x1) / 2, y1 / 2 + lift, SD / 2, [1, 0, 0], [0, -1, 0])}>
+                <text x={0} y={-2} fill="#7dd3fc" fontSize={7} fontFamily="monospace" fontWeight="bold" textAnchor="middle">{`0${i + 1}`}</text>
+                <text x={0} y={6} fill="#93a5bd" fontSize={5.2} fontFamily="monospace" textAnchor="middle" letterSpacing="0.4">{st.t}</text>
+              </g>
+            </g>
+          )
+        })}
+
+        {/* Znacznik postępu wędrujący po ścieżce */}
+        {p > 0.12 && (() => {
+          const c = P3(marker[0], marker[1], marker[2])
+          return (
+            <g>
+              <circle cx={c.x} cy={c.y} r={16} fill="#38bdf8" opacity={0.14} />
+              <circle cx={c.x} cy={c.y} r={6.5} fill="#38bdf8" />
+              <circle cx={c.x} cy={c.y} r={11} fill="none" stroke="#7dd3fc" strokeWidth={1.2} opacity={0.6} />
+            </g>
+          )
+        })()}
+
+        <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
+          <text x={28} y={596} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+            {`POSTĘP ŚCIEŻKI ${String(Math.round(Math.min(1, p / 0.9) * 100)).padStart(3, '0')}%`}
+          </text>
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODUŁ 06: PANEL TWÓRCY
+   Wizualizacja: KONSOLETA — SUWAKI WJEŻDŻAJĄ NA POZYCJE
+
+   Panel to dosłownie panel. Przy scrollu fadery wjeżdżają na swoje wartości,
+   pokrętła się obracają, a wskaźniki zapalają kolejno. Ruch liniowy plus
+   obrót — inny gest niż wszystko wcześniej.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const FADERS = [0.78, 0.46, 0.9, 0.62, 0.34, 0.7]
+const KNOBS = [0.7, 0.35, 0.55]
+
+function CreatorPanelVisual() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const p = useScrollProgress(containerRef)
+  const { P3, poly, plane } = makeScene(1.70, 450, 392)
+
+  // Blat konsolety: prostokąt odchylony do tyłu (przód niżej, tył wyżej).
+  const PX = 150, PZF = 58, PZB = -66, YF = 0, YB = 46
+  const TOP: [V3, V3] = [[1, 0, 0], [0, -0.348, 0.937]]
+
+  return (
+    <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[430px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.12)_0%,transparent_70%)] blur-3xl"
+        style={{ opacity: 0.45 + p * 0.45 }}
+      />
+      <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="nbCpTop" x1="0%" y1="0%" x2="60%" y2="100%">
+            <stop offset="0%" stopColor="#26313f" /><stop offset="55%" stopColor="#151d28" /><stop offset="100%" stopColor="#0c131b" />
+          </linearGradient>
+          <linearGradient id="nbCpSide" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#5f6e82" /><stop offset="100%" stopColor="#232d3b" />
+          </linearGradient>
+          <radialGradient id="nbCpFloor" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {(() => { const e = P3(0, -14, 0); return <ellipse cx={e.x} cy={e.y} rx={224} ry={46} fill="url(#nbCpFloor)" /> })()}
+
+        {/* Obudowa: przednia ścianka i boki */}
+        <polygon points={poly([[-PX, YF - 16, PZF], [PX, YF - 16, PZF], [PX, YF, PZF], [-PX, YF, PZF]])} fill="#111a25" stroke="#4a5b72" strokeWidth={1.2} />
+        <polygon points={poly([[PX, YF - 16, PZF], [PX, YB - 16, PZB], [PX, YB, PZB], [PX, YF, PZF]])} fill="url(#nbCpSide)" stroke="#7d8ea6" strokeWidth={1.2} />
+
+        {/* Blat */}
+        <polygon points={poly([[-PX, YF, PZF], [PX, YF, PZF], [PX, YB, PZB], [-PX, YB, PZB]])} fill="url(#nbCpTop)" stroke="#9fb0c6" strokeWidth={1.4} strokeLinejoin="round" />
+
+        {/* Wszystkie kontrolki rysowane w lokalnym układzie blatu */}
+        <g transform={plane(0, (YF + YB) / 2, (PZF + PZB) / 2, ...TOP)}>
+          {/* Fadery */}
+          {FADERS.map((v, i) => {
+            const x = -120 + i * 28
+            const q = Math.max(0, Math.min(1, (p - 0.1 - i * 0.07) / 0.3))
+            const t = q * q * (3 - 2 * q)
+            const top = -30, len = 54
+            const y = top + len - len * v * t
+            return (
+              <g key={`f${i}`}>
+                <rect x={x - 2.5} y={top} width={5} height={len} rx={2.5} fill="#070c13" stroke="#3d4b5e" strokeWidth={0.8} />
+                <line x1={x} y1={y} x2={x} y2={top + len} stroke="#38bdf8" strokeWidth={2.2} opacity={0.55} />
+                <rect x={x - 8} y={y - 4} width={16} height={8} rx={2} fill="#8ea0b8" stroke="#dbe3ec" strokeWidth={0.9} />
+                <line x1={x - 5} y1={y} x2={x + 5} y2={y} stroke="#0f172a" strokeWidth={1.1} />
+              </g>
+            )
+          })}
+
+          {/* Pokrętła */}
+          {KNOBS.map((v, i) => {
+            const x = 62 + i * 36
+            const y = 40
+            const q = Math.max(0, Math.min(1, (p - 0.22 - i * 0.08) / 0.3))
+            const t = q * q * (3 - 2 * q)
+            const ang = (-130 + 260 * v * t) * D2R
+            return (
+              <g key={`k${i}`}>
+                <circle cx={x} cy={y} r={12} fill="#1b2533" stroke="#8ea0b8" strokeWidth={1.1} />
+                <circle cx={x} cy={y} r={12} fill="none" stroke="#38bdf8" strokeWidth={1.6} strokeDasharray={`${Math.max(0.01, 56 * v * t)} 200`} transform={`rotate(140 ${x} ${y})`} opacity={0.85} />
+                <line x1={x} y1={y} x2={x + Math.sin(ang) * 8} y2={y - Math.cos(ang) * 8} stroke="#e8eef6" strokeWidth={1.6} strokeLinecap="round" />
+              </g>
+            )
+          })}
+
+          {/* Wskaźnik segmentowy */}
+          {Array.from({ length: 12 }, (_, i) => {
+            const on = p > 0.3 + i * 0.05
+            return (
+              <rect
+                key={`s${i}`} x={-124 + i * 9} y={-50} width={6} height={5} rx={1}
+                fill={on ? (i > 9 ? '#7dd3fc' : '#38bdf8') : '#16202c'}
+                opacity={on ? 0.9 : 1}
+              />
+            )
+          })}
+
+          <text x={62} y={20} fill="#6b7f96" fontSize={7} fontFamily="monospace" letterSpacing="1.4">PRESETY</text>
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODUŁ 07: ZINTEGROWANY WORKSPACE
+   Wizualizacja: MODUŁY WSUWANE W JEDNĄ OBUDOWĘ
+
+   Jedyna scena na stronie, która się SKŁADA, a nie rozkłada. Cała strona
+   przez sześć sekcji rozbiera rzeczy na części — finał scala je w jedno.
+   To jest komunikat „jedna platforma zamiast pięciu subskrypcji”
+   opowiedziany samym ruchem.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const RACK_MODULES = ['CZAT AI', 'OBRAZY I WIDEO', 'ASYSTENT', 'DEEP RESEARCH', 'AKADEMIA', 'PANEL TWÓRCY']
+
+function WorkspaceVisual() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const p = useScrollProgress(containerRef)
+  const { P3, poly, plane } = makeScene(1.55, 450, 402)
+
+  const RX = 118        // półszerokość obudowy
+  const RZ = 52         // półgłębokość
+  const SLOT_H = 22     // wysokość jednego modułu
+  const N = RACK_MODULES.length
+  const H = N * SLOT_H + 12
+
+  return (
+    <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[450px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
+        style={{ opacity: 0.4 + p * 0.5 }}
+      />
+      <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="nbWsCase" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#2a3444" /><stop offset="100%" stopColor="#0b111a" />
+          </linearGradient>
+          <linearGradient id="nbWsSide" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#63758c" /><stop offset="100%" stopColor="#1d2836" />
+          </linearGradient>
+          <linearGradient id="nbWsMod" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#1d2938" /><stop offset="100%" stopColor="#101823" />
+          </linearGradient>
+          <radialGradient id="nbWsFloor" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {(() => { const e = P3(0, -6, 0); return <ellipse cx={e.x} cy={e.y} rx={196} ry={42} fill="url(#nbWsFloor)" /> })()}
+
+        {/* Obudowa: bok i wnętrze (moduły wjeżdżają PRZED tę ściankę) */}
+        <polygon points={poly([[RX, 0, -RZ], [RX, 0, RZ], [RX, H, RZ], [RX, H, -RZ]])} fill="url(#nbWsSide)" stroke="#8ea0b8" strokeWidth={1.3} strokeLinejoin="round" />
+        <polygon points={poly([[-RX, 0, -RZ], [RX, 0, -RZ], [RX, H, -RZ], [-RX, H, -RZ]])} fill="#070c13" stroke="#3f5169" strokeWidth={1.1} />
+        <polygon points={poly([[-RX, H, RZ], [RX, H, RZ], [RX, H, -RZ], [-RX, H, -RZ]])} fill="url(#nbWsCase)" stroke="#9fb0c6" strokeWidth={1.3} strokeLinejoin="round" />
+
+        {/* Moduły wsuwane po kolei */}
+        {RACK_MODULES.map((m, i) => {
+          const at = i * 0.13
+          const q = Math.max(0, Math.min(1, (p - at) / 0.26))
+          const t = q * q * (3 - 2 * q)
+          const y0 = 6 + i * SLOT_H
+          const y1 = y0 + SLOT_H - 4
+          // Wysunięcie: moduł nadjeżdża z przodu (duże +Z) na swoje miejsce.
+          const off = (1 - t) * 150
+          const zf = RZ - 4 + off
+          const zb = -RZ + 6 + off
+          const done = t > 0.985
+          return (
+            <g key={m} opacity={Math.min(1, t * 2.2)}>
+              <polygon points={poly([[-RX + 6, y0, zf], [RX - 6, y0, zf], [RX - 6, y1, zf], [-RX + 6, y1, zf]])} fill="url(#nbWsMod)" stroke={done ? '#7dd3fc' : '#54687f'} strokeWidth={1.2} strokeLinejoin="round" />
+              <polygon points={poly([[RX - 6, y0, zb], [RX - 6, y0, zf], [RX - 6, y1, zf], [RX - 6, y1, zb]])} fill="#0a121c" stroke="#3f5169" strokeWidth={0.9} />
+              <g transform={plane(0, (y0 + y1) / 2, zf, [1, 0, 0], [0, -1, 0])}>
+                <text x={-100} y={2.4} fill={done ? '#bfe4fb' : '#8ba0b8'} fontSize={7.4} fontFamily="monospace" letterSpacing="0.8">{m}</text>
+                <circle cx={96} cy={0} r={3} fill={done ? '#38bdf8' : '#26333f'} />
+              </g>
+            </g>
+          )
+        })}
+
+        {/* Front obudowy z podpisem — domyka bryłę */}
+        <g transform={plane(0, H + 6, RZ, [1, 0, 0], [0, -1, 0])}>
+          <text x={-104} y={0} fill="#9fb0c6" fontSize={8} fontFamily="monospace" fontWeight="bold" letterSpacing="2">NEXTBYTE</text>
+        </g>
+
+        <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
+          <text x={28} y={596} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+            {`MODUŁY W OBUDOWIE ${Math.min(N, Math.round(p / 0.13))} / ${N}`}
+          </text>
+        </g>
+      </svg>
     </div>
   )
 }
@@ -2397,23 +3038,38 @@ const MODULE_COPY: ModuleCopy[] = [
     visualLeft: true,
   },
   {
-    id: 'creator',
+    id: 'academy',
     num: '05',
-    tag: 'AKADEMIA I PANEL TWÓRCY',
-    titleLead: 'Akademia i Panel Twórcy.',
-    titleAccent: 'Ucz się i zarabiaj na wiedzy.',
-    lead: 'Certyfikowane kursy AI po polsku oraz dedykowany panel, w którym wystawiasz własne materiały i zarabiasz w PLN.',
+    tag: 'AKADEMIA',
+    titleLead: 'Akademia.',
+    titleAccent: 'Od pierwszego promptu do własnych procesów.',
+    lead: 'Ścieżka prowadzona krok po kroku — od podstaw po automatyzacje, na których realnie oszczędzasz czas. Po polsku i na konkretach.',
     bullets: [
-      'Panel Twórcy: twórz i sprzedawaj własne kursy oraz szablony',
-      'Sklep z gotowymi promptami i workflow biznesowymi',
-      'Wypłata zysków bezpośrednio w PLN z fakturą VAT 23%',
+      'Ścieżka od podstaw po zaawansowane automatyzacje',
+      'Gotowe prompty i szablony do skopiowania',
+      'Konkretne przykłady zamiast suchej teorii',
     ],
-    cta: 'Odkryj Akademię i Twórców →',
+    cta: 'Wejdź do Akademii →',
+    visualLeft: true,
+  },
+  {
+    id: 'creator',
+    num: '06',
+    tag: 'PANEL TWÓRCY',
+    titleLead: 'Panel Twórcy.',
+    titleAccent: 'Ucz innych i zarabiaj na swojej wiedzy.',
+    lead: 'Wystawiasz własne kursy, prompty i szablony, a wypłatę dostajesz w złotówkach. Bez pośredników i bez przeliczania walut.',
+    bullets: [
+      'Twórz i sprzedawaj własne kursy oraz szablony',
+      'Sklep z gotowymi promptami i workflow biznesowymi',
+      'Wypłata zysków w PLN, z fakturą VAT 23%',
+    ],
+    cta: 'Otwórz Panel Twórcy →',
     visualLeft: false,
   },
   {
     id: 'workspace',
-    num: '06',
+    num: '07',
     tag: 'ZINTEGROWANY WORKSPACE',
     titleLead: 'Zintegrowany Workspace.',
     titleAccent: 'Wszystko w jednym rdzeniu.',
@@ -2507,7 +3163,14 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
               <ModuleZigzagSection
                 copy={copy}
                 onNavigate={onNavigate}
-                visual={copy.id === 'assistant' ? <AssistantOrbitVisual /> : undefined}
+                visual={
+                  copy.id === 'assistant' ? <AssistantOrbitVisual />
+                    : copy.id === 'research' ? <DeepResearchVisual />
+                      : copy.id === 'academy' ? <AcademyVisual />
+                        : copy.id === 'creator' ? <CreatorPanelVisual />
+                          : copy.id === 'workspace' ? <WorkspaceVisual />
+                            : undefined
+                }
               />
             </FadeIn>
           </Section>
