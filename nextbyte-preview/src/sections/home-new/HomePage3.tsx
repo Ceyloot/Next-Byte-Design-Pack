@@ -1888,29 +1888,6 @@ const ASSIST_LIGHT = (() => {
   return [v[0] / L, v[1] / L, v[2] / L] as V3
 })()
 
-/** Warstwice popiersia: [wysokość, półoś w X, półoś w Z, przesunięcie w Z].
-    Ramiona są szerokie i płytkie, szyja wąska, głowa niemal okrągła
-    i lekko wysunięta do przodu — sylwetka czyta się bez rysowania twarzy. */
-const BUST_CONTOURS: [number, number, number, number][] = [
-  [0, 64, 26, 0],
-  [8, 63, 25, 0],
-  [16, 60, 24, 1],
-  [24, 54, 23, 1],
-  [31, 45, 21, 2],
-  [37, 35, 19, 2],
-  [43, 25, 16, 3],
-  [48, 18, 14, 3],
-  [53, 16, 14, 4],
-  [58, 16, 14, 4],
-  [63, 19, 18, 5],
-  [69, 24, 23, 5],
-  [75, 26, 26, 5],
-  [82, 26, 26, 4],
-  [88, 24, 24, 4],
-  [94, 19, 20, 3],
-  [99, 12, 14, 2],
-  [103, 5, 7, 1],
-]
 
 /** Karty krążące wokół postaci. `at` to próg scrolla, przy którym karta
     wychodzi zza popiersia; `lab` oznacza te, które dostają opis CAD. */
@@ -1973,12 +1950,6 @@ function AssistantOrbitVisual() {
   const contourEllipse = (rx: number, rz: number) =>
     circleToEllipse(rx * C.ux * S, rx * C.uy * S, rz * C.wx * S, rz * C.wy * S)
 
-  /* Punkt na obwodzie przekroju — używany do łuku światła i do kotwic opisów. */
-  const contourPt = (y: number, rx: number, rz: number, cz: number, t: number) => {
-    const x = Math.cos(t) * rx
-    const z = Math.sin(t) * rz + cz
-    return P3(x, y, z)
-  }
 
   /** Układ lokalny leżący NA płaszczyźnie karty — pozwala rysować grafikę
       karty w jej własnych milimetrach, a rzut sam nadaje pochylenie. */
@@ -2029,8 +2000,13 @@ function AssistantOrbitVisual() {
   })
 
   /* ── Kotwice opisów: prawy górny róg karty ───────────────────────── */
-  const anchorOf = (c: typeof cards[number]) =>
-    P3(c.cx + c.ux * CW, c.cy + CH, c.cz + c.uz * CW)
+  /** Narożnik karty od strony opisu — linia dobija do najbliższego rogu,
+      zamiast przecinać własną kartę w drodze do przeciwległego. */
+  const anchorOf = (c: typeof cards[number], side?: string, top?: boolean) => {
+    const sx = side === 'r' ? 1 : -1
+    const sy = top === false ? -1 : 1
+    return P3(c.cx + sx * c.ux * CW, c.cy + sy * CH, c.cz + sx * c.uz * CW)
+  }
 
   const CORNERS = [
     { cls: 'left-[2%] top-[4%]', side: 'l', ax: 222, ay: 64 },
@@ -2047,8 +2023,8 @@ function AssistantOrbitVisual() {
     const a = Math.atan2(y - HUB.y, x - HUB.x)
     return a < 0 ? a + Math.PI * 2 : a
   }
-  const anchors = labelled.map((c) => P3(c.cx + c.ux * CW, c.cy + CH, c.cz + c.uz * CW))
-  const byAngle = anchors
+  const centers = labelled.map((c) => P3(c.cx, c.cy, c.cz))
+  const byAngle = centers
     .map((a, j) => ({ j, t: ang(a.x, a.y) }))
     .sort((a, b) => a.t - b.t)
   const cornersByAngle = CORNERS
@@ -2065,7 +2041,7 @@ function AssistantOrbitVisual() {
     let cost = 0
     byAngle.forEach((c, i) => {
       const k = CORNERS[cornersByAngle[(i + r) % N]!.j]!
-      const a = anchors[c.j]!
+      const a = centers[c.j]!
       cost += Math.hypot(k.ax - a.x, k.ay - a.y)
     })
     if (cost < bestCost) { bestCost = cost; bestRot = r }
@@ -2109,10 +2085,8 @@ function AssistantOrbitVisual() {
       case 'search': // lupa nad dokumentem — research, nie zwykłe szukanie
         return (
           <>
-            <circle cx={-1} cy={-2} r={9} {...st} />
-            <line x1={5.5} y1={4.5} x2={11} y2={10} strokeWidth={2.6} stroke="#e8eef6" strokeLinecap="round" />
-            <line x1={-6} y1={-4} x2={4} y2={-4} {...thin} opacity={0.7} />
-            <line x1={-6} y1={0} x2={2} y2={0} {...thin} opacity={0.7} />
+            <circle cx={-2} cy={-3} r={9.5} {...st} />
+            <line x1={5} y1={4} x2={11.5} y2={10.5} strokeWidth={2.8} stroke="#e8eef6" strokeLinecap="round" />
           </>
         )
       case 'task': // lista zadań z odhaczonymi polami
@@ -2120,9 +2094,9 @@ function AssistantOrbitVisual() {
           <>
             {[-8, 0, 8].map((y, i) => (
               <g key={y}>
-                <rect x={-12} y={y - 3.5} width={7} height={7} rx={1.5} {...thin} />
-                {i < 2 && <path d={`M -10.5 ${y} L -9 ${y + 1.8} L -6.5 ${y - 2.2}`} {...thin} />}
-                <line x1={-2} y1={y} x2={11} y2={y} {...thin} />
+                <rect x={5} y={y - 3.5} width={7} height={7} rx={1.5} {...thin} />
+                {i < 2 && <path d={`M 6.5 ${y} L 8 ${y + 1.8} L 10.5 ${y - 2.2}`} {...thin} />}
+                <line x1={-11} y1={y} x2={1} y2={y} {...thin} />
               </g>
             ))}
           </>
@@ -2270,7 +2244,7 @@ function AssistantOrbitVisual() {
             if (!L.card) return null
             const o = Math.min(1, Math.max(0, (p - L.card.at - 0.14) / 0.18)) * L.card.o
             if (o <= 0.01) return null
-            const a = anchorOf(L.card)
+            const a = anchorOf(L.card, L.side, L.ay < 300)
             return (
               <g key={L.k} opacity={o}>
                 <line x1={L.ax} y1={L.ay} x2={a.x} y2={a.y} stroke="#38bdf8" strokeWidth={1.1} strokeDasharray="4 4" opacity={0.7} />
@@ -2386,42 +2360,50 @@ function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
    MODUŁ 04: DEEP RESEARCH
    Wizualizacja: SIEĆ NEURONOWA WYRASTAJĄCA Z LAPTOPA
 
-   Zamiast rzadkiego drzewka — gęsta, warstwowa siatka: cztery warstwy
-   węzłów, każdy spięty z kilkoma z warstwy następnej. Krawędzie zapalają
-   się falami w miarę scrolla, na końcu wszystko schodzi się do raportu.
-   Kształt węzła nadal niesie typ źródła, więc widać CO zostało przeszukane.
+   Gęsta, warstwowa siatka: trzy warstwy węzłów, każdy spięty z kilkoma
+   z warstwy wyżej. Krawędzie zapalają się falami, na końcu wszystko
+   schodzi się do raportu. Kształt węzła niesie typ źródła, a część węzłów
+   ma podpis — widać nie tylko ILE, ale i CO zostało przeszukane.
    ═══════════════════════════════════════════════════════════════════════ */
 
-type NeuroNode = { x: number; y: number; z: number; lvl: number; kind: number }
+type NeuroNode = { x: number; y: number; z: number; lvl: number; kind: number; tag?: string }
 
-/** Warstwy sieci: liczba węzłów, wysokość, rozpiętość w poziomie. */
+/** Przykładowe źródła — pokazują, że research faktycznie czegoś szuka. */
+const NEURO_TAGS = [
+  'arxiv.org', 'benchmarki LLM', 'raport rynku AI',
+  'dokumentacja API', 'analiza konkurencji', 'studium przypadku',
+]
+
 const NEURO = (() => {
   const layers = [
-    { n: 7, y: 74, spread: 168, dz: 46 },
-    { n: 10, y: 140, spread: 236, dz: 60 },
-    { n: 8, y: 206, spread: 200, dz: 52 },
+    { n: 7, y: 84, spread: 208, dz: 54 },
+    { n: 10, y: 168, spread: 286, dz: 70 },
+    { n: 8, y: 250, spread: 244, dz: 60 },
   ]
   const nodes: NeuroNode[] = []
   const index: number[][] = []
+  let tagI = 0
   layers.forEach((L, li) => {
     const ids: number[] = []
     for (let i = 0; i < L.n; i++) {
       const u = L.n === 1 ? 0.5 : i / (L.n - 1)
       const seed = li * 50 + i
+      // Podpisy tylko na skrajnych węzłach — w środku zrobiłby się tłok.
+      const edgeish = i === 0 || i === L.n - 1
+      const tag = edgeish && tagI < NEURO_TAGS.length ? NEURO_TAGS[tagI++] : undefined
       nodes.push({
-        x: (u - 0.5) * 2 * L.spread + (noise(seed) - 0.5) * 22,
-        y: L.y + (noise(seed + 7) - 0.5) * 20,
+        x: (u - 0.5) * 2 * L.spread + (noise(seed) - 0.5) * 24,
+        y: L.y + (noise(seed + 7) - 0.5) * 22,
         z: (noise(seed + 13) - 0.5) * 2 * L.dz,
         lvl: li + 1,
         kind: (i + li) % 4,
+        tag,
       })
       ids.push(nodes.length - 1)
     }
     index.push(ids)
   })
 
-  // Krawędzie: każdy węzeł łączy się z 2–3 najbliższymi w poziomie z warstwy
-  // wyżej. Nie „każdy z każdym” — inaczej robi się plątanina zamiast siatki.
   const edges: { a: number; b: number; at: number }[] = []
   for (let li = 0; li < index.length - 1; li++) {
     index[li]!.forEach((ai) => {
@@ -2434,47 +2416,38 @@ const NEURO = (() => {
       })
     })
   }
-  // Warstwa wejściowa spięta z laptopem
   index[0]!.forEach((ai, i) => edges.push({ a: -1, b: ai, at: 0.05 + i * 0.02 }))
-  // Ostatnia warstwa spięta z raportem
   index[index.length - 1]!.forEach((ai, i) => edges.push({ a: ai, b: -2, at: 0.72 + i * 0.015 }))
-
   return { nodes, edges }
 })()
 
-const NEURO_APEX: V3 = [0, 34, -24]
-const NEURO_OUT: V3 = [0, 274, -4]
+const NEURO_APEX: V3 = [0, 40, -28]
+const NEURO_OUT: V3 = [0, 330, -4]
 
 function DeepResearchVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
   const p = useScrollProgress(containerRef)
-  const { P3, poly } = makeScene(1.18, 450, 552)
+  const { P3, poly, plane } = makeScene(1.02, 450, 566)
 
-  const pos = (i: number): V3 => {
-    if (i === -1) return NEURO_APEX
-    if (i === -2) return NEURO_OUT
-    const n = NEURO.nodes[i]!
-    return [n.x, n.y, n.z]
-  }
+  const pos = (i: number): V3 =>
+    i === -1 ? NEURO_APEX : i === -2 ? NEURO_OUT : [NEURO.nodes[i]!.x, NEURO.nodes[i]!.y, NEURO.nodes[i]!.z]
+
   const nodeT = (i: number) => {
-    const n = NEURO.nodes[i]!
-    const at = 0.08 + (n.lvl - 1) * 0.2
+    const at = 0.08 + (NEURO.nodes[i]!.lvl - 1) * 0.2
     const q = Math.max(0, Math.min(1, (p - at) / 0.18))
     return q * q * (3 - 2 * q)
   }
 
-  /** Krawędź rysowana częściowo — realnie „narasta”, zamiast mrugać. */
   const edgePts = (a: V3, b: V3, t: number, bow: number) => {
     const pts: string[] = []
     const N = 12
     for (let i = 0; i <= N; i++) {
       const u = (i / N) * t
-      const v = 1 - u
-      const mid = 4 * u * v
-      const x = a[0] + (b[0] - a[0]) * u
-      const y = a[1] + (b[1] - a[1]) * u + mid * bow
-      const z = a[2] + (b[2] - a[2]) * u
-      const q = P3(x, y, z)
+      const q = P3(
+        a[0] + (b[0] - a[0]) * u,
+        a[1] + (b[1] - a[1]) * u + 4 * u * (1 - u) * bow,
+        a[2] + (b[2] - a[2]) * u,
+      )
       pts.push(`${q.x.toFixed(1)},${q.y.toFixed(1)}`)
     }
     return pts.join(' ')
@@ -2482,7 +2455,7 @@ function DeepResearchVisual() {
 
   const glyph = (kind: number, x: number, y: number, k: number) => {
     const st = { stroke: '#7dd3fc', strokeWidth: 1.2, fill: '#07131f' }
-    const r = 4.6 * k
+    const r = 5 * k
     if (kind === 0) return <circle cx={x} cy={y} r={r} {...st} />
     if (kind === 1) return <rect x={x - r * 0.9} y={y - r * 1.15} width={r * 1.8} height={r * 2.3} rx={1} {...st} />
     if (kind === 2) return (
@@ -2501,16 +2474,19 @@ function DeepResearchVisual() {
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[470px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.15)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.15)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.45 + p * 0.45 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbRsBase" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#8b9bb1" /><stop offset="100%" stopColor="#3a4759" />
+            <stop offset="0%" stopColor="#9fadc0" /><stop offset="100%" stopColor="#3a4759" />
+          </linearGradient>
+          <linearGradient id="nbRsLid" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6d7d92" /><stop offset="100%" stopColor="#2b3644" />
           </linearGradient>
           <radialGradient id="nbRsFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
+            <stop offset="0%" stopColor="#020617" stopOpacity="0.72" />
             <stop offset="100%" stopColor="#020617" stopOpacity="0" />
           </radialGradient>
           <filter id="nbRsGlow" x="-60%" y="-60%" width="220%" height="220%">
@@ -2528,26 +2504,49 @@ function DeepResearchVisual() {
             const out = e.b === -2
             return (
               <polyline
-                key={`e${i}`}
-                points={edgePts(pos(e.a), pos(e.b), t, out ? -16 : 10)}
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth={out ? 0.9 : 1}
+                key={`e${i}`} points={edgePts(pos(e.a), pos(e.b), t, out ? -18 : 12)}
+                fill="none" stroke="#38bdf8" strokeWidth={out ? 0.9 : 1}
                 strokeDasharray={out ? '3 5' : undefined}
-                opacity={(out ? 0.4 : 0.3) * t}
-                strokeLinecap="round"
+                opacity={(out ? 0.4 : 0.3) * t} strokeLinecap="round"
               />
             )
           })}
         </g>
 
-        {/* ── LAPTOP: mała kotwica sceny ── */}
+        {/* ── LAPTOP ── */}
         <g>
-          {(() => { const e = P3(0, -2, 0); return <ellipse cx={e.x} cy={e.y} rx={98} ry={24} fill="url(#nbRsFloor)" /> })()}
-          <polygon points={poly([[-34, 0, 21], [34, 0, 21], [28, 0, -23], [-28, 0, -23]])} fill="url(#nbRsBase)" stroke="#c3d0e0" strokeWidth={1.1} strokeLinejoin="round" />
-          <polygon points={poly([[-34, 0, 21], [34, 0, 21], [34, -3, 21], [-34, -3, 21]])} fill="#2b3646" stroke="#7d8ea6" strokeWidth={1} />
-          <polygon points={poly([[-28, 0, -23], [28, 0, -23], [25, 33, -32], [-25, 33, -32]])} fill="#0b1622" stroke="#c3d0e0" strokeWidth={1.2} strokeLinejoin="round" />
-          <polygon points={poly([[-23, 4, -25], [23, 4, -25], [21, 29, -32], [-21, 29, -32]])} fill="#07121d" stroke="#38bdf8" strokeWidth={0.9} strokeOpacity={0.55} />
+          {(() => { const e = P3(0, -3, 0); return <ellipse cx={e.x} cy={e.y} rx={128} ry={30} fill="url(#nbRsFloor)" /> })()}
+
+          {/* klapa z ekranem */}
+          <polygon points={poly([[-40, 0, -28], [40, 0, -28], [36, 40, -40], [-36, 40, -40]])} fill="url(#nbRsLid)" stroke="#cbd8e6" strokeWidth={1.3} strokeLinejoin="round" />
+          <polygon points={poly([[-34, 4, -30], [34, 4, -30], [30.5, 36, -39], [-30.5, 36, -39]])} fill="#06111c" stroke="#38bdf8" strokeWidth={0.9} strokeOpacity={0.5} />
+          {/* zawartość ekranu: pasek wyszukiwania i wyniki */}
+          <g transform={plane(0, 20, -34.5, [1, 0, 0], [0, -1, 0])} opacity={0.9}>
+            <rect x={-26} y={-13} width={52} height={7} rx={3.5} fill="#0d2033" stroke="#38bdf8" strokeWidth={0.7} />
+            <circle cx={-21} cy={-9.5} r={2.1} fill="none" stroke="#7dd3fc" strokeWidth={0.7} />
+            <line x1={-19.6} y1={-8.1} x2={-18.2} y2={-6.7} stroke="#7dd3fc" strokeWidth={0.7} />
+            <line x1={-15} y1={-9.5} x2={12} y2={-9.5} stroke="#7dd3fc" strokeWidth={0.9} opacity={0.55} />
+            {[-2, 3, 8].map((y, i) => (
+              <g key={y}>
+                <rect x={-26} y={y} width={3} height={3} rx={0.6} fill="#38bdf8" opacity={0.6} />
+                <line x1={-20} y1={y + 1.5} x2={26 - i * 8} y2={y + 1.5} stroke="#5b7d99" strokeWidth={0.8} />
+              </g>
+            ))}
+          </g>
+
+          {/* podstawa z klawiaturą i gładzikiem */}
+          <polygon points={poly([[-42, 0, 26], [42, 0, 26], [36, 0, -28], [-36, 0, -28]])} fill="url(#nbRsBase)" stroke="#d3dde9" strokeWidth={1.3} strokeLinejoin="round" />
+          <polygon points={poly([[-42, 0, 26], [42, 0, 26], [42, -3.5, 26], [-42, -3.5, 26]])} fill="#28323f" stroke="#7d8ea6" strokeWidth={1} />
+          <g transform={plane(0, 0.4, 0, [1, 0, 0], [0, 0, 1])} opacity={0.75}>
+            {Array.from({ length: 4 }, (_, r) => (
+              <g key={r}>
+                {Array.from({ length: 12 }, (_, c) => (
+                  <rect key={c} x={-32 + c * 5.4} y={-18 + r * 5.2} width={4.2} height={4} rx={0.8} fill="#1c2531" opacity={0.9} />
+                ))}
+              </g>
+            ))}
+            <rect x={-11} y={6} width={22} height={13} rx={1.6} fill="none" stroke="#6f8199" strokeWidth={0.8} />
+          </g>
         </g>
 
         {/* ── WĘZŁY ── */}
@@ -2558,37 +2557,41 @@ function DeepResearchVisual() {
             const q = P3(n.x, n.y, n.z)
             return (
               <g key={`n${i}`} opacity={t}>
-                <circle cx={q.x} cy={q.y} r={9} fill="#38bdf8" opacity={0.09} />
+                <circle cx={q.x} cy={q.y} r={10} fill="#38bdf8" opacity={0.1} />
                 {glyph(n.kind, q.x, q.y, n.lvl === 2 ? 1.05 : 0.92)}
+                {n.tag && (
+                  <text
+                    x={q.x + (n.x < 0 ? -13 : 13)} y={q.y + 3.6}
+                    textAnchor={n.x < 0 ? 'end' : 'start'}
+                    fill="#8fb3cc" fontSize={11} fontFamily="monospace" letterSpacing="0.3"
+                  >
+                    {n.tag}
+                  </text>
+                )}
               </g>
             )
           })}
         </g>
 
-        {/* ── RAPORT: jedna odpowiedź na wyjściu sieci ── */}
+        {/* ── RAPORT ── */}
         {outT > 0.01 && (() => {
           const c = P3(NEURO_OUT[0], NEURO_OUT[1], NEURO_OUT[2])
-          const w = 60, h = 38
+          const w = 64, h = 40
           return (
-            <g opacity={outT} filter="url(#nbRsGlow)">
-              <rect x={c.x - w} y={c.y - h} width={w * 2} height={h * 2} rx={4} fill="#0a1726" stroke="#7dd3fc" strokeWidth={1.6} />
-              {[-17, -7, 3, 13].map((dy, i) => (
-                <line key={dy} x1={c.x - w + 15} y1={c.y + dy} x2={c.x + w - (i === 3 ? 38 : 15)} y2={c.y + dy} stroke="#9fc9e4" strokeWidth={1.4} opacity={0.7} />
-              ))}
+            <g opacity={outT}>
+              <g filter="url(#nbRsGlow)">
+                <rect x={c.x - w} y={c.y - h} width={w * 2} height={h * 2} rx={4} fill="#0a1726" stroke="#7dd3fc" strokeWidth={1.6} />
+                {[-18, -7, 4, 15].map((dy, i) => (
+                  <line key={dy} x1={c.x - w + 16} y1={c.y + dy} x2={c.x + w - (i === 3 ? 40 : 16)} y2={c.y + dy} stroke="#9fc9e4" strokeWidth={1.5} opacity={0.72} />
+                ))}
+              </g>
+              <text x={c.x} y={c.y + h + 20} fill="#7dd3fc" fontSize={12} fontFamily="monospace" fontWeight="bold" textAnchor="middle" letterSpacing="1.5">RAPORT</text>
             </g>
-          )
-        })()}
-        {outT > 0.01 && (() => {
-          const c = P3(NEURO_OUT[0], NEURO_OUT[1], NEURO_OUT[2])
-          return (
-            <text x={c.x} y={c.y + 58} fill="#7dd3fc" fontSize={12} fontFamily="monospace" fontWeight="bold" textAnchor="middle" letterSpacing="1.5" opacity={outT}>
-              RAPORT
-            </text>
           )
         })()}
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={596} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`PRZESZUKANO ${String(shown * 9).padStart(3, '0')} ŹRÓDEŁ`}
           </text>
         </g>
@@ -2598,57 +2601,57 @@ function DeepResearchVisual() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   MODUŁ 05: AKADEMIA
-   Wizualizacja: ŚCIEŻKA, KTÓRA BUDUJE SIĘ W GÓRĘ
+   MODUŁ 05: AKADEMIA I PANEL TWÓRCY
+   Wizualizacja: ŚCIEŻKA W GÓRĘ, A NA SZCZYCIE PULPIT TWÓRCY
 
-   Każdy stopień to etap nauki. Przy scrollu schody dobudowują się kolejno,
-   a po nich wędruje znacznik postępu. Ruch narastający w górę — nie ma go
-   w żadnym innym module.
+   Jedna scena opowiada oba etapy: schody to nauka, konsoleta na szczycie
+   to moment, w którym sam zaczynasz wystawiać i zarabiać. Ruch narastający
+   w górę plus wysuw suwaków — dwa gesty, których nie ma nigdzie indziej.
    ═══════════════════════════════════════════════════════════════════════ */
 
-const ACADEMY_STEPS = [
-  { t: 'PODSTAWY' },
-  { t: 'PROMPTY' },
-  { t: 'OBRAZ' },
-  { t: 'ASYSTENT' },
-  { t: 'AUTOMATY' },
-]
+const ACADEMY_STEPS = [{ t: 'PODSTAWY' }, { t: 'PROMPTY' }, { t: 'OBRAZ' }, { t: 'ASYSTENT' }, { t: 'AUTOMATY' }]
+const CREATOR_FADERS = [0.76, 0.44, 0.9, 0.6]
 
 function AcademyVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
   const p = useScrollProgress(containerRef)
-  const { P3, poly, plane } = makeScene(2.30, 424, 432)
+  const { P3, poly, plane } = makeScene(1.72, 372, 486)
 
-  const SW = 52   // szerokość stopnia wzdłuż X
-  const SH = 15   // wysokość podstopnia
-  const SD = 62   // głębokość stopnia
-  const stepAt = (i: number) => i * 0.15
-
-  // Środek górnej płaszczyzny stopnia i — po tym wędruje znacznik.
-  const topOf = (i: number): V3 => [-118 + i * SW + SW / 2, (i + 1) * SH, 0]
+  const SW = 56, SH = 17, SD = 66
+  const topOf = (i: number): V3 => [-150 + i * SW + SW / 2, (i + 1) * SH, 0]
 
   const marker = (() => {
-    const q = Math.max(0, Math.min(1, (p - 0.1) / 0.8)) * (ACADEMY_STEPS.length - 1)
+    const q = Math.max(0, Math.min(1, (p - 0.06) / 0.62)) * (ACADEMY_STEPS.length - 1)
     const i = Math.min(ACADEMY_STEPS.length - 2, Math.floor(q))
     const f = q - i
     const a = topOf(i), b = topOf(i + 1)
-    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f + 13, a[2]] as V3
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f + 14, a[2]] as V3
   })()
+
+  // Pulpit twórcy unosi się nad ostatnim stopniem
+  const deskT = Math.max(0, Math.min(1, (p - 0.66) / 0.28))
+  const deskEase = deskT * deskT * (3 - 2 * deskT)
+  const DX = -150 + (ACADEMY_STEPS.length - 1) * SW + SW / 2 + 26
+  const DY = ACADEMY_STEPS.length * SH + 52 + (1 - deskEase) * -26
+  const DESK: [V3, V3] = [[1, 0, 0], [0, -0.42, 0.91]]
 
   return (
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[440px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.12)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.45 + p * 0.45 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbAcTop" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#5c6d84" /><stop offset="100%" stopColor="#26303f" />
+            <stop offset="0%" stopColor="#66788f" /><stop offset="100%" stopColor="#28323f" />
           </linearGradient>
           <linearGradient id="nbAcFront" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#1a2534" /><stop offset="100%" stopColor="#0a1119" />
+            <stop offset="0%" stopColor="#1c2735" /><stop offset="100%" stopColor="#0a1119" />
+          </linearGradient>
+          <linearGradient id="nbAcDesk" x1="0%" y1="0%" x2="60%" y2="100%">
+            <stop offset="0%" stopColor="#28333f" /><stop offset="60%" stopColor="#141d27" /><stop offset="100%" stopColor="#0b131b" />
           </linearGradient>
           <radialGradient id="nbAcFloor" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#020617" stopOpacity="0.65" />
@@ -2656,45 +2659,69 @@ function AcademyVisual() {
           </radialGradient>
         </defs>
 
-        {(() => { const e = P3(0, -4, 0); return <ellipse cx={e.x} cy={e.y} rx={230} ry={44} fill="url(#nbAcFloor)" /> })()}
+        {(() => { const e = P3(0, -5, 0); return <ellipse cx={e.x} cy={e.y} rx={272} ry={50} fill="url(#nbAcFloor)" /> })()}
 
         {ACADEMY_STEPS.map((st, i) => {
-          const q = Math.max(0, Math.min(1, (p - stepAt(i)) / 0.2))
+          const q = Math.max(0, Math.min(1, (p - i * 0.12) / 0.2))
           const t = q * q * (3 - 2 * q)
           if (t <= 0.01) return null
-          const x0 = -118 + i * SW
-          const x1 = x0 + SW
-          const y1 = (i + 1) * SH
-          // Stopień wjeżdża od dołu na swoje miejsce.
-          const lift = (1 - t) * -34
+          const x0 = -150 + i * SW, x1 = x0 + SW, y1 = (i + 1) * SH
+          const lift = (1 - t) * -36
           return (
             <g key={st.t} opacity={t}>
-              <polygon points={poly([[x1, lift, -SD / 2], [x1, lift, SD / 2], [x1, y1 + lift, SD / 2], [x1, y1 + lift, -SD / 2]])} fill="#0d1622" stroke="#3f5169" strokeWidth={1.1} strokeLinejoin="round" />
-              <polygon points={poly([[x0, y1 + lift, SD / 2], [x1, y1 + lift, SD / 2], [x1, y1 + lift, -SD / 2], [x0, y1 + lift, -SD / 2]])} fill="url(#nbAcTop)" stroke="#8ea0b8" strokeWidth={1.2} strokeLinejoin="round" />
-              <polygon points={poly([[x0, lift, SD / 2], [x1, lift, SD / 2], [x1, y1 + lift, SD / 2], [x0, y1 + lift, SD / 2]])} fill="url(#nbAcFront)" stroke="#3f5169" strokeWidth={1.1} strokeLinejoin="round" />
-              {/* Numer i nazwa etapu na czole stopnia */}
+              <polygon points={poly([[x1, lift, -SD / 2], [x1, lift, SD / 2], [x1, y1 + lift, SD / 2], [x1, y1 + lift, -SD / 2]])} fill="#0d1622" stroke="#42556d" strokeWidth={1.1} strokeLinejoin="round" />
+              <polygon points={poly([[x0, y1 + lift, SD / 2], [x1, y1 + lift, SD / 2], [x1, y1 + lift, -SD / 2], [x0, y1 + lift, -SD / 2]])} fill="url(#nbAcTop)" stroke="#94a6be" strokeWidth={1.2} strokeLinejoin="round" />
+              <polygon points={poly([[x0, lift, SD / 2], [x1, lift, SD / 2], [x1, y1 + lift, SD / 2], [x0, y1 + lift, SD / 2]])} fill="url(#nbAcFront)" stroke="#42556d" strokeWidth={1.1} strokeLinejoin="round" />
               <g transform={plane((x0 + x1) / 2, y1 / 2 + lift, SD / 2, [1, 0, 0], [0, -1, 0])}>
-                <text x={0} y={-2} fill="#7dd3fc" fontSize={7} fontFamily="monospace" fontWeight="bold" textAnchor="middle">{`0${i + 1}`}</text>
-                <text x={0} y={6} fill="#93a5bd" fontSize={5.2} fontFamily="monospace" textAnchor="middle" letterSpacing="0.4">{st.t}</text>
+                <text x={0} y={-1.5} fill="#7dd3fc" fontSize={7.6} fontFamily="monospace" fontWeight="bold" textAnchor="middle">{`0${i + 1}`}</text>
+                <text x={0} y={6.4} fill="#9db0c6" fontSize={5.4} fontFamily="monospace" textAnchor="middle" letterSpacing="0.4">{st.t}</text>
               </g>
             </g>
           )
         })}
 
-        {/* Znacznik postępu wędrujący po ścieżce */}
-        {p > 0.12 && (() => {
+        {/* Znacznik postępu na ścieżce */}
+        {p > 0.08 && (() => {
           const c = P3(marker[0], marker[1], marker[2])
           return (
             <g>
-              <circle cx={c.x} cy={c.y} r={16} fill="#38bdf8" opacity={0.14} />
+              <circle cx={c.x} cy={c.y} r={17} fill="#38bdf8" opacity={0.14} />
               <circle cx={c.x} cy={c.y} r={6.5} fill="#38bdf8" />
-              <circle cx={c.x} cy={c.y} r={11} fill="none" stroke="#7dd3fc" strokeWidth={1.2} opacity={0.6} />
+              <circle cx={c.x} cy={c.y} r={11.5} fill="none" stroke="#7dd3fc" strokeWidth={1.2} opacity={0.6} />
             </g>
           )
         })()}
 
+        {/* ── PULPIT TWÓRCY NA SZCZYCIE ── */}
+        {deskT > 0.01 && (
+          <g opacity={deskEase}>
+            <polygon points={poly([[DX - 66, DY, 34], [DX + 66, DY, 34], [DX + 58, DY + 26, -30], [DX - 58, DY + 26, -30]])} fill="url(#nbAcDesk)" stroke="#9fb0c6" strokeWidth={1.3} strokeLinejoin="round" />
+            <polygon points={poly([[DX - 66, DY - 8, 34], [DX + 66, DY - 8, 34], [DX + 66, DY, 34], [DX - 66, DY, 34]])} fill="#131c27" stroke="#54687f" strokeWidth={1} />
+            <g transform={plane(DX, DY + 13, 2, ...DESK)}>
+              {CREATOR_FADERS.map((v, i) => {
+                const x = -40 + i * 26
+                const q = Math.max(0, Math.min(1, (deskEase - i * 0.12) / 0.5))
+                const y = 16 - 30 * v * (q * q * (3 - 2 * q))
+                return (
+                  <g key={i}>
+                    <rect x={x - 2} y={-14} width={4} height={30} rx={2} fill="#070c13" stroke="#3d4b5e" strokeWidth={0.7} />
+                    <line x1={x} y1={y} x2={x} y2={16} stroke="#38bdf8" strokeWidth={1.8} opacity={0.6} />
+                    <rect x={x - 6} y={y - 3} width={12} height={6} rx={1.6} fill="#93a4bb" stroke="#e2e9f2" strokeWidth={0.7} />
+                  </g>
+                )
+              })}
+              {/* metka ceny — moment, w którym zaczynasz zarabiać */}
+              <g opacity={Math.max(0, Math.min(1, (deskEase - 0.5) / 0.4))}>
+                <rect x={22} y={-13} width={40} height={17} rx={3} fill="#0a1a2a" stroke="#7dd3fc" strokeWidth={1} />
+                <text x={42} y={-1.5} fill="#bfe4fb" fontSize={8} fontFamily="monospace" fontWeight="bold" textAnchor="middle">PLN</text>
+              </g>
+              <text x={-40} y={-24} fill="#7f93aa" fontSize={6.4} fontFamily="monospace" letterSpacing="1">PANEL TWÓRCY</text>
+            </g>
+          </g>
+        )}
+
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={596} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`POSTĘP ŚCIEŻKI ${String(Math.round(Math.min(1, p / 0.9) * 100)).padStart(3, '0')}%`}
           </text>
         </g>
@@ -2704,104 +2731,105 @@ function AcademyVisual() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   MODUŁ 06: PANEL TWÓRCY
-   Wizualizacja: KONSOLETA — SUWAKI WJEŻDŻAJĄ NA POZYCJE
+   MODUŁ 06: PAMIĘĆ AI
+   Wizualizacja: KARTOTEKA — WPISY, KTÓRE MOŻESZ PRZEJRZEĆ I WYJĄĆ
 
-   Panel to dosłownie panel. Przy scrollu fadery wjeżdżają na swoje wartości,
-   pokrętła się obracają, a wskaźniki zapalają kolejno. Ruch liniowy plus
-   obrót — inny gest niż wszystko wcześniej.
+   Karty wsuwają się do szuflady jedna po drugiej: to rzeczy, które
+   platforma o Tobie zapamiętała. Jedna jest wysunięta i podświetlona
+   z krzyżykiem — cała obietnica modułu w jednym geście: masz wgląd
+   i w każdej chwili możesz skasować.
    ═══════════════════════════════════════════════════════════════════════ */
 
-const FADERS = [0.78, 0.46, 0.9, 0.62, 0.34, 0.7]
-const KNOBS = [0.7, 0.35, 0.55]
+const MEMORY_CARDS = [
+  'Branża i profil firmy',
+  'Ton komunikacji',
+  'Nazwy produktów',
+  'Stali klienci',
+  'Ulubione formaty',
+  'Ustalenia z projektów',
+]
 
-function CreatorPanelVisual() {
+function MemoryVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
   const p = useScrollProgress(containerRef)
-  const { P3, poly, plane } = makeScene(1.70, 450, 392)
+  const { P3, poly, plane } = makeScene(1.62, 442, 452)
 
-  // Blat konsolety: prostokąt odchylony do tyłu (przód niżej, tył wyżej).
-  const PX = 150, PZF = 58, PZB = -66, YF = 0, YB = 46
-  const TOP: [V3, V3] = [[1, 0, 0], [0, -0.348, 0.937]]
+  const TX = 116, TZ = 74, TY = 34       // szuflada
+  const CW = 104, CH = 84                // karta
+  const N = MEMORY_CARDS.length
+  const pullT = Math.max(0, Math.min(1, (p - 0.68) / 0.3))
+  const pullEase = pullT * pullT * (3 - 2 * pullT)
 
   return (
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[430px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.12)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[450px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.45 + p * 0.45 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="nbCpTop" x1="0%" y1="0%" x2="60%" y2="100%">
-            <stop offset="0%" stopColor="#26313f" /><stop offset="55%" stopColor="#151d28" /><stop offset="100%" stopColor="#0c131b" />
+          <linearGradient id="nbMmTray" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#5d6d83" /><stop offset="100%" stopColor="#1c2430" />
           </linearGradient>
-          <linearGradient id="nbCpSide" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#5f6e82" /><stop offset="100%" stopColor="#232d3b" />
+          <linearGradient id="nbMmCard" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#22303f" /><stop offset="100%" stopColor="#121a25" />
           </linearGradient>
-          <radialGradient id="nbCpFloor" cx="50%" cy="50%" r="50%">
+          <radialGradient id="nbMmFloor" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#020617" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {(() => { const e = P3(0, -14, 0); return <ellipse cx={e.x} cy={e.y} rx={224} ry={46} fill="url(#nbCpFloor)" /> })()}
+        {(() => { const e = P3(0, -4, 0); return <ellipse cx={e.x} cy={e.y} rx={218} ry={46} fill="url(#nbMmFloor)" /> })()}
 
-        {/* Obudowa: przednia ścianka i boki */}
-        <polygon points={poly([[-PX, YF - 16, PZF], [PX, YF - 16, PZF], [PX, YF, PZF], [-PX, YF, PZF]])} fill="#111a25" stroke="#4a5b72" strokeWidth={1.2} />
-        <polygon points={poly([[PX, YF - 16, PZF], [PX, YB - 16, PZB], [PX, YB, PZB], [PX, YF, PZF]])} fill="url(#nbCpSide)" stroke="#7d8ea6" strokeWidth={1.2} />
+        {/* Tylna ścianka szuflady */}
+        <polygon points={poly([[-TX, 0, -TZ], [TX, 0, -TZ], [TX, TY, -TZ], [-TX, TY, -TZ]])} fill="#080e16" stroke="#3f5169" strokeWidth={1.1} />
 
-        {/* Blat */}
-        <polygon points={poly([[-PX, YF, PZF], [PX, YF, PZF], [PX, YB, PZB], [-PX, YB, PZB]])} fill="url(#nbCpTop)" stroke="#9fb0c6" strokeWidth={1.4} strokeLinejoin="round" />
-
-        {/* Wszystkie kontrolki rysowane w lokalnym układzie blatu */}
-        <g transform={plane(0, (YF + YB) / 2, (PZF + PZB) / 2, ...TOP)}>
-          {/* Fadery */}
-          {FADERS.map((v, i) => {
-            const x = -120 + i * 28
-            const q = Math.max(0, Math.min(1, (p - 0.1 - i * 0.07) / 0.3))
-            const t = q * q * (3 - 2 * q)
-            const top = -30, len = 54
-            const y = top + len - len * v * t
-            return (
-              <g key={`f${i}`}>
-                <rect x={x - 2.5} y={top} width={5} height={len} rx={2.5} fill="#070c13" stroke="#3d4b5e" strokeWidth={0.8} />
-                <line x1={x} y1={y} x2={x} y2={top + len} stroke="#38bdf8" strokeWidth={2.2} opacity={0.55} />
-                <rect x={x - 8} y={y - 4} width={16} height={8} rx={2} fill="#8ea0b8" stroke="#dbe3ec" strokeWidth={0.9} />
-                <line x1={x - 5} y1={y} x2={x + 5} y2={y} stroke="#0f172a" strokeWidth={1.1} />
-              </g>
-            )
-          })}
-
-          {/* Pokrętła */}
-          {KNOBS.map((v, i) => {
-            const x = 62 + i * 36
-            const y = 40
-            const q = Math.max(0, Math.min(1, (p - 0.22 - i * 0.08) / 0.3))
-            const t = q * q * (3 - 2 * q)
-            const ang = (-130 + 260 * v * t) * D2R
-            return (
-              <g key={`k${i}`}>
-                <circle cx={x} cy={y} r={12} fill="#1b2533" stroke="#8ea0b8" strokeWidth={1.1} />
-                <circle cx={x} cy={y} r={12} fill="none" stroke="#38bdf8" strokeWidth={1.6} strokeDasharray={`${Math.max(0.01, 56 * v * t)} 200`} transform={`rotate(140 ${x} ${y})`} opacity={0.85} />
-                <line x1={x} y1={y} x2={x + Math.sin(ang) * 8} y2={y - Math.cos(ang) * 8} stroke="#e8eef6" strokeWidth={1.6} strokeLinecap="round" />
-              </g>
-            )
-          })}
-
-          {/* Wskaźnik segmentowy */}
-          {Array.from({ length: 12 }, (_, i) => {
-            const on = p > 0.3 + i * 0.05
-            return (
-              <rect
-                key={`s${i}`} x={-124 + i * 9} y={-50} width={6} height={5} rx={1}
-                fill={on ? (i > 9 ? '#7dd3fc' : '#38bdf8') : '#16202c'}
-                opacity={on ? 0.9 : 1}
+        {/* Karty — wsuwają się kolejno, jedna zostaje wysunięta w górę */}
+        {MEMORY_CARDS.map((m, i) => {
+          const q = Math.max(0, Math.min(1, (p - i * 0.1) / 0.24))
+          const t = q * q * (3 - 2 * q)
+          if (t <= 0.01) return null
+          const isPulled = i === 2
+          const z = -TZ + 12 + i * 25 + (1 - t) * 110
+          const lift = isPulled ? pullEase * 62 : 0
+          const x0 = -CW / 2, x1 = CW / 2
+          const y0 = 8 + lift, y1 = 8 + CH + lift
+          const hot = isPulled && pullEase > 0.4
+          return (
+            <g key={m} opacity={Math.min(1, t * 2)}>
+              <polygon
+                points={poly([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]])}
+                fill="url(#nbMmCard)" stroke={hot ? '#7dd3fc' : '#54687f'} strokeWidth={hot ? 1.5 : 1.1} strokeLinejoin="round"
               />
-            )
-          })}
+              <g transform={plane(0, (y0 + y1) / 2, z, [1, 0, 0], [0, -1, 0])}>
+                <text x={-42} y={-27} fill={hot ? '#bfe4fb' : '#93a8c0'} fontSize={7.4} fontFamily="monospace" letterSpacing="0.4">{m}</text>
+                <line x1={-42} y1={-18} x2={16} y2={-18} stroke="#3f5169" strokeWidth={0.9} />
+                <line x1={-42} y1={-11} x2={0} y2={-11} stroke="#3f5169" strokeWidth={0.9} />
+                {hot && (
+                  <g>
+                    <circle cx={40} cy={-28} r={7} fill="#0b1a28" stroke="#7dd3fc" strokeWidth={1.1} />
+                    <path d="M 37 -31 L 43 -25 M 43 -31 L 37 -25" stroke="#bfe4fb" strokeWidth={1.3} strokeLinecap="round" />
+                  </g>
+                )}
+              </g>
+            </g>
+          )
+        })}
 
-          <text x={62} y={20} fill="#6b7f96" fontSize={7} fontFamily="monospace" letterSpacing="1.4">PRESETY</text>
+        {/* Przednia ścianka szuflady — karty siedzą za nią */}
+        <polygon points={poly([[-TX, 0, TZ], [TX, 0, TZ], [TX, TY, TZ], [-TX, TY, TZ]])} fill="url(#nbMmTray)" stroke="#a7b6c9" strokeWidth={1.3} strokeLinejoin="round" />
+        <polygon points={poly([[TX, 0, -TZ], [TX, 0, TZ], [TX, TY, TZ], [TX, TY, -TZ]])} fill="#1a222e" stroke="#6f8199" strokeWidth={1.1} />
+        <g transform={plane(0, TY / 2, TZ, [1, 0, 0], [0, -1, 0])}>
+          <rect x={-26} y={-6} width={52} height={12} rx={2.5} fill="#0d151f" stroke="#8ea0b8" strokeWidth={0.9} />
+          <text x={0} y={3} fill="#9fb0c6" fontSize={7} fontFamily="monospace" textAnchor="middle" letterSpacing="1.4">PAMIĘĆ</text>
+        </g>
+
+        <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
+          <text x={28} y={598} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+            {`ZAPAMIĘTANE WPISY ${Math.min(N, Math.round(p / 0.1))} / ${N} · PEŁNY WGLĄD`}
+          </text>
         </g>
       </svg>
     </div>
@@ -2810,44 +2838,47 @@ function CreatorPanelVisual() {
 
 /* ═══════════════════════════════════════════════════════════════════════
    MODUŁ 07: ZINTEGROWANY WORKSPACE
-   Wizualizacja: MODUŁY WSUWANE W JEDNĄ OBUDOWĘ
+   Wizualizacja: WSZYSTKIE NARZĘDZIA ZLATUJĄ SIĘ W JEDNĄ TABLICĘ
 
-   Jedyna scena na stronie, która się SKŁADA, a nie rozkłada. Cała strona
-   przez sześć sekcji rozbiera rzeczy na części — finał scala je w jedno.
-   To jest komunikat „jedna platforma zamiast pięciu subskrypcji”
-   opowiedziany samym ruchem.
+   Jedyna scena na stronie, która się SKŁADA, a nie rozkłada. Kafle
+   z nazwami wszystkich narzędzi nadlatują z zewnątrz i wskakują na swoje
+   miejsca w jednej ramie. Cała strona przez sześć sekcji rozbiera rzeczy
+   na części — finał scala je w jedno. To jest komunikat „jedna platforma
+   zamiast pięciu subskrypcji” opowiedziany samym ruchem.
    ═══════════════════════════════════════════════════════════════════════ */
 
-const RACK_MODULES = ['CZAT AI', 'OBRAZY I WIDEO', 'ASYSTENT', 'DEEP RESEARCH', 'AKADEMIA', 'PANEL TWÓRCY']
+const WS_TILES = [
+  'CZAT AI', 'STUDIO ZDJĘĆ', 'STUDIO WIDEO',
+  'ASYSTENT', 'DEEP RESEARCH', 'PAMIĘĆ AI',
+  'NOTATKI', 'KALENDARZ', 'ZADANIA',
+  'TABLICE', 'AKADEMIA', 'SKLEP',
+]
 
 function WorkspaceVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
   const p = useScrollProgress(containerRef)
-  const { P3, poly, plane } = makeScene(1.55, 450, 402)
+  const { P3, poly, plane } = makeScene(1.30, 450, 430)
 
-  const RX = 118        // półszerokość obudowy
-  const RZ = 52         // półgłębokość
-  const SLOT_H = 22     // wysokość jednego modułu
-  const N = RACK_MODULES.length
-  const H = N * SLOT_H + 12
+  const COLS = 3, ROWS = 4
+  const TW = 92, TH = 40, GAP = 8
+  const BW = COLS * TW + (COLS + 1) * GAP
+  const BH = ROWS * TH + (ROWS + 1) * GAP
+  const X0 = -BW / 2, Y0 = 0
 
   return (
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[450px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[470px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.14)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.4 + p * 0.5 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="nbWsCase" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#2a3444" /><stop offset="100%" stopColor="#0b111a" />
+          <linearGradient id="nbWsBoard" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#141d29" /><stop offset="100%" stopColor="#070c13" />
           </linearGradient>
-          <linearGradient id="nbWsSide" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#63758c" /><stop offset="100%" stopColor="#1d2836" />
-          </linearGradient>
-          <linearGradient id="nbWsMod" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#1d2938" /><stop offset="100%" stopColor="#101823" />
+          <linearGradient id="nbWsTile" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#213042" /><stop offset="100%" stopColor="#101923" />
           </linearGradient>
           <radialGradient id="nbWsFloor" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
@@ -2855,45 +2886,54 @@ function WorkspaceVisual() {
           </radialGradient>
         </defs>
 
-        {(() => { const e = P3(0, -6, 0); return <ellipse cx={e.x} cy={e.y} rx={196} ry={42} fill="url(#nbWsFloor)" /> })()}
+        {(() => { const e = P3(0, -8, 0); return <ellipse cx={e.x} cy={e.y} rx={230} ry={44} fill="url(#nbWsFloor)" /> })()}
 
-        {/* Obudowa: bok i wnętrze (moduły wjeżdżają PRZED tę ściankę) */}
-        <polygon points={poly([[RX, 0, -RZ], [RX, 0, RZ], [RX, H, RZ], [RX, H, -RZ]])} fill="url(#nbWsSide)" stroke="#8ea0b8" strokeWidth={1.3} strokeLinejoin="round" />
-        <polygon points={poly([[-RX, 0, -RZ], [RX, 0, -RZ], [RX, H, -RZ], [-RX, H, -RZ]])} fill="#070c13" stroke="#3f5169" strokeWidth={1.1} />
-        <polygon points={poly([[-RX, H, RZ], [RX, H, RZ], [RX, H, -RZ], [-RX, H, -RZ]])} fill="url(#nbWsCase)" stroke="#9fb0c6" strokeWidth={1.3} strokeLinejoin="round" />
+        {/* Rama tablicy */}
+        <polygon points={poly([[X0 - 11, Y0 - 11, -4], [X0 + BW + 11, Y0 - 11, -4], [X0 + BW + 11, Y0 + BH + 11, -4], [X0 - 11, Y0 + BH + 11, -4]])} fill="url(#nbWsBoard)" stroke="#40536b" strokeWidth={1.4} strokeLinejoin="round" />
 
-        {/* Moduły wsuwane po kolei */}
-        {RACK_MODULES.map((m, i) => {
-          const at = i * 0.13
-          const q = Math.max(0, Math.min(1, (p - at) / 0.26))
+        {/* Kafle nadlatujące na swoje miejsca */}
+        {WS_TILES.map((label, i) => {
+          const col = i % COLS
+          const row = Math.floor(i / COLS)
+          const at = i * 0.055
+          const q = Math.max(0, Math.min(1, (p - at) / 0.3))
           const t = q * q * (3 - 2 * q)
-          const y0 = 6 + i * SLOT_H
-          const y1 = y0 + SLOT_H - 4
-          // Wysunięcie: moduł nadjeżdża z przodu (duże +Z) na swoje miejsce.
-          const off = (1 - t) * 150
-          const zf = RZ - 4 + off
-          const zb = -RZ + 6 + off
-          const done = t > 0.985
+          if (t <= 0.005) return null
+
+          // Kierunek nadlotu: na zewnątrz od środka tablicy, z głębi sceny.
+          const a = (noise(i * 3) * Math.PI * 2)
+          const d = (1 - t) * 210
+          const ox = Math.cos(a) * d
+          const oy = Math.sin(a) * d * 0.55
+          const oz = (1 - t) * 120
+
+          const x0 = X0 + GAP + col * (TW + GAP) + ox
+          const x1 = x0 + TW
+          const y0 = Y0 + GAP + (ROWS - 1 - row) * (TH + GAP) + oy
+          const y1 = y0 + TH
+          const z = oz
+          const done = t > 0.99
           return (
-            <g key={m} opacity={Math.min(1, t * 2.2)}>
-              <polygon points={poly([[-RX + 6, y0, zf], [RX - 6, y0, zf], [RX - 6, y1, zf], [-RX + 6, y1, zf]])} fill="url(#nbWsMod)" stroke={done ? '#7dd3fc' : '#54687f'} strokeWidth={1.2} strokeLinejoin="round" />
-              <polygon points={poly([[RX - 6, y0, zb], [RX - 6, y0, zf], [RX - 6, y1, zf], [RX - 6, y1, zb]])} fill="#0a121c" stroke="#3f5169" strokeWidth={0.9} />
-              <g transform={plane(0, (y0 + y1) / 2, zf, [1, 0, 0], [0, -1, 0])}>
-                <text x={-100} y={2.4} fill={done ? '#bfe4fb' : '#8ba0b8'} fontSize={7.4} fontFamily="monospace" letterSpacing="0.8">{m}</text>
-                <circle cx={96} cy={0} r={3} fill={done ? '#38bdf8' : '#26333f'} />
+            <g key={label} opacity={Math.min(1, t * 1.8)}>
+              <polygon
+                points={poly([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]])}
+                fill="url(#nbWsTile)" stroke={done ? '#7dd3fc' : '#4d6178'} strokeWidth={done ? 1.3 : 1.05} strokeLinejoin="round"
+              />
+              <g transform={plane((x0 + x1) / 2, (y0 + y1) / 2, z, [1, 0, 0], [0, -1, 0])}>
+                <text x={0} y={2.6} fill={done ? '#cfe8fb' : '#8ba0b8'} fontSize={7.4} fontFamily="monospace" textAnchor="middle" letterSpacing="0.5">{label}</text>
               </g>
             </g>
           )
         })}
 
-        {/* Front obudowy z podpisem — domyka bryłę */}
-        <g transform={plane(0, H + 6, RZ, [1, 0, 0], [0, -1, 0])}>
-          <text x={-104} y={0} fill="#9fb0c6" fontSize={8} fontFamily="monospace" fontWeight="bold" letterSpacing="2">NEXTBYTE</text>
+        {/* Podpis ramy */}
+        <g transform={plane(0, -18, -4, [1, 0, 0], [0, -1, 0])}>
+          <text x={0} y={0} fill="#9fb0c6" fontSize={9} fontFamily="monospace" fontWeight="bold" textAnchor="middle" letterSpacing="2.4">NEXTBYTE WORKSPACE</text>
         </g>
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={596} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
-            {`MODUŁY W OBUDOWIE ${Math.min(N, Math.round(p / 0.13))} / ${N}`}
+          <text x={28} y={598} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+            {`NARZĘDZIA W JEDNYM MIEJSCU ${Math.min(WS_TILES.length, Math.round(p / 0.055))} / ${WS_TILES.length}`}
           </text>
         </g>
       </svg>
@@ -3040,46 +3080,48 @@ const MODULE_COPY: ModuleCopy[] = [
   {
     id: 'academy',
     num: '05',
-    tag: 'AKADEMIA',
-    titleLead: 'Akademia.',
-    titleAccent: 'Od pierwszego promptu do własnych procesów.',
-    lead: 'Ścieżka prowadzona krok po kroku — od podstaw po automatyzacje, na których realnie oszczędzasz czas. Po polsku i na konkretach.',
+    tag: 'AKADEMIA I PANEL TWÓRCY',
+    titleLead: 'Akademia i Panel Twórcy.',
+    titleAccent: 'Naucz się, a potem zarabiaj na tym.',
+    lead: 'Ścieżka prowadzi od pierwszego promptu po własne automatyzacje. Na jej końcu wystawiasz swoje kursy i szablony, a wypłatę dostajesz w złotówkach.',
     bullets: [
       'Ścieżka od podstaw po zaawansowane automatyzacje',
       'Gotowe prompty i szablony do skopiowania',
-      'Konkretne przykłady zamiast suchej teorii',
+      'Sprzedaj własne kursy, prompty i workflow',
+      'Wypłata zysków w PLN, z fakturą VAT 23%',
     ],
     cta: 'Wejdź do Akademii →',
     visualLeft: true,
   },
   {
-    id: 'creator',
+    id: 'memory',
     num: '06',
-    tag: 'PANEL TWÓRCY',
-    titleLead: 'Panel Twórcy.',
-    titleAccent: 'Ucz innych i zarabiaj na swojej wiedzy.',
-    lead: 'Wystawiasz własne kursy, prompty i szablony, a wypłatę dostajesz w złotówkach. Bez pośredników i bez przeliczania walut.',
+    tag: 'PAMIĘĆ AI',
+    titleLead: 'Pamięć AI.',
+    titleAccent: 'Pamięta o Tobie to, co ważne.',
+    lead: 'Twoja branża, ton komunikacji i ustalenia z projektów żyją między modułami. Nie tłumaczysz wszystkiego od nowa przy każdej rozmowie.',
     bullets: [
-      'Twórz i sprzedawaj własne kursy oraz szablony',
-      'Sklep z gotowymi promptami i workflow biznesowymi',
-      'Wypłata zysków w PLN, z fakturą VAT 23%',
+      'Wspólny kontekst dla czatu, obrazów i asystenta',
+      'Zna Twoją firmę, produkty i sposób pisania',
+      'Pełny wgląd — widzisz każdy zapamiętany wpis',
+      'Kasujesz dowolny wpis jednym kliknięciem',
     ],
-    cta: 'Otwórz Panel Twórcy →',
-    visualLeft: false,
+    cta: 'Zobacz Pamięć AI →',
   },
   {
     id: 'workspace',
     num: '07',
     tag: 'ZINTEGROWANY WORKSPACE',
-    titleLead: 'Zintegrowany Workspace.',
-    titleAccent: 'Wszystko w jednym rdzeniu.',
-    lead: 'Tablice wizualne, notatki semantyczne, kalendarz i zadania Kanban połączone w jeden płynny organizm.',
+    titleLead: 'Wszystko w jednym miejscu.',
+    titleAccent: 'Jedna platforma zamiast pięciu subskrypcji.',
+    lead: 'Czat, studio zdjęć i wideo, asystent, research, notatki, kalendarz, zadania, tablice, akademia i sklep — spięte jednym kontem i jednym kontekstem.',
     bullets: [
-      'Tablice: nieskończone płótno do szkiców i map myśli',
-      'Notatki AI odpowiadające na bazie Twoich dokumentów',
-      'Wspólny stan danych bez kopiowania między aplikacjami',
+      'Jedno logowanie do wszystkich narzędzi',
+      'Wspólny kontekst — nic nie przepisujesz między modułami',
+      'Jedna faktura zamiast pięciu subskrypcji',
+      'Serwery w UE, rozliczenie po polsku',
     ],
-    cta: 'Zobacz Zintegrowany Workspace →',
+    cta: 'Zobacz cały Workspace →',
     visualLeft: true,
   },
 ]
@@ -3167,7 +3209,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
                   copy.id === 'assistant' ? <AssistantOrbitVisual />
                     : copy.id === 'research' ? <DeepResearchVisual />
                       : copy.id === 'academy' ? <AcademyVisual />
-                        : copy.id === 'creator' ? <CreatorPanelVisual />
+                        : copy.id === 'memory' ? <MemoryVisual />
                           : copy.id === 'workspace' ? <WorkspaceVisual />
                             : undefined
                 }
