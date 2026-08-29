@@ -1278,7 +1278,7 @@ const OPTICS = [
 ]
 
 /* ═══════════════════════════════════════════════════════════════════════
-   4. MODUŁ 02: KREACJA WIZUALNA (STUDIO 4K & WIDEO AI)
+   4. MODUŁ 02: OBRAZY I WIDEO (ZDJĘCIA & WIDEO AI)
    Wizualizacja: APARAT W WIDOKU ROZSTRZELONYM, ROZKŁADANY SCROLLEM
    ═══════════════════════════════════════════════════════════════════════ */
 function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
@@ -1325,7 +1325,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
   /* ── Kadr: STAŁA skala (aparat się nie kurczy — tylko rozsuwa). Przy p=0
         bryła stoi po prawej, przy p=1 jest wyśrodkowana, więc rozsuw wypełnia
         całą dostępną szerokość zamiast zjeżdżać poza kadr. ── */
-  const S = 1.46
+  const S = 1.30
   const OX = 690 - p * 78
   const OY = 318
 
@@ -1514,10 +1514,11 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
   /* ── Przesunięcia podzespołów (offset × postęp scrolla) ────────────── */
   const yPlate = p * 44     // górna płyta z pokrętłami — w górę
   const yPrism = p * 62     // pryzmat / wizjer — najwyżej
-  const xPrism = -p * 40    // …i lekko w bok, żeby zwolnić róg na opis
+  const xPrism = -p * 86    // …i mocno w bok, żeby zwolnić prawy górny róg na opis
   const zDoor = -p * 66     // klapka tylna — do tyłu
-  const zSens = -p * 30     // matryca 4K — do tyłu…
-  const ySens = -p * 138    // …i w dół, żeby wyszła zza korpusu
+  const xSens = -p * 34     // matryca 4K — w bok, dalej od rogu z opisem…
+  const zSens = -p * 30     // …do tyłu…
+  const ySens = -p * 150    // …i w dół, żeby wyszła zza korpusu
   const fade = (from: number, span = 0.2) => Math.max(0, Math.min(1, (p - from) / span))
   const glassOn = fade(0.04, 0.18)
 
@@ -1599,18 +1600,19 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
   ].sort((a, b) => a.d - b.d)
 
   /* ── Punkty zaczepienia opisów: 4 symetryczne, bezkolizyjne cele
-        (przednia soczewka, tubus optyczny, korpus/silniki na górze, matryca 4K na dole).
-        Linie wskaźnikowe i opisy są czyste, czytelne i nie nachodzą na elementy. ── */
+        (przednia soczewka, tubus optyczny, korpus na górze, matryca na dole).
+        Silniki obrazu i wideo trzymamy w JEDNEJ etykiecie — rozbicie ich na dwie
+        mówiło dwa razy to samo. ── */
   const tOptic = rim(OPTICS[3].z + OPTICS[3].off * p, OPTICS[3].r * 0.98, -1.35)
   const tFocus = rim((TUBES[2].z0 + TUBES[2].z1) / 2 + TUBES[2].off * p, TUBES[2].r * 0.98, 1.75)
   const tPrism = P3(PRISM.x0 + xPrism + 6, PRISM.y0 + yPrism + 6, PRISM.z1)
-  const tSens = P3(SENS.x + 4, -SENS.y + ySens + 6, SENS.z1 + zSens)
+  const tSens = P3(SENS.x + xSens + 4, -SENS.y + ySens + 6, SENS.z1 + zSens)
 
   const LABELS = [
-    { k: 'l1', num: '01', head: 'HIPERREALIZM 4K', sub: 'Fotorealizm w pełnym 3840 × 2160.', side: 'l', cls: 'left-[2%] top-[3%]', ax: 240, ay: 58, to: tOptic, at: 0.24 },
-    { k: 'l2', num: '02', head: 'NAJLEPSZE MODELE WIDEO', sub: 'Kling, Runway, PixVerse — fizyka 60 FPS.', side: 'l', cls: 'left-[2%] top-[77%]', ax: 240, ay: 490, to: tFocus, at: 0.40 },
-    { k: 'l3', num: '03', head: 'TOPOWE SILNIKI AI', sub: 'Nano Banana Pro, GPT Image, Grok.', side: 'r', cls: 'right-[2%] top-[3%]', ax: 660, ay: 58, to: tPrism, at: 0.30 },
-    { k: 'l4', num: '04', head: 'SENSOR 4K CMOS', sub: '100% praw komercyjnych, zero tantiem.', side: 'r', cls: 'right-[2%] top-[77%]', ax: 710, ay: 490, to: tSens, at: 0.46 },
+    { k: 'l1', num: '01', head: 'HIPERREALIZM', sub: 'Hiperrealistycznie generowane zdjęcia.', side: 'l', cls: 'left-[2%] top-[3%]', ax: 222, ay: 58, to: tOptic, at: 0.24 },
+    { k: 'l2', num: '02', head: 'WIDEO Z KADRU', sub: 'Zdjęcie zamienia się w gotowy klip.', side: 'l', cls: 'left-[2%] top-[77%]', ax: 222, ay: 490, to: tFocus, at: 0.40 },
+    { k: 'l3', num: '03', head: 'NAJLEPSZE SILNIKI', sub: 'Kling, PixVerse, Seedance — w jednym miejscu.', side: 'r', cls: 'right-[1.5%] top-[3%]', ax: 678, ay: 58, to: tPrism, at: 0.30 },
+    { k: 'l4', num: '04', head: 'TWOJE POSTACIE', sub: 'Ta sama twarz hiperrealistycznie w każdym ujęciu.', side: 'r', cls: 'right-[1.5%] top-[77%]', ax: 678, ay: 500, to: tSens, at: 0.62 },
   ]
 
   return (
@@ -1622,22 +1624,22 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
         {/* LEWA STRONA: TYPOGRAFIA, PUNKTY I CTA */}
         <div className="lg:col-span-5 text-left space-y-5">
           <div className="space-y-2.5">
-            <SecRule label="02 // KREACJA WIZUALNA" />
+            <SecRule label="02 // OBRAZY I WIDEO" />
             <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.06] tracking-[-2px] text-foreground">
-              Zdjęcia & Wideo AI. <br className="hidden sm:block" />
-              <span className="font-normal text-primary">Hollywoodzka jakość na kliknięcie.</span>
+              Obrazy i Wideo. <br className="hidden sm:block" />
+              <span className="font-normal text-primary">Bez sesji, bez ekipy, bez czekania.</span>
             </h2>
             <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
-              Generuj zachwycające grafiki produktowe 4K oraz kinowe wideo w ułamku sekundy — bez drogich sesji zdjęciowych, aktorów i zewnętrznych studiów renderujących.
+              Opisujesz kadr — dostajesz gotowe zdjęcie produktowe albo klip reklamowy. Poprawka to kolejny prompt, a nie kolejna sesja i kolejna faktura.
             </p>
           </div>
 
           <div className="space-y-2.5 font-sans pt-1">
             {[
-              'Szybkie generowanie zdjęć i grafik w ultrawysokiej rozdzielczości 4K',
-              'Kinowe ujęcia wideo 60 FPS z realistyczną fizyką ruchu i światła',
-              'Wszystkie wiodące silniki obrazu i wideo AI w jednym spójnym panelu',
-              '100% praw komercyjnych do każdego wygenerowanego kadru',
+              'Zdjęcia produktowe prosto do sklepu, oferty i reklamy',
+              'Własna postać — ta sama twarz hiperrealistycznie w każdym kadrze',
+              'Klipy pod social media z opisu albo jednego zdjęcia',
+              'Pełne prawa komercyjne do każdego kadru — zero tantiem',
             ].map((bullet) => (
               <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
                 <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
@@ -1648,7 +1650,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
           <div className="pt-2">
             <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
-              Wypróbuj Studio Zdjęć & Wideo →
+              Zobacz Obrazy i Wideo →
             </GlowButton>
           </div>
         </div>
@@ -1728,10 +1730,10 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               {/* ── 2. PŁYTKA MATRYCY 4K CMOS (do tyłu i w dół) — rysowana przed
                      korpusem, więc przy złożeniu jest poprawnie w nim schowana ── */}
               <g opacity={0.3 + fade(0.05, 0.2) * 0.7}>
-                {Trail(P3(0, 0, SENS.z1), P3(0, ySens, SENS.z0 + zSens), fade(0.06))}
-                {Box(-SENS.x, -SENS.y + ySens, SENS.z0 + zSens, SENS.x, SENS.y + ySens, SENS.z1 + zSens,
+                {Trail(P3(0, 0, SENS.z1), P3(xSens, ySens, SENS.z0 + zSens), fade(0.06))}
+                {Box(-SENS.x + xSens, -SENS.y + ySens, SENS.z0 + zSens, SENS.x + xSens, SENS.y + ySens, SENS.z1 + zSens,
                   '#0b1a2b', '#14324d', 'url(#nbSensor)', '#7dd3fc', 1.2)}
-                <g transform={plane(0, ySens, SENS.z1 + zSens, ...FRONT)}>
+                <g transform={plane(xSens, ySens, SENS.z1 + zSens, ...FRONT)}>
                   <rect x={-32} y={-18} width={64} height={36} fill="#05101c" stroke="#9ad9fb" strokeWidth={0.9} />
                   {[-12, -4, 4, 12].map((yy) => <line key={yy} x1={-30} y1={yy} x2={30} y2={yy} stroke="#38bdf8" strokeWidth={0.4} strokeOpacity={0.35} />)}
                   {[-24, -12, 0, 12, 24].map((xx) => <line key={xx} x1={xx} y1={-16} x2={xx} y2={16} stroke="#38bdf8" strokeWidth={0.4} strokeOpacity={0.35} />)}
@@ -1833,7 +1835,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
             {LABELS.map((L) => (
               <div
                 key={L.k}
-                className={`absolute w-[218px] hidden sm:block pointer-events-none transition-opacity duration-300 ${L.cls} ${L.side === 'r' ? 'text-right' : 'text-left'}`}
+                className={`absolute w-[200px] hidden sm:block pointer-events-none transition-opacity duration-300 ${L.cls} ${L.side === 'r' ? 'text-right' : 'text-left'}`}
                 style={{
                   opacity: Math.max(0, Math.min(1, (p - L.at) / 0.18)),
                   transform: `translateX(${(1 - p) * (L.side === 'r' ? 14 : -14)}px)`,
@@ -1854,6 +1856,181 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
     </div>
   )
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   SZKIELET MODUŁÓW 03–06 (ZIGZAG)
+
+   Moduły 01 (Czat AI) i 02 (Obrazy i Wideo) mają własne, autorskie
+   wizualizacje SVG. Pozostałe czekają na swoje — do tego czasu wchodzi
+   `ModuleVisualSlot`, żeby rytm scrollowania i kadr były już finalne,
+   a grafika wpinała się później jednym propem `visual`.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/** Miejsce na wizualizację modułu — trzyma dokładnie ten sam kadr
+    (900 × 620) co gotowe moduły, więc podmiana nic nie przesunie. */
+function ModuleVisualSlot({ num, tag }: { num: string; tag: string }) {
+  return (
+    <div className="relative w-full max-w-[900px] aspect-[900/620]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[440px] w-[600px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.10)_0%,transparent_70%)] blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.055]"
+        style={{
+          backgroundImage:
+            'linear-gradient(0deg, #38bdf8 1px, transparent 1px),' +
+            'linear-gradient(90deg, #38bdf8 1px, transparent 1px)',
+          backgroundSize: '44px 44px',
+          maskImage: 'radial-gradient(ellipse at center, #000 25%, transparent 72%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, #000 25%, transparent 72%)',
+        }}
+      />
+      <div className="absolute inset-8 rounded-2xl border border-dashed border-primary/[0.14]">
+        <TechCornerMarks />
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 select-none">
+        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.24em] text-primary/45">{num}</span>
+        <span className="font-heading text-[15px] font-light uppercase tracking-[0.16em] text-foreground/30">{tag}</span>
+      </div>
+    </div>
+  )
+}
+
+type ModuleCopy = {
+  id: string
+  num: string
+  tag: string
+  titleLead: string
+  titleAccent: string
+  lead: string
+  bullets: string[]
+  cta: string
+  visualLeft?: boolean
+}
+
+/** Wspólny układ zigzag dla modułów. Kolumna tekstu zawsze idzie pierwsza
+    w DOM (czytelność na mobile), a na `lg` przestawia ją `order`. */
+function ModuleZigzagSection({
+  copy, onNavigate, visual,
+}: {
+  copy: ModuleCopy
+  onNavigate: (p: HomePageId) => void
+  visual?: ReactNode
+}) {
+  const left = copy.visualLeft
+  return (
+    <div className="relative z-10 overflow-visible py-8 sm:py-12">
+      <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
+
+        {/* KOLUMNA TEKSTU */}
+        <div className={cn('lg:col-span-5 text-left space-y-5', left && 'lg:order-2')}>
+          <div className="space-y-2.5">
+            <SecRule label={`${copy.num} // ${copy.tag}`} />
+            <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.06] tracking-[-2px] text-foreground">
+              {copy.titleLead} <br className="hidden sm:block" />
+              <span className="font-normal text-primary">{copy.titleAccent}</span>
+            </h2>
+            <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
+              {copy.lead}
+            </p>
+          </div>
+
+          <div className="space-y-2.5 pt-1 font-sans">
+            {copy.bullets.map((bullet) => (
+              <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
+                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                <span>{bullet}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-2">
+            <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
+              {copy.cta}
+            </GlowButton>
+          </div>
+        </div>
+
+        {/* KOLUMNA WIZUALIZACJI */}
+        <div className={cn(
+          'lg:col-span-7 flex flex-col items-center justify-center relative select-none',
+          left && 'lg:order-1',
+        )}>
+          {visual ?? <ModuleVisualSlot num={copy.num} tag={copy.tag} />}
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+/* Zigzag naprzemienny: 01 grafika po lewej, 02 po prawej, 03 po lewej… */
+const MODULE_COPY: ModuleCopy[] = [
+  {
+    id: 'notes',
+    num: '03',
+    tag: 'NOTATKI AI',
+    titleLead: 'Notatki AI.',
+    titleAccent: 'Twoje dokumenty w końcu odpowiadają.',
+    lead: 'Wrzucasz raporty, umowy i notatki ze spotkań. Pytasz normalnym zdaniem. Dostajesz odpowiedź ze swoich plików — nie z internetu.',
+    bullets: [
+      'Wyszukiwanie po sensie, nie po słowie kluczowym',
+      'Pytania zadajesz wprost do własnej bazy wiedzy',
+      'Automatyczne podsumowania i wnioski z długich raportów',
+      'Eksport do Markdown, PDF i DOCX',
+    ],
+    cta: 'Zobacz Notatki AI →',
+    visualLeft: true,
+  },
+  {
+    id: 'calendar',
+    num: '04',
+    tag: 'KALENDARZ AI',
+    titleLead: 'Kalendarz AI.',
+    titleAccent: 'Ustalenia same stają się terminami.',
+    lead: 'Co ustalisz na czacie, ląduje w kalendarzu jako zadanie z datą i osobą odpowiedzialną. Bez przepisywania i bez zapominania.',
+    bullets: [
+      'Wnioski z rozmowy stają się terminami i zadaniami',
+      'Dwukierunkowa synchronizacja z Kalendarzem Google',
+      'Karty Kanban spięte z projektami i notatkami',
+      'Powiadomienia o spotkaniach zawsze na czas',
+    ],
+    cta: 'Zobacz Kalendarz AI →',
+  },
+  {
+    id: 'voice',
+    num: '05',
+    tag: 'GŁOS AI',
+    titleLead: 'Głos AI.',
+    titleAccent: 'Mów. Reszta zapisze się sama.',
+    lead: 'Naturalny polski głos i transkrypcja nagrań. Spotkanie zamienia się w listę ustaleń, zanim zdążysz wrócić do biurka.',
+    bullets: [
+      'Naturalnie brzmiące polskie głosy na silniku ElevenLabs',
+      'Transkrypcja nagrań z podziałem na wypowiedzi',
+      'Burza mózgów głosowo — w aucie i na spacerze',
+      'Notatki z rozmów same trafiają do projektów',
+    ],
+    cta: 'Zobacz Głos AI →',
+    visualLeft: true,
+  },
+  {
+    id: 'memory',
+    num: '06',
+    tag: 'PAMIĘĆ AI',
+    titleLead: 'Pamięć AI.',
+    titleAccent: 'Platforma pamięta, kim jesteś.',
+    lead: 'Twój kontekst, styl i ustalenia żyją między modułami. Nie tłumaczysz wszystkiego od nowa przy każdej rozmowie, grafice i notatce.',
+    bullets: [
+      'Wspólny kontekst dla czatu, notatek i kalendarza',
+      'Zna Twoją firmę, produkty i ton komunikacji',
+      'Wraca do ustaleń sprzed tygodni bez przypominania',
+      'Pamięć przejrzysz i wyczyścisz w każdej chwili',
+    ],
+    cta: 'Zobacz Pamięć AI →',
+  },
+]
+
 /* ═══════════════════════════════════════════════════════════════════════
    GŁÓWNY KOMPONENT: HomePage3 (KOMPLETNY, ZBALANSOWANY LEJEK 10 SEKCJI)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -1924,16 +2101,30 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 4. MODUŁ 02: KREACJA WIZUALNA (ZDJĘCIA 4K & WIDEO AI) ══════════ */}
+      {/* ══════════ 4. MODUŁ 02: OBRAZY I WIDEO (ZDJĘCIA & WIDEO AI) ══════════ */}
       <Section className="relative z-10 py-4 sm:py-8">
         <FadeIn>
           <Module02VisualCreationZigzagSection onNavigate={onNavigate} />
         </FadeIn>
       </Section>
 
+      {/* ══════════ 5. MODUŁY 03–06: NOTATKI, KALENDARZ, GŁOS, PAMIĘĆ ══════════
+          Kadr i rytm są już finalne — brakuje wyłącznie autorskich wizualizacji
+          SVG. Każda wpina się później przez prop `visual`, bez ruszania układu. */}
+      {MODULE_COPY.map((copy) => (
+        <div key={copy.id}>
+          <TechDivider />
+          <Section className="relative z-10 py-4 sm:py-8">
+            <FadeIn>
+              <ModuleZigzagSection copy={copy} onNavigate={onNavigate} />
+            </FadeIn>
+          </Section>
+        </div>
+      ))}
+
       <TechDivider />
 
-      {/* ══════════ 4. PRYWATNOŚĆ & LOKALNY AI (0 ZŁ OFFLINE) ══════════ */}
+      {/* ══════════ 6. PRYWATNOŚĆ & LOKALNY AI (0 ZŁ OFFLINE) ══════════ */}
       <Section className="relative z-10 py-16 sm:py-20">
         <FadeIn>
           <SecRule label="Prywatność // 0 zł Offline" />
@@ -1967,7 +2158,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 5. TRZY FILARY WARTOŚCI DLA BIZNESU ══════════ */}
+      {/* ══════════ 7. TRZY FILARY WARTOŚCI DLA BIZNESU ══════════ */}
       <Section className="relative z-10 py-16 sm:py-20">
         <FadeIn>
           <SecRule label="Trzy filary" />
@@ -1998,7 +2189,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 6. START W 3 PROSTYCH KROKACH ══════════ */}
+      {/* ══════════ 8. START W 3 PROSTYCH KROKACH ══════════ */}
       <Section className="relative z-10 py-16 sm:py-20">
         <FadeIn>
           <SecRule label="Start w 3 krokach" />
@@ -2030,7 +2221,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 7. BEZPIECZEŃSTWO & SERWERY W UE ══════════ */}
+      {/* ══════════ 9. BEZPIECZEŃSTWO & SERWERY W UE ══════════ */}
       <Section className="relative z-10 py-16 sm:py-20">
         <FadeIn>
           <SecRule label="Bezpieczeństwo" />
@@ -2066,7 +2257,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 8. KALKULACJA KOSZTÓW & PRICING ROI (ZAMIAST 5 SUBSKRYPCJI) ══════════ */}
+      {/* ══════════ 10. KALKULACJA KOSZTÓW & PRICING ROI (ZAMIAST 5 SUBSKRYPCJI) ══════════ */}
       <Section className="relative z-10 overflow-hidden py-16 sm:py-24">
         <BigBackdropText className="top-6">BYTE</BigBackdropText>
         <Glow className="left-1/2 top-1/3 -translate-x-1/2" size={800} opacity={0.1} />
@@ -2142,7 +2333,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 9. ZAUFANIE UŻYTKOWNIKÓW (OPINIE) ══════════ */}
+      {/* ══════════ 11. ZAUFANIE UŻYTKOWNIKÓW (OPINIE) ══════════ */}
       <Section className="relative z-10 py-16 sm:py-20">
         <FadeIn>
           <SecRule label="Zaufanie użytkowników" />
@@ -2169,7 +2360,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 10. FAQ & FINALNE CTA ══════════ */}
+      {/* ══════════ 12. FAQ & FINALNE CTA ══════════ */}
       <Section className="relative z-10 py-16 sm:py-20">
         <FadeIn>
           <SecRule label="Pytania" />
