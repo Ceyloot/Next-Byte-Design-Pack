@@ -54,6 +54,13 @@ export function AnimStyles() {
       @keyframes nb-spin-slow {
         to { transform: rotate(360deg); }
       }
+      /* Impuls prądu biegnący ścieżką do rdzenia. Klatki były używane
+         w schemacie platformy, ale nigdy nie zdefiniowane — stąd martwa
+         animacja. Przesuwamy kreskę o pełną długość wzoru (14 + 86). */
+      @keyframes nbElectricCurrent {
+        from { stroke-dashoffset: 100; }
+        to   { stroke-dashoffset: 0; }
+      }
       @keyframes nb-progress {
         from { width: 0; }
       }
