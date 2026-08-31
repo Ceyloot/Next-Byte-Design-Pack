@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nordic — NextByte</title>
+<style>
+:root{
+  --bg:#efece6;--srf:#f7f5f1;--srf2:#e8e4dd;--srf3:#dedad2;
+  --brd:#d3cec5;--brd2:#b9b4ab;
+  --ac:#4c6e63;--ac2:#669180;--ac-d:rgba(76,110,99,.10);
+  --t1:#1b1917;--t2:#68635d;--t3:#a09b94;
+  --ok:#5a8c6a;--ok-d:rgba(90,140,106,.10);
+  --wa:#b87840;--wa-d:rgba(184,120,64,.10);
+  --er:#a84848;--er-d:rgba(168,72,72,.10);
+  --cy:#4a7394;--cy-d:rgba(74,115,148,.10);
+  --pu:#7a6090;--pu-d:rgba(122,96,144,.10);
+  --sw:220px;--hh:50px;--r:8px;--rl:12px;
+  --f:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fm:"SF Mono","Cascadia Mono",Consolas,monospace;
+  --shd:0 1px 3px rgba(0,0,0,.07),0 0 0 1px rgba(0,0,0,.04);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--f);font-size:13px;color:var(--t1);background:var(--bg)}
+body{display:flex;overflow:hidden}
+
+/* sidebar */
+.sb{width:var(--sw);flex-shrink:0;height:100vh;background:var(--srf);border-right:1px solid var(--brd);display:flex;flex-direction:column}
+.sb-logo{height:var(--hh);display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--brd);gap:9px}
+.sb-mark{width:26px;height:26px;background:var(--ac);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-mark svg{width:13px;height:13px;color:#fff}
+.sb-name{font-size:14px;font-weight:600;letter-spacing:-.3px}
+.sb-chip{margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);background:var(--ok-d);padding:2px 6px;border-radius:4px}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 8px}
+.sb-lbl{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:10px 10px 4px;display:block}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:0 var(--r) var(--r) 0;color:var(--t2);font-size:13px;cursor:default;user-select:none;position:relative}
+.sb-item:hover{background:rgba(76,110,99,.06);color:var(--t1)}
+.sb-item.on{background:rgba(76,110,99,.08);color:var(--ac)}
+.sb-item.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--ac);border-radius:0 2px 2px 0}
+.sb-item.on .ico{color:var(--ac)}
+.ico{width:14px;height:14px;flex-shrink:0;color:var(--t3)}
+.sb-badge{margin-left:auto;font-size:10px;font-weight:600;font-family:var(--fm);color:var(--ok);background:var(--ok-d);padding:0 5px;height:15px;border-radius:4px;display:inline-flex;align-items:center}
+.sb-div{height:1px;background:var(--brd);margin:6px 0}
+.sb-foot{border-top:1px solid var(--brd);padding:10px;flex-shrink:0}
+.sb-user{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r);cursor:default}
+.av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--cy));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.un{font-size:12px;font-weight:500}
+.up{font-size:10px;color:var(--t3)}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{height:var(--hh);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;gap:8px;flex-shrink:0;background:var(--bg)}
+.crumb{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--t2)}
+.crumb .c{color:var(--t1);font-weight:500}
+.sp{flex:1}
+.td-s{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3)}
+.td-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.td{font-size:11.5px;color:var(--t2);font-family:var(--fm);padding:0 14px;border-left:1px solid var(--brd);border-right:1px solid var(--brd);height:var(--hh);display:flex;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:0 12px;height:30px;border-radius:var(--r);font-size:12px;font-weight:500;font-family:var(--f);border:none;cursor:default}
+.btn svg{width:12px;height:12px}
+.bp{background:var(--ac);color:#fff}
+.bg{background:transparent;color:var(--t2);border:1px solid var(--brd2)}
+
+.content{flex:1;overflow-y:auto;padding:20px 22px}
+
+/* welcome */
+.wl{display:flex;align-items:center;margin-bottom:20px}
+.wl h1{font-size:18px;font-weight:600;letter-spacing:-.4px;line-height:1.2}
+.wl p{font-size:12px;color:var(--t2);margin-top:2px}
+.wl-a{margin-left:auto}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:18px}
+.sc{background:var(--srf);border:1px solid transparent;border-radius:var(--rl);padding:16px 17px;box-shadow:var(--shd)}
+.sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.sc-lbl{font-size:11px;font-weight:500;color:var(--t2)}
+.sc-ico{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center}
+.sc-ico svg{width:12px;height:12px}
+.sc-n{font-family:var(--fm);font-size:24px;font-weight:600;color:var(--t1);letter-spacing:-.5px;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:9px}
+.sc-ft{display:flex;align-items:center;justify-content:space-between}
+.sc-sub{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:3px}
+.up-c{color:var(--ok)}.dn-c{color:var(--er)}
+.spk{width:60px;height:20px;overflow:visible}
+.spk polyline{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+
+/* columns */
+.cols{display:grid;grid-template-columns:1fr 300px;gap:13px;margin-bottom:18px}
+.cstack{display:flex;flex-direction:column;gap:13px}
+.panel{background:var(--srf);border:1px solid transparent;border-radius:var(--rl);overflow:hidden;box-shadow:var(--shd)}
+.ph{padding:12px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
+.ph-t{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}
+.ph-l{font-size:11.5px;color:var(--ac2);cursor:default}
+.pb{padding:13px 16px}
+
+/* tools */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tc{border:1px solid var(--brd);border-radius:var(--r);padding:12px 13px;cursor:default;display:flex;flex-direction:column;gap:6px;background:var(--srf)}
+.tc:hover{background:var(--srf2);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.tc-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.tc-ico svg{width:13px;height:13px}
+.tc-n{font-size:12px;font-weight:600;color:var(--t1)}
+.tc-d{font-size:10.5px;color:var(--t3);line-height:1.3}
+.tc-k{font-size:9px;font-family:var(--fm);color:var(--t3);background:var(--srf2);border:1px solid var(--brd);padding:0 3px;height:13px;border-radius:3px;display:inline-flex;align-items:center;align-self:flex-start}
+
+/* usage */
+.ur{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid var(--brd)}
+.ur:last-child{border-bottom:none}
+.u-l{font-size:11.5px;color:var(--t2);width:86px;flex-shrink:0}
+.u-t{flex:1;height:5px;background:var(--srf3);border-radius:3px;overflow:hidden}
+.u-f{height:100%;border-radius:3px}
+.u-v{font-size:11px;font-family:var(--fm);color:var(--t2);width:68px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+
+/* ring */
+.ring-w{display:flex;align-items:center;gap:13px;padding:5px 0 16px;border-bottom:1px solid var(--brd);margin-bottom:11px}
+.ring{width:48px;height:48px;flex-shrink:0}
+.ring circle{fill:none;stroke-width:4;stroke-linecap:round}
+.rt{stroke:var(--srf3)}
+.rf{stroke:var(--ac);stroke-dasharray:131 200;transform:rotate(-90deg);transform-origin:50% 50%}
+.r-lbl{font-size:10.5px;color:var(--t2)}
+.r-val{font-size:17px;font-weight:650;font-family:var(--fm);letter-spacing:-.5px;line-height:1.2;font-variant-numeric:tabular-nums}
+.r-pct{font-size:10.5px;color:var(--t3)}
+
+/* tasks — okrągłe checkboxy */
+.tr{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--brd)}
+.tr:last-child{border-bottom:none}
+.ck{width:15px;height:15px;border:1.5px solid var(--brd2);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ck.done{background:var(--ok-d);border-color:var(--ok)}
+.ck.done::after{content:'';width:5px;height:3px;border-left:1.5px solid var(--ok);border-bottom:1.5px solid var(--ok);transform:rotate(-45deg) translateY(-1px)}
+.tt{flex:1;font-size:12px;color:var(--t1)}
+.tt.done{text-decoration:line-through;color:var(--t3)}
+/* tagi pill (r:20px) */
+.tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.tac{background:var(--ac-d);color:var(--ac2)}
+.tcy{background:var(--cy-d);color:var(--cy)}
+.twa{background:var(--wa-d);color:var(--wa)}
+.tok{background:var(--ok-d);color:var(--ok)}
+.tpu{background:var(--pu-d);color:var(--pu)}
+
+/* activity */
+.ar{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--brd)}
+.ar:last-child{border-bottom:none}
+.ad{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.at{font-size:12px;line-height:1.4;color:var(--t1)}
+.at strong{font-weight:600}
+.atm{font-size:10px;color:var(--t3);font-family:var(--fm);margin-top:2px}
+</style>
+</head>
+<body>
+
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-mark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 8h3l2-5 3 9 2-4h2"/></svg></div>
+    <span class="sb-name">NextByte</span>
+    <span class="sb-chip">Pro</span>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-item on">
+      <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      Panel Główny
+    </div>
+    <span class="sb-lbl">Narzędzia AI</span>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10c0 .93-.75 1.67-1.67 1.67H5L2 14.33V4.67C2 3.75 2.75 3 3.67 3h8.66C13.25 3 14 3.75 14 4.67V10Z"/></svg>Chat AI</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="2"/><path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M12.5 2.5l1 1-1 1"/></svg>Agent AI</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="12" height="10" rx="1.5"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></svg>Studio Zdjęć</div>
+    <div class="sb-div"></div>
+    <span class="sb-lbl">Produktywność</span>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="13" rx="1.5"/><path d="M5 1v2M11 1v2M2 6h12"/></svg>Kalendarz</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h8M4 8h8M4 12h5"/><circle cx="2" cy="4" r=".7" fill="currentColor" stroke="none"/><circle cx="2" cy="8" r=".7" fill="currentColor" stroke="none"/><circle cx="2" cy="12" r=".7" fill="currentColor" stroke="none"/></svg>Zadania<span class="sb-badge">7</span></div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h8a1 1 0 0 1 1 1v11l-4-2-4 2V3a1 1 0 0 1 1-1Z"/></svg>Notatki</div>
+    <div class="sb-div"></div>
+    <span class="sb-lbl">Platforma</span>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z"/></svg>Akademia</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 6V4a3 3 0 0 1 6 0v2"/></svg>B2B Panel</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h1.5l1 6h7l1-5H5"/><circle cx="6.5" cy="12.5" r="1"/><circle cx="11" cy="12.5" r="1"/></svg>Sklep</div>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="av">AK</div>
+      <div><div class="un">Artur K.</div><div class="up">Plan Pro · 12 dni</div></div>
+      <svg style="margin-left:auto;color:var(--t3)" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 12l4-4-4-4"/></svg>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="crumb"><span>NextByte</span><span style="color:var(--t3);margin:0 4px">/</span><span class="c">Panel Główny</span></div>
+    <div class="sp"></div>
+    <div class="td-s"><div class="td-dot"></div>Systemy sprawne</div>
+    <div class="td">pon, 11 sie 2026</div>
+    <button class="btn bp" style="margin-left:10px">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+      Nowy chat
+    </button>
+  </header>
+
+  <div class="content">
+    <div class="wl">
+      <div><h1>Panel Główny</h1><p>Przegląd aktywności i skróty do narzędzi.</p></div>
+      <div class="wl-a"><button class="btn bg"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Nowe zadanie</button></div>
+    </div>
+
+    <div class="stats">
+      <div class="sc">
+        <div class="sc-top"><span class="sc-lbl">Tokeny AI</span><div class="sc-ico" style="background:var(--ac-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--ac2)" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h3l2-5 3 9 2-4h2"/></svg></div></div>
+        <div class="sc-n">284k</div>
+        <div class="sc-ft"><div class="sc-sub"><span class="up-c">↑ 12%</span> vs. poprz.</div>
+          <svg class="spk" viewBox="0 0 64 22"><polyline points="0,18 8,14 16,16 24,10 32,12 40,7 48,9 56,4 64,6" stroke="var(--ac)" opacity=".5"/></svg>
+        </div>
+      </div>
+      <div class="sc">
+        <div class="sc-top"><span class="sc-lbl">Zdjęcia AI</span><div class="sc-ico" style="background:var(--cy-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--cy)" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="4" width="12" height="10" rx="1.5"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></svg></div></div>
+        <div class="sc-n">143</div>
+        <div class="sc-ft"><div class="sc-sub"><span class="up-c">↑ 34%</span> mies.</div>
+          <svg class="spk" viewBox="0 0 64 22"><polyline points="0,16 8,18 16,12 24,14 32,8 40,11 48,6 56,8 64,4" stroke="var(--cy)" opacity=".5"/></svg>
+        </div>
+      </div>
+      <div class="sc">
+        <div class="sc-top"><span class="sc-lbl">Aktywne zadania</span><div class="sc-ico" style="background:var(--wa-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--wa)" stroke-width="1.6" stroke-linecap="round"><path d="M4 4h8M4 8h8M4 12h5"/><circle cx="2" cy="4" r=".7" fill="var(--wa)" stroke="none"/><circle cx="2" cy="8" r=".7" fill="var(--wa)" stroke="none"/><circle cx="2" cy="12" r=".7" fill="var(--wa)" stroke="none"/></svg></div></div>
+        <div class="sc-n">7</div>
+        <div class="sc-ft"><div class="sc-sub"><span class="dn-c">↓ 2</span> do jutra</div>
+          <svg class="spk" viewBox="0 0 64 22"><polyline points="0,10 8,12 16,14 24,10 32,16 40,12 48,14 56,10 64,12" stroke="var(--wa)" opacity=".5"/></svg>
+        </div>
+      </div>
+      <div class="sc">
+        <div class="sc-top"><span class="sc-lbl">Notatki</span><div class="sc-ico" style="background:var(--pu-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--pu)" stroke-width="1.6" stroke-linecap="round"><path d="M4 2h8a1 1 0 0 1 1 1v11l-4-2-4 2V3a1 1 0 0 1 1-1Z"/></svg></div></div>
+        <div class="sc-n">38</div>
+        <div class="sc-ft"><div class="sc-sub"><span class="up-c">+3</span> tydzień</div>
+          <svg class="spk" viewBox="0 0 64 22"><polyline points="0,18 8,16 16,15 24,14 32,12 40,13 48,10 56,11 64,8" stroke="var(--pu)" opacity=".5"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="cstack">
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Narzędzia</span><a class="ph-l">Wszystkie →</a></div>
+          <div class="pb">
+            <div class="tools">
+              <a class="tc"><div class="tc-ico" style="background:var(--ac-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--ac2)" stroke-width="1.6" stroke-linecap="round"><path d="M14 10c0 .93-.75 1.67-1.67 1.67H5L2 14.33V4.67C2 3.75 2.75 3 3.67 3h8.66C13.25 3 14 3.75 14 4.67V10Z"/></svg></div><div class="tc-n">Chat AI</div><div class="tc-d">GPT, Claude, Gemini</div><span class="tc-k">⌘C</span></a>
+              <a class="tc"><div class="tc-ico" style="background:rgba(122,96,144,.10)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--pu)" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="6" r="2"/><path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M12.5 2.5l1 1-1 1"/></svg></div><div class="tc-n">Agent AI</div><div class="tc-d">Autonomiczne workflow</div><span class="tc-k">⌘A</span></a>
+              <a class="tc"><div class="tc-ico" style="background:var(--cy-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--cy)" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="4" width="12" height="10" rx="1.5"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></svg></div><div class="tc-n">Studio Zdjęć</div><div class="tc-d">Generowanie obrazów</div><span class="tc-k">⌘S</span></a>
+              <a class="tc"><div class="tc-ico" style="background:var(--ok-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--ok)" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="2" width="12" height="13" rx="1.5"/><path d="M5 1v2M11 1v2M2 6h12"/></svg></div><div class="tc-n">Kalendarz</div><div class="tc-d">Harmonogram i sync</div><span class="tc-k">⌘K</span></a>
+              <a class="tc"><div class="tc-ico" style="background:var(--wa-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--wa)" stroke-width="1.6" stroke-linecap="round"><path d="M2 4h12M2 8h12M2 12h8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 11v1.5l1 .5"/></svg></div><div class="tc-n">Zadania</div><div class="tc-d">Kanban dla zespołu</div><span class="tc-k">⌘T</span></a>
+              <a class="tc"><div class="tc-ico" style="background:var(--pu-d)"><svg viewBox="0 0 16 16" fill="none" stroke="var(--pu)" stroke-width="1.6" stroke-linecap="round"><path d="M4 2h8a1 1 0 0 1 1 1v11l-4-2-4 2V3a1 1 0 0 1 1-1Z"/><path d="M6 7h4M6 9.5h2.5"/></svg></div><div class="tc-n">Notatki</div><div class="tc-d">Markdown + bloki</div><span class="tc-k">⌘N</span></a>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Zużycie zasobów</span><a class="ph-l">Kup limity →</a></div>
+          <div class="pb">
+            <div class="ring-w">
+              <svg class="ring" viewBox="0 0 48 48"><circle class="rt" cx="24" cy="24" r="19"/><circle class="rf" cx="24" cy="24" r="19"/></svg>
+              <div><div class="r-lbl">Tokeny ChatAI</div><div class="r-val">284k</div><div class="r-pct">z 500k — 56,8% pozostało</div></div>
+            </div>
+            <div class="ur"><span class="u-l">Zdjęcia</span><div class="u-t"><div class="u-f" style="width:71%;background:var(--cy)"></div></div><span class="u-v">143 / 200</span></div>
+            <div class="ur"><span class="u-l">Przechowywanie</span><div class="u-t"><div class="u-f" style="width:34%;background:var(--ok)"></div></div><span class="u-v">3,4 / 10 GB</span></div>
+            <div class="ur"><span class="u-l">Agenci</span><div class="u-t"><div class="u-f" style="width:20%;background:var(--pu)"></div></div><span class="u-v">4 / 20 uruch.</span></div>
+            <div class="ur"><span class="u-l">API calle</span><div class="u-t"><div class="u-f" style="width:8%;background:var(--wa)"></div></div><span class="u-v">820 / 10k</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cstack">
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Zadania na dziś</span><a class="ph-l">Wszystkie →</a></div>
+          <div class="pb">
+            <div class="tr"><div class="ck done"></div><span class="tt done">Grafiki do kampanii</span><span class="tag tcy">AI</span></div>
+            <div class="tr"><div class="ck done"></div><span class="tt done">Raport B2B za lipiec</span><span class="tag tok">Gotowe</span></div>
+            <div class="tr"><div class="ck"></div><span class="tt">Prompt do agenta AI</span><span class="tag tac">Pro</span></div>
+            <div class="tr"><div class="ck"></div><span class="tt">Onboarding klient 14:00</span><span class="tag twa">Pilne</span></div>
+            <div class="tr"><div class="ck"></div><span class="tt">Post na LinkedIn</span><span class="tag tpu">Treść</span></div>
+            <div class="tr" style="border:none"><div class="ck"></div><span class="tt">Notatki ze spotkania</span><span class="tag tac">Pro</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Ostatnia aktywność</span><a class="ph-l">Historia →</a></div>
+          <div class="pb">
+            <div class="ar"><div class="ad" style="background:var(--ac)"></div><div><div class="at">Chat z <strong>Claude 3.5</strong> — strategia content</div><div class="atm">przed 8 min</div></div></div>
+            <div class="ar"><div class="ad" style="background:var(--cy)"></div><div><div class="at">Studio: <strong>6 obrazów</strong> dla klienta</div><div class="atm">przed 42 min</div></div></div>
+            <div class="ar"><div class="ad" style="background:var(--ok)"></div><div><div class="at">Zadanie <strong>„Raport B2B"</strong> ukończone</div><div class="atm">przed 1 godz.</div></div></div>
+            <div class="ar"><div class="ad" style="background:var(--pu)"></div><div><div class="at">Notatka <strong>„Spotkanie klient X"</strong> edytowana</div><div class="atm">09:14</div></div></div>
+            <div class="ar" style="border:none"><div class="ad" style="background:var(--wa)"></div><div><div class="at">Agent <strong>„Analityk treści"</strong> zakończył</div><div class="atm">08:52</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

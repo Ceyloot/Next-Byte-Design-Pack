@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+
+    <!-- Noise grain -->
+    <filter id="grain" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" seed="8" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="grey"/>
+      <feBlend in="SourceGraphic" in2="grey" mode="overlay" result="blend"/>
+      <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+    </filter>
+
+    <!-- Soft blur for blobs -->
+    <filter id="blob-blur-xl" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="90"/>
+    </filter>
+    <filter id="blob-blur-lg" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="70"/>
+    </filter>
+    <filter id="blob-blur-md" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="48"/>
+    </filter>
+
+    <!-- Radial gradient blobs -->
+    <radialGradient id="gBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.90"/>
+      <stop offset="60%"  stop-color="#2563eb" stop-opacity="0.50"/>
+      <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gViolet" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#a855f7" stop-opacity="0.85"/>
+      <stop offset="55%"  stop-color="#7c3aed" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#6d28d9" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#22d3ee" stop-opacity="0.80"/>
+      <stop offset="55%"  stop-color="#06b6d4" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#0891b2" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gEmerald" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#34d399" stop-opacity="0.75"/>
+      <stop offset="55%"  stop-color="#10b981" stop-opacity="0.38"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gAmber" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.70"/>
+      <stop offset="55%"  stop-color="#f59e0b" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gRose" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#fb7185" stop-opacity="0.65"/>
+      <stop offset="55%"  stop-color="#f43f5e" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#e11d48" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Vignette overlay -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+      <stop offset="0%"   stop-color="#050510" stop-opacity="0"/>
+      <stop offset="75%"  stop-color="#050510" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#050510" stop-opacity="0.80"/>
+    </radialGradient>
+
+    <!-- Top darken -->
+    <linearGradient id="topFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#050510" stop-opacity="0.60"/>
+      <stop offset="18%"  stop-color="#050510" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Bottom darken -->
+    <linearGradient id="bottomFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#050510" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#050510" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Base ── -->
+  <rect width="1440" height="900" fill="#050510"/>
+
+  <!-- ── Color blobs ── -->
+
+  <!-- BLUE — lewy górny narożnik, za kartą Analityka -->
+  <ellipse cx="260" cy="270" rx="420" ry="380" fill="url(#gBlue)" filter="url(#blob-blur-xl)" opacity="0.85"/>
+
+  <!-- VIOLET — środek górny, za Status systemu -->
+  <ellipse cx="820" cy="200" rx="400" ry="340" fill="url(#gViolet)" filter="url(#blob-blur-xl)" opacity="0.80"/>
+
+  <!-- CYAN — prawy górny, za Bezpieczeństwo -->
+  <ellipse cx="1280" cy="310" rx="380" ry="320" fill="url(#gCyan)" filter="url(#blob-blur-xl)" opacity="0.78"/>
+
+  <!-- EMERALD — lewy dolny, za stat cards -->
+  <ellipse cx="280" cy="680" rx="360" ry="300" fill="url(#gEmerald)" filter="url(#blob-blur-lg)" opacity="0.72"/>
+
+  <!-- AMBER — prawy dolny, za GlassModelSearch -->
+  <ellipse cx="1150" cy="700" rx="340" ry="280" fill="url(#gAmber)" filter="url(#blob-blur-lg)" opacity="0.68"/>
+
+  <!-- ROSE — środkowy accent, małe -->
+  <ellipse cx="720" cy="560" rx="260" ry="220" fill="url(#gRose)" filter="url(#blob-blur-md)" opacity="0.55"/>
+
+  <!-- Dodatkowe małe połyski -->
+  <ellipse cx="520" cy="440" rx="180" ry="150" fill="url(#gViolet)" filter="url(#blob-blur-md)" opacity="0.38"/>
+  <ellipse cx="1000" cy="480" rx="190" ry="155" fill="url(#gCyan)"   filter="url(#blob-blur-md)" opacity="0.35"/>
+
+  <!-- ── Vignette i fade'y ── -->
+  <rect width="1440" height="900" fill="url(#vignette)"/>
+  <rect width="1440" height="900" fill="url(#topFade)"/>
+  <rect width="1440" height="900" fill="url(#bottomFade)"/>
+
+  <!-- ── Grain overlay ── -->
+  <rect width="1440" height="900" fill="#050510" opacity="0"/>
+  <rect width="1440" height="900" filter="url(#grain)" opacity="0.035" fill="white"/>
+
+</svg>
