@@ -1,30 +1,26 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import type { LucideIcon } from 'lucide-react'
-import {
-  Shield, Cpu, WifiOff,
-  Building2, Lock, LogOut, CircleCheck, X,
-  Mic, Camera, Video, NotebookPen, ArrowRight,
-  Radar, Workflow, Sparkles, Brain, Calendar, Rocket, Check,
-  Zap, Play, TrendingUp, Layers, Database, ArrowUpRight, MessageSquare
-} from 'lucide-react'
+import { Mic, Camera, Video, NotebookPen } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton,
-  IconTile, Glow, PageAmbience,
-  AnimStyles, FadeIn, Stars,
+  PageAmbience, AnimStyles, FadeIn,
   TechDivider, TechCornerMarks,
 } from './shared'
 import {
-  MODULY, STATY, KROKI,
-  POROWNANIE, OPINIE, FAQ,
-} from './data'
-import {
-  ModelEcosystemBridge,
-  HemisphereArchSection, FaqRow, SecRule,
-  OpenAIIcon, AnthropicIcon, XaiIcon, GoogleIcon, GeminiIcon,
-  NextByteMarkIcon, ChaosVsUnifiedCard,
+  ModelEcosystemBridge, SecRule,
+  OpenAIIcon, AnthropicIcon, XaiIcon, GeminiIcon,
+  NextByteMarkIcon,
 } from './HomePage'
-import { GlassCard } from '@/components/glass'
+import {
+  BlockAnimStyles, LazyBlock,
+  PrivacyLocalAISection, ThreePillarsSection, ThreeStepsSection,
+  SecurityEuSection, ComparisonSection, TestimonialsSection,
+  FaqSection, FinalCtaSection,
+} from './HomePage3Blocks'
+import {
+  ElevenLabsIcon, KlingIcon, RunwareIcon,
+  BananaIcon, PixVerseIcon, MiniMaxIcon,
+} from './brand-icons'
 import type { HomePage as HomePageId } from './types'
 
 import interiorImg from '@/assets/studio/interior.jpg'
@@ -54,28 +50,6 @@ import animalImg from '@/assets/studio/animal.jpg'
       - Skrócone, zwięzłe opisy o natychmiastowej czytelności.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/** Skrócone i zwięzłe opisy trzech filarów wartości */
-const FILARY_SKROCONE = [
-  {
-    tag: '// SYGNAŁ ZAMIAST SZUMU',
-    title: 'Tylko narzędzia, które dają wynik',
-    desc: 'Testujemy dziesiątki nowości AI i wdrażamy tylko to, co realnie przyspiesza pracę — z gotową instrukcją krok po kroku po polsku.',
-    accent: '#70BEFA',
-  },
-  {
-    tag: '// PROMPTY BIZNESOWE',
-    title: 'Sprawdzone szablony promptów',
-    desc: 'Gotowe prompty pod konkretne zadania: research, treści, analizy i kod. Kopiujesz, podmieniasz dane i od razu masz oczekiwany rezultat.',
-    accent: '#C084FC',
-  },
-  {
-    tag: '// CAŁE SYSTEMY',
-    title: 'Kompletne przepływy pracy',
-    desc: 'Od pomysłu do gotowego wyniku. Zintegrowane narzędzia i rozpisane kroki, które uruchomisz w firmie tego samego dnia.',
-    accent: '#34D399',
-  },
-] as const
-
 /** Wspólny styl obramowań z poświatą */
 export const GLOW_CARD = 'relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-5 backdrop-blur-sm'
 
@@ -85,49 +59,8 @@ export function glowStyle(color: string): { borderColor: string; boxShadow: stri
   return { borderColor: border, boxShadow: `0 0 10px -5px ${halo}` }
 }
 
-function CardDepth({ color = 'hsl(var(--primary))' }: { color?: string }) {
-  return (
-    <>
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.14] to-transparent" />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -bottom-8 left-1/2 h-20 w-36 -translate-x-1/2 rounded-full opacity-[0.16] blur-2xl"
-        style={{ background: color }}
-      />
-    </>
-  )
-}
 
-function GlowIcon({ icon: Icon, color = 'hsl(var(--primary))' }: { icon: LucideIcon; color?: string }) {
-  return (
-    <span
-      className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border"
-      style={{
-        borderColor: `color-mix(in srgb, ${color} 35%, transparent)`,
-        background: `linear-gradient(180deg, hsl(var(--background)) 0%, color-mix(in srgb, ${color} 20%, hsl(var(--background))) 100%)`,
-        boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.1), 0 6px 14px -6px color-mix(in srgb, ${color} 55%, transparent)`,
-      }}
-    >
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/[0.08] to-transparent" />
-      <Icon className="relative h-[19px] w-[19px]" style={{ color }} />
-    </span>
-  )
-}
 
-function BigBackdropText({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div
-      aria-hidden
-      className={cn(
-        'pointer-events-none absolute inset-x-0 top-0 select-none whitespace-nowrap text-center font-heading font-black leading-none text-foreground/[0.05]',
-        'text-[18vw] sm:text-[15vw]',
-        className,
-      )}
-    >
-      {children}
-    </div>
-  )
-}
 
 function HeroWispyBackground() {
   return (
@@ -162,55 +95,6 @@ function HeroWispyBackground() {
       </svg>
       <div className="absolute inset-0" style={{ opacity: 0.05, mixBlendMode: 'overlay', backgroundImage: 'repeating-linear-gradient(115deg, hsl(var(--foreground)) 0px, transparent 1.5px, transparent 3px)' }} />
     </div>
-  )
-}
-
-function ElevenLabsIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 14 24" className={className} fill="currentColor">
-      <rect x="0" y="0" width="4" height="24" rx="1" />
-      <rect x="10" y="0" width="4" height="24" rx="1" />
-    </svg>
-  )
-}
-
-function KlingIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M4 3.5h3.8v7.2L14.2 3.5h4.6l-7.3 7.8 7.7 9.2h-4.8L8 13.2v7.3H4V3.5z" />
-    </svg>
-  )
-}
-
-function RunwareIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M12 2L2 7.5v9L12 22l10-5.5v-9L12 2zm0 3.2l6.8 3.7L12 12.6 5.2 8.9 12 5.2zm-7 5.1l6 3.3v6.7l-6-3.3v-6.7zm8 10v-6.7l6-3.3v6.7l-6 3.3z" />
-    </svg>
-  )
-}
-
-function BananaIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M18.8 3.5c-.8 1.4-1.9 3.2-3.1 5.3-2.1 3.7-4.4 7.6-7.2 9.8-1.4 1.1-2.9 1.9-4.5 1.9-.3 0-.6 0-.8-.1-.6-.2-1-.7-1.1-1.3-.1-.6.1-1.2.6-1.6 1.8-1.5 3.8-3.4 5.7-5.9 2-2.6 3.8-5.7 4.9-8.4.5-1.2 1.3-1.8 2.5-1.8.8 0 2 .7 3 2.1z" />
-    </svg>
-  )
-}
-
-function PixVerseIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M3 6l9-4 9 4v12l-9 4-9-4V6zm9 2.5L6.5 11l5.5 2.5 5.5-2.5L12 8.5z" />
-    </svg>
-  )
-}
-
-function MiniMaxIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M3 7h3v10H3V7zm5-4h3v18H8V3zm5 8h3v6h-3v-6zm5-5h3v16h-3V6z" />
-    </svg>
   )
 }
 
@@ -3229,19 +3113,20 @@ function ModuleZigzagSection({
   )
 }
 
-/* Moduły 03–06: Spójne, krótkie, sprzedażowe */
+/* Moduły 03–07: opisy przy animacjach — jedna obietnica, cztery konkrety */
 const MODULE_COPY: ModuleCopy[] = [
   {
     id: 'assistant',
     num: '03',
     tag: 'ASYSTENT NEXTBYTE',
-    titleLead: 'Twój asystent.',
-    titleAccent: 'Działa sam.',
-    lead: 'Zlecasz zadanie, a asystent sam przeszukuje pliki, ustala terminy w kalendarzu i pilnuje projektów.',
+    titleLead: 'Asystent, który nie czeka',
+    titleAccent: 'na kolejne polecenie.',
+    lead: 'Zwykły czat odpowiada i zapomina. Asystent NextByte bierze zadanie i doprowadza je do końca: sam sięga po Twoje pliki, wyciąga ustalenia z notatek, wpisuje terminy do kalendarza i wraca z gotowym wynikiem.',
     bullets: [
-      'Wnioski z rozmów same stają się terminami',
-      'Automatyczne tworzenie i przypisywanie zadań',
-      'Błyskawiczna analiza Twoich dokumentów i plików',
+      'Z notatki ze spotkania robi zadania i terminy — bez przepisywania',
+      'Czyta Twoje umowy, oferty i arkusze, zanim odpowie',
+      'Pilnuje dat i sam przypomina, gdy projekt stoi w miejscu',
+      'Pracuje na kontekście firmy, nie na ogólnikach z internetu',
     ],
     cta: 'Poznaj Asystenta NextByte →',
     visualLeft: false,
@@ -3250,13 +3135,14 @@ const MODULE_COPY: ModuleCopy[] = [
     id: 'research',
     num: '04',
     tag: 'DEEP RESEARCH',
-    titleLead: 'Deep Research.',
-    titleAccent: 'Analiza setek źródeł w locie.',
-    lead: 'Autonomiczny radar sieci: przeszukuje dziesiątki baz, weryfikuje fakty i sporządza wyczerpujący raport w 30 sekund.',
+    titleLead: 'Dzień researchu',
+    titleAccent: 'zamknięty w 30 sekundach.',
+    lead: 'Zamiast jednej odpowiedzi z jednego modelu dostajesz przeszukane kilkadziesiąt źródeł naraz, zestawione ze sobą i sprawdzone krzyżowo. Na końcu jest raport z przypisami, a nie ściana tekstu do weryfikacji.',
     bullets: [
-      'Równoległa eksploracja do 40 źródeł w czasie rzeczywistym',
-      'Krzyżowa weryfikacja faktów eliminująca halucynacje',
-      'Gotowy raport executive z tabelami i cytowaniami',
+      'Do 40 źródeł przeszukiwanych równolegle w czasie rzeczywistym',
+      'Sprzeczne dane wyłapane i pokazane, a nie wygładzone',
+      'Każdy wniosek z linkiem do źródła — sprawdzalny w sekundę',
+      'Raport z tabelami, gotowy do wysłania klientowi lub zarządowi',
     ],
     cta: 'Uruchom Deep Research →',
     visualLeft: true,
@@ -3265,14 +3151,14 @@ const MODULE_COPY: ModuleCopy[] = [
     id: 'academy',
     num: '05',
     tag: 'AKADEMIA I PANEL TWÓRCY',
-    titleLead: 'Akademia i Panel Twórcy.',
-    titleAccent: 'Naucz się, a potem zarabiaj na tym.',
-    lead: 'Ścieżka prowadzi od pierwszego promptu po własne automatyzacje. Na jej końcu wystawiasz swoje kursy i szablony, a wypłatę dostajesz w złotówkach.',
+    titleLead: 'Najpierw się uczysz.',
+    titleAccent: 'Potem na tym zarabiasz.',
+    lead: 'Ścieżka prowadzi od pierwszego promptu po własne automatyzacje — wszystko po polsku, na realnych przypadkach z firm. Kiedy dojdziesz do końca, ten sam panel pozwala Ci sprzedać swoje kursy, prompty i workflow innym użytkownikom.',
     bullets: [
-      'Ścieżka od podstaw po zaawansowane automatyzacje',
-      'Gotowe prompty i szablony do skopiowania',
-      'Sprzedaj własne kursy, prompty i workflow',
-      'Wypłata zysków w PLN, z fakturą VAT 23%',
+      'Kurs po polsku, na przykładach z polskich firm',
+      'Gotowe prompty i szablony — kopiujesz i używasz od razu',
+      'Wystawiasz własne materiały w sklepie platformy',
+      'Wypłata w złotówkach, z fakturą VAT 23%',
     ],
     cta: 'Wejdź do Akademii →',
     visualLeft: true,
@@ -3281,14 +3167,14 @@ const MODULE_COPY: ModuleCopy[] = [
     id: 'memory',
     num: '06',
     tag: 'PAMIĘĆ AI',
-    titleLead: 'Pamięć AI.',
-    titleAccent: 'Pamięta o Tobie to, co ważne.',
-    lead: 'Twoja branża, ton komunikacji i ustalenia z projektów żyją między modułami. Nie tłumaczysz wszystkiego od nowa przy każdej rozmowie.',
+    titleLead: 'Koniec tłumaczenia od zera',
+    titleAccent: 'przy każdej rozmowie.',
+    lead: 'Twoja branża, produkty, ton komunikacji i ustalenia z projektów zostają w platformie i wędrują między modułami. Czat, studio i asystent startują z tą samą wiedzą o Tobie — a Ty w każdej chwili widzisz i kasujesz każdy zapamiętany wpis.',
     bullets: [
-      'Wspólny kontekst dla czatu, obrazów i asystenta',
-      'Zna Twoją firmę, produkty i sposób pisania',
-      'Pełny wgląd — widzisz każdy zapamiętany wpis',
-      'Kasujesz dowolny wpis jednym kliknięciem',
+      'Jeden kontekst dla czatu, grafik, researchu i asystenta',
+      'Zna Twoje produkty, klientów i sposób pisania',
+      'Pełna lista zapamiętanych faktów — nic nie dzieje się po cichu',
+      'Kasujesz dowolny wpis jednym kliknięciem, bez pytań',
     ],
     cta: 'Zobacz Pamięć AI →',
   },
@@ -3296,14 +3182,14 @@ const MODULE_COPY: ModuleCopy[] = [
     id: 'workspace',
     num: '07',
     tag: 'ZINTEGROWANY WORKSPACE',
-    titleLead: 'Wszystko w jednym miejscu.',
-    titleAccent: 'Jeden rdzeń, wszystkie narzędzia.',
-    lead: 'Czat, studio zdjęć i wideo, asystent, research, notatki, kalendarz, zadania, tablice, akademia i sklep — spięte jednym kontem i jednym kontekstem.',
+    titleLead: 'Dziesięć narzędzi.',
+    titleAccent: 'Jedno konto i jedna faktura.',
+    lead: 'Czat, studio zdjęć i wideo, asystent, research, notatki, kalendarz, zadania, tablice, akademia i sklep siedzą na jednym rdzeniu. Wynik z jednego modułu wchodzi do drugiego bez kopiowania, eksportów i przeklejania między kartami przeglądarki.',
     bullets: [
-      'Jedno logowanie do wszystkich narzędzi',
-      'Wspólny kontekst — nic nie przepisujesz między modułami',
-      'Jedna faktura zamiast pięciu subskrypcji',
-      'Serwery w UE, rozliczenie po polsku',
+      'Jedno logowanie zamiast pięciu kont i pięciu haseł',
+      'Efekt pracy przechodzi między modułami razem z kontekstem',
+      'Jedna faktura VAT w PLN zamiast pięciu obciążeń w dolarach',
+      'Serwery w UE, wsparcie i rozliczenie po polsku',
     ],
     cta: 'Zobacz cały Workspace →',
     visualLeft: true,
@@ -3314,11 +3200,10 @@ const MODULE_COPY: ModuleCopy[] = [
    GŁÓWNY KOMPONENT: HomePage3 (KOMPLETNY, ZBALANSOWANY LEJEK 10 SEKCJI)
    ═══════════════════════════════════════════════════════════════════════ */
 export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePageId) => void }) {
-  const [faqOpen, setFaqOpen] = useState<number | null>(0)
-
   return (
     <div className="relative flex w-full flex-col font-landing text-foreground">
       <AnimStyles />
+      <BlockAnimStyles />
       <PageAmbience />
 
       {/* ══════════ 1. HERO + JEDYNA KARUZELA (MODEL ECOSYSTEM BRIDGE) ══════════ */}
@@ -3365,25 +3250,30 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
       <TechDivider />
 
       {/* ══════════ 3. MODUŁ 01: CHAT AI (ZIGZAG 3D EXPLODED HUD) ══════════ */}
-      <Section className="relative z-10 py-4 sm:py-8">
-        <FadeIn>
-          <Module01ChatAiZigzagSection onNavigate={onNavigate} />
-        </FadeIn>
-      </Section>
+      <LazyBlock minHeight={860}>
+        <Section className="relative z-10 py-4 sm:py-8">
+          <FadeIn>
+            <Module01ChatAiZigzagSection onNavigate={onNavigate} />
+          </FadeIn>
+        </Section>
+      </LazyBlock>
 
       <TechDivider />
 
       {/* ══════════ 4. MODUŁ 02: OBRAZY I WIDEO (ZDJĘCIA & WIDEO AI) ══════════ */}
-      <Section className="relative z-10 py-4 sm:py-8">
-        <FadeIn>
-          <Module02VisualCreationZigzagSection onNavigate={onNavigate} />
-        </FadeIn>
-      </Section>
+      <LazyBlock minHeight={860}>
+        <Section className="relative z-10 py-4 sm:py-8">
+          <FadeIn>
+            <Module02VisualCreationZigzagSection onNavigate={onNavigate} />
+          </FadeIn>
+        </Section>
+      </LazyBlock>
 
       {/* ══════════ 5. MODUŁY 03–06: ASYSTENT, DEEP RESEARCH, AKADEMIA, WORKSPACE ══════════ */}
       {MODULE_COPY.map((copy) => (
         <div key={copy.id}>
           <TechDivider />
+          <LazyBlock minHeight={820}>
           <Section className="relative z-10 py-4 sm:py-8">
             <FadeIn>
               <ModuleZigzagSection
@@ -3400,334 +3290,47 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
               />
             </FadeIn>
           </Section>
+          </LazyBlock>
         </div>
       ))}
 
       <TechDivider />
 
-      {/* ══════════ 6. PRYWATNOŚĆ & LOKALNY AI (0 ZŁ OFFLINE) ══════════ */}
-      <Section className="relative z-10 py-16 sm:py-20">
-        <FadeIn>
-          <SecRule label="Prywatność // 0 zł Offline" />
-          <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.1] text-foreground mb-3 max-w-2xl tracking-[-2px]">
-            Prywatne AI na Twoim sprzęcie.
-          </h2>
-          <p className="font-sans text-[15px] text-foreground/65 leading-relaxed max-w-xl mb-8 font-light">
-            Llama, Mistral i DeepSeek bezpośrednio na Twoim GPU przez Ollama i LM Studio. 100% prywatności, zero opłat i nielimitowane działanie offline.
-          </p>
-          <div className="grid gap-5 md:grid-cols-3">
-            {[
-              { icon: Shield, title: '100% na Twoim dysku', desc: 'Przetwarzanie lokalne przez procesor i kartę graficzną bez wysyłania danych do chmury.' },
-              { icon: Cpu, title: 'Działa z Llama i Ollama', desc: 'Natywna integracja z darmowymi programami Ollama i LM Studio jednym kliknięciem.' },
-              { icon: WifiOff, title: 'Za 0 zł i bez limitów', desc: 'Nielimitowana praca w trybie offline bez zużywania jednostek Byte i abonamentów.' },
-            ].map((item, i) => {
-              const ItemIcon = item.icon
-              return (
-                <FadeIn key={item.title} delay={i * 80}>
-                  <div className="relative h-full overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/80 p-6 shadow-[0_24px_48px_-28px_rgb(0_0_0/0.6)] backdrop-blur-sm transition-colors hover:border-primary/25">
-                    <CardDepth />
-                    <GlowIcon icon={ItemIcon} />
-                    <h3 className="relative mt-3.5 font-heading text-[15.5px] font-extrabold leading-snug text-foreground">{item.title}</h3>
-                    <p className="relative mt-2 text-[13px] leading-relaxed text-foreground/55 font-light">{item.desc}</p>
-                  </div>
-                </FadeIn>
-              )
-            })}
-          </div>
-        </FadeIn>
-      </Section>
+      {/* ══════════ 6. PRYWATNOŚĆ — DWIE ZAGRODY OBOK SIEBIE ══════════ */}
+      <LazyBlock minHeight={1080}><PrivacyLocalAISection /></LazyBlock>
 
       <TechDivider />
 
-      {/* ══════════ 7. TRZY FILARY WARTOŚCI DLA BIZNESU ══════════ */}
-      <Section className="relative z-10 py-16 sm:py-20">
-        <FadeIn>
-          <SecRule label="Trzy filary" />
-          <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.1] text-foreground mb-3 max-w-2xl tracking-[-2px]">
-            Dlaczego podejście <span className="font-normal text-primary">NextByte działa.</span>
-          </h2>
-          <p className="font-sans text-[15px] text-foreground/55 leading-relaxed max-w-xl mb-10 font-light">
-            Trzy zasady, dzięki którym nie marnujesz czasu na testowanie niesprawdzonych narzędzi.
-          </p>
-        </FadeIn>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {FILARY_SKROCONE.map((f, i) => {
-            const FilarIcon = [Radar, Workflow, Sparkles][i] ?? Sparkles
-            return (
-              <FadeIn key={f.tag} delay={i * 80}>
-                <div className="relative h-full overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/80 p-6 shadow-[0_24px_48px_-28px_rgb(0_0_0/0.6)] backdrop-blur-sm transition-all hover:border-primary/30">
-                  <CardDepth color={f.accent} />
-                  <GlowIcon icon={FilarIcon} color={f.accent} />
-                  <p className="relative mt-3.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-primary/70">{f.tag}</p>
-                  <h3 className="relative mt-1 font-heading text-[16px] font-extrabold leading-snug text-foreground">{f.title}</h3>
-                  <p className="relative mt-2 text-[13px] leading-relaxed text-foreground/60 font-light">{f.desc}</p>
-                </div>
-              </FadeIn>
-            )
-          })}
-        </div>
-      </Section>
+      {/* ══════════ 7. TRZY FILARY WARTOŚCI ══════════ */}
+      <LazyBlock minHeight={760}><ThreePillarsSection /></LazyBlock>
 
       <TechDivider />
 
-      {/* ══════════ 8. START W 3 PROSTYCH KROKACH ══════════ */}
-      <Section className="relative z-10 py-16 sm:py-20">
-        <FadeIn>
-          <SecRule label="Start w 3 krokach" />
-          <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.1] text-foreground mb-3 max-w-2xl tracking-[-2px]">
-            Od rejestracji do pierwszego wyniku
-          </h2>
-          <p className="font-sans text-[15px] text-foreground/55 leading-relaxed max-w-xl mb-12 font-light">
-            Zero konfiguracji, zero kart kredytowych na start.
-          </p>
-        </FadeIn>
-        <div className="relative mx-auto max-w-xl">
-          <div aria-hidden className="absolute left-5 top-3 bottom-3 w-px bg-gradient-to-b from-primary/70 via-primary/25 to-transparent" />
-          {KROKI.map((k, i) => (
-            <FadeIn key={k.krok} delay={i * 100} className={cn('relative flex gap-5', i < KROKI.length - 1 && 'pb-7')}>
-              <span
-                className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-background font-mono text-[13px] font-bold text-primary"
-                style={glowStyle('hsl(var(--primary))')}
-              >
-                {i + 1}
-              </span>
-              <div className="flex-1 rounded-2xl border border-foreground/[0.08] bg-card/80 p-5 shadow-[0_24px_48px_-28px_rgb(0_0_0/0.6)] backdrop-blur-sm">
-                <h3 className="font-heading text-[15.5px] font-extrabold leading-snug text-foreground">{k.title}</h3>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/55 font-light">{k.desc}</p>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-      </Section>
+      {/* ══════════ 8. WDROŻENIE W 3 KROKACH — PROCES W DÓŁ ══════════ */}
+      <LazyBlock minHeight={1180}><ThreeStepsSection onNavigate={onNavigate} /></LazyBlock>
 
       <TechDivider />
 
-      {/* ══════════ 9. BEZPIECZEŃSTWO & SERWERY W UE ══════════ */}
-      <Section className="relative z-10 py-16 sm:py-20">
-        <FadeIn>
-          <SecRule label="Bezpieczeństwo" />
-          <h2 className="font-heading text-[clamp(26px,3.8vw,40px)] font-light leading-[1.1] text-foreground mb-3 tracking-[-1.5px] max-w-2xl">
-            Twoje dane są tylko <span className="text-primary font-normal">Twoje.</span>
-          </h2>
-          <p className="font-sans text-[15px] text-foreground/55 leading-relaxed max-w-xl mb-10 font-light">
-            Żaden gigant się nie szkoli na Twoich rozmowach. Nikt nie ma wglądu w Twoje dokumenty. To nie jest klauzula regulaminowa — to architektura platformy.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { icon: Building2, title: 'Serwery w UE', sentence: 'Dane w Unii Europejskiej, pełna zgodność z RODO.' },
-              { icon: Lock, title: 'Zero trenowania', sentence: 'Nikt nie szkoli modeli na Twoich danych.' },
-              { icon: WifiOff, title: 'Zero wglądu z zewnątrz', sentence: 'Lokalny AI — dane nie opuszczają urządzenia.' },
-              { icon: LogOut, title: 'Rezygnujesz kiedy chcesz', sentence: 'Jedno kliknięcie — dane usunięte w 30 dni.' },
-            ].map((item) => {
-              const ItemIcon = item.icon
-              return (
-                <div
-                  key={item.title}
-                  className="relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/80 p-6 text-center shadow-[0_24px_48px_-28px_rgb(0_0_0/0.6)] backdrop-blur-sm transition-colors hover:border-primary/25"
-                >
-                  <CardDepth />
-                  <GlowIcon icon={ItemIcon} />
-                  <h3 className="relative font-heading text-[14.5px] font-semibold text-foreground leading-snug">{item.title}</h3>
-                  <p className="relative font-sans text-[12px] text-foreground/50 font-light leading-snug">{item.sentence}</p>
-                </div>
-              )
-            })}
-          </div>
-        </FadeIn>
-      </Section>
+      {/* ══════════ 9. BEZPIECZEŃSTWO I ARCHITEKTURA UE — ZAMEK ══════════ */}
+      <LazyBlock minHeight={900}><SecurityEuSection /></LazyBlock>
 
       <TechDivider />
 
-      {/* ══════════ 10. KALKULACJA KOSZTÓW & PRICING ROI (ZAMIAST 5 SUBSKRYPCJI) ══════════ */}
-      <Section className="relative z-10 overflow-hidden py-16 sm:py-24">
-        <BigBackdropText className="top-6">BYTE</BigBackdropText>
-        <Glow className="left-1/2 top-1/3 -translate-x-1/2" size={800} opacity={0.1} />
-
-        <FadeIn>
-          <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
-            <SecRule label="Kalkulacja kosztów" />
-            <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.06] text-foreground tracking-[-2px]">
-              Jeden abonament zamiast <span className="text-primary font-normal">pięciu osobnych.</span>
-            </h2>
-            <p className="font-sans text-[15px] text-foreground/60 leading-relaxed font-light">
-              Koniec z płaceniem ~450 zł/mc w obcych walutach i chaosem faktur. Wszystkie silniki i narzędzia w ramach jednej puli Byte z fakturą VAT 23%.
-            </p>
-          </div>
-        </FadeIn>
-
-        {/* INTERAKTYWNA KARTA PORÓWNANIA KOSZTÓW (CHAOS VS NEXTBYTE) */}
-        <FadeIn delay={60} className="mb-12">
-          <ChaosVsUnifiedCard />
-        </FadeIn>
-
-        {/* TABELA FUNKCJI */}
-        <FadeIn delay={120}>
-          <div className="relative max-w-4xl mx-auto">
-            <TechCornerMarks />
-            <GlassCard padding="p-0" className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm font-sans">
-                <thead>
-                  <tr className="border-b border-foreground/[0.07]">
-                    <th className="px-5 py-5 text-left text-[12px] font-medium text-foreground/40 font-mono">Funkcja</th>
-                    {POROWNANIE.kolumny.map((k, i) => (
-                      <th key={k} className="px-4 py-5 text-center">
-                        {i === 0 ? (
-                          <span className="font-heading text-[14px] font-semibold text-primary">{k}</span>
-                        ) : (
-                          <span className="font-heading text-[12.5px] font-medium text-foreground/40">{k}</span>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {POROWNANIE.wiersze.map((r, ri) => (
-                    <tr
-                      key={r.f}
-                      className={cn(
-                        'border-b border-foreground/[0.04] last:border-b-0 transition-colors hover:bg-foreground/[0.02]',
-                        ri % 2 === 0 && 'bg-foreground/[0.008]',
-                      )}
-                    >
-                      <td className="px-5 py-3.5 text-[13px] font-medium text-foreground/70 font-sans">{r.f}</td>
-                      {r.v.map((v, vi) => (
-                        <td key={vi} className={cn('px-4 py-3.5 text-center', vi === 0 && 'bg-primary/[0.035]')}>
-                          {v === true ? (
-                            <CircleCheck className="mx-auto h-[18px] w-[18px] text-primary" />
-                          ) : v === false ? (
-                            <X className="mx-auto h-5 w-5 text-foreground/25 font-bold" />
-                          ) : (
-                            <span className={cn('font-sans text-[12.5px] font-semibold', vi === 0 ? 'text-primary' : 'text-foreground/50')}>
-                              {v}
-                            </span>
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </GlassCard>
-          </div>
-        </FadeIn>
-      </Section>
+      {/* ══════════ 10. PORÓWNANIE Z OSOBNYMI SUBSKRYPCJAMI ══════════ */}
+      <LazyBlock minHeight={1020}><ComparisonSection /></LazyBlock>
 
       <TechDivider />
 
-      {/* ══════════ 11. ZAUFANIE UŻYTKOWNIKÓW (OPINIE) ══════════ */}
-      <Section className="relative z-10 py-16 sm:py-20">
-        <FadeIn>
-          <SecRule label="Zaufanie użytkowników" />
-          <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.1] text-foreground mb-12 max-w-2xl tracking-[-2px]">
-            Nie nasze słowa. Ich wyniki.
-          </h2>
-        </FadeIn>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {OPINIE.map((o, i) => (
-            <FadeIn key={o.id} delay={i * 80}>
-              <div className="flex h-full flex-col gap-3 rounded-2xl border border-foreground/[0.08] bg-card/80 p-6 shadow-[0_24px_48px_-28px_rgb(0_0_0/0.6)] backdrop-blur-sm">
-                <Stars n={5} size={13} />
-                <p className="text-[13.5px] leading-relaxed text-foreground/70 font-light">„{o.tekst}"</p>
-                <div className="mt-auto flex flex-col items-start gap-1 border-t border-foreground/[0.07] pt-3.5">
-                  <p className="font-heading text-[13px] font-bold text-foreground">{o.kategoria}</p>
-                  <p className="text-[11.5px] text-foreground/45">{o.rola}</p>
-                  <span className="mt-1 rounded-full bg-primary/[0.1] px-2.5 py-1 font-mono text-[10.5px] font-bold text-primary">{o.metryka}</span>
-                </div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-      </Section>
+      {/* ══════════ 11. ZAUFANIE I OPINIE — KARUZELA ══════════ */}
+      <LazyBlock minHeight={560}><TestimonialsSection /></LazyBlock>
 
       <TechDivider />
 
-      {/* ══════════ 12. FAQ & FINALNE CTA ══════════ */}
-      <Section className="relative z-10 py-16 sm:py-20">
-        <FadeIn>
-          <SecRule label="Pytania" />
-          <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.1] text-foreground mb-10 max-w-2xl tracking-[-2px]">
-            Wszystko, co warto wiedzieć przed startem.
-          </h2>
-        </FadeIn>
-        <FadeIn delay={100} className="mx-auto max-w-3xl space-y-2.5">
-          {FAQ.map((f, i) => (
-            <FaqRow key={f.q} q={f.q} a={f.a} open={faqOpen === i} onToggle={() => setFaqOpen(faqOpen === i ? null : i)} />
-          ))}
-        </FadeIn>
-      </Section>
+      {/* ══════════ 12. BAZA WIEDZY I FAQ ══════════ */}
+      <LazyBlock minHeight={760}><FaqSection onNavigate={onNavigate} /></LazyBlock>
 
-      {/* FINALNE CTA Z LUMINOUS ARCH */}
-      <Section className="relative z-10 py-20 sm:py-28 overflow-hidden">
-        {/* Luminous Atmospheric Horizon Arch & Pulsing Aura */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[420px] flex items-center justify-center overflow-visible"
-          style={{
-            maskImage: 'radial-gradient(ellipse 75% 65% at 50% 50%, black 25%, transparent 80%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 75% 65% at 50% 50%, black 25%, transparent 80%)',
-          }}
-        >
-          <div
-            className="absolute w-[820px] h-[360px] rounded-[100%] bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.3)_0%,hsl(var(--primary)/0.06)_50%,transparent_75%)] blur-3xl"
-          />
-          <svg
-            viewBox="0 0 1000 350"
-            className="relative w-full h-full opacity-80"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="finalCtaArchGlow3" x1="0%" y1="100%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-                <stop offset="20%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
-                <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.95" />
-                <stop offset="80%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-              </linearGradient>
-              <filter id="finalCtaBlur3" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="8" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-            <path
-              d="M 50 330 C 200 60, 800 60, 950 330"
-              stroke="url(#finalCtaArchGlow3)"
-              strokeWidth="1.75"
-              filter="url(#finalCtaBlur3)"
-            />
-          </svg>
-        </div>
-
-        <FadeIn>
-          <div className="relative mx-auto max-w-3xl text-center">
-            <h2
-              className="font-heading font-light leading-[1.08] tracking-[-2px] text-foreground mb-4"
-              style={{ fontSize: 'clamp(2.4rem, 5.2vw, 4rem)' }}
-            >
-              Wszystkie modele AI. <br />
-              <span className="text-primary font-normal drop-shadow-[0_0_35px_rgba(105,179,240,0.5)]">
-                Jeden standard pracy.
-              </span>
-            </h2>
-
-            <p className="font-sans text-[15px] sm:text-[16px] text-foreground/65 max-w-md mx-auto leading-relaxed mb-8 font-light">
-              Topowe modele, studio grafik 4K i baza wiedzy w jednym oknie. Start za 0 zł bez karty.
-            </p>
-
-            <div className="flex flex-col items-center justify-center gap-3.5 sm:flex-row">
-              <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
-                Rozpocznij za darmo
-              </GlowButton>
-              <GhostButton size="lg" onClick={() => onNavigate('cennik')}>
-                Zobacz cennik i pakiety
-              </GhostButton>
-            </div>
-          </div>
-        </FadeIn>
-      </Section>
+      {/* ══════════ 13. FINALNE CTA — KONWERGENCJA ══════════ */}
+      <LazyBlock minHeight={720}><FinalCtaSection onNavigate={onNavigate} /></LazyBlock>
     </div>
   )
 }
