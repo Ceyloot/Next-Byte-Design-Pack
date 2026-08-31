@@ -1050,8 +1050,9 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
           <div className="space-y-2.5 font-sans pt-1">
             {[
               'Generowanie do 165 t/s',
-              'Wspólna pamięć kontekstu',
-              'Pełna prywatność i serwery w UE',
+              'Zmieniasz model, kontekst zostaje',
+              'Serwery w UE i pełne RODO',
+              'Analiza plików PDF, Excel, kodu i zdjęć',
             ].map((bullet) => (
               <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
                 <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
@@ -1063,7 +1064,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
           {/* PRZYCISK CTA */}
           <div className="pt-2">
             <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
-              Wypróbuj Chat AI
+              Zacznij rozmowę
             </GlowButton>
           </div>
         </div>
@@ -1517,9 +1518,10 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
           <div className="space-y-2.5 font-sans pt-1">
             {[
-              'Generowanie grafik w jakości 4K bez limitu ani kolejek',
+              'Grafiki i wideo w jakości 4K bez limitów',
               'Wszystkie topowe modele w jednym miejscu',
               'Postacie pozwalające na fotorealistyczne oddanie osób na zdjęciu',
+              'Zaawansowane generowanie wideo AI',
             ].map((bullet) => (
               <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
                 <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
@@ -3119,31 +3121,31 @@ const MODULE_COPY: ModuleCopy[] = [
   {
     id: 'assistant',
     num: '03',
-    tag: 'ASYSTENT NEXTBYTE',
-    titleLead: 'Asystent NextByte',
-    titleAccent: 'Autonomia w firmie',
-    lead: 'Autonomiczny agent, który sam tworzy notatki, generuje dokumenty, odpala research i planuje zadania w kalendarzu.',
+    tag: 'ASYSTENT AI',
+    titleLead: 'Jeden asystent',
+    titleAccent: 'do całej Twojej pracy',
+    lead: 'Pracuje w czacie, notatkach, kalendarzu i na tablicach. Wykonuje zadania tam, gdzie jesteś, bez przełączania okien.',
     bullets: [
-      'Samodzielnie tworzy notatki i generuje dokumenty z ustaleń',
-      'Uruchamia research i wyciąga najważniejsze wnioski',
-      'Planuje zadania i pilnuje terminów w kalendarzu',
-      'Pracuje na pełnym kontekście Twojej firmy',
+      'Obecny w każdym module platformy',
+      'Tworzy notatki i dokumenty z Twoich ustaleń',
+      "Sam wpisuje spotkania i deadline'y do kalendarza",
+      'Rozumie kontekst Twojej pracy',
     ],
-    cta: 'Poznaj Asystenta NextByte',
+    cta: 'Poznaj Asystenta AI',
     visualLeft: true,
   },
   {
     id: 'research',
     num: '04',
     tag: 'DEEP RESEARCH',
-    titleLead: 'Deep Research',
-    titleAccent: 'Raport w 30 sekund',
-    lead: 'Przeszukuj do 40 wiarygodnych źródeł naraz w czasie rzeczywistym. Otrzymujesz gotowy, zweryfikowany raport z tabelami.',
+    titleLead: 'Zrób research',
+    titleAccent: 'w parę minut',
+    lead: 'Przeszukuje cały internet, zbiera dziesiątki źródeł naraz, sprawdza fakty i oddaje gotowy raport z tabelami i linkami.',
     bullets: [
-      'Do 40 źródeł przeszukiwanych równolegle w czasie rzeczywistym',
-      'Krzyżowa weryfikacja eliminująca błędy i halucynacje',
-      'Gotowy raport z tabelami i wnioskami dla zespołu',
-      'Aktywne linki źródłowe do natychmiastowej weryfikacji',
+      'Przeszukuje cały internet i dziesiątki źródeł naraz',
+      'Każdy fakt sprawdzony w kilku źródłach',
+      'Wnioski i tabele zamiast ściany linków',
+      'Linki źródłowe do szybkiego sprawdzenia',
     ],
     cta: 'Uruchom Deep Research',
     visualLeft: false,
@@ -3154,12 +3156,12 @@ const MODULE_COPY: ModuleCopy[] = [
     tag: 'AKADEMIA I PANEL TWÓRCY',
     titleLead: 'Akademia AI',
     titleAccent: 'i Panel Twórcy',
-    lead: 'Ucz się praktycznego wykorzystania AI z gotowych kursów lub twórz i sprzedawaj własne szablony i automatyzacje.',
+    lead: 'Ucz się praktycznej wiedzy z gotowych kursów od twórców albo publikuj własne materiały i na nich zarabiaj.',
     bullets: [
-      'Praktyczne kursy wdrożeniowe na realnych przykładach',
-      'Gotowe szablony, prompty i procesy do wdrożenia od zaraz',
-      'Panel Twórcy i sprzedaż własnych materiałów w sklepie',
-      'Wypłata zysków w PLN z pełną fakturą VAT 23%',
+      'Zero teorii, kursy skupione na efektywności',
+      'Gotowe szablony i prompty zamiast suchej teorii',
+      'Zarabiasz na tym, co już umiesz',
+      'Wypłata zysków w PLN z fakturą VAT 23%',
     ],
     cta: 'Wejdź do Akademii',
     visualLeft: true,
@@ -3168,14 +3170,14 @@ const MODULE_COPY: ModuleCopy[] = [
     id: 'memory',
     num: '06',
     tag: 'PAMIĘĆ AI',
-    titleLead: 'Pamięć AI',
-    titleAccent: 'Bez tłumaczenia od zera',
-    lead: 'Platforma pamięta Twój styl, produkty i ustalenia z projektów. Wszystkie moduły korzystają ze wspólnej wiedzy.',
+    titleLead: 'AI, która pamięta',
+    titleAccent: 'kim jesteś',
+    lead: 'Platforma pamięta Twój styl, produkty i ustalenia z projektów. Wszystkie moduły korzystają z tej samej wiedzy.',
     bullets: [
-      'Wspólny kontekst dla czatu, grafiki, wideo i asystenta',
-      'Znajomość Twoich produktów, klientów i stylu pisania',
-      'Pełna lista faktów z opcją edycji w każdej chwili',
-      'Kasowanie dowolnego wpisu jednym kliknięciem',
+      'Zna Twoje dane i dopasowuje każdą odpowiedź',
+      'Nie tłumaczysz od nowa, kim jesteś i nad czym pracujesz',
+      'Cała pamięć na jednej liście, bez tajemnic',
+      'Ty decydujesz, co zostaje w pamięci',
     ],
     cta: 'Zobacz Pamięć AI',
   },
@@ -3184,15 +3186,15 @@ const MODULE_COPY: ModuleCopy[] = [
     num: '07',
     tag: 'ZINTEGROWANY WORKSPACE',
     titleLead: 'Wszystkie narzędzia',
-    titleAccent: 'Jeden wspólny organizm',
-    lead: 'Czat, grafika, wideo, notatki, kalendarz i tablice połączone w jednym oknie. Wynik przechodzi między narzędziami bez kopiowania.',
+    titleAccent: 'Jeden panel',
+    lead: 'Czat, grafika, wideo, notatki, kalendarz i tablice w jednym oknie. Wynik z jednego narzędzia od razu działa w kolejnym.',
     bullets: [
-      'Jedno logowanie zamiast pięciu osobnych programów',
-      'Płynny przepływ plików i danych między modułami',
-      'Jedna faktura w PLN zamiast wielu opłat w dolarach',
-      'Bezpieczne serwery w UE i wsparcie w języku polskim',
+      'Jedna platforma zamiast pięciu subskrypcji',
+      'Pliki i dane same przechodzą między modułami',
+      'Jedna polska faktura zamiast kilku płatności w USD',
+      'Serwery w UE i wsparcie po polsku',
     ],
-    cta: 'Zobacz cały Workspace',
+    cta: 'Zacznij za darmo',
     visualLeft: true,
   },
 ]
