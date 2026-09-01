@@ -26,6 +26,12 @@ body {
   color: hsl(var(--foreground));
 }
 
+/* --nb-navbar-h: realna wysokość sticky navbara, ustawiana przez LandingNavbar
+   (fallback 49px). Używana do wyliczeń wycentrowania grafik przy scrollu. */
+:root {
+  --nb-navbar-h: 49px;
+}
+
 .font-heading,
 .font-landing,
 .font-landing h1,

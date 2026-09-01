@@ -8,7 +8,7 @@ import {
 } from './shared'
 import { SecRule, NextByteMarkIcon, OpenAIIcon, AnthropicIcon, GeminiIcon, XaiIcon } from './HomePage'
 import { ElevenLabsIcon, KlingIcon } from './brand-icons'
-import { POROWNANIE, FAQ } from './data'
+import { FAQ } from './data'
 import type { HomePage as HomePageId } from './types'
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -52,11 +52,22 @@ export function LazyBlock({ children, minHeight = 620 }: { children: ReactNode; 
     const measure = () => {
       const r = el.getBoundingClientRect()
       const vh = window.innerHeight || 800
-      apply(r.bottom > -LAZY_MARGIN && r.top < vh + LAZY_MARGIN)
+
+      if (r.bottom > -LAZY_MARGIN && r.top < vh + LAZY_MARGIN) {
+        apply(true)
+        return
+      }
+
+      // Zdejmujemy z DOM WYŁĄCZNIE sekcje pod kadrem. Sekcja, którą już
+      // minęliśmy (jest nad kadrem), zostaje zamontowana na stałe: każde
+      // jej zdjęcie/wstawienie zmieniałoby wysokość treści NAD widokiem,
+      // a wtedy kotwiczenie scrolla w przeglądarce szarpie widok w górę.
+      if (r.top >= vh) apply(false)
     }
 
-    // Ścieżka podstawowa: obserwator przecięcia — nie dotyka layoutu.
-    const io = new IntersectionObserver(([e]) => apply(!!e?.isIntersecting), {
+    // Ścieżka podstawowa: obserwator przecięcia. Sam decyduje tylko o tym,
+    // KIEDY przeliczyć — o kierunku (nad/pod kadrem) decyduje `measure`.
+    const io = new IntersectionObserver(() => measure(), {
       rootMargin: `${LAZY_MARGIN}px 0px`,
     })
     io.observe(el)
@@ -106,9 +117,14 @@ function useSectionProgress(ref: React.RefObject<HTMLElement | null>) {
       if (q !== last) { last = q; setP(q) }
     }
     const loop = () => { read(); rafId = requestAnimationFrame(loop) }
-    const onScroll = () => { read() }
+    // Ścieżka zapasowa liczy TYLKO gdy sekcja jest przy kadrze. Sekcje raz
+    // pokazane zostają zamontowane, więc bez tej bramki każde zdarzenie
+    // scrolla wymuszałoby pomiar layoutu w kilkunastu sekcjach naraz.
+    let inViewRef = false
+    const onScroll = () => { if (inViewRef) read() }
     const io = new IntersectionObserver((entries) => {
       const inView = entries[0]?.isIntersecting ?? true
+      inViewRef = inView
       if (inView && !rafId) rafId = requestAnimationFrame(loop)
       if (!inView && rafId) { cancelAnimationFrame(rafId); rafId = 0 }
     }, { rootMargin: '300px 0px' })
@@ -427,17 +443,17 @@ function LocalGpuScene() {
 const LOKALNE_KORZYSCI = [
   {
     v: '0 zł',
-    t: 'Za każdą generację',
-    k: 'Ollama i LM Studio są darmowe, model liczy u Ciebie. Nie ma tu żadnej opłaty do zapłacenia.',
+    t: 'Za każde zapytanie',
+    k: 'Płacisz zero złotych — model działa lokalnie przez Ollama lub LM Studio na Twoim komputerze.',
   },
   {
     v: 'bez limitów',
     t: 'Tyle, ile wytrzyma karta',
-    k: 'Żadnych kolejek, przydziałów ani dziennych pułapów. Generujesz, dopóki chcesz.',
+    k: 'Pracujesz bez ograniczeń, bez opłat i bez limitów tak długo, jak chcesz.',
   },
   {
     v: 'offline',
-    t: 'Bez internetu i bez transferu',
+    t: 'Działa bez internetu',
     k: 'W pociągu, u klienta, w sieci odciętej od świata. Prompt i odpowiedź zostają na Twoim dysku.',
   },
 ] as const
@@ -455,7 +471,7 @@ export function PrivacyLocalAISection() {
           label="AI lokalne · 0 zł"
           title="Za darmo, bez limitów"
           accent="i bez internetu."
-          lead="Podłączasz darmowe Ollama albo LM Studio i NextByte przestaje pytać chmurę. Model chodzi na Twojej karcie graficznej — z tego samego czatu, z tą samą historią rozmów."
+          lead="Podłączasz własne AI z Ollamy albo LM Studio i korzystasz bez limitu ani opłat. Model chodzi na Twoim komputerze, z tego samego czatu, z tą samą historią rozmów."
         />
       </FadeIn>
 
@@ -738,20 +754,20 @@ export function DataSecuritySection({ onNavigate = () => {} }: { onNavigate?: (p
             <div className="space-y-2">
               <SecRule label="BEZPIECZEŃSTWO DANYCH" />
               <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
-                Twoje dane pod kluczem <br className="hidden sm:block" />
-                <span className="font-normal text-primary">bankowej kryptografii</span>
+                Szyfrowanie AES-256 <br className="hidden sm:block" />
+                <span className="font-normal text-primary">najwyższy poziom bezpieczeństwa</span>
               </h2>
               <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
-                Każda rozmowa, plik i notatka są szyfrowane standardem AES-256 oraz TLS 1.3. Żaden zewnętrzny model AI nie uczy się na Twoich danych.
+                Twoje dane są chronione zawsze — a pełne szyfrowanie AES-256 włączasz i wyłączasz jednym przełącznikiem, gdy potrzebujesz maksimum bezpieczeństwa.
               </p>
             </div>
 
             <div className="space-y-2.5 pt-1 font-sans">
               {[
-                'Szyfrowanie AES-256 w spoczynku dla każdego pliku i bazy danych',
-                'Bezpieczny tunel TLS 1.3 w tranzycie między przeglądarką a serwerem',
-                'Klucze Zero-Access: nikt z zespołu nie ma wglądu w Twoje treści',
-                'Zero-Training: pełna gwarancja braku trenowania AI na Twoich danych',
+                'Ty decydujesz kiedy: przełącznik AES-256 zawsze pod ręką',
+                'Dane w drodze zawsze zaszyfrowane — standard TLS 1.3',
+                'Pełna prywatność czatu bez wyjątku',
+                'AI nigdy nie uczy się z Twoich danych',
               ].map((bullet) => (
                 <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
                   <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
@@ -1280,8 +1296,8 @@ export function ServerSecuritySection({ onNavigate = () => {} }: { onNavigate?: 
             <div className="space-y-2">
               <SecRule label="BEZPIECZEŃSTWO SERWERÓW" />
               <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
-                Serwery w UE <br className="hidden sm:block" />
-                <span className="font-normal text-primary">Dane tylko w Europie</span>
+                Twoje dane <br className="hidden sm:block" />
+                <span className="font-normal text-primary">na bezpiecznych serwerach</span>
               </h2>
               <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
                 Serwery, kopie zapasowe i logi trzymamy wyłącznie na terenie Unii Europejskiej. Zgodność z RODO i AI Act jest wpisana w architekturę platformy.
@@ -1290,10 +1306,10 @@ export function ServerSecuritySection({ onNavigate = () => {} }: { onNavigate?: 
 
             <div className="space-y-2.5 pt-1 font-sans">
               {[
-                'Serwery i kopie zapasowe wyłącznie na terenie Unii Europejskiej',
+                'Dane zawsze bezpieczne na europejskich serwerach',
                 'Certyfikacja ISO 27001 i standard Tier-3 z ciągłym monitoringiem 24/7',
-                'Pełna zgodność z unijnym rozporządzeniem RODO oraz normami AI Act',
-                'Prawo do zapomnienia: eksport 1-kliknięciem i bezpowrotne kasowanie',
+                'Pełna zgodność z RODO i AI Act',
+                'Eksport i kasowanie jednym klikiem',
               ].map((bullet) => (
                 <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
                   <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
@@ -1470,213 +1486,100 @@ export function SecurityAndArchitectureSection() {
 const OSOBNE_SUBSKRYPCJE = [
   { n: 'ChatGPT Plus', zl: 80 },
   { n: 'Claude Pro', zl: 80 },
-  { n: 'Midjourney Std', zl: 120 },
-  { n: 'Notion AI', zl: 95 },
-  { n: 'Narzędzie wideo AI', zl: 90 },
+  { n: 'Gemini Advanced', zl: 120 },
+  { n: 'Grok', zl: 95 },
+  { n: 'ElevenLabs Voice', zl: 90 },
 ] as const
 
 const RAZEM = OSOBNE_SUBSKRYPCJE.reduce((a, b) => a + b.zl, 0)
 
-/** Wiersze funkcji bez wiersza z ceną — po nich liczymy braki. */
-const FUNKCJE = POROWNANIE.wiersze.slice(0, -1)
+/** Kolumny macierzy — logo zamiast nazwy tekstowej w nagłówku i selektorze. */
+const POROWNANIE_KOLUMNY = [
+  { label: 'NextByte', Icon: NextByteMarkIcon },
+  { label: 'ChatGPT Plus', Icon: OpenAIIcon },
+  { label: 'Claude Pro', Icon: AnthropicIcon },
+  { label: 'Gemini Advanced', Icon: GeminiIcon },
+  { label: 'Grok', Icon: XaiIcon },
+] as const
 
-export function ComparisonSection() {
+/** Wiersze funkcji — v[0] to zawsze NextByte, dalej po kolei kolumny konkurentów
+    (ChatGPT Plus, Claude Pro, Gemini Advanced, Grok/SuperGrok). Sprawdzone
+    researchem na wrzesień 2026 zamiast zgadywane:
+    — Generowanie grafik: ChatGPT Plus ma GPT Image, Claude NIE generuje obrazów
+      (brak modelu graficznego), Gemini ma Nano Banana, Grok ma Grok Imagine.
+    — Generowanie wideo AI: Sora zniknęła z ChatGPT Plus (wycofana III/IV 2026),
+      Claude nie generuje wideo, Gemini ma Veo, Grok ma Grok Imagine (wideo).
+    — Kalendarz i zadania AI: ChatGPT ma Scheduled Tasks + integrację z Kalendarzem
+      Google (VI 2026), Gemini ma to tylko w płatnym dodatku Workspace (nie w
+      samym Gemini Advanced), Claude i Grok — brak.
+    — Płatność za zużycie / koszt widoczny przed wysłaniem: wszyscy czterej
+      konkurenci to sztywne abonamenty miesięczne (20-30 $) bez metrycznego
+      rozliczania per zapytanie — fakt modelu biznesowego, nie możliwości AI.
+    Najważniejsze (najbardziej odróżniające) rzeczy na górze. */
+const POROWNANIE_WIERSZE = [
+  { f: 'Chat z wieloma modelami', v: [true, false, false, false, false] },
+  { f: 'Generowanie grafik', v: [true, true, false, true, true] },
+  { f: 'Generowanie wideo AI', v: [true, false, false, true, true] },
+  { f: 'Model lokalny offline', v: [true, false, false, false, false] },
+  { f: 'Kalendarz i zadania AI', v: [true, true, false, false, false] },
+  { f: 'Płatność za realne zużycie, nie sztywny abonament', v: [true, false, false, false, false] },
+  { f: 'Koszt zapytania widoczny przed wysłaniem', v: [true, false, false, false, false] },
+  { f: 'Jedna faktura w PLN', v: [true, false, false, false, false] },
+] as const
+
+export function ComparisonSection({ onNavigate = () => {} }: { onNavigate?: (p: HomePageId) => void }) {
   const ref = useRef<HTMLDivElement>(null)
   const p = useSectionProgress(ref)
-  const rosnie = Math.min(1, Math.max(0, p / 0.55))
-  const [wybrany, setWybrany] = useState<number | null>(1)
-  const brakuje = wybrany === null ? 0 : FUNKCJE.filter((r) => r.v[wybrany] === false).length
+  const rosnie = Math.min(1, Math.max(0, p / 0.6))
 
   return (
-    <Section className="relative z-10 py-16 sm:py-20">
+    <Section className="relative z-10 py-8 sm:py-12">
       <FadeIn>
-        <BlockHead
-          center
-          label="Porównanie"
-          title="Pięć rachunków miesięcznie"
-          accent="albo jeden."
-          lead="Tyle kosztuje trzymanie osobnych subskrypcji na czat, grafikę, wideo i notatki — w obcych walutach, z pięcioma fakturami do rozliczenia."
-        />
-      </FadeIn>
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
 
-      {/* ── STOS RACHUNKÓW ── */}
-      <div ref={ref} className="mx-auto mt-14 grid max-w-5xl gap-10 lg:grid-cols-2 lg:gap-14">
-        <FadeIn>
-          <div className="flex items-baseline justify-between border-b border-foreground/[0.08] pb-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/35">osobno</span>
-            <span className="font-heading text-[26px] font-light leading-none tracking-tight text-foreground/60">
-              {RAZEM} <span className="text-[13px] text-foreground/35">zł/mc</span>
-            </span>
-          </div>
-
-          <div className="mt-5 space-y-2.5">
-            {OSOBNE_SUBSKRYPCJE.map((s, i) => (
-              <div key={s.n} className="flex items-center gap-3.5">
-                <span className="w-[132px] shrink-0 font-sans text-[12.5px] font-light text-foreground/50">{s.n}</span>
-                <span className="h-[9px] flex-1 overflow-hidden rounded-full bg-foreground/[0.05]">
-                  <span
-                    className="block h-full rounded-full bg-foreground/25"
-                    style={{
-                      width: `${(s.zl / 130) * 100 * Math.min(1, Math.max(0, (rosnie - i * 0.08) / 0.5))}%`,
-                      transition: 'none',
-                    }}
-                  />
-                </span>
-                <span className="w-[52px] shrink-0 text-right font-mono text-[11px] text-foreground/40">{s.zl} zł</span>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-5 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/30">
-            <X className="h-3.5 w-3.5" /> pięć faktur · trzy waluty · pięć logowań
-          </p>
-        </FadeIn>
-
-        <FadeIn delay={90}>
-          <div className="flex items-baseline justify-between border-b border-primary/30 pb-3">
-            <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-primary/75">
-              <NextByteMarkIcon className="h-3.5 w-3.5" /> w NextByte
-            </span>
-            <span
-              className="font-heading text-[40px] font-light leading-none tracking-tight text-primary"
-              style={{ filter: 'drop-shadow(0 0 26px hsl(var(--primary)/0.35))' }}
-            >
-              od 0 <span className="text-[15px] text-foreground/40">zł/mc</span>
-            </span>
-          </div>
-
-          <div className="mt-5 flex items-center gap-3.5">
-            <span className="w-[132px] shrink-0 font-sans text-[12.5px] font-light text-foreground/70">Wszystko razem</span>
-            <span className="h-[9px] flex-1 overflow-hidden rounded-full bg-foreground/[0.05]">
-              <span
-                className="block h-full rounded-full bg-primary"
-                style={{ width: `${18 * rosnie}%`, boxShadow: '0 0 14px hsl(var(--primary)/0.6)' }}
-              />
-            </span>
-            <span className="w-[52px] shrink-0 text-right font-mono text-[11px] font-bold text-primary">0 zł</span>
-          </div>
-
-          <p className="mt-5 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-primary/60">
-            <CircleCheck className="h-3.5 w-3.5" /> jedna faktura vat 23% · pln · jedno logowanie
-          </p>
-
-          <p className="mt-6 font-sans text-[13px] font-light leading-relaxed text-foreground/50">
-            Plan darmowy obejmuje interfejs, notatki, kalendarz i modele lokalne. Za resztę płacisz jedną pulą Byte —
-            tylko za to, co faktycznie wygenerujesz, a niewykorzystana część przechodzi na kolejny miesiąc.
-          </p>
-        </FadeIn>
-      </div>
-
-      {/* ── DOWÓD: MACIERZ, KTÓRĄ SIĘ PRZEPYTUJE ──
-         Rozsypane bloki „czego tam nie ma" zastąpiła macierz, bo tylko ona
-         pokazuje braki wprost. Żeby nie była martwym arkuszem, wybiera się
-         w niej konkurenta: jego kolumna wychodzi na wierzch, reszta gaśnie,
-         a nad tabelą staje licznik brakujących funkcji. */}
-      <FadeIn delay={120}>
-        <div className="mx-auto mt-16 max-w-5xl border-t border-foreground/[0.08] pt-10">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/35">porównaj z</span>
-            {POROWNANIE.kolumny.slice(1).map((k, i) => {
-              const idx = i + 1
-              const on = wybrany === idx
-              return (
-                <button
-                  key={k}
-                  onClick={() => setWybrany(on ? null : idx)}
-                  aria-pressed={on}
-                  className={cn(
-                    'rounded-full border px-4 py-1.5 font-sans text-[12.5px] transition-all duration-300',
-                    on
-                      ? 'border-primary/45 bg-primary/[0.1] text-foreground'
-                      : 'border-foreground/[0.09] text-foreground/45 hover:border-foreground/20 hover:text-foreground/75',
-                  )}
-                >
-                  {k}
-                </button>
-              )
-            })}
-          </div>
-
-          <p className="mt-6 text-center font-heading text-[clamp(17px,2.2vw,22px)] font-light leading-snug tracking-[-0.4px] text-foreground">
-            {wybrany === null ? (
-              <>Wybierz narzędzie, żeby zobaczyć, <span className="text-foreground/45">czego w nim nie ma.</span></>
-            ) : (
-              <>
-                <span className="text-primary">{POROWNANIE.kolumny[wybrany]}</span> nie ma{' '}
-                <span className="text-primary">{brakuje} z {FUNKCJE.length}</span> rzeczy z tej listy.
-              </>
-            )}
-          </p>
-
-          {/* ── MACIERZ ── */}
-          <div className="mt-8 overflow-x-auto">
-            <table className="w-full min-w-[620px] border-collapse font-sans text-sm">
+          {/* KOLUMNA TABELI — PO LEWEJ NA DESKTOPIE. Wszyscy konkurenci naraz,
+             bez wyboru — logo zamiast nazwy w nagłówku. Wiersze „ładują się"
+             kolejno przy przewijaniu. ── */}
+          <div ref={ref} className="lg:col-span-7 order-2 lg:order-1">
+            <table className="w-full border-collapse font-sans text-sm">
               <thead>
                 <tr className="border-b border-foreground/[0.08]">
-                  <th className="w-[44%] pb-3 pr-4 text-left font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-foreground/30">
+                  <th className="pb-3 text-left font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-foreground/30">
                     Funkcja
                   </th>
-                  {POROWNANIE.kolumny.map((k, ci) => (
-                    <th
-                      key={k}
-                      className={cn(
-                        'relative px-3 pb-3 pt-2 text-center align-bottom transition-opacity duration-300',
-                        ci === 0 && 'bg-primary/[0.07]',
-                        wybrany !== null && ci !== 0 && ci !== wybrany && 'opacity-25',
-                      )}
-                    >
-                      {ci === 0 ? (
-                        <>
-                          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-b bg-primary" />
-                          <span className="inline-flex flex-col items-center gap-1">
-                            <NextByteMarkIcon className="h-4 w-4 text-primary" />
-                            <span className="font-heading text-[13px] font-semibold text-primary">{k}</span>
-                          </span>
-                        </>
-                      ) : (
-                        <span className={cn('font-heading text-[12.5px] font-light', ci === wybrany ? 'text-foreground/80' : 'text-foreground/35')}>
-                          {k}
-                        </span>
-                      )}
+                  {POROWNANIE_KOLUMNY.map((k, ci) => (
+                    <th key={k.label} className="w-12 pb-3">
+                      <k.Icon title={k.label} className={cn('mx-auto h-6 w-6', ci === 0 ? 'text-primary' : 'text-foreground/35')} />
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {POROWNANIE.wiersze.map((r, ri) => {
-                  const show = Math.max(0, Math.min(1, (p - 0.28 - ri * 0.03) / 0.2))
-                  const ostatni = ri === POROWNANIE.wiersze.length - 1
+                {POROWNANIE_WIERSZE.map((r, i) => {
+                  // Krok dobrany tak, by ostatni wiersz doszedł do show=1 dokładnie przy rosnie=1
+                  // (przy 7 wierszach i stałym kroku 0.15 ostatni wiersz nigdy się nie domykał).
+                  const step = 0.6 / (POROWNANIE_WIERSZE.length - 1)
+                  const show = Math.min(1, Math.max(0, (rosnie - i * step) / 0.4))
                   return (
-                    <tr key={r.f} className="border-b border-foreground/[0.05] last:border-b-0" style={{ opacity: 0.14 + show * 0.86 }}>
-                      <td className={cn('py-2.5 pr-4 text-[12.5px] leading-snug', ostatni ? 'font-semibold text-foreground' : 'font-light text-foreground/65')}>
-                        {r.f}
-                      </td>
+                    <tr
+                      key={r.f}
+                      className="border-b border-foreground/[0.05] last:border-b-0"
+                      style={{
+                        opacity: 0.15 + show * 0.85,
+                        transform: `translateX(${(1 - show) * -10}px)`,
+                        filter: `blur(${(1 - show) * 5}px)`,
+                      }}
+                    >
+                      <td className="py-3 pr-3 text-[12.5px] font-light leading-snug text-foreground/65">{r.f}</td>
                       {r.v.map((v, vi) => (
-                        <td
-                          key={vi}
-                          className={cn(
-                            'relative px-3 py-2.5 text-center transition-opacity duration-300',
-                            vi === 0 && 'bg-primary/[0.05]',
-                            wybrany !== null && vi !== 0 && vi !== wybrany && 'opacity-20',
-                          )}
-                        >
-                          {vi === 0 && (
-                            <>
-                              <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-px bg-primary/20" />
-                              <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-px bg-primary/20" />
-                            </>
-                          )}
+                        <td key={vi} className={cn('py-3 text-center', vi === 0 && 'bg-primary/[0.04]')}>
                           {v === true ? (
                             <CircleCheck
-                              className={cn('mx-auto h-[17px] w-[17px]', vi === 0 ? 'text-primary' : 'text-foreground/45')}
-                              style={vi === 0 ? { filter: 'drop-shadow(0 0 7px hsl(var(--primary)/0.6))' } : undefined}
+                              className={cn('mx-auto h-4 w-4', vi === 0 ? 'text-primary' : 'text-foreground/40')}
+                              style={vi === 0 ? { filter: 'drop-shadow(0 0 6px hsl(var(--primary)/0.5))' } : undefined}
                             />
-                          ) : v === false ? (
-                            <X className={cn('mx-auto h-4 w-4', vi === wybrany ? 'text-rose-300/70' : 'text-foreground/15')} />
                           ) : (
-                            <span className={cn('font-sans', ostatni ? 'text-[14px]' : 'text-[12px]', vi === 0 ? 'font-semibold text-primary' : 'font-light text-foreground/40')}>
-                              {v}
-                            </span>
+                            <X className="mx-auto h-4 w-4 text-foreground/15" />
                           )}
                         </td>
                       ))}
@@ -1685,14 +1588,49 @@ export function ComparisonSection() {
                 })}
               </tbody>
             </table>
+
+            {/* Cena jako smaczek, nie jako główny argument. */}
+            <p className="mt-6 text-center font-mono text-[11px] text-foreground/35">
+              {RAZEM} zł/mc osobno <span className="text-foreground/20">→</span>{' '}
+              <span className="text-primary/70">od 0 zł w NextByte</span>
+            </p>
           </div>
+
+          {/* KOLUMNA TEKSTU — PO PRAWEJ NA DESKTOPIE */}
+          <div className="lg:col-span-5 text-left space-y-5 order-1 lg:order-2">
+            <div className="space-y-2">
+              <SecRule label="PORÓWNANIE" />
+              <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
+                Koniec z skakaniem <br className="hidden sm:block" />
+                <span className="font-normal text-primary">Między stronami</span>
+              </h2>
+              <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
+                Tyle kosztuje trzymanie osobnych subskrypcji na czat, grafikę, wideo i notatki.
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-1 font-sans">
+              {[
+                'Model dobierasz do zadania — nie jesteś zamknięty u jednego dostawcy',
+                'Płacisz tylko za to, co realnie wygenerujesz, bez sztywnego abonamentu',
+                'Wszystko w jednym panelu, z jedną fakturą VAT w PLN',
+              ].map((bullet) => (
+                <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
+                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                  <span>{bullet}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2">
+              <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
+                Zobacz cennik NextByte
+              </GlowButton>
+            </div>
+          </div>
+
         </div>
       </FadeIn>
-
-      <p className="mx-auto mt-8 max-w-2xl text-center font-sans text-[11.5px] font-light leading-relaxed text-foreground/30">
-        Ceny konkurencji według cenników katalogowych, przeliczone po bieżącym kursie. Twój rachunek w NextByte zależy
-        od realnego zużycia — koszt każdego zapytania widzisz przed wysłaniem.
-      </p>
     </Section>
   )
 }
@@ -1706,14 +1644,36 @@ export function ComparisonSection() {
 
 export function PlatformVideoSection({ onNavigate = () => {} }: { onNavigate?: (p: HomePageId) => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [isPlaying, setIsPlaying] = useState(true)
+  // Wideo NIE odtwarza się automatycznie (brak autoplay=1 w URL) — stan startowy
+  // musi to odzwierciedlać, inaczej pierwsze kliknięcie wysyła "pause" zamiast "play".
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [volume, setVolume] = useState(100)
+  const volumeBeforeMute = useRef(100)
+
+  const postToPlayer = (method: string, value?: unknown) => {
+    iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ method, value }), '*')
+  }
 
   const togglePlay = () => {
     if (!iframeRef.current?.contentWindow) return
     const nextState = !isPlaying
-    const method = nextState ? 'play' : 'pause'
-    iframeRef.current.contentWindow.postMessage(JSON.stringify({ method }), '*')
+    postToPlayer(nextState ? 'play' : 'pause')
     setIsPlaying(nextState)
+  }
+
+  const applyVolume = (next: number) => {
+    setVolume(next)
+    postToPlayer('setVolume', next / 100)
+  }
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (volume > 0) {
+      volumeBeforeMute.current = volume
+      applyVolume(0)
+    } else {
+      applyVolume(volumeBeforeMute.current || 100)
+    }
   }
 
   return (
@@ -1750,6 +1710,44 @@ export function PlatformVideoSection({ onNavigate = () => {} }: { onNavigate?: (
                   </svg>
                 </div>
               </div>
+
+              {/* Kontrola głośności — niezależna od odtwarzania/zatrzymania.
+                  Suwak rozwija się w lewo przy najechaniu na grupę. */}
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="group/vol absolute bottom-3 right-3 flex items-center gap-2 rounded-full border border-foreground/15 bg-background/80 py-1.5 pl-1.5 pr-1.5 backdrop-blur-md transition-[padding] duration-200 hover:pl-3"
+              >
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={volume}
+                  onChange={(e) => applyVolume(Number(e.target.value))}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Głośność wideo"
+                  className="h-1 w-0 shrink-0 cursor-pointer appearance-none overflow-hidden rounded-full bg-foreground/20 opacity-0 transition-all duration-200 group-hover/vol:w-16 group-hover/vol:opacity-100 accent-primary"
+                />
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  title={volume === 0 ? 'Włącz dźwięk' : 'Wycisz'}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center text-foreground/80 transition-colors hover:text-primary"
+                >
+                  {volume === 0 ? (
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="4,9 8,9 12,5 12,19 8,15 4,15" fill="currentColor" stroke="none" />
+                      <line x1="16" y1="9" x2="21" y2="14" />
+                      <line x1="21" y1="9" x2="16" y2="14" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="4,9 8,9 12,5 12,19 8,15 4,15" fill="currentColor" stroke="none" />
+                      <path d="M16 8.5c1 1 1 6 0 7" opacity={volume > 30 ? 1 : 0.25} />
+                      <path d="M18.5 6c2 2 2 10 0 12" opacity={volume > 65 ? 1 : 0.25} />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1768,8 +1766,7 @@ export function PlatformVideoSection({ onNavigate = () => {} }: { onNavigate?: (
 
             <div className="space-y-2.5 pt-1 font-sans">
               {[
-                'Przegląd najważniejszych funkcji platformy w 2 minuty',
-                'Płynna praca bez przełączania kart i kopiowania kontekstu',
+                'Zobacz czym jest NextByte',
                 'Demonstracja realnych scenariuszy i automatyzacji w firmie',
               ].map((bullet) => (
                 <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">

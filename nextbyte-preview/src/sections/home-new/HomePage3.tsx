@@ -51,6 +51,13 @@ import animalImg from '@/assets/studio/animal.jpg'
       - Skrócone, zwięzłe opisy o natychmiastowej czytelności.
    ═══════════════════════════════════════════════════════════════════════ */
 
+/** Wysokość sticky paska nawigacyjnego strony — "wycentrowanie" grafik liczymy
+    w obszarze POD nim, a nie w całym oknie przeglądarki. */
+function getNavbarOffset(): number {
+  if (typeof document === 'undefined') return 0
+  return document.querySelector<HTMLElement>('[data-navbar]')?.getBoundingClientRect().height ?? 0
+}
+
 /** Wspólny styl obramowań z poświatą */
 export const GLOW_CARD = 'relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-5 backdrop-blur-sm'
 
@@ -530,22 +537,26 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
    ═══════════════════════════════════════════════════════════════════════ */
 function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  // Mierzymy pozycję samej ramki grafiki (stały aspect-ratio), a nie całej sekcji —
+  // sekcje mają różną wysokość zależnie od ilości tekstu, co przesuwałoby trigger.
+  const stageRef = useRef<HTMLDivElement>(null)
   const [scrollProgress, setScrollProgress] = useState(0)
 
   // Reaktywny nasłuch scrolla z triggerem idealnie w miejscu ze zrzutu ekranu
   useEffect(() => {
-    const el = containerRef.current
+    const el = stageRef.current ?? containerRef.current
     if (!el) return
 
     const updateProgress = () => {
       const rect = el.getBoundingClientRect()
 
       // TRIGGER ROZSUWANIA:
-      // Rozpoczyna rozsuwanie gdy sekcja wchodzi na ekran (rect.top ≈ vh * 0.58)
-      // Osiąga 100% (rozwinięcie na maksa) dokładnie w momencie wyrównania w kadrze (rect.top ≈ vh * 0.16)
+      // Rozpoczyna rozsuwanie gdy sekcja wchodzi na ekran (rect.top ≈ vh * 0.45)
+      // Osiąga 100% (rozwinięcie na maksa) dokładnie w momencie, gdy grafika jest wycentrowana na ekranie.
       const vh = window.innerHeight || 800
       const startUnfold = vh * 0.45
-      const fullUnfold = vh * 0.18
+      // Wycentrowanie liczymy w obszarze POD sticky navbarem, nie w całym oknie.
+      const fullUnfold = (vh + getNavbarOffset()) / 2 - rect.height / 2
 
       const raw = (startUnfold - rect.top) / (startUnfold - fullUnfold)
       const clamped = Math.max(0, Math.min(1, raw))
@@ -617,7 +628,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
           />
 
           {/* GŁÓWNY WIDOK IZOMETRYCZNY SVG ZE STOSEM WARSTW PROCESORA */}
-          <div className="relative w-full max-w-[740px] h-[580px] flex items-center justify-center">
+          <div ref={stageRef} className="relative w-full max-w-[740px] h-[580px] flex items-center justify-center">
 
             <svg
               viewBox="0 0 740 580"
@@ -1165,10 +1176,13 @@ const OPTICS = [
    ═══════════════════════════════════════════════════════════════════════ */
 function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  // Mierzymy pozycję samej ramki grafiki (stały aspect-ratio), a nie całej sekcji —
+  // sekcje mają różną wysokość zależnie od ilości tekstu, co przesuwałoby trigger.
+  const stageRef = useRef<HTMLDivElement>(null)
   const [p, setP] = useState(0)
 
   useEffect(() => {
-    const el = containerRef.current
+    const el = stageRef.current ?? containerRef.current
     if (!el) return
 
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
@@ -1182,8 +1196,9 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
     const read = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || 800
-      const start = vh * 0.88
-      const end = vh * 0.14
+      const start = vh * 0.6
+      // Wycentrowanie liczymy w obszarze POD sticky navbarem, nie w całym oknie.
+      const end = (vh + getNavbarOffset()) / 2 - rect.height / 2
       const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
       const eased = t * t * (3 - 2 * t)
       const q = Math.round(eased * 400) / 400
@@ -1546,7 +1561,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
             style={{ opacity: 0.5 + p * 0.4 }}
           />
 
-          <div className="relative w-full max-w-[900px] aspect-[900/620]">
+          <div ref={stageRef} className="relative w-full max-w-[900px] aspect-[900/620]">
             <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="nbSkinF" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -1797,8 +1812,9 @@ function AssistantOrbitVisual() {
     const read = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || 800
-      const start = vh * 0.88
-      const end = vh * 0.14
+      const start = vh * 0.6
+      // Wycentrowanie liczymy w obszarze POD sticky navbarem, nie w całym oknie.
+      const end = (vh + getNavbarOffset()) / 2 - rect.height / 2
       const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
       const eased = t * t * (3 - 2 * t)
       const q = Math.round(eased * 400) / 400
@@ -2230,7 +2246,10 @@ function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
     const read = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || 800
-      const t = Math.max(0, Math.min(1, (vh * 0.88 - rect.top) / (vh * 0.74)))
+      const start = vh * 0.6
+      // Wycentrowanie liczymy w obszarze POD sticky navbarem, nie w całym oknie.
+      const end = (vh + getNavbarOffset()) / 2 - rect.height / 2
+      const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
       const eased = t * t * (3 - 2 * t)
       const q = Math.round(eased * 400) / 400
       if (q !== last) { last = q; setP(q) }
@@ -3210,8 +3229,24 @@ function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
     { label: 'Historia', id: 'historia' },
   ]
 
+  const navRef = useRef<HTMLDivElement>(null)
+
+  // Dół tego navbara = "góra strony" dla scroll-snapa i wyliczeń wycentrowania
+  // modułów (--nb-navbar-h w :root, patrz index.css `scroll-padding-top`).
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+    const sync = () => {
+      document.documentElement.style.setProperty('--nb-navbar-h', `${el.getBoundingClientRect().height}px`)
+    }
+    sync()
+    const ro = new ResizeObserver(sync)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
-    <div className="sticky top-0 z-50 w-full shrink-0 border-b border-foreground/[0.06] bg-background/92 backdrop-blur-md">
+    <div ref={navRef} data-navbar className="sticky top-0 z-50 w-full shrink-0 border-b border-foreground/[0.06] bg-background/92 backdrop-blur-md">
       <div className="flex items-center justify-center gap-1.5 px-4 h-12">
         {items.map((item) => {
           const aktywna = item.id === 'home'
@@ -3252,10 +3287,14 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
       <PageAmbience />
 
       {/* ══════════ 1. HERO + JEDYNA KARUZELA (MODEL ECOSYSTEM BRIDGE) ══════════ */}
-      <div className="relative overflow-hidden">
+      {/* Fale podciągnięte pod sticky navbar (ujemny margines o jego wysokość) —
+          navbar (półprzezroczysty, z blurem) siedzi WIZUALNIE na falach, a nie
+          na czystym tle. Padding sekcji poniżej odzyskuje tę wysokość i dokłada
+          trochę więcej odstępu nad nagłówkiem. */}
+      <div className="relative overflow-hidden" style={{ marginTop: 'calc(var(--nb-navbar-h, 49px) * -1)' }}>
         <HeroWispyBackground />
 
-        <section className="relative pt-[60px] sm:pt-[80px]">
+        <section className="relative pt-[130px] sm:pt-[160px]">
           <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
             <FadeIn>
               <h1 className="font-heading text-[clamp(32px,5.2vw,72px)] font-normal leading-[1.04] tracking-[-0.035em]">
@@ -3377,12 +3416,12 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
       <TechDivider />
 
       {/* ══════════ 10. WDROŻENIE W 3 KROKACH — PROCES W DÓŁ ══════════ */}
-      <LazyBlock minHeight={700}><ThreeStepsSection onNavigate={onNavigate} /></LazyBlock>
+      <LazyBlock minHeight={900}><ThreeStepsSection onNavigate={onNavigate} /></LazyBlock>
 
       <TechDivider />
 
       {/* ══════════ 11. PORÓWNANIE Z OSOBNYMI SUBSKRYPCJAMI ══════════ */}
-      <LazyBlock minHeight={1020}><ComparisonSection /></LazyBlock>
+      <LazyBlock minHeight={560}><ComparisonSection onNavigate={onNavigate} /></LazyBlock>
 
       <TechDivider />
 
