@@ -16,6 +16,13 @@
       "autoPort": false
     },
     {
+      "name": "nextbyte-homepage3",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "nextbyte-homepage3", "--", "--port", "5197", "--strictPort"],
+      "port": 5197,
+      "autoPort": false
+    },
+    {
       "name": "nextbyte-app",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "../nextbyte-app", "--", "--port", "5198", "--strictPort"],

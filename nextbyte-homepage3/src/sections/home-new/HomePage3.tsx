@@ -617,7 +617,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
           />
 
           {/* GŁÓWNY WIDOK IZOMETRYCZNY SVG ZE STOSEM WARSTW PROCESORA */}
-          <div className="relative w-full max-w-[740px] h-[580px] flex items-center justify-center">
+          <div className="relative w-full max-w-[740px] aspect-[740/580] flex items-center justify-center">
 
             <svg
               viewBox="0 0 740 580"
@@ -3212,7 +3212,7 @@ function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
 
   return (
     <div className="sticky top-0 z-50 w-full shrink-0 border-b border-foreground/[0.06] bg-background/92 backdrop-blur-md">
-      <div className="flex items-center justify-center gap-1.5 px-4 h-12">
+      <div className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 h-12 overflow-x-auto">
         {items.map((item) => {
           const aktywna = item.id === 'home'
           return (
@@ -3225,7 +3225,7 @@ function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
                 }
               }}
               className={cn(
-                'h-8 px-4 rounded-lg font-sans text-[13px] font-medium transition-all duration-200 cursor-pointer',
+                'h-8 shrink-0 whitespace-nowrap px-2.5 sm:px-4 rounded-lg font-sans text-[12px] sm:text-[13px] font-medium transition-all duration-200 cursor-pointer',
                 aktywna
                   ? 'bg-primary/15 border border-primary/30 text-primary'
                   : 'text-foreground/45 hover:text-foreground/75 hover:bg-foreground/[0.05]',
