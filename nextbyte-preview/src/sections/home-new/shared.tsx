@@ -153,7 +153,7 @@ export function Glow({
 /** Precyzyjny separator laserowy z rozmyciem bocznym i świecącym mikrowęzłem */
 export function TechDivider({ className }: { className?: string }) {
   return (
-    <div aria-hidden className={cn('relative w-full flex items-center justify-center my-12 pointer-events-none', className)}>
+    <div aria-hidden className={cn('relative w-full flex items-center justify-center my-6 sm:my-12 pointer-events-none', className)}>
       <div className="h-px w-full max-w-5xl bg-gradient-to-r from-transparent via-foreground/[0.12] to-transparent" />
       <div className="absolute h-1.5 w-1.5 rounded-full bg-primary/60 shadow-[0_0_8px_hsl(var(--primary))]" />
     </div>

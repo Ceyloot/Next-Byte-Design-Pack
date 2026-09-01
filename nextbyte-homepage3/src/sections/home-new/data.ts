@@ -139,31 +139,31 @@ export const TECH_PARTNERZY = [
 /* ══════════════ TRZY FILARY WARTOŚCI DLA BIZNESU ══════════════ */
 export const WARTOSCI_FILARY = [
   {
-    tag: '// SYGNAŁ ZAMIAST SZUMU',
-    title: 'Codziennie wychodzi 50 „przełomowych" narzędzi AI. Znaczenie mają 2.',
-    desc: 'NextByte testuje je za Ciebie i pokazuje tylko to, co realnie przyspiesza pracę — z instrukcją krok po kroku, po polsku.',
+    tag: '// SELEKCJA',
+    title: 'Tylko modele, które realnie dowożą',
+    desc: 'Odrzucamy marketingowy szum i testujemy dziesiątki silników miesięcznie. Dostajesz dostęp wyłącznie do modeli przynoszących wymierną wartość biznesową.',
     accent: '#70BEFA',
   },
   {
-    tag: '// PROMPTY, KTÓRE DZIAŁAJĄ',
-    title: 'Zero „magicznych promptów" z TikToka.',
-    desc: 'Dostajesz sprawdzone szablony pod konkretne zadania: research, treści, automatyzacje, kod. Każdy prompt z kontekstem: kiedy użyć, co zmienić pod siebie, czego się spodziewać.',
+    tag: '// GOTOWE WZORCE',
+    title: 'Przetestowane szablony pod realne zadania',
+    desc: 'Gotowe procedury pod analizy rynkowe, research, kod i content marketing. Wklejasz własne dane i otrzymujesz profesjonalny wynik bez nauki inżynierii promptów.',
     accent: '#C084FC',
   },
   {
-    tag: '// GOTOWE PRZEPŁYWY',
-    title: 'Nie pojedyncze triki, tylko całe systemy.',
-    desc: 'Od pomysłu do wyniku — z rozpisanymi narzędziami i kolejnością kroków. Kopiujesz, podmieniasz dane, działa. Tego samego dnia.',
+    tag: '// CAŁE PRZEPŁYWY',
+    title: 'Zintegrowane procesy zamiast chaosu narzędzi',
+    desc: 'Łączymy generowanie tekstu, grafikę 4K, notatki i automatyzacje w jeden ciągły proces, który Twój zespół wdroży w kilkanaście minut.',
     accent: '#34D399',
   },
 ] as const
 
 /* ══════════════ TELEMETRIA / KLUCZOWE WSKAŹNIKI ══════════════ */
 export const STATY = [
-  { value: '10+',     label: 'Modeli AI w 1 panelu', sub: 'Gemini · GPT · Claude · Grok · Mistral', icon: Brain },
-  { value: '1',       label: 'Subskrypcja', sub: 'Zamiast pięciu osobnych', icon: Layers },
-  { value: '100%',    label: 'Po polsku', sub: 'Interfejs, prompty, wsparcie', icon: Shield },
-  { value: '0 zł',    label: 'Modele lokalne', sub: 'Ollama i LM Studio bez opłat',        icon: Sparkles },
+  { value: '10+', label: 'Modeli AI w 1 panelu', sub: 'Gemini · GPT · Claude · Grok · Mistral', icon: Brain },
+  { value: '1', label: 'Subskrypcja', sub: 'Zamiast pięciu osobnych', icon: Layers },
+  { value: '100%', label: 'Po polsku', sub: 'Interfejs, prompty, wsparcie', icon: Shield },
+  { value: '0 zł', label: 'Modele lokalne', sub: 'Ollama i LM Studio bez opłat', icon: Sparkles },
 ] as const
 
 export const KROKI = [
@@ -189,15 +189,15 @@ export const POROWNANIE = {
   kolumny: ['NextByte', 'ChatGPT Plus', 'Midjourney Std', 'Notion AI'],
   wiersze: [
     { f: 'Chat z wieloma modelami (GPT-5.4, Claude, Gemini, Grok)', v: [true, 'Tylko GPT-5.4', false, 'Tylko OpenAI'] },
-    { f: 'Generowanie grafik 4K (Nano Banana, GPT Image 2.0)',     v: [true, 'DALL-E (limit)', true, false] },
-    { f: 'Generowanie wideo AI (Runware, Kling)',                  v: [true, false, false, false] },
-    { f: 'Głos AI i transkrypcja spotkań',                        v: [true, 'podstawowy', false, 'Meeting Notes'] },
-    { f: 'Notatki AI i semantyczna baza wiedzy',                  v: [true, false, false, true] },
-    { f: 'Kanban, zadania i Kalendarz AI',                        v: [true, false, false, true] },
+    { f: 'Generowanie grafik 4K (Nano Banana, GPT Image 2.0)', v: [true, 'DALL-E (limit)', true, false] },
+    { f: 'Generowanie wideo AI (Runware, Kling)', v: [true, false, false, false] },
+    { f: 'Głos AI i transkrypcja spotkań', v: [true, 'podstawowy', false, 'Meeting Notes'] },
+    { f: 'Notatki AI i semantyczna baza wiedzy', v: [true, false, false, true] },
+    { f: 'Kanban, zadania i Kalendarz AI', v: [true, false, false, true] },
     { f: 'Lokalny AI offline — zero transferu (Ollama / LM Studio)', v: [true, false, false, false] },
-    { f: 'Serwery w UE · pełna zgodność z RODO',                 v: [true, false, false, false] },
-    { f: 'Płatność w PLN · polska faktura VAT 23%',              v: [true, false, false, false] },
-    { f: 'Cena miesięczna',                                       v: ['od 0 zł', '~80 zł ($20)', '~120 zł ($30)', '~95 zł ($24/os.)'] },
+    { f: 'Serwery w UE · pełna zgodność z RODO', v: [true, false, false, false] },
+    { f: 'Płatność w PLN · polska faktura VAT 23%', v: [true, false, false, false] },
+    { f: 'Cena miesięczna', v: ['od 0 zł', '~80 zł ($20)', '~120 zł ($30)', '~95 zł ($24/os.)'] },
   ],
 } as const
 
@@ -241,8 +241,8 @@ export const PLANY: Plan[] = [
     polecany: false,
     odznaka: null,
     progi: [
-      { byte: 495,  miesiecznie: 99,  rocznie: 82,  kurs: '5,00 ⟠ / zł' },
-      { byte: 950,  miesiecznie: 179, rocznie: 149, kurs: '5,30 ⟠ / zł' },
+      { byte: 495, miesiecznie: 99, rocznie: 82, kurs: '5,00 ⟠ / zł' },
+      { byte: 950, miesiecznie: 179, rocznie: 149, kurs: '5,30 ⟠ / zł' },
       { byte: 1500, miesiecznie: 269, rocznie: 225, kurs: '5,58 ⟠ / zł' },
     ],
     cechy: [
@@ -346,7 +346,7 @@ export const FAQ = [
   },
   {
     q: 'Jak działa tryb prywatny i modele lokalne (Llama / Ollama)?',
-    a: 'Możesz podłączyć darmowe programy takie jak Ollama czy LM Studio i uruchamiać modele (np. Llama, Mistral, Gemma) bezpośrednio na swoim komputerze. Żadne dane nie wychodzą do sieci, pracujesz nawet offline, a za lokalne generacje nie zużywasz ani jednego Byte.',
+    a: 'To dwie różne rzeczy. W trybie prywatnym rozmowa jest ulotna — jej treść nie zapisuje się na serwerze. Modele lokalne idą o krok dalej: podłączasz darmowe Ollama albo LM Studio, a model liczy bezpośrednio na Twoim komputerze, więc dane w ogóle z niego nie wychodzą. Działa nawet bez internetu, a takie generacje nie zużywają ani jednego Byte.',
   },
   {
     q: 'Czym są jednostki Byte i jak działają?',
@@ -362,7 +362,19 @@ export const FAQ = [
   },
   {
     q: 'Jak dbacie o bezpieczeństwo moich danych i prywatność?',
-    a: 'Nasza infrastruktura oparta jest na serwerach w Unii Europejskiej z pełną zgodnością z RODO i szyfrowaniem E2EE. Żadne Twoje rozmowy ani dokumenty nie są wykorzystywane do trenowania publicznych modeli AI.',
+    a: 'Nie stawiamy na jedno zabezpieczenie, tylko na kilka niezależnych warstw. Połączenie z platformą jest zawsze szyfrowane — ruch bez szyfrowania po prostu nie istnieje w naszej architekturze. Dyski z danymi są zaszyfrowane w całości, a serwery stoją w Unii Europejskiej i dane ich nie opuszczają. O tym, co widzisz, decyduje sama baza danych, a nie kod aplikacji: bez pasującej reguły nie odda ani jednego wiersza, nawet gdyby ktoś ominął interfejs. Twoje rozmowy i dokumenty nie trafiają do trenowania publicznych modeli AI.',
+  },
+  {
+    q: 'Czy ktoś z Waszego zespołu może odczytać moje dane?',
+    a: 'Nie — i nie jest to kwestia obietnicy, tylko tego, jak działa samo szyfrowanie. Klucz do Twoich danych powstaje z Twojego hasła, w Twojej przeglądarce, i nigdy do nas nie trafia. Na naszych serwerach leży wyłącznie zaszyfrowana treść, której bez tego hasła nie da się otworzyć — także nam. Sam klucz znika z pamięci w chwili zamknięcia karty, a jego wyliczanie jest celowo powolne, żeby zgadywanie hasła siłą było nieopłacalne.',
+  },
+  {
+    q: 'Jak chronione jest moje konto przed przejęciem?',
+    a: 'Twoje hasło nie trafia do naszych tabel ani do logów — przechowywany jest wyłącznie jego nieodwracalny skrót, więc nie ma czego z nas wykraść. Nad hasłem możesz postawić drugi składnik logowania: kod z aplikacji, kod wysłany e-mailem albo klucz dostępu potwierdzany odciskiem palca lub skanem twarzy. Ten ostatni jest odporny na phishing — nawet jeśli ktoś podstawi Ci łudząco podobną stronę, nie ma czego przechwycić, bo klucz nigdy nie opuszcza Twojego urządzenia.',
+  },
+  {
+    q: 'Co dzieje się z danymi mojej karty płatniczej?',
+    a: 'Nic, bo nigdy ich nie dostajemy. Całą płatność obsługuje Stripe i to on przyjmuje dane karty — na naszych serwerach nie pojawiają się na żadnym etapie. Gdyby cokolwiek zawiodło po naszej stronie, transakcja zwyczajnie się nie powiedzie: nie ma takiej ścieżki, w której błąd po cichu otwiera dostęp bez opłaty.',
   },
 ] as const
 
@@ -370,9 +382,9 @@ export const LOGOTYPY = TECH_PARTNERZY
 
 /* Orientacyjny koszt pojedynczej operacji w jednostkach Byte. */
 const KOSZT_BYTE = {
-  wiadomosc:    1,
-  grafika4k:    6,
-  minutaAudio:  2,
+  wiadomosc: 1,
+  grafika4k: 6,
+  minutaAudio: 2,
 } as const
 
 /**
@@ -382,8 +394,8 @@ const KOSZT_BYTE = {
 export function przelicznikByte(byte: number) {
   return [
     { icon: MessageSquare, label: 'wiadomości w Chat AI', value: Math.round(byte / KOSZT_BYTE.wiadomosc) },
-    { icon: Camera,        label: 'grafik 4K w Studio',   value: Math.round(byte / KOSZT_BYTE.grafika4k) },
-    { icon: Mic,           label: 'minut transkrypcji',   value: Math.round(byte / KOSZT_BYTE.minutaAudio) },
+    { icon: Camera, label: 'grafik 4K w Studio', value: Math.round(byte / KOSZT_BYTE.grafika4k) },
+    { icon: Mic, label: 'minut transkrypcji', value: Math.round(byte / KOSZT_BYTE.minutaAudio) },
   ]
 }
 

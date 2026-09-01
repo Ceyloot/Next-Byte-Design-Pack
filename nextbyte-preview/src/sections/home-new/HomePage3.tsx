@@ -336,7 +336,10 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
 
         {/* PRAWA STRONA: ORGANICZNY POZIOMY SCHEMAT ŚWIATŁOWODOWY */}
         <div className="lg:col-span-7 flex items-center justify-center">
-          <div className="relative mx-auto w-full max-w-[580px] h-[340px] flex items-center justify-center select-none">
+          {/* Wysokość MUSI iść za skalą poniżej: `transform: scale()` zmniejsza
+              tylko rysunek, layout dalej zajmuje pełne 320 px. Bez tych progów
+              pod grafiką zostawała pusta dziura (na telefonie ~140 px). */}
+          <div className="relative mx-auto w-full max-w-[580px] h-[215px] xs:h-[255px] sm:h-[305px] md:h-[340px] flex items-center justify-center select-none">
 
             {/* Subtelna poświata ambientowa w tle */}
             <div className="absolute inset-0 bg-primary/[0.04] blur-3xl rounded-full pointer-events-none" />
@@ -600,13 +603,15 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
   const sepX = scrollProgress * 28
 
   return (
-    <div ref={containerRef} className="relative z-10 py-16 sm:py-24 overflow-visible">
+    <div ref={containerRef} className="relative z-10 py-6 sm:py-24 overflow-visible">
 
       {/* 2-KOLUMNOWY UKŁAD NAPRZEMIENNY (CZYSTY, BEZ KAFELKÓW I BEZ CIĘŻKICH BLOKÓW) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
 
-        {/* LEWA STRONA: 3D DIAGONAL ISOMETRIC WAFER STACK + LINIE PROWADZĄCE (LEADER LINES) */}
-        <div className="lg:col-span-7 flex flex-col items-center justify-center relative select-none">
+        {/* LEWA STRONA: 3D DIAGONAL ISOMETRIC WAFER STACK + LINIE PROWADZĄCE (LEADER LINES).
+            Na telefonie tekst ma iść PRZED grafiką (order-2), na desktopie grafika
+            wraca na swoje miejsce po lewej (lg:order-1) — jak w pozostałych modułach. */}
+        <div className="lg:col-span-7 flex flex-col items-center justify-center relative select-none order-2 lg:order-1">
 
           {/* Subtelna kwantowa poświata w tle */}
           <div
@@ -628,7 +633,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
           />
 
           {/* GŁÓWNY WIDOK IZOMETRYCZNY SVG ZE STOSEM WARSTW PROCESORA */}
-          <div ref={stageRef} className="relative w-full max-w-[740px] h-[580px] flex items-center justify-center">
+          <div ref={stageRef} className="relative w-full max-w-[740px] aspect-[740/580] flex items-center justify-center">
 
             <svg
               viewBox="0 0 740 580"
@@ -1045,7 +1050,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
         </div>
 
         {/* PRAWA STRONA: ULTRA-CZYSTA, MINIMALISTYCZNA TYPOGRAFIA (BEZ ZBĘDNEGO ROZPYCHANIA) */}
-        <div className="lg:col-span-5 text-left space-y-5">
+        <div className="lg:col-span-5 text-left space-y-5 order-1 lg:order-2">
           <div className="space-y-2">
             <SecRule label="01 // CHAT AI" />
             <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
@@ -3426,7 +3431,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
       <TechDivider />
 
       {/* ══════════ 12. BAZA WIEDZY I FAQ ══════════ */}
-      <LazyBlock minHeight={760}><FaqSection onNavigate={onNavigate} /></LazyBlock>
+      <LazyBlock minHeight={950}><FaqSection onNavigate={onNavigate} /></LazyBlock>
 
       {/* ══════════ 13. FINALNE CTA — KONWERGENCJA ══════════ */}
       <LazyBlock minHeight={720}><FinalCtaSection onNavigate={onNavigate} /></LazyBlock>

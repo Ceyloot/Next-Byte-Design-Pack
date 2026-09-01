@@ -202,7 +202,10 @@ export function BlockAnimStyles() {
   return (
     <style dangerouslySetInnerHTML={{
       __html: `
-      @keyframes nb3-burst    { 0%{opacity:0; transform:scale(.35);} 35%{opacity:.9;} 100%{opacity:0; transform:scale(2.1);} }
+      /* Centrowanie MUSI siedzieć w keyframes: animowany transform nadpisuje
+         klasy -translate-x-1/2/-translate-y-1/2, więc bez tego pierścień
+         odjeżdża o połowę swojego rozmiaru w prawy dolny róg. */
+      @keyframes nb3-burst    { 0%{opacity:0; transform:translate(-50%,-50%) scale(.35);} 35%{opacity:.9;} 100%{opacity:0; transform:translate(-50%,-50%) scale(2.1);} }
       @keyframes nb3-marquee  { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
       @keyframes nb3-arrow    { 0%,100% { transform: translateY(0); opacity:.35; } 50% { transform: translateY(5px); opacity:.9; } }
       .nb3-marquee { animation: nb3-marquee 46s linear infinite; will-change: transform; }
@@ -334,9 +337,9 @@ function IsoFan({ cx, cy, r, dur }: { cx: number; cy: number; r: number; dur: nu
     Bez tabeli specyfikacji: kazdy jej wiersz dublowal tresc, ktora sekcja
     podaje juz w kolumnie po lewej i w licznikach pod spodem. */
 function LocalGpuScene() {
-  const b00 = gpuPt(0, 0, 0),      b0D = gpuPt(0, GPU_D, 0)
+  const b00 = gpuPt(0, 0, 0), b0D = gpuPt(0, GPU_D, 0)
   const bLD = gpuPt(GPU_L, GPU_D, 0)
-  const t00 = gpuPt(0, 0, GPU_T),  t0D = gpuPt(0, GPU_D, GPU_T)
+  const t00 = gpuPt(0, 0, GPU_T), t0D = gpuPt(0, GPU_D, GPU_T)
   const tLD = gpuPt(GPU_L, GPU_D, GPU_T)
 
   return (
@@ -569,9 +572,9 @@ const ENC_FAKTY = [
     ze ścieżką poświaty, punkty lutownicze z pierścieniami, gradienty #0b1626 / #040a14 i typografia. */
 /* 5x7 bitmapy znakow - napis AES-256 tez jest zbudowany z szyfrogramu */
 const EK_GLYPHS: Record<string, string[]> = {
-  A:   ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
-  E:   ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
-  S:   ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
+  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
   '-': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'],
   '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
   '5': ['11111', '10000', '11110', '00001', '00001', '10001', '01110'],
@@ -682,8 +685,8 @@ function EncryptionScene({ p }: { p: number }) {
       aria-label="Opadajacy szyfrogram formujacy sie w klodke z napisem AES-256">
       <defs>
         <filter id="ekGlow" x="-70%" y="-70%" width="240%" height="240%">
-          <feGaussianBlur stdDeviation="3.5" result="b"/>
-          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          <feGaussianBlur stdDeviation="3.5" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
 
@@ -694,8 +697,8 @@ function EncryptionScene({ p }: { p: number }) {
           if (t <= 0) return null
 
           const ease = 1 - Math.pow(1 - t, 3)         // wytracanie predkosci przy ladowaniu
-          const y    = cell.y - (1 - ease) * FALL
-          const set  = t >= 1                          // ulozona na miejscu
+          const y = cell.y - (1 - ease) * FALL
+          const set = t >= 1                          // ulozona na miejscu
 
           // w locie szyfrogram sie przemiela, po wyladowaniu zastyga
           const ch = set
@@ -740,7 +743,7 @@ const DANE_FAKTY = [
   },
 ] as const
 
-export function DataSecuritySection({ onNavigate = () => {} }: { onNavigate?: (p: HomePageId) => void }) {
+export function DataSecuritySection({ onNavigate = () => { } }: { onNavigate?: (p: HomePageId) => void }) {
   const visualRef = useRef<HTMLDivElement>(null)
   const p = useSectionProgress(visualRef)
 
@@ -808,23 +811,23 @@ const FILARY = [
   {
     n: '01',
     tag: 'Selekcja',
-    title: 'Tylko narzędzia, które dowożą',
-    desc: 'Testujemy dziesiątki nowości miesięcznie i wpuszczamy do platformy wyłącznie to, co skraca realną pracę.',
-    metric: '10+ modeli po selekcji',
+    title: 'Tylko modele, które realnie dowożą',
+    desc: 'Odrzucamy marketingowy szum i testujemy dziesiątki silników miesięcznie. Dostajesz dostęp wyłącznie do modeli przynoszących wymierną wartość biznesową.',
+    metric: '10+ wyselekcjonowanych modeli',
   },
   {
     n: '02',
     tag: 'Gotowe wzorce',
-    title: 'Sprawdzone prompty pod zadania',
-    desc: 'Research, treści, analizy, kod. Podmieniasz swoje dane w szablonie i masz wynik, zanim nauczysz się promptować.',
-    metric: 'minuta do pierwszego wyniku',
+    title: 'Praktyczne schematy zamiast teorii',
+    desc: 'Przetestowane procedury pod marketing, sprzedaż, finanse i audyty. Wprowadzasz kontekst swojej firmy i od razu odbierasz dopracowany raport lub kreację.',
+    metric: 'Zero straconego czasu',
   },
   {
     n: '03',
     tag: 'Całe przepływy',
-    title: 'Systemy, nie pojedyncze triki',
-    desc: 'Narzędzia spięte w kolejność kroków, którą uruchomisz w firmie tego samego dnia i powtórzysz w przyszłym tygodniu.',
-    metric: 'zero integracji do spinania',
+    title: 'Zintegrowane procesy zamiast chaosu narzędzi',
+    desc: 'Łączymy generowanie tekstu, grafikę 4K, notatki i automatyzacje w jeden ciągły proces, który Twój zespół wdroży w kilkanaście minut.',
+    metric: '0 integracji API do konfiguracji',
   },
 ] as const
 
@@ -841,7 +844,7 @@ export function ThreePillarsSection() {
           label="Trzy filary"
           title="Platforma stoi"
           accent="na trzech rzeczach."
-          lead="Nie na długości listy funkcji. Zabierz którąkolwiek z nich, a zostaje kolejne narzędzie AI — z tych, których rynek produkuje kilkanaście tygodniowo."
+          lead="Nie potrzebujesz kolejnych 20 subskrypcji. Potrzebujesz systemu, który filtruje szum technologiczny i daje gotowy wynik od pierwszego dnia."
         />
       </FadeIn>
 
@@ -920,20 +923,20 @@ export function ThreePillarsSection() {
 const WEZLY = [
   {
     n: '01',
-    title: 'Zakładasz konto',
-    desc: 'Adres e-mail i trzydzieści sekund. Bez karty płatniczej i bez rozmowy z handlowcem.',
-    detal: 'karta niewymagana',
+    title: 'Zakładasz darmowe konto',
+    desc: 'Wystarczy adres e-mail. Dostęp do panelu i modeli otrzymujesz natychmiast — bez podawania karty i bez rozmów z handlowcem.',
+    detal: 'karta niewymagana · start w 30s',
   },
   {
     n: '02',
-    title: 'Piszesz pierwszy prompt',
-    desc: 'Model znajdujesz wyszukiwarką — wpisujesz nazwę albo samo zadanie. Zmieniasz go w trakcie wątku.',
+    title: 'Wybierasz model lub szablon',
+    desc: 'Wskazujesz gotowy proces lub zadajesz pytanie w czacie. Dokładny koszt w jednostkach Byte widzisz jeszcze przed wysłaniem zapytania.',
     detal: 'koszt widoczny przed wysłaniem',
   },
   {
     n: '03',
     title: 'Odbierasz gotowy materiał',
-    desc: 'Tekst, analiza albo komplet grafik — z dokładnym rachunkiem w Byte i resztą puli, która przechodzi dalej.',
+    desc: 'Pobierasz sformatowany dokument, analizę, kod lub grafiki 4K. Niewykorzystana pula Byte nie przepada i przechodzi na kolejny miesiąc.',
     detal: 'pierwszy wynik na koncie',
   },
 ] as const
@@ -1024,7 +1027,7 @@ export function ThreeStepsSection({ onNavigate }: { onNavigate: (p: HomePageId) 
           label="Start"
           title="Zaczynasz"
           accent="w trzech krokach."
-          lead="Dosłownie w trzech: konto, pierwszy prompt, gotowy materiał. Bez wdrożeniowca, bez migracji i bez karty na start."
+          lead="Zero skomplikowanych wdrożeń, migracji czy podpinania karty. Gotowy rezultat w mniej niż 2 minuty."
         />
       </FadeIn>
 
@@ -1275,7 +1278,7 @@ const SERWERY_FAKTY = [
   },
 ] as const
 
-export function ServerSecuritySection({ onNavigate = () => {} }: { onNavigate?: (p: HomePageId) => void }) {
+export function ServerSecuritySection({ onNavigate = () => { } }: { onNavigate?: (p: HomePageId) => void }) {
   const visualRef = useRef<HTMLDivElement>(null)
   const p = useSectionProgress(visualRef)
 
@@ -1360,7 +1363,7 @@ export function SecurityAndArchitectureSection() {
 
         {/* ══ FILAR 1: GWARANCJE PRAWNE & ARCHITEKTURA UE ══ */}
         <FadeIn delay={40} className="flex flex-col">
-          
+
           {/* Etykieta i nagłówek kolumny */}
           <div className="pb-6 border-b border-foreground/[0.08]">
             <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-primary/80 flex items-center gap-2">
@@ -1410,7 +1413,7 @@ export function SecurityAndArchitectureSection() {
 
         {/* ══ FILAR 2: STANDARD KRYPTOGRAFICZNY (AES-256) ══ */}
         <FadeIn delay={80} className="flex flex-col">
-          
+
           {/* Etykieta i nagłówek kolumny */}
           <div className="pb-6 border-b border-foreground/[0.08]">
             <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-primary/80 flex items-center gap-2">
@@ -1527,7 +1530,7 @@ const POROWNANIE_WIERSZE = [
   { f: 'Jedna faktura w PLN', v: [true, false, false, false, false] },
 ] as const
 
-export function ComparisonSection({ onNavigate = () => {} }: { onNavigate?: (p: HomePageId) => void }) {
+export function ComparisonSection({ onNavigate = () => { } }: { onNavigate?: (p: HomePageId) => void }) {
   const ref = useRef<HTMLDivElement>(null)
   const p = useSectionProgress(ref)
   const rosnie = Math.min(1, Math.max(0, p / 0.6))
@@ -1642,7 +1645,7 @@ export function ComparisonSection({ onNavigate = () => {} }: { onNavigate?: (p: 
    Układ 2-kolumnowy: wideo po lewej, opis i punkty po prawej
    ═══════════════════════════════════════════════════════════════════════ */
 
-export function PlatformVideoSection({ onNavigate = () => {} }: { onNavigate?: (p: HomePageId) => void }) {
+export function PlatformVideoSection({ onNavigate = () => { } }: { onNavigate?: (p: HomePageId) => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   // Wideo NIE odtwarza się automatycznie (brak autoplay=1 w URL) — stan startowy
   // musi to odzwierciedlać, inaczej pierwsze kliknięcie wysyła "pause" zamiast "play".
@@ -1862,8 +1865,8 @@ export function FaqSection({ onNavigate }: { onNavigate: (p: HomePageId) => void
                 <span className="font-normal text-primary">Nasze odpowiedzi.</span>
               </h2>
               <p className="mt-4 max-w-sm font-sans text-[14.5px] font-light leading-relaxed text-foreground/55">
-                Sześć rzeczy, o które pytacie najczęściej przed założeniem konta — o koszty, o prywatność i o to, co się
-                dzieje, gdy chcecie zrezygnować.
+                To, o co pytacie najczęściej przed założeniem konta — o koszty, o bezpieczeństwo i prywatność oraz o to,
+                co się dzieje, gdy chcecie zrezygnować.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="font-sans text-[13px] font-light text-foreground/40">Nie ma tu Twojego pytania?</span>
