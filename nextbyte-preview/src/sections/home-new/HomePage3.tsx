@@ -1201,7 +1201,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
     const read = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || 800
-      const start = vh * 0.6
+      const start = vh * 0.82
       // Wycentrowanie liczymy w obszarze POD sticky navbarem, nie w całym oknie.
       const end = (vh + getNavbarOffset()) / 2 - rect.height / 2
       const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
@@ -1817,7 +1817,7 @@ function AssistantOrbitVisual() {
     const read = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || 800
-      const start = vh * 0.6
+      const start = vh * 0.82
       // Wycentrowanie liczymy w obszarze POD sticky navbarem, nie w całym oknie.
       const end = (vh + getNavbarOffset()) / 2 - rect.height / 2
       const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
@@ -2240,7 +2240,7 @@ function makeScene(S: number, OX: number, OY: number) {
 }
 
 /** Wspólny hook postępu scrolla dla scen. */
-function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
+function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>, startRatio = 0.82) {
   const [p, setP] = useState(0)
   useEffect(() => {
     const el = ref.current
@@ -2251,7 +2251,7 @@ function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
     const read = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || 800
-      const start = vh * 0.6
+      const start = vh * startRatio
       // Wycentrowanie liczymy w obszarze POD sticky navbarem, nie w całym oknie.
       const end = (vh + getNavbarOffset()) / 2 - rect.height / 2
       const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end)))
@@ -2269,7 +2269,7 @@ function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
     read()
     rafId = requestAnimationFrame(loop)
     return () => { io.disconnect(); if (rafId) cancelAnimationFrame(rafId) }
-  }, [ref])
+  }, [ref, startRatio])
   return p
 }
 
@@ -2343,7 +2343,7 @@ const NEURO_OUT: V3 = [0, 330, -4]
 
 function DeepResearchVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const p = useScrollProgress(containerRef)
+  const p = useScrollProgress(containerRef, 0.66)
   const { P3, poly, plane } = makeScene(1.30, 450, 590)
 
   const pos = (i: number): V3 =>
@@ -2532,7 +2532,7 @@ const LESSON_CARDS = ['PODSTAWY', 'PROMPTY', 'OBRAZ', 'ASYSTENT', 'AUTOMATY']
 
 function AcademyVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const p = useScrollProgress(containerRef)
+  const p = useScrollProgress(containerRef, 0.82)
   const { P3, poly, plane, Disc, discE } = makeScene(1.02, 356, 404)
 
   const BW = 176   // półszerokość okładki
@@ -2735,7 +2735,7 @@ const MEMORY_CARDS = [
 
 function MemoryVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const p = useScrollProgress(containerRef)
+  const p = useScrollProgress(containerRef, 0.82)
   const { P3, poly, plane } = makeScene(1.16, 430, 452)
 
   const TX = 168, TZ = 108, TY = 48, WT = 10  // szuflada + grubość ścianek
@@ -2885,7 +2885,7 @@ const PCB_MODS: PcbMod[] = [
 
 function WorkspaceVisual() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const p = useScrollProgress(containerRef)
+  const p = useScrollProgress(containerRef, 0.82)
 
   /** Trasa ścieżki: nóżka → kolanko → przesunięcie → pole lutownicze.
       Rysowana częściowo, więc realnie „narasta". */
