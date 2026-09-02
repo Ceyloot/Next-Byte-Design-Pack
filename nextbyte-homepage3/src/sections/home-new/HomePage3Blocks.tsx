@@ -924,19 +924,19 @@ const WEZLY = [
   {
     n: '01',
     title: 'Zakładasz darmowe konto',
-    desc: 'Wystarczy adres e-mail. Dostęp do panelu i modeli otrzymujesz natychmiast — bez podawania karty i bez rozmów z handlowcem.',
+    desc: 'Wystarczy adres e-mail. Dostęp do panelu i modeli otrzymujesz natychmiast',
     detal: 'karta niewymagana · start w 30s',
   },
   {
     n: '02',
-    title: 'Wybierasz model lub szablon',
-    desc: 'Wskazujesz gotowy proces lub zadajesz pytanie w czacie. Dokładny koszt w jednostkach Byte widzisz jeszcze przed wysłaniem zapytania.',
+    title: 'Wybierasz pierwszy model',
+    desc: 'Wybierasz moduł lub zadajesz pytanie w czacie. Dokładny koszt w jednostkach Byte widzisz jeszcze przed wysłaniem zapytania',
     detal: 'koszt widoczny przed wysłaniem',
   },
   {
     n: '03',
     title: 'Odbierasz gotowy materiał',
-    desc: 'Pobierasz sformatowany dokument, analizę, kod lub grafiki 4K. Niewykorzystana pula Byte nie przepada i przechodzi na kolejny miesiąc.',
+    desc: 'Czytasz odpowiedź lub pobierasz dokument, analizę, kod lub grafiki AI',
     detal: 'pierwszy wynik na koncie',
   },
 ] as const
@@ -1027,7 +1027,7 @@ export function ThreeStepsSection({ onNavigate }: { onNavigate: (p: HomePageId) 
           label="Start"
           title="Zaczynasz"
           accent="w trzech krokach."
-          lead="Zero skomplikowanych wdrożeń, migracji czy podpinania karty. Gotowy rezultat w mniej niż 2 minuty."
+          lead="Zero skomplikowanych wdrożeń ani migracji. Gotowy rezultat w mniej niż 2 minuty."
         />
       </FadeIn>
 
@@ -1604,8 +1604,8 @@ export function ComparisonSection({ onNavigate = () => { } }: { onNavigate?: (p:
             <div className="space-y-2">
               <SecRule label="PORÓWNANIE" />
               <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
-                Pięć rachunków miesięcznie <br className="hidden sm:block" />
-                <span className="font-normal text-primary">albo jeden.</span>
+                Koniec z skakaniem <br className="hidden sm:block" />
+                <span className="font-normal text-primary">Między stronami</span>
               </h2>
               <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
                 Tyle kosztuje trzymanie osobnych subskrypcji na czat, grafikę, wideo i notatki.
@@ -1861,12 +1861,11 @@ export function FaqSection({ onNavigate }: { onNavigate: (p: HomePageId) => void
             <FadeIn>
               <SecRule label="Baza wiedzy" />
               <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.06] tracking-[-2px] text-foreground">
-                Wasze pytania.<br />
-                <span className="font-normal text-primary">Nasze odpowiedzi.</span>
+                Wasze pytania<br />
+                <span className="font-normal text-primary">Nasze odpowiedzi</span>
               </h2>
               <p className="mt-4 max-w-sm font-sans text-[14.5px] font-light leading-relaxed text-foreground/55">
-                To, o co pytacie najczęściej przed założeniem konta — o koszty, o bezpieczeństwo i prywatność oraz o to,
-                co się dzieje, gdy chcecie zrezygnować.
+                Wszystko, co warto wiedzieć przed startem: jak działają jednostki Byte, jak dbamy o prywatność Twoich danych w UE oraz jak elastycznie zarządzać subskrypcją bez zobowiązań
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="font-sans text-[13px] font-light text-foreground/40">Nie ma tu Twojego pytania?</span>

@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { cn } from '@/lib/utils'
 import {
-  Check, X, CircleCheck, Wallet, Repeat, Shield,
-  MessageSquare, Image as ImageIcon, Bot, CalendarCheck, ShieldCheck, Zap,
+  Check, X, CircleCheck, Lock, Sparkles, PhoneCall, Wand2, ArrowRight,
+  MessageSquare, ImagePlus, Bot, Users, Zap,
 } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton, FadeIn, akcentTlo,
-  AnimStyles, PageAmbience, Glow,
+  AnimStyles,
 } from './shared'
 import { SecRule, NextByteMarkIcon } from './HomePage'
 import { PLANY, przelicznikByte, POROWNANIE, FAQ } from './data'
@@ -37,43 +37,6 @@ const PLAN_MACIERZ: { f: string; v: (boolean | string)[] }[] = [
   { f: 'Kontekst i limit przesyłanych plików', v: ['Standard', 'Standard', '200k tokenów · 100 MB'] },
   { f: 'Wsparcie', v: ['Baza wiedzy', 'Mail do 24h', 'Dedykowany kanał na żywo'] },
 ]
-
-/** Tło hero — fale rozmytego światła pod maską zanikania w dół, 1:1 z HeroWispyBackground strony głównej 3. */
-function HeroWispyBackground() {
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 overflow-hidden"
-      style={{
-        background: 'radial-gradient(ellipse 90% 70% at 50% 0%, hsl(var(--foreground) / 0.06), hsl(var(--background)) 65%)',
-        maskImage: 'linear-gradient(to bottom, black 0%, black 48%, transparent 75%)',
-        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 48%, transparent 75%)',
-      }}
-    >
-      <svg viewBox="0 0 1200 820" preserveAspectRatio="xMidYMin slice" className="absolute inset-0 h-full w-full" style={{ opacity: 0.55 }}>
-        <defs>
-          <filter id="nbWispCennik" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="14" />
-          </filter>
-          <linearGradient id="nbWispCennikGrad1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
-            <stop offset="45%" stopColor="hsl(var(--foreground))" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="nbWispCennikGrad2" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d="M -100 120 C 200 40, 350 260, 620 160 S 1000 60, 1300 220" fill="none" stroke="url(#nbWispCennikGrad1)" strokeWidth="60" filter="url(#nbWispCennik)" />
-        <path d="M -100 380 C 250 300, 420 520, 700 400 S 1050 260, 1300 420" fill="none" stroke="url(#nbWispCennikGrad2)" strokeWidth="70" filter="url(#nbWispCennik)" />
-        <path d="M -100 600 C 220 520, 500 700, 780 560 S 1080 480, 1300 620" fill="none" stroke="url(#nbWispCennikGrad1)" strokeWidth="50" filter="url(#nbWispCennik)" />
-      </svg>
-      <div className="absolute inset-0" style={{ opacity: 0.05, mixBlendMode: 'overlay', backgroundImage: 'repeating-linear-gradient(115deg, hsl(var(--foreground)) 0px, transparent 1.5px, transparent 3px)' }} />
-    </div>
-  )
-}
 
 /** Nagłówek bloku — ten sam rytm co BlockHead ze strony głównej 3. */
 function BlockHead({
@@ -131,11 +94,11 @@ function OkresToggle({ okres, onChange }: { okres: Okres; onChange: (o: Okres) =
   }, [okres])
 
   return (
-    <div className="rounded-full border border-foreground/[0.1] bg-foreground/[0.02] p-1 backdrop-blur-md">
+    <div className="rounded-xl border border-foreground/[0.1] bg-foreground/[0.02] p-1 backdrop-blur-md">
       <div ref={wrapRef} className="relative inline-flex items-center">
         <span
           aria-hidden
-          className="pointer-events-none rounded-full"
+          className="pointer-events-none rounded-lg"
           style={{
             position: 'absolute',
             top: 0, bottom: 0,
@@ -152,7 +115,7 @@ function OkresToggle({ okres, onChange }: { okres: Okres; onChange: (o: Okres) =
           type="button"
           onClick={() => onChange('miesiecznie')}
           className={cn(
-            'relative z-10 h-10 shrink-0 rounded-full px-6 font-heading text-[13px] font-semibold transition-colors duration-200',
+            'relative z-10 h-10 shrink-0 rounded-lg px-6 font-heading text-[13px] font-semibold transition-colors duration-200',
             okres === 'miesiecznie' ? 'text-background' : 'text-foreground/45 hover:text-foreground/75',
           )}
         >
@@ -163,7 +126,7 @@ function OkresToggle({ okres, onChange }: { okres: Okres; onChange: (o: Okres) =
           type="button"
           onClick={() => onChange('rocznie')}
           className={cn(
-            'relative z-10 flex h-10 shrink-0 items-center gap-2 rounded-full px-6 font-heading text-[13px] font-semibold transition-colors duration-200',
+            'relative z-10 flex h-10 shrink-0 items-center gap-2 rounded-lg px-6 font-heading text-[13px] font-semibold transition-colors duration-200',
             okres === 'rocznie' ? 'text-background' : 'text-foreground/45 hover:text-foreground/75',
           )}
         >
@@ -179,6 +142,24 @@ function OkresToggle({ okres, onChange }: { okres: Okres; onChange: (o: Okres) =
         </button>
       </div>
     </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRZYCISK "NIE WIESZ KTÓRY PLAN WYBRAĆ?" — kliknięcie przewija do
+   sekcji Byte i zamienia ją w krótki dobór planu (patrz PlanFinder).
+   ═══════════════════════════════════════════════════════════════ */
+function PlanFinderButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-foreground/[0.14] bg-foreground/[0.02] px-4 font-heading text-[13px] font-semibold text-foreground/80 backdrop-blur-md transition-colors duration-200 hover:border-primary/40 hover:text-foreground"
+    >
+      <Wand2 className="h-3.5 w-3.5 text-primary" />
+      Nie wiesz który plan wybrać?
+      <span className="rounded-full bg-primary/15 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wide text-primary">Nowość</span>
+    </button>
   )
 }
 
@@ -273,11 +254,12 @@ function ByteSlider({
           />
         </div>
 
-        {/* punkty */}
-        <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between">
+        {/* punkty — pozycjonowane procentowo, środek kropki dokładnie na linii toru */}
+        <div className="absolute inset-x-0 top-1/2">
           {progi.map((p, i) => {
             const aktywny = i <= indeks
             const biezacy = i === indeks
+            const left = (i / (progi.length - 1)) * 100
             return (
               <button
                 key={p.byte}
@@ -285,10 +267,11 @@ function ByteSlider({
                 onClick={() => onChange(i)}
                 aria-label={`${p.byte} Byte`}
                 className={cn(
-                  'rounded-full transition-all duration-300',
+                  'absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300',
                   biezacy ? 'h-[18px] w-[18px]' : 'h-[13px] w-[13px] hover:scale-125',
                 )}
                 style={{
+                  left: `${left}%`,
                   background: aktywny ? kolor : 'hsl(var(--foreground)/0.14)',
                   border: '2px solid hsl(var(--card))',
                   boxShadow: biezacy ? `0 0 0 3px ${akcentTlo(kolor, 25)}, 0 0 16px ${akcentTlo(kolor, 60)}` : 'none',
@@ -299,354 +282,278 @@ function ByteSlider({
         </div>
       </div>
 
-      {/* etykiety progów */}
-      <div className="flex justify-between">
-        {progi.map((p, i) => (
-          <button
-            key={p.byte}
-            type="button"
-            onClick={() => onChange(i)}
-            className={cn(
-              'font-mono text-[10px] transition-colors',
-              i === indeks ? 'font-bold' : 'text-foreground/30 hover:text-foreground/55',
-            )}
-            style={i === indeks ? { color: kolor } : undefined}
-          >
-            {p.byte.toLocaleString('pl-PL')}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   MORPHING CANVAS — jedna scena SVG zamiast trzech kart. Sześć modułów
-   platformy krąży wokół rdzenia Byte; który węzeł "żyje" (świeci, pulsuje
-   prądem do rdzenia) zależy od wybranego planu. Przesuwasz plan wyżej —
-   scena dosłownie się rozbudowuje, zamiast czytać listę cech.
-   ═══════════════════════════════════════════════════════════════════════ */
-type WezelId = 'chat' | 'studio' | 'notatki' | 'asystent' | 'lokalny' | 'fast'
-
-const WEZLY_CANVAS: { id: WezelId; label: string; icon: React.ComponentType<{ className?: string }>; minTier: 0 | 1 | 2; kat: number }[] = [
-  { id: 'chat', label: 'Chat AI', icon: MessageSquare, minTier: 0, kat: -90 },
-  { id: 'studio', label: 'Studio Zdjęć', icon: ImageIcon, minTier: 0, kat: -30 },
-  { id: 'asystent', label: 'Asystent', icon: Bot, minTier: 1, kat: 30 },
-  { id: 'notatki', label: 'Kalendarz', icon: CalendarCheck, minTier: 1, kat: 90 },
-  { id: 'lokalny', label: 'Lokalny AI', icon: ShieldCheck, minTier: 1, kat: 150 },
-  { id: 'fast', label: 'FAST queue', icon: Zap, minTier: 2, kat: 210 },
-]
-
-function PricingCanvas({ tier, kolor }: { tier: 0 | 1 | 2; kolor: string }) {
-  const cx = 320
-  const cy = 168
-  const promien = 128
-  const rdzenR = 30 + tier * 7
-
-  return (
-    <div className="relative mx-auto h-[300px] w-full max-w-[640px] sm:h-[340px]">
-      <svg viewBox="0 0 640 320" className="absolute inset-0 h-full w-full overflow-visible" fill="none">
-        <defs>
-          <filter id="cnvGlow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="4" result="b" />
-            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-
-        {/* pierścienie wokół rdzenia — przybywają z tierem */}
-        <circle cx={cx} cy={cy} r={rdzenR + 22} fill="none" stroke={kolor} strokeWidth="1" strokeDasharray="2 6"
-          style={{ opacity: tier >= 1 ? 0.35 : 0, transition: 'opacity 400ms ease' }} />
-        <circle cx={cx} cy={cy} r={rdzenR + 40} fill="none" stroke={kolor} strokeWidth="1" strokeDasharray="1 8"
-          style={{ opacity: tier >= 2 ? 0.28 : 0, transition: 'opacity 400ms ease 120ms' }} />
-
-        {/* połączenia — dopiero za nimi rysują się węzły, żeby chip przykrywał start ścieżki */}
-        {WEZLY_CANVAS.map(w => {
-          const rad = (w.kat * Math.PI) / 180
-          const nx = cx + Math.cos(rad) * promien
-          const ny = cy + Math.sin(rad) * promien
-          const aktywny = w.minTier <= tier
-          const midx = cx + Math.cos(rad) * (promien * 0.5)
-          const midy = cy + Math.sin(rad) * (promien * 0.5)
+      {/* etykiety progów — te same procentowe pozycje co kropki, żeby cyfry siedziały dokładnie pod nimi */}
+      <div className="relative h-4">
+        {progi.map((p, i) => {
+          const left = (i / (progi.length - 1)) * 100
           return (
-            <g key={w.id}>
-              <path
-                d={`M ${nx} ${ny} Q ${midx} ${midy} ${cx} ${cy}`}
-                fill="none"
-                stroke={aktywny ? kolor : 'hsl(var(--foreground))'}
-                strokeWidth={aktywny ? 1.6 : 1}
-                strokeOpacity={aktywny ? 0.5 : 0.1}
-                style={{ transition: 'stroke-opacity 400ms ease, stroke 400ms ease' }}
-              />
-              {aktywny && (
-                <path
-                  d={`M ${nx} ${ny} Q ${midx} ${midy} ${cx} ${cy}`}
-                  fill="none"
-                  stroke={kolor}
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeDasharray="14 86"
-                  filter="url(#cnvGlow)"
-                  style={{ animation: 'nbElectricCurrent 1.6s linear infinite', opacity: 0.85 }}
-                />
+            <button
+              key={p.byte}
+              type="button"
+              onClick={() => onChange(i)}
+              className={cn(
+                'absolute top-0 font-mono text-[10px] transition-colors',
+                i === 0 ? 'left-0' : i === progi.length - 1 ? 'right-0' : '-translate-x-1/2',
+                i === indeks ? 'font-bold' : 'text-foreground/30 hover:text-foreground/55',
               )}
-            </g>
+              style={{ left: i === 0 || i === progi.length - 1 ? undefined : `${left}%`, color: i === indeks ? kolor : undefined }}
+            >
+              {p.byte.toLocaleString('pl-PL')}
+            </button>
           )
         })}
-
-        {/* rdzeń Byte */}
-        <circle cx={cx} cy={cy} r={rdzenR} fill="hsl(var(--background))" stroke={kolor} strokeWidth="2" filter="url(#cnvGlow)"
-          style={{ transition: 'r 400ms ease' }} />
-      </svg>
-
-      {/* logo rdzenia — HTML nad SVG, żeby użyć gotowej ikony marki */}
-      <div
-        className="absolute flex items-center justify-center rounded-full transition-all duration-400"
-        style={{
-          left: cx, top: cy, width: rdzenR * 2, height: rdzenR * 2, transform: 'translate(-50%,-50%)',
-          background: akcentTlo(kolor, 10),
-        }}
-      >
-        <NextByteMarkIcon className="h-1/2 w-1/2" style={{ color: kolor }} />
       </div>
-
-      {/* węzły modułów — HTML nad SVG dla ostrych ikon i etykiet */}
-      {WEZLY_CANVAS.map(w => {
-        const rad = (w.kat * Math.PI) / 180
-        const nx = cx + Math.cos(rad) * promien
-        const ny = cy + Math.sin(rad) * promien
-        const aktywny = w.minTier <= tier
-        return (
-          <div
-            key={w.id}
-            className="absolute flex flex-col items-center gap-1.5 transition-all duration-500"
-            style={{
-              left: `${(nx / 640) * 100}%`,
-              top: `${(ny / 320) * 100}%`,
-              transform: `translate(-50%,-50%) scale(${aktywny ? 1 : 0.8})`,
-              opacity: aktywny ? 1 : 0.3,
-            }}
-          >
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-xl border backdrop-blur-sm"
-              style={{
-                borderColor: aktywny ? akcentTlo(kolor, 45) : 'hsl(var(--foreground)/0.12)',
-                background: aktywny ? akcentTlo(kolor, 12) : 'hsl(var(--card)/0.6)',
-                boxShadow: aktywny ? `0 0 16px -2px ${akcentTlo(kolor, 60)}` : undefined,
-              }}
-            >
-              <w.icon className="h-[18px] w-[18px]" style={{ color: aktywny ? kolor : 'hsl(var(--foreground)/0.35)' }} />
-            </div>
-            <span className="whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.1em]" style={{ color: aktywny ? 'hsl(var(--foreground)/0.6)' : 'hsl(var(--foreground)/0.25)' }}>
-              {w.label}
-            </span>
-          </div>
-        )
-      })}
     </div>
   )
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PRZEŁĄCZNIK PLANU — segmentowana pigułka z N opcjami (mechanika
-   z OkresToggle uogólniona na dowolną liczbę przycisków).
+   SUWAK KROKOWY — generyczna wersja mechaniki ByteSlider, używana
+   w PlanFinder do pytań "ile treści miesięcznie" (jak w referencji:
+   dwa suwaki z podziałką pod pytaniem "What are you here to make?").
    ═══════════════════════════════════════════════════════════════ */
-function PlanSwitch({ plany, aktywny, onChange }: { plany: Plan[]; aktywny: string; onChange: (id: string) => void }) {
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const btnRefs = useRef(new Map<string, HTMLButtonElement>())
-  const [pill, setPill] = useState({ left: 0, width: 0 })
-  const [gotowy, setGotowy] = useState(false)
-  const aktywnyPlan = plany.find(p => p.id === aktywny)!
-
-  const zmierz = () => {
-    const wrap = wrapRef.current
-    const btn = btnRefs.current.get(aktywny)
-    if (!wrap || !btn) return
-    const w = wrap.getBoundingClientRect()
-    const b = btn.getBoundingClientRect()
-    if (b.width === 0) return
-    setPill({ left: b.left - w.left, width: b.width })
-    setGotowy(true)
-  }
-
-  useLayoutEffect(() => {
-    zmierz()
-    const raf = requestAnimationFrame(zmierz)
-    window.addEventListener('resize', zmierz)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', zmierz) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aktywny])
+function KrokSlider({
+  etykieta, kroki, indeks, onChange, kolor,
+}: {
+  etykieta: string
+  kroki: { label: string; opis: string }[]
+  indeks: number
+  onChange: (i: number) => void
+  kolor: string
+}) {
+  const pct = (indeks / (kroki.length - 1)) * 100
 
   return (
-    <div className="inline-flex rounded-full border border-foreground/[0.1] bg-foreground/[0.02] p-1 backdrop-blur-md">
-      <div ref={wrapRef} className="relative inline-flex items-center">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 rounded-full transition-[left,width] duration-300"
-          style={{
-            left: pill.left,
-            width: pill.width,
-            opacity: gotowy ? 1 : 0,
-            background: akcentTlo(aktywnyPlan.kolor, 14),
-            border: `1px solid ${akcentTlo(aktywnyPlan.kolor, 38)}`,
-            boxShadow: `0 0 20px -4px ${akcentTlo(aktywnyPlan.kolor, 60)}`,
-            transitionTimingFunction: 'cubic-bezier(0.34,1.4,0.64,1)',
-          }}
-        />
-        {plany.map(p => (
-          <button
-            key={p.id}
-            ref={el => { if (el) btnRefs.current.set(p.id, el); }}
-            type="button"
-            onClick={() => onChange(p.id)}
-            className={cn(
-              'relative z-10 flex h-11 shrink-0 items-center gap-2 rounded-full px-5 font-heading text-[13.5px] font-semibold transition-colors duration-200',
-              aktywny === p.id ? 'text-foreground' : 'text-foreground/40 hover:text-foreground/70',
-            )}
-            style={aktywny === p.id ? { color: p.kolor } : undefined}
-          >
-            {p.nazwa}
-            {p.odznaka && (
-              <span className="hidden rounded-full px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wide sm:inline" style={{ color: p.kolor, background: akcentTlo(p.kolor, 18) }}>
-                top
-              </span>
-            )}
-          </button>
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[12.5px] font-medium text-foreground/60">{etykieta}</span>
+        <span className="font-heading text-[12.5px] font-bold" style={{ color: kolor }}>{kroki[indeks].label}</span>
+      </div>
+
+      <div className="relative py-2">
+        <div className="relative h-1.5 w-full rounded-full bg-foreground/[0.08]">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-300"
+            style={{ width: `${pct}%`, background: kolor, boxShadow: `0 0 12px ${akcentTlo(kolor, 65)}` }}
+          />
+        </div>
+        <div className="absolute inset-x-0 top-1/2">
+          {kroki.map((k, i) => {
+            const aktywny = i <= indeks
+            const biezacy = i === indeks
+            const left = (i / (kroki.length - 1)) * 100
+            return (
+              <button
+                key={k.label}
+                type="button"
+                onClick={() => onChange(i)}
+                aria-label={k.label}
+                className={cn(
+                  'absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300',
+                  biezacy ? 'h-4 w-4' : 'h-[11px] w-[11px] hover:scale-125',
+                )}
+                style={{
+                  left: `${left}%`,
+                  background: aktywny ? kolor : 'hsl(var(--foreground)/0.14)',
+                  border: '2px solid hsl(var(--card))',
+                  boxShadow: biezacy ? `0 0 0 3px ${akcentTlo(kolor, 22)}` : 'none',
+                }}
+              />
+            )
+          })}
+        </div>
+      </div>
+
+      <p className="text-[11px] text-foreground/40">{kroki[indeks].opis}</p>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL "UNLIMITED & FREE GENS"
+   ═══════════════════════════════════════════════════════════════ */
+function UnlimitedPanel({ plan }: { plan: Plan }) {
+  const wszystkieZablokowane = plan.unlimited.every(u => !u.dostep)
+  return (
+    <div
+      className="rounded-xl border p-4"
+      style={{
+        borderColor: wszystkieZablokowane ? 'hsl(var(--foreground)/0.08)' : akcentTlo(plan.kolor, 22),
+        background: wszystkieZablokowane ? 'hsl(var(--foreground)/0.015)' : akcentTlo(plan.kolor, 5),
+      }}
+    >
+      <div className="mb-3 flex items-center gap-2">
+        <Lock className="h-3.5 w-3.5 text-foreground/30" />
+        <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-foreground/35">
+          Unlimited &amp; darmowe generacje
+        </p>
+      </div>
+      <div className="space-y-2">
+        {plan.unlimited.map(u => (
+          <div key={u.label} className="flex items-center justify-between gap-3">
+            <span className={cn('text-[12px]', u.dostep ? 'text-foreground/70' : 'text-foreground/30 line-through')}>
+              {u.label}
+            </span>
+            {u.dostep
+              ? <span className="rounded-md px-1.5 py-0.5 font-mono text-[9px] font-bold" style={{ color: plan.kolor, background: akcentTlo(plan.kolor, 14) }}>UNLIMITED</span>
+              : <X className="h-3.5 w-3.5 shrink-0 text-foreground/20" />}
+          </div>
         ))}
       </div>
     </div>
   )
 }
 
-/** Zanika i wjeżdża od dołu za każdym razem, gdy zmienia się `id` — używane przy przełączaniu planu. */
-function Crossfade({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) {
-  const [widoczny, setWidoczny] = useState(true)
-  useEffect(() => {
-    setWidoczny(false)
-    const raf = requestAnimationFrame(() => setWidoczny(true))
-    return () => cancelAnimationFrame(raf)
-  }, [id])
+/* ═══════════════════════════════════════════════════════════════
+   PANEL "DOSTĘP DO MODELI"
+   ═══════════════════════════════════════════════════════════════ */
+function ModelAccessPanel({ modele, kolor }: { modele: NonNullable<Plan['modele']>; kolor: string }) {
+  return (
+    <div
+      className="rounded-xl border p-4"
+      style={{ borderColor: akcentTlo(kolor, 30), background: `linear-gradient(160deg, ${akcentTlo(kolor, 12)}, ${akcentTlo(kolor, 3)})` }}
+    >
+      <p className="text-[12.5px] font-bold text-foreground">{modele.tytul}</p>
+      <p className="mt-0.5 text-[11px] text-foreground/45">{modele.podtytul}</p>
+      <div className="mt-3 space-y-2">
+        {modele.pozycje.map(p => (
+          <div key={p.label} className="flex items-center justify-between gap-3 rounded-lg bg-foreground/[0.04] px-2.5 py-1.5">
+            <span className="text-[11.5px] font-semibold text-foreground/80">{p.label}</span>
+            <span className="rounded-md px-1.5 py-0.5 font-mono text-[9px] font-bold" style={{ color: kolor, background: akcentTlo(kolor, 16) }}>
+              {p.tag}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   KARTA PLANU — trzy karty obok siebie (Free / Premium / Ultimate),
+   jak w referencyjnych cennikach: odznaka + rabat, cena, CTA,
+   suwak puli Byte, pasek zużycia, unlimited i dostęp do modeli, cechy.
+   ═══════════════════════════════════════════════════════════════ */
+function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Okres; podswietlony?: boolean }) {
+  const [prog, setProg] = useState(0)
+  const konfiguracja = plan.progi?.[prog] ?? null
+  const cena = konfiguracja ? (okres === 'miesiecznie' ? konfiguracja.miesiecznie : konfiguracja.rocznie) : 0
+  const darmowy = plan.progi === null
+
+  const jasny = plan.id !== 'free' // premium/ultimate dostają wypełniony przycisk w kolorze marki
+  const wyroznione = plan.polecany || podswietlony
 
   return (
     <div
-      className={cn('transition-[opacity,transform] duration-300 ease-out', className)}
-      style={{ opacity: widoczny ? 1 : 0, transform: widoczny ? 'translateY(0)' : 'translateY(6px)' }}
+      className={cn(
+        'relative flex flex-col overflow-hidden rounded-2xl border p-7 transition-all duration-300 hover:-translate-y-1.5',
+        !wyroznione && 'border-foreground/[0.08]',
+        podswietlony && 'ring-2 ring-offset-2 ring-offset-background',
+        'bg-[hsl(var(--card)/0.92)]',
+      )}
+      style={{
+        borderColor: wyroznione ? akcentTlo(plan.kolor, 45) : undefined,
+        boxShadow: wyroznione ? `0 0 60px -14px ${akcentTlo(plan.kolor, 55)}` : undefined,
+        ['--tw-ring-color' as string]: podswietlony ? plan.kolor : undefined,
+      }}
     >
-      {children}
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   WITRYNA PLANU — canvas na górze, przełącznik i panel ceny/cech
-   pod spodem, wszystko reaguje na jeden wybrany plan.
-   ═══════════════════════════════════════════════════════════════ */
-function PlanShowcase({ okres }: { okres: Okres }) {
-  const polecanyId = PLANY.find(p => p.polecany)?.id ?? PLANY[0].id
-  const [aktywnyId, setAktywnyId] = useState(polecanyId)
-  const plan = PLANY.find(p => p.id === aktywnyId)!
-  const tier = PLANY.findIndex(p => p.id === aktywnyId) as 0 | 1 | 2
-  const [prog, setProg] = useState(0)
-
-  useEffect(() => { setProg(0) }, [aktywnyId])
-
-  const konfiguracja = plan.progi?.[prog] ?? null
-  const darmowy = plan.progi === null
-  // Rabat roczny = 2 miesiące gratis na 12 (miesięczna × 5/6) — dokładnie jak w panelu rozliczeń.
-  const cena = konfiguracja ? (okres === 'miesiecznie' ? konfiguracja.miesiecznie : konfiguracja.miesiecznie * 5 / 6) : 0
-
-  return (
-    <div className="flex flex-col items-center">
-      <PricingCanvas tier={tier} kolor={plan.kolor} />
-
-      <div className="-mt-2">
-        <PlanSwitch plany={PLANY} aktywny={aktywnyId} onChange={setAktywnyId} />
-      </div>
-
-      <div className="relative mt-8 w-full overflow-hidden rounded-2xl border p-8 sm:p-10" style={{ borderColor: akcentTlo(plan.kolor, 16), background: 'hsl(var(--card)/0.55)', backdropFilter: 'blur(20px)' }}>
+      {jasny && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 transition-[background] duration-500"
-          style={{ background: `radial-gradient(ellipse 70% 45% at 15% 0%, ${akcentTlo(plan.kolor, 10)}, transparent)` }}
+          className="pointer-events-none absolute inset-0"
+          style={{ background: `radial-gradient(ellipse 90% 55% at 50% 0%, ${akcentTlo(plan.kolor, plan.polecany ? 20 : 10)}, transparent 70%)` }}
         />
+      )}
 
-        <div className="relative z-10 grid gap-10 lg:grid-cols-12 lg:gap-14">
-          <div className="lg:col-span-5">
-            <Crossfade id={aktywnyId}>
-              <p className="font-sans text-[13px] font-normal text-foreground/55">{plan.opis}</p>
+      <div className="relative z-10 flex flex-1 flex-col">
+        <div className="mb-4 h-6" />
 
-              <div className="mt-6 flex h-5 items-center">
-                {!darmowy && okres === 'rocznie' && konfiguracja && (
-                  <span className="font-mono text-[13px] font-semibold text-red-400/70 line-through decoration-red-400/70">
-                    {konfiguracja.miesiecznie.toLocaleString('pl-PL')} PLN
-                  </span>
-                )}
-              </div>
+        <h3
+          className="font-heading text-[26px] font-extrabold leading-none tracking-tight"
+          style={{ color: jasny ? plan.kolor : undefined }}
+        >
+          {plan.nazwa}
+        </h3>
+        <p className="mt-2 text-[12.5px] text-foreground/45">{plan.opis}</p>
 
-              <div className="flex items-end gap-2">
-                {!darmowy && <span className="pb-2 font-sans text-[13px] font-medium text-foreground/40">od</span>}
-                <span className="font-heading text-[56px] font-semibold leading-none tracking-[-2px] text-foreground">
-                  {darmowy ? '0' : <AnimNum value={cena} decimals={okres === 'rocznie' ? 2 : 0} />}
-                </span>
-                <span className="flex flex-col pb-2">
-                  <span className="font-heading text-[14px] font-bold text-foreground/70">PLN</span>
-                  <span className="font-sans text-[10.5px] font-medium text-foreground/40">/miesiąc</span>
-                </span>
-              </div>
-
-              <p className="mt-2 font-sans text-[11.5px] font-medium text-foreground/45">
-                {darmowy
-                  ? 'Płacisz tylko za zużyte Byte z doładowanych paczek'
-                  : okres === 'rocznie'
-                    ? 'Płatność roczna.'
-                    : 'Rozliczane miesięcznie · anulujesz w każdej chwili'}
-                {!darmowy && okres === 'rocznie' && (
-                  <span className="ml-1 font-semibold" style={{ color: plan.kolor }}>Oszczędzasz 17%</span>
-                )}
-              </p>
-
-              {plan.polecany ? (
-                <GlowButton className="mt-6 w-full justify-center">{plan.cta}</GlowButton>
-              ) : (
-                <GhostButton className="mt-6 w-full justify-center" icon={undefined}>{plan.cta}</GhostButton>
-              )}
-
-              {plan.progi && (
-                <div className="mt-8">
-                  <ByteSlider progi={plan.progi} indeks={prog} onChange={setProg} kolor={plan.kolor} />
-                </div>
-              )}
-
-              {konfiguracja && (
-                <p className="mt-5 font-sans text-[12px] font-medium leading-relaxed text-foreground/55">
-                  To wystarczy na <strong className="font-semibold text-foreground/90">≈{przelicznikByte(konfiguracja.byte)[0].value.toLocaleString('pl-PL')}</strong> wiadomości
-                  lub <strong className="font-semibold text-foreground/90">≈{przelicznikByte(konfiguracja.byte)[1].value.toLocaleString('pl-PL')}</strong> grafik 4K w miesiącu
-                  <span className="ml-1 font-mono text-[10.5px] text-foreground/35">· kurs {konfiguracja.kurs}</span>
-                </p>
-              )}
-            </Crossfade>
-          </div>
-
-          <div className="lg:col-span-7">
-            <Crossfade id={aktywnyId}>
-              <p className="mb-4 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-foreground/30">
-                W planie {plan.nazwa}
-              </p>
-              <ul className="grid gap-x-8 gap-y-3.5 sm:grid-cols-2">
-                {plan.cechy.map(c => (
-                  <li key={c} className="flex items-start gap-2.5 font-sans text-[13px] font-normal leading-relaxed text-foreground/70">
-                    <Check className="mt-[3px] h-3.5 w-3.5 shrink-0" style={{ color: plan.kolor }} strokeWidth={2.5} />
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            </Crossfade>
-          </div>
+        <div className="mt-7 flex items-end gap-2">
+          {!darmowy && <span className="pb-2 text-[13px] font-medium text-foreground/35">od</span>}
+          <span className="font-heading text-[46px] font-extrabold leading-none tracking-tight text-foreground">
+            {darmowy ? '0' : <AnimNum value={cena} />}
+          </span>
+          <span className="flex flex-col pb-1.5">
+            <span className="text-[13px] font-bold text-foreground/60">PLN</span>
+            <span className="text-[10.5px] text-foreground/35">/miesiąc</span>
+          </span>
         </div>
+
+        <p className="mt-2 text-[11.5px] text-foreground/40">
+          {darmowy
+            ? 'Płacisz tylko za zużyte Byte z doładowanych paczek'
+            : okres === 'rocznie'
+              ? `Rozliczane rocznie · ${(cena * 12).toLocaleString('pl-PL')} zł za rok`
+              : 'Rozliczane miesięcznie · anulujesz w każdej chwili'}
+        </p>
+
+        {jasny ? (
+          <GlowButton className="mt-6 w-full justify-center" icon={false}>{plan.cta}</GlowButton>
+        ) : (
+          <GhostButton className="mt-6 w-full justify-center" icon={undefined}>{plan.cta}</GhostButton>
+        )}
+
+        {plan.progi && (
+          <div className="mt-7">
+            <ByteSlider progi={plan.progi} indeks={prog} onChange={setProg} kolor={plan.kolor} />
+          </div>
+        )}
+
+        {konfiguracja && (
+          <div className="mt-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] p-4">
+            <p className="mb-3 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-foreground/30">
+              To wystarczy na
+            </p>
+            <div className="space-y-2">
+              {przelicznikByte(konfiguracja.byte).map(r => (
+                <div key={r.label} className="flex items-center gap-2.5">
+                  <r.icon className="h-3.5 w-3.5 shrink-0" style={{ color: plan.kolor }} />
+                  <span className="text-[11.5px] text-foreground/55">
+                    <strong className="font-bold text-foreground/85">≈ {r.value.toLocaleString('pl-PL')}</strong> {r.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 border-t border-foreground/[0.06] pt-2.5 font-mono text-[10px] text-foreground/35">
+              Kurs: <span style={{ color: plan.kolor }}>{konfiguracja.kurs}</span>
+            </p>
+          </div>
+        )}
+
+        <div className="mt-4 space-y-3">
+          <UnlimitedPanel plan={plan} />
+          {plan.modele && <ModelAccessPanel modele={plan.modele} kolor={plan.kolor} />}
+        </div>
+
+        <div aria-hidden className="my-6 h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, hsl(var(--foreground)/0.10) 50%, transparent)' }} />
+        <p className="mb-3.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-foreground/30">
+          W planie {plan.nazwa}
+        </p>
+        <ul className="space-y-2.5">
+          {plan.cechy.map(c => (
+            <li key={c} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-foreground/60">
+              <span
+                className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                style={{ background: akcentTlo(plan.kolor, 15) }}
+              >
+                <Check className="h-2.5 w-2.5" style={{ color: plan.kolor }} />
+              </span>
+              {c}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )
 }
-
 
 /* ═══════════════════════════════════════════════════════════════
    FAQ — akordeon z pomiarem wysokości (ResizeObserver), ten sam
@@ -701,141 +608,409 @@ function FaqRow({ q, a, open, onToggle }: { q: string; a: string; open: boolean;
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   ENTERPRISE — szeroki baner kontaktowy pod trzema kartami planów,
+   zamiast osobnej zakładki "Dla firm".
+   ═══════════════════════════════════════════════════════════════ */
+function EnterpriseCard() {
+  const kolor = 'hsl(var(--primary))'
+  const cechy = [
+    'Niestandardowa pula Byte dopasowana do organizacji',
+    'Dedykowana infrastruktura i gwarancja SLA',
+    'Nieograniczona liczba użytkowników',
+    'Wspólny workspace i pula Byte dla całej firmy',
+    'Priorytetowe wsparcie na dedykowanym kanale',
+  ]
+
+  return (
+    <div
+      className="relative flex flex-col overflow-hidden rounded-2xl border p-7 transition-all duration-300 hover:-translate-y-1.5"
+      style={{
+        borderColor: akcentTlo(kolor, 24),
+        background: 'linear-gradient(160deg, hsl(var(--foreground)/0.06), hsl(var(--card)/0.92))',
+      }}
+    >
+      <div className="relative z-10 flex flex-1 flex-col">
+        <div className="mb-4 h-6" />
+
+        <h3 className="font-heading text-[26px] font-extrabold leading-none tracking-tight text-foreground">
+          Enterprise
+        </h3>
+        <p className="mt-2 text-[12.5px] text-foreground/45">Dla organizacji potrzebujących personalizacji i bezpieczeństwa</p>
+
+        <div className="mt-7 flex items-end gap-2">
+          <span className="font-heading text-[28px] font-light leading-none tracking-tight text-foreground">
+            Porozmawiajmy
+          </span>
+        </div>
+        <p className="mt-2 text-[11.5px] text-foreground/40">Wycena dopasowana do skali Twojej organizacji</p>
+
+        <GlowButton className="mt-6 w-full justify-center" icon={false}>
+          <PhoneCall className="h-4 w-4" />
+          Skontaktuj się z nami
+        </GlowButton>
+
+        <div aria-hidden className="my-6 h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, hsl(var(--foreground)/0.10) 50%, transparent)' }} />
+
+        <p className="mb-3.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-foreground/30">
+          W planie Enterprise
+        </p>
+        <ul className="space-y-2.5">
+          {cechy.map(c => (
+            <li key={c} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-foreground/60">
+              <span className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full" style={{ background: akcentTlo(kolor, 15) }}>
+                <Check className="h-2.5 w-2.5" style={{ color: kolor }} />
+              </span>
+              {c}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PLAN FINDER — zamienia sekcję "Byte" w kreator doboru planu 1:1
+   z referencyjnym wizardem: po lewej checkboxy "do czego używasz",
+   po prawej dynamicznie aktualizowana karta rekomendacji.
+   ═══════════════════════════════════════════════════════════════ */
+const OPCJE_DOBORU = [
+  { id: 'test', icon: Sparkles, t: 'Testuję platformę', wagi: { free: 2, premium: 0, ultimate: 0 } },
+  { id: 'chat', icon: MessageSquare, t: 'Codzienny Chat AI', wagi: { free: 1, premium: 1, ultimate: 0 } },
+  { id: 'obrazy', icon: ImagePlus, t: 'Generowanie obrazów', wagi: { free: 0, premium: 2, ultimate: 1 } },
+  { id: 'automatyzacje', icon: Bot, t: 'Asystent i automatyzacje', wagi: { free: 0, premium: 1, ultimate: 2 } },
+  { id: 'zespol', icon: Users, t: 'Praca zespołowa', wagi: { free: 0, premium: 0, ultimate: 3 } },
+  { id: 'skala', icon: Zap, t: 'Duża skala, priorytet w kolejce', wagi: { free: 0, premium: 0, ultimate: 3 } },
+] as const
+
+/** Kroki suwaka "ile obrazów miesięcznie" — im wyższy krok, tym mocniej przechyla w stronę wyższego planu. */
+const KROKI_OBRAZY = [
+  { label: '~50', opis: '≈50 grafik Nano Banana miesięcznie', waga: 0 },
+  { label: '~200', opis: '≈200 grafik Nano Banana miesięcznie', waga: 1 },
+  { label: '~500', opis: '≈500 grafik Nano Banana miesięcznie', waga: 2 },
+  { label: '1000+', opis: '1000+ grafik Nano Banana miesięcznie', waga: 3 },
+]
+
+const KROKI_WIADOMOSCI = [
+  { label: '~100', opis: '≈100 wiadomości w Chat AI miesięcznie', waga: 0 },
+  { label: '~500', opis: '≈500 wiadomości w Chat AI miesięcznie', waga: 1 },
+  { label: '~1500', opis: '≈1500 wiadomości w Chat AI miesięcznie', waga: 2 },
+  { label: 'Bez limitu', opis: 'Intensywna, codzienna praca z Chat AI', waga: 3 },
+]
+
+function obliczRekomendacje(wybrane: Set<string>, obrazy: number, wiadomosci: number): string {
+  const wyniki = { free: 0, premium: 0, ultimate: 0 }
+  OPCJE_DOBORU.forEach(o => {
+    if (!wybrane.has(o.id)) return
+    wyniki.free += o.wagi.free
+    wyniki.premium += o.wagi.premium
+    wyniki.ultimate += o.wagi.ultimate
+  })
+  const wagaObjetosci = KROKI_OBRAZY[obrazy].waga + KROKI_WIADOMOSCI[wiadomosci].waga
+  wyniki.premium += Math.min(wagaObjetosci, 2)
+  wyniki.ultimate += Math.max(wagaObjetosci - 2, 0) * 2
+  if (wyniki.free === 0 && wyniki.premium === 0 && wyniki.ultimate === 0) return 'premium'
+  return (Object.entries(wyniki) as [string, number][]).sort((a, b) => b[1] - a[1])[0][0]
+}
+
+function PlanFinder({ onWybierz, onZamknij }: { onWybierz: (id: string) => void; onZamknij: () => void }) {
+  const [wybrane, setWybrane] = useState<Set<string>>(new Set(['obrazy']))
+  const [krokObrazy, setKrokObrazy] = useState(1)
+  const [krokWiadomosci, setKrokWiadomosci] = useState(1)
+  const [pokazDlaczego, setPokazDlaczego] = useState(false)
+  const rekomendowanyId = obliczRekomendacje(wybrane, krokObrazy, krokWiadomosci)
+  const plan = PLANY.find(p => p.id === rekomendowanyId) ?? PLANY[1]
+  const konfiguracja = plan.progi?.[Math.min(1, (plan.progi?.length ?? 1) - 1)] ?? null
+
+  const przelacz = (id: string) => {
+    setWybrane(prev => {
+      const nast = new Set(prev)
+      nast.has(id) ? nast.delete(id) : nast.add(id)
+      return nast
+    })
+  }
+
+  return (
+    <FadeIn className="mx-auto max-w-5xl">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <h2 className="font-heading text-[clamp(24px,3.4vw,34px)] font-light leading-[1.1] tracking-[-1px] text-foreground">
+          Wybierz, do czego <span className="font-normal text-primary">tworzysz i otrzymaj rekomendację.</span>
+        </h2>
+      </div>
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_360px]">
+        {/* lewa kolumna — pytanie i checkboxy */}
+        <div className="rounded-2xl border border-foreground/[0.1] bg-foreground/[0.02] p-6 sm:p-7">
+          <div className="flex items-start gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.14] bg-foreground/[0.04] font-mono text-[12px] font-bold text-foreground/70">1</span>
+            <div>
+              <h3 className="font-heading text-[16px] font-bold text-foreground">Do czego używasz NextByte?</h3>
+              <p className="mt-0.5 text-[12px] text-foreground/45">Możesz wybrać kilka opcji</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {OPCJE_DOBORU.map(o => {
+              const aktywna = wybrane.has(o.id)
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => przelacz(o.id)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all duration-200',
+                    aktywna ? 'border-primary/45 bg-primary/[0.08]' : 'border-foreground/[0.1] bg-foreground/[0.02] hover:border-foreground/20',
+                  )}
+                >
+                  <o.icon className={cn('h-4 w-4 shrink-0', aktywna ? 'text-primary' : 'text-foreground/40')} />
+                  <span className={cn('flex-1 text-[13px] font-semibold', aktywna ? 'text-foreground' : 'text-foreground/60')}>{o.t}</span>
+                  <span
+                    className={cn(
+                      'flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border transition-colors',
+                      aktywna ? 'border-primary bg-primary' : 'border-foreground/20',
+                    )}
+                  >
+                    {aktywna && <Check className="h-3 w-3 text-background" strokeWidth={3} />}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mt-8 flex items-start gap-3 border-t border-foreground/[0.08] pt-7">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.14] bg-foreground/[0.04] font-mono text-[12px] font-bold text-foreground/70">2</span>
+            <div>
+              <h3 className="font-heading text-[16px] font-bold text-foreground">Ile treści tworzysz miesięcznie?</h3>
+              <p className="mt-0.5 text-[12px] text-foreground/45">Przesuń suwaki, żeby dopasować pulę Byte</p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-6">
+            <KrokSlider etykieta="Obrazy AI" kroki={KROKI_OBRAZY} indeks={krokObrazy} onChange={setKrokObrazy} kolor={plan.kolor} />
+            <KrokSlider etykieta="Wiadomości w Chat AI" kroki={KROKI_WIADOMOSCI} indeks={krokWiadomosci} onChange={setKrokWiadomosci} kolor={plan.kolor} />
+          </div>
+
+          <button
+            type="button"
+            onClick={onZamknij}
+            className="mt-7 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground/35 transition-colors hover:text-foreground/60"
+          >
+            ← Wróć do informacji o Byte
+          </button>
+        </div>
+
+        {/* prawa kolumna — dynamiczna karta rekomendacji */}
+        <div
+          className="relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-colors duration-500"
+          style={{ borderColor: akcentTlo(plan.kolor, 40), background: `linear-gradient(160deg, ${akcentTlo(plan.kolor, 14)}, hsl(var(--card)/0.92))` }}
+        >
+          <p className="text-center font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40">Polecamy Twój plan</p>
+          <button
+            type="button"
+            onClick={() => setPokazDlaczego(v => !v)}
+            className="mx-auto mt-2 rounded-lg px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wide transition-colors"
+            style={{ color: plan.kolor, background: akcentTlo(plan.kolor, 14) }}
+          >
+            {pokazDlaczego ? 'Ukryj powód ↑' : 'Zobacz dlaczego →'}
+          </button>
+          {pokazDlaczego && (
+            <p className="mt-3 rounded-lg bg-foreground/[0.04] p-3 text-center text-[11.5px] leading-relaxed text-foreground/55">
+              Na podstawie wybranych opcji plan {plan.nazwa} daje najlepszy stosunek mocy AI do ceny dla Twojego przypadku.
+            </p>
+          )}
+
+          <div key={plan.id} className="animate-tab-in">
+            <h3 className="mt-5 font-heading text-[28px] font-light leading-none tracking-[-1.5px]" style={{ color: plan.kolor }}>
+              {plan.nazwa}
+            </h3>
+            <p className="mt-1 text-[12px] text-foreground/50">{plan.opis}</p>
+          </div>
+
+          {/* liczby NIE są w keyowanym, przemontowywanym bloku — dzięki temu AnimNum
+              faktycznie przelicza starą wartość na nową, zamiast migać z pominięciem animacji */}
+          {konfiguracja && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-foreground/[0.04] px-3 py-2">
+              <Sparkles className="h-3.5 w-3.5" style={{ color: plan.kolor }} />
+              <span className="text-[12.5px] font-semibold text-foreground"><AnimNum value={konfiguracja.byte} /> ⟠ / mies.</span>
+            </div>
+          )}
+
+          <div className="mt-4 flex items-end gap-2">
+            <span className="font-heading text-[36px] font-extrabold leading-none tracking-tight text-foreground">
+              {plan.progi === null ? '0' : <AnimNum value={konfiguracja?.miesiecznie ?? 0} />}
+            </span>
+            <span className="flex flex-col pb-1">
+              <span className="text-[12px] font-bold text-foreground/60">PLN</span>
+              <span className="text-[10px] text-foreground/35">/miesiąc</span>
+            </span>
+          </div>
+
+          <div key={`${plan.id}-szczegoly`} className="animate-tab-in">
+            <ul className="mt-4 space-y-2">
+              {plan.cechy.slice(0, 3).map(c => (
+                <li key={c} className="flex items-start gap-2 text-[11.5px] leading-relaxed text-foreground/60">
+                  <Check className="mt-[2px] h-3.5 w-3.5 shrink-0" style={{ color: plan.kolor }} strokeWidth={2.5} />
+                  {c}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              type="button"
+              onClick={() => onWybierz(plan.id)}
+              className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl font-heading text-[14px] font-extrabold uppercase tracking-wide transition-transform duration-200 hover:scale-[1.02]"
+              style={{ background: akcentTlo(plan.kolor, 24), border: `1px solid ${akcentTlo(plan.kolor, 55)}`, color: plan.kolor }}
+            >
+              Wybierz {plan.nazwa}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </FadeIn>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
    STRONA CENNIKA
    ═══════════════════════════════════════════════════════════════ */
 export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
   const [okres, setOkres] = useState<Okres>('miesiecznie')
   const [faqOpen, setFaqOpen] = useState<number | null>(0)
+  const [dobor, setDobor] = useState(true)
+  const [rekomendacja, setRekomendacja] = useState<string | null>(null)
+  const byteRef = useRef<HTMLDivElement>(null)
+  const kartyRef = useRef<HTMLDivElement>(null)
+
+  const wlaczDobor = () => {
+    setDobor(true)
+    requestAnimationFrame(() => byteRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const wybierzRekomendacje = (id: string) => {
+    setRekomendacja(id)
+    requestAnimationFrame(() => kartyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }
 
   return (
     <div className="relative flex w-full flex-col font-landing text-foreground">
       <AnimStyles />
-      <PageAmbience />
 
-      {/* ══════════ NAGŁÓWEK ══════════ */}
-      <div className="relative overflow-hidden">
-        <HeroWispyBackground />
-        <Glow className="left-1/2 top-[-120px] -translate-x-1/2" size={720} opacity={0.16} />
-
-        {/* gigantyczny napis w tle — ten sam trik co w referencyjnych cennikach */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[-0.12em] -translate-x-1/2 select-none whitespace-nowrap font-heading font-bold uppercase leading-none text-foreground/[0.05]"
-          style={{ fontSize: 'clamp(90px, 17vw, 230px)', letterSpacing: '-0.04em' }}
-        >
-          Cennik
-        </span>
-
-        <Section className="relative pb-16 pt-14 sm:pt-20">
-          <FadeIn className="relative z-10 mx-auto flex max-w-2xl flex-col items-center text-center">
-            <SecRule label="Cennik i plany" />
-            <h1 className="font-heading text-[clamp(34px,6vw,58px)] font-normal leading-[1.05] tracking-[-2.5px] text-foreground">
-              Jedna cena. <br />
-              <span className="font-normal text-primary drop-shadow-[0_0_44px_hsl(var(--primary)/0.4)]">Cały ekosystem AI.</span>
+      {/* ══════════ NAGŁÓWEK + KARTY PLANÓW ══════════
+           Bez PageAmbience / HeroWispyBackground / Glow / gigantycznego napisu
+           w tle — te dekoracyjne warstwy zacinały scroll. Nagłówek i karty
+           dzielą TEN SAM, szerszy niż reszta strony kontener (max-w-[92rem])
+           — przy 4 kartach naraz (Free/Premium/Ultimate/Enterprise) węższy
+           max-w-6xl ze standardowego Section zbyt mocno je ściskał. */}
+      <div className="relative">
+        <div className="relative mx-auto w-full max-w-[92rem] px-4 pb-14 pt-14 sm:px-6 sm:pt-20 lg:px-8">
+          <FadeIn className="relative z-10">
+            <h1 className="font-heading text-[clamp(26px,4vw,42px)] font-semibold leading-[1.1] tracking-[-1px] text-foreground">
+              Wybierz najlepszy plan dla siebie.
             </h1>
-            <p className="mt-5 max-w-xl font-sans text-[15.5px] font-light leading-relaxed text-foreground/65">
-              Wybierz plan dopasowany do skali pracy. Niewykorzystane Byte przechodzą na kolejny okres,
-              a plan zmienisz albo anulujesz w dowolnym momencie.
+            <p className="mt-3 max-w-lg font-sans text-[14.5px] font-light leading-relaxed text-foreground/55">
+              Odblokuj lepsze ceny lub skaluj swoje możliwości, dopasowując plan do bieżących potrzeb.
             </p>
 
-            <div className="mt-8">
+            <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <PlanFinderButton onClick={wlaczDobor} />
               <OkresToggle okres={okres} onChange={setOkres} />
             </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              {[
-                { i: Wallet, t: 'Bez karty na starcie' },
-                { i: Repeat, t: 'Zmiana planu w każdej chwili' },
-                { i: Shield, t: 'Faktura VAT w złotówkach' },
-              ].map(x => (
-                <span key={x.t} className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-foreground/35">
-                  <x.i className="h-3.5 w-3.5 text-primary/60" />
-                  {x.t}
-                </span>
-              ))}
-            </div>
           </FadeIn>
-        </Section>
+        </div>
+
+        {/* ══════════ KARTY PLANÓW — Enterprise jako 4. kafelek w tej samej siatce ══════════ */}
+        <div className="relative mx-auto w-full max-w-[92rem] px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+          <div ref={kartyRef} className="scroll-mt-24">
+            <FadeIn>
+              <div className="grid items-start gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {PLANY.map(p => <PlanCard key={p.id} plan={p} okres={okres} podswietlony={rekomendacja === p.id} />)}
+                <EnterpriseCard />
+              </div>
+            </FadeIn>
+          </div>
+
+          <p className="mt-10 text-center font-sans text-[11.5px] font-light text-foreground/30">
+            Wszystkie ceny netto. Przy rozliczeniu rocznym rabat do 17% względem ceny miesięcznej.
+            Niewykorzystana pula Byte przechodzi na kolejny okres do trzykrotności puli miesięcznej.
+          </p>
+        </div>
       </div>
 
-      {/* ══════════ MORPHING CANVAS — scena SVG + przełącznik + panel ceny ══════════ */}
-      <Section className="pb-28 pt-4">
-        <FadeIn>
-          <PlanShowcase okres={okres} />
-        </FadeIn>
-
-        <p className="mt-10 text-center font-sans text-[11.5px] font-light text-foreground/30">
-          Wszystkie ceny netto. Przy rozliczeniu rocznym rabat do 17% względem ceny miesięcznej.
-          Niewykorzystana pula Byte przechodzi na kolejny okres do trzykrotności puli miesięcznej.
-        </p>
-      </Section>
-
-      {/* ══════════ JAK DZIAŁA BYTE — trzy filary, rytm strony głównej 3 ══════════ */}
+      {/* ══════════ JAK DZIAŁA BYTE / DOBÓR PLANU ══════════ */}
       <Section className="pb-24">
-        <FadeIn>
-          <BlockHead
-            center
-            label="Model rozliczeń"
-            title="Byte — jednostka mocy,"
-            accent="nie abonament."
-            lead="Zamiast płacić stałą kwotę za dostęp, którego nie wykorzystujesz w pełni, rozliczasz rzeczywiste zużycie. Koszt każdej akcji widzisz zanim ją uruchomisz."
-          />
-        </FadeIn>
-
-        <div className="relative mx-auto mt-14 max-w-5xl">
-          <div className="relative mb-8 h-7">
-            <span aria-hidden className="absolute inset-x-0 top-[13px] h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
-            <span className="absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-2 bg-background px-4">
-              <NextByteMarkIcon className="h-3.5 w-3.5 text-primary" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/45">rozliczenia</span>
-            </span>
-          </div>
-
-          <div className="grid gap-x-10 gap-y-14 md:grid-cols-3">
-            {[
-              {
-                n: '01', tag: 'Przejrzystość',
-                t: 'Jawny koszt każdej akcji',
-                d: 'Wiadomość do modelu, wygenerowany obraz, analiza dokumentu — każda operacja ma cenę w Byte widoczną przed uruchomieniem i zapisaną w historii.',
-                metric: 'koszt widoczny przed wysłaniem',
-              },
-              {
-                n: '02', tag: 'Bez straty',
-                t: 'Pula nigdy nie przepada',
-                d: 'Niewykorzystane Byte przechodzą na kolejny okres, do trzykrotności puli miesięcznej. Byte z doładowanych paczek nie wygasają w ogóle.',
-                metric: 'do 3× puli w rolowaniu',
-              },
-              {
-                n: '03', tag: 'Prywatność',
-                t: 'Modele lokalne bez kosztu',
-                d: 'Praca na modelach uruchomionych przez Ollamę nie zużywa ani jednego Byte — niezależnie od planu i liczby zapytań.',
-                metric: '0 ⟠ za pracę offline',
-              },
-            ].map((f, i) => (
-              <FadeIn key={f.n} delay={i * 90} className="relative pl-7">
-                <span
-                  aria-hidden
-                  className="absolute -left-[3px] -top-1 h-[7px] w-[7px] rounded-full bg-primary"
-                  style={{ boxShadow: '0 0 12px hsl(var(--primary))' }}
+        <div ref={byteRef} className="scroll-mt-24">
+          {dobor ? (
+            <PlanFinder onWybierz={wybierzRekomendacje} onZamknij={() => setDobor(false)} />
+          ) : (
+            <>
+              <FadeIn>
+                <BlockHead
+                  center
+                  label="Model rozliczeń"
+                  title="Byte — jednostka mocy,"
+                  accent="nie abonament."
+                  lead="Zamiast płacić stałą kwotę za dostęp, którego nie wykorzystujesz w pełni, rozliczasz rzeczywiste zużycie. Koszt każdej akcji widzisz zanim ją uruchomisz."
                 />
-                <span aria-hidden className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-primary/70 to-primary/10" />
-                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70">
-                  {f.n} · {f.tag}
-                </span>
-                <h3 className="mt-3.5 font-heading text-[19px] font-light leading-snug tracking-[-0.5px] text-foreground">
-                  {f.t}
-                </h3>
-                <p className="mt-3 font-sans text-[13.5px] font-light leading-relaxed text-foreground/55">
-                  {f.d}
-                </p>
-                <p className="mt-5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-foreground/35">
-                  {f.metric}
-                </p>
               </FadeIn>
-            ))}
-          </div>
 
-          <div aria-hidden className="mt-8 h-px w-full bg-gradient-to-r from-transparent via-foreground/[0.12] to-transparent" />
+              <div className="relative mx-auto mt-14 max-w-5xl">
+                <div className="relative mb-8 h-7">
+                  <span aria-hidden className="absolute inset-x-0 top-[13px] h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
+                  <span className="absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-2 bg-background px-4">
+                    <NextByteMarkIcon className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/45">rozliczenia</span>
+                  </span>
+                </div>
+
+                <div className="grid gap-x-10 gap-y-14 md:grid-cols-3">
+                  {[
+                    {
+                      n: '01', tag: 'Przejrzystość',
+                      t: 'Jawny koszt każdej akcji',
+                      d: 'Wiadomość do modelu, wygenerowany obraz, analiza dokumentu — każda operacja ma cenę w Byte widoczną przed uruchomieniem i zapisaną w historii.',
+                      metric: 'koszt widoczny przed wysłaniem',
+                    },
+                    {
+                      n: '02', tag: 'Bez straty',
+                      t: 'Pula nigdy nie przepada',
+                      d: 'Niewykorzystane Byte przechodzą na kolejny okres, do trzykrotności puli miesięcznej. Byte z doładowanych paczek nie wygasają w ogóle.',
+                      metric: 'do 3× puli w rolowaniu',
+                    },
+                    {
+                      n: '03', tag: 'Prywatność',
+                      t: 'Modele lokalne bez kosztu',
+                      d: 'Praca na modelach uruchomionych przez Ollamę nie zużywa ani jednego Byte — niezależnie od planu i liczby zapytań.',
+                      metric: '0 ⟠ za pracę offline',
+                    },
+                  ].map((f, i) => (
+                    <FadeIn key={f.n} delay={i * 90} className="relative pl-7">
+                      <span
+                        aria-hidden
+                        className="absolute -left-[3px] -top-1 h-[7px] w-[7px] rounded-full bg-primary"
+                        style={{ boxShadow: '0 0 12px hsl(var(--primary))' }}
+                      />
+                      <span aria-hidden className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-primary/70 to-primary/10" />
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70">
+                        {f.n} · {f.tag}
+                      </span>
+                      <h3 className="mt-3.5 font-heading text-[19px] font-light leading-snug tracking-[-0.5px] text-foreground">
+                        {f.t}
+                      </h3>
+                      <p className="mt-3 font-sans text-[13.5px] font-light leading-relaxed text-foreground/55">
+                        {f.d}
+                      </p>
+                      <p className="mt-5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-foreground/35">
+                        {f.metric}
+                      </p>
+                    </FadeIn>
+                  ))}
+                </div>
+
+                <div aria-hidden className="mt-8 h-px w-full bg-gradient-to-r from-transparent via-foreground/[0.12] to-transparent" />
+              </div>
+            </>
+          )}
         </div>
       </Section>
 
@@ -981,7 +1156,6 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
 
       {/* ══════════ CTA ══════════ */}
       <Section className="relative overflow-hidden py-16 sm:py-20">
-        <Glow className="left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" size={820} opacity={0.22} />
         <NextByteMarkIcon className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-[70%] text-primary/[0.06]" />
         <FadeIn className="relative z-10 mx-auto flex max-w-2xl flex-col items-center text-center">
           <SecRule label="500 ⟠ na start" />

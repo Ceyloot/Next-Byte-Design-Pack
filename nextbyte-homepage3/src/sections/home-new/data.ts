@@ -140,14 +140,14 @@ export const TECH_PARTNERZY = [
 export const WARTOSCI_FILARY = [
   {
     tag: '// SELEKCJA',
-    title: 'Tylko modele, które realnie dowożą',
-    desc: 'Odrzucamy marketingowy szum i testujemy dziesiątki silników miesięcznie. Dostajesz dostęp wyłącznie do modeli przynoszących wymierną wartość biznesową.',
+    title: 'Tylko najlepsze modele',
+    desc: 'Odrzucamy marketingowy szum i testujemy dziesiątki modeli miesięcznie. Dostajesz dostęp wyłącznie do modeli przynoszących wymierną wartość',
     accent: '#70BEFA',
   },
   {
     tag: '// GOTOWE WZORCE',
-    title: 'Przetestowane szablony pod realne zadania',
-    desc: 'Gotowe procedury pod analizy rynkowe, research, kod i content marketing. Wklejasz własne dane i otrzymujesz profesjonalny wynik bez nauki inżynierii promptów.',
+    title: 'Praktyczne schematy zamiast teorii',
+    desc: 'Przetestowane procedury pod marketing, sprzedaż, finanse i audyty. Wprowadzasz kontekst swojej firmy i od razu odbierasz dopracowany raport lub kreację.',
     accent: '#C084FC',
   },
   {
@@ -209,7 +209,11 @@ export type Plan = {
   kolor: string
   polecany: boolean
   odznaka: string | null
+  rabat: string | null
   progi: { byte: number; miesiecznie: number; rocznie: number; kurs: string }[] | null
+  wykorzystaniePct: number
+  unlimited: { label: string; dostep: boolean }[]
+  modele: { tytul: string; podtytul: string; pozycje: { label: string; tag: string }[] } | null
   cechy: string[]
   cta: string
 }
@@ -222,7 +226,15 @@ export const PLANY: Plan[] = [
     kolor: AKCENT.neutral,
     polecany: false,
     odznaka: null,
+    rabat: null,
     progi: null,
+    wykorzystaniePct: 0,
+    unlimited: [
+      { label: 'Nano Banana (obrazy)', dostep: false },
+      { label: 'Kling HD (wideo)', dostep: false },
+      { label: 'Chat AI — wszystkie modele', dostep: false },
+    ],
+    modele: null,
     cechy: [
       'Dostęp do wszystkich modułów (Chat, Studio, Notatki, Zadania)',
       'Wszystkie modele komercyjne — płatne elastycznie z paczek Byte',
@@ -240,11 +252,26 @@ export const PLANY: Plan[] = [
     kolor: AKCENT.chat,
     polecany: false,
     odznaka: null,
+    rabat: '20% taniej',
     progi: [
       { byte: 495, miesiecznie: 99, rocznie: 82, kurs: '5,00 ⟠ / zł' },
       { byte: 950, miesiecznie: 179, rocznie: 149, kurs: '5,30 ⟠ / zł' },
       { byte: 1500, miesiecznie: 269, rocznie: 225, kurs: '5,58 ⟠ / zł' },
     ],
+    wykorzystaniePct: 68,
+    unlimited: [
+      { label: 'Nano Banana (obrazy)', dostep: true },
+      { label: 'Kling HD (wideo, 7 dni)', dostep: true },
+      { label: 'Chat AI — wszystkie modele', dostep: true },
+    ],
+    modele: {
+      tytul: 'Dostęp do modeli Premium',
+      podtytul: '7 modeli bez limitu i darmowych generacji',
+      pozycje: [
+        { label: 'Nano Banana 2', tag: '7-dniowy unlimited' },
+        { label: 'Kling HD', tag: '7-dniowy unlimited' },
+      ],
+    },
     cechy: [
       'Miesięczna pula Byte z możliwością przenoszenia niewykorzystanych jednostek',
       'Pełny dostęp do Chat AI, Studia Zdjęć i Personalnego Asystenta',
@@ -261,12 +288,28 @@ export const PLANY: Plan[] = [
     opis: 'Dla wymagających firm i agencji',
     kolor: AKCENT.chat,
     polecany: true,
-    odznaka: 'Najlepsza oferta',
+    odznaka: 'Najlepsza wartość',
+    rabat: '23% taniej',
     progi: [
       { byte: 2450, miesiecznie: 349, rocznie: 290, kurs: '7,02 ⟠ / zł' },
       { byte: 4150, miesiecznie: 589, rocznie: 490, kurs: '7,05 ⟠ / zł' },
       { byte: 6070, miesiecznie: 849, rocznie: 710, kurs: '7,15 ⟠ / zł' },
     ],
+    wykorzystaniePct: 93,
+    unlimited: [
+      { label: 'Nano Banana Pro (obrazy)', dostep: true },
+      { label: 'Kling HD (wideo, 7 dni)', dostep: true },
+      { label: 'Chat AI — wszystkie modele', dostep: true },
+      { label: 'Enhancer 2x (jakość HD)', dostep: true },
+    ],
+    modele: {
+      tytul: 'Dostęp do wszystkich modeli',
+      podtytul: 'Pełna linia modeli, zero limitów',
+      pozycje: [
+        { label: 'Nano Banana Pro', tag: '7-dniowy unlimited' },
+        { label: 'Kling HD 4K', tag: 'Pełny dostęp' },
+      ],
+    },
     cechy: [
       'Najkorzystniejszy przelicznik: aż do 7,15 Byte za każdą złotówkę',
       'Priorytetowa kolejka wykonywania operacji (FAST queue)',
@@ -276,6 +319,110 @@ export const PLANY: Plan[] = [
       'Bezpośrednie wsparcie na dedykowanym kanale w czasie rzeczywistym',
     ],
     cta: 'Wybierz Ultimate',
+  },
+]
+
+/* ══════════════ CENNIK B2B — PLANY DLA FIRM ══════════════ */
+export type PlanB2B = {
+  id: string
+  nazwa: string
+  opis: string
+  rabat: string | null
+  ekspert: boolean
+  byte: number | null
+  bytePerSeat: number | null
+  seatMin: number
+  seatMax: number
+  seatDefault: number
+  miesiecznie: number | null
+  rocznie: number | null
+  cechy: { grupa: string; pozycje: string[] }[]
+  cta: string
+}
+
+export const PLANY_B2B: PlanB2B[] = [
+  {
+    id: 'zespol',
+    nazwa: 'Zespół',
+    opis: 'Dla agencji i małych zespołów tworzących szybciej',
+    rabat: '18% taniej',
+    ekspert: false,
+    byte: 5000,
+    bytePerSeat: 1000,
+    seatMin: 2,
+    seatMax: 9,
+    seatDefault: 5,
+    miesiecznie: 79,
+    rocznie: 65,
+    cechy: [
+      {
+        grupa: 'Workspace i współpraca',
+        pozycje: [
+          '2 do 9 osób we wspólnym workspace',
+          'Dostęp do wszystkich funkcji i modeli',
+          'Wspólna pula Byte dla całego zespołu',
+          'Współdzielony workspace projektowy',
+          'Wczesny dostęp do nowych funkcji AI',
+        ],
+      },
+    ],
+    cta: 'Wybierz Zespół Rocznie',
+  },
+  {
+    id: 'skala',
+    nazwa: 'Skala',
+    opis: 'Zaprojektowany dla rosnących zespołów kreatywnych',
+    rabat: '30% taniej',
+    ekspert: false,
+    byte: 12500,
+    bytePerSeat: 2500,
+    seatMin: 5,
+    seatMax: 15,
+    seatDefault: 5,
+    miesiecznie: 245,
+    rocznie: 150,
+    cechy: [
+      {
+        grupa: 'Workspace i współpraca',
+        pozycje: [
+          '5 do 15 osób we wspólnym workspace',
+          'Dostęp do wszystkich funkcji i modeli',
+          'Wspólna pula Byte dla całego zespołu',
+          'Współdzielony workspace projektowy',
+          'Wczesny dostęp do nowych funkcji AI',
+          'Priorytetowa kolejka wykonywania operacji',
+        ],
+      },
+    ],
+    cta: 'Wybierz Skalę Rocznie',
+  },
+  {
+    id: 'enterprise',
+    nazwa: 'Enterprise',
+    opis: 'Dla organizacji potrzebujących personalizacji i bezpieczeństwa',
+    rabat: null,
+    ekspert: true,
+    byte: null,
+    bytePerSeat: null,
+    seatMin: 1,
+    seatMax: 1,
+    seatDefault: 1,
+    miesiecznie: null,
+    rocznie: null,
+    cechy: [
+      {
+        grupa: 'Workspace i współpraca',
+        pozycje: [
+          'Nieograniczona liczba użytkowników',
+          'Dedykowana infrastruktura (SLA)',
+          'Dostęp do wszystkich funkcji i modeli',
+          'Wspólna pula Byte dla całej organizacji',
+          'Współdzielony workspace projektowy',
+          'Wczesny dostęp do nowych funkcji AI',
+        ],
+      },
+    ],
+    cta: 'Skontaktuj się z nami',
   },
 ]
 
