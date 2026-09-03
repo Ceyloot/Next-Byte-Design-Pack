@@ -427,7 +427,7 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
 
           <div className="mt-1 min-h-[18px]">
             {!darmowy && okres === 'rocznie' ? (
-              <span className="text-[11.5px] text-emerald-400 font-medium">
+              <span className="text-[11.5px] text-primary font-medium">
                 faktura roczna: <AnimNum value={cena * 12} /> PLN
               </span>
             ) : darmowy ? (
