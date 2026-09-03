@@ -16,6 +16,7 @@ import {
   PlatformVideoSection,
   DataSecuritySection, ServerSecuritySection, PrivacyLocalAISection,
   ThreePillarsSection, ThreeStepsSection, ComparisonSection,
+  HomePagePricingSection,
   FaqSection, FinalCtaSection,
 } from './HomePage3Blocks'
 import {
@@ -446,7 +447,7 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                       "absolute -translate-x-1/2 -translate-y-1/2 w-[50px] h-[50px] rounded-xl flex items-center justify-center select-none transition-all duration-300 z-20 group cursor-default",
                       "border bg-card/90 dark:bg-[#0a0d13]/90 backdrop-blur-md",
                       isHovered
-                        ? "border-primary/80 scale-115 shadow-[0_0_20px_rgba(56,189,248,0.45)]"
+                        ? "border-primary/80 scale-115 shadow-[0_0_20px_hsl(var(--primary)/0.45)]"
                         : "border-foreground/[0.12] hover:border-primary/50 shadow-md"
                     )}
                     style={{ left: node.x, top: node.y }}
@@ -460,7 +461,7 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                     <node.icon
                       className={cn(
                         "h-6 w-6 transition-all duration-300",
-                        isHovered ? "text-primary scale-110 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]" : "text-foreground/75 group-hover:text-primary"
+                        isHovered ? "text-primary scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)]" : "text-foreground/75 group-hover:text-primary"
                       )}
                     />
                   </div>
@@ -473,7 +474,7 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                   "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[76px] h-[76px] rounded-2xl",
                   "flex flex-col items-center justify-center p-2 text-center select-none group z-30 transition-all duration-300",
                   "border border-primary/60 bg-card/95 dark:bg-[#070a0f]/95 backdrop-blur-2xl",
-                  "shadow-[0_0_40px_rgba(56,189,248,0.3)] hover:shadow-[0_0_60px_rgba(56,189,248,0.55)]"
+                  "shadow-[0_0_40px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_60px_hsl(var(--primary)/0.55)]"
                 )}
               >
                 {/* Wewnętrzne narożniki CAD */}
@@ -502,7 +503,7 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                       "absolute -translate-x-1/2 -translate-y-1/2 w-[50px] h-[50px] rounded-xl flex items-center justify-center select-none transition-all duration-300 z-20 group cursor-default",
                       "border bg-card/90 dark:bg-[#0a0d13]/90 backdrop-blur-md",
                       isHovered
-                        ? "border-primary/80 scale-115 shadow-[0_0_20px_rgba(56,189,248,0.45)]"
+                        ? "border-primary/80 scale-115 shadow-[0_0_20px_hsl(var(--primary)/0.45)]"
                         : "border-foreground/[0.12] hover:border-primary/50 shadow-md"
                     )}
                     style={{ left: node.x, top: node.y }}
@@ -516,7 +517,7 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                     <node.icon
                       className={cn(
                         "h-6 w-6 transition-all duration-300",
-                        isHovered ? "text-primary scale-110 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]" : "text-foreground/75 group-hover:text-primary"
+                        isHovered ? "text-primary scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)]" : "text-foreground/75 group-hover:text-primary"
                       )}
                     />
                   </div>
@@ -616,7 +617,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
           {/* Subtelna kwantowa poświata w tle */}
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[540px] h-[540px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.18)_0%,transparent_70%)] blur-3xl opacity-80"
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[540px] h-[540px] rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.18)_0%,transparent_70%)] blur-3xl opacity-80"
           />
 
           {/* PERSPEKTYWICZNA SIATKA PODŁOŻA CAD */}
@@ -1071,7 +1072,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
               'Analiza plików PDF, Excel, kodu i zdjęć',
             ].map((bullet) => (
               <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
-                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
                 <span>{bullet}</span>
               </div>
             ))}
@@ -1544,7 +1545,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               'Zaawansowane generowanie wideo AI',
             ].map((bullet) => (
               <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] text-foreground/80 font-light">
-                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
                 <span>{bullet}</span>
               </div>
             ))}
@@ -1562,7 +1563,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[500px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[500px] rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.13)_0%,transparent_70%)] blur-3xl"
             style={{ opacity: 0.5 + p * 0.4 }}
           />
 
@@ -2108,7 +2109,7 @@ function AssistantOrbitVisual() {
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.12)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.12)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.5 + p * 0.4 }}
       />
 
@@ -2391,7 +2392,7 @@ function DeepResearchVisual() {
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.15)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.15)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.45 + p * 0.45 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2545,7 +2546,7 @@ function AcademyVisual() {
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[470px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[470px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.13)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.45 + p * 0.45 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2753,7 +2754,7 @@ function MemoryVisual() {
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.13)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.13)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.45 + p * 0.45 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2924,7 +2925,7 @@ function WorkspaceVisual() {
     <div ref={containerRef} className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.17)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.17)_0%,transparent_70%)] blur-3xl"
         style={{ opacity: 0.4 + p * 0.5 }}
       />
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3047,7 +3048,7 @@ function ModuleVisualSlot({ num, tag }: { num: string; tag: string }) {
     <div className="relative w-full max-w-[900px] aspect-[900/620]">
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[440px] w-[600px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.10)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[440px] w-[600px] rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.10)_0%,transparent_70%)] blur-3xl"
       />
       <div
         aria-hidden
@@ -3114,7 +3115,7 @@ function ModuleZigzagSection({
           <div className="space-y-2.5 pt-1 font-sans">
             {copy.bullets.map((bullet) => (
               <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
-                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
                 <span>{bullet}</span>
               </div>
             ))}
@@ -3303,10 +3304,10 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
           <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
             <FadeIn>
               <h1 className="font-heading text-[clamp(32px,5.2vw,72px)] font-normal leading-[1.04] tracking-[-0.035em]">
-                <span className="block text-primary drop-shadow-[0_0_40px_rgba(105,179,240,0.4)]">NextByte
+                <span className="block text-primary drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]">NextByte
 
                 </span>
-                <span className="block text-foreground sm:whitespace-nowrap">Twoje AI w&nbsp;jednym miejscu.</span>
+                <span className="block text-foreground sm:whitespace-nowrap">Twoje AI w&nbsp;jednym miejscu</span>
               </h1>
             </FadeIn>
 
@@ -3430,10 +3431,17 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 12. BAZA WIEDZY I FAQ ══════════ */}
+      {/* ══════════ 12. CENNIK I SUBSKRYPCJE (GŁÓWNA STRONA) ══════════ */}
+      <div id="cennik">
+        <LazyBlock minHeight={880}><HomePagePricingSection onNavigate={onNavigate} /></LazyBlock>
+      </div>
+
+      <TechDivider />
+
+      {/* ══════════ 13. BAZA WIEDZY I FAQ ══════════ */}
       <LazyBlock minHeight={950}><FaqSection onNavigate={onNavigate} /></LazyBlock>
 
-      {/* ══════════ 13. FINALNE CTA — KONWERGENCJA ══════════ */}
+      {/* ══════════ 14. FINALNE CTA — KONWERGENCJA ══════════ */}
       <LazyBlock minHeight={720}><FinalCtaSection onNavigate={onNavigate} /></LazyBlock>
     </div>
   )

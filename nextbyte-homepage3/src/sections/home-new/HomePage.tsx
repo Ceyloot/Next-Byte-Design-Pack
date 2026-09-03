@@ -1710,7 +1710,7 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
 
         <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center pt-4">
           <h1 className="font-heading text-[clamp(36px,5.6vw,72px)] tracking-[-2px] leading-[1.05] mb-5 font-light">
-            <span className="text-primary drop-shadow-[0_0_32px_rgba(105,179,240,0.45)] block font-normal">NextByte.</span>
+            <span className="text-primary drop-shadow-[0_0_32px_hsl(var(--primary)/0.45)] block font-normal">NextByte.</span>
             <span className="text-foreground block font-light">Twoje AI w jednym miejscu.</span>
           </h1>
 
@@ -2236,7 +2236,7 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
               style={{ fontSize: 'clamp(2.4rem, 5.2vw, 4rem)' }}
             >
               Wszystkie modele AI. <br />
-              <span className="text-primary font-normal drop-shadow-[0_0_35px_rgba(105,179,240,0.5)]">
+              <span className="text-primary font-normal drop-shadow-[0_0_35px_hsl(var(--primary)/0.5)]">
                 Jeden standard pracy.
               </span>
             </h2>

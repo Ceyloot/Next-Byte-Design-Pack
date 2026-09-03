@@ -64,6 +64,31 @@ export function AnimStyles() {
       @keyframes nb-progress {
         from { width: 0; }
       }
+      /* Suwak zakresu w kreatorze doboru planu. Tło toru ustawia inline
+         gradient (wypełnienie do bieżącej wartości), tutaj zostaje sam
+         uchwyt — przeglądarki wymagają osobnych reguł dla WebKita i Gecko. */
+      .nb-zakres::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px; height: 18px;
+        border-radius: 9999px;
+        background: hsl(var(--background));
+        border: 2px solid hsl(var(--primary));
+        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18);
+        cursor: pointer;
+        transition: transform .15s ease;
+      }
+      .nb-zakres::-webkit-slider-thumb:hover { transform: scale(1.12); }
+      .nb-zakres::-moz-range-thumb {
+        width: 18px; height: 18px;
+        border-radius: 9999px;
+        background: hsl(var(--background));
+        border: 2px solid hsl(var(--primary));
+        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18);
+        cursor: pointer;
+      }
+      .nb-zakres:disabled::-webkit-slider-thumb { border-color: hsl(var(--foreground) / 0.3); box-shadow: none; cursor: default; }
+      .nb-zakres:disabled::-moz-range-thumb     { border-color: hsl(var(--foreground) / 0.3); box-shadow: none; cursor: default; }
       .nb-float     { animation: nb-float     5s ease-in-out infinite; }
       .nb-shimmer   { animation: nb-shimmer   2.2s linear infinite; }
       .nb-pulse-ring{ animation: nb-pulse-ring 1.9s ease-out infinite; }

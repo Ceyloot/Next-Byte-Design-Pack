@@ -2,13 +2,18 @@ import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import {
   CircleCheck, X, Check, ArrowRight, Play, Pause,
+  Sparkles, Bot, Zap, Shield, ImagePlus, Search, Clock, Building2,
+  HelpCircle, CheckCircle2, ChevronDown, Layers, FileText, Lock,
+  Database, LayoutGrid, MessagesSquare, Repeat, GraduationCap,
+  Upload, Wand2, Globe, ShieldCheck, ChevronRight,
 } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton, FadeIn, Stars,
+  akcentTlo, TechCornerMarks, TechDivider,
 } from './shared'
 import { SecRule, NextByteMarkIcon, OpenAIIcon, AnthropicIcon, GeminiIcon, XaiIcon } from './HomePage'
 import { ElevenLabsIcon, KlingIcon } from './brand-icons'
-import { FAQ } from './data'
+import { FAQ, PLANY, przelicznikByte, type Plan } from './data'
 import type { HomePage as HomePageId } from './types'
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -773,7 +778,7 @@ export function DataSecuritySection({ onNavigate = () => { } }: { onNavigate?: (
                 'AI nigdy nie uczy się z Twoich danych',
               ].map((bullet) => (
                 <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
-                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
                   <span>{bullet}</span>
                 </div>
               ))}
@@ -1315,7 +1320,7 @@ export function ServerSecuritySection({ onNavigate = () => { } }: { onNavigate?:
                 'Eksport i kasowanie jednym klikiem',
               ].map((bullet) => (
                 <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
-                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
                   <span>{bullet}</span>
                 </div>
               ))}
@@ -1619,7 +1624,7 @@ export function ComparisonSection({ onNavigate = () => { } }: { onNavigate?: (p:
                 'Wszystko w jednym panelu, z jedną fakturą VAT w PLN',
               ].map((bullet) => (
                 <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
-                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
                   <span>{bullet}</span>
                 </div>
               ))}
@@ -1634,6 +1639,526 @@ export function ComparisonSection({ onNavigate = () => { } }: { onNavigate?: (p:
 
         </div>
       </FadeIn>
+    </Section>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CENNIK I SUBSKRYPCJE — STRONA GŁÓWNA 3 (FROSTED GLASS / SMOKED OBSIDIAN)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+type PricingOkres = 'miesiecznie' | 'rocznie'
+const RABAT_ROCZNY = 0.17
+const cenaZaOkres = (miesiecznie: number, okres: PricingOkres) =>
+  okres === 'rocznie' ? Math.round(miesiecznie * (1 - RABAT_ROCZNY)) : miesiecznie
+
+function PricingAnimNum({ value, decimals = 0 }: { value: number; decimals?: number }) {
+  const [pokaz, setPokaz] = useState(value)
+  const poprzedni = useRef(value)
+  const mnoznik = 10 ** decimals
+
+  useEffect(() => {
+    const start = poprzedni.current
+    const koniec = value
+    poprzedni.current = koniec
+    if (start === koniec) return
+
+    const czas = 360
+    let raf = 0
+    const t0 = performance.now()
+
+    const krok = (t: number) => {
+      const p = Math.min((t - t0) / czas, 1)
+      const e = 1 - Math.pow(1 - p, 3)
+      setPokaz(Math.round((start + (koniec - start) * e) * mnoznik) / mnoznik)
+      if (p < 1) raf = requestAnimationFrame(krok)
+    }
+    raf = requestAnimationFrame(krok)
+
+    const domkniecie = window.setTimeout(() => {
+      cancelAnimationFrame(raf)
+      setPokaz(koniec)
+    }, czas + 40)
+
+    return () => { cancelAnimationFrame(raf); clearTimeout(domkniecie) }
+  }, [value, mnoznik])
+
+  return (
+    <span className="tabular-nums">
+      {pokaz.toLocaleString('pl-PL', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
+    </span>
+  )
+}
+
+/** Dyskretny, nowoczesny przełącznik roczny w dynamicznym HSL */
+function PricingMinimalSwitch({ okres, onChange }: { okres: PricingOkres; onChange: (o: PricingOkres) => void }) {
+  const isYearly = okres === 'rocznie'
+  return (
+    <div className="inline-flex items-center gap-3 select-none">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isYearly}
+        onClick={() => onChange(isYearly ? 'miesiecznie' : 'rocznie')}
+        className={cn(
+          'group relative h-6 w-11 rounded-full border p-0.5 transition-all duration-300 cursor-pointer shadow-inner',
+          isYearly
+            ? 'border-primary/50 bg-primary/20 shadow-[0_0_12px_hsl(var(--primary)/0.25)]'
+            : 'border-foreground/[0.14] bg-[hsl(var(--card)/0.7)] hover:border-primary/30',
+        )}
+        aria-label="Przełącz rozliczenie roczne"
+      >
+        <span
+          className={cn(
+            'block h-4.5 w-4.5 rounded-full transition-transform duration-300 shadow-sm',
+            isYearly
+              ? 'translate-x-5 bg-primary shadow-[0_0_8px_hsl(var(--primary))]'
+              : 'translate-x-0 bg-muted-foreground',
+          )}
+        />
+      </button>
+
+      <div
+        onClick={() => onChange(isYearly ? 'miesiecznie' : 'rocznie')}
+        className="flex items-center gap-2 cursor-pointer"
+      >
+        <span className={cn('font-heading text-sm transition-colors', isYearly ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground')}>
+          Rozliczane rocznie
+        </span>
+        <span
+          className={cn(
+            'rounded-full px-2 py-0.5 font-mono text-[10.5px] font-bold border transition-colors',
+            isYearly
+              ? 'border-primary/40 bg-primary/20 text-primary shadow-[0_0_10px_hsl(var(--primary)/0.25)]'
+              : 'border-foreground/15 bg-foreground/[0.05] text-muted-foreground',
+          )}
+        >
+          do −17%
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/** Interaktywny selektor progów Byte w czystej szklanej estetyce */
+/** Interaktywny selektor progów Byte w HSL z etykietami pod torem */
+function PricingByteSlider({
+  progi, indeks, onChange, kolor,
+}: {
+  progi: NonNullable<Plan['progi']>
+  indeks: number
+  onChange: (i: number) => void
+  kolor: string
+}) {
+  const pct = (indeks / (progi.length - 1)) * 100
+
+  return (
+    <div className="space-y-3">
+      {/* Nagłówek: etykieta cicha, liczba w kolorze planu */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Byte miesięcznie:</span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-sm font-bold tabular-nums" style={{ color: kolor }}>
+            <PricingAnimNum value={progi[indeks].byte} />
+          </span>
+          <span className="text-xs font-semibold" style={{ color: kolor }}>⟠</span>
+        </span>
+      </div>
+
+      {/* Tor suwaka */}
+      <div className="relative py-2">
+        <div className="relative h-1.5 w-full rounded-full bg-foreground/[0.08]">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-300"
+            style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${akcentTlo(kolor, 35)}, ${akcentTlo(kolor, 65)})` }}
+          />
+        </div>
+
+        {/* Punkty kroków */}
+        <div className="absolute inset-x-0 top-1/2">
+          {progi.map((p, i) => {
+            const aktywny = i <= indeks
+            const biezacy = i === indeks
+            const left = (i / (progi.length - 1)) * 100
+            return (
+              <button
+                key={p.byte}
+                type="button"
+                onClick={() => onChange(i)}
+                aria-label={`${p.byte} Byte`}
+                className={cn(
+                  'absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 cursor-pointer',
+                  biezacy ? 'h-[18px] w-[18px]' : 'h-[13px] w-[13px] hover:scale-125',
+                )}
+                style={{
+                  left: `${left}%`,
+                  background: biezacy ? kolor : aktywny ? akcentTlo(kolor, 55) : 'hsl(var(--foreground)/0.14)',
+                  border: '2px solid hsl(var(--card))',
+                  boxShadow: biezacy ? `0 0 0 3px ${akcentTlo(kolor, 20)}` : 'none',
+                }}
+              />
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Etykiety numeryczne pod torem */}
+      <div className="relative h-4">
+        {progi.map((p, i) => {
+          const left = (i / (progi.length - 1)) * 100
+          return (
+            <button
+              key={p.byte}
+              type="button"
+              onClick={() => onChange(i)}
+              className={cn(
+                'absolute top-0 text-[11px] tabular-nums transition-colors cursor-pointer select-none',
+                i === 0 ? 'left-0' : i === progi.length - 1 ? 'right-0' : '-translate-x-1/2',
+                i === indeks ? 'font-semibold' : 'text-muted-foreground/60 hover:text-muted-foreground',
+              )}
+              style={{ left: i === 0 || i === progi.length - 1 ? undefined : `${left}%`, color: i === indeks ? kolor : undefined }}
+            >
+              {p.byte.toLocaleString('pl-PL')}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/** Telemetria wydajności w HSL */
+function PricingUsagePanel({ byte, unlimited, kolor }: { byte: number | null; unlimited?: Plan['unlimited']; kolor: string }) {
+  const kalkulacja = byte !== null ? przelicznikByte(byte) : []
+
+  return (
+    <div className="space-y-1.5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] p-3">
+      {byte !== null && (
+        <>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
+            To wystarczy na:
+          </p>
+          {kalkulacja.map((r) => (
+            <div key={r.label} className="flex items-center gap-2">
+              <r.icon className="h-3.5 w-3.5 shrink-0" style={{ color: akcentTlo(kolor, 70) }} />
+              <span className="text-xs text-muted-foreground">
+                ≈ <strong className="font-bold tabular-nums text-foreground"><PricingAnimNum value={r.value} /></strong> {r.label}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
+
+      {unlimited && unlimited.length > 0 && (
+        <div className={cn('space-y-1.5', byte !== null && 'mt-2 border-t border-foreground/[0.06] pt-2')}>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
+            Unlimited:
+          </p>
+          {unlimited.map((u) => (
+            <div key={u.label} className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <u.icon className="h-3.5 w-3.5 shrink-0" style={{ color: akcentTlo(kolor, 70) }} />
+                <span className="text-xs text-muted-foreground">{u.label}</span>
+              </div>
+              <span
+                className="rounded-full border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                style={{ color: kolor, background: akcentTlo(kolor, 15), borderColor: akcentTlo(kolor, 25) }}
+              >
+                Unlimited
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Karta Planu — zoptymalizowana: rounded-2xl, CTA pod ceną, spójna z NextByte */
+function PricingCard({
+  plan, okres, onNavigate,
+}: {
+  plan: Plan
+  okres: PricingOkres
+  onNavigate: (p: HomePageId) => void
+}) {
+  const [prog, setProg] = useState(0)
+  const [rozwiniete, setRozwiniete] = useState(false)
+  const konfiguracja = plan.progi?.[prog] ?? null
+  const cenaBazowa = konfiguracja ? konfiguracja.miesiecznie : plan.cena ?? 0
+  const cena = cenaZaOkres(cenaBazowa, okres)
+  const darmowy = plan.cena === 0
+  const wyrozniony = plan.polecany
+  const pulaByte = konfiguracja?.byte ?? plan.stalaPula
+
+  const WIDOCZNE = 5
+  const ukryte = plan.cechy.length - WIDOCZNE
+
+  return (
+    <div
+      className={cn(
+        'group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border p-6 sm:p-7 transition-all duration-300 backdrop-blur-xl',
+        wyrozniony
+          ? 'border-primary/45 bg-[hsl(var(--card)/0.94)] shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.3)]'
+          : 'border-foreground/[0.09] bg-[hsl(var(--card)/0.88)] hover:border-foreground/[0.2] hover:bg-[hsl(var(--card)/0.96)] shadow-lg',
+      )}
+    >
+      {/* Specularna krawędź świetlna u góry karty */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+      />
+
+      {/* Subtelna poświata akcentu u góry */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-36 opacity-70"
+        style={{ background: `radial-gradient(ellipse 90% 100% at 50% 0%, ${akcentTlo(plan.kolor, 15)}, transparent 75%)` }}
+      />
+
+      <div>
+        {/* Etykieta planu & odznaka */}
+        <div className="flex items-center justify-between min-h-[24px] mb-2">
+          <span className="font-heading text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {plan.nazwa} Plan
+          </span>
+
+          {wyrozniony && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+              style={{ color: plan.kolor, background: akcentTlo(plan.kolor, 15), borderColor: akcentTlo(plan.kolor, 30) }}
+            >
+              ★ Najlepsza oferta
+            </span>
+          )}
+        </div>
+
+        {/* Tytuł & opis */}
+        <div className="mb-3">
+          <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            {plan.nazwa}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{plan.opis}</p>
+        </div>
+
+        {/* Cena */}
+        <div className="mb-4">
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="font-heading text-3xl sm:text-4xl font-bold text-foreground">
+              {darmowy ? (
+                'Free'
+              ) : (
+                <>
+                  <PricingAnimNum value={cena} decimals={cena % 1 !== 0 ? 2 : 0} />
+                  <span className="text-base font-normal text-muted-foreground ml-1">zł/m</span>
+                </>
+              )}
+            </span>
+          </div>
+
+          <div className="mt-1 min-h-[18px]">
+            {!darmowy && okres === 'rocznie' ? (
+              <span className="text-[11.5px] text-emerald-400 font-medium">
+                faktura roczna: <PricingAnimNum value={cena * 12} /> PLN
+              </span>
+            ) : darmowy ? (
+              <span className="text-[11.5px] text-muted-foreground font-light">bez karty kredytowej</span>
+            ) : (
+              <span className="text-[11.5px] text-muted-foreground font-light">rozliczane miesięcznie</span>
+            )}
+          </div>
+        </div>
+
+        {/* ══════════ PRZYCISK CTA ZARAZ POD CENĄ ══════════ */}
+        <div className="mb-5">
+          {wyrozniony ? (
+            <GlowButton
+              onClick={() => onNavigate('cennik')}
+              className="w-full justify-center"
+              icon={false}
+            >
+              {plan.cta || 'Wybierz plan'}
+            </GlowButton>
+          ) : (
+            <GhostButton
+              onClick={() => onNavigate('cennik')}
+              className="w-full justify-center"
+              icon={undefined}
+            >
+              {plan.cta || 'Wybierz plan'}
+            </GhostButton>
+          )}
+        </div>
+
+        {/* Suwak progów Byte jeśli plan ma warianty */}
+        <div className="mb-5 space-y-3">
+          {plan.progi ? (
+            <PricingByteSlider
+              progi={plan.progi}
+              indeks={prog}
+              onChange={setProg}
+              kolor={plan.kolor}
+            />
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">Byte miesięcznie:</span>
+                {pulaByte !== null && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold tabular-nums" style={{ color: plan.kolor }}>
+                      <PricingAnimNum value={pulaByte} />
+                    </span>
+                    <span className="text-xs font-semibold" style={{ color: plan.kolor }}>⟠</span>
+                  </span>
+                )}
+              </div>
+              {plan.notka && (
+                <p className="rounded-lg border border-foreground/[0.08] bg-foreground/[0.03] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                  {plan.notkaTytul && <strong className="block text-foreground/70">{plan.notkaTytul}</strong>}
+                  {plan.notka}
+                </p>
+              )}
+            </>
+          )}
+
+          <PricingUsagePanel
+            byte={pulaByte ?? null}
+            unlimited={plan.unlimited}
+            kolor={plan.kolor}
+          />
+        </div>
+
+        {/* Lista cech z okrągłymi minimalistycznymi checkmarkami */}
+        <div className="space-y-2.5 pt-2 border-t border-foreground/[0.08]">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            {plan.cechyNaglowek || 'W pakiecie:'}
+          </p>
+
+          {(rozwiniete ? plan.cechy : plan.cechy.slice(0, WIDOCZNE)).map((c, i) => (
+            <div key={i} className="flex items-start gap-3 text-[13px] text-zinc-300 font-light leading-snug">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white mt-0.5">
+                <Check className="h-3 w-3 stroke-[2.5]" />
+              </span>
+              <span className="flex-1">{c.t}</span>
+              {c.badge && (
+                <span className="shrink-0 rounded px-1.5 py-0.2 font-mono text-[9px] font-bold border border-white/[0.12] bg-white/[0.04] text-zinc-300">
+                  {c.badge.t}
+                </span>
+              )}
+            </div>
+          ))}
+
+          {ukryte > 0 && (
+            <button
+              type="button"
+              onClick={() => setRozwiniete(!rozwiniete)}
+              className="pt-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <span>{rozwiniete ? 'Zwiń listę' : `+ Więcej (${ukryte})`}</span>
+              <ChevronDown className={cn('h-3 w-3 transition-transform', rozwiniete && 'rotate-180')} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function HomePagePricingSection({ onNavigate = () => { } }: { onNavigate?: (p: HomePageId) => void }) {
+  const [okres, setOkres] = useState<PricingOkres>('miesiecznie')
+
+  return (
+    <Section className="relative z-10 py-16 sm:py-24">
+      <div className="relative z-10 mx-auto max-w-7xl">
+        {/* Nagłówek i opis */}
+        <FadeIn>
+          <div className="mx-auto max-w-3xl text-center mb-12">
+            <div className="flex justify-center">
+              <SecRule label="CENNIK & SUBSKRYPCJE // PRZEJRZYSTE ZASADY" />
+            </div>
+            <h2 className="font-heading text-[clamp(30px,4.5vw,52px)] font-light leading-[1.08] tracking-[-2px] text-white">
+              Inwestuj w efektywność, <br className="hidden sm:inline" />
+              <span className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
+                nie w chaos subskrypcji
+              </span>
+            </h2>
+            <p className="mt-4 font-sans text-[15px] font-light leading-relaxed text-zinc-400 max-w-xl mx-auto">
+              Zacznij za 0 zł bez podawania karty. Jeden abonament w PLN, pełna faktura VAT 23%, a niewykorzystane Byte nie przepadają.
+            </p>
+
+            {/* Minimalistyczny przełącznik (Billed Yearly) w centrum */}
+            <div className="mt-8 flex justify-center">
+              <PricingMinimalSwitch okres={okres} onChange={setOkres} />
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* SIATKA 4 KAFELKÓW */}
+        <FadeIn delay={100}>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
+            {PLANY.map((plan) => (
+              <PricingCard
+                key={plan.id}
+                plan={plan}
+                okres={okres}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        </FadeIn>
+
+        {/* Dolny pasek: B2B Enterprise & Trust Guarantees w spójnym szklanym stylu */}
+        <FadeIn delay={160}>
+          <div className="mt-14 rounded-[28px] border border-white/[0.1] bg-[#0c0d12]/60 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4 text-left">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.04] text-white shadow-inner">
+                  <Building2 className="h-6 w-6 text-zinc-200" />
+                </div>
+                <div>
+                  <h4 className="font-heading text-base font-bold text-white">
+                    Potrzebujesz rozwiązania dla zespołu lub całej firmy?
+                  </h4>
+                  <p className="mt-0.5 font-sans text-[13px] font-light text-zinc-400">
+                    Wspólna pula Byte, dedykowane stanowiska, faktury zbiorcze, centralne zarządzanie uprawnieniami i SLA.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('b2b')}
+                  className="group inline-flex items-center gap-2 rounded-full border border-white/[0.15] bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/[0.25] px-5 py-2.5 text-xs font-heading font-semibold text-white transition-all duration-200 cursor-pointer shadow-sm"
+                >
+                  <span>Zobacz ofertę dla firm (B2B)</span>
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 text-zinc-400 group-hover:text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* 4 Gwarancje */}
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-white/[0.06] pt-5 font-mono text-[11px] text-zinc-400">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span className="text-zinc-300">Faktura VAT 23% w PLN</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span className="text-zinc-300">Serwery wyłącznie w UE</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span className="text-zinc-300">0% trenowania na danych</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span className="text-zinc-300">Rezygnacja 1 kliknięciem</span>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
     </Section>
   )
 }
@@ -1707,7 +2232,7 @@ export function PlatformVideoSection({ onNavigate = () => { } }: { onNavigate?: 
                   isPlaying ? 'opacity-0' : 'opacity-100 bg-black/40 backdrop-blur-[2px]',
                 )}
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-primary/40 bg-background/90 text-primary shadow-[0_0_30px_rgba(56,189,248,0.35)]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-primary/40 bg-background/90 text-primary shadow-[0_0_30px_hsl(var(--primary)/0.35)]">
                   <svg viewBox="0 0 24 24" className="h-7 w-7 text-primary pl-0.5" fill="currentColor">
                     <polygon points="6,4 20,12 6,20" />
                   </svg>
@@ -1773,7 +2298,7 @@ export function PlatformVideoSection({ onNavigate = () => { } }: { onNavigate?: 
                 'Demonstracja realnych scenariuszy i automatyzacji w firmie',
               ].map((bullet) => (
                 <div key={bullet} className="flex items-center gap-2.5 text-[13.5px] font-light text-foreground/80">
-                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                  <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
                   <span>{bullet}</span>
                 </div>
               ))}

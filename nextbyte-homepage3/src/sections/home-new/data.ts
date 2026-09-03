@@ -2,8 +2,11 @@ import {
   Brain, Camera, NotebookPen, Workflow, Cpu, Zap, Users, MessageSquare,
   Shield, Sparkles, Layers, Clock, Building2, Lock, Gauge, GitBranch,
   Rocket, BadgeCheck, Headphones, KeyRound, ServerCog, FileStack,
-  Calendar, Mic, Bot, Repeat, CheckCircle2, Radar,
+  Calendar, Mic, Bot, Repeat, CheckCircle2, Radar, ImagePlus, FileSearch,
+  MessagesSquare, ZoomIn, LayoutGrid, Database,
+  Coins, ShoppingCart, GraduationCap, Globe, Search, Upload, Wand2,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { AKCENT } from './shared'
 
 /* ══════════════ MODUŁY PLATFORMY (AUTENTYCZNE I PRZEKONYWUJĄCE) ══════════════ */
@@ -201,20 +204,37 @@ export const POROWNANIE = {
   ],
 } as const
 
-/* ══════════════ CENNIK I PLANY ══════════════ */
+/* ══════════════ CENNIK I PLANY — treść i ceny 1:1 z cennika produkcyjnego ══════════════ */
+
+/** Ton plakietki przy cesze planu. Kolory idą za produkcją: niebieski = pojemność/limit,
+ *  zielony = przywilej techniczny, różowy = limit ekskluzywny, fiolet = tryb AI. */
+export type TonPlakietki = 'blue' | 'green' | 'pink' | 'violet'
+
+export type Cecha = {
+  t: string
+  icon: LucideIcon
+  badge?: { t: string; ton: TonPlakietki }
+}
+
 export type Plan = {
   id: string
   nazwa: string
   opis: string
   kolor: string
   polecany: boolean
-  odznaka: string | null
-  rabat: string | null
-  progi: { byte: number; miesiecznie: number; rocznie: number; kurs: string }[] | null
-  wykorzystaniePct: number
-  unlimited: { label: string; dostep: boolean }[]
-  modele: { tytul: string; podtytul: string; pozycje: { label: string; tag: string }[] } | null
-  cechy: string[]
+  /** Stała cena miesięczna — tylko Bezpłatny (0) i Lite (27,90) jej używają. */
+  cena: number | null
+  /** Progi puli Byte — tylko Premium i Ultimate mają suwak wyboru progu. */
+  progi: { byte: number; miesiecznie: number }[] | null
+  /** Stała pula Byte dla planu bez progów (Lite = 140). */
+  stalaPula: number | null
+  notkaTytul: string | null
+  notka: string | null
+  /** Podpis pod ceną — tylko plan bezpłatny ma własny (reszta liczy się z okresu). */
+  podCena: string | null
+  unlimited: { label: string; icon: LucideIcon }[]
+  cechyNaglowek: string
+  cechy: Cecha[]
   cta: string
 }
 
@@ -222,105 +242,192 @@ export const PLANY: Plan[] = [
   {
     id: 'free',
     nazwa: 'Bezpłatny',
-    opis: 'Sprawdź platformę bez żadnego ryzyka',
+    opis: 'Start z platformą NextByte',
     kolor: AKCENT.neutral,
     polecany: false,
-    odznaka: null,
-    rabat: null,
+    cena: 0,
     progi: null,
-    wykorzystaniePct: 0,
+    stalaPula: null,
+    notkaTytul: 'Bez miesięcznej puli',
+    notka: 'Operacje AI opłacasz z doładowanych paczek Byte — płacisz tylko za to, co zużyjesz.',
+    podCena: 'Płacisz tylko za zużyte Byte z paczek',
     unlimited: [
-      { label: 'Nano Banana (obrazy)', dostep: false },
-      { label: 'Kling HD (wideo)', dostep: false },
-      { label: 'Chat AI — wszystkie modele', dostep: false },
+      { label: 'Chat AI', icon: MessagesSquare },
+      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
+      { label: 'Baza Danych', icon: Database },
+      { label: 'Szyfrowanie', icon: Lock },
     ],
-    modele: null,
+    cechyNaglowek: 'W planie Bezpłatnym:',
     cechy: [
-      'Dostęp do wszystkich modułów (Chat, Studio, Notatki, Zadania)',
-      'Wszystkie modele komercyjne — płatne elastycznie z paczek Byte',
-      'Płacisz wyłącznie za realne zużycie — bez stałej opłaty miesięcznej',
-      'Modele lokalne (Ollama / LM Studio) całkowicie za darmo i offline',
-      'Kalendarz, Zadania i Notatki bez żadnych limitów',
-      'Bezpieczne szyfrowanie danych End-to-End (E2EE)',
+      { t: 'Płacisz tylko za zużycie', icon: Coins },
+      { t: 'Chat AI', icon: Sparkles },
+      { t: 'Studio Zdjęć', icon: ImagePlus },
+      { t: 'Personalny Asystent', icon: Bot },
+      { t: 'PromptEx', icon: Wand2 },
+      { t: 'Kalendarz', icon: Calendar, badge: { t: 'Unlimited', ton: 'blue' } },
+      { t: 'Zadania', icon: CheckCircle2, badge: { t: 'Unlimited', ton: 'blue' } },
+      { t: 'Notatki', icon: NotebookPen, badge: { t: 'Unlimited', ton: 'blue' } },
+      { t: 'Baza Danych', icon: Database, badge: { t: 'Unlimited', ton: 'blue' } },
+      { t: 'Szyfrowanie', icon: Lock, badge: { t: 'Unlimited', ton: 'blue' } },
+      { t: 'Listy Zakupowe', icon: ShoppingCart },
+      { t: 'Pętle AI', icon: Repeat, badge: { t: '1 pętla', ton: 'pink' } },
+      { t: 'Przesyłanie plików do 20 MB', icon: Upload },
+      { t: 'Kontekst plików projektu w AI Chat', icon: Brain, badge: { t: '50k tok', ton: 'green' } },
     ],
     cta: 'Zacznij za darmo',
   },
   {
-    id: 'premium',
-    nazwa: 'Premium',
-    opis: 'Dla profesjonalistów i twórców',
+    id: 'lite',
+    nazwa: 'Lite',
+    opis: 'Wejście w płatny plan',
     kolor: AKCENT.chat,
     polecany: false,
-    odznaka: null,
-    rabat: '20% taniej',
-    progi: [
-      { byte: 495, miesiecznie: 99, rocznie: 82, kurs: '5,00 ⟠ / zł' },
-      { byte: 950, miesiecznie: 179, rocznie: 149, kurs: '5,30 ⟠ / zł' },
-      { byte: 1500, miesiecznie: 269, rocznie: 225, kurs: '5,58 ⟠ / zł' },
-    ],
-    wykorzystaniePct: 68,
+    cena: 27.9,
+    progi: null,
+    stalaPula: 140,
+    notkaTytul: null,
+    notka: 'Stała pula — bez progów do wyboru.',
+    podCena: null,
     unlimited: [
-      { label: 'Nano Banana (obrazy)', dostep: true },
-      { label: 'Kling HD (wideo, 7 dni)', dostep: true },
-      { label: 'Chat AI — wszystkie modele', dostep: true },
+      { label: 'Chat AI', icon: MessagesSquare },
+      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
+      { label: 'Baza Danych', icon: Database },
+      { label: 'Szyfrowanie', icon: Lock },
     ],
-    modele: {
-      tytul: 'Dostęp do modeli Premium',
-      podtytul: '7 modeli bez limitu i darmowych generacji',
-      pozycje: [
-        { label: 'Nano Banana 2', tag: '7-dniowy unlimited' },
-        { label: 'Kling HD', tag: '7-dniowy unlimited' },
-      ],
-    },
+    cechyNaglowek: 'W planie Lite:',
     cechy: [
-      'Miesięczna pula Byte z możliwością przenoszenia niewykorzystanych jednostek',
-      'Pełny dostęp do Chat AI, Studia Zdjęć i Personalnego Asystenta',
-      'Lokalny AI z gwarancją 100% prywatności pod poufne dane',
-      'Tryb Ultra AI & Deep Research do wieloetapowych analiz biznesowych',
-      'Do 3 równoległych generacji obrazów jednocześnie',
-      'Priorytetowe wsparcie mailowe z czasem odpowiedzi do 24h',
+      { t: '140 Byte co miesiąc', icon: Coins, badge: { t: '140 ⟠', ton: 'blue' } },
+      { t: 'Wszystkie funkcje Premium', icon: Sparkles },
+      { t: 'Wszystkie modele AI', icon: Gauge },
+      { t: 'Miesięczne odnowienie', icon: Repeat },
+      { t: 'Doładowania paczkami', icon: ShoppingCart },
+      { t: 'Akademia Premium', icon: GraduationCap },
+      { t: 'Pamięć AI', icon: Brain },
+      { t: 'Mniejsza pula niż w Premium', icon: Layers },
+    ],
+    cta: 'Wybierz Lite',
+  },
+  {
+    id: 'premium',
+    nazwa: 'Premium',
+    opis: 'Pełny dostęp do funkcji AI',
+    kolor: AKCENT.chat,
+    polecany: false,
+    cena: null,
+    progi: [
+      { byte: 495, miesiecznie: 99 },
+      { byte: 950, miesiecznie: 179 },
+      { byte: 1500, miesiecznie: 269 },
+    ],
+    stalaPula: null,
+    notkaTytul: null,
+    notka: null,
+    podCena: null,
+    unlimited: [
+      { label: 'Chat AI', icon: MessagesSquare },
+      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
+      { label: 'Baza Danych', icon: Database },
+      { label: 'Szyfrowanie', icon: Lock },
+    ],
+    cechyNaglowek: 'W planie Premium:',
+    cechy: [
+      { t: 'Pełny dostęp do Chat AI', icon: Sparkles },
+      { t: 'Personalny Asystent', icon: Bot },
+      { t: 'Lokalny AI', icon: Database, badge: { t: 'Private', ton: 'green' } },
+      { t: 'Kalendarz AI i Zadania', icon: Calendar },
+      { t: 'Akademia Premium', icon: GraduationCap },
+      { t: 'Studio Zdjęć AI', icon: ImagePlus },
+      { t: 'Pamięć AI', icon: Brain },
+      { t: 'Miesięczne odnowienie do limitu', icon: Repeat },
+      { t: 'Wsparcie Email', icon: Headphones },
+      { t: 'Tryb Ultra AI', icon: Globe, badge: { t: 'Ultra', ton: 'violet' } },
+      { t: 'Deep Research', icon: Search, badge: { t: 'Pro', ton: 'blue' } },
+      { t: 'Równoległe generacje', icon: Layers, badge: { t: '3x', ton: 'green' } },
+      { t: 'Pętle AI', icon: Repeat, badge: { t: '3 pętle', ton: 'pink' } },
+      { t: 'Przesyłanie plików do 47 MB', icon: Upload },
+      { t: 'Kontekst plików projektu w AI Chat', icon: Brain, badge: { t: '100k tok', ton: 'green' } },
     ],
     cta: 'Wybierz Premium',
   },
   {
     id: 'ultimate',
     nazwa: 'Ultimate',
-    opis: 'Dla wymagających firm i agencji',
+    opis: 'Maksymalne możliwości AI',
     kolor: AKCENT.chat,
     polecany: true,
-    odznaka: 'Najlepsza wartość',
-    rabat: '23% taniej',
+    cena: null,
     progi: [
-      { byte: 2450, miesiecznie: 349, rocznie: 290, kurs: '7,02 ⟠ / zł' },
-      { byte: 4150, miesiecznie: 589, rocznie: 490, kurs: '7,05 ⟠ / zł' },
-      { byte: 6070, miesiecznie: 849, rocznie: 710, kurs: '7,15 ⟠ / zł' },
+      { byte: 2450, miesiecznie: 349 },
+      { byte: 4150, miesiecznie: 589 },
+      { byte: 6070, miesiecznie: 849 },
     ],
-    wykorzystaniePct: 93,
+    stalaPula: null,
+    notkaTytul: null,
+    notka: null,
+    podCena: null,
     unlimited: [
-      { label: 'Nano Banana Pro (obrazy)', dostep: true },
-      { label: 'Kling HD (wideo, 7 dni)', dostep: true },
-      { label: 'Chat AI — wszystkie modele', dostep: true },
-      { label: 'Enhancer 2x (jakość HD)', dostep: true },
+      { label: 'Chat AI', icon: MessagesSquare },
+      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
+      { label: 'Baza Danych', icon: Database },
+      { label: 'Szyfrowanie', icon: Lock },
+      { label: 'Enhancer 2x', icon: ZoomIn },
     ],
-    modele: {
-      tytul: 'Dostęp do wszystkich modeli',
-      podtytul: 'Pełna linia modeli, zero limitów',
-      pozycje: [
-        { label: 'Nano Banana Pro', tag: '7-dniowy unlimited' },
-        { label: 'Kling HD 4K', tag: 'Pełny dostęp' },
-      ],
-    },
+    cechyNaglowek: 'Wszystko z Premium, plus:',
     cechy: [
-      'Najkorzystniejszy przelicznik: aż do 7,15 Byte za każdą złotówkę',
-      'Priorytetowa kolejka wykonywania operacji (FAST queue)',
-      'Do 5 równoległych generacji grafik i materiałów wideo',
-      'Ekskluzywny, wczesny dostęp do premierowych modeli AI',
-      'Przesyłanie dużych plików do 100 MB i kontekst do 200k tokenów',
-      'Bezpośrednie wsparcie na dedykowanym kanale w czasie rzeczywistym',
+      { t: 'Priorytetowa kolejka', icon: Clock, badge: { t: 'Fast', ton: 'green' } },
+      { t: 'Równoległe generacje', icon: Layers, badge: { t: '5x', ton: 'green' } },
+      { t: 'Wczesny dostęp', icon: Rocket, badge: { t: 'Wczesny dostęp', ton: 'blue' } },
+      { t: 'Ekskluzywne modele AI', icon: Globe, badge: { t: 'Ekskluzywne', ton: 'pink' } },
+      { t: 'Priorytetowe wsparcie', icon: Zap, badge: { t: 'Priorytet', ton: 'pink' } },
+      { t: 'Pętle AI — MAX', icon: Repeat, badge: { t: '5 pętli', ton: 'pink' } },
+      { t: 'Przesyłanie plików do 100 MB', icon: Upload, badge: { t: '100 MB', ton: 'blue' } },
+      { t: 'Kontekst plików projektu w AI Chat — MAX', icon: Brain, badge: { t: '200k tok', ton: 'green' } },
     ],
     cta: 'Wybierz Ultimate',
   },
 ]
+
+/** Tabela "Co dostajesz w każdym planie" — kolumny Free / Premium / Ultimate. */
+export const PLAN_MACIERZ: { f: string; v: (boolean | string)[] }[] = [
+  { f: 'Chat AI (wszystkie modele)', v: ['Limit dzienny', true, true] },
+  { f: 'Notatki i Kalendarz', v: [true, true, true] },
+  { f: 'Personalny Asystent (executor)', v: [false, true, true] },
+  { f: 'Studio Zdjęć AI', v: [false, true, true] },
+  { f: 'Pamięć długoterminowa AI', v: [false, true, true] },
+  { f: 'Akademia Premium (kursy)', v: [false, true, true] },
+  { f: 'Deep Research (raporty AI)', v: [false, true, true] },
+  { f: 'Tryb Ultra (Gemini 2.5 Pro)', v: [false, true, true] },
+  { f: 'Lokalny AI (LM Studio / Ollama)', v: [false, true, true] },
+  { f: 'Równoległe generacje obrazów', v: [false, '3x', '5x'] },
+  { f: 'Priorytetowa kolejka zapytań', v: [false, false, true] },
+  { f: 'Ekskluzywne modele AI', v: [false, false, true] },
+  { f: 'Wczesny dostęp do nowości', v: [false, false, true] },
+  { f: 'Wsparcie', v: ['Społeczność', 'Email · 48h', 'Czat · 24h'] },
+]
+
+/** Sekcja "Jedna waluta. Pełna kontrola." — cztery kafle z narożnikami. */
+export const BYTE_KARTY = [
+  {
+    tag: '// 01 / UNIT',
+    t: 'Czym jest Byte?',
+    d: 'Jednostka rozliczeniowa NextByte. Każda akcja AI — wiadomość, generacja, raport — zużywa liczbę Byte zgodnie z cennikiem operacji.',
+  },
+  {
+    tag: '// 02 / REFRESH',
+    t: 'Miesięczne odnowienie',
+    d: 'Co miesiąc pula z subskrypcji odnawia się do pełnego stanu. Byte kupione zachowują ważność 12 miesięcy i nie są resetowane.',
+  },
+  {
+    tag: '// 03 / PRIORITY',
+    t: 'Kolejność zużycia',
+    d: 'Subskrypcja → Byte przyznane → Byte kupione. Najpierw spalamy to, co najbardziej ulotne.',
+  },
+  {
+    tag: '// 04 / TOP-UP',
+    t: 'Doładowania',
+    d: 'Potrzebujesz więcej? Doładuj pakiet Byte w panelu — bez zmiany planu, bez zobowiązań.',
+  },
+] as const
 
 /* ══════════════ CENNIK B2B — PLANY DLA FIRM ══════════════ */
 export type PlanB2B = {
@@ -525,13 +632,47 @@ export const FAQ = [
   },
 ] as const
 
+
+/* ══════════════ FAQ CENNIKA — treści 1:1 z danych strukturalnych produkcji ══════════════ */
+export const CENNIK_FAQ = [
+  {
+    q: 'Czy mogę anulować subskrypcję w dowolnym momencie?',
+    a: 'Tak. Subskrypcja jest miesięczna lub roczna i możesz ją anulować w panelu jednym kliknięciem. Dostęp pozostaje aktywny do końca opłaconego okresu.',
+  },
+  {
+    q: 'Czym Premium różni się od Ultimate?',
+    a: 'Premium daje pełen dostęp do platformy: Chat AI, Asystent, Studio Zdjęć, Akademia, Deep Research, Tryb Ultra. Ultimate dokłada priorytetową kolejkę, ekskluzywne modele AI, większą równoległość generacji oraz wczesny dostęp do funkcji w fazie beta.',
+  },
+  {
+    q: 'Co zawiera plan darmowy?',
+    a: 'Notatki, Kalendarz oraz limitowany dostęp do Chat AI. Plan darmowy pozwala poznać platformę bez zobowiązań — idealny start.',
+  },
+  {
+    q: 'Czy są dostępne plany dla firm?',
+    a: 'Tak. NextByte oferuje dedykowaną platformę B2B z izolacją danych, zarządzaniem zespołami, granularnymi uprawnieniami i własną pulą Byte. Sprawdź zakładkę „Dla firm".',
+  },
+  {
+    q: 'W jakiej walucie są ceny i jak działa VAT?',
+    a: 'Wszystkie ceny podane są w PLN i zawierają podatek VAT. Faktury VAT generowane są automatycznie po każdej płatności i dostępne w panelu „Subskrypcja".',
+  },
+  {
+    q: 'Czy płatność jest bezpieczna?',
+    a: 'Tak. Płatności obsługuje Stripe — globalny lider w przetwarzaniu płatności online. Dane karty nigdy nie trafiają na nasze serwery.',
+  },
+] as const
+
 export const LOGOTYPY = TECH_PARTNERZY
 
-/* Orientacyjny koszt pojedynczej operacji w jednostkach Byte. */
-const KOSZT_BYTE = {
-  wiadomosc: 1,
-  grafika4k: 6,
-  minutaAudio: 2,
+/**
+ * Koszt pojedynczej operacji w jednostkach Byte — stawki zmierzone na produkcji.
+ * Te same liczby zasilają kartę planu ("To wystarczy na...") i kreator doboru,
+ * więc szacunek w kreatorze zgadza się co do jednego z tym, co pokazuje karta.
+ */
+export const KOSZT_BYTE = {
+  rozmowa: 5,
+  obraz: 4,
+  zadanieAsystenta: 5,
+  mocnyModel: 11,
 } as const
 
 /**
@@ -540,9 +681,10 @@ const KOSZT_BYTE = {
  */
 export function przelicznikByte(byte: number) {
   return [
-    { icon: MessageSquare, label: 'wiadomości w Chat AI', value: Math.round(byte / KOSZT_BYTE.wiadomosc) },
-    { icon: Camera, label: 'grafik 4K w Studio', value: Math.round(byte / KOSZT_BYTE.grafika4k) },
-    { icon: Mic, label: 'minut transkrypcji', value: Math.round(byte / KOSZT_BYTE.minutaAudio) },
+    { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa) },
+    { icon: ImagePlus, label: 'obrazów w Studiu Zdjęć', value: Math.floor(byte / KOSZT_BYTE.obraz) },
+    { icon: Sparkles, label: 'zadań Asystenta', value: Math.floor(byte / KOSZT_BYTE.zadanieAsystenta) },
+    { icon: FileSearch, label: 'rozmów na mocnym modelu', value: Math.floor(byte / KOSZT_BYTE.mocnyModel) },
   ]
 }
 
