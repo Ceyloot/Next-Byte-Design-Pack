@@ -833,7 +833,7 @@ export function HeroAppMockup() {
         id: '4',
         title: 'Audyt bezpieczeństwa danych i zgodności RODO',
         tag: 'Review',
-        tagColor: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+        tagColor: 'bg-foreground/10 text-foreground/70 border-foreground/25',
         author: 'Zarząd',
       },
     ],
@@ -1443,7 +1443,7 @@ export function getModuleVisual(mod: (typeof MODULY)[number], color: string) {
             <span>zapisano termin</span>
           </div>
           <div className="rounded-lg bg-foreground/[0.03] p-2 border border-foreground/[0.05]">
-            <span className="text-emerald-400 block font-bold">Zadania + Sync</span>
+            <span className="text-primary block font-bold">Zadania + Sync</span>
             <span>utworzono w agendzie</span>
           </div>
         </div>
@@ -1452,7 +1452,7 @@ export function getModuleVisual(mod: (typeof MODULY)[number], color: string) {
     if (mod.id === 'research') return (
       <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-2.5">
         <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
           <span className="font-sans text-[12px] text-foreground/80 font-medium">Deep Research: 34 źródła</span>
         </div>
         <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-foreground/60">
@@ -1461,7 +1461,7 @@ export function getModuleVisual(mod: (typeof MODULY)[number], color: string) {
             <span>czas weryfikacji</span>
           </div>
           <div className="rounded-lg bg-foreground/[0.03] p-2 border border-foreground/[0.05]">
-            <span className="text-emerald-400 block font-bold">Raport PDF</span>
+            <span className="text-primary block font-bold">Raport PDF</span>
             <span>gotowy do pobrania</span>
           </div>
         </div>
@@ -1471,7 +1471,7 @@ export function getModuleVisual(mod: (typeof MODULY)[number], color: string) {
       <div className="mt-4 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] p-3.5 space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="font-sans text-[12px] font-bold text-foreground">Panel Twórcy & Sklep</span>
-          <span className="font-mono text-[11px] text-emerald-400 font-semibold">+2 450 PLN / mc</span>
+          <span className="font-mono text-[11px] text-primary font-semibold">+2 450 PLN / mc</span>
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[11.5px] text-foreground/70">
@@ -1499,7 +1499,7 @@ export function getModuleVisual(mod: (typeof MODULY)[number], color: string) {
         </div>
         <div className="flex items-center justify-between pt-1 text-[11px] text-foreground/50">
           <span>Wspólny stan danych</span>
-          <span className="text-emerald-400 font-mono">100% sync</span>
+          <span className="text-primary font-mono">100% sync</span>
         </div>
       </div>
     )

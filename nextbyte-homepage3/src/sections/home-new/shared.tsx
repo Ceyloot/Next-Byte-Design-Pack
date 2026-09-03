@@ -391,7 +391,7 @@ export function GlowButton({
       onClick={onClick}
       className={cn(
         'group relative inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden rounded-xl font-sans font-semibold cursor-pointer select-none',
-        'border border-primary/60 bg-primary/20 backdrop-blur-xl text-white hover:bg-primary/30 hover:border-primary',
+        'border border-primary/60 bg-primary/20 backdrop-blur-xl text-foreground hover:bg-primary/30 hover:border-primary',
         'shadow-[0_0_24px_-2px_hsl(var(--primary)/0.45),inset_0_1px_0_0_rgba(255,255,255,0.25)]',
         'transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-[0_0_36px_0px_hsl(var(--primary)/0.6),inset_0_1px_0_0_rgba(255,255,255,0.4)] active:scale-[0.98]',
         size === 'lg' ? 'h-12 px-7 text-[14.5px] tracking-[-0.2px]' : size === 'sm' ? 'h-8 px-3.5 text-xs' : 'h-10 px-5 text-sm',
@@ -401,13 +401,13 @@ export function GlowButton({
       {/* Top subtle specular highlight */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/40 to-transparent"
       />
 
-      <span className="relative z-10 flex items-center gap-2 text-white font-semibold">
+      <span className="relative z-10 flex items-center gap-2 text-foreground font-semibold">
         {children}
         {icon && (
-          <ArrowRight className="h-4 w-4 stroke-[2.2] text-primary transition-transform duration-200 group-hover:translate-x-1 group-hover:text-white" />
+          <ArrowRight className="h-4 w-4 stroke-[2.2] text-primary transition-transform duration-200 group-hover:translate-x-1 group-hover:text-foreground" />
         )}
       </span>
     </button>
@@ -429,7 +429,7 @@ export function GhostButton({
       onClick={onClick}
       className={cn(
         'group relative inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden rounded-xl font-sans font-semibold cursor-pointer select-none',
-        'border border-foreground/[0.14] bg-card/75 backdrop-blur-xl text-foreground/90 hover:text-white hover:border-foreground/[0.28] hover:bg-card',
+        'border border-foreground/[0.14] bg-card/75 backdrop-blur-xl text-foreground/90 hover:text-foreground hover:border-foreground/[0.28] hover:bg-card',
         'shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]',
         'transition-all duration-200 ease-out hover:scale-[1.015] active:scale-[0.98]',
         size === 'lg' ? 'h-12 px-6 text-[14.5px] tracking-[-0.2px]' : size === 'sm' ? 'h-8 px-3.5 text-xs' : 'h-10 px-5 text-sm',

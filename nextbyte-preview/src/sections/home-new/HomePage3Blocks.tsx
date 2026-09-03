@@ -1766,57 +1766,76 @@ function PricingByteSlider({
       </div>
 
       {/* Tor suwaka */}
-      <div className="relative py-2">
-        <div className="relative h-1.5 w-full rounded-full bg-foreground/[0.08]">
+      <div className="relative py-2.5">
+        <div className="relative h-1.5 w-full rounded-full bg-foreground/[0.08] shadow-inner">
           <div
             className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-300"
-            style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${akcentTlo(kolor, 35)}, ${akcentTlo(kolor, 65)})` }}
+            style={{
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, ${akcentTlo(kolor, 45)}, ${kolor})`,
+              boxShadow: `0 0 10px ${akcentTlo(kolor, 35)}`,
+            }}
           />
         </div>
 
         {/* Punkty kroków */}
-        <div className="absolute inset-x-0 top-1/2">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none">
           {progi.map((p, i) => {
             const aktywny = i <= indeks
             const biezacy = i === indeks
             const left = (i / (progi.length - 1)) * 100
             return (
-              <button
+              <div
                 key={p.byte}
-                type="button"
-                onClick={() => onChange(i)}
-                aria-label={`${p.byte} Byte`}
-                className={cn(
-                  'absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 cursor-pointer',
-                  biezacy ? 'h-[18px] w-[18px]' : 'h-[13px] w-[13px] hover:scale-125',
-                )}
-                style={{
-                  left: `${left}%`,
-                  background: biezacy ? kolor : aktywny ? akcentTlo(kolor, 55) : 'hsl(var(--foreground)/0.14)',
-                  border: '2px solid hsl(var(--card))',
-                  boxShadow: biezacy ? `0 0 0 3px ${akcentTlo(kolor, 20)}` : 'none',
-                }}
-              />
+                className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto flex items-center justify-center"
+                style={{ left: `${left}%` }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onChange(i)}
+                  aria-label={`${p.byte} Byte`}
+                  className={cn(
+                    'flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer',
+                    biezacy
+                      ? 'h-4 w-4 bg-background border-[3px] shadow-[0_0_12px_hsl(var(--primary)/0.75),0_2px_4px_hsl(var(--background)/0.6)] hover:scale-115'
+                      : 'h-6 w-6 group'
+                  )}
+                  style={{
+                    borderColor: biezacy ? kolor : undefined,
+                  }}
+                >
+                  {!biezacy && (
+                    <span
+                      className="h-1.5 w-1.5 rounded-full transition-all duration-200 group-hover:scale-150"
+                      style={{
+                        background: aktywny ? kolor : 'hsl(var(--foreground)/0.25)',
+                        opacity: aktywny ? 0.75 : 0.35,
+                      }}
+                    />
+                  )}
+                </button>
+              </div>
             )
           })}
         </div>
       </div>
 
       {/* Etykiety numeryczne pod torem */}
-      <div className="relative h-4">
+      <div className="relative h-4 mt-0.5">
         {progi.map((p, i) => {
           const left = (i / (progi.length - 1)) * 100
+          const biezacy = i === indeks
           return (
             <button
               key={p.byte}
               type="button"
               onClick={() => onChange(i)}
               className={cn(
-                'absolute top-0 text-[11px] tabular-nums transition-colors cursor-pointer select-none',
+                'absolute top-0 text-[11px] tabular-nums transition-all cursor-pointer select-none',
                 i === 0 ? 'left-0' : i === progi.length - 1 ? 'right-0' : '-translate-x-1/2',
-                i === indeks ? 'font-semibold' : 'text-muted-foreground/60 hover:text-muted-foreground',
+                biezacy ? 'font-bold drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]' : 'text-muted-foreground/50 hover:text-foreground font-normal',
               )}
-              style={{ left: i === 0 || i === progi.length - 1 ? undefined : `${left}%`, color: i === indeks ? kolor : undefined }}
+              style={{ left: i === 0 || i === progi.length - 1 ? undefined : `${left}%`, color: biezacy ? kolor : undefined }}
             >
               {p.byte.toLocaleString('pl-PL')}
             </button>
@@ -1906,7 +1925,7 @@ function PricingCard({
       {/* Specularna krawędź świetlna u góry karty */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent"
       />
 
       {/* Subtelna poświata akcentu u góry */}
@@ -1958,7 +1977,7 @@ function PricingCard({
 
           <div className="mt-1 min-h-[18px]">
             {!darmowy && okres === 'rocznie' ? (
-              <span className="text-[11.5px] text-emerald-400 font-medium">
+              <span className="text-[11.5px] text-primary font-medium">
                 faktura roczna: <PricingAnimNum value={cena * 12} /> PLN
               </span>
             ) : darmowy ? (
@@ -2035,13 +2054,13 @@ function PricingCard({
           </p>
 
           {(rozwiniete ? plan.cechy : plan.cechy.slice(0, WIDOCZNE)).map((c, i) => (
-            <div key={i} className="flex items-start gap-3 text-[13px] text-zinc-300 font-light leading-snug">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white mt-0.5">
+            <div key={i} className="flex items-start gap-3 text-[13px] text-foreground/70 font-light leading-snug">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground/[0.08] text-foreground mt-0.5">
                 <Check className="h-3 w-3 stroke-[2.5]" />
               </span>
               <span className="flex-1">{c.t}</span>
               {c.badge && (
-                <span className="shrink-0 rounded px-1.5 py-0.2 font-mono text-[9px] font-bold border border-white/[0.12] bg-white/[0.04] text-zinc-300">
+                <span className="shrink-0 rounded px-1.5 py-0.2 font-mono text-[9px] font-bold border border-foreground/[0.12] bg-foreground/[0.04] text-foreground/70">
                   {c.badge.t}
                 </span>
               )}
@@ -2076,13 +2095,13 @@ export function HomePagePricingSection({ onNavigate = () => { } }: { onNavigate?
             <div className="flex justify-center">
               <SecRule label="CENNIK & SUBSKRYPCJE // PRZEJRZYSTE ZASADY" />
             </div>
-            <h2 className="font-heading text-[clamp(30px,4.5vw,52px)] font-light leading-[1.08] tracking-[-2px] text-white">
+            <h2 className="font-heading text-[clamp(30px,4.5vw,52px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
               Inwestuj w efektywność, <br className="hidden sm:inline" />
-              <span className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
+              <span className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/80 to-foreground/50">
                 nie w chaos subskrypcji
               </span>
             </h2>
-            <p className="mt-4 font-sans text-[15px] font-light leading-relaxed text-zinc-400 max-w-xl mx-auto">
+            <p className="mt-4 font-sans text-[15px] font-light leading-relaxed text-foreground/55 max-w-xl mx-auto">
               Zacznij za 0 zł bez podawania karty. Jeden abonament w PLN, pełna faktura VAT 23%, a niewykorzystane Byte nie przepadają.
             </p>
 
@@ -2109,17 +2128,17 @@ export function HomePagePricingSection({ onNavigate = () => { } }: { onNavigate?
 
         {/* Dolny pasek: B2B Enterprise & Trust Guarantees w spójnym szklanym stylu */}
         <FadeIn delay={160}>
-          <div className="mt-14 rounded-[28px] border border-white/[0.1] bg-[#0c0d12]/60 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
+          <div className="mt-14 rounded-[28px] border border-foreground/[0.1] bg-card/60 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4 text-left">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.04] text-white shadow-inner">
-                  <Building2 className="h-6 w-6 text-zinc-200" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-foreground/[0.12] bg-foreground/[0.04] text-foreground shadow-inner">
+                  <Building2 className="h-6 w-6 text-foreground/85" />
                 </div>
                 <div>
-                  <h4 className="font-heading text-base font-bold text-white">
+                  <h4 className="font-heading text-base font-bold text-foreground">
                     Potrzebujesz rozwiązania dla zespołu lub całej firmy?
                   </h4>
-                  <p className="mt-0.5 font-sans text-[13px] font-light text-zinc-400">
+                  <p className="mt-0.5 font-sans text-[13px] font-light text-foreground/55">
                     Wspólna pula Byte, dedykowane stanowiska, faktury zbiorcze, centralne zarządzanie uprawnieniami i SLA.
                   </p>
                 </div>
@@ -2129,31 +2148,31 @@ export function HomePagePricingSection({ onNavigate = () => { } }: { onNavigate?
                 <button
                   type="button"
                   onClick={() => onNavigate('b2b')}
-                  className="group inline-flex items-center gap-2 rounded-full border border-white/[0.15] bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/[0.25] px-5 py-2.5 text-xs font-heading font-semibold text-white transition-all duration-200 cursor-pointer shadow-sm"
+                  className="group inline-flex items-center gap-2 rounded-full border border-foreground/[0.15] bg-foreground/[0.05] hover:bg-foreground/[0.1] hover:border-foreground/[0.25] px-5 py-2.5 text-xs font-heading font-semibold text-foreground transition-all duration-200 cursor-pointer shadow-sm"
                 >
                   <span>Zobacz ofertę dla firm (B2B)</span>
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 text-zinc-400 group-hover:text-white" />
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 text-foreground/55 group-hover:text-foreground" />
                 </button>
               </div>
             </div>
 
             {/* 4 Gwarancje */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-white/[0.06] pt-5 font-mono text-[11px] text-zinc-400">
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-foreground/[0.06] pt-5 font-mono text-[11px] text-foreground/55">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="text-zinc-300">Faktura VAT 23% w PLN</span>
+                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-foreground/70">Faktura VAT 23% w PLN</span>
               </div>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="text-zinc-300">Serwery wyłącznie w UE</span>
+                <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-foreground/70">Serwery wyłącznie w UE</span>
               </div>
               <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="text-zinc-300">0% trenowania na danych</span>
+                <Lock className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-foreground/70">0% trenowania na danych</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="text-zinc-300">Rezygnacja 1 kliknięciem</span>
+                <Zap className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-foreground/70">Rezygnacja 1 kliknięciem</span>
               </div>
             </div>
           </div>
@@ -2214,7 +2233,7 @@ export function PlatformVideoSection({ onNavigate = () => { } }: { onNavigate?: 
             <div
               onClick={togglePlay}
               title={isPlaying ? 'Kliknij, aby zatrzymać wideo' : 'Kliknij, aby odtworzyć wideo'}
-              className="relative w-full aspect-video overflow-hidden rounded-2xl bg-black shadow-2xl cursor-pointer"
+              className="relative w-full aspect-video overflow-hidden rounded-2xl bg-card shadow-2xl cursor-pointer"
             >
               <iframe
                 ref={iframeRef}
@@ -2229,7 +2248,7 @@ export function PlatformVideoSection({ onNavigate = () => { } }: { onNavigate?: 
               <div
                 className={cn(
                   'absolute inset-0 flex items-center justify-center transition-opacity duration-200 pointer-events-none',
-                  isPlaying ? 'opacity-0' : 'opacity-100 bg-black/40 backdrop-blur-[2px]',
+                  isPlaying ? 'opacity-0' : 'opacity-100 bg-background/40 backdrop-blur-[2px]',
                 )}
               >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full border border-primary/40 bg-background/90 text-primary shadow-[0_0_30px_hsl(var(--primary)/0.35)]">

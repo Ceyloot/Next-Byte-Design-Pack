@@ -16,7 +16,6 @@ import {
   PlatformVideoSection,
   DataSecuritySection, ServerSecuritySection, PrivacyLocalAISection,
   ThreePillarsSection, ThreeStepsSection, ComparisonSection,
-  HomePagePricingSection,
   FaqSection, FinalCtaSection,
 } from './HomePage3Blocks'
 import {
@@ -67,6 +66,26 @@ export function glowStyle(color: string): { borderColor: string; boxShadow: stri
   const halo = `color-mix(in srgb, ${color} 22%, transparent)`
   return { borderColor: border, boxShadow: `0 0 10px -5px ${halo}` }
 }
+
+/* ── PALETA SCEN 3D — WYPROWADZONA Z MOTYWU ──────────────────────────
+   Bryły (aparat, płyty modułów, płytka PCB) były malowane stałymi
+   granatami i srebrami. Motyw przestawiał tekst i tło, a scena zostawała
+   ta sama: w jasnym motywie czarna plama, w Luxury — niebieska mimo
+   złotej marki.
+
+   Teraz każdy ton bryły to punkt na JEDNEJ rampie rozpiętej między tłem
+   a kolorem tekstu. Przy ciemnym motywie bryła jest ciemna z jasnymi
+   refleksami; przy jasnym rampa odwraca się sama i scena czyta się jak
+   rysunek techniczny na papierze. Refleksy barwne schodzą z --primary,
+   więc scena przejmuje kolor motywu zamiast go ignorować. */
+
+/** Ton bryły: 0 = czyste tło, 100 = czysty kolor tekstu. */
+const ton = (n: number) =>
+  `color-mix(in srgb, hsl(var(--foreground)) ${Math.round(n * 10) / 10}%, hsl(var(--background)))`
+
+/** Ton bryły z domieszką akcentu — refleks przejmujący kolor motywu. */
+const tonAkc = (n: number, a: number) =>
+  `color-mix(in srgb, hsl(var(--primary)) ${a}%, ${ton(n)})`
 
 
 
@@ -444,14 +463,13 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                     onMouseEnter={() => setHoveredNode(node.id)}
                     onMouseLeave={() => setHoveredNode(null)}
                     className={cn(
-                      "absolute -translate-x-1/2 -translate-y-1/2 w-[50px] h-[50px] rounded-xl flex items-center justify-center select-none transition-all duration-300 z-20 group cursor-default",
-                      "border bg-card/90 dark:bg-[#0a0d13]/90 backdrop-blur-md",
+                      "absolute -translate-x-1/2 -translate-y-1/2 w-[50px] h-[50px] rounded-xl flex items-center justify-center select-none transition-all duration-300 z-20 group cursor-pointer",
+                      "border bg-card/90 backdrop-blur-md",
                       isHovered
-                        ? "border-primary/80 scale-115 shadow-[0_0_20px_hsl(var(--primary)/0.45)]"
+                        ? "border-primary/80 scale-115 shadow-[0_0_20px_hsl(var(--primary)/0.45)] z-40"
                         : "border-foreground/[0.12] hover:border-primary/50 shadow-md"
                     )}
                     style={{ left: node.x, top: node.y }}
-                    title={`${node.name} — ${node.sub}`}
                   >
                     <span className="absolute top-1 left-1 text-[5px] font-mono text-primary/40 leading-none">┌</span>
                     <span className="absolute top-1 right-1 text-[5px] font-mono text-primary/40 leading-none">┐</span>
@@ -464,6 +482,25 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                         isHovered ? "text-primary scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)]" : "text-foreground/75 group-hover:text-primary"
                       )}
                     />
+
+                    {/* CUSTOMOWY TOOLTIP CAD (HUD) */}
+                    {isHovered && (
+                      <div
+                        className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 flex items-center gap-2 whitespace-nowrap rounded-lg border border-primary/50 bg-card/95 px-2.5 py-1.5 text-foreground backdrop-blur-xl shadow-[0_4px_24px_hsl(var(--background)/0.85),0_0_16px_hsl(var(--primary)/0.3)] transition-all duration-200"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+                        <span className="font-heading text-[12.5px] font-semibold text-foreground tracking-[-0.2px]">
+                          {node.name}
+                        </span>
+                        <span className="font-mono text-[10px] font-medium text-primary tracking-wide">
+                          // {node.sub}
+                        </span>
+                        <span className="absolute -top-1 -left-1 text-[6px] font-mono text-primary/40 leading-none">┌</span>
+                        <span className="absolute -top-1 -right-1 text-[6px] font-mono text-primary/40 leading-none">┐</span>
+                        <span className="absolute -bottom-1 -left-1 text-[6px] font-mono text-primary/40 leading-none">└</span>
+                        <span className="absolute -bottom-1 -right-1 text-[6px] font-mono text-primary/40 leading-none">┘</span>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -473,7 +510,7 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                 className={cn(
                   "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[76px] h-[76px] rounded-2xl",
                   "flex flex-col items-center justify-center p-2 text-center select-none group z-30 transition-all duration-300",
-                  "border border-primary/60 bg-card/95 dark:bg-[#070a0f]/95 backdrop-blur-2xl",
+                  "border border-primary/60 bg-card/95 backdrop-blur-2xl",
                   "shadow-[0_0_40px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_60px_hsl(var(--primary)/0.55)]"
                 )}
               >
@@ -500,14 +537,13 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                     onMouseEnter={() => setHoveredNode(node.id)}
                     onMouseLeave={() => setHoveredNode(null)}
                     className={cn(
-                      "absolute -translate-x-1/2 -translate-y-1/2 w-[50px] h-[50px] rounded-xl flex items-center justify-center select-none transition-all duration-300 z-20 group cursor-default",
-                      "border bg-card/90 dark:bg-[#0a0d13]/90 backdrop-blur-md",
+                      "absolute -translate-x-1/2 -translate-y-1/2 w-[50px] h-[50px] rounded-xl flex items-center justify-center select-none transition-all duration-300 z-20 group cursor-pointer",
+                      "border bg-card/90 backdrop-blur-md",
                       isHovered
-                        ? "border-primary/80 scale-115 shadow-[0_0_20px_hsl(var(--primary)/0.45)]"
+                        ? "border-primary/80 scale-115 shadow-[0_0_20px_hsl(var(--primary)/0.45)] z-40"
                         : "border-foreground/[0.12] hover:border-primary/50 shadow-md"
                     )}
                     style={{ left: node.x, top: node.y }}
-                    title={`${node.name} — ${node.sub}`}
                   >
                     <span className="absolute top-1 left-1 text-[5px] font-mono text-primary/40 leading-none">┌</span>
                     <span className="absolute top-1 right-1 text-[5px] font-mono text-primary/40 leading-none">┐</span>
@@ -520,6 +556,25 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                         isHovered ? "text-primary scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)]" : "text-foreground/75 group-hover:text-primary"
                       )}
                     />
+
+                    {/* CUSTOMOWY TOOLTIP CAD (HUD) */}
+                    {isHovered && (
+                      <div
+                        className="pointer-events-none absolute right-full mr-3 top-1/2 -translate-y-1/2 z-50 flex items-center gap-2 whitespace-nowrap rounded-lg border border-primary/50 bg-card/95 px-2.5 py-1.5 text-foreground backdrop-blur-xl shadow-[0_4px_24px_hsl(var(--background)/0.85),0_0_16px_hsl(var(--primary)/0.3)] transition-all duration-200"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+                        <span className="font-heading text-[12.5px] font-semibold text-foreground tracking-[-0.2px]">
+                          {node.name}
+                        </span>
+                        <span className="font-mono text-[10px] font-medium text-primary tracking-wide">
+                          // {node.sub}
+                        </span>
+                        <span className="absolute -top-1 -left-1 text-[6px] font-mono text-primary/40 leading-none">┌</span>
+                        <span className="absolute -top-1 -right-1 text-[6px] font-mono text-primary/40 leading-none">┐</span>
+                        <span className="absolute -bottom-1 -left-1 text-[6px] font-mono text-primary/40 leading-none">└</span>
+                        <span className="absolute -bottom-1 -right-1 text-[6px] font-mono text-primary/40 leading-none">┘</span>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -626,8 +681,8 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
             className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-56 w-[560px] opacity-[0.14]"
             style={{
               backgroundImage:
-                'linear-gradient(30deg, #38bdf8 1px, transparent 1px),' +
-                'linear-gradient(150deg, #38bdf8 1px, transparent 1px)',
+                'linear-gradient(30deg, hsl(var(--primary)) 1px, transparent 1px),' +
+                'linear-gradient(150deg, hsl(var(--primary)) 1px, transparent 1px)',
               backgroundSize: '22px 22px',
               transform: 'translateX(-50%) rotateX(65deg) rotateZ(-35deg)',
             }}
@@ -644,14 +699,14 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
             >
               <defs>
                 <linearGradient id="chipTopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#1a2332" stopOpacity="0.96" />
-                  <stop offset="50%" stopColor="#0e141d" stopOpacity="0.98" />
-                  <stop offset="100%" stopColor="#070a0f" stopOpacity="1" />
+                  <stop offset="0%" stopColor={ton(12)} stopOpacity="0.96" />
+                  <stop offset="50%" stopColor={ton(9)} stopOpacity="0.98" />
+                  <stop offset="100%" stopColor={ton(6)} stopOpacity="1" />
                 </linearGradient>
 
                 <linearGradient id="chipBevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0d131c" />
-                  <stop offset="100%" stopColor="#040609" />
+                  <stop offset="0%" stopColor={ton(8)} />
+                  <stop offset="100%" stopColor={ton(5)} />
                 </linearGradient>
 
                 <filter id="laserGlow" x="-20%" y="-20%" width="140%" height="140%">
@@ -673,7 +728,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                 const botCy = 290 + 2 * sepY + 12
 
                 return (
-                  <g opacity={scrollProgress * 0.75} stroke="#38bdf8" strokeWidth="1" strokeDasharray="3 3">
+                  <g opacity={scrollProgress * 0.75} stroke="hsl(var(--primary))" strokeWidth="1" strokeDasharray="3 3">
                     {/* Lewy narożnik */}
                     <line x1={topCx - 120} y1={topCy} x2={botCx - 120} y2={botCy} />
                     {/* Górny narożnik */}
@@ -699,12 +754,12 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                     <g transform="scale(1, 0.5416) rotate(-45)">
                       <path
                         d="M 0 -24 L 22 -12 L 22 8 C 22 22, 0 28, 0 28 C 0 28, -22 22, -22 8 L -22 -12 Z"
-                        fill="#080d16"
-                        stroke="#38bdf8"
+                        fill={ton(8)}
+                        stroke="hsl(var(--primary))"
                         strokeWidth="2.5"
                       />
-                      <circle cx="0" cy="-2" r="4.5" fill="#38bdf8" />
-                      <rect x="-2.5" y="-2" width="5" height="10" rx="1.5" fill="#38bdf8" />
+                      <circle cx="0" cy="-2" r="4.5" fill="hsl(var(--primary))" />
+                      <rect x="-2.5" y="-2" width="5" height="10" rx="1.5" fill="hsl(var(--primary))" />
                     </g>
                   ),
                 },
@@ -714,16 +769,16 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                   icon: (
                     /* 04 // WSPÓLNY KONTEKST I PAMIĘĆ - RDZEŃ PAMIĘCI 3D */
                     <g transform="scale(1, 0.5416) rotate(-45)">
-                      <rect x="-18" y="-18" width="36" height="36" rx="8" fill="#080d16" stroke="#38bdf8" strokeWidth="2.5" />
-                      <circle cx="-26" cy="-26" r="3" fill="#38bdf8" />
-                      <circle cx="26" cy="-26" r="3" fill="#38bdf8" />
-                      <circle cx="26" cy="26" r="3" fill="#38bdf8" />
-                      <circle cx="-26" cy="26" r="3" fill="#38bdf8" />
-                      <line x1="-18" y1="-18" x2="-24" y2="-24" stroke="#38bdf8" strokeWidth="2" />
-                      <line x1="18" y1="-18" x2="24" y2="-24" stroke="#38bdf8" strokeWidth="2" />
-                      <line x1="18" y1="18" x2="24" y2="24" stroke="#38bdf8" strokeWidth="2" />
-                      <line x1="-18" y1="18" x2="-24" y2="24" stroke="#38bdf8" strokeWidth="2" />
-                      <text x="0" y="5" fill="#ffffff" fontSize="11" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">CTX</text>
+                      <rect x="-18" y="-18" width="36" height="36" rx="8" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="2.5" />
+                      <circle cx="-26" cy="-26" r="3" fill="hsl(var(--primary))" />
+                      <circle cx="26" cy="-26" r="3" fill="hsl(var(--primary))" />
+                      <circle cx="26" cy="26" r="3" fill="hsl(var(--primary))" />
+                      <circle cx="-26" cy="26" r="3" fill="hsl(var(--primary))" />
+                      <line x1="-18" y1="-18" x2="-24" y2="-24" stroke="hsl(var(--primary))" strokeWidth="2" />
+                      <line x1="18" y1="-18" x2="24" y2="-24" stroke="hsl(var(--primary))" strokeWidth="2" />
+                      <line x1="18" y1="18" x2="24" y2="24" stroke="hsl(var(--primary))" strokeWidth="2" />
+                      <line x1="-18" y1="18" x2="-24" y2="24" stroke="hsl(var(--primary))" strokeWidth="2" />
+                      <text x="0" y="5" fill={ton(100)} fontSize="11" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">CTX</text>
                     </g>
                   ),
                 },
@@ -733,15 +788,15 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                   icon: (
                     /* 03 // ROZUMOWANIE & PERSONY - SUWAKI I KONTROLA STYLU 3D */
                     <g transform="scale(1, 0.5416) rotate(-45)">
-                      <rect x="-24" y="-20" width="48" height="40" rx="6" fill="#080d16" stroke="#38bdf8" strokeWidth="2.5" />
-                      <line x1="-16" y1="-7" x2="16" y2="-7" stroke="#38bdf8" strokeWidth="2" strokeOpacity="0.4" />
-                      <circle cx="5" cy="-7" r="4.5" fill="#38bdf8" />
-                      <line x1="-16" y1="7" x2="16" y2="7" stroke="#38bdf8" strokeWidth="2" strokeOpacity="0.4" />
-                      <circle cx="-6" cy="7" r="4.5" fill="#38bdf8" />
-                      <circle cx="-16" cy="-7" r="1.5" fill="#38bdf8" />
-                      <circle cx="16" cy="-7" r="1.5" fill="#38bdf8" />
-                      <circle cx="-16" cy="7" r="1.5" fill="#38bdf8" />
-                      <circle cx="16" cy="7" r="1.5" fill="#38bdf8" />
+                      <rect x="-24" y="-20" width="48" height="40" rx="6" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="2.5" />
+                      <line x1="-16" y1="-7" x2="16" y2="-7" stroke="hsl(var(--primary))" strokeWidth="2" strokeOpacity="0.4" />
+                      <circle cx="5" cy="-7" r="4.5" fill="hsl(var(--primary))" />
+                      <line x1="-16" y1="7" x2="16" y2="7" stroke="hsl(var(--primary))" strokeWidth="2" strokeOpacity="0.4" />
+                      <circle cx="-6" cy="7" r="4.5" fill="hsl(var(--primary))" />
+                      <circle cx="-16" cy="-7" r="1.5" fill="hsl(var(--primary))" />
+                      <circle cx="16" cy="-7" r="1.5" fill="hsl(var(--primary))" />
+                      <circle cx="-16" cy="7" r="1.5" fill="hsl(var(--primary))" />
+                      <circle cx="16" cy="7" r="1.5" fill="hsl(var(--primary))" />
                     </g>
                   ),
                 },
@@ -751,12 +806,12 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                   icon: (
                     /* 02 // MULTIMODAL & DOKUMENTY - ARKUSZ 3D */
                     <g transform="scale(1, 0.5416) rotate(-45)">
-                      <rect x="-18" y="-24" width="36" height="48" rx="5" fill="#080d16" stroke="#38bdf8" strokeWidth="2.5" />
-                      <path d="M 6 -24 L 18 -12 L 6 -12 Z" fill="#38bdf8" fillOpacity="0.4" stroke="#38bdf8" strokeWidth="1.5" />
-                      <line x1="-11" y1="-14" x2="1" y2="-14" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" />
-                      <line x1="-11" y1="-4" x2="11" y2="-4" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" />
-                      <line x1="-11" y1="6" x2="11" y2="6" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" />
-                      <line x1="-11" y1="16" x2="5" y2="16" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" />
+                      <rect x="-18" y="-24" width="36" height="48" rx="5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="2.5" />
+                      <path d="M 6 -24 L 18 -12 L 6 -12 Z" fill="hsl(var(--primary))" fillOpacity="0.4" stroke="hsl(var(--primary))" strokeWidth="1.5" />
+                      <line x1="-11" y1="-14" x2="1" y2="-14" stroke="hsl(var(--primary))" strokeWidth="2.2" strokeLinecap="round" />
+                      <line x1="-11" y1="-4" x2="11" y2="-4" stroke="hsl(var(--primary))" strokeWidth="2.2" strokeLinecap="round" />
+                      <line x1="-11" y1="6" x2="11" y2="6" stroke="hsl(var(--primary))" strokeWidth="2.2" strokeLinecap="round" />
+                      <line x1="-11" y1="16" x2="5" y2="16" stroke="hsl(var(--primary))" strokeWidth="2.2" strokeLinecap="round" />
                     </g>
                   ),
                 },
@@ -774,51 +829,51 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                         width="72"
                         height="72"
                         rx="14"
-                        fill="#38bdf8"
+                        fill="hsl(var(--primary))"
                         fillOpacity="0.25"
                         filter="url(#laserGlow)"
                       />
 
                       {/* ──────────────── 12 ŚCIEŻEK KRZEMOWYCH Z TERMINALAMI ──────────────── */}
                       {/* GÓRNE 3 ŚCIEŻKI */}
-                      <line x1="0" y1="-28" x2="0" y2="-44" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <circle cx="0" cy="-46" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <line x1="0" y1="-28" x2="0" y2="-44" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" />
+                      <circle cx="0" cy="-46" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M -16 -28 L -16 -36 L -28 -36 L -28 -44" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="-28" cy="-46" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M -16 -28 L -16 -36 L -28 -36 L -28 -44" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="-28" cy="-46" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M 16 -28 L 16 -36 L 28 -36 L 28 -44" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="28" cy="-46" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M 16 -28 L 16 -36 L 28 -36 L 28 -44" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="28" cy="-46" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
                       {/* DOLNE 3 ŚCIEŻKI */}
-                      <line x1="0" y1="28" x2="0" y2="44" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <circle cx="0" cy="46" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <line x1="0" y1="28" x2="0" y2="44" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" />
+                      <circle cx="0" cy="46" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M -16 28 L -16 36 L -28 36 L -28 44" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="-28" cy="46" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M -16 28 L -16 36 L -28 36 L -28 44" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="-28" cy="46" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M 16 28 L 16 36 L 28 36 L 28 44" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="28" cy="46" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M 16 28 L 16 36 L 28 36 L 28 44" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="28" cy="46" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
                       {/* LEWE 3 ŚCIEŻKI */}
-                      <line x1="-28" y1="0" x2="-44" y2="0" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <circle cx="-46" cy="0" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <line x1="-28" y1="0" x2="-44" y2="0" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" />
+                      <circle cx="-46" cy="0" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M -28 -16 L -36 -16 L -36 -28 L -44 -28" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="-46" cy="-28" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M -28 -16 L -36 -16 L -36 -28 L -44 -28" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="-46" cy="-28" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M -28 16 L -36 16 L -36 28 L -44 28" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="-46" cy="28" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M -28 16 L -36 16 L -36 28 L -44 28" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="-46" cy="28" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
                       {/* PRAWE 3 ŚCIEŻKI */}
-                      <line x1="28" y1="0" x2="44" y2="0" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
-                      <circle cx="46" cy="0" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <line x1="28" y1="0" x2="44" y2="0" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" />
+                      <circle cx="46" cy="0" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M 28 -16 L 36 -16 L 36 -28 L 44 -28" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="46" cy="-28" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M 28 -16 L 36 -16 L 36 -28 L 44 -28" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="46" cy="-28" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
-                      <path d="M 28 16 L 36 16 L 36 28 L 44 28" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="46" cy="28" r="4.5" fill="#080d16" stroke="#38bdf8" strokeWidth="3" />
+                      <path d="M 28 16 L 36 16 L 36 28 L 44 28" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="46" cy="28" r="4.5" fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth="3" />
 
                       {/* ──────────────── CENTRALNY KWADRAT CHIPA Z ZAOKRĄGLONYMI ROGAMI ──────────────── */}
                       <rect
@@ -827,8 +882,8 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                         width="56"
                         height="56"
                         rx="12"
-                        fill="#080d16"
-                        stroke="#38bdf8"
+                        fill={ton(8)}
+                        stroke="hsl(var(--primary))"
                         strokeWidth="3.2"
                       />
 
@@ -836,7 +891,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                       <text
                         x="0"
                         y="9"
-                        fill="#ffffff"
+                        fill={ton(100)}
                         fontSize="24"
                         fontFamily="sans-serif"
                         fontWeight="900"
@@ -860,7 +915,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                     <path
                       d={`M ${cx - 120} ${cy} L ${cx} ${cy + 65} L ${cx + 120} ${cy} L ${cx + 120} ${cy + 10} L ${cx} ${cy + 75} L ${cx - 120} ${cy + 10} Z`}
                       fill="url(#chipBevelGrad)"
-                      stroke="#1e293b"
+                      stroke="hsl(var(--primary)/0.25)"
                       strokeWidth="1"
                     />
 
@@ -868,7 +923,7 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                     <path
                       d={`M ${cx} ${cy - 65} L ${cx + 120} ${cy} L ${cx} ${cy + 65} L ${cx - 120} ${cy} Z`}
                       fill="url(#chipTopGrad)"
-                      stroke={isTop ? "#38bdf8" : "hsl(var(--foreground))"}
+                      stroke={isTop ? "hsl(var(--primary))" : "hsl(var(--foreground))"}
                       strokeOpacity={isTop ? 0.95 : 0.25}
                       strokeWidth={isTop ? 2.2 : 1}
                       filter={isTop ? "url(#laserGlow)" : undefined}
@@ -878,23 +933,23 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                     <path
                       d={`M ${cx - 90} ${cy} L ${cx - 45} ${cy - 25} L ${cx} ${cy - 52} L ${cx + 45} ${cy - 25} L ${cx + 90} ${cy}`}
                       fill="none"
-                      stroke="#38bdf8"
+                      stroke="hsl(var(--primary))"
                       strokeOpacity={isTop ? 0.45 : 0.15}
                       strokeWidth="1.2"
                     />
                     <path
                       d={`M ${cx - 90} ${cy} L ${cx - 45} ${cy + 25} L ${cx} ${cy + 52} L ${cx + 45} ${cy + 25} L ${cx + 90} ${cy}`}
                       fill="none"
-                      stroke="#38bdf8"
+                      stroke="hsl(var(--primary))"
                       strokeOpacity={isTop ? 0.45 : 0.15}
                       strokeWidth="1.2"
                     />
 
                     {/* Narożne punkty lutownicze */}
-                    <circle cx={cx - 105} cy={cy} r="2.5" fill="#38bdf8" fillOpacity={isTop ? 0.9 : 0.4} />
-                    <circle cx={cx + 105} cy={cy} r="2.5" fill="#38bdf8" fillOpacity={isTop ? 0.9 : 0.4} />
-                    <circle cx={cx} cy={cy - 52} r="2.5" fill="#38bdf8" fillOpacity={isTop ? 0.9 : 0.4} />
-                    <circle cx={cx} cy={cy + 52} r="2.5" fill="#38bdf8" fillOpacity={isTop ? 0.9 : 0.4} />
+                    <circle cx={cx - 105} cy={cy} r="2.5" fill="hsl(var(--primary))" fillOpacity={isTop ? 0.9 : 0.4} />
+                    <circle cx={cx + 105} cy={cy} r="2.5" fill="hsl(var(--primary))" fillOpacity={isTop ? 0.9 : 0.4} />
+                    <circle cx={cx} cy={cy - 52} r="2.5" fill="hsl(var(--primary))" fillOpacity={isTop ? 0.9 : 0.4} />
+                    <circle cx={cx} cy={cy + 52} r="2.5" fill="hsl(var(--primary))" fillOpacity={isTop ? 0.9 : 0.4} />
 
                     {/* Wizualizacja na środku wafla (osadzona w 3D) */}
                     <g transform={`translate(${cx}, ${cy})`}>
@@ -913,12 +968,12 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                 y1="42"
                 x2={370 - 2 * sepX - 120}
                 y2={290 - 2 * sepY}
-                stroke="#38bdf8"
+                stroke="hsl(var(--primary))"
                 strokeWidth="1.2"
                 strokeDasharray="3 3"
                 opacity={Math.min(1, Math.max(0, (scrollProgress - 0.12) * 1.5))}
               />
-              <circle cx="170" cy="42" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.12) * 1.5))} />
+              <circle cx="170" cy="42" r="3" fill="hsl(var(--primary))" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.12) * 1.5))} />
 
               {/* 2. Prawa góra -> Multimodal & Pliki (Wafer 1) */}
               <line
@@ -926,12 +981,12 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                 y1="127"
                 x2={370 - 1 * sepX + 120}
                 y2={290 - 1 * sepY}
-                stroke="#38bdf8"
+                stroke="hsl(var(--primary))"
                 strokeWidth="1.2"
                 strokeDasharray="3 3"
                 opacity={Math.min(1, Math.max(0, (scrollProgress - 0.20) * 1.5))}
               />
-              <circle cx="570" cy="127" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.20) * 1.5))} />
+              <circle cx="570" cy="127" r="3" fill="hsl(var(--primary))" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.20) * 1.5))} />
 
               {/* 3. Lewy środek -> Dopasowanie Czatu (Wafer 2) */}
               <line
@@ -939,12 +994,12 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                 y1="282"
                 x2={370 - 120}
                 y2={290}
-                stroke="#38bdf8"
+                stroke="hsl(var(--primary))"
                 strokeWidth="1.2"
                 strokeDasharray="3 3"
                 opacity={Math.min(1, Math.max(0, (scrollProgress - 0.28) * 1.5))}
               />
-              <circle cx="170" cy="282" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.28) * 1.5))} />
+              <circle cx="170" cy="282" r="3" fill="hsl(var(--primary))" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.28) * 1.5))} />
 
               {/* 4. Prawa dół -> Wspólny Kontekst (Wafer 3) */}
               <line
@@ -952,12 +1007,12 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                 y1="397"
                 x2={370 + 1 * sepX + 120}
                 y2={290 + 1 * sepY}
-                stroke="#38bdf8"
+                stroke="hsl(var(--primary))"
                 strokeWidth="1.2"
                 strokeDasharray="3 3"
                 opacity={Math.min(1, Math.max(0, (scrollProgress - 0.36) * 1.5))}
               />
-              <circle cx="570" cy="397" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.36) * 1.5))} />
+              <circle cx="570" cy="397" r="3" fill="hsl(var(--primary))" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.36) * 1.5))} />
 
               {/* 5. Lewy dół -> Prywatność & RODO (Wafer 4) */}
               <line
@@ -965,12 +1020,12 @@ function Module01ChatAiZigzagSection({ onNavigate }: { onNavigate: (p: HomePageI
                 y1="502"
                 x2={370 + 2 * sepX - 120}
                 y2={290 + 2 * sepY}
-                stroke="#38bdf8"
+                stroke="hsl(var(--primary))"
                 strokeWidth="1.2"
                 strokeDasharray="3 3"
                 opacity={Math.min(1, Math.max(0, (scrollProgress - 0.44) * 1.5))}
               />
-              <circle cx="170" cy="502" r="3" fill="#38bdf8" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.44) * 1.5))} />
+              <circle cx="170" cy="502" r="3" fill="hsl(var(--primary))" opacity={Math.min(1, Math.max(0, (scrollProgress - 0.44) * 1.5))} />
             </svg>
 
             {/* ─────────────────────────────────────────────────────────────
@@ -1321,7 +1376,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
   }) => {
     const a = P3(0, 0, z0), b = P3(0, 0, z1)
     const ox = SIL_Z.x * r * S, oy = SIL_Z.y * r * S
-    const st = o.stroke ?? '#7d8ea6'
+    const st = o.stroke ?? tonAkc(55, 15)
     const sw = o.sw ?? 1.3
     const bore = (o.bore ?? 0.60) * r
     const quad = `M ${(a.x + ox).toFixed(1)} ${(a.y + oy).toFixed(1)} L ${(b.x + ox).toFixed(1)} ${(b.y + oy).toFixed(1)} L ${(b.x - ox).toFixed(1)} ${(b.y - oy).toFixed(1)} L ${(a.x - ox).toFixed(1)} ${(a.y - oy).toFixed(1)} Z`
@@ -1333,14 +1388,14 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
         <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke={st} strokeWidth={sw} />
         <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke={st} strokeWidth={sw} />
         {/* ścianka wewnętrzna widoczna w głębi otworu */}
-        {Ring(z0, bore, { fill: 'none', stroke: '#243244', strokeWidth: 1.6, strokeOpacity: 0.8 })}
+        {Ring(z0, bore, { fill: 'none', stroke: tonAkc(21, 12), strokeWidth: 1.6, strokeOpacity: 0.8 })}
         {Annulus(z1, r, bore, { fill: o.cap, stroke: st, strokeWidth: sw })}
       </>
     )
   }
 
   /** Walec pionowy (pokrętła na płycie). */
-  const VTube = (x: number, z: number, y0: number, y1: number, r: number, band: string, cap: string, st = '#9fb0c6', sw = 1.1) => {
+  const VTube = (x: number, z: number, y0: number, y1: number, r: number, band: string, cap: string, st = tonAkc(68, 15), sw = 1.1) => {
     const a = P3(x, y0, z), b = P3(x, y1, z)
     const ox = SIL_Y.x * r * S, oy = SIL_Y.y * r * S
     return (
@@ -1356,7 +1411,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
   /** Radełkowanie — żłobki tylko po widocznej połowie walca, z jasnością
       rosnącą ku krawędzi sylwetki, jak na realnym toczonym metalu. */
-  const Knurl = (z0: number, z1: number, r: number, n: number, color = '#94a3b8') => {
+  const Knurl = (z0: number, z1: number, r: number, n: number, color = tonAkc(63, 13)) => {
     const out = []
     for (let i = 0; i < n; i++) {
       const t = (i / n) * Math.PI * 2
@@ -1377,15 +1432,15 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
     const hi = rim(zf, r * 0.58, 2.5)
     return (
       <g opacity={o}>
-        {Ring(zb, r, { fill: 'none', stroke: '#7dd3fc', strokeWidth: 1, strokeOpacity: 0.32 })}
-        <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke="#9ad9fb" strokeWidth={1.2} strokeOpacity={0.55} />
-        <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke="#9ad9fb" strokeWidth={1.2} strokeOpacity={0.55} />
-        {Ring(zf, r, { fill, fillOpacity: 0.34, stroke: '#9ad9fb', strokeWidth: 1.5 })}
-        {Ring(zf, r * 0.84, { fill: 'none', stroke: '#e0f2fe', strokeWidth: 0.8, strokeOpacity: 0.3 })}
+        {Ring(zb, r, { fill: 'none', stroke: tonAkc(78, 47), strokeWidth: 1, strokeOpacity: 0.32 })}
+        <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke={tonAkc(81, 36)} strokeWidth={1.2} strokeOpacity={0.55} />
+        <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke={tonAkc(81, 36)} strokeWidth={1.2} strokeOpacity={0.55} />
+        {Ring(zf, r, { fill, fillOpacity: 0.34, stroke: tonAkc(81, 36), strokeWidth: 1.5 })}
+        {Ring(zf, r * 0.84, { fill: 'none', stroke: tonAkc(94, 11), strokeWidth: 0.8, strokeOpacity: 0.3 })}
         <ellipse
           cx={0} cy={0} rx={r * RING.rx * S * 0.30} ry={r * RING.ry * S * 0.11}
           transform={`translate(${hi.x.toFixed(1)} ${hi.y.toFixed(1)}) rotate(${(RING.rot + 24).toFixed(1)})`}
-          fill="#ffffff" opacity={0.4}
+          fill={ton(100)} opacity={0.4}
         />
       </g>
     )
@@ -1403,13 +1458,13 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
       const a = rim(z, rin, t)
       hole.push(`${a.x.toFixed(1)},${a.y.toFixed(1)}`)
       const b = rim(z, r * 0.93, t + Math.PI / n)
-      edges.push(<line key={`ib${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#38bdf8" strokeWidth={0.9} opacity={0.45} />)
+      edges.push(<line key={`ib${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(var(--primary))" strokeWidth={0.9} opacity={0.45} />)
     }
     return (
       <g opacity={o}>
-        {Tube(z - 5, z + 5, r, { band: 'url(#nbBarrel)', cap: '#0c1626', stroke: '#8ba0b8', sw: 1.3, bore: 0.93 })}
+        {Tube(z - 5, z + 5, r, { band: 'url(#nbBarrel)', cap: tonAkc(11, 10), stroke: tonAkc(61, 17), sw: 1.3, bore: 0.93 })}
         {edges}
-        <polygon points={hole.join(' ')} fill="#020a14" fillOpacity={0.55} stroke="#7dd3fc" strokeWidth={1.3} />
+        <polygon points={hole.join(' ')} fill={tonAkc(7, 7)} fillOpacity={0.55} stroke="hsl(var(--primary))" strokeWidth={1.3} />
       </g>
     )
   }
@@ -1427,7 +1482,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
   /* Kreskowany ślad montażowy — krótki, tylko przy podzespołach korpusu. */
   const Trail = (a: { x: number; y: number }, b: { x: number; y: number }, o: number) => (
-    <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#38bdf8" strokeWidth={0.9} strokeDasharray="3 6" opacity={o * 0.35} />
+    <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(var(--primary))" strokeWidth={0.9} strokeDasharray="3 6" opacity={o * 0.35} />
   )
 
   /* Stos optyki sortowany realną głębią — kolejność zawsze fizycznie poprawna. */
@@ -1442,33 +1497,33 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
           <>
             {[0.35, 2.45, 4.55].map((a, i) => {
               const q = rim(z1, t.r * 0.94, a), w = rim(z1, t.r * 0.78, a)
-              return <line key={`by${i}`} x1={q.x} y1={q.y} x2={w.x} y2={w.y} stroke="#cbd5e1" strokeWidth={2.6} opacity={0.6} />
+              return <line key={`by${i}`} x1={q.x} y1={q.y} x2={w.x} y2={w.y} stroke={tonAkc(83, 8)} strokeWidth={2.6} opacity={0.6} />
             })}
           </>
         )
       } else if (t.id === 'T2') {
         inner = (
           <>
-            {Knurl(z0 + 3, z1 - 3, t.r, 46, '#64748b')}
+            {Knurl(z0 + 3, z1 - 3, t.r, 46, tonAkc(45, 15))}
           </>
         )
       } else if (t.id === 'T3') {
         inner = (
           <>
-            {Knurl(z0 + 4, z1 - 4, t.r, 64, '#94a3b8')}
-            {Ring(z1 - 4, t.r * 1.01, { fill: 'none', stroke: '#cbd5e1', strokeWidth: 1, strokeOpacity: 0.4 })}
+            {Knurl(z0 + 4, z1 - 4, t.r, 64, tonAkc(63, 13))}
+            {Ring(z1 - 4, t.r * 1.01, { fill: 'none', stroke: tonAkc(83, 8), strokeWidth: 1, strokeOpacity: 0.4 })}
           </>
         )
       } else if (t.id === 'T4') {
         inner = (
           <>
-            {Knurl(z0 + 3, z1 - 3, t.r, 54, '#94a3b8')}
+            {Knurl(z0 + 3, z1 - 3, t.r, 54, tonAkc(63, 13))}
           </>
         )
       } else {
         inner = (
           <>
-            {Ring(z1, t.r * 0.90, { fill: 'none', stroke: '#cbd5e1', strokeWidth: 2.4, strokeOpacity: 0.55 })}
+            {Ring(z1, t.r * 0.90, { fill: 'none', stroke: tonAkc(83, 8), strokeWidth: 2.4, strokeOpacity: 0.55 })}
           </>
         )
       }
@@ -1479,7 +1534,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
           <g key={t.id}>
             {Tube(z0, z1, t.r, {
               band: t.id === 'T5' ? 'url(#nbBezel)' : 'url(#nbBarrel)',
-              cap: 'url(#nbCap)', stroke: '#8ba0b8', sw: 1.4,
+              cap: 'url(#nbCap)', stroke: tonAkc(61, 17), sw: 1.4,
               bore: t.id === 'T1' ? 0.68 : 0.60,
             })}
             {inner}
@@ -1571,48 +1626,54 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
             <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="nbSkinF" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#18222f" /><stop offset="55%" stopColor="#0b111c" /><stop offset="100%" stopColor="#05080e" />
+                  <stop offset="0%" stopColor={tonAkc(15, 9)} /><stop offset="55%" stopColor={tonAkc(9, 6)} /><stop offset="100%" stopColor={ton(6)} />
                 </linearGradient>
                 <linearGradient id="nbSkinS" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#0d1522" /><stop offset="100%" stopColor="#03060b" />
+                  <stop offset="0%" stopColor={tonAkc(11, 8)} /><stop offset="100%" stopColor={ton(6)} />
                 </linearGradient>
                 <linearGradient id="nbSkinT" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#1d2734" /><stop offset="100%" stopColor="#090e16" />
+                  <stop offset="0%" stopColor={tonAkc(17, 9)} /><stop offset="100%" stopColor={ton(8)} />
                 </linearGradient>
                 <linearGradient id="nbMagT" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#dbe3ec" /><stop offset="42%" stopColor="#8b99aa" /><stop offset="100%" stopColor="#3d4959" />
+                  <stop offset="0%" stopColor={tonAkc(88, 6)} /><stop offset="42%" stopColor={tonAkc(59, 12)} /><stop offset="100%" stopColor={tonAkc(29, 10)} />
                 </linearGradient>
                 <linearGradient id="nbMagF" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#a1aebe" /><stop offset="58%" stopColor="#4e5a6b" /><stop offset="100%" stopColor="#252f3d" />
+                  <stop offset="0%" stopColor={tonAkc(67, 11)} /><stop offset="58%" stopColor={tonAkc(35, 11)} /><stop offset="100%" stopColor={tonAkc(20, 9)} />
                 </linearGradient>
                 <linearGradient id="nbMagS" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#68768a" /><stop offset="100%" stopColor="#1b2430" />
+                  <stop offset="0%" stopColor={tonAkc(46, 13)} /><stop offset="100%" stopColor={tonAkc(16, 8)} />
                 </linearGradient>
                 {/* Anodowany tubus — pas boczny walca oświetlony od góry */}
                 <linearGradient id="nbBarrel" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#48586f" /><stop offset="15%" stopColor="#95a7bd" />
-                  <stop offset="35%" stopColor="#1f2937" /><stop offset="72%" stopColor="#06090f" />
-                  <stop offset="92%" stopColor="#18212e" /><stop offset="100%" stopColor="#36445a" />
+                  <stop offset="0%" stopColor={tonAkc(34, 15)} /><stop offset="15%" stopColor={tonAkc(64, 15)} />
+                  <stop offset="35%" stopColor={tonAkc(17, 9)} /><stop offset="72%" stopColor={ton(7)} />
+                  <stop offset="92%" stopColor={tonAkc(15, 8)} /><stop offset="100%" stopColor={tonAkc(27, 13)} />
                 </linearGradient>
                 <linearGradient id="nbBezel" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#54637a" /><stop offset="16%" stopColor="#aebcce" />
-                  <stop offset="38%" stopColor="#1c2532" /><stop offset="74%" stopColor="#05080d" />
-                  <stop offset="94%" stopColor="#1d2632" /><stop offset="100%" stopColor="#41505f" />
+                  <stop offset="0%" stopColor={tonAkc(38, 14)} /><stop offset="16%" stopColor={tonAkc(73, 12)} />
+                  <stop offset="38%" stopColor={tonAkc(16, 8)} /><stop offset="74%" stopColor={ton(6)} />
+                  <stop offset="94%" stopColor={tonAkc(16, 8)} /><stop offset="100%" stopColor={tonAkc(31, 11)} />
                 </linearGradient>
                 <linearGradient id="nbCap" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#2b3646" /><stop offset="55%" stopColor="#0d1522" /><stop offset="100%" stopColor="#050a13" />
+                  <stop offset="0%" stopColor={tonAkc(22, 10)} /><stop offset="55%" stopColor={tonAkc(11, 8)} /><stop offset="100%" stopColor={ton(7)} />
                 </linearGradient>
                 <radialGradient id="nbGlassR" cx="34%" cy="26%" r="80%">
-                  <stop offset="0%" stopColor="#cdeafd" /><stop offset="45%" stopColor="#0ea5e9" /><stop offset="100%" stopColor="#082c46" />
+                  <stop offset="0%" stopColor={ton(100)} stopOpacity="0.75" />
+                  <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor={ton(7)} stopOpacity="0.95" />
                 </radialGradient>
                 <radialGradient id="nbGlassF" cx="32%" cy="24%" r="82%">
-                  <stop offset="0%" stopColor="#e0f2fe" /><stop offset="34%" stopColor="#38bdf8" /><stop offset="100%" stopColor="#062032" />
+                  <stop offset="0%" stopColor={ton(100)} stopOpacity="0.85" />
+                  <stop offset="32%" stopColor="hsl(var(--primary))" stopOpacity="0.65" />
+                  <stop offset="100%" stopColor={ton(6)} stopOpacity="0.95" />
                 </radialGradient>
                 <linearGradient id="nbSensor" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#1d4ed8" /><stop offset="48%" stopColor="#0b2036" /><stop offset="100%" stopColor="#334155" />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.85" />
+                  <stop offset="45%" stopColor={ton(12)} />
+                  <stop offset="100%" stopColor={ton(8)} />
                 </linearGradient>
                 <radialGradient id="nbFloor" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#020617" stopOpacity="0.8" /><stop offset="100%" stopColor="#020617" stopOpacity="0" />
+                  <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.8" /><stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
                 </radialGradient>
               </defs>
 
@@ -1623,10 +1684,10 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g>
                 {Trail(P3(0, 0, DOOR.z1), P3(0, 0, DOOR.z0 + zDoor), fade(0.08))}
                 {Box(-DOOR.x, -DOOR.y, DOOR.z0 + zDoor, DOOR.x, DOOR.y, DOOR.z1 + zDoor,
-                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', '#3f5064', 1.2)}
+                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', tonAkc(31, 14), 1.2)}
                 <g transform={plane(0, 0, DOOR.z1 + zDoor, ...FRONT)}>
-                  <rect x={-74} y={-34} width={148} height={68} rx={4} fill="#070d17" stroke="#1e293b" strokeWidth={0.8} />
-                  <rect x={-58} y={-22} width={116} height={44} rx={3} fill="none" stroke="#38bdf8" strokeWidth={0.5} strokeOpacity={0.28} strokeDasharray="3 3" />
+                  <rect x={-74} y={-34} width={148} height={68} rx={4} fill={tonAkc(8, 6)} stroke={tonAkc(18, 11)} strokeWidth={0.8} />
+                  <rect x={-58} y={-22} width={116} height={44} rx={3} fill="none" stroke="hsl(var(--primary))" strokeWidth={0.5} strokeOpacity={0.28} strokeDasharray="3 3" />
                 </g>
               </g>
 
@@ -1635,36 +1696,36 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g opacity={0.3 + fade(0.05, 0.2) * 0.7}>
                 {Trail(P3(0, 0, SENS.z1), P3(xSens, ySens, SENS.z0 + zSens), fade(0.06))}
                 {Box(-SENS.x + xSens, -SENS.y + ySens, SENS.z0 + zSens, SENS.x + xSens, SENS.y + ySens, SENS.z1 + zSens,
-                  '#0b1a2b', '#14324d', 'url(#nbSensor)', '#7dd3fc', 1.2)}
+                  ton(8), tonAkc(13, 6), 'url(#nbSensor)', 'hsl(var(--primary))', 1.2)}
                 <g transform={plane(xSens, ySens, SENS.z1 + zSens, ...FRONT)}>
-                  <rect x={-32} y={-18} width={64} height={36} fill="#05101c" stroke="#9ad9fb" strokeWidth={0.9} />
-                  {[-12, -4, 4, 12].map((yy) => <line key={yy} x1={-30} y1={yy} x2={30} y2={yy} stroke="#38bdf8" strokeWidth={0.4} strokeOpacity={0.35} />)}
-                  {[-24, -12, 0, 12, 24].map((xx) => <line key={xx} x1={xx} y1={-16} x2={xx} y2={16} stroke="#38bdf8" strokeWidth={0.4} strokeOpacity={0.35} />)}
-                  <text x={0} y={3.5} fill="#ffffff" fontSize={12} fontFamily="sans-serif" fontWeight="900" textAnchor="middle">4K</text>
-                  {[-40, 40].map((xx) => <rect key={xx} x={xx - 1.5} y={-14} width={3} height={28} fill="#94a3b8" opacity={0.6} />)}
+                  <rect x={-32} y={-18} width={64} height={36} fill={ton(7)} stroke="hsl(var(--primary))" strokeWidth={0.9} />
+                  {[-12, -4, 4, 12].map((yy) => <line key={yy} x1={-30} y1={yy} x2={30} y2={yy} stroke="hsl(var(--primary))" strokeWidth={0.4} strokeOpacity={0.4} />)}
+                  {[-24, -12, 0, 12, 24].map((xx) => <line key={xx} x1={xx} y1={-16} x2={xx} y2={16} stroke="hsl(var(--primary))" strokeWidth={0.4} strokeOpacity={0.4} />)}
+                  <text x={0} y={3.5} fill={ton(100)} fontSize={12} fontFamily="sans-serif" fontWeight="900" textAnchor="middle">4K</text>
+                  {[-40, 40].map((xx) => <rect key={xx} x={xx - 1.5} y={-14} width={3} height={28} fill={tonAkc(63, 13)} opacity={0.6} />)}
                 </g>
               </g>
               {/* ── 3. KORPUS (skórzana obudowa) ── */}
               <g>
                 {Box(-BODY.x, BODY.y0, -BODY.z, BODY.x, BODY.y1, BODY.z,
-                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', '#42536a', 1.5)}
+                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', tonAkc(32, 15), 1.5)}
 
                 <g transform={plane(0, -6, BODY.z, ...FRONT)}>
-                  <rect x={-88} y={-46} width={176} height={92} rx={5} fill="#060b14" stroke="#1b2532" strokeWidth={0.7} />
+                  <rect x={-88} y={-46} width={176} height={92} rx={5} fill={ton(7)} stroke={tonAkc(16, 9)} strokeWidth={0.7} />
                   {Array.from({ length: 12 }, (_, i) => (
-                    <line key={`vt${i}`} x1={-82 + i * 15} y1={-42} x2={-82 + i * 15} y2={42} stroke="#5b7796" strokeWidth={0.3} strokeOpacity={0.13} />
+                    <line key={`vt${i}`} x1={-82 + i * 15} y1={-42} x2={-82 + i * 15} y2={42} stroke={tonAkc(45, 22)} strokeWidth={0.3} strokeOpacity={0.13} />
                   ))}
                   <g transform="translate(-66 12)">
-                    <circle r={11} fill="#0c1421" stroke="#8798ad" strokeWidth={0.9} />
-                    <path d="M 0 0 L 8 -7" stroke="#cbd5e1" strokeWidth={2.4} strokeLinecap="round" />
+                    <circle r={11} fill={tonAkc(10, 8)} stroke={tonAkc(58, 14)} strokeWidth={0.9} />
+                    <path d="M 0 0 L 8 -7" stroke={tonAkc(83, 8)} strokeWidth={2.4} strokeLinecap="round" />
                   </g>
-                  <circle cx={64} cy={0} r={6} fill="#121d2c" stroke="#8798ad" strokeWidth={0.9} />
+                  <circle cx={64} cy={0} r={6} fill={tonAkc(13, 10)} stroke={tonAkc(58, 14)} strokeWidth={0.9} />
                 </g>
 
                 <g transform={plane(BODY.x, -6, 0, ...SIDE)}>
-                  <rect x={-28} y={-44} width={56} height={88} rx={4} fill="#05080f" stroke="#1b2532" strokeWidth={0.7} />
+                  <rect x={-28} y={-44} width={56} height={88} rx={4} fill={ton(6)} stroke={tonAkc(16, 9)} strokeWidth={0.7} />
                   {Array.from({ length: 10 }, (_, i) => (
-                    <line key={i} x1={-24} y1={-36 + i * 8} x2={24} y2={-36 + i * 8} stroke="#5b7796" strokeWidth={0.6} strokeOpacity={0.18} />
+                    <line key={i} x1={-24} y1={-36 + i * 8} x2={24} y2={-36 + i * 8} stroke={tonAkc(45, 22)} strokeWidth={0.6} strokeOpacity={0.18} />
                   ))}
                 </g>
               </g>
@@ -1673,31 +1734,31 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g>
                 {Trail(P3(0, PLATE.y0, 0), P3(0, PLATE.y1 + yPlate, 0), fade(0.08))}
                 {Box(-BODY.x, PLATE.y0 + yPlate, -BODY.z, BODY.x, PLATE.y1 + yPlate, BODY.z,
-                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', '#c3d0e0', 1.3)}
+                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', tonAkc(81, 11), 1.3)}
 
                 <g transform={plane(0, PLATE.y0 + yPlate + 9, BODY.z, ...FRONT)}>
-                  <rect x={-74} y={-6} width={26} height={12} rx={2} fill="#08131d" stroke="#b9c7d8" strokeWidth={0.8} />
-                  <rect x={30} y={-6} width={20} height={12} rx={2} fill="#08131d" stroke="#b9c7d8" strokeWidth={0.8} />
-                  <circle cx={-61} cy={0} r={3.4} fill="#7dd3fc" opacity={0.42} />
+                  <rect x={-74} y={-6} width={26} height={12} rx={2} fill={tonAkc(10, 8)} stroke={tonAkc(77, 12)} strokeWidth={0.8} />
+                  <rect x={30} y={-6} width={20} height={12} rx={2} fill={tonAkc(10, 8)} stroke={tonAkc(77, 12)} strokeWidth={0.8} />
+                  <circle cx={-61} cy={0} r={3.4} fill={tonAkc(78, 47)} opacity={0.42} />
                 </g>
 
-                {VTube(48, -2, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 11, 19, '#3a465a', 'url(#nbMagT)', '#dbe3ec', 1.2)}
+                {VTube(48, -2, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 11, 19, tonAkc(28, 12), 'url(#nbMagT)', tonAkc(88, 6), 1.2)}
                 {Array.from({ length: 18 }, (_, i) => {
                   const t = (i / 18) * Math.PI * 2
                   const c0 = P3(48 + Math.cos(t) * 15, PLATE.y1 + yPlate + 11, -2 + Math.sin(t) * 15)
                   const c1 = P3(48 + Math.cos(t) * 18.6, PLATE.y1 + yPlate + 11, -2 + Math.sin(t) * 18.6)
-                  return <line key={`sd${i}`} x1={c0.x} y1={c0.y} x2={c1.x} y2={c1.y} stroke="#46536a" strokeWidth={1} opacity={0.75} />
+                  return <line key={`sd${i}`} x1={c0.x} y1={c0.y} x2={c1.x} y2={c1.y} stroke={tonAkc(33, 13)} strokeWidth={1} opacity={0.75} />
                 })}
 
-                {VTube(-58, -4, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 9, 15, '#3a465a', 'url(#nbMagT)', '#dbe3ec', 1.1)}
+                {VTube(-58, -4, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 9, 15, tonAkc(28, 12), 'url(#nbMagT)', tonAkc(88, 6), 1.1)}
 
-                {VTube(22, 8, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 6, 7.5, '#4a5768', '#c3d0e0', '#dbe3ec', 1)}
+                {VTube(22, 8, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 6, 7.5, tonAkc(34, 11), tonAkc(81, 11), tonAkc(88, 6), 1)}
 
                 {Box(-14, PLATE.y1 + yPlate, -14, 12, PLATE.y1 + yPlate + 6, 4,
-                  '#131e2c', '#212d3c', '#0c1621', '#8798ad', 0.9)}
+                  tonAkc(14, 9), tonAkc(19, 10), tonAkc(11, 8), tonAkc(58, 14), 0.9)}
 
                 <g transform={plane(0, PLATE.y1 + yPlate + 0.4, 0, ...TOPF)}>
-                  <path d="M 66 16 L 88 20 L 92 12 L 70 8 Z" fill="#8b99aa" stroke="#dbe3ec" strokeWidth={0.6} />
+                  <path d="M 66 16 L 88 20 L 92 12 L 70 8 Z" fill={tonAkc(59, 12)} stroke={tonAkc(88, 6)} strokeWidth={0.6} />
                 </g>
               </g>
 
@@ -1705,13 +1766,13 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g opacity={0.45 + fade(0.04, 0.2) * 0.55}>
                 {Trail(P3(-10, PRISM.y0, 4), P3(-10 + xPrism, PRISM.y0 + yPrism, 4), fade(0.06))}
                 {Box(PRISM.x0 + xPrism, PRISM.y0 + yPrism, PRISM.z0, PRISM.x1 + xPrism, PRISM.y1 + yPrism, PRISM.z1,
-                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', '#c3d0e0', 1.3)}
+                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', tonAkc(81, 11), 1.3)}
                 <g transform={plane(-10 + xPrism, PRISM.y0 + yPrism + 14, PRISM.z1, ...FRONT)}>
-                  <rect x={-17} y={-9} width={34} height={18} rx={2} fill="#06121c" stroke="#7dd3fc" strokeWidth={0.9} />
-                  <path d="M -14 7 L 0 -6 L 14 7 Z" fill="#38bdf8" fillOpacity={0.3} stroke="#9ad9fb" strokeWidth={0.7} />
+                  <rect x={-17} y={-9} width={34} height={18} rx={2} fill={tonAkc(9, 8)} stroke="hsl(var(--primary))" strokeWidth={0.9} />
+                  <path d="M -14 7 L 0 -6 L 14 7 Z" fill="hsl(var(--primary))" fillOpacity="0.3" stroke="hsl(var(--primary))" strokeWidth={0.7} />
                 </g>
                 {Box(-24 + xPrism, PRISM.y0 + yPrism + 6, PRISM.z0 - 10, 4 + xPrism, PRISM.y1 + yPrism - 6, PRISM.z0,
-                  '#0f1826', '#1d2836', '#0b1320', '#6d7c92', 0.9)}
+                  tonAkc(12, 9), tonAkc(17, 9), tonAkc(10, 8), tonAkc(48, 14), 0.9)}
               </g>
 
 
@@ -1725,9 +1786,9 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
                   if (o <= 0.01) return null
                   return (
                     <g key={L.k} opacity={o}>
-                      <line x1={L.ax} y1={L.ay} x2={L.to.x} y2={L.to.y} stroke="#38bdf8" strokeWidth={1.1} strokeDasharray="4 4" opacity={0.75} />
-                      <circle cx={L.to.x} cy={L.to.y} r={3.2} fill="none" stroke="#38bdf8" strokeWidth={1.4} />
-                      <circle cx={L.ax} cy={L.ay} r={2.6} fill="#38bdf8" />
+                      <line x1={L.ax} y1={L.ay} x2={L.to.x} y2={L.to.y} stroke="hsl(var(--primary))" strokeWidth={1.1} strokeDasharray="4 4" opacity={0.75} />
+                      <circle cx={L.to.x} cy={L.to.y} r={3.2} fill="none" stroke="hsl(var(--primary))" strokeWidth={1.4} />
+                      <circle cx={L.ax} cy={L.ay} r={2.6} fill="hsl(var(--primary))" />
                     </g>
                   )
                 })}
@@ -1960,7 +2021,7 @@ function AssistantOrbitVisual() {
 
   /* ── Grafika na licu karty — jeden hairline'owy znak, nic więcej ── */
   const glyphOf = (kind: string) => {
-    const st = { stroke: '#e8eef6', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' }
+    const st = { stroke: 'hsl(var(--foreground))', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' }
     const thin = { ...st, strokeWidth: 1.45 }
     switch (kind) {
       case 'note': // kartka z zagiętym rogiem i tekstem
@@ -1981,7 +2042,7 @@ function AssistantOrbitVisual() {
             <rect x={-12} y={-11} width={24} height={22} rx={2.5} {...st} />
             <line x1={-12} y1={-4} x2={12} y2={-4} {...st} />
             {[-6, 0, 6].map((x) => [1, 6].map((y) => (
-              <circle key={`${x}_${y}`} cx={x} cy={y} r={1.4} fill="#e8eef6" />
+              <circle key={`${x}_${y}`} cx={x} cy={y} r={1.4} fill="hsl(var(--primary))" />
             )))}
           </>
         )
@@ -1989,7 +2050,7 @@ function AssistantOrbitVisual() {
         return (
           <>
             <circle cx={-2} cy={-3} r={9.5} {...st} />
-            <line x1={5} y1={4} x2={11.5} y2={10.5} strokeWidth={2.8} stroke="#e8eef6" strokeLinecap="round" />
+            <line x1={5} y1={4} x2={11.5} y2={10.5} strokeWidth={2.8} stroke="hsl(var(--foreground))" strokeLinecap="round" />
           </>
         )
       case 'task': // lista zadań z odhaczonymi polami
@@ -2012,7 +2073,7 @@ function AssistantOrbitVisual() {
           </>
         )
       default:
-        return <circle cx={0} cy={0} r={2.4} fill="#7dd3fc" />
+        return <circle cx={0} cy={0} r={2.4} fill="hsl(var(--primary))" />
     }
   }
 
@@ -2046,30 +2107,30 @@ function AssistantOrbitVisual() {
             return (
               <g transform={tr}>
                 <clipPath id="nbAsClip"><path d={d} /></clipPath>
-                <path d={d} fill="url(#nbAsBody)" stroke="#3a4c66" strokeWidth={1.1 / k} strokeLinejoin="round" />
-                {/* Linie skanu — faktura, nie kontur */}
-                <g clipPath="url(#nbAsClip)" stroke="#7f96b2" strokeWidth={0.9 / k}>
+                <path d={d} fill="url(#nbAsBody)" stroke="hsl(var(--primary)/0.35)" strokeWidth={1.1 / k} strokeLinejoin="round" />
+                {/* Linie skanu — subtelna faktura w barwie motywu */}
+                <g clipPath="url(#nbAsClip)" stroke="hsl(var(--primary))" strokeWidth={0.85 / k}>
                   {Array.from({ length: 22 }, (_, i) => {
                     const y = -104 + i * 4.8
-                    return <line key={i} x1={-70} y1={y} x2={70} y2={y} opacity={0.14 + (i / 22) * 0.16} />
+                    return <line key={i} x1={-70} y1={y} x2={70} y2={y} opacity={0.08 + (i / 22) * 0.18} />
                   })}
                 </g>
-                {/* Światło po prawej krawędzi — ta sama logika co na aparacie */}
+                {/* Światło po prawej krawędzi — zsynchronizowane z akcentem */}
                 <path
                   d="M 0 -106 C 16 -106 27 -93 27 -75 C 27 -64 25 -54 14 -50 L 17 -38 C 40 -28 62 -18 68 0"
-                  fill="none" stroke="#c3d3e6" strokeWidth={2 / k} strokeLinecap="round" opacity={0.6}
+                  fill="none" stroke="hsl(var(--primary))" strokeWidth={2 / k} strokeLinecap="round" opacity={0.55}
                 />
               </g>
             )
           })()}
 
-          {/* Rdzeń obecności — jedyny cyan na postaci */}
+          {/* Rdzeń obecności w barwie motywu */}
           {(() => {
             const c = P3(0, 74, 0)
             return (
               <>
-                <circle cx={c.x} cy={c.y} r={4} fill="#38bdf8" opacity={0.9} />
-                <circle cx={c.x} cy={c.y} r={9} fill="none" stroke="#38bdf8" strokeWidth={1} opacity={0.32} />
+                <circle cx={c.x} cy={c.y} r={4} fill="hsl(var(--primary))" opacity={0.9} />
+                <circle cx={c.x} cy={c.y} r={9} fill="none" stroke="hsl(var(--primary))" strokeWidth={1} opacity={0.32} />
               </>
             )
           })()}
@@ -2077,9 +2138,9 @@ function AssistantOrbitVisual() {
       ),
     },
     ...cards.map((c) => {
-      // Jasność lica z kąta do światła sceny — jedno światło na całą scenę.
-      const face = 17 + c.lit * 30
-      const edge = 52 + c.lit * 62
+      // Płynna jasność neutralna zamiast zimnego błękitu — na rampie motywu,
+      // więc karta jaśnieje od tła w każdym motywie, nie tylko w ciemnym.
+      const face = ton(6 + c.lit * 10)
       return {
         d: c.d,
         node: (
@@ -2091,12 +2152,12 @@ function AssistantOrbitVisual() {
                 P3(c.cx + c.ux * CW, c.cy - CH, c.cz + c.uz * CW),
                 P3(c.cx - c.ux * CW, c.cy - CH, c.cz - c.uz * CW),
               ].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
-              fill={`rgb(${face} ${face + 6} ${face + 14})`}
-              stroke={`rgb(${edge} ${edge + 14} ${edge + 28})`}
+              fill={face}
+              stroke={c.lit > 0.55 ? 'hsl(var(--primary)/0.65)' : 'hsl(var(--primary)/0.25)'}
               strokeWidth={1.2}
               strokeLinejoin="round"
             />
-            <g transform={cardPlane(c.cx, c.cy, c.cz, c.ux, c.uz)} opacity={0.5 + c.lit * 0.5}>
+            <g transform={cardPlane(c.cx, c.cy, c.cz, c.ux, c.uz)} opacity={0.6 + c.lit * 0.4}>
               {glyphOf(c.glyph)}
             </g>
           </g>
@@ -2116,15 +2177,16 @@ function AssistantOrbitVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbAsBody" x1="0%" y1="0%" x2="100%" y2="60%">
-            <stop offset="0%" stopColor="#0a121e" />
-            <stop offset="55%" stopColor="#111b2a" />
-            <stop offset="100%" stopColor="#1c2a3d" />
+            <stop offset="0%" stopColor={ton(7)} />
+            <stop offset="55%" stopColor={tonAkc(11, 6)} />
+            <stop offset="100%" stopColor="hsl(var(--primary)/0.16)" />
           </linearGradient>
           <radialGradient id="nbAsFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#020617" stopOpacity="0.75" />
-            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+            <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.75" />
+            <stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
           </radialGradient>
         </defs>
+
 
         {/* Cień kontaktowy — sadza scenę na podłożu */}
         {(() => {
@@ -2150,9 +2212,9 @@ function AssistantOrbitVisual() {
             const a = anchorOf(L.card, L.side, L.ay < 300)
             return (
               <g key={L.k} opacity={o}>
-                <line x1={L.ax} y1={L.ay} x2={a.x} y2={a.y} stroke="#38bdf8" strokeWidth={1.1} strokeDasharray="4 4" opacity={0.7} />
-                <circle cx={a.x} cy={a.y} r={3} fill="none" stroke="#38bdf8" strokeWidth={1.3} />
-                <circle cx={L.ax} cy={L.ay} r={2.6} fill="#38bdf8" />
+                <line x1={L.ax} y1={L.ay} x2={a.x} y2={a.y} stroke="hsl(var(--primary))" strokeWidth={1.1} strokeDasharray="4 4" opacity={0.7} />
+                <circle cx={a.x} cy={a.y} r={3} fill="none" stroke="hsl(var(--primary))" strokeWidth={1.3} />
+                <circle cx={L.ax} cy={L.ay} r={2.6} fill="hsl(var(--primary))" />
               </g>
             )
           })}
@@ -2372,14 +2434,14 @@ function DeepResearchVisual() {
   }
 
   const glyph = (kind: number, x: number, y: number, k: number) => {
-    const st = { stroke: '#7dd3fc', strokeWidth: 1.2, fill: '#07131f' }
+    const st = { stroke: 'hsl(var(--primary))', strokeWidth: 1.2, fill: tonAkc(10, 9) }
     const r = 5 * k
     if (kind === 0) return <circle cx={x} cy={y} r={r} {...st} />
     if (kind === 1) return <rect x={x - r * 0.9} y={y - r * 1.15} width={r * 1.8} height={r * 2.3} rx={1} {...st} />
     if (kind === 2) return (
       <>
         <rect x={x - r * 1.1} y={y - r * 0.85} width={r * 2.2} height={r * 1.7} rx={1} {...st} />
-        <line x1={x - r * 1.1} y1={y} x2={x + r * 1.1} y2={y} stroke="#7dd3fc" strokeWidth={0.7} />
+        <line x1={x - r * 1.1} y1={y} x2={x + r * 1.1} y2={y} stroke="hsl(var(--primary))" strokeWidth={0.7} />
       </>
     )
     return <polygon points={`${x},${y - r * 1.25} ${x + r},${y} ${x},${y + r * 1.25} ${x - r},${y}`} {...st} />
@@ -2398,14 +2460,14 @@ function DeepResearchVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbRsBase" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#9fadc0" /><stop offset="100%" stopColor="#3a4759" />
+            <stop offset="0%" stopColor={tonAkc(67, 12)} /><stop offset="100%" stopColor={tonAkc(28, 12)} />
           </linearGradient>
           <linearGradient id="nbRsLid" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6d7d92" /><stop offset="100%" stopColor="#2b3644" />
+            <stop offset="0%" stopColor={tonAkc(48, 14)} /><stop offset="100%" stopColor={tonAkc(22, 9)} />
           </linearGradient>
           <radialGradient id="nbRsFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#020617" stopOpacity="0.72" />
-            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+            <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.72" />
+            <stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
           </radialGradient>
           <filter id="nbRsGlow" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="3" result="b" />
@@ -2423,7 +2485,7 @@ function DeepResearchVisual() {
             return (
               <polyline
                 key={`e${i}`} points={edgePts(pos(e.a), pos(e.b), t, out ? -18 : 12)}
-                fill="none" stroke="#38bdf8" strokeWidth={out ? 0.9 : 1}
+                fill="none" stroke="hsl(var(--primary))" strokeWidth={out ? 0.9 : 1}
                 strokeDasharray={out ? '3 5' : undefined}
                 opacity={(out ? 0.4 : 0.3) * t} strokeLinecap="round"
               />
@@ -2436,34 +2498,34 @@ function DeepResearchVisual() {
           {(() => { const e = P3(0, -3, 0); return <ellipse cx={e.x} cy={e.y} rx={128} ry={30} fill="url(#nbRsFloor)" /> })()}
 
           {/* klapa z ekranem */}
-          <polygon points={poly([[-58, 0, -40], [58, 0, -40], [52, 58, -56], [-52, 58, -56]])} fill="url(#nbRsLid)" stroke="#cbd8e6" strokeWidth={1.3} strokeLinejoin="round" />
-          <polygon points={poly([[-49, 6, -43], [49, 6, -43], [44, 52, -55], [-44, 52, -55]])} fill="#06111c" stroke="#38bdf8" strokeWidth={0.9} strokeOpacity={0.5} />
+          <polygon points={poly([[-58, 0, -40], [58, 0, -40], [52, 58, -56], [-52, 58, -56]])} fill="url(#nbRsLid)" stroke={tonAkc(84, 10)} strokeWidth={1.3} strokeLinejoin="round" />
+          <polygon points={poly([[-49, 6, -43], [49, 6, -43], [44, 52, -55], [-44, 52, -55]])} fill={tonAkc(9, 8)} stroke="hsl(var(--primary))" strokeWidth={0.9} strokeOpacity={0.5} />
           {/* zawartość ekranu: pasek wyszukiwania i wyniki */}
           <g transform={plane(0, 29, -49, [1, 0, 0], [0, -1, 0])} opacity={0.92}>
-            <rect x={-38} y={-19} width={76} height={10} rx={5} fill="#0d2033" stroke="#38bdf8" strokeWidth={0.9} />
-            <circle cx={-31} cy={-14} r={3} fill="none" stroke="#7dd3fc" strokeWidth={0.9} />
-            <line x1={-29} y1={-12} x2={-26.6} y2={-9.6} stroke="#7dd3fc" strokeWidth={0.9} />
-            <line x1={-22} y1={-14} x2={18} y2={-14} stroke="#7dd3fc" strokeWidth={1.2} opacity={0.55} />
+            <rect x={-38} y={-19} width={76} height={10} rx={5} fill="hsl(var(--primary)/0.12)" stroke="hsl(var(--primary))" strokeWidth={0.9} />
+            <circle cx={-31} cy={-14} r={3} fill="none" stroke="hsl(var(--primary))" strokeWidth={0.9} />
+            <line x1={-29} y1={-12} x2={-26.6} y2={-9.6} stroke="hsl(var(--primary))" strokeWidth={0.9} />
+            <line x1={-22} y1={-14} x2={18} y2={-14} stroke="hsl(var(--primary))" strokeWidth={1.2} opacity={0.55} />
             {[-3, 4, 11].map((y, i) => (
               <g key={y}>
-                <rect x={-38} y={y} width={4.4} height={4.4} rx={0.8} fill="#38bdf8" opacity={0.6} />
-                <line x1={-30} y1={y + 2.2} x2={38 - i * 12} y2={y + 2.2} stroke="#5b7d99" strokeWidth={1.1} />
+                <rect x={-38} y={y} width={4.4} height={4.4} rx={0.8} fill="hsl(var(--primary))" opacity={0.6} />
+                <line x1={-30} y1={y + 2.2} x2={38 - i * 12} y2={y + 2.2} stroke={tonAkc(47, 23)} strokeWidth={1.1} />
               </g>
             ))}
           </g>
 
           {/* podstawa z klawiaturą i gładzikiem */}
-          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [52, 0, -40], [-52, 0, -40]])} fill="url(#nbRsBase)" stroke="#d3dde9" strokeWidth={1.3} strokeLinejoin="round" />
-          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [61, -5, 38], [-61, -5, 38]])} fill="#28323f" stroke="#7d8ea6" strokeWidth={1} />
+          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [52, 0, -40], [-52, 0, -40]])} fill="url(#nbRsBase)" stroke={tonAkc(86, 8)} strokeWidth={1.3} strokeLinejoin="round" />
+          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [61, -5, 38], [-61, -5, 38]])} fill={tonAkc(21, 9)} stroke={tonAkc(55, 15)} strokeWidth={1} />
           <g transform={plane(0, 0.4, 0, [1, 0, 0], [0, 0, 1])} opacity={0.75}>
             {Array.from({ length: 4 }, (_, r) => (
               <g key={r}>
                 {Array.from({ length: 13 }, (_, c) => (
-                  <rect key={c} x={-45 + c * 7.1} y={-26 + r * 7.4} width={5.8} height={5.6} rx={1} fill="#1c2531" opacity={0.9} />
+                  <rect key={c} x={-45 + c * 7.1} y={-26 + r * 7.4} width={5.8} height={5.6} rx={1} fill={tonAkc(16, 8)} opacity={0.9} />
                 ))}
               </g>
             ))}
-            <rect x={-16} y={9} width={32} height={19} rx={2.2} fill="none" stroke="#6f8199" strokeWidth={1} />
+            <rect x={-16} y={9} width={32} height={19} rx={2.2} fill="none" stroke={tonAkc(50, 16)} strokeWidth={1} />
           </g>
         </g>
 
@@ -2475,13 +2537,13 @@ function DeepResearchVisual() {
             const q = P3(n.x, n.y, n.z)
             return (
               <g key={`n${i}`} opacity={t}>
-                <circle cx={q.x} cy={q.y} r={10} fill="#38bdf8" opacity={0.1} />
+                <circle cx={q.x} cy={q.y} r={10} fill="hsl(var(--primary))" opacity={0.1} />
                 {glyph(n.kind, q.x, q.y, n.lvl === 2 ? 1.05 : 0.92)}
                 {n.tag && (
                   <text
                     x={q.x + (n.x < 0 ? -15 : 15)} y={q.y + 4.2}
                     textAnchor={n.x < 0 ? 'end' : 'start'}
-                    fill="#a8c9e0" fontSize={15} fontFamily="monospace" letterSpacing="0.3"
+                    fill={tonAkc(77, 21)} fontSize={15} fontFamily="monospace" letterSpacing="0.3"
                   >
                     {n.tag}
                   </text>
@@ -2498,18 +2560,18 @@ function DeepResearchVisual() {
           return (
             <g opacity={outT}>
               <g filter="url(#nbRsGlow)">
-                <rect x={c.x - w} y={c.y - h} width={w * 2} height={h * 2} rx={4} fill="#0a1726" stroke="#7dd3fc" strokeWidth={1.6} />
+                <rect x={c.x - w} y={c.y - h} width={w * 2} height={h * 2} rx={4} fill={ton(8)} stroke="hsl(var(--primary))" strokeWidth={1.6} />
                 {[-18, -7, 4, 15].map((dy, i) => (
-                  <line key={dy} x1={c.x - w + 16} y1={c.y + dy} x2={c.x + w - (i === 3 ? 40 : 16)} y2={c.y + dy} stroke="#9fc9e4" strokeWidth={1.5} opacity={0.72} />
+                  <line key={dy} x1={c.x - w + 16} y1={c.y + dy} x2={c.x + w - (i === 3 ? 40 : 16)} y2={c.y + dy} stroke="hsl(var(--primary)/0.65)" strokeWidth={1.5} opacity={0.72} />
                 ))}
               </g>
-              <text x={c.x} y={c.y + h + 20} fill="#7dd3fc" fontSize={12} fontFamily="monospace" fontWeight="bold" textAnchor="middle" letterSpacing="1.5">RAPORT</text>
+              <text x={c.x} y={c.y + h + 20} fill="hsl(var(--primary))" fontSize={12} fontFamily="monospace" fontWeight="bold" textAnchor="middle" letterSpacing="1.5">RAPORT</text>
             </g>
           )
         })()}
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={598} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`PRZESZUKANO ${String(shown * 9).padStart(3, '0')} ŹRÓDEŁ`}
           </text>
         </g>
@@ -2552,17 +2614,17 @@ function AcademyVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbAcCover" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#31404f" /><stop offset="100%" stopColor="#131c26" />
+            <stop offset="0%" stopColor={tonAkc(25, 11)} /><stop offset="100%" stopColor={tonAkc(13, 7)} />
           </linearGradient>
           <linearGradient id="nbAcPage" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#cfdae6" /><stop offset="100%" stopColor="#7e8ea1" />
+            <stop offset="0%" stopColor={tonAkc(85, 9)} /><stop offset="100%" stopColor={tonAkc(55, 13)} />
           </linearGradient>
           <linearGradient id="nbAcLesson" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#233243" /><stop offset="100%" stopColor="#111a24" />
+            <stop offset="0%" stopColor={tonAkc(20, 12)} /><stop offset="100%" stopColor={tonAkc(12, 7)} />
           </linearGradient>
           <radialGradient id="nbAcFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+            <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -2571,22 +2633,22 @@ function AcademyVisual() {
         {/* ── KSIĄŻKA: dwie połówki rozchylone wokół grzbietu ── */}
         <g>
           {/* lewa okładka + kartki */}
-          <polygon points={poly([[-BW, 0, -BD], [0, 0, -BD], [0, 0, BD], [-BW, 0, BD]])} fill="url(#nbAcCover)" stroke="#7d8ea6" strokeWidth={1.2} strokeLinejoin="round" />
-          <polygon points={poly([[-BW + 8, lift * 0.35, -BD + 8], [-4, 0, -BD + 8], [-4, 0, BD - 8], [-BW + 8, lift * 0.35, BD - 8]])} fill="url(#nbAcPage)" stroke="#e6edf5" strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
+          <polygon points={poly([[-BW, 0, -BD], [0, 0, -BD], [0, 0, BD], [-BW, 0, BD]])} fill="url(#nbAcCover)" stroke={tonAkc(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
+          <polygon points={poly([[-BW + 8, lift * 0.35, -BD + 8], [-4, 0, -BD + 8], [-4, 0, BD - 8], [-BW + 8, lift * 0.35, BD - 8]])} fill="url(#nbAcPage)" stroke={tonAkc(92, 6)} strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
           {/* prawa okładka + kartki */}
-          <polygon points={poly([[0, 0, -BD], [BW, 0, -BD], [BW, 0, BD], [0, 0, BD]])} fill="url(#nbAcCover)" stroke="#7d8ea6" strokeWidth={1.2} strokeLinejoin="round" />
-          <polygon points={poly([[4, 0, -BD + 8], [BW - 8, lift * 0.35, -BD + 8], [BW - 8, lift * 0.35, BD - 8], [4, 0, BD - 8]])} fill="url(#nbAcPage)" stroke="#e6edf5" strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
+          <polygon points={poly([[0, 0, -BD], [BW, 0, -BD], [BW, 0, BD], [0, 0, BD]])} fill="url(#nbAcCover)" stroke={tonAkc(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
+          <polygon points={poly([[4, 0, -BD + 8], [BW - 8, lift * 0.35, -BD + 8], [BW - 8, lift * 0.35, BD - 8], [4, 0, BD - 8]])} fill="url(#nbAcPage)" stroke={tonAkc(92, 6)} strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
           {/* grzbiet */}
-          <polygon points={poly([[-5, 0, -BD], [5, 0, -BD], [5, 5, BD], [-5, 5, BD]])} fill="#0d151f" stroke="#5f7288" strokeWidth={1} />
+          <polygon points={poly([[-5, 0, -BD], [5, 0, -BD], [5, 5, BD], [-5, 5, BD]])} fill={tonAkc(11, 7)} stroke={tonAkc(44, 15)} strokeWidth={1} />
           {/* linie tekstu na kartkach */}
           <g transform={plane(-BW / 2 - 4, lift * 0.18, 0, [1, 0, 0], [0, 0, -1])} opacity={0.45 * open}>
             {[-22, -14, -6, 2, 10, 18].map((y, i) => (
-              <line key={y} x1={-32} y1={y} x2={i % 3 === 2 ? 8 : 30} y2={y} stroke="#4a5b70" strokeWidth={1.4} />
+              <line key={y} x1={-32} y1={y} x2={i % 3 === 2 ? 8 : 30} y2={y} stroke={tonAkc(35, 14)} strokeWidth={1.4} />
             ))}
           </g>
           <g transform={plane(BW / 2 + 4, lift * 0.18, 0, [1, 0, 0], [0, 0, -1])} opacity={0.45 * open}>
             {[-22, -14, -6, 2, 10, 18].map((y, i) => (
-              <line key={y} x1={-30} y1={y} x2={i % 3 === 1 ? 6 : 32} y2={y} stroke="#4a5b70" strokeWidth={1.4} />
+              <line key={y} x1={-30} y1={y} x2={i % 3 === 1 ? 6 : 32} y2={y} stroke={tonAkc(35, 14)} strokeWidth={1.4} />
             ))}
           </g>
         </g>
@@ -2609,11 +2671,11 @@ function AcademyVisual() {
             <g key={t} opacity={Math.min(1, e * 1.8)}>
               <polygon
                 points={poly([[cx - w, cy + h, cz], [cx + w, cy + h, cz], [cx + w, cy - h, cz], [cx - w, cy - h, cz]])}
-                fill="url(#nbAcLesson)" stroke={sell > 0.4 ? '#7dd3fc' : '#5b7288'} strokeWidth={sell > 0.4 ? 1.5 : 1.1} strokeLinejoin="round"
+                fill="url(#nbAcLesson)" stroke={sell > 0.4 ? tonAkc(78, 47) : tonAkc(44, 17)} strokeWidth={sell > 0.4 ? 1.5 : 1.1} strokeLinejoin="round"
               />
               <g transform={plane(cx, cy, cz, [1, 0, 0], [0, -1, 0])}>
-                <text x={0} y={-8} fill="#7dd3fc" fontSize={16} fontFamily="monospace" fontWeight="bold" textAnchor="middle">{`0${i + 1}`}</text>
-                <text x={0} y={14} fill={sell > 0.4 ? '#e0f2fe' : '#bacbde'} fontSize={14} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">{t}</text>
+                <text x={0} y={-8} fill={tonAkc(78, 47)} fontSize={16} fontFamily="monospace" fontWeight="bold" textAnchor="middle">{`0${i + 1}`}</text>
+                <text x={0} y={14} fill={sell > 0.4 ? tonAkc(94, 11) : tonAkc(78, 13)} fontSize={14} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">{t}</text>
               </g>
             </g>
           )
@@ -2630,21 +2692,21 @@ function AcademyVisual() {
             <g opacity={Math.min(1, e * 1.6)}>
               {/* Panel z wykresem — u samej góry kadru, w pełnej czytelności */}
               <g transform={plane(EX, EY, EZ, [1, 0, 0], [0, -1, 0])}>
-                <rect x={-118} y={-92} width={236} height={184} rx={8} fill="#0a1420" stroke="#4f6a86" strokeWidth={1.8} />
-                <text x={-100} y={-62} fill="#9fc2da" fontSize={17} fontFamily="monospace" letterSpacing="1.6">PRZYCHÓD</text>
+                <rect x={-118} y={-92} width={236} height={184} rx={8} fill={tonAkc(10, 8)} stroke={tonAkc(41, 20)} strokeWidth={1.8} />
+                <text x={-100} y={-62} fill={tonAkc(74, 22)} fontSize={17} fontFamily="monospace" letterSpacing="1.6">PRZYCHÓD</text>
                 {bars.map((v, i) => {
                   const bq = Math.max(0, Math.min(1, (e - i * 0.1) / 0.4))
                   const bt = bq * bq * (3 - 2 * bq)
                   const h = 104 * v * bt
                   return (
                     <rect key={i} x={-96 + i * 40} y={60 - h} width={27} height={h} rx={2.6}
-                      fill={i === bars.length - 1 ? '#38bdf8' : '#20415c'} stroke="#5b93b8" strokeWidth={1.1} />
+                      fill={i === bars.length - 1 ? 'hsl(var(--primary))' : 'hsl(var(--primary)/0.25)'} stroke="hsl(var(--primary)/0.5)" strokeWidth={1.1} />
                   )
                 })}
-                <line x1={-104} y1={62} x2={104} y2={62} stroke="#4a6178" strokeWidth={1.6} />
-                <path d="M -92 30 L -34 -2 L 12 14 L 84 -56" fill="none" stroke="#7dd3fc" strokeWidth={3.4}
+                <line x1={-104} y1={62} x2={104} y2={62} stroke={tonAkc(37, 17)} strokeWidth={1.6} />
+                <path d="M -92 30 L -34 -2 L 12 14 L 84 -56" fill="none" stroke="hsl(var(--primary))" strokeWidth={3.4}
                   strokeLinecap="round" strokeLinejoin="round" opacity={Math.max(0, (e - 0.3) / 0.5)} />
-                <path d="M 60 -56 L 88 -56 L 88 -28" fill="none" stroke="#7dd3fc" strokeWidth={3.4}
+                <path d="M 60 -56 L 88 -56 L 88 -28" fill="none" stroke="hsl(var(--primary))" strokeWidth={3.4}
                   strokeLinecap="round" strokeLinejoin="round" opacity={Math.max(0, (e - 0.45) / 0.4)} />
               </g>
 
@@ -2658,14 +2720,14 @@ function AcademyVisual() {
                   <g key={`note${i}`} opacity={nt}>
                     <polygon
                       points={poly([[bx - 62, by, bz - 34], [bx + 62, by, bz - 34], [bx + 62, by, bz + 34], [bx - 62, by, bz + 34]])}
-                      fill="#15303f" stroke="#7dd3fc" strokeWidth={1.3} strokeLinejoin="round"
+                      fill={tonAkc(19, 16)} stroke={tonAkc(78, 47)} strokeWidth={1.3} strokeLinejoin="round"
                     />
                     {i === 2 && (
                       <g transform={plane(bx, by + 0.6, bz, [1, 0, 0], [0, 0, -1])}>
-                        <circle cx={0} cy={0} r={13} fill="none" stroke="#9fd6f2" strokeWidth={1.4} />
-                        <text x={0} y={5} fill="#d6ecfb" fontSize={14} fontFamily="monospace" fontWeight="bold" textAnchor="middle">zł</text>
-                        <line x1={-46} y1={-18} x2={-22} y2={-18} stroke="#5b93b8" strokeWidth={1.4} />
-                        <line x1={22} y1={18} x2={46} y2={18} stroke="#5b93b8" strokeWidth={1.4} />
+                        <circle cx={0} cy={0} r={13} fill="none" stroke={tonAkc(80, 31)} strokeWidth={1.4} />
+                        <text x={0} y={5} fill={tonAkc(91, 14)} fontSize={14} fontFamily="monospace" fontWeight="bold" textAnchor="middle">zł</text>
+                        <line x1={-46} y1={-18} x2={-22} y2={-18} stroke={tonAkc(55, 35)} strokeWidth={1.4} />
+                        <line x1={22} y1={18} x2={46} y2={18} stroke={tonAkc(55, 35)} strokeWidth={1.4} />
                       </g>
                     )}
                   </g>
@@ -2689,13 +2751,13 @@ function AcademyVisual() {
                     const hw = Math.hypot(R * discE.rx * Math.cos(rot), R * discE.ry * Math.sin(rot))
                     return (
                       <g key={i} opacity={ct}>
-                        {Disc(st.x, y, st.z, R, { fill: '#0f2433', stroke: '#4d7f9e', strokeWidth: 1 })}
+                        {Disc(st.x, y, st.z, R, { fill: tonAkc(15, 13), stroke: tonAkc(47, 30), strokeWidth: 1 })}
                         <path
                           d={`M ${(bot.x - hw).toFixed(1)} ${bot.y.toFixed(1)} L ${(bot.x + hw).toFixed(1)} ${bot.y.toFixed(1)} L ${(top.x + hw).toFixed(1)} ${top.y.toFixed(1)} L ${(top.x - hw).toFixed(1)} ${top.y.toFixed(1)} Z`}
-                          fill="#173347" stroke="#5b93b8" strokeWidth={1}
+                          fill={tonAkc(20, 18)} stroke={tonAkc(55, 35)} strokeWidth={1}
                         />
-                        {Disc(st.x, y + TH, st.z, R, { fill: '#22485f', stroke: '#a8def8', strokeWidth: 1.5 })}
-                        {Disc(st.x, y + TH + 0.4, st.z, R * 0.62, { fill: 'none', stroke: '#6fa8c8', strokeWidth: 1 })}
+                        {Disc(st.x, y + TH, st.z, R, { fill: tonAkc(27, 23), stroke: tonAkc(84, 30), strokeWidth: 1.5 })}
+                        {Disc(st.x, y + TH + 0.4, st.z, R * 0.62, { fill: 'none', stroke: tonAkc(62, 33), strokeWidth: 1 })}
                       </g>
                     )
                   })}
@@ -2706,7 +2768,7 @@ function AcademyVisual() {
         })()}
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={598} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {p > 0.74 ? 'UCZ SIĘ · WYSTAW · ZARABIAJ' : `LEKCJE ${Math.min(LESSON_CARDS.length, Math.max(0, Math.round((p - 0.16) / 0.12) + 1))} / ${LESSON_CARDS.length}`}
           </text>
         </g>
@@ -2760,39 +2822,39 @@ function MemoryVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbMmFront" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#7f8fa4" /><stop offset="100%" stopColor="#232d3a" />
+            <stop offset="0%" stopColor={tonAkc(55, 14)} /><stop offset="100%" stopColor={tonAkc(19, 9)} />
           </linearGradient>
           <linearGradient id="nbMmInner" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#1e2b3a" /><stop offset="100%" stopColor="#0a121b" />
+            <stop offset="0%" stopColor={tonAkc(18, 10)} /><stop offset="100%" stopColor={tonAkc(10, 6)} />
           </linearGradient>
           <linearGradient id="nbMmCard" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#26364a" /><stop offset="100%" stopColor="#131c28" />
+            <stop offset="0%" stopColor={tonAkc(22, 13)} /><stop offset="100%" stopColor={tonAkc(13, 8)} />
           </linearGradient>
           <radialGradient id="nbMmFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#020617" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#020617" stopOpacity="0" />
+            <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
           </radialGradient>
         </defs>
 
         {(() => { const e = P3(0, -8, 50); return <ellipse cx={e.x} cy={e.y} rx={256} ry={50} fill="url(#nbMmFloor)" /> })()}
 
         {/* ── SZAFKA, Z KTÓREJ SZUFLADA WYJEŻDŻA ── */}
-        <polygon points={poly([[-TX - 12, -6, -TZ - 10], [TX + 12, -6, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [-TX - 12, TY + 22, -TZ - 10]])} fill="#060b12" stroke="#29384a" strokeWidth={1.1} />
-        <polygon points={poly([[TX + 12, -6, -TZ - 10], [TX + 12, -6, -TZ + 52], [TX + 12, TY + 22, -TZ + 52], [TX + 12, TY + 22, -TZ - 10]])} fill="#0b131d" stroke="#31435a" strokeWidth={1} />
-        <polygon points={poly([[-TX - 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ + 52], [-TX - 12, TY + 22, -TZ + 52]])} fill="#101a26" stroke="#3d4f66" strokeWidth={1} />
+        <polygon points={poly([[-TX - 12, -6, -TZ - 10], [TX + 12, -6, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [-TX - 12, TY + 22, -TZ - 10]])} fill={ton(7)} stroke={tonAkc(23, 12)} strokeWidth={1.1} />
+        <polygon points={poly([[TX + 12, -6, -TZ - 10], [TX + 12, -6, -TZ + 52], [TX + 12, TY + 22, -TZ + 52], [TX + 12, TY + 22, -TZ - 10]])} fill={tonAkc(10, 7)} stroke={tonAkc(27, 15)} strokeWidth={1} />
+        <polygon points={poly([[-TX - 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ + 52], [-TX - 12, TY + 22, -TZ + 52]])} fill={tonAkc(12, 8)} stroke={tonAkc(31, 15)} strokeWidth={1} />
 
         {/* ── DNO ── */}
-        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [-TX, 0, Z(TZ)]])} fill="#0a121c" stroke="#44576f" strokeWidth={1.1} strokeLinejoin="round" />
+        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [-TX, 0, Z(TZ)]])} fill={tonAkc(10, 7)} stroke={tonAkc(34, 16)} strokeWidth={1.1} strokeLinejoin="round" />
 
         {/* ── TYLNA ŚCIANKA (wnętrze) ── */}
-        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, TY, Z(-TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke="#46586f" strokeWidth={1.1} />
+        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, TY, Z(-TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke={tonAkc(34, 15)} strokeWidth={1.1} />
 
         {/* ── LEWA ŚCIANKA. Jej ściana ZEWNĘTRZNA jest przy tej kamerze tyłem,
                dlatego wcześniej wyglądało, jakby szuflada nie miała lewego boku.
                Rysujemy powierzchnię wewnętrzną plus grubość na górnej krawędzi. ── */}
-        <polygon points={poly([[-TX, 0, Z(-TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke="#6b7f99" strokeWidth={1.2} strokeLinejoin="round" />
-        <polygon points={poly([[-TX, TY, Z(-TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)], [-TX - WT, TY, Z(-TZ)]])} fill="#8496ab" stroke="#c3d0e0" strokeWidth={1.1} strokeLinejoin="round" />
-        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill="#4d5c70" stroke="#93a4bb" strokeWidth={1} />
+        <polygon points={poly([[-TX, 0, Z(-TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke={tonAkc(49, 17)} strokeWidth={1.2} strokeLinejoin="round" />
+        <polygon points={poly([[-TX, TY, Z(-TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)], [-TX - WT, TY, Z(-TZ)]])} fill={tonAkc(58, 15)} stroke={tonAkc(81, 11)} strokeWidth={1.1} strokeLinejoin="round" />
+        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill={tonAkc(36, 13)} stroke={tonAkc(63, 15)} strokeWidth={1} />
 
         {/* ── KARTY ── */}
         {MEMORY_CARDS.map((m, i) => {
@@ -2808,16 +2870,16 @@ function MemoryVisual() {
             <g key={m} opacity={Math.min(1, t * 2)}>
               <polygon
                 points={poly([[-CW / 2, y0, z], [CW / 2, y0, z], [CW / 2, y1, z], [-CW / 2, y1, z]])}
-                fill="url(#nbMmCard)" stroke={hot ? '#7dd3fc' : '#5b7089'} strokeWidth={hot ? 1.6 : 1.1} strokeLinejoin="round"
+                fill="url(#nbMmCard)" stroke={hot ? tonAkc(78, 47) : tonAkc(43, 17)} strokeWidth={hot ? 1.6 : 1.1} strokeLinejoin="round"
               />
               <g transform={plane(0, (y0 + y1) / 2, z, [1, 0, 0], [0, -1, 0])}>
-                <text x={-56} y={-30} fill={hot ? '#e0f2fe' : '#b9cbdf'} fontSize={12} fontFamily="monospace" letterSpacing="0.2">{m}</text>
-                <line x1={-50} y1={-19} x2={22} y2={-19} stroke="#3f5169" strokeWidth={1.1} />
-                <line x1={-50} y1={-10} x2={0} y2={-10} stroke="#3f5169" strokeWidth={1.1} />
+                <text x={-56} y={-30} fill={hot ? tonAkc(94, 11) : tonAkc(78, 14)} fontSize={12} fontFamily="monospace" letterSpacing="0.2">{m}</text>
+                <line x1={-50} y1={-19} x2={22} y2={-19} stroke={tonAkc(32, 16)} strokeWidth={1.1} />
+                <line x1={-50} y1={-10} x2={0} y2={-10} stroke={tonAkc(32, 16)} strokeWidth={1.1} />
                 {hot && (
                   <g>
-                    <circle cx={48} cy={-32} r={9} fill="#0b1a28" stroke="#7dd3fc" strokeWidth={1.3} />
-                    <path d="M 44 -36 L 52 -28 M 52 -36 L 44 -28" stroke="#d3ecfb" strokeWidth={1.6} strokeLinecap="round" />
+                    <circle cx={48} cy={-32} r={9} fill={tonAkc(12, 11)} stroke={tonAkc(78, 47)} strokeWidth={1.3} />
+                    <path d="M 44 -36 L 52 -28 M 52 -36 L 44 -28" stroke={tonAkc(91, 15)} strokeWidth={1.6} strokeLinecap="round" />
                   </g>
                 )}
               </g>
@@ -2826,18 +2888,18 @@ function MemoryVisual() {
         })}
 
         {/* ── PRAWA ŚCIANKA I FRONT (karty siedzą za nimi) ── */}
-        <polygon points={poly([[TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [TX, TY, Z(TZ)], [TX, TY, Z(-TZ)]])} fill="#1a2431" stroke="#7d8ea6" strokeWidth={1.2} strokeLinejoin="round" />
-        <polygon points={poly([[TX, TY, Z(-TZ)], [TX, TY, Z(TZ)], [TX + WT, TY, Z(TZ)], [TX + WT, TY, Z(-TZ)]])} fill="#8496ab" stroke="#c3d0e0" strokeWidth={1.1} strokeLinejoin="round" />
-        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [TX + WT, 0, Z(TZ)], [TX + WT, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill="url(#nbMmFront)" stroke="#c3d0e0" strokeWidth={1.4} strokeLinejoin="round" />
+        <polygon points={poly([[TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [TX, TY, Z(TZ)], [TX, TY, Z(-TZ)]])} fill={tonAkc(16, 9)} stroke={tonAkc(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
+        <polygon points={poly([[TX, TY, Z(-TZ)], [TX, TY, Z(TZ)], [TX + WT, TY, Z(TZ)], [TX + WT, TY, Z(-TZ)]])} fill={tonAkc(58, 15)} stroke={tonAkc(81, 11)} strokeWidth={1.1} strokeLinejoin="round" />
+        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [TX + WT, 0, Z(TZ)], [TX + WT, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill="url(#nbMmFront)" stroke={tonAkc(81, 11)} strokeWidth={1.4} strokeLinejoin="round" />
 
         {/* uchwyt i podpis frontu */}
         <g transform={plane(0, TY / 2, Z(TZ), [1, 0, 0], [0, -1, 0])}>
-          <rect x={-46} y={-11} width={92} height={22} rx={4} fill="#0d151f" stroke="#a1b2c6" strokeWidth={1.1} />
-          <text x={0} y={5} fill="#d5e3f2" fontSize={13} fontFamily="monospace" textAnchor="middle" letterSpacing="2.2">PAMIĘĆ</text>
+          <rect x={-46} y={-11} width={92} height={22} rx={4} fill={tonAkc(11, 7)} stroke={tonAkc(68, 14)} strokeWidth={1.1} />
+          <text x={0} y={5} fill={tonAkc(88, 11)} fontSize={13} fontFamily="monospace" textAnchor="middle" letterSpacing="2.2">PAMIĘĆ</text>
         </g>
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={598} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`ZAPAMIĘTANE WPISY ${Math.min(N, Math.max(0, Math.round((p - 0.16) / 0.075) + 1))} / ${N}`}
           </text>
         </g>
@@ -2931,10 +2993,10 @@ function WorkspaceVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbPcbCore" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#23445f" /><stop offset="55%" stopColor="#122536" /><stop offset="100%" stopColor="#0a151f" />
+            <stop offset="0%" stopColor={tonAkc(26, 22)} /><stop offset="55%" stopColor={tonAkc(16, 13)} /><stop offset="100%" stopColor={tonAkc(10, 8)} />
           </linearGradient>
           <linearGradient id="nbPcbPad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#17222f" /><stop offset="100%" stopColor="#0d151f" />
+            <stop offset="0%" stopColor={tonAkc(15, 9)} /><stop offset="100%" stopColor={tonAkc(11, 7)} />
           </linearGradient>
           <filter id="nbPcbGlow" x="-80%" y="-80%" width="260%" height="260%">
             <feGaussianBlur stdDeviation="6" result="b" />
@@ -2952,8 +3014,8 @@ function WorkspaceVisual() {
             if (t <= 0.01) return null
             return (
               <g key={`stub${i}`}>
-                <line x1={PCB_CX + off} y1={y0} x2={PCB_CX + off} y2={y0 + dir * len * t} stroke="#38bdf8" strokeWidth={2.2} opacity={0.55} />
-                <circle cx={PCB_CX + off} cy={y0 + dir * len * t} r={3.6} fill="none" stroke="#7dd3fc" strokeWidth={1.4} opacity={t} />
+                <line x1={PCB_CX + off} y1={y0} x2={PCB_CX + off} y2={y0 + dir * len * t} stroke="hsl(var(--primary))" strokeWidth={2.2} opacity={0.55} />
+                <circle cx={PCB_CX + off} cy={y0 + dir * len * t} r={3.6} fill="none" stroke="hsl(var(--primary))" strokeWidth={1.4} opacity={t} />
               </g>
             )
           })}
@@ -2969,9 +3031,9 @@ function WorkspaceVisual() {
             const r0 = route(m)
             return (
               <g key={`tr${i}`}>
-                <polyline points={pts} fill="none" stroke="#38bdf8" strokeWidth={6} opacity={0.13} strokeLinejoin="round" strokeLinecap="round" />
-                <polyline points={pts} fill="none" stroke="#7dd3fc" strokeWidth={2} opacity={0.88} strokeLinejoin="round" strokeLinecap="round" />
-                <circle cx={r0[1]![0]} cy={r0[1]![1]} r={3.4} fill="#07131f" stroke="#7dd3fc" strokeWidth={1.4} opacity={t} />
+                <polyline points={pts} fill="none" stroke="hsl(var(--primary))" strokeWidth={6} opacity={0.13} strokeLinejoin="round" strokeLinecap="round" />
+                <polyline points={pts} fill="none" stroke="hsl(var(--primary))" strokeWidth={2} opacity={0.88} strokeLinejoin="round" strokeLinecap="round" />
+                <circle cx={r0[1]![0]} cy={r0[1]![1]} r={3.4} fill={tonAkc(10, 9)} stroke="hsl(var(--primary))" strokeWidth={1.4} opacity={t} />
               </g>
             )
           })}
@@ -2986,15 +3048,15 @@ function WorkspaceVisual() {
           const y = m.padY - PAD_H / 2
           return (
             <g key={m.t} opacity={t}>
-              <rect x={x} y={y} width={m.w} height={PAD_H} rx={6} fill="url(#nbPcbPad)" stroke="#7dd3fc" strokeWidth={1.7} />
+              <rect x={x} y={y} width={m.w} height={PAD_H} rx={6} fill="url(#nbPcbPad)" stroke="hsl(var(--primary))" strokeWidth={1.7} />
               {[-0.3, 0, 0.3].map((u) => (
                 m.axis === 'h' ? (
-                  <line key={u} x1={m.padX} y1={m.padY + u * PAD_H} x2={m.padX + m.dir * 10} y2={m.padY + u * PAD_H} stroke="#9fb8cc" strokeWidth={2.2} opacity={0.8} />
+                  <line key={u} x1={m.padX} y1={m.padY + u * PAD_H} x2={m.padX + m.dir * 10} y2={m.padY + u * PAD_H} stroke={tonAkc(70, 17)} strokeWidth={2.2} opacity={0.8} />
                 ) : (
-                  <line key={u} x1={m.padX + u * m.w} y1={m.padY - m.dir * PAD_H / 2} x2={m.padX + u * m.w} y2={m.padY - m.dir * (PAD_H / 2 + 10)} stroke="#9fb8cc" strokeWidth={2.2} opacity={0.8} />
+                  <line key={u} x1={m.padX + u * m.w} y1={m.padY - m.dir * PAD_H / 2} x2={m.padX + u * m.w} y2={m.padY - m.dir * (PAD_H / 2 + 10)} stroke={tonAkc(70, 17)} strokeWidth={2.2} opacity={0.8} />
                 )
               ))}
-              <text x={x + m.w / 2} y={m.padY + 6} fill="#dcf0fd" fontSize={16} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">
+              <text x={x + m.w / 2} y={m.padY + 6} fill={tonAkc(93, 12)} fontSize={16} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">
                 {m.t}
               </text>
             </g>
@@ -3004,23 +3066,23 @@ function WorkspaceVisual() {
         {/* ── RDZEŃ ── */}
         <g filter="url(#nbPcbGlow)">
           <rect x={PCB_CX - PCB_R} y={PCB_CY - PCB_R} width={PCB_R * 2} height={PCB_R * 2} rx={14}
-            fill="url(#nbPcbCore)" stroke="#7dd3fc" strokeWidth={2.4} />
+            fill="url(#nbPcbCore)" stroke="hsl(var(--primary))" strokeWidth={2.4} />
           <rect x={PCB_CX - PCB_R + 10} y={PCB_CY - PCB_R + 10} width={PCB_R * 2 - 20} height={PCB_R * 2 - 20} rx={8}
-            fill="none" stroke="#38bdf8" strokeWidth={1.1} strokeOpacity={0.4} />
+            fill="none" stroke="hsl(var(--primary))" strokeWidth={1.1} strokeOpacity={0.4} />
         </g>
         <g opacity={0.85}>
           {[-52, -34, -16, 4, 22, 40, 58].map((d) => (
             <g key={`pin${d}`}>
-              <line x1={PCB_CX - PCB_R} y1={PCB_CY + d} x2={PCB_CX - PCB_R - 11} y2={PCB_CY + d} stroke="#9fb8cc" strokeWidth={2.6} />
-              <line x1={PCB_CX + PCB_R} y1={PCB_CY + d} x2={PCB_CX + PCB_R + 11} y2={PCB_CY + d} stroke="#9fb8cc" strokeWidth={2.6} />
-              <line x1={PCB_CX + d} y1={PCB_CY - PCB_R} x2={PCB_CX + d} y2={PCB_CY - PCB_R - 11} stroke="#9fb8cc" strokeWidth={2.6} />
-              <line x1={PCB_CX + d} y1={PCB_CY + PCB_R} x2={PCB_CX + d} y2={PCB_CY + PCB_R + 11} stroke="#9fb8cc" strokeWidth={2.6} />
+              <line x1={PCB_CX - PCB_R} y1={PCB_CY + d} x2={PCB_CX - PCB_R - 11} y2={PCB_CY + d} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
+              <line x1={PCB_CX + PCB_R} y1={PCB_CY + d} x2={PCB_CX + PCB_R + 11} y2={PCB_CY + d} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
+              <line x1={PCB_CX + d} y1={PCB_CY - PCB_R} x2={PCB_CX + d} y2={PCB_CY - PCB_R - 11} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
+              <line x1={PCB_CX + d} y1={PCB_CY + PCB_R} x2={PCB_CX + d} y2={PCB_CY + PCB_R + 11} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
             </g>
           ))}
         </g>
 
         {/* Prawdziwy znak NextByte na rdzeniu (viewBox ikony 278.5 45.5 642 775) */}
-        <g transform={`translate(${PCB_CX} ${PCB_CY}) scale(0.104) translate(-599.5 -433)`} fill="#e6f6ff">
+        <g transform={`translate(${PCB_CX} ${PCB_CY}) scale(0.104) translate(-599.5 -433)`} fill={tonAkc(95, 9)}>
           <path d="M299,65.5 L298,225 L900,800.5 L900,641 Z" />
           <path d="M784,68 L900,68 L900,460 L784,460 Z" />
           <path d="M299,264 L416,377 L415,797 L298,797 Z" />
@@ -3028,7 +3090,7 @@ function WorkspaceVisual() {
         </g>
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={604} fill="#64748b" fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={604} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`PODŁĄCZONE MODUŁY ${PCB_MODS.filter((m) => p > m.at + 0.13).length} / ${PCB_MODS.length}`}
           </text>
         </g>
@@ -3055,8 +3117,8 @@ function ModuleVisualSlot({ num, tag }: { num: string; tag: string }) {
         className="pointer-events-none absolute inset-0 opacity-[0.055]"
         style={{
           backgroundImage:
-            'linear-gradient(0deg, #38bdf8 1px, transparent 1px),' +
-            'linear-gradient(90deg, #38bdf8 1px, transparent 1px)',
+            'linear-gradient(0deg, hsl(var(--primary)) 1px, transparent 1px),' +
+            'linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)',
           backgroundSize: '44px 44px',
           maskImage: 'radial-gradient(ellipse at center, #000 25%, transparent 72%)',
           WebkitMaskImage: 'radial-gradient(ellipse at center, #000 25%, transparent 72%)',
@@ -3431,14 +3493,7 @@ export function HomePage3({ onNavigate = () => { } }: { onNavigate?: (p: HomePag
 
       <TechDivider />
 
-      {/* ══════════ 12. CENNIK I SUBSKRYPCJE (GŁÓWNA STRONA) ══════════ */}
-      <div id="cennik">
-        <LazyBlock minHeight={880}><HomePagePricingSection onNavigate={onNavigate} /></LazyBlock>
-      </div>
-
-      <TechDivider />
-
-      {/* ══════════ 13. BAZA WIEDZY I FAQ ══════════ */}
+      {/* ══════════ 12. BAZA WIEDZY I FAQ ══════════ */}
       <LazyBlock minHeight={950}><FaqSection onNavigate={onNavigate} /></LazyBlock>
 
       {/* ══════════ 14. FINALNE CTA — KONWERGENCJA ══════════ */}
