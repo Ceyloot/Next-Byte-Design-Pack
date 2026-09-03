@@ -238,57 +238,76 @@ function ByteSlider({
       </div>
 
       {/* Tor suwaka */}
-      <div className="relative py-2">
-        <div className="relative h-1.5 w-full rounded-full bg-foreground/[0.08]">
+      <div className="relative py-2.5">
+        <div className="relative h-1.5 w-full rounded-full bg-foreground/[0.08] shadow-inner">
           <div
             className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-300"
-            style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${akcentTlo(kolor, 35)}, ${akcentTlo(kolor, 65)})` }}
+            style={{
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, ${akcentTlo(kolor, 45)}, ${kolor})`,
+              boxShadow: `0 0 10px ${akcentTlo(kolor, 35)}`,
+            }}
           />
         </div>
 
         {/* Punkty kroków */}
-        <div className="absolute inset-x-0 top-1/2">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none">
           {progi.map((p, i) => {
             const aktywny = i <= indeks
             const biezacy = i === indeks
             const left = (i / (progi.length - 1)) * 100
             return (
-              <button
+              <div
                 key={p.byte}
-                type="button"
-                onClick={() => onChange(i)}
-                aria-label={`${p.byte} Byte`}
-                className={cn(
-                  'absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 cursor-pointer',
-                  biezacy ? 'h-[18px] w-[18px]' : 'h-[13px] w-[13px] hover:scale-125',
-                )}
-                style={{
-                  left: `${left}%`,
-                  background: biezacy ? kolor : aktywny ? akcentTlo(kolor, 55) : 'hsl(var(--foreground)/0.14)',
-                  border: '2px solid hsl(var(--card))',
-                  boxShadow: biezacy ? `0 0 0 3px ${akcentTlo(kolor, 20)}` : 'none',
-                }}
-              />
+                className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto flex items-center justify-center"
+                style={{ left: `${left}%` }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onChange(i)}
+                  aria-label={`${p.byte} Byte`}
+                  className={cn(
+                    'flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer',
+                    biezacy
+                      ? 'h-4 w-4 bg-white border-[3px] shadow-[0_0_12px_hsl(var(--primary)/0.75),0_2px_4px_rgba(0,0,0,0.6)] hover:scale-115'
+                      : 'h-6 w-6 group'
+                  )}
+                  style={{
+                    borderColor: biezacy ? kolor : undefined,
+                  }}
+                >
+                  {!biezacy && (
+                    <span
+                      className="h-1.5 w-1.5 rounded-full transition-all duration-200 group-hover:scale-150"
+                      style={{
+                        background: aktywny ? kolor : 'hsl(var(--foreground)/0.25)',
+                        opacity: aktywny ? 0.75 : 0.35,
+                      }}
+                    />
+                  )}
+                </button>
+              </div>
             )
           })}
         </div>
       </div>
 
       {/* Etykiety numeryczne progów pod linią */}
-      <div className="relative h-4">
+      <div className="relative h-4 mt-0.5">
         {progi.map((p, i) => {
           const left = (i / (progi.length - 1)) * 100
+          const biezacy = i === indeks
           return (
             <button
               key={p.byte}
               type="button"
               onClick={() => onChange(i)}
               className={cn(
-                'absolute top-0 text-[11px] tabular-nums transition-colors cursor-pointer select-none',
+                'absolute top-0 text-[11px] tabular-nums transition-all cursor-pointer select-none',
                 i === 0 ? 'left-0' : i === progi.length - 1 ? 'right-0' : '-translate-x-1/2',
-                i === indeks ? 'font-semibold' : 'text-muted-foreground/60 hover:text-muted-foreground',
+                biezacy ? 'font-bold drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]' : 'text-muted-foreground/50 hover:text-foreground font-normal',
               )}
-              style={{ left: i === 0 || i === progi.length - 1 ? undefined : `${left}%`, color: i === indeks ? kolor : undefined }}
+              style={{ left: i === 0 || i === progi.length - 1 ? undefined : `${left}%`, color: biezacy ? kolor : undefined }}
             >
               {p.byte.toLocaleString('pl-PL')}
             </button>
@@ -610,20 +629,19 @@ function FaqRow({ q, a, open, onToggle }: { q: string; a: string; open: boolean;
  *  (tam podaje się dokładną liczbę), pozostałe dokładają do rachunku typowe
  *  miesięczne zużycie swojej kategorii — `dodatek` w Byte. */
 const OPCJE_UZYCIA = [
-  { id: 'rozmowy', icon: MessageSquare, t: 'Pisanie i rozmowy z AI', dodatek: 0, opis: 'Ustawiasz suwakiem niżej' },
-  { id: 'grafika', icon: ImagePlus, t: 'Grafika i wizualizacje', dodatek: 0, opis: 'Ustawiasz suwakiem niżej' },
-  { id: 'asystent', icon: Bot, t: 'Asystent wykonujący zadania', dodatek: 20 * KOSZT_BYTE.zadanieAsystenta, opis: '≈20 zadań miesięcznie' },
-  { id: 'analizy', icon: FileSearch, t: 'Analizy i Deep Research', dodatek: 15 * KOSZT_BYTE.mocnyModel, opis: '≈15 analiz na mocnym modelu' },
-  { id: 'notatki', icon: Layers, t: 'Notatki, kalendarz, zadania', dodatek: 6 * KOSZT_BYTE.zadanieAsystenta, opis: '≈6 podsumowań miesięcznie' },
-  { id: 'dokumenty', icon: FileStack, t: 'Dokumenty i analiza plików', dodatek: 20 * KOSZT_BYTE.zadanieAsystenta, opis: '≈20 przeanalizowanych plików' },
+  { id: 'rozmowy', icon: MessageSquare, t: 'Pisanie & Chat', tag: 'GPT-5, Claude, Gemini', dodatek: 0 },
+  { id: 'grafika', icon: ImagePlus, t: 'Grafika & Studio', tag: 'FLUX, Midjourney 4K', dodatek: 0 },
+  { id: 'asystent', icon: Bot, t: 'Asystent Zadań', tag: 'Autonomiczne akcje', dodatek: 20 * KOSZT_BYTE.zadanieAsystenta },
+  { id: 'analizy', icon: FileSearch, t: 'Deep Research', tag: 'Synteza i raporty', dodatek: 15 * KOSZT_BYTE.mocnyModel },
+  { id: 'notatki', icon: Layers, t: 'Notatki & Plany', tag: 'Harmonogram i baza', dodatek: 10 * KOSZT_BYTE.zadanieAsystenta },
+  { id: 'dokumenty', icon: FileStack, t: 'Analiza Plików', tag: 'PDF, CSV, docx, kod', dodatek: 20 * KOSZT_BYTE.zadanieAsystenta },
 ] as const
 
-/** Suwaki zużycia — liczą się zawsze, tak jak w cenniku produkcyjnym
- *  (przy zerowych zaznaczeniach domyślne 30 rozmów i 10 obrazów dają 190 ⟠).
+/** Suwaki zużycia — dopasowują dokładną liczbę operacji.
  *  `stawka` to koszt jednej operacji w Byte. */
 const SUWAKI_ZUZYCIA = [
-  { id: 'rozmowy', icon: MessageSquare, etykieta: 'Rozmowy z AI', jednostka: 'za rozmowę', stawka: KOSZT_BYTE.rozmowa, max: 400, krok: 10, domyslnie: 30 },
-  { id: 'obrazy', icon: ImagePlus, etykieta: 'Obrazy', jednostka: 'za obraz', stawka: KOSZT_BYTE.obraz, max: 500, krok: 10, domyslnie: 10 },
+  { id: 'rozmowy', icon: MessageSquare, etykieta: 'Rozmowy z AI', jednostka: 'za rozmowę', stawka: KOSZT_BYTE.rozmowa, max: 400, krok: 10, domyslnie: 50 },
+  { id: 'obrazy', icon: ImagePlus, etykieta: 'Obrazy i grafiki', jednostka: 'za obraz', stawka: KOSZT_BYTE.obraz, max: 500, krok: 5, domyslnie: 0 },
 ] as const
 
 /** Suwak liczbowy w stylu produkcyjnym: nazwa + pigułka z wartością po lewej,
@@ -646,13 +664,13 @@ function SuwakZuzycia({
     <div>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 shrink-0 text-primary/70" />
-          <span className="text-sm font-medium text-foreground">{etykieta}</span>
-          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary">
+          <Icon className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+          <span className="text-[13px] font-medium text-foreground">{etykieta}</span>
+          <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-primary">
             {wartosc}
           </span>
         </div>
-        <span className="text-xs tabular-nums text-muted-foreground">{koszt} ⟠</span>
+        <span className="font-mono text-xs tabular-nums text-muted-foreground/80">{koszt} ⟠</span>
       </div>
 
       <input
@@ -663,49 +681,59 @@ function SuwakZuzycia({
         value={wartosc}
         onChange={e => onChange(Number(e.target.value))}
         aria-label={etykieta}
-        className="nb-zakres mt-2.5 h-1.5 w-full cursor-pointer appearance-none rounded-full"
+        className="nb-zakres mt-2 h-1.5 w-full cursor-pointer appearance-none rounded-full"
         style={{ background: `linear-gradient(90deg, hsl(var(--primary)) ${pct}%, hsl(var(--foreground)/0.1) ${pct}%)` }}
       />
 
-      <p className="mt-1.5 text-[11px] text-muted-foreground/70">{stawka} ⟠ {jednostka}</p>
-    </div>
-  )
-}
-
-/** Numerowany krok kreatora — kółko z cyfrą + tytuł i podtytuł. */
-function KrokNaglowek({ n, tytul, podtytul }: { n: number; tytul: string; podtytul: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
-        {n}
-      </span>
-      <div>
-        <h3 className="font-heading text-[15px] font-bold text-foreground">{tytul}</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">{podtytul}</p>
-      </div>
+      <p className="mt-1 text-[10.5px] text-muted-foreground/60">{stawka} ⟠ {jednostka}</p>
     </div>
   )
 }
 
 function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
-  const [wybrane, setWybrane] = useState<Set<string>>(new Set())
-  const [ilosci, setIlosci] = useState<Record<string, number>>(
-    () => Object.fromEntries(SUWAKI_ZUZYCIA.map(s => [s.id, s.domyslnie])),
-  )
+  const [wybrane, setWybrane] = useState<Set<string>>(() => new Set(['rozmowy']))
+  const [ilosci, setIlosci] = useState<Record<string, number>>(() => ({
+    rozmowy: 50,
+    obrazy: 0,
+  }))
   const [mocne, setMocne] = useState(false)
   const [skad, setSkad] = useState(false)
 
   const przelacz = (id: string) => {
     setWybrane(prev => {
       const nast = new Set(prev)
-      if (nast.has(id)) nast.delete(id)
-      else nast.add(id)
+      const wlaczony = !nast.has(id)
+      if (wlaczony) {
+        nast.add(id)
+        if (id === 'rozmowy') {
+          setIlosci(il => ({ ...il, rozmowy: Math.max(50, il.rozmowy + 50) }))
+        } else if (id === 'grafika') {
+          setIlosci(il => ({ ...il, obrazy: Math.max(25, il.obrazy + 25) }))
+        }
+      } else {
+        nast.delete(id)
+        if (id === 'rozmowy') {
+          setIlosci(il => ({ ...il, rozmowy: Math.max(0, il.rozmowy - 50) }))
+        } else if (id === 'grafika') {
+          setIlosci(il => ({ ...il, obrazy: Math.max(0, il.obrazy - 25) }))
+        }
+      }
       return nast
     })
   }
 
-  // Tryb "mocniejsze modele" podnosi koszt rozmowy do stawki mocnego modelu —
-  // dokładnie ta sama liczba, którą karta planu pokazuje w "rozmów na mocnym modelu".
+  const zmienSuwak = (id: string, v: number) => {
+    setIlosci(prev => ({ ...prev, [id]: v }))
+    setWybrane(prev => {
+      const nast = new Set(prev)
+      const optId = id === 'obrazy' ? 'grafika' : id
+      if (v > 0) nast.add(optId)
+      else nast.delete(optId)
+      return nast
+    })
+  }
+
+  // Tryb "mocniejsze modele" podnosi koszt rozmowy do stawki mocnego modelu
   const pozycje = SUWAKI_ZUZYCIA.map(s => {
     const stawka = s.id === 'rozmowy' && mocne ? KOSZT_BYTE.mocnyModel : s.stawka
     return { ...s, stawkaAktualna: stawka, koszt: ilosci[s.id] * stawka }
@@ -719,7 +747,6 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
     dodatki.reduce((sum, o) => sum + o.dodatek, 0)
 
   // Rekomendacja: najtańszy próg, którego pula pokrywa wyliczone zużycie.
-  // Gdy nic nie zaznaczono albo zużycie = 0, sensowny jest plan bezpłatny.
   const kandydaci = PLANY.flatMap(p => (p.progi ?? []).map(prog => ({ plan: p, prog })))
     .sort((a, b) => a.prog.miesiecznie - b.prog.miesiecznie)
 
@@ -731,30 +758,46 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
   const zapas = prog ? prog.byte - zuzycie : 0
   const pokrycie = prog ? Math.min((zuzycie / prog.byte) * 100, 100) : 0
 
-  // Kolejny próg — "gdy zabraknie" pokazuje, ile kosztuje wyższa półka.
-  const nastepny = wybor ? kandydaci[kandydaci.indexOf(wybor) + 1] ?? null : null
-
   return (
-    <FadeIn className="mx-auto max-w-6xl">
-      <div className="rounded-2xl border border-foreground/[0.1] bg-foreground/[0.02] p-5 sm:p-7">
-        <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
+    <FadeIn className="mx-auto max-w-4xl">
+      <div className="relative">
+        {/* Górna belka kreatora */}
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-foreground/[0.08] pb-4">
           <div className="flex items-center gap-2.5">
-            <Wand2 className="h-5 w-5 text-primary" />
-            <h2 className="font-heading text-[17px] font-bold text-foreground">Dobierz plan pod swoje użycie</h2>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <Wand2 className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="font-heading text-[16px] font-bold text-foreground leading-tight">
+                Inteligentny dobór planu
+              </h2>
+              <p className="text-[12px] text-muted-foreground/70">
+                Wybierz swoje zastosowania — dopasujemy optymalny pakiet Byte
+              </p>
+            </div>
           </div>
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60">
-            Stawki zmierzone na produkcji
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground/60">
+            Automatyczna kalkulacja
           </span>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-          {/* ── lewa kolumna: trzy kroki konfiguracji ── */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_310px] items-start">
+          {/* ── lewa kolumna: czysty wybór bez zbędnych obliczeń ── */}
           <div className="space-y-4">
-            <div className="rounded-xl border border-foreground/[0.08] bg-foreground/[0.02] p-5">
-              <KrokNaglowek n={1} tytul="Co chcesz robić?" podtytul="Można zaznaczyć kilka" />
-              <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+            {/* KROK 1: Kafelki zastosowań */}
+            <div className="space-y-2.5">
+              <div className="flex h-6 items-center justify-between">
+                <span className="font-heading text-[13px] font-semibold text-foreground flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 font-mono text-[10px] font-bold text-primary">1</span>
+                  Co chcesz robić?
+                </span>
+                <span className="text-[11px] text-muted-foreground/60">Wybierz dowolną liczbę</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {OPCJE_UZYCIA.map(o => {
                   const on = wybrane.has(o.id)
+                  const Icon = o.icon
                   return (
                     <button
                       key={o.id}
@@ -762,33 +805,71 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
                       onClick={() => przelacz(o.id)}
                       aria-pressed={on}
                       className={cn(
-                        'flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors duration-200',
-                        on ? 'border-primary/45 bg-primary/[0.08]' : 'border-foreground/[0.1] bg-foreground/[0.02] hover:border-foreground/20',
+                        'group relative flex flex-col justify-between rounded-xl p-3.5 text-left transition-all duration-200 cursor-pointer select-none',
+                        'border min-h-[94px] backdrop-blur-md',
+                        on
+                          ? 'border-primary/60 bg-primary/[0.08] shadow-[0_4px_20px_-4px_hsl(var(--primary)/0.25)]'
+                          : 'border-white/[0.08] bg-card/60 shadow-sm hover:border-white/20 hover:bg-card/90 hover:shadow-md hover:-translate-y-0.5',
                       )}
                     >
-                      <span
-                        className={cn(
-                          'flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border transition-colors',
-                          on ? 'border-primary bg-primary' : 'border-foreground/25',
-                        )}
-                      >
-                        {on && <Check className="h-3 w-3 text-background" strokeWidth={3} />}
-                      </span>
-                      <span className="flex-1">
-                        <span className={cn('block text-sm leading-snug', on ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+                      {/* Górny rząd: ikona w kapsułce i wskaźnik zaznaczenia */}
+                      <div className="flex items-center justify-between w-full">
+                        <div
+                          className={cn(
+                            'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-all duration-200',
+                            on
+                              ? 'border-primary/40 bg-primary/20 text-primary'
+                              : 'border-white/[0.08] bg-white/[0.03] text-muted-foreground group-hover:text-foreground group-hover:border-white/15',
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </div>
+
+                        <div
+                          className={cn(
+                            'flex h-4 w-4 shrink-0 items-center justify-center rounded-md border transition-all',
+                            on
+                              ? 'border-primary bg-primary text-background shadow-[0_0_8px_hsl(var(--primary)/0.6)]'
+                              : 'border-white/20 bg-white/[0.02] group-hover:border-white/35',
+                          )}
+                        >
+                          {on && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+                        </div>
+                      </div>
+
+                      {/* Dolna treść kafelka */}
+                      <div className="mt-2.5 space-y-0.5">
+                        <p className={cn(
+                          'font-heading text-[13px] font-semibold leading-tight transition-colors',
+                          on ? 'text-foreground' : 'text-foreground/90 group-hover:text-foreground',
+                        )}>
                           {o.t}
-                        </span>
-                        <span className="mt-0.5 block text-[11px] text-muted-foreground/60">{o.opis}</span>
-                      </span>
+                        </p>
+                        <p className="font-mono text-[9.5px] text-muted-foreground/60 tracking-tight leading-tight">
+                          {o.tag}
+                        </p>
+                      </div>
                     </button>
                   )
                 })}
               </div>
             </div>
 
-            <div className="rounded-xl border border-foreground/[0.08] bg-foreground/[0.02] p-5">
-              <KrokNaglowek n={2} tytul="Ile tego miesięcznie?" podtytul="Przesuń, jeśli chcesz doprecyzować" />
-              <div className="mt-6 space-y-6">
+            {/* KROK 2: Precyzyjne doprecyzowanie (suwaki i jakość) */}
+            <div className="relative overflow-hidden rounded-xl border border-foreground/[0.08] bg-foreground/[0.02] p-4 space-y-4">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+              />
+              <div className="flex items-center justify-between">
+                <span className="font-heading text-[13px] font-semibold text-foreground flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 font-mono text-[10.5px] font-bold text-primary">2</span>
+                  Precyzyjne dopasowanie
+                </span>
+                <span className="text-[11px] text-muted-foreground/60">Opcjonalnie</span>
+              </div>
+
+              <div className="space-y-4 pt-1">
                 {pozycje.map(s => (
                   <SuwakZuzycia
                     key={s.id}
@@ -800,149 +881,141 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
                     koszt={s.koszt}
                     stawka={s.stawkaAktualna}
                     jednostka={s.jednostka}
-                    onChange={v => setIlosci(prev => ({ ...prev, [s.id]: v }))}
+                    onChange={v => zmienSuwak(s.id, v)}
                   />
                 ))}
               </div>
-            </div>
 
-            <div className="rounded-xl border border-foreground/[0.08] bg-foreground/[0.02] p-5">
-              <KrokNaglowek n={3} tytul="Jakość modeli" podtytul="Mocniejsze myślą dłużej i kosztują więcej" />
-              <button
-                type="button"
-                role="switch"
-                aria-checked={mocne}
-                onClick={() => setMocne(v => !v)}
-                className="mt-5 flex w-full items-center gap-3 rounded-xl border border-foreground/[0.1] bg-foreground/[0.02] px-3.5 py-3 text-left transition-colors hover:border-foreground/20"
-              >
-                <Gauge className="h-4 w-4 shrink-0 text-primary/70" />
-                <span className="text-sm font-medium text-foreground">Mocniejsze modele</span>
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  {KOSZT_BYTE.rozmowa} ⟠ → {KOSZT_BYTE.mocnyModel} ⟠
-                </span>
-                <span
-                  className={cn(
-                    'ml-auto flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200',
-                    mocne ? 'bg-primary' : 'bg-foreground/15',
-                  )}
+              {/* Tryb mocniejszych modeli */}
+              <div className="border-t border-foreground/[0.08] pt-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={mocne}
+                  onClick={() => setMocne(v => !v)}
+                  className="flex w-full items-center justify-between gap-3 text-left cursor-pointer group"
                 >
+                  <div className="flex items-center gap-2.5">
+                    <Gauge className={cn('h-4 w-4 transition-colors', mocne ? 'text-primary' : 'text-foreground/40')} />
+                    <div>
+                      <p className="text-[12.5px] font-medium text-foreground">Zaawansowane modele myślenia</p>
+                      <p className="text-[10.5px] text-muted-foreground/60">GPT-5 / Claude 3.5 Sonnet / o3</p>
+                    </div>
+                  </div>
                   <span
-                    className="h-5 w-5 rounded-full bg-background transition-transform duration-200"
-                    style={{ transform: mocne ? 'translateX(20px)' : 'translateX(0)' }}
-                  />
-                </span>
-              </button>
+                    className={cn(
+                      'flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200',
+                      mocne ? 'bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.5)]' : 'bg-foreground/15',
+                    )}
+                  >
+                    <span
+                      className="h-4 w-4 rounded-full bg-background transition-transform duration-200 shadow-sm"
+                      style={{ transform: mocne ? 'translateX(16px)' : 'translateX(0)' }}
+                    />
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* ── prawa kolumna: propozycja planu ── */}
-          <div>
-            <p className="mb-3 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
-              Proponujemy plan
-            </p>
+          {/* ── prawa kolumna: zwięzła propozycja planu ── */}
+          <div className="lg:sticky lg:top-6 space-y-2.5">
+            <div className="flex h-6 items-center justify-between">
+              <span className="font-heading text-[13px] font-semibold text-foreground flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                Rekomendowany plan
+              </span>
+              <span className="font-mono text-[9.5px] uppercase tracking-wider text-muted-foreground/60">
+                Optymalny wybór
+              </span>
+            </div>
 
             <div
-              className="rounded-2xl border p-5 transition-colors duration-500"
+              className="relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.3)] backdrop-blur-xl"
               style={{
                 borderColor: akcentTlo(plan.kolor, 35),
-                background: `linear-gradient(160deg, ${akcentTlo(plan.kolor, 12)}, hsl(var(--card)/0.92))`,
+                background: `linear-gradient(160deg, ${akcentTlo(plan.kolor, 12)}, hsl(var(--card)/0.96))`,
               }}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div key={plan.id} className="animate-tab-in">
-                  <h3 className="font-heading text-[26px] font-bold leading-none" style={{ color: plan.kolor }}>
-                    {plan.nazwa}
-                  </h3>
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    {prog ? 'Rozliczane miesięcznie' : 'Wystarczy pula startowa'}
-                  </p>
-                </div>
-                {/* Liczba poza keyowanym blokiem — inaczej przemontowanie zjadłoby
-                    animację przeliczania i cena tylko by przeskakiwała. */}
-                <div className="flex shrink-0 items-baseline gap-1">
-                  <span className="font-heading text-[32px] font-bold leading-none text-foreground">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              />
+
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="font-heading text-[24px] font-bold leading-none tracking-tight" style={{ color: plan.kolor }}>
+                  {plan.nazwa}
+                </h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-heading text-[28px] font-bold leading-none text-foreground">
                     <AnimNum value={prog?.miesiecznie ?? 0} />
                   </span>
-                  <span className="text-xs text-muted-foreground">zł/mies.</span>
+                  <span className="text-xs text-muted-foreground">zł/msc</span>
                 </div>
               </div>
 
-              <div className="mt-5">
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="text-muted-foreground">Twoje szacowane zużycie</span>
-                  <span className="font-semibold tabular-nums" style={{ color: plan.kolor }}>
-                    <AnimNum value={zuzycie} /> / {prog ? prog.byte.toLocaleString('pl-PL') : '—'} ⟠
+              <p className="mt-1 text-[11.5px] text-muted-foreground/70">
+                {prog ? 'Pula Byte odnawiana co miesiąc' : 'Zacznij bez podawania karty'}
+              </p>
+
+              {/* Pasek pokrycia zużycia */}
+              <div className="mt-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] p-3">
+                <div className="flex items-center justify-between text-[11.5px]">
+                  <span className="text-muted-foreground">Szacowane zużycie:</span>
+                  <span className="font-bold tabular-nums" style={{ color: plan.kolor }}>
+                    <AnimNum value={zuzycie} /> {prog ? `/ ${prog.byte.toLocaleString('pl-PL')} ⟠` : '⟠'}
                   </span>
                 </div>
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.08]">
                   <div
-                    className="h-full rounded-full transition-[width] duration-500"
+                    className="h-full rounded-full transition-[width] duration-300"
                     style={{ width: `${pokrycie}%`, background: plan.kolor }}
                   />
                 </div>
-                <p className="mt-1.5 text-[11px] text-muted-foreground/70">
+                <p className="mt-1.5 text-[10.5px] text-muted-foreground/60">
                   {prog
-                    ? `Zostaje ${zapas.toLocaleString('pl-PL')} ⟠ zapasu`
-                    : 'Zacznij bez opłaty i doładuj paczkę, gdy będzie potrzebna'}
+                    ? `Zostaje ${zapas.toLocaleString('pl-PL')} ⟠ wolnego zapasu`
+                    : 'Zacznij za darmo i doładuj Byte w razie potrzeby'}
                 </p>
               </div>
 
+              <GlowButton className="mt-4 w-full justify-center text-[13px] py-2.5" icon={false} onClick={() => onWybierz(plan.id)}>
+                <Sparkles className="h-3.5 w-3.5" />
+                Wybieram {plan.nazwa}
+              </GlowButton>
+
+              {/* Opcjonalne rozwinięcie rozbicia */}
               <button
                 type="button"
                 onClick={() => setSkad(v => !v)}
                 aria-expanded={skad}
-                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-foreground/[0.04] py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="mt-3 flex w-full items-center justify-center gap-1.5 py-1 text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
               >
-                Skąd ta liczba?
-                <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', skad && 'rotate-180')} />
+                {skad ? 'Ukryj podsumowanie' : 'Rozwiń podsumowanie Byte'}
+                <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', skad && 'rotate-180')} />
               </button>
 
               {skad && (
-                <div className="mt-2 animate-tab-in space-y-1.5 rounded-lg bg-foreground/[0.04] p-3">
+                <div className="mt-2 animate-tab-in space-y-1.5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] p-2.5 text-[10.5px]">
                   {pozycje.filter(s => s.koszt > 0).map(s => (
-                    <div key={s.id} className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="text-muted-foreground">
-                        {s.etykieta} · {ilosci[s.id]} × {s.stawkaAktualna} ⟠
-                      </span>
-                      <span className="font-semibold tabular-nums text-foreground">{s.koszt} ⟠</span>
+                    <div key={s.id} className="flex items-center justify-between gap-2 text-muted-foreground">
+                      <span>{s.etykieta} ({ilosci[s.id]}×)</span>
+                      <span className="font-semibold text-foreground">{s.koszt} ⟠</span>
                     </div>
                   ))}
                   {dodatki.map(o => (
-                    <div key={o.id} className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="text-muted-foreground">{o.t} · {o.opis}</span>
-                      <span className="font-semibold tabular-nums text-foreground">{o.dodatek} ⟠</span>
+                    <div key={o.id} className="flex items-center justify-between gap-2 text-muted-foreground">
+                      <span>{o.t}</span>
+                      <span className="font-semibold text-foreground">{o.dodatek} ⟠</span>
                     </div>
                   ))}
-                  {zuzycie === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">Ustaw suwaki albo zaznacz, co chcesz robić.</p>
-                  ) : (
-                    <div className="flex items-center justify-between gap-2 border-t border-foreground/[0.08] pt-1.5 text-[11px]">
-                      <span className="font-medium text-foreground">Razem</span>
-                      <span className="font-bold tabular-nums" style={{ color: plan.kolor }}>{zuzycie} ⟠</span>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between gap-2 border-t border-foreground/[0.08] pt-1.5 font-bold">
+                    <span className="text-foreground">Suma</span>
+                    <span style={{ color: plan.kolor }}>{zuzycie} ⟠</span>
+                  </div>
                 </div>
               )}
             </div>
-
-            <GlowButton className="mt-4 w-full justify-center" icon={false} onClick={() => onWybierz(plan.id)}>
-              <Sparkles className="h-4 w-4" />
-              Wybieram {plan.nazwa}
-            </GlowButton>
-
-            {nastepny && (
-              <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-foreground/[0.08] px-3.5 py-2.5 text-xs">
-                <span className="text-muted-foreground">Gdy zabraknie</span>
-                <span className="font-semibold tabular-nums text-foreground">
-                  {nastepny.prog.byte.toLocaleString('pl-PL')} ⟠ za {nastepny.prog.miesiecznie} zł
-                </span>
-              </div>
-            )}
-
-            <p className="mt-5 text-center text-[11px] leading-relaxed text-muted-foreground/60">
-              Plan zmienisz w każdej chwili. W górę działa od razu z dopłatą różnicy, w dół od
-              następnego okresu — żeby nie przepadło to, co już opłacone.
-            </p>
           </div>
         </div>
       </div>
@@ -962,249 +1035,231 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
    ostrożność.
    ═══════════════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════════════
-   BOGATA WIZUALIZACJA: EKOSYSTEM JEDNEJ WALUTY (PLN → BYTE)
-   Wzorowana na zaawansowanych scenach modułowych (Deep Research):
-   3D moneta PLN, wznoszący się strumień kwantowy, centralny kryształ
-   Byte ⟠ oraz 6 rozchodzących się satelitarnych węzłów operacji.
+   ZNAK BYTE, KTÓRY SIĘ GENERUJE
+   Jeden symbol zamiast diagramu sieci: kontur ⟠ stoi w miejscu jak
+   naczynie, a w środku podnosi się świecący poziom — wartość, która
+   rośnie. Pętla 0→100%, krótki postój na pełni, od nowa. Poziom
+   liczy się jako pojedynczy stan (setInterval co 100ms, jak licznik
+   tokenów w HomePage3Blocks), a granicę wypełnienia rysuje jeden
+   gradient z twardym progiem — bez masek i osobnych warstw.
    ═══════════════════════════════════════════════════════════════ */
-function BytePlnTransferVisual() {
-  const referencja = PLANY.find(p => p.id === 'premium')?.progi?.[0]
-  const kurs = (referencja ? referencja.byte / referencja.miesiecznie : 5).toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+/* ═══════════════════════════════════════════════════════════════
+   GENEROWANIE ZNAKU BYTE ZGODNIE ZE SCROLLEM (OD GÓRY DO DOŁU)
+   W miarę przewijania strony symbol Byte ⟠ materializuje się od
+   górnego wierzchołka do dolnego, prowadzony laserową wiązką.
+   ═══════════════════════════════════════════════════════════════ */
+function useElementScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setProgress(1)
+      return
+    }
+
+    let last = -1
+    const read = () => {
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || 800
+      // Początek materializacji gdy element wchodzi od dołu (82% vh),
+      // pełna synteza gdy zbliża się do środka ekranu (40% vh)
+      const start = vh * 0.82
+      const end = vh * 0.40
+      const raw = (start - rect.top) / (start - end)
+      const clamped = Math.max(0, Math.min(1, raw))
+      const q = Math.round(clamped * 200) / 200
+      if (q !== last) { last = q; setProgress(q) }
+    }
+
+    // Odpytywanie co 80ms zamiast pętli rAF — dziesięć-kilkanaście kroków
+    // na sekundę wystarczy oku (patrz useTokenTicker wyżej), a działa
+    // niezawodnie nawet tam, gdzie rAF bywa wstrzymywany przez hosta.
+    // Liczy TYLKO gdy sekcja jest w okolicy kadru — IntersectionObserver
+    // włącza i wyłącza interwał. Bez tego zwykły `window` 'scroll' nigdy by
+    // się nie odpalił: w hoście podglądu przewija się WEWNĘTRZNY kontener
+    // (main.overflow-y-auto), nie window, więc `progress` zamrażał się
+    // na 0 po pierwszym renderze.
+    let ivId = 0
+    let inViewRef = false
+    const io = new IntersectionObserver((entries) => {
+      const inView = entries[0]?.isIntersecting ?? true
+      inViewRef = inView
+      if (inView && !ivId) ivId = window.setInterval(read, 80)
+      if (!inView && ivId) { clearInterval(ivId); ivId = 0 }
+    }, { rootMargin: '300px 0px' })
+    io.observe(el)
+
+    // Ścieżka zapasowa: scroll na window w fazie capture łapie też przewijanie
+    // kontenerów potomnych — przydaje się tam, gdzie interwał akurat jeszcze
+    // nie zdążył odpytać.
+    const onScroll = () => { if (inViewRef) read() }
+    read()
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+
+    return () => {
+      io.disconnect()
+      if (ivId) clearInterval(ivId)
+      window.removeEventListener('scroll', onScroll, { capture: true })
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [ref])
+
+  return progress
+}
+
+function ByteGeneratingGlyph() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const progress = useElementScrollProgress(containerRef)
+
+  // Geometria autentycznego znaku Byte ⟠ (dwa trójkąty stykające się podstawami):
+  // Górny wierzchołek: (0, -100)
+  // Lewy wierzchołek: (-55, 0)
+  // Prawy wierzchołek: (55, 0)
+  // Dolny wierzchołek: (0, 100)
+  const totalH = 200
+  const topY = -100
+  const scanY = topY + progress * totalH
+
+  // Szerokość symbolu w punkcie skanowania scanY:
+  const currentHalfW = scanY <= 0
+    ? Math.max(0, ((scanY - topY) / 100) * 55)
+    : Math.max(0, (1 - scanY / 100) * 55)
 
   return (
-    <div className="relative w-full max-w-[880px] aspect-[880/580] flex items-center justify-center">
-      {/* Poświata tła */}
+    <div
+      ref={containerRef}
+      className="relative w-full max-w-[380px] aspect-[300/360] mx-auto flex items-center justify-center select-none"
+    >
+      {/* Poświata tła narastająca wraz z generowaniem symbolu */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[420px] w-[620px] rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.14)_0%,transparent_70%)] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[340px] w-[340px] rounded-full blur-3xl transition-opacity duration-300"
+        style={{
+          background: 'radial-gradient(ellipse at center, hsl(var(--primary)/0.25) 0%, transparent 70%)',
+          opacity: 0.25 + progress * 0.75,
+        }}
       />
 
-      {/* Siatka techniczna z radialną maską */}
+      {/* Siatka techniczna CAD z radialną maską */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
         style={{
           backgroundImage:
-            'linear-gradient(0deg, #38bdf8 1px, transparent 1px),' +
-            'linear-gradient(90deg, #38bdf8 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-          maskImage: 'radial-gradient(ellipse at center, #000 30%, transparent 75%)',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, #000 30%, transparent 75%)',
+            'linear-gradient(0deg, hsl(var(--primary)) 1px, transparent 1px),' +
+            'linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)',
+          backgroundSize: '36px 36px',
+          maskImage: 'radial-gradient(ellipse at center, #000 35%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, #000 35%, transparent 75%)',
         }}
       />
 
       <svg
-        viewBox="0 0 880 580"
-        className="relative z-10 h-full w-full overflow-visible select-none"
+        viewBox="0 0 300 360"
+        className="relative z-10 h-full w-full overflow-visible"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <filter id="bytePulseGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
+          <filter id="byteGlyphGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
 
-          <linearGradient id="plnBaseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#1e293b" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#090d16" stopOpacity="0.98" />
-          </linearGradient>
+          <filter id="laserBeamGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="4.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
 
-          <linearGradient id="crystalFacetA" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.32" />
-            <stop offset="100%" stopColor="#0284c7" stopOpacity="0.1" />
-          </linearGradient>
+          {/* Maska obcinająca scrolla — odsłania znak ściśle od góry do dołu */}
+          <clipPath id="byteScrollRevealClip">
+            <rect
+              x="-150"
+              y="-120"
+              width="300"
+              height={Math.max(0, progress * (totalH + 15))}
+            />
+          </clipPath>
 
-          <linearGradient id="crystalFacetB" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#0369a1" stopOpacity="0.08" />
-          </linearGradient>
-
-          <linearGradient id="beamGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.1" />
-            <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.95" />
+          <linearGradient id="laserBeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+            <stop offset="20%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="80%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        {/* ══════════ 1. PROMIENISTE ŁUKI POŁĄCZEŃ OD KRYSZTAŁU DO WĘZŁÓW ══════════ */}
-        <g stroke="#38bdf8" strokeOpacity="0.32" strokeWidth="1.2" fill="none">
-          <path d="M 440 190 C 360 180, 280 130, 230 110" strokeDasharray="3 4" />
-          <path d="M 440 210 C 340 220, 260 230, 200 245" strokeDasharray="3 4" />
-          <path d="M 440 240 C 350 310, 260 360, 210 385" strokeDasharray="3 4" />
-          <path d="M 440 190 C 520 180, 600 130, 650 110" strokeDasharray="3 4" />
-          <path d="M 440 210 C 540 220, 620 230, 680 245" strokeDasharray="3 4" />
-          <path d="M 440 240 C 530 310, 620 360, 670 385" strokeDasharray="3 4" />
+        <g transform="translate(150, 155)">
+          {/* ════ ZSYNTEZOWANY ZNAK BYTE (odkrywany od góry do dołu scrollem) ════ */}
+          <g clipPath="url(#byteScrollRevealClip)">
+            {/* Półprzezroczysta poświata wnętrza */}
+            <polygon points="0,-100 55,0 -55,0" fill="hsl(var(--primary))" fillOpacity="0.08" />
+            <polygon points="-55,0 55,0 0,100" fill="hsl(var(--primary))" fillOpacity="0.08" />
+
+            {/* Zewnętrzne świecące linie błękitne znaku Byte ⟠ */}
+            <polygon
+              points="0,-100 55,0 -55,0"
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="2.8"
+              strokeLinejoin="round"
+              filter="url(#byteGlyphGlow)"
+            />
+            <polygon
+              points="-55,0 55,0 0,100"
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="2.8"
+              strokeLinejoin="round"
+              filter="url(#byteGlyphGlow)"
+            />
+            <line
+              x1="-55"
+              y1="0"
+              x2="55"
+              y2="0"
+              stroke="hsl(var(--primary))"
+              strokeWidth="2.6"
+              filter="url(#byteGlyphGlow)"
+            />
+
+            {/* Biały rdzeń specularny krawędzi */}
+            <polygon points="0,-100 55,0 -55,0" fill="none" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.85" strokeLinejoin="round" />
+            <polygon points="-55,0 55,0 0,100" fill="none" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.85" strokeLinejoin="round" />
+            <line x1="-55" y1="0" x2="55" y2="0" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.85" />
+          </g>
+
+          {/* ════ WIĄZKA LASEROWA PROWADZĄCA SYNTEZĘ (podąża za scrollem) ════ */}
+          {progress > 0.02 && progress < 0.99 && (
+            <g filter="url(#laserBeamGlow)">
+              <line
+                x1={-Math.max(currentHalfW + 24, 28)}
+                y1={scanY}
+                x2={Math.max(currentHalfW + 24, 28)}
+                y2={scanY}
+                stroke="url(#laserBeamGrad)"
+                strokeWidth="2.4"
+              />
+            </g>
+          )}
+
+          {/* Punkty wierzchołków CAD */}
+          <circle cx="0" cy="-100" r="2.8" fill={progress > 0.03 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
+          <circle cx="-55" cy="0" r="2.8" fill={progress >= 0.5 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
+          <circle cx="55" cy="0" r="2.8" fill={progress >= 0.5 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
+          <circle cx="0" cy="100" r="2.8" fill={progress >= 0.97 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
         </g>
-
-        {/* Cząstki fotonów poruszające się wzdłuż łuków */}
-        <g fill="#38bdf8" filter="url(#bytePulseGlow)">
-          <circle r="2.5">
-            <animateMotion dur="4s" repeatCount="indefinite" path="M 440 190 C 360 180, 280 130, 230 110" />
-          </circle>
-          <circle r="2.5">
-            <animateMotion dur="4.6s" repeatCount="indefinite" begin="0.8s" path="M 440 210 C 340 220, 260 230, 200 245" />
-          </circle>
-          <circle r="2.5">
-            <animateMotion dur="5.2s" repeatCount="indefinite" begin="1.4s" path="M 440 240 C 350 310, 260 360, 210 385" />
-          </circle>
-          <circle r="2.5">
-            <animateMotion dur="4.2s" repeatCount="indefinite" begin="0.4s" path="M 440 190 C 520 180, 600 130, 650 110" />
-          </circle>
-          <circle r="2.5">
-            <animateMotion dur="4.8s" repeatCount="indefinite" begin="1.1s" path="M 440 210 C 540 220, 620 230, 680 245" />
-          </circle>
-          <circle r="2.5">
-            <animateMotion dur="5.5s" repeatCount="indefinite" begin="1.8s" path="M 440 240 C 530 310, 620 360, 670 385" />
-          </circle>
-        </g>
-
-        {/* ══════════ 2. STRUMIEŃ KWANTOWY PLN -> BYTE ══════════ */}
-        <g>
-          <line x1="440" y1="445" x2="440" y2="245" stroke="url(#beamGrad)" strokeWidth="2.5" />
-          <line x1="428" y1="448" x2="428" y2="250" stroke="#38bdf8" strokeOpacity="0.22" strokeWidth="1" strokeDasharray="3 5" />
-          <line x1="452" y1="448" x2="452" y2="250" stroke="#38bdf8" strokeOpacity="0.22" strokeWidth="1" strokeDasharray="3 5" />
-
-          <circle r="3" fill="#38bdf8" filter="url(#bytePulseGlow)">
-            <animate attributeName="cy" from="445" to="245" dur="2.4s" repeatCount="indefinite" />
-            <animate attributeName="cx" values="440;441;439;440" dur="2.4s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.4s" repeatCount="indefinite" />
-          </circle>
-          <circle r="2" fill="#7dd3fc">
-            <animate attributeName="cy" from="445" to="245" dur="2.8s" begin="1.1s" repeatCount="indefinite" />
-            <animate attributeName="cx" values="436;437;435;436" dur="2.8s" begin="1.1s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.8s" begin="1.1s" repeatCount="indefinite" />
-          </circle>
-        </g>
-
-        {/* ══════════ 3. BAZA PLN: 3D CYFROWY SKARBIEC ══════════ */}
-        <g transform="translate(440, 465)">
-          <ellipse cx="0" cy="8" rx="145" ry="42" fill="none" stroke="#38bdf8" strokeOpacity="0.15" strokeWidth="1" strokeDasharray="5 7" />
-          <ellipse cx="0" cy="8" rx="120" ry="34" fill="none" stroke="#38bdf8" strokeOpacity="0.25" strokeWidth="1.2" />
-
-          {/* Grubość krawędzi monety 3D */}
-          <path d="M -90 0 C -90 26, 90 26, 90 0 L 90 14 C 90 40, -90 40, -90 14 Z" fill="#0b111c" stroke="#38bdf8" strokeOpacity="0.4" strokeWidth="1.2" />
-
-          {/* Górna tafla monety PLN */}
-          <ellipse cx="0" cy="0" rx="90" ry="26" fill="url(#plnBaseGrad)" stroke="#38bdf8" strokeWidth="1.6" filter="url(#bytePulseGlow)" />
-          <ellipse cx="0" cy="0" rx="76" ry="21" fill="none" stroke="#38bdf8" strokeOpacity="0.3" strokeWidth="1" strokeDasharray="3 4" />
-
-          <text x="0" y="8" textAnchor="middle" fontSize="28" fontWeight="800" fill="white" letterSpacing="-1px" fontFamily="ui-sans-serif, system-ui">
-            zł
-          </text>
-          <text x="0" y="22" textAnchor="middle" fontSize="8" fontWeight="700" fill="#38bdf8" letterSpacing="0.24em" fontFamily="ui-monospace, monospace">
-            PLN POZIOM BAZOWY
-          </text>
-        </g>
-
-        {/* Holograficzna plakietka przelicznika na środku strumienia */}
-        <g transform="translate(440, 335)">
-          <rect x="-68" y="-14" width="136" height="28" rx="14" fill="#07121e" stroke="#38bdf8" strokeOpacity="0.7" strokeWidth="1.3" filter="url(#bytePulseGlow)" />
-          <text x="0" y="4" textAnchor="middle" fontSize="11" fontWeight="700" fill="white" fontFamily="ui-monospace, monospace">
-            1 ZŁ <tspan fill="#38bdf8">≈</tspan> {kurs} ⟠
-          </text>
-        </g>
-
-        {/* ══════════ 4. CENTRALNY KRYSZTAŁ BYTE 3D (⟠) ══════════ */}
-        <g transform="translate(440, 185)">
-          <circle cx="0" cy="0" r="70" fill="none" stroke="#38bdf8" strokeOpacity="0.12" strokeWidth="1" strokeDasharray="6 6" />
-          <circle cx="0" cy="0" r="54" fill="none" stroke="#38bdf8" strokeOpacity="0.22" strokeWidth="1" />
-
-          {/* Płaszczyzny 3D kryształu Byte */}
-          <polygon points="0,-48 -38,-6 0,38" fill="url(#crystalFacetA)" stroke="#38bdf8" strokeWidth="1.6" />
-          <polygon points="0,-48 38,-6 0,38" fill="url(#crystalFacetB)" stroke="#38bdf8" strokeWidth="1.6" />
-          <polygon points="-38,-6 0,38 0,48" fill="#0369a1" fillOpacity="0.3" stroke="#38bdf8" strokeOpacity="0.6" strokeWidth="1" />
-          <polygon points="38,-6 0,38 0,48" fill="#0284c7" fillOpacity="0.4" stroke="#38bdf8" strokeOpacity="0.6" strokeWidth="1" />
-
-          {/* Główny symbol Byte */}
-          <text x="0" y="10" textAnchor="middle" fontSize="32" fontWeight="900" fill="#38bdf8" filter="url(#bytePulseGlow)" fontFamily="sans-serif">
-            ⟠
-          </text>
-          <text x="0" y="66" textAnchor="middle" fontSize="10" fontWeight="700" fill="white" letterSpacing="0.18em" fontFamily="ui-monospace, monospace">
-            JEDNOSTKA BYTE
-          </text>
-        </g>
-
-        {/* ══════════ 5. SATELITARNE WĘZŁY ZASTOSOWAŃ (JAK W RESEARCH) ══════════ */}
-        {/* WĘZEŁ 1: CZAT & TEKST */}
-        <g transform="translate(110, 95)">
-          <rect x="-10" y="-18" width="165" height="42" rx="10" fill="#07121e" stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1.2" />
-          <circle cx="-10" cy="3" r="3.5" fill="#38bdf8" />
-          <text x="8" y="-1" fontSize="12" fontWeight="600" fill="white" fontFamily="ui-sans-serif, system-ui">
-            Czat & Modele AI
-          </text>
-          <text x="8" y="15" fontSize="10" fontWeight="700" fill="#38bdf8" fontFamily="ui-monospace, monospace">
-            od 0.002 ⟠ / zapytanie
-          </text>
-        </g>
-
-        {/* WĘZEŁ 2: STUDIO OBRAZÓW */}
-        <g transform="translate(80, 230)">
-          <rect x="-10" y="-18" width="170" height="42" rx="10" fill="#07121e" stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1.2" />
-          <circle cx="-10" cy="3" r="3.5" fill="#38bdf8" />
-          <text x="8" y="-1" fontSize="12" fontWeight="600" fill="white" fontFamily="ui-sans-serif, system-ui">
-            Studio Grafik 4K
-          </text>
-          <text x="8" y="15" fontSize="10" fontWeight="700" fill="#38bdf8" fontFamily="ui-monospace, monospace">
-            0.15 ⟠ / generacja
-          </text>
-        </g>
-
-        {/* WĘZEŁ 3: LOKALNE AI */}
-        <g transform="translate(95, 370)">
-          <rect x="-10" y="-18" width="165" height="42" rx="10" fill="#07121e" stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1.2" />
-          <circle cx="-10" cy="3" r="3.5" fill="#38bdf8" />
-          <text x="8" y="-1" fontSize="12" fontWeight="600" fill="white" fontFamily="ui-sans-serif, system-ui">
-            Lokalne AI (Ollama)
-          </text>
-          <text x="8" y="15" fontSize="10" fontWeight="700" fill="#10b981" fontFamily="ui-monospace, monospace">
-            0.00 ⟠ (BEZ LIMITU)
-          </text>
-        </g>
-
-        {/* WĘZEŁ 4: DEEP RESEARCH */}
-        <g transform="translate(620, 95)">
-          <rect x="-10" y="-18" width="170" height="42" rx="10" fill="#07121e" stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1.2" />
-          <circle cx="160" cy="3" r="3.5" fill="#38bdf8" />
-          <text x="8" y="-1" fontSize="12" fontWeight="600" fill="white" fontFamily="ui-sans-serif, system-ui">
-            Deep Research
-          </text>
-          <text x="8" y="15" fontSize="10" fontWeight="700" fill="#38bdf8" fontFamily="ui-monospace, monospace">
-            0.80 ⟠ / pełen raport
-          </text>
-        </g>
-
-        {/* WĘZEŁ 5: KODOWANIE & AGENCI */}
-        <g transform="translate(645, 230)">
-          <rect x="-10" y="-18" width="165" height="42" rx="10" fill="#07121e" stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1.2" />
-          <circle cx="155" cy="3" r="3.5" fill="#38bdf8" />
-          <text x="8" y="-1" fontSize="12" fontWeight="600" fill="white" fontFamily="ui-sans-serif, system-ui">
-            Kodowanie & Audyt
-          </text>
-          <text x="8" y="15" fontSize="10" fontWeight="700" fill="#38bdf8" fontFamily="ui-monospace, monospace">
-            0.05 ⟠ / analiza
-          </text>
-        </g>
-
-        {/* WĘZEŁ 6: AUDIO & GŁOS */}
-        <g transform="translate(630, 370)">
-          <rect x="-10" y="-18" width="165" height="42" rx="10" fill="#07121e" stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1.2" />
-          <circle cx="155" cy="3" r="3.5" fill="#38bdf8" />
-          <text x="8" y="-1" fontSize="12" fontWeight="600" fill="white" fontFamily="ui-sans-serif, system-ui">
-            Generacja Głosu TTS
-          </text>
-          <text x="8" y="15" fontSize="10" fontWeight="700" fill="#38bdf8" fontFamily="ui-monospace, monospace">
-            0.02 ⟠ / minuta
-          </text>
-        </g>
-
-        {/* ══════════ PODPIS DOLNY ══════════ */}
-        <text x="440" y="555" textAnchor="middle" fontSize="10.5" fontFamily="ui-monospace, monospace" fill="hsl(var(--foreground)/0.45)" letterSpacing="0.18em">
-          PŁACISZ W PLN · ZUŻYWASZ W BYTE · NIEWYKORZYSTANE NIE PRZEPADAJĄ
-        </text>
       </svg>
     </div>
   )
@@ -1269,18 +1324,22 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
            — przy 4 kartach naraz (Free/Premium/Ultimate/Enterprise) węższy
            max-w-6xl ze standardowego Section zbyt mocno je ściskał. */}
       <div className="relative">
-        <div className="relative mx-auto w-full max-w-[92rem] px-4 pb-14 pt-14 sm:px-6 sm:pt-20 lg:px-8">
-          <FadeIn className="relative z-10">
-            <h1 className="font-heading text-[clamp(26px,4vw,42px)] font-semibold leading-[1.1] tracking-[-1px] text-foreground">
-              Wybierz najlepszy plan dla siebie.
-            </h1>
-            <p className="mt-3 max-w-lg font-sans text-[14.5px] font-light leading-relaxed text-foreground/55">
-              Odblokuj lepsze ceny lub skaluj swoje możliwości, dopasowując plan do bieżących potrzeb.
-            </p>
+        {/* Subtelna poświata głębi u góry strony */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.09)_0%,transparent_70%)] blur-3xl"
+        />
 
-            <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <PlanFinderButton otwarty={dobor} onClick={() => setDobor(v => !v)} />
+        <div className="relative mx-auto w-full max-w-4xl px-4 pb-10 pt-12 text-center sm:px-6 sm:pt-16 lg:px-8">
+          <FadeIn className="relative z-10">
+            <h1 className="font-heading text-center text-[clamp(36px,5.5vw,62px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
+              Wybierz swój <span className="font-normal text-primary">plan.</span>
+            </h1>
+
+            {/* Przełącznik okresu i kreator doboru wycentrowane */}
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-5">
               <OkresToggle okres={okres} onChange={setOkres} />
+              <PlanFinderButton otwarty={dobor} onClick={() => setDobor(v => !v)} />
             </div>
           </FadeIn>
         </div>
@@ -1334,19 +1393,19 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                   Jedna waluta. <br className="hidden sm:block" />
                   <span className="font-normal text-primary">Pełna kontrola.</span>
                 </h2>
-                <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/70">
-                  Byte to wewnętrzna jednostka rozliczeniowa NextByte. Płacisz tylko za to, czego naprawdę używasz — bez sztucznych limitów per-model.
+                <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
+                  Jeden portfel w PLN zamiast 5 osobnych subskrypcji. Płacisz tylko za to, co faktycznie zużyjesz — z pełną fakturą VAT 23%.
                 </p>
               </div>
 
-              {/* LISTA PUNKTÓW Z CYANOWĄ POŚWIATĄ */}
-              <div className="space-y-3.5 pt-1 font-sans">
+              {/* LISTA PUNKTÓW Z AKCENTEM */}
+              <div className="space-y-4 pt-1 font-sans">
                 {BYTE_KARTY.map((k) => (
-                  <div key={k.t} className="flex items-start gap-3 text-[13.5px] font-light text-foreground/80 leading-snug">
+                  <div key={k.t} className="flex items-start gap-3 text-[13.5px] font-light leading-snug">
                     <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] mt-2" />
                     <div>
                       <strong className="font-semibold text-foreground mr-1.5">{k.t}:</strong>
-                      <span className="text-foreground/70">{k.d}</span>
+                      <span className="text-foreground/75">{k.d}</span>
                     </div>
                   </div>
                 ))}
@@ -1362,14 +1421,13 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                   }}
                 >
                   Sprawdź kalkulator Byte
-                  <ArrowRight className="ml-2 h-4 w-4" />
                 </GlowButton>
               </div>
             </div>
 
             {/* PRAWA KOLUMNA — BOGATA WIZUALIZACJA EKOSYSTEMU BYTE */}
             <div className="lg:col-span-7 flex flex-col items-center justify-center relative select-none w-full">
-              <BytePlnTransferVisual />
+              <ByteGeneratingGlyph />
             </div>
           </div>
         </FadeIn>

@@ -408,24 +408,24 @@ export const PLAN_MACIERZ: { f: string; v: (boolean | string)[] }[] = [
 /** Sekcja "Jedna waluta. Pełna kontrola." — cztery kafle z narożnikami. */
 export const BYTE_KARTY = [
   {
-    tag: '// 01 / UNIT',
-    t: 'Czym jest Byte?',
-    d: 'Jednostka rozliczeniowa NextByte. Każda akcja AI — wiadomość, generacja, raport — zużywa liczbę Byte zgodnie z cennikiem operacji.',
+    tag: '// 01 / EKOSYSTEM',
+    t: 'Jeden portfel AI',
+    d: 'Wszystkie modele (GPT, Claude, Gemini, grafiki 4K) rozliczasz z jednej wspólnej puli.',
   },
   {
-    tag: '// 02 / REFRESH',
-    t: 'Miesięczne odnowienie',
-    d: 'Co miesiąc pula z subskrypcji odnawia się do pełnego stanu. Byte kupione zachowują ważność 12 miesięcy i nie są resetowane.',
+    tag: '// 02 / ROLLOVER',
+    t: 'Środki nie przepadają',
+    d: 'Niewykorzystane Byte przechodzą na kolejny miesiąc i kumulują się aż do 3×.',
   },
   {
-    tag: '// 03 / PRIORITY',
-    t: 'Kolejność zużycia',
-    d: 'Subskrypcja → Byte przyznane → Byte kupione. Najpierw spalamy to, co najbardziej ulotne.',
+    tag: '// 03 / ZUŻYCIE',
+    t: 'Uczciwa kolejność',
+    d: 'Najpierw schodzi abonament, a dokupione pakiety zachowują ważność przez 12 miesięcy.',
   },
   {
-    tag: '// 04 / TOP-UP',
-    t: 'Doładowania',
-    d: 'Potrzebujesz więcej? Doładuj pakiet Byte w panelu — bez zmiany planu, bez zobowiązań.',
+    tag: '// 04 / DOŁADOWANIA',
+    t: 'Pakiety od ręki',
+    d: 'Większy projekt? Dokupujesz Byte w PLN w każdej chwili, bez zmiany planu.',
   },
 ] as const
 
