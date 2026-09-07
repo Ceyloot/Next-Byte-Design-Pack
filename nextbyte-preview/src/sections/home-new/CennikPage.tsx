@@ -34,7 +34,7 @@ const cenaZaOkres = (miesiecznie: number, okres: Okres) =>
 function BlockHead({
   label, title, accent, lead, center, className,
 }: {
-  label: string
+  label?: string
   title: React.ReactNode
   accent?: React.ReactNode
   lead?: React.ReactNode
@@ -43,7 +43,7 @@ function BlockHead({
 }) {
   return (
     <div className={cn('max-w-2xl', center && 'mx-auto text-center', className)}>
-      <div className={cn(center && 'flex justify-center')}><SecRule label={label} /></div>
+      {label && <div className={cn(center && 'flex justify-center')}><SecRule label={label} /></div>}
       <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
         {title}{accent ? <> <span className="font-normal text-primary">{accent}</span></> : null}
       </h2>
@@ -421,38 +421,62 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
           )}
         </div>
 
-        {/* Tytuł & krótki opis */}
+        {/* Tytuł & krótki opis — przy rozliczeniu rocznym obok nazwy siada rabat */}
         <div className="mb-3">
-          <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            {plan.nazwa}
-          </h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              {plan.nazwa}
+            </h3>
+            {!darmowy && okres === 'rocznie' && (
+              <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 font-sans text-[11.5px] font-bold text-primary">
+                −{Math.round(RABAT_ROCZNY * 100)}%
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{plan.opis}</p>
         </div>
 
-        {/* Cena: czytelna i przejrzysta */}
+        {/* Cena: czytelna i przejrzysta. Przy rozliczeniu rocznym obok nowej kwoty
+            stoi przekreślona cena miesięczna — przecena musi być widoczna od razu,
+            bez czytania drobnego druku pod spodem. */}
         <div className="mb-4">
-          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+          <div className="flex items-baseline gap-2 whitespace-nowrap">
             <span className="font-heading text-3xl sm:text-4xl font-bold text-foreground">
               {darmowy ? (
                 'Free'
               ) : (
-                <>
-                  <AnimNum value={cena} decimals={cena % 1 !== 0 ? 2 : 0} />
-                  <span className="text-base font-normal text-muted-foreground ml-1">zł/m</span>
-                </>
+                <AnimNum value={cena} decimals={cena % 1 !== 0 ? 2 : 0} />
               )}
             </span>
+
+            {!darmowy && okres === 'rocznie' && cenaBazowa > cena && (
+              <span className="font-heading text-xl font-semibold text-foreground/25 line-through decoration-foreground/30">
+                {cenaBazowa.toLocaleString('pl-PL', {
+                  minimumFractionDigits: cenaBazowa % 1 !== 0 ? 2 : 0,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            )}
+
+            {!darmowy && (
+              <span className="text-base font-normal text-muted-foreground">zł/m</span>
+            )}
           </div>
 
-          <div className="mt-1 min-h-[18px]">
+          <div className="mt-1 min-h-[32px] space-y-0.5">
             {!darmowy && okres === 'rocznie' ? (
-              <span className="text-[11.5px] text-primary font-medium">
-                faktura roczna: <AnimNum value={cena * 12} /> PLN
-              </span>
+              <>
+                <p className="text-[11.5px] text-muted-foreground font-light">
+                  Rozliczane rocznie — faktura <AnimNum value={cena * 12} /> PLN
+                </p>
+                <p className="text-[11.5px] font-medium text-primary">
+                  Oszczędzasz <AnimNum value={(cenaBazowa - cena) * 12} /> zł rocznie
+                </p>
+              </>
             ) : darmowy ? (
-              <span className="text-[11.5px] text-muted-foreground font-light">bez karty kredytowej</span>
+              <p className="text-[11.5px] text-muted-foreground font-light">bez karty kredytowej</p>
             ) : (
-              <span className="text-[11.5px] text-muted-foreground font-light">rozliczane miesięcznie</span>
+              <p className="text-[11.5px] text-muted-foreground font-light">rozliczane miesięcznie</p>
             )}
           </div>
         </div>
@@ -690,7 +714,7 @@ function SuwakZuzycia({
   )
 }
 
-function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
+function PlanFinder({ onWybierz, okres }: { onWybierz: (id: string) => void; okres: Okres }) {
   const [wybrane, setWybrane] = useState<Set<string>>(() => new Set(['rozmowy']))
   const [ilosci, setIlosci] = useState<Record<string, number>>(() => ({
     rozmowy: 50,
@@ -757,6 +781,7 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
   const prog = wybor?.prog ?? null
   const zapas = prog ? prog.byte - zuzycie : 0
   const pokrycie = prog ? Math.min((zuzycie / prog.byte) * 100, 100) : 0
+  const cena = cenaZaOkres(prog?.miesiecznie ?? 0, okres)
 
   return (
     <FadeIn className="mx-auto max-w-4xl">
@@ -782,8 +807,26 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_310px] items-start">
-          {/* ── lewa kolumna: czysty wybór bez zbędnych obliczeń ── */}
-          <div className="space-y-4">
+          {/* ── lewa kolumna: jedna karta — te same cienie i światło co kafelki planów (PlanCard).
+               UWAGA: odstęp między krokami trzyma wewnętrzny wrapper, a NIE sama karta. Gdy
+               `space-y-5` siedziało na karcie, Tailwind dokładał margin-top każdemu dziecku poza
+               pierwszym — łącznie z warstwą poświaty, która mimo `absolute top-0` startowała
+               20px niżej i rysowała widoczną linię odcięcia u góry. ── */}
+          <div className="relative overflow-hidden rounded-2xl border border-foreground/[0.07] bg-[hsl(var(--card)/0.9)] p-5 backdrop-blur-xl shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.3)]">
+            {/* Specularna krawędź świetlna u góry — jak w PlanCard */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            />
+
+            {/* Subtelna poświata akcentu u góry — jak w PlanCard */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-36 opacity-70"
+              style={{ background: 'radial-gradient(ellipse 90% 100% at 50% 0%, hsl(var(--primary)/0.15), transparent 75%)' }}
+            />
+
+            <div className="space-y-5">
             {/* KROK 1: Kafelki zastosowań */}
             <div className="space-y-2.5">
               <div className="flex h-6 items-center justify-between">
@@ -855,12 +898,10 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
               </div>
             </div>
 
-            {/* KROK 2: Precyzyjne doprecyzowanie (suwaki i jakość) */}
-            <div className="relative overflow-hidden rounded-xl border border-foreground/[0.08] bg-foreground/[0.02] p-4 space-y-4">
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
-              />
+            <div className="h-px bg-foreground/[0.08]" />
+
+            {/* KROK 2: Precyzyjne doprecyzowanie (suwaki i jakość) — bez własnej karty, bo mieści się już we wspólnej */}
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-heading text-[13px] font-semibold text-foreground flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 font-mono text-[10.5px] font-bold text-primary">2</span>
@@ -916,6 +957,7 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
                 </button>
               </div>
             </div>
+            </div>
           </div>
 
           {/* ── prawa kolumna: zwięzła propozycja planu ── */}
@@ -948,15 +990,20 @@ function PlanFinder({ onWybierz }: { onWybierz: (id: string) => void }) {
                 </h3>
                 <div className="flex items-baseline gap-1">
                   <span className="font-heading text-[28px] font-bold leading-none text-foreground">
-                    <AnimNum value={prog?.miesiecznie ?? 0} />
+                    <AnimNum value={cena} />
                   </span>
-                  <span className="text-xs text-muted-foreground">zł/msc</span>
+                  <span className="text-xs text-muted-foreground">zł/m</span>
                 </div>
               </div>
 
               <p className="mt-1 text-[11.5px] text-muted-foreground/70">
                 {prog ? 'Pula Byte odnawiana co miesiąc' : 'Zacznij bez podawania karty'}
               </p>
+              {prog && okres === 'rocznie' && (
+                <p className="text-[11px] text-primary font-medium">
+                  faktura roczna: <AnimNum value={cena * 12} /> PLN
+                </p>
+              )}
 
               {/* Pasek pokrycia zużycia */}
               <div className="mt-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] p-3">
@@ -1110,23 +1157,20 @@ function useElementScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
   return progress
 }
 
+// Geometria znaku Byte ⟠ — cztery wierzchołki diamentu plus pozioma poprzeczka:
+// góra (0,-100), prawy (55,0), dół (0,100), lewy (-55,0).
+// Jedna nieprzerwana ścieżka pióra: prawy → góra → lewy → dół → prawy → lewy.
+// Domyka zewnętrzny obrys i na końcu przecina go poprzeczką — bez podnoszenia
+// pióra, każda krawędź narysowana dokładnie raz (ścieżka Eulera na tym grafie:
+// prawy i lewy mają nieparzysty stopień, więc to jedyne poprawne krańce).
+const BYTE_EDGE = Math.hypot(55, 100)
+const BYTE_PATH_LEN = BYTE_EDGE * 4 + 110
+const BYTE_PATH_D = 'M 55,0 L 0,-100 L -55,0 L 0,100 L 55,0 L -55,0'
+
 function ByteGeneratingGlyph() {
   const containerRef = useRef<HTMLDivElement>(null)
   const progress = useElementScrollProgress(containerRef)
-
-  // Geometria autentycznego znaku Byte ⟠ (dwa trójkąty stykające się podstawami):
-  // Górny wierzchołek: (0, -100)
-  // Lewy wierzchołek: (-55, 0)
-  // Prawy wierzchołek: (55, 0)
-  // Dolny wierzchołek: (0, 100)
-  const totalH = 200
-  const topY = -100
-  const scanY = topY + progress * totalH
-
-  // Szerokość symbolu w punkcie skanowania scanY:
-  const currentHalfW = scanY <= 0
-    ? Math.max(0, ((scanY - topY) / 100) * 55)
-    : Math.max(0, (1 - scanY / 100) * 55)
+  const dashOffset = BYTE_PATH_LEN * (1 - progress)
 
   return (
     <div
@@ -1140,20 +1184,6 @@ function ByteGeneratingGlyph() {
         style={{
           background: 'radial-gradient(ellipse at center, hsl(var(--primary)/0.25) 0%, transparent 70%)',
           opacity: 0.25 + progress * 0.75,
-        }}
-      />
-
-      {/* Siatka techniczna CAD z radialną maską */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-        style={{
-          backgroundImage:
-            'linear-gradient(0deg, hsl(var(--primary)) 1px, transparent 1px),' +
-            'linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)',
-          backgroundSize: '36px 36px',
-          maskImage: 'radial-gradient(ellipse at center, #000 35%, transparent 75%)',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, #000 35%, transparent 75%)',
         }}
       />
 
@@ -1171,94 +1201,33 @@ function ByteGeneratingGlyph() {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-
-          <filter id="laserBeamGlow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="4.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-
-          {/* Maska obcinająca scrolla — odsłania znak ściśle od góry do dołu */}
-          <clipPath id="byteScrollRevealClip">
-            <rect
-              x="-150"
-              y="-120"
-              width="300"
-              height={Math.max(0, progress * (totalH + 15))}
-            />
-          </clipPath>
-
-          <linearGradient id="laserBeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-            <stop offset="20%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-            <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="80%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-          </linearGradient>
         </defs>
 
         <g transform="translate(150, 155)">
-          {/* ════ ZSYNTEZOWANY ZNAK BYTE (odkrywany od góry do dołu scrollem) ════ */}
-          <g clipPath="url(#byteScrollRevealClip)">
-            {/* Półprzezroczysta poświata wnętrza */}
-            <polygon points="0,-100 55,0 -55,0" fill="hsl(var(--primary))" fillOpacity="0.08" />
-            <polygon points="-55,0 55,0 0,100" fill="hsl(var(--primary))" fillOpacity="0.08" />
-
-            {/* Zewnętrzne świecące linie błękitne znaku Byte ⟠ */}
-            <polygon
-              points="0,-100 55,0 -55,0"
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="2.8"
-              strokeLinejoin="round"
-              filter="url(#byteGlyphGlow)"
-            />
-            <polygon
-              points="-55,0 55,0 0,100"
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="2.8"
-              strokeLinejoin="round"
-              filter="url(#byteGlyphGlow)"
-            />
-            <line
-              x1="-55"
-              y1="0"
-              x2="55"
-              y2="0"
-              stroke="hsl(var(--primary))"
-              strokeWidth="2.6"
-              filter="url(#byteGlyphGlow)"
-            />
-
-            {/* Biały rdzeń specularny krawędzi */}
-            <polygon points="0,-100 55,0 -55,0" fill="none" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.85" strokeLinejoin="round" />
-            <polygon points="-55,0 55,0 0,100" fill="none" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.85" strokeLinejoin="round" />
-            <line x1="-55" y1="0" x2="55" y2="0" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.85" />
-          </g>
-
-          {/* ════ WIĄZKA LASEROWA PROWADZĄCA SYNTEZĘ (podąża za scrollem) ════ */}
-          {progress > 0.02 && progress < 0.99 && (
-            <g filter="url(#laserBeamGlow)">
-              <line
-                x1={-Math.max(currentHalfW + 24, 28)}
-                y1={scanY}
-                x2={Math.max(currentHalfW + 24, 28)}
-                y2={scanY}
-                stroke="url(#laserBeamGrad)"
-                strokeWidth="2.4"
-              />
-            </g>
-          )}
-
-          {/* Punkty wierzchołków CAD */}
-          <circle cx="0" cy="-100" r="2.8" fill={progress > 0.03 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
-          <circle cx="-55" cy="0" r="2.8" fill={progress >= 0.5 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
-          <circle cx="55" cy="0" r="2.8" fill={progress >= 0.5 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
-          <circle cx="0" cy="100" r="2.8" fill={progress >= 0.97 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.25)'} />
+          {/* ════ ZNAK BYTE — rysowany jednym ciągłym ruchem pióra, scroll steruje długością kreski ════ */}
+          <path
+            d={BYTE_PATH_D}
+            fill="none"
+            stroke="hsl(var(--primary))"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={BYTE_PATH_LEN}
+            strokeDashoffset={dashOffset}
+            filter="url(#byteGlyphGlow)"
+          />
+          {/* Biały rdzeń specularny — ta sama ścieżka, węższa kreska na wierzchu */}
+          <path
+            d={BYTE_PATH_D}
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="1"
+            strokeOpacity="0.85"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={BYTE_PATH_LEN}
+            strokeDashoffset={dashOffset}
+          />
         </g>
       </svg>
     </div>
@@ -1301,7 +1270,9 @@ function Rozwijane({ otwarte, children }: { otwarte: boolean; children: React.Re
    STRONA CENNIKA
    ═══════════════════════════════════════════════════════════════ */
 export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
-  const [okres, setOkres] = useState<Okres>('miesiecznie')
+  // Domyślnie rozliczenie roczne — pokazuje niższą cenę miesięczną i od razu
+  // komunikuje oszczędność, zamiast startować od wyższej liczby.
+  const [okres, setOkres] = useState<Okres>('rocznie')
   const [faqOpen, setFaqOpen] = useState<number | null>(0)
   const [dobor, setDobor] = useState(false)
   const [rekomendacja, setRekomendacja] = useState<string | null>(null)
@@ -1359,7 +1330,7 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                 transition: 'transform .45s cubic-bezier(.22,1,.36,1)',
               }}
             >
-              <PlanFinder onWybierz={wybierzRekomendacje} />
+              <PlanFinder onWybierz={wybierzRekomendacje} okres={okres} />
             </div>
           </Rozwijane>
         </div>
@@ -1374,9 +1345,18 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
             </FadeIn>
           </div>
 
-          <p className="relative mt-10 text-center font-sans text-[11.5px] font-light text-foreground/30">
+          {/* Zdjęcie ryzyka z decyzji — stoi przy kartach, nie w zwiniętym FAQ na dole.
+              Zapis w języku strony: mono, wersaliki, kropka rozdzielająca. */}
+          <p className="relative mt-9 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 font-mono text-[10.5px] uppercase tracking-[0.18em] text-primary/85">
+            <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+            <span>Anulujesz jednym kliknięciem</span>
+            <span aria-hidden className="h-1 w-1 rounded-full bg-primary/40" />
+            <span>Dostęp do końca opłaconego okresu</span>
+          </p>
+
+          <p className="relative mt-4 text-center font-sans text-[11.5px] font-light text-foreground/30">
             Wszystkie ceny netto. Przy rozliczeniu rocznym rabat do 17% względem ceny miesięcznej.
-            Niewykorzystana pula Byte przechodzi na kolejny okres do trzykrotności puli miesięcznej.
+            Miesięczna pula Byte odnawia się z każdym cyklem, a dokupione pakiety zachowują ważność przez 12 miesięcy.
           </p>
         </div>
       </div>
@@ -1388,13 +1368,12 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
             {/* LEWA KOLUMNA — DOKŁADNIE FORMAT JAK NA WZORZE (IMAGE 2) */}
             <div className="lg:col-span-5 text-left space-y-6">
               <div className="space-y-2.5">
-                <SecRule label="BYTE // WALUTA PLATFORMY" />
                 <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
                   Jedna waluta. <br className="hidden sm:block" />
                   <span className="font-normal text-primary">Pełna kontrola.</span>
                 </h2>
                 <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
-                  Jeden portfel w PLN zamiast 5 osobnych subskrypcji. Płacisz tylko za to, co faktycznie zużyjesz — z pełną fakturą VAT 23%.
+                  Jedna wpłata w PLN. Zero osobnych subskrypcji. Płacisz za zużycie, nie za dostęp.
                 </p>
               </div>
 
@@ -1420,7 +1399,7 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                     requestAnimationFrame(() => byteRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
                   }}
                 >
-                  Sprawdź kalkulator Byte
+                  Wybierz plan idealny dla ciebie
                 </GlowButton>
               </div>
             </div>
@@ -1438,7 +1417,7 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
            własnej kolumny w tej tabeli — tak samo jak w cenniku referencyjnym). ══════════ */}
       <Section className="pb-24">
         <FadeIn>
-          <BlockHead center label="// Porównanie / tabela" title="Co dostajesz" accent="w każdym planie." className="mx-auto" />
+          <BlockHead center title="Co dostajesz" accent="w każdym planie." className="mx-auto" />
         </FadeIn>
 
         <FadeIn delay={80} className="mt-12 overflow-x-auto">
@@ -1448,11 +1427,11 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                 <th className="w-[38%] pb-4 text-left align-bottom font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-foreground/30">
                   Funkcja
                 </th>
-                {['Free', 'Premium', 'Ultimate'].map((nazwa, i) => (
+                {['Free', 'Lite', 'Premium', 'Ultimate'].map((nazwa, i) => (
                   <th key={nazwa} className="px-3 pb-4 text-center align-bottom">
                     <span
                       className="font-mono text-[11px] font-medium uppercase tracking-[0.16em]"
-                      style={{ color: i === 2 ? 'hsl(var(--primary))' : undefined }}
+                      style={{ color: i === 3 ? 'hsl(var(--primary))' : undefined }}
                     >
                       {nazwa}
                     </span>
@@ -1461,21 +1440,40 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
               </tr>
             </thead>
             <tbody>
-              {PLAN_MACIERZ.map(r => (
-                <tr key={r.f} className="border-b border-foreground/[0.05] last:border-b-0">
-                  <td className="py-3.5 pr-3 font-sans text-[13px] font-normal leading-snug text-foreground/70">{r.f}</td>
-                  {r.v.map((v, vi) => (
-                    <td key={vi} className={cn('px-3 py-3.5 text-center', vi === 2 && 'bg-primary/[0.035]')}>
-                      {v === true ? (
-                        <Check className="mx-auto h-4 w-4 text-primary" strokeWidth={2.5} />
-                      ) : v === false ? (
-                        <span className="mx-auto block h-px w-3 bg-foreground/15" />
-                      ) : (
-                        <span className={cn('font-sans text-[11.5px] font-semibold', vi === 2 ? 'text-primary' : 'text-foreground/55')}>{v}</span>
-                      )}
+              {PLAN_MACIERZ.map((r, ri) => (
+                <React.Fragment key={r.f + ri}>
+                  {r.kategoria && (
+                    <tr className="border-b border-foreground/[0.08] bg-foreground/[0.02]">
+                      <td
+                        colSpan={5}
+                        className={cn(
+                          'px-3 pb-2.5 pt-6 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-primary',
+                          ri === 0 && 'pt-4'
+                        )}
+                      >
+                        // {r.kategoria}
+                      </td>
+                    </tr>
+                  )}
+                  <tr className="border-b border-foreground/[0.05] last:border-b-0 hover:bg-foreground/[0.015] transition-colors">
+                    <td className="py-3.5 pr-3 font-sans text-[13px] font-normal leading-snug text-foreground/75">
+                      {r.f}
                     </td>
-                  ))}
-                </tr>
+                    {r.v.map((v, vi) => (
+                      <td key={vi} className={cn('px-3 py-3.5 text-center', vi === 3 && 'bg-primary/[0.035]')}>
+                        {v === true ? (
+                          <Check className="mx-auto h-4 w-4 text-primary" strokeWidth={2.5} />
+                        ) : v === false ? (
+                          <span className="mx-auto block h-px w-3 bg-foreground/15" />
+                        ) : (
+                          <span className={cn('font-sans text-[11.5px] font-semibold', vi === 3 ? 'text-primary' : 'text-foreground/60')}>
+                            {v}
+                          </span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
@@ -1512,7 +1510,6 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
       <Section className="relative overflow-hidden py-16 sm:py-20">
         <NextByteMarkIcon className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-[70%] text-primary/[0.06]" />
         <FadeIn className="relative z-10 mx-auto flex max-w-2xl flex-col items-center text-center">
-          <SecRule label="500 ⟠ na start" />
           <h2 className="font-heading text-[clamp(28px,5vw,44px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
             Nie musisz wybierać <br />
             <span className="font-normal text-primary">planu od razu.</span>

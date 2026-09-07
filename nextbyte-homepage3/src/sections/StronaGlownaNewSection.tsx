@@ -3,6 +3,7 @@ import { HomePage } from './home-new/HomePage'
 import { CennikPage } from './home-new/CennikPage'
 import { DlaFirmPage } from './home-new/DlaFirmPage'
 import { HistoriaPage } from './home-new/HistoriaPage'
+import { LogowaniePage } from './home-new/LogowaniePage'
 import { Footer } from './home-new/Footer'
 import type { HomePage as HomePageId } from './home-new/types'
 
@@ -33,12 +34,15 @@ export function StronaGlownaNewSection({
 
   return (
     <div ref={rootRef} className="w-full font-landing text-foreground">
-      {page === 'home'     && <HomePage     onNavigate={idz} />}
-      {page === 'cennik'   && <CennikPage   onNavigate={idz} />}
-      {page === 'b2b'      && <DlaFirmPage  onNavigate={idz} />}
-      {page === 'historia' && <HistoriaPage onNavigate={idz} />}
+      {page === 'home'      && <HomePage      onNavigate={idz} />}
+      {page === 'cennik'    && <CennikPage    onNavigate={idz} />}
+      {page === 'b2b'       && <DlaFirmPage   onNavigate={idz} />}
+      {page === 'historia'  && <HistoriaPage  onNavigate={idz} />}
+      {page === 'logowanie' && <LogowaniePage />}
 
-      <Footer onNavigate={idz} />
+      {/* Logowanie ma własną, minimalną stopkę w karcie — pełna stopka serwisu
+          rozbijałaby skupienie na formularzu. */}
+      {page !== 'logowanie' && <Footer onNavigate={idz} />}
     </div>
   )
 }

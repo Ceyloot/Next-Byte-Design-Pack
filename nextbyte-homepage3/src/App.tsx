@@ -92,7 +92,8 @@ function RefrakcjaToggle({ wszedzie, onToggle }: { wszedzie: boolean; onToggle: 
 // ── Główna treść (wewnątrz GlassProvider) ─────────────────────────
 function AppInner() {
   const { isGlass, toggle: toggleGlass, showContent, toggleContent } = useGlass()
-  const [activeTheme, setActiveTheme] = useState<ThemeKey>(null)
+  // Motyw ciemny jako domyślny — podgląd startuje w trybie, w którym pracujemy.
+  const [activeTheme, setActiveTheme] = useState<ThemeKey>('dark-theme')
   const [activeTab,   setActiveTab]   = useState<TabKey>('preview')
   const [bgKey,       setBgKey]       = useState<BgKey>('nextbyte')
   const [lensWszedzie, setLensWszedzie] = useState(false)

@@ -3295,6 +3295,7 @@ function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
     { label: 'Cennik', id: 'cennik' },
     { label: 'Dla firm', id: 'b2b' },
     { label: 'Historia', id: 'historia' },
+    { label: 'Logowanie', id: 'logowanie' },
   ]
 
   const navRef = useRef<HTMLDivElement>(null)

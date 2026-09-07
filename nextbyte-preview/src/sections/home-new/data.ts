@@ -173,7 +173,7 @@ export const KROKI = [
   {
     krok: '01',
     title: 'Zakładasz konto za 0 zł',
-    desc: 'Rejestracja w 30 sekund bez karty kredytowej. Modele lokalne i podstawowe narzędzia bez opłat.',
+    desc: 'Rejestracja w 30 sekund bez karty kredytowej. Narzędzia do organizacji pracy bez opłat.',
   },
   {
     krok: '02',
@@ -387,22 +387,94 @@ export const PLANY: Plan[] = [
   },
 ]
 
-/** Tabela "Co dostajesz w każdym planie" — kolumny Free / Premium / Ultimate. */
-export const PLAN_MACIERZ: { f: string; v: (boolean | string)[] }[] = [
-  { f: 'Chat AI (wszystkie modele)', v: ['Limit dzienny', true, true] },
-  { f: 'Notatki i Kalendarz', v: [true, true, true] },
-  { f: 'Personalny Asystent (executor)', v: [false, true, true] },
-  { f: 'Studio Zdjęć AI', v: [false, true, true] },
-  { f: 'Pamięć długoterminowa AI', v: [false, true, true] },
-  { f: 'Akademia Premium (kursy)', v: [false, true, true] },
-  { f: 'Deep Research (raporty AI)', v: [false, true, true] },
-  { f: 'Tryb Ultra (Gemini 2.5 Pro)', v: [false, true, true] },
-  { f: 'Lokalny AI (LM Studio / Ollama)', v: [false, true, true] },
-  { f: 'Równoległe generacje obrazów', v: [false, '3x', '5x'] },
-  { f: 'Priorytetowa kolejka zapytań', v: [false, false, true] },
-  { f: 'Ekskluzywne modele AI', v: [false, false, true] },
-  { f: 'Wczesny dostęp do nowości', v: [false, false, true] },
-  { f: 'Wsparcie', v: ['Społeczność', 'Email · 48h', 'Czat · 24h'] },
+export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string)[] }[] = [
+  // ── Rozliczenia i pula Byte ──
+  {
+    kategoria: 'Rozliczenia i pula Byte',
+    f: 'Comiesięczna pula Byte',
+    v: ['Z paczek', '140 Byte', '495 - 1500 Byte', '2450 - 6070 Byte'],
+  },
+  {
+    f: 'Dostosowanie puli suwakiem',
+    v: [false, 'Stała pula', '3 progi do wyboru', '3 progi do wyboru'],
+  },
+  {
+    f: 'Ważność dokupionych paczek Byte',
+    v: ['12 miesięcy', '12 miesięcy', '12 miesięcy', '12 miesięcy'],
+  },
+  {
+    f: 'Faktura VAT 23% dla firm',
+    v: [true, true, true, true],
+  },
+
+  // ── Modele AI i generowanie ──
+  {
+    kategoria: 'Modele AI i generowanie',
+    f: 'Chat AI (GPT-5.4, Claude, Gemini, Grok)',
+    v: ['Z paczek Byte', true, true, true],
+  },
+  {
+    f: 'Lokalny AI offline (Ollama / LM Studio)',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Personalny Asystent AI',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Studio Zdjęć i Grafik 4K',
+    v: ['Z paczek Byte', true, true, true],
+  },
+  {
+    f: 'Deep Research i Tryb Ultra',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Równoległe generacje obrazów',
+    v: [false, '1x', '3x', '5x'],
+  },
+
+  // ── Narzędzia i organizacja pracy ──
+  {
+    kategoria: 'Narzędzia i organizacja pracy',
+    f: 'Notatki, Zadania, Tablice i Kalendarz',
+    v: [true, true, true, true],
+  },
+  {
+    f: 'Pamięć długoterminowa AI',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Akademia wiedzy AI',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Maksymalny rozmiar pliku',
+    v: ['20 MB', '47 MB', '47 MB', '100 MB'],
+  },
+  {
+    f: 'Pamięć kontekstu w AI Chat',
+    v: ['50k tok', '100k tok', '100k tok', '200k tok'],
+  },
+
+  // ── Korzyści planu Ultimate ──
+  {
+    kategoria: 'Korzyści planu Ultimate',
+    f: 'Priorytetowa kolejka zapytań',
+    v: [false, false, false, true],
+  },
+  {
+    f: 'Ekskluzywne modele AI',
+    v: [false, false, false, true],
+  },
+  {
+    f: 'Wczesny dostęp do nowości beta',
+    v: [false, false, false, true],
+  },
+  {
+    f: 'Dedykowane wsparcie priorytetowe',
+    v: [false, false, false, true],
+  },
 ]
 
 /** Sekcja "Jedna waluta. Pełna kontrola." — cztery kafle z narożnikami. */
@@ -410,22 +482,22 @@ export const BYTE_KARTY = [
   {
     tag: '// 01 / EKOSYSTEM',
     t: 'Jeden portfel AI',
-    d: 'Wszystkie modele (GPT, Claude, Gemini, grafiki 4K) rozliczasz z jednej wspólnej puli.',
+    d: 'GPT, Claude, Gemini i grafiki 4K rozliczają się z jednego konta, bez osobnych limitów na modele.',
   },
   {
-    tag: '// 02 / ROLLOVER',
-    t: 'Środki nie przepadają',
-    d: 'Niewykorzystane Byte przechodzą na kolejny miesiąc i kumulują się aż do 3×.',
+    tag: '// 02 / CYKL ROZLICZENIOWY',
+    t: 'Świeża pula co miesiąc',
+    d: 'Miesięczna pula Byte odnawia się z każdym nowym okresem rozliczeniowym.',
   },
   {
-    tag: '// 03 / ZUŻYCIE',
-    t: 'Uczciwa kolejność',
-    d: 'Najpierw schodzi abonament, a dokupione pakiety zachowują ważność przez 12 miesięcy.',
+    tag: '// 03 / WAŻNOŚĆ PACZEK',
+    t: 'Pakiety nie wygasają',
+    d: 'Dokupione dodatkowo paczki Byte zachowują ważność przez 12 miesięcy.',
   },
   {
     tag: '// 04 / DOŁADOWANIA',
     t: 'Pakiety od ręki',
-    d: 'Większy projekt? Dokupujesz Byte w PLN w każdej chwili, bez zmiany planu.',
+    d: 'Większy projekt? Dokupujesz Byte w każdej chwili, bez zmiany planu.',
   },
 ] as const
 
@@ -518,14 +590,13 @@ export const PLANY_B2B: PlanB2B[] = [
     rocznie: null,
     cechy: [
       {
-        grupa: 'Workspace i współpraca',
+        grupa: 'Bezpieczeństwo i SLA',
         pozycje: [
-          'Nieograniczona liczba użytkowników',
-          'Dedykowana infrastruktura (SLA)',
-          'Dostęp do wszystkich funkcji i modeli',
-          'Wspólna pula Byte dla całej organizacji',
-          'Współdzielony workspace projektowy',
-          'Wczesny dostęp do nowych funkcji AI',
+          'Indywidualna pula Byte dopasowana do skali firmy',
+          'Dedykowane środowisko i separacja danych',
+          'Dedykowany opiekun konta i priorytetowe SLA',
+          'Wdrożenie on-premise lub dedykowana chmura prywatna',
+          'Niestandardowe integracje API i logowanie SSO / SAML',
         ],
       },
     ],
@@ -570,22 +641,22 @@ export const B2B_KORZYSCI = [
 /* ══════════════ AUTENTYCZNE OPINIE UŻYTKOWNIKÓW ══════════════ */
 export const OPINIE = [
   {
-    id: '01',
-    kategoria: 'Studio Kreatywne & Agencja',
-    rola: 'Agencja marketingowa · Zespół 6 os.',
-    tekst: 'Zamiast utrzymywać 4 osobne subskrypcje na ChatGPT, Claude i Midjourney — cały zespół pracuje w jednym panelu. Zadania i notatki z rozmów trafiają od razu na Kanban, a faktura VAT w PLN upraszcza księgowość.',
-    metryka: '2h oszczędności dziennie',
+    autor: 'Tomasz Krawczyk',
+    inicjaly: 'TK',
+    rola: 'Architekt Systemów & Lead Dev',
+    tekst: 'Dla mnie kluczowa była lokalna baza wiedzy i obsługa modeli offline. Mogę pracować z poufnym kodem bez obawy, że cokolwiek wyjdzie na zewnątrz. Reszta zespołu korzysta z chmury, a wszystko spina jeden interfejs.',
+    metryka: 'Zero wycieków danych',
   },
   {
-    id: '02',
-    kategoria: 'Praca z Danymi Poufnymi',
-    rola: 'Konsulting & Audyt IT',
-    tekst: 'Prywatny tryb lokalny z modelami Llama i DeepSeek przez Ollama to dla nas kluczowy standard przy wrażliwych dokumentach. Żadne dane nie opuszczają stacji roboczej, a platforma działa bez zarzutu.',
-    metryka: '100% poufności offline',
+    autor: 'Aleksandra Nowak',
+    inicjaly: 'AN',
+    rola: 'Head of Content & Copywriting',
+    tekst: 'Wcześniej płaciliśmy za 4 osobne narzędzia, z których połowa leżała odłogiem przez pół miesiąca. W NextByte mamy jedną pulę Byte dla całego zespołu i płacimy tylko za to, co faktycznie wygenerujemy.',
+    metryka: '-65% kosztów narzędzi',
   },
   {
-    id: '03',
-    kategoria: 'Freelance & Produkcja Treści',
+    autor: 'Michał Wiśniewski',
+    inicjaly: 'MW',
     rola: 'Twórca cyfrowy & Konsultant AI',
     tekst: 'Przełączanie między Claude a GPT w tym samym wątku z zachowaniem kontekstu to ogromna przewaga. Do tego generowanie grafik 4K bez limitów kolejek. Prawdziwe centrum dowodzenia AI.',
     metryka: '10+ modeli w 1 panelu',
@@ -600,15 +671,15 @@ export const FAQ = [
   },
   {
     q: 'Jak działa tryb prywatny i modele lokalne (Llama / Ollama)?',
-    a: 'To dwie różne rzeczy. W trybie prywatnym rozmowa jest ulotna — jej treść nie zapisuje się na serwerze. Modele lokalne idą o krok dalej: podłączasz darmowe Ollama albo LM Studio, a model liczy bezpośrednio na Twoim komputerze, więc dane w ogóle z niego nie wychodzą. Działa nawet bez internetu, a takie generacje nie zużywają ani jednego Byte.',
+    a: 'To dwie różne rzeczy. W trybie prywatnym rozmowa jest ulotna, a jej treść nie zapisuje się na serwerze. Modele lokalne idą o krok dalej: podłączasz darmowe Ollama albo LM Studio, a model liczy bezpośrednio na Twoim komputerze, więc dane w ogóle z niego nie wychodzą. Działa nawet bez internetu, a takie generacje nie zużywają ani jednego Byte.',
   },
   {
     q: 'Czym są jednostki Byte i jak działają?',
-    a: 'Byte to elastyczna waluta platformy. Płacisz tylko za to, co faktycznie wygenerujesz (widzisz dokładny koszt przed wysłaniem zapytania). W planach abonamentowych niewykorzystane Byte przechodzą na kolejny miesiąc — nic nie przepada.',
+    a: 'Byte to elastyczna waluta platformy. Płacisz tylko za to, co faktycznie wygenerujesz, widząc dokładny koszt przed wysłaniem zapytania. Miesięczny przydział Byte odnawia się z każdym cyklem rozliczeniowym, a w razie potrzeby możesz w każdej chwili dokupić dodatkowy pakiet.',
   },
   {
     q: 'Czy muszę podawać kartę płatniczą przy rejestracji?',
-    a: 'Nie. Możesz założyć konto za 0 zł i od razu korzystać z interfejsu, notatek, kalendarza oraz modeli lokalnych offline bez podawania jakichkolwiek danych płatniczych.',
+    a: 'Nie. Możesz założyć konto za 0 zł i od razu korzystać z interfejsu, notatek, zadań, tablic oraz kalendarza bez podawania jakichkolwiek danych płatniczych.',
   },
   {
     q: 'Czy mogę zrezygnować w dowolnym momencie?',
@@ -616,48 +687,52 @@ export const FAQ = [
   },
   {
     q: 'Jak dbacie o bezpieczeństwo moich danych i prywatność?',
-    a: 'Nie stawiamy na jedno zabezpieczenie, tylko na kilka niezależnych warstw. Połączenie z platformą jest zawsze szyfrowane — ruch bez szyfrowania po prostu nie istnieje w naszej architekturze. Dyski z danymi są zaszyfrowane w całości, a serwery stoją w Unii Europejskiej i dane ich nie opuszczają. O tym, co widzisz, decyduje sama baza danych, a nie kod aplikacji: bez pasującej reguły nie odda ani jednego wiersza, nawet gdyby ktoś ominął interfejs. Twoje rozmowy i dokumenty nie trafiają do trenowania publicznych modeli AI.',
+    a: 'Nie stawiamy na jedno zabezpieczenie, tylko na kilka niezależnych warstw. Połączenie z platformą jest zawsze szyfrowane, a ruch bez szyfrowania po prostu nie istnieje w naszej architekturze. Dyski z danymi są zaszyfrowane w całości, a serwery stoją w Unii Europejskiej i dane ich nie opuszczają. O tym, co widzisz, decyduje sama baza danych, a nie kod aplikacji: bez pasującej reguły nie odda ani jednego wiersza, nawet gdyby ktoś ominął interfejs. Twoje rozmowy i dokumenty nie trafiają do trenowania publicznych modeli AI.',
   },
   {
     q: 'Czy ktoś z Waszego zespołu może odczytać moje dane?',
-    a: 'Nie — i nie jest to kwestia obietnicy, tylko tego, jak działa samo szyfrowanie. Klucz do Twoich danych powstaje z Twojego hasła, w Twojej przeglądarce, i nigdy do nas nie trafia. Na naszych serwerach leży wyłącznie zaszyfrowana treść, której bez tego hasła nie da się otworzyć — także nam. Sam klucz znika z pamięci w chwili zamknięcia karty, a jego wyliczanie jest celowo powolne, żeby zgadywanie hasła siłą było nieopłacalne.',
+    a: 'Nie, i nie jest to kwestia obietnicy, tylko tego, jak działa samo szyfrowanie. Klucz do Twoich danych powstaje z Twojego hasła, w Twojej przeglądarce, i nigdy do nas nie trafia. Na naszych serwerach leży wyłącznie zaszyfrowana treść, której bez tego hasła nie da się otworzyć, również nam. Sam klucz znika z pamięci w chwili zamknięcia karty, a jego wyliczanie jest celowo powolne, żeby zgadywanie hasła siłą było nieopłacalne.',
   },
   {
     q: 'Jak chronione jest moje konto przed przejęciem?',
-    a: 'Twoje hasło nie trafia do naszych tabel ani do logów — przechowywany jest wyłącznie jego nieodwracalny skrót, więc nie ma czego z nas wykraść. Nad hasłem możesz postawić drugi składnik logowania: kod z aplikacji, kod wysłany e-mailem albo klucz dostępu potwierdzany odciskiem palca lub skanem twarzy. Ten ostatni jest odporny na phishing — nawet jeśli ktoś podstawi Ci łudząco podobną stronę, nie ma czego przechwycić, bo klucz nigdy nie opuszcza Twojego urządzenia.',
+    a: 'Twoje hasło nie trafia do naszych tabel ani do logów, przechowywany jest wyłącznie jego nieodwracalny skrót, więc nie ma czego z nas wykraść. Nad hasłem możesz postawić drugi składnik logowania: kod z aplikacji, kod wysłany e-mailem albo klucz dostępu potwierdzany odciskiem palca lub skanem twarzy. Ten ostatni jest odporny na phishing: nawet jeśli ktoś podstawi Ci łudząco podobną stronę, nie ma czego przechwycić, bo klucz nigdy nie opuszcza Twojego urządzenia.',
   },
   {
     q: 'Co dzieje się z danymi mojej karty płatniczej?',
-    a: 'Nic, bo nigdy ich nie dostajemy. Całą płatność obsługuje Stripe i to on przyjmuje dane karty — na naszych serwerach nie pojawiają się na żadnym etapie. Gdyby cokolwiek zawiodło po naszej stronie, transakcja zwyczajnie się nie powiedzie: nie ma takiej ścieżki, w której błąd po cichu otwiera dostęp bez opłaty.',
+    a: 'Nic, bo nigdy ich nie dostajemy. Całą płatność obsługuje Stripe i to on przyjmuje dane karty, więc na naszych serwerach nie pojawiają się na żadnym etapie. Gdyby cokolwiek zawiodło po naszej stronie, transakcja zwyczajnie się nie powiedzie: nie ma takiej ścieżki, w której błąd po cichu otwiera dostęp bez opłaty.',
   },
 ] as const
 
 
-/* ══════════════ FAQ CENNIKA — treści 1:1 z danych strukturalnych produkcji ══════════════ */
+/* ══════════════ FAQ CENNIKA — zaktualizowane i zgodne z logiką platformy ══════════════ */
 export const CENNIK_FAQ = [
   {
-    q: 'Czy mogę anulować subskrypcję w dowolnym momencie?',
-    a: 'Tak. Subskrypcja jest miesięczna lub roczna i możesz ją anulować w panelu jednym kliknięciem. Dostęp pozostaje aktywny do końca opłaconego okresu.',
+    q: 'Czym różnią się plany i czy mogę dostosować pulę Byte?',
+    a: 'W planie Lite masz już normalnie pełen dostęp do narzędzi i modeli AI ze stałą pulą 140 Byte za 27,90 zł. W planach Premium oraz Ultimate zyskujesz dodatkowo pełną elastyczność: suwakiem samodzielnie ustalasz wielkość comiesięcznej puli Byte i dopasowujesz cenę do własnych potrzeb. Wyższe plany oferują także znacznie większe pule, wyższą równoległość zadań, Deep Research, Tryb Ultra, a w Ultimate priorytetową kolejkę zapytań oraz ekskluzywne modele AI.',
   },
   {
-    q: 'Czym Premium różni się od Ultimate?',
-    a: 'Premium daje pełen dostęp do platformy: Chat AI, Asystent, Studio Zdjęć, Akademia, Deep Research, Tryb Ultra. Ultimate dokłada priorytetową kolejkę, ekskluzywne modele AI, większą równoległość generacji oraz wczesny dostęp do funkcji w fazie beta.',
+    q: 'Jak długo ważne są jednostki Byte i co jeśli ich zabraknie?',
+    a: 'Miesięczna pula Byte z abonamentu jest przypisana do bieżącego cyklu rozliczeniowego i należy ją wykorzystać do końca opłaconego okresu. Wraz z odnowieniem subskrypcji Twoje konto zasila świeża, pełna pula Byte na kolejny miesiąc. Jeśli pracujesz intensywniej i zużyjesz limit wcześniej, w każdej chwili możesz dokupić dodatkową paczkę Byte w panelu, bez konieczności zmiany całego planu na wyższy. Dokupione pakiety zachowują ważność przez 12 miesięcy.',
   },
   {
-    q: 'Co zawiera plan darmowy?',
-    a: 'Notatki, Kalendarz oraz limitowany dostęp do Chat AI. Plan darmowy pozwala poznać platformę bez zobowiązań — idealny start.',
+    q: 'Co dokładnie oferuje plan darmowy za 0 zł?',
+    a: 'W planie darmowym zyskujesz bezterminowy dostęp do narzędzi organizacji pracy: Notatek, Zadań, Tablic oraz Kalendarza bez opłat i bez podawania karty. Zawsze możesz też dokupić pojedynczą paczkę Byte, aby przetestować modele w chmurze bez konieczności wchodzenia w abonament.',
   },
   {
-    q: 'Czy są dostępne plany dla firm?',
-    a: 'Tak. NextByte oferuje dedykowaną platformę B2B z izolacją danych, zarządzaniem zespołami, granularnymi uprawnieniami i własną pulą Byte. Sprawdź zakładkę „Dla firm".',
+    q: 'Czy otrzymam fakturę VAT na firmę?',
+    a: 'Tak. Pełna faktura VAT 23% na firmę jest dostępna przy każdym zakupie. Przy finalizacji zamówienia wystarczy podać numer NIP oraz dane działalności. Faktura w formacie PDF generuje się automatycznie po każdej płatności i jest gotowa do pobrania w panelu konta w zakładce Subskrypcja.',
   },
   {
-    q: 'W jakiej walucie są ceny i jak działa VAT?',
-    a: 'Wszystkie ceny podane są w PLN i zawierają podatek VAT. Faktury VAT generowane są automatycznie po każdej płatności i dostępne w panelu „Subskrypcja".',
+    q: 'Czy moje dane lub pliki trenują zewnętrzne modele AI?',
+    a: 'Nigdy. Twoje dane, zapytania, notatki i przesyłane pliki nie wychodzą poza infrastrukturę NextByte i w żadnym wypadku nie są wykorzystywane do trenowania jakichkolwiek modeli AI. Korzystamy wyłącznie z dedykowanych interfejsów biznesowych z gwarancją poufności oraz zerowej retencji danych.',
   },
   {
-    q: 'Czy płatność jest bezpieczna?',
-    a: 'Tak. Płatności obsługuje Stripe — globalny lider w przetwarzaniu płatności online. Dane karty nigdy nie trafiają na nasze serwery.',
+    q: 'Co się dzieje po anulowaniu subskrypcji?',
+    a: 'Subskrypcję możesz anulować w każdej chwili jednym kliknięciem w panelu konta, bez okresów wypowiedzenia i bez ukrytych opłat. Po anulowaniu zachowujesz pełen dostęp do platformy oraz wszystkich swoich Byte do końca opłaconego okresu rozliczeniowego. Kolejne opłaty z Twojej karty nie zostaną pobrane.',
+  },
+  {
+    q: 'Czy są dostępne plany dla zespołów i firm?',
+    a: 'Tak. NextByte oferuje dedykowaną platformę B2B ze wspólną pulą Byte dla całego zespołu, współdzielonym workspace, zarządzaniem rolami i granularnymi uprawnieniami. Sprawdź zakładkę Dla firm w górnym przełączniku cennika.',
   },
 ] as const
 

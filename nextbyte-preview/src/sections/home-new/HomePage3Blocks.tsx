@@ -2102,7 +2102,7 @@ export function HomePagePricingSection({ onNavigate = () => { } }: { onNavigate?
               </span>
             </h2>
             <p className="mt-4 font-sans text-[15px] font-light leading-relaxed text-foreground/55 max-w-xl mx-auto">
-              Zacznij za 0 zł bez podawania karty. Jeden abonament w PLN, pełna faktura VAT 23%, a niewykorzystane Byte nie przepadają.
+              Zacznij za 0 zł bez podawania karty. Jeden abonament w PLN, pełna faktura VAT 23% i pełna swoboda korzystania.
             </p>
 
             {/* Minimalistyczny przełącznik (Billed Yearly) w centrum */}
