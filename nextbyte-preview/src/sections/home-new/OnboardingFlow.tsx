@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from 'react'
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import {
   Image as ImageIcon,
   Rocket,
@@ -112,20 +112,37 @@ const CELE_UZYTKOWNIKA: CelItem[] = [
 
 /* Własne keyframe'y zamiast klas `animate-in` / `slide-in-from-*`:
    projekt nie ma pluginu tailwindcss-animate, więc te klasy nic nie robiły
-   (getComputedStyle zwracał animationName: none). Bez fill-mode `both` —
-   gdyby animacja z jakiegoś powodu nie wystartowała, treść i tak jest
-   widoczna, zamiast zostać na opacity 0. */
+   (getComputedStyle zwracał animationName: none).
+
+   Przejście to czyste przenikanie krycia — bez cienia przesunięcia treści.
+   Wersja z translateY(10px) dawała efekt odbicia: blok jest wyśrodkowany w
+   pionie, więc rosnąca wysokość i tak przesuwa całość w jedną stronę, a
+   treść jechała wtedy w drugą. Dwa przeciwne ruchy naraz oko czyta jako
+   odbicie, mimo że żadna krzywa nie ma przestrzelenia.
+
+   Stary krok gaśnie do zera, zanim nowy zacznie się pojawiać — przy nakładce
+   dwie siatki kafelków leżałyby na sobie półprzezroczyste. */
+const CZAS_WYJSCIA = 140
+const OPOZNIENIE_WEJSCIA = 120
+const CZAS_WEJSCIA = 260
+/* Wysokość kończy się dokładnie razem z krzywą krycia — gdy jedno kończy się
+   po drugim, ten ogon czyta się jako osobny, drugi ruch. */
+const CZAS_KROKU = OPOZNIENIE_WEJSCIA + CZAS_WEJSCIA
+const KRZYWA_KROKU = 'cubic-bezier(0.4, 0, 0.2, 1)'
+
 function StyleKrokow() {
   return (
     <style>{`
-      @keyframes nbKrokZPrawej { from { opacity: 0; transform: translateX(28px) } }
-      @keyframes nbKrokZLewej  { from { opacity: 0; transform: translateX(-28px) } }
+      @keyframes nbKrokWchodzi { from { opacity: 0 } }
+      @keyframes nbKrokZnika   { to   { opacity: 0 } }
       @keyframes nbPojaw       { from { opacity: 0 } }
-      .nb-krok-prawo { animation: nbKrokZPrawej .34s cubic-bezier(.16,1,.3,1) }
-      .nb-krok-lewo  { animation: nbKrokZLewej  .34s cubic-bezier(.16,1,.3,1) }
-      .nb-pojaw      { animation: nbPojaw .3s ease-out }
+      /* Wypełnienie backwards trzyma krycie 0 przez czas opóźnienia — bez
+         niego nowy krok mignąłby w pełni, zanim animacja go schowa. */
+      .nb-krok-wchodzi { animation: nbKrokWchodzi ${CZAS_WEJSCIA}ms ${KRZYWA_KROKU} ${OPOZNIENIE_WEJSCIA}ms backwards }
+      .nb-krok-znika   { animation: nbKrokZnika ${CZAS_WYJSCIA}ms ease-out forwards }
+      .nb-pojaw        { animation: nbPojaw .3s ease-out }
       @media (prefers-reduced-motion: reduce) {
-        .nb-krok-prawo, .nb-krok-lewo, .nb-pojaw { animation: none }
+        .nb-krok-wchodzi, .nb-krok-znika, .nb-pojaw { animation: none }
       }
     `}</style>
   )
@@ -180,39 +197,135 @@ export function OnboardingFlow({
     }
   }
 
-  /* Kierunek przejścia: 1 = w przód (treść wjeżdża z prawej), -1 = wstecz */
-  const [kierunek, setKierunek] = useState<1 | -1>(1)
+  /* Przejście między krokami. W trakcie animacji absolutna jest TYLKO warstwa
+     wychodząca — nowa zostaje w normalnym przepływie, więc naturalna wysokość
+     pudełka zawsze równa się wysokości docelowej. To jest ważne dla końcówki:
+     gdy wysokość zdejmujemy po animacji, pudełko wraca do „auto” i musi trafić
+     w dokładnie tę samą wartość, do której dojechało. Przy obu warstwach
+     absolutnych mierzyliśmy wysokość osobno i każda różnica (choćby przez
+     pojawienie się paska przewijania) wracała na końcu jako skok.
+
+     Pudełko nie ma też overflow-hidden: obie warstwy tylko zmieniają krycie,
+     nic nie wyjeżdża w bok, a przycinanie było widoczne jako ostra krawędź
+     ucinająca treść w trakcie zmiany wysokości. */
+  const boxRef = useRef<HTMLDivElement>(null)
+  const wysStartRef = useRef<number | null>(null)
+  const [przejscie, setPrzejscie] = useState<{ z: 1 | 2 } | null>(null)
+
+  /* Wysokość jedzie po style.height ustawianym ręcznie, nie przez stan Reacta.
+     Przez stan nie działa: wartość startowa i docelowa trafiają do DOM w tym
+     samym cyklu przeliczania stylu, więc przeglądarka widzi tylko „auto →
+     docelowa”, a auto nie jest interpolowalne — wysokość przeskakiwała
+     natychmiast, bez animacji. */
   const idzDo = (nowy: 1 | 2) => {
-    setKierunek(nowy > krok ? 1 : -1)
+    if (nowy === krok) return
+    const el = boxRef.current
+    const bezRuchu =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!el || bezRuchu) { setKrok(nowy); return }
+    wysStartRef.current = el.offsetHeight // wysokość sprzed podmiany treści
+    setPrzejscie({ z: krok })
     setKrok(nowy)
   }
 
-  /* Kroki różnią się wysokością (6 vs 8 kafelków), a blok jest wyśrodkowany,
-     więc bez animowania wysokości całość podskakiwałaby przy zmianie kroku.
-     Wysokości nie da się animować z „auto”: mierzymy docelową, cofamy do
-     poprzedniej i puszczamy przejście. */
-  const trescRef = useRef<HTMLDivElement>(null)
-  const poprzedniaWys = useRef<number | null>(null)
-
   useLayoutEffect(() => {
-    const el = trescRef.current
-    if (!el) return
-    const start = poprzedniaWys.current
+    const el = boxRef.current
+    if (!przejscie || !el) return
+    const start = wysStartRef.current
+    /* Cel czytamy z pudełka przy wysokości „auto”, czyli dokładnie tę wartość,
+       którą przyjmie po sprzątnięciu — dzięki temu koniec przejścia nie ma
+       czego doskakiwać. */
     el.style.height = ''
     const cel = el.offsetHeight
-    poprzedniaWys.current = cel
     if (start == null || start === cel) return
+    /* Obie wartości muszą trafić do DOM tutaj, rozdzielone wymuszonym reflow.
+       Bez niego przeglądarka widzi jedną zmianę i nie ma czego interpolować. */
     el.style.height = `${start}px`
-    void el.offsetHeight // wymuś reflow, inaczej przeglądarka zobaczy tylko stan końcowy
+    void el.offsetHeight
     el.style.height = `${cel}px`
-  }, [krok])
+  }, [przejscie, krok])
+
+  /* Zdjęcie stałej wysokości dopiero po zakończeniu przejścia i zawsze w tym
+     samym commicie, w którym znika warstwa wychodząca. */
+  useLayoutEffect(() => {
+    if (przejscie || !boxRef.current) return
+    boxRef.current.style.height = ''
+  }, [przejscie])
+
+  useEffect(() => {
+    if (!przejscie) return
+    const id = window.setTimeout(() => setPrzejscie(null), CZAS_KROKU + 60)
+    return () => window.clearTimeout(id)
+  }, [przejscie])
 
   const pierwszyKrok = krok === 1
-  const pozycje = pierwszyKrok
-    ? NARZEDZIA_AI.map(n => ({ id: n.id, tytul: n.nazwa, opis: n.opis, ikona: n.ikona }))
-    : CELE_UZYTKOWNIKA.map(c => ({ id: c.id, tytul: c.tytul, opis: c.podtytul, ikona: c.ikona }))
-  const zaznaczone = pierwszyKrok ? wybraneNarzedzia : wybraneCele
-  const przelacz = pierwszyKrok ? przelaczNarzedzie : przelaczCel
+
+  /* Treść kroku jako funkcja numeru, a nie stanu — w trakcie przejścia
+     trzeba wyrenderować jednocześnie krok stary i nowy. */
+  const trescKroku = (k: 1 | 2) => {
+    const pierwszy = k === 1
+    const pozycje = pierwszy
+      ? NARZEDZIA_AI.map(n => ({ id: n.id, tytul: n.nazwa, opis: n.opis, ikona: n.ikona }))
+      : CELE_UZYTKOWNIKA.map(c => ({ id: c.id, tytul: c.tytul, opis: c.podtytul, ikona: c.ikona }))
+    const wybrane = pierwszy ? wybraneNarzedzia : wybraneCele
+    const przelaczK = pierwszy ? przelaczNarzedzie : przelaczCel
+    return (
+      <>
+        {/* Nagłówek kroku */}
+        <div className="mt-10 text-center">
+          <h1 className="font-sans text-[24px] font-bold leading-tight tracking-[-0.8px] text-foreground">
+            {pierwszy ? 'Z jakich narzędzi AI już korzystasz?' : 'Na czym zależy Ci najbardziej?'}
+          </h1>
+          <p className="mt-1.5 font-sans text-[13.5px] text-foreground/40">
+            {pierwszy
+              ? 'Dzięki temu dopasujemy start do Twojego poziomu'
+              : 'Od tego zaczniemy Twój pierwszy dzień'}
+          </p>
+        </div>
+
+        {/* Siatka wyboru — jeden komponent kafelka dla obu kroków */}
+        <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {pozycje.map(poz => (
+            <Kafelek
+              key={poz.id}
+              ikona={poz.ikona}
+              tytul={poz.tytul}
+              opis={poz.opis}
+              zaznaczony={wybrane.includes(poz.id)}
+              onClick={() => przelaczK(poz.id)}
+            />
+          ))}
+        </div>
+
+        {/* Akcje — jedno główne działanie po prawej, reszta jako link */}
+        <div className="mt-9 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => idzDo(pierwszy ? 2 : 1)}
+            className="inline-flex items-center gap-1.5 font-sans text-[13px] text-foreground/40 transition-colors hover:text-foreground/75 cursor-pointer"
+          >
+            {pierwszy ? (
+              'Pomiń ten krok'
+            ) : (
+              <>
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Wstecz
+              </>
+            )}
+          </button>
+
+          <GlowButton
+            size="lg"
+            onClick={() => (pierwszy ? idzDo(2) : obsluzKoniec())}
+            className="h-[46px] px-7"
+          >
+            {pierwszy ? 'Dalej' : 'Przejdź do platformy'}
+          </GlowButton>
+        </div>
+      </>
+    )
+  }
 
   return (
     <div className="nb-pojaw relative z-10 w-full max-w-[760px]">
@@ -251,73 +364,30 @@ export function OnboardingFlow({
         <span className="font-mono text-foreground/35">Krok {krok} z 2</span>
       </div>
 
-      {/* Zmienna część kroku — wysokość animowana, zawartość wjeżdża z boku.
-          overflow-hidden przycina wsuwający się blok do krawędzi, przez co
-          czyta się jak przesuwanie kart, a nie skok. */}
+      {/* Zmienna część kroku — wysokość animowana jedną krzywą, treść
+          przenika krycie. Bez overflow-hidden: nic nie wyjeżdża poza obrys,
+          a przycinanie ucinałoby zarówno treść w trakcie zmiany wysokości,
+          jak i poświatę przycisku CTA przy dolnej krawędzi. */}
       <div
-        ref={trescRef}
-        onTransitionEnd={e => {
-          if (e.propertyName === 'height' && e.target === e.currentTarget) {
-            e.currentTarget.style.height = ''
-          }
+        ref={boxRef}
+        className="relative transition-[height]"
+        style={{
+          transitionDuration: `${CZAS_KROKU}ms`,
+          transitionTimingFunction: KRZYWA_KROKU,
         }}
-        className="overflow-hidden transition-[height] duration-300 ease-[cubic-bezier(.16,1,.3,1)]"
       >
-        <div
-          key={krok}
-          className={kierunek === 1 ? 'nb-krok-prawo' : 'nb-krok-lewo'}
-        >
-          {/* Nagłówek kroku */}
-          <div className="mt-10 text-center">
-            <h1 className="font-sans text-[24px] font-bold leading-tight tracking-[-0.8px] text-foreground">
-              {pierwszyKrok ? 'Z jakich narzędzi AI już korzystasz?' : 'Na czym zależy Ci najbardziej?'}
-            </h1>
-            <p className="mt-1.5 font-sans text-[13.5px] text-foreground/40">
-              {pierwszyKrok
-                ? 'Dzięki temu dopasujemy start do Twojego poziomu'
-                : 'Od tego zaczniemy Twój pierwszy dzień'}
-            </p>
+        {przejscie && (
+          <div
+            key={`wychodzi-${przejscie.z}`}
+            aria-hidden
+            className="nb-krok-znika pointer-events-none absolute inset-x-0 top-0"
+          >
+            {trescKroku(przejscie.z)}
           </div>
+        )}
 
-          {/* Siatka wyboru — jeden komponent kafelka dla obu kroków */}
-          <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {pozycje.map(poz => (
-              <Kafelek
-                key={poz.id}
-                ikona={poz.ikona}
-                tytul={poz.tytul}
-                opis={poz.opis}
-                zaznaczony={zaznaczone.includes(poz.id)}
-                onClick={() => przelacz(poz.id)}
-              />
-            ))}
-          </div>
-
-          {/* Akcje — jedno główne działanie po prawej, reszta jako link */}
-          <div className="mt-9 flex items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={() => idzDo(pierwszyKrok ? 2 : 1)}
-              className="inline-flex items-center gap-1.5 font-sans text-[13px] text-foreground/40 transition-colors hover:text-foreground/75 cursor-pointer"
-            >
-              {pierwszyKrok ? (
-                'Pomiń ten krok'
-              ) : (
-                <>
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  Wstecz
-                </>
-              )}
-            </button>
-
-            <GlowButton
-              size="lg"
-              onClick={() => (pierwszyKrok ? idzDo(2) : obsluzKoniec())}
-              className="h-[46px] px-7"
-            >
-              {pierwszyKrok ? 'Dalej' : 'Przejdź do platformy'}
-            </GlowButton>
-          </div>
+        <div key={krok} className={cn(przejscie && 'nb-krok-wchodzi')}>
+          {trescKroku(krok)}
         </div>
       </div>
     </div>

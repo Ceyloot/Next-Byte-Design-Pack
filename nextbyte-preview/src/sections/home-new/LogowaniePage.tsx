@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { Mail, Lock, Eye, EyeOff, Check, User, AlertCircle } from 'lucide-react'
 import { AnimStyles, GlowButton } from './shared'
@@ -14,18 +14,33 @@ import { OnboardingFlow } from './OnboardingFlow'
 
 type Tryb = 'logowanie' | 'rejestracja'
 
-/* Własne keyframe'y — projekt nie ma pluginu tailwindcss-animate, więc klasy
-   `animate-in` / `fade-in` nic tu nie robią. Bez fill-mode: gdyby animacja nie
-   wystartowała, pola i tak są widoczne zamiast zostać na opacity 0.
-   Krzywa 0.4,0,0.2,1 zamiast expo-out: tamta przy 60% czasu była już na 97%
-   dystansu, więc ogon rozciągał się na ponad 100 ms i wyglądał jak zacięcie. */
-function StyleTrybu() {
+/* Przełączanie trybów zmienia zestaw pól, a kolumna jest wyśrodkowana, więc
+   każde skokowe pojawienie/zniknięcie podrzucało całą stronę. Zamiast mierzyć
+   wysokość kolumny w JS (to animowało tylko wejście — pola znikały natychmiast,
+   a przejście dojeżdżało już nad pustką) każdy blok zależny od trybu chowa się
+   sam. Grid z `grid-template-rows: 0fr → 1fr` daje animowalną wysokość „auto"
+   w obie strony, więc wysokość kolumny płynie za treścią do samego końca. */
+function Rozwijane({
+  otwarte, children, className,
+}: {
+  otwarte: boolean
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <style>{`
-      @keyframes nbPoleWjazd { from { opacity: 0; transform: translateY(-6px) } }
-      .nb-pole { animation: nbPoleWjazd .26s cubic-bezier(0.4, 0, 0.2, 1) }
-      @media (prefers-reduced-motion: reduce) { .nb-pole { animation: none } }
-    `}</style>
+    <div
+      aria-hidden={!otwarte}
+      className={cn(
+        'grid transition-[grid-template-rows,opacity] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none',
+        otwarte ? 'opacity-100' : 'pointer-events-none opacity-0',
+        className,
+      )}
+      style={{ gridTemplateRows: otwarte ? '1fr' : '0fr' }}
+    >
+      {/* min-h-0 jest konieczne: element gridu ma domyślnie min-height:auto,
+          co blokuje zjazd wiersza poniżej wysokości treści. */}
+      <div className="min-h-0 overflow-hidden">{children}</div>
+    </div>
   )
 }
 
@@ -175,9 +190,15 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
   /* Zakres zaznaczenia w polu potwierdzenia — natywne zaznaczenie jest ukryte,
      więc rysujemy je sami na kropkach. */
   const [zakres, setZakres] = useState({ od: 0, do: 0 })
+  /* Przy haśle dłuższym niż pole input przewija swoją treść. Nakładka z
+     kropkami leży osobno, więc bez przepisania scrollLeft rozjeżdżałaby się
+     z tekstem dokładnie o tyle, o ile pole jest przewinięte. */
+  const [przesuniecie, setPrzesuniecie] = useState(0)
   const poleHaslo2 = useRef<HTMLInputElement>(null)
-  const odczytajZakres = (el: HTMLInputElement) =>
+  const odczytajZakres = (el: HTMLInputElement) => {
     setZakres({ od: el.selectionStart ?? 0, do: el.selectionEnd ?? 0 })
+    setPrzesuniecie(el.scrollLeft)
+  }
 
   /* `selectionchange` na dokumencie to jedyne zdarzenie lecące w trakcie
      przeciągania myszą — onMouseUp/onSelect odpalają się dopiero po puszczeniu,
@@ -215,29 +236,6 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
   useEffect(() => { setTryb(initialTryb) }, [initialTryb])
 
   const zmienTryb = (t: Tryb) => { setTryb(t); setPokazBladWalidacji(false) }
-
-  /* Rejestracja dokłada pięć pól, więc kolumna zmienia wysokość skokowo,
-     a że jest wyśrodkowana — całość podskakuje. Wysokości nie da się animować
-     z „auto”: mierzymy docelową, cofamy do poprzedniej i puszczamy przejście.
-     overflow-hidden włączamy tylko na czas animacji, bo na stałe przycinałby
-     poświatę przycisku CTA. */
-  const kolumnaRef = useRef<HTMLDivElement>(null)
-  const poprzedniaWys = useRef<number | null>(null)
-  const [animujeWysokosc, setAnimujeWysokosc] = useState(false)
-
-  useLayoutEffect(() => {
-    const el = kolumnaRef.current
-    if (!el) return
-    const start = poprzedniaWys.current
-    el.style.height = ''
-    const cel = el.offsetHeight
-    poprzedniaWys.current = cel
-    if (start == null || start === cel) return
-    setAnimujeWysokosc(true)
-    el.style.height = `${start}px`
-    void el.offsetHeight // wymuś reflow, inaczej przeglądarka zobaczy tylko stan końcowy
-    el.style.height = `${cel}px`
-  }, [tryb])
 
   const obsluzUtworzKonto = () => {
     if (!wszystkieWarunkiSpelnione) { setPokazBladWalidacji(true); return }
@@ -285,21 +283,7 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
         }}
       />
 
-      <StyleTrybu />
-
-      <div
-        ref={kolumnaRef}
-        onTransitionEnd={e => {
-          if (e.propertyName === 'height' && e.target === e.currentTarget) {
-            e.currentTarget.style.height = ''
-            setAnimujeWysokosc(false)
-          }
-        }}
-        className={cn(
-          'relative z-10 w-full max-w-[400px] transition-[height] duration-[260ms] ease-[cubic-bezier(0.4,0,0.2,1)]',
-          animujeWysokosc && 'overflow-hidden',
-        )}
-      >
+      <div className="relative z-10 w-full max-w-[400px]">
 
         {/* Przełącznik trybu — jeden ekran obsługuje logowanie i rejestrację */}
         <PrzelacznikTrybu tryb={tryb} onZmien={zmienTryb} />
@@ -309,11 +293,11 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
           <h1 className="font-heading text-[24px] font-bold leading-tight tracking-[-0.8px] text-foreground">
             {logowanie ? 'Zaloguj się' : 'Utwórz konto'}
           </h1>
-          {logowanie && (
-            <p className="mt-1.5 font-sans text-[13px] text-foreground/40">
+          <Rozwijane otwarte={logowanie}>
+            <p className="pt-1.5 font-sans text-[13px] text-foreground/40">
               Wróć do swoich projektów w NextByte.
             </p>
-          )}
+          </Rozwijane>
         </div>
 
         {/* Google */}
@@ -337,16 +321,20 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
         </div>
 
         {/* Pola */}
-        <div className="space-y-2">
-          {!logowanie && (
-            <div className="nb-pole grid grid-cols-2 gap-2.5">
+        {/* Odstępy siedzą wewnątrz zwijanych bloków (a nie w space-y na
+            kontenerze), bo zwinięty element nadal dostawałby margines
+            od space-y i zostawiał pustą szparę. */}
+        <div>
+          <Rozwijane otwarte={!logowanie}>
+            <div className="grid grid-cols-2 gap-2.5 pb-2">
               <Pole icon={User} typ="text" placeholder="Imię" wartosc={imie} onChange={setImie} />
               <Pole icon={User} typ="text" placeholder="Nazwisko" wartosc={nazwisko} onChange={setNazwisko} />
             </div>
-          )}
+          </Rozwijane>
 
           <Pole icon={Mail} typ="email" placeholder="twoj@email.com" wartosc={email} onChange={setEmail} />
 
+          <div className="mt-2" />
           <Pole
             icon={Lock}
             typ={pokazHaslo ? 'text' : 'password'}
@@ -365,8 +353,8 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
             }
           />
 
-          {!logowanie && (
-            <div className="nb-pole">
+          <Rozwijane otwarte={!logowanie}>
+            <div className="pt-2">
               <div className={cn(
                 'group relative flex items-center rounded-xl bg-foreground/[0.035] ring-1 ring-inset transition-all duration-200',
                 haslo2.length === 0
@@ -380,47 +368,56 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
                   placeholder="Potwierdź hasło"
                   value={haslo2}
                   onChange={e => { setHaslo2(e.target.value); odczytajZakres(e.target) }}
+                  onScroll={e => setPrzesuniecie(e.currentTarget.scrollLeft)}
                   onBlur={() => setZakres({ od: 0, do: 0 })}
                   className={cn(
-                    'h-11 w-full bg-transparent pl-10 pr-10 font-sans text-[14px] outline-none placeholder:text-foreground/30',
+                    'h-11 w-full bg-transparent pl-10 pr-10 text-[14px] outline-none placeholder:text-foreground/30',
+                    // Zamaskowane pole jedzie monospace, żeby każdy znak miał
+                    // ten sam rozstaw co komórka kropki w nakładce. Inaczej
+                    // przeglądarka liczy zaznaczenie na proporcjonalnym
+                    // font-sans, a my rysujemy je na równych kratkach —
+                    // podświetlenie lądowało kilka znaków od kursora.
                     pokazHaslo2 || haslo2.length === 0
-                      ? 'text-foreground caret-primary'
+                      ? 'font-sans text-foreground caret-primary'
                       // Natywne zaznaczenie całkiem ukryte: przeglądarka rysuje
                       // przy nim własny prostokąt i wymusza widoczność tekstu,
                       // więc spod przezroczystego tekstu wychodziły natywne
                       // kropki. Zaznaczenie rysujemy sami, na kropkach niżej.
-                      : 'text-transparent caret-transparent selection:bg-transparent selection:text-transparent',
+                      : 'font-mono text-transparent caret-transparent selection:bg-transparent selection:text-transparent',
                   )}
                 />
-                {/* Kropki zgodności znak po znaku. Kontener musi mieć prawą
-                    krawędź i overflow-hidden — bez tego przy dłuższym haśle
-                    kropki wylewały się poza pole przez pół ekranu. shrink-0
-                    trzyma je okrągłe: mają być przycięte, nie ściśnięte.
-                    Każda kropka siedzi w komórce bez odstępu — dzięki temu
-                    podświetlenie zaznaczenia układa się w ciągły pasek. */}
+                {/* Kropki zgodności znak po znaku. Komórka nie ma sztywnej
+                    szerokości — zawiera przezroczysty znak w tym samym
+                    monospace co input, więc jej rozstaw jest dokładnie taki
+                    jak rozstaw znaków, na których przeglądarka liczy
+                    zaznaczenie. Kropka leży nad nią absolutnie, żeby jej
+                    rozmiar nie wpływał na szerokość komórki. */}
                 {!pokazHaslo2 && haslo2.length > 0 && (
                   <div className="pointer-events-none absolute inset-y-0 left-10 right-10 flex items-center overflow-hidden">
-                    {haslo2.split('').map((z, i) => {
-                      const wZaznaczeniu = i >= zakres.od && i < zakres.do
-                      return (
-                        <span
-                          key={i}
-                          className={cn(
-                            'flex h-5 w-2.5 shrink-0 items-center justify-center',
-                            wZaznaczeniu && 'bg-primary/25',
-                            wZaznaczeniu && i === zakres.od && 'rounded-l-[3px]',
-                            wZaznaczeniu && i === zakres.do - 1 && 'rounded-r-[3px]',
-                          )}
-                        >
+                    <div className="flex" style={{ transform: `translateX(${-przesuniecie}px)` }}>
+                      {haslo2.split('').map((z, i) => {
+                        const wZaznaczeniu = i >= zakres.od && i < zakres.do
+                        return (
                           <span
+                            key={i}
                             className={cn(
-                              'h-1.5 w-1.5 rounded-full',
-                              z === haslo[i] ? 'bg-primary' : 'bg-destructive',
+                              'relative inline-flex h-5 shrink-0 items-center justify-center font-mono text-[14px] leading-5 text-transparent',
+                              wZaznaczeniu && 'bg-primary/25',
+                              wZaznaczeniu && i === zakres.od && 'rounded-l-[3px]',
+                              wZaznaczeniu && i === zakres.do - 1 && 'rounded-r-[3px]',
                             )}
-                          />
-                        </span>
-                      )
-                    })}
+                          >
+                            0
+                            <span
+                              className={cn(
+                                'absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full',
+                                z === haslo[i] ? 'bg-primary' : 'bg-destructive',
+                              )}
+                            />
+                          </span>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
                 <button
@@ -440,13 +437,13 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
                 )}
               </div>
             </div>
-          )}
+          </Rozwijane>
         </div>
 
         {/* Siła hasła — bez ramki, zawsze widoczna w rejestracji, żeby
             pojawienie się po pierwszym znaku nie przesuwało układu */}
-        {!logowanie && (
-          <div className="nb-pole mt-1">
+        <Rozwijane otwarte={!logowanie}>
+          <div className="pt-1">
             <div className="flex items-center gap-2">
               <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-foreground/[0.09]">
                 <div
@@ -474,11 +471,11 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
                   : `Brakuje: ${braki.slice(0, 2).map(w => w.krotki).join(', ')}${braki.length > 2 ? ' i inne' : ''}.`}
             </p>
           </div>
-        )}
+        </Rozwijane>
 
         {/* Zapamiętaj / reset */}
-        {logowanie && (
-          <div className="nb-pole mt-4 flex items-center justify-between">
+        <Rozwijane otwarte={logowanie}>
+          <div className="flex items-center justify-between pt-4">
             <button
               type="button"
               onClick={() => setZapamietaj(v => !v)}
@@ -496,11 +493,11 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
               Nie pamiętasz hasła?
             </button>
           </div>
-        )}
+        </Rozwijane>
 
         {/* Zgody */}
-        {!logowanie && (
-          <div className="nb-pole mt-3">
+        <Rozwijane otwarte={!logowanie}>
+          <div className="pt-3">
             <Zgoda
               zaznaczona={zgody.regulamin}
               onZmien={() => setZgody(z => ({ ...z, regulamin: !z.regulamin }))}
@@ -519,11 +516,11 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
               tekst="Chcę dostawać informacje o nowych funkcjach"
             />
           </div>
-        )}
+        </Rozwijane>
 
         {/* Błąd walidacji */}
-        {pokazBladWalidacji && !wszystkieWarunkiSpelnione && (
-          <div className="mt-4 flex items-center gap-2 font-sans text-[12.5px] text-destructive">
+        <Rozwijane otwarte={pokazBladWalidacji && !wszystkieWarunkiSpelnione}>
+          <div className="flex items-center gap-2 pt-4 font-sans text-[12.5px] text-destructive">
             <AlertCircle className="h-3.5 w-3.5 shrink-0" />
             <span>
               {!daneOsobowePoprawne ? 'Wpisz imię i nazwisko.' :
@@ -534,7 +531,7 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
                !zgody.prywatnosc ? 'Zaakceptuj Politykę prywatności.' : 'Uzupełnij wymagane pola.'}
             </span>
           </div>
-        )}
+        </Rozwijane>
 
         {/* CTA */}
         <div className="mt-3.5">
@@ -549,15 +546,15 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
 
         {/* Linki prawne tylko przy logowaniu — w rejestracji Regulamin
             i Polityka są już linkami w zgodach tuż nad przyciskiem. */}
-        {logowanie && (
-          <div className="nb-pole mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
+        <Rozwijane otwarte={logowanie}>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 pt-5">
             {DOKUMENTY.map(t => (
               <button key={t} type="button" className="font-sans text-[11px] text-foreground/25 hover:text-foreground/50 cursor-pointer transition-colors">
                 {t}
               </button>
             ))}
           </div>
-        )}
+        </Rozwijane>
       </div>
 
       {/* Modal weryfikacji email */}

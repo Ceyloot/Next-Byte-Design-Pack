@@ -4,29 +4,77 @@
     {
       "name": "nextbyte-preview",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "nextbyte-preview"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "nextbyte-preview"
+      ],
       "port": 5190,
       "autoPort": false
     },
     {
       "name": "nextbyte-ui-example",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "packages/nextbyte-ui-example", "--", "--port", "5199", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "packages/nextbyte-ui-example",
+        "--",
+        "--port",
+        "5199",
+        "--strictPort"
+      ],
       "port": 5199,
       "autoPort": false
     },
     {
       "name": "nextbyte-homepage3",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "nextbyte-homepage3", "--", "--port", "5197", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "nextbyte-homepage3",
+        "--",
+        "--port",
+        "5197",
+        "--strictPort"
+      ],
       "port": 5197,
       "autoPort": false
     },
     {
       "name": "nextbyte-app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "../nextbyte-app", "--", "--port", "5198", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "../nextbyte-app",
+        "--",
+        "--port",
+        "5198",
+        "--strictPort"
+      ],
       "port": 5198,
+      "autoPort": false
+    },
+    {
+      "name": "nextbyte-auth",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "nextbyte-auth",
+        "--",
+        "--port",
+        "5210",
+        "--strictPort"
+      ],
+      "port": 5210,
       "autoPort": false
     }
   ]

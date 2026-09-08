@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlowButton } from './shared'
-import { OpenAIIcon, AnthropicIcon, GeminiIcon } from './HomePage'
+import { OpenAIIcon, AnthropicIcon, GeminiIcon } from './ai-icons'
 import { MidjourneyIcon, CanvaIcon } from './brand-icons'
 
 // ── Opcje Kroku 1 (Narzędzia AI) ─────────────────────────────────────────────
