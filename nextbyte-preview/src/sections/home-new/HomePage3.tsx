@@ -3290,18 +3290,15 @@ const MODULE_COPY: ModuleCopy[] = [
    GÓRNY NAVBAR STRONY GŁÓWNEJ (1:1 Z STRONA GŁÓWNA)
    ═══════════════════════════════════════════════════════════════════════ */
 function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
-  const items: { label: string; id: HomePageId }[] = [
+  const navItems: { label: string; id: HomePageId }[] = [
     { label: 'Strona główna', id: 'home' },
     { label: 'Cennik', id: 'cennik' },
     { label: 'Dla firm', id: 'b2b' },
     { label: 'Historia', id: 'historia' },
-    { label: 'Logowanie', id: 'logowanie' },
   ]
 
   const navRef = useRef<HTMLDivElement>(null)
 
-  // Dół tego navbara = "góra strony" dla scroll-snapa i wyliczeń wycentrowania
-  // modułów (--nb-navbar-h w :root, patrz index.css `scroll-padding-top`).
   useEffect(() => {
     const el = navRef.current
     if (!el) return
@@ -3316,29 +3313,45 @@ function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
 
   return (
     <div ref={navRef} data-navbar className="sticky top-0 z-50 w-full shrink-0 border-b border-foreground/[0.06] bg-background/92 backdrop-blur-md">
-      <div className="flex items-center justify-center gap-1.5 px-4 h-12">
-        {items.map((item) => {
-          const aktywna = item.id === 'home'
-          return (
+      <div className="flex items-center px-5 h-12 gap-4">
+        {/* Logo */}
+        <button
+          type="button"
+          onClick={() => {}}
+          className="flex items-center gap-2 shrink-0 cursor-pointer"
+        >
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
+            <svg viewBox="0 0 12 12" className="h-3 w-3 text-primary-foreground" fill="currentColor">
+              <path d="M6 1L10 4V8L6 11L2 8V4L6 1Z" />
+            </svg>
+          </div>
+          <span className="font-heading text-[14px] font-bold tracking-[-0.4px] text-foreground">NextByte</span>
+        </button>
+
+        {/* Nav linki — wycentrowane */}
+        <div className="flex flex-1 items-center justify-center gap-1">
+          {navItems.map((item) => (
             <button
               key={item.id}
               type="button"
-              onClick={() => {
-                if (item.id !== 'home') {
-                  onNavigate(item.id)
-                }
-              }}
-              className={cn(
-                'h-8 px-4 rounded-lg font-sans text-[13px] font-medium transition-all duration-200 cursor-pointer',
-                aktywna
-                  ? 'bg-primary/15 border border-primary/30 text-primary'
-                  : 'text-foreground/45 hover:text-foreground/75 hover:bg-foreground/[0.05]',
-              )}
+              onClick={() => onNavigate(item.id)}
+              className="h-8 px-3.5 rounded-lg font-sans text-[13px] font-medium text-foreground/45 hover:text-foreground/80 hover:bg-foreground/[0.05] transition-all duration-150 cursor-pointer"
             >
               {item.label}
             </button>
-          )
-        })}
+          ))}
+        </div>
+
+        {/* CTA — Zaloguj się */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => onNavigate('logowanie')}
+            className="h-8 px-4 rounded-lg font-sans text-[13px] font-semibold bg-primary text-primary-foreground hover:bg-primary/85 transition-all duration-150 cursor-pointer shadow-[0_0_14px_-3px_hsl(var(--primary)/0.6)]"
+          >
+            Zaloguj się
+          </button>
+        </div>
       </div>
     </div>
   )

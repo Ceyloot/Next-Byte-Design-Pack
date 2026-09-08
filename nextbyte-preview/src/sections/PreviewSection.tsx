@@ -32,6 +32,7 @@ import { StronaGlownaSection } from '@/sections/StronaGlownaSection'
 import { StronaGlownaNewSection } from '@/sections/StronaGlownaNewSection'
 import type { HomePageId } from '@/sections/StronaGlownaNewSection'
 import { STRONY as HOME_NEW_STRONY } from '@/sections/home-new/types'
+import { AKTUALNOSCI } from '@/sections/home-new/aktualnosci'
 import { HomePage2 } from '@/sections/home-new/HomePage2'
 import { HomePage3 } from '@/sections/home-new/HomePage3'
 
@@ -329,44 +330,9 @@ const AKTUALNOSCI_ITEMS = [
   },
 ]
 
-const FEATURED_NEWS = [
-  {
-    id: 1,
-    title: 'Grok Image — kosmiczny realizm',
-    desc: 'Najmocniejsze odwzorowanie ludzi i fotorealizm. Twarze, skóra, światło — jak ze studia.',
-    tag: 'Studio Zdęć v2.1',
-    linkText: 'Otwórz Studio Zdęć',
-    icon: Camera,
-    gradient: 'from-primary/30 via-sky-600/25 to-blue-600/20',
-  },
-  {
-    id: 2,
-    title: 'Model Chat AI 4.0 — superszybki kompilator',
-    desc: 'O 300% szybsza generacja kodu i automatyczna synteza długich instrukcji.',
-    tag: 'Chat AI v4.0',
-    linkText: 'Przejdź do Chat AI',
-    icon: MessageSquare,
-    gradient: 'from-cyan-500/30 via-blue-600/25 to-indigo-600/20',
-  },
-  {
-    id: 3,
-    title: 'PromptEx v3 — automatyczny optymalizator',
-    desc: 'Błyskawiczne ulepszanie instrukcji w czasie rzeczywistym z analizą kontekstu.',
-    tag: 'Prompty v3.0',
-    linkText: 'Otwórz PromptEx',
-    icon: Terminal,
-    gradient: 'from-amber-500/30 via-orange-600/25 to-red-600/20',
-  },
-  {
-    id: 4,
-    title: 'Byte Cloud — bezlimitowa pamięć AI',
-    desc: 'Błyskawiczne zapisywanie sesji roboczych i natychmiastowe współdzielenie projektów.',
-    tag: 'Pamięć AI',
-    linkText: 'Sprawdź Pamięć AI',
-    icon: Brain,
-    gradient: 'from-emerald-500/30 via-teal-600/25 to-cyan-600/20',
-  },
-]
+/* Dane przeniesione do home-new/aktualnosci.ts — ten sam zestaw zasila
+   lewą szynę ekranu logowania, więc nie duplikujemy go w dwóch miejscach. */
+const FEATURED_NEWS = AKTUALNOSCI
 
 const QUICK_SHORTCUTS = [
   {
@@ -1016,9 +982,18 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             backdropFilter: 'blur(12px)',
           }}
         >
-          <div className="flex items-center justify-center gap-1.5 px-4 h-12">
+          {/* Przewijanie poziome + `w-max min-w-full` na wewnętrznym pasku:
+              gdy pozycje się mieszczą, `min-w-full` pozwala je wyśrodkować,
+              a gdy nie — `w-max` zrównuje szerokość z treścią, więc nadmiar
+              idzie tylko w prawo i da się do niego doscrollować. Samo
+              `justify-center` wypychało pierwsze pozycje na ujemne pozycje,
+              skąd bez przewijania nie było już do nich dostępu. */}
+          <div className="h-12 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex h-full w-max min-w-full items-center justify-center gap-1.5 px-4">
             {(previewSubView === 'homepage-new'
-              ? HOME_NEW_STRONY
+              ? [
+                  ...HOME_NEW_STRONY,
+                ]
               : [
                   { label: 'Strona główna', id: 'home' as HomePageId },
                   { label: 'Cennik', id: 'cennik' as HomePageId },
@@ -1029,22 +1004,31 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               const aktywna = previewSubView === 'homepage-new'
                 ? homeNewPage === item.id
                 : item.id === 'home'
+              const skrot = 'skrot' in item && item.skrot
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => previewSubView === 'homepage-new' && setHomeNewPage(item.id)}
-                  className={cn(
-                    'h-8 px-4 rounded-lg font-sans text-[13px] font-medium transition-all duration-200 cursor-pointer',
-                    aktywna
-                      ? 'bg-primary/15 border border-primary/30 text-primary'
-                      : 'text-foreground/45 hover:text-foreground/75 hover:bg-foreground/[0.05]'
-                  )}
-                >
-                  {item.label}
-                </button>
+                <React.Fragment key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (item.id === 'home') { setPreviewSubView('homepage-3'); return }
+                      if (previewSubView === 'homepage-new') setHomeNewPage(item.id)
+                    }}
+                    className={cn(
+                      'h-8 px-4 rounded-lg font-sans text-[13px] transition-all duration-200 cursor-pointer',
+                      skrot ? 'font-normal italic' : 'font-medium',
+                      aktywna
+                        ? 'bg-primary/15 border border-primary/30 text-primary'
+                        : skrot
+                          ? 'text-foreground/30 hover:text-foreground/60 hover:bg-foreground/[0.05]'
+                          : 'text-foreground/45 hover:text-foreground/75 hover:bg-foreground/[0.05]'
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                </React.Fragment>
               )
             })}
+            </div>
           </div>
         </div>
       )}
@@ -1072,7 +1056,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         {activeTab === 'preview' && (
           <div className="space-y-4 w-full flex-1 flex flex-col min-h-0">
             {previewSubView === 'homepage-3' ? (
-              <HomePage3 onNavigate={(p) => { setHomeNewPage(p); setPreviewSubView('homepage-new') }} />
+              <HomePage3 onNavigate={(p) => {
+                if (p === 'home') { setPreviewSubView('homepage-3'); return }
+                setHomeNewPage(p); setPreviewSubView('homepage-new')
+              }} />
             ) : previewSubView === 'homepage' ? (
               <StronaGlownaSection />
             ) : previewSubView === 'homepage-new' ? (

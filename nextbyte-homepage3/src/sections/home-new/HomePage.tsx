@@ -1838,7 +1838,7 @@ export function HomePage({ onNavigate }: { onNavigate: (p: HomePageId) => void }
                     )}
                     {/* Loga modeli / rozwiązań napędzających moduł */}
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      {CHIP_DATA[m.id].filter(chip => !chip.highlight).map((chip, idx) => {
+                      {(CHIP_DATA[m.id] ?? []).filter(chip => !chip.highlight).map((chip, idx) => {
                         const ChipIcon = chip.icon
                         return (
                           <span

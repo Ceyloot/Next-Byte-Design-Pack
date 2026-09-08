@@ -1,10 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useLayoutEffect } from 'react'
 import {
-  Bot,
-  Sparkles,
-  Zap,
   Image as ImageIcon,
-  Palette,
   Rocket,
   MessageSquare,
   Video,
@@ -18,7 +14,9 @@ import {
   Check,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { GlowButton, GhostButton } from './shared'
+import { GlowButton } from './shared'
+import { OpenAIIcon, AnthropicIcon, GeminiIcon } from './HomePage'
+import { MidjourneyIcon, CanvaIcon } from './brand-icons'
 
 // ── Opcje Kroku 1 (Narzędzia AI) ─────────────────────────────────────────────
 interface NarzedzieItem {
@@ -30,11 +28,11 @@ interface NarzedzieItem {
 }
 
 const NARZEDZIA_AI: NarzedzieItem[] = [
-  { id: 'chatgpt', nazwa: 'ChatGPT', opis: 'Najpopularniejszy model konwersacyjny OpenAI', ikona: Bot, badge: 'OpenAI' },
-  { id: 'claude', nazwa: 'Claude', opis: 'Zaawansowana analiza, kod i długie konteksty', ikona: Sparkles, badge: 'Anthropic' },
-  { id: 'gemini', nazwa: 'Gemini', opis: 'Multimodalna sztuczna inteligencja od Google', ikona: Zap, badge: 'Google' },
-  { id: 'midjourney', nazwa: 'Midjourney / generatory grafik', opis: 'Fotorealistyczne obrazy i grafiki koncepcyjne', ikona: ImageIcon, badge: 'Grafika' },
-  { id: 'canva', nazwa: 'Canva', opis: 'Szablony, prezentacje i szybki design z AI', ikona: Palette, badge: 'Design' },
+  { id: 'chatgpt', nazwa: 'ChatGPT', opis: 'Najpopularniejszy model konwersacyjny OpenAI', ikona: OpenAIIcon, badge: 'OpenAI' },
+  { id: 'claude', nazwa: 'Claude', opis: 'Zaawansowana analiza, kod i długie konteksty', ikona: AnthropicIcon, badge: 'Anthropic' },
+  { id: 'gemini', nazwa: 'Gemini', opis: 'Multimodalna sztuczna inteligencja od Google', ikona: GeminiIcon, badge: 'Google' },
+  { id: 'midjourney', nazwa: 'Midjourney / generatory grafik', opis: 'Fotorealistyczne obrazy i grafiki koncepcyjne', ikona: MidjourneyIcon, badge: 'Grafika' },
+  { id: 'canva', nazwa: 'Canva', opis: 'Szablony, prezentacje i szybki design z AI', ikona: CanvaIcon, badge: 'Design' },
   {
     id: 'poczatkujacy',
     nazwa: 'Dopiero zaczynam z AI',
@@ -112,6 +110,27 @@ const CELE_UZYTKOWNIKA: CelItem[] = [
   },
 ]
 
+/* Własne keyframe'y zamiast klas `animate-in` / `slide-in-from-*`:
+   projekt nie ma pluginu tailwindcss-animate, więc te klasy nic nie robiły
+   (getComputedStyle zwracał animationName: none). Bez fill-mode `both` —
+   gdyby animacja z jakiegoś powodu nie wystartowała, treść i tak jest
+   widoczna, zamiast zostać na opacity 0. */
+function StyleKrokow() {
+  return (
+    <style>{`
+      @keyframes nbKrokZPrawej { from { opacity: 0; transform: translateX(28px) } }
+      @keyframes nbKrokZLewej  { from { opacity: 0; transform: translateX(-28px) } }
+      @keyframes nbPojaw       { from { opacity: 0 } }
+      .nb-krok-prawo { animation: nbKrokZPrawej .34s cubic-bezier(.16,1,.3,1) }
+      .nb-krok-lewo  { animation: nbKrokZLewej  .34s cubic-bezier(.16,1,.3,1) }
+      .nb-pojaw      { animation: nbPojaw .3s ease-out }
+      @media (prefers-reduced-motion: reduce) {
+        .nb-krok-prawo, .nb-krok-lewo, .nb-pojaw { animation: none }
+      }
+    `}</style>
+  )
+}
+
 interface OnboardingFlowProps {
   poczatkowyKrok?: 1 | 2
   onZakoncz?: () => void
@@ -161,271 +180,200 @@ export function OnboardingFlow({
     }
   }
 
+  /* Kierunek przejścia: 1 = w przód (treść wjeżdża z prawej), -1 = wstecz */
+  const [kierunek, setKierunek] = useState<1 | -1>(1)
+  const idzDo = (nowy: 1 | 2) => {
+    setKierunek(nowy > krok ? 1 : -1)
+    setKrok(nowy)
+  }
+
+  /* Kroki różnią się wysokością (6 vs 8 kafelków), a blok jest wyśrodkowany,
+     więc bez animowania wysokości całość podskakiwałaby przy zmianie kroku.
+     Wysokości nie da się animować z „auto”: mierzymy docelową, cofamy do
+     poprzedniej i puszczamy przejście. */
+  const trescRef = useRef<HTMLDivElement>(null)
+  const poprzedniaWys = useRef<number | null>(null)
+
+  useLayoutEffect(() => {
+    const el = trescRef.current
+    if (!el) return
+    const start = poprzedniaWys.current
+    el.style.height = ''
+    const cel = el.offsetHeight
+    poprzedniaWys.current = cel
+    if (start == null || start === cel) return
+    el.style.height = `${start}px`
+    void el.offsetHeight // wymuś reflow, inaczej przeglądarka zobaczy tylko stan końcowy
+    el.style.height = `${cel}px`
+  }, [krok])
+
+  const pierwszyKrok = krok === 1
+  const pozycje = pierwszyKrok
+    ? NARZEDZIA_AI.map(n => ({ id: n.id, tytul: n.nazwa, opis: n.opis, ikona: n.ikona }))
+    : CELE_UZYTKOWNIKA.map(c => ({ id: c.id, tytul: c.tytul, opis: c.podtytul, ikona: c.ikona }))
+  const zaznaczone = pierwszyKrok ? wybraneNarzedzia : wybraneCele
+  const przelacz = pierwszyKrok ? przelaczNarzedzie : przelaczCel
+
   return (
-    <div className="relative z-10 flex w-full flex-col items-center animate-in fade-in duration-300">
-      {/* Główna Karta Onboardingu o identycznej stylistyce co karta logowania */}
-      <div className="relative w-full max-w-[880px] transition-all duration-300">
-        <div
-          className="relative rounded-[26px] p-px shadow-[0_30px_80px_-30px_hsl(var(--primary)/0.45)]"
-          style={{
-            background:
-              'linear-gradient(180deg, hsl(var(--primary)/0.5), hsl(var(--foreground)/0.08) 38%, hsl(var(--foreground)/0.03))',
-          }}
+    <div className="nb-pojaw relative z-10 w-full max-w-[760px]">
+      <StyleKrokow />
+      {/* Górny pasek: etykieta kroku + wyjście */}
+      <div className="flex items-center justify-between gap-4">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/35">
+          Personalizacja konta
+        </span>
+        <button
+          type="button"
+          onClick={obsluzKoniec}
+          className="group inline-flex items-center gap-1.5 font-sans text-[12.5px] text-foreground/40 transition-colors hover:text-foreground/75 cursor-pointer"
         >
-          <div
-            className="relative overflow-hidden rounded-[25px] px-6 py-8 backdrop-blur-xl sm:px-9 sm:py-10"
-            style={{
-              background:
-                'radial-gradient(ellipse 130% 90% at 50% -20%, hsl(var(--foreground)/0.08) 0%, transparent 65%),' +
-                'linear-gradient(180deg, hsl(var(--card)/0.92) 0%, hsl(var(--background)/0.95) 100%)',
-            }}
-          >
-            {/* ── GÓRNY PASEK: Tytuł sekcji + Szybkie pominięcie w prawym rogu ── */}
-            <div className="flex items-center justify-between pb-3.5">
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-foreground/45">
-                Personalizacja konta
-              </span>
-              <button
-                type="button"
-                onClick={obsluzKoniec}
-                className="group inline-flex items-center gap-1.5 font-sans text-[12.5px] font-medium text-foreground/45 transition-colors hover:text-foreground cursor-pointer"
-              >
-                <span>Pomiń personalizację</span>
-                <ArrowRight className="h-3.5 w-3.5 text-foreground/35 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-              </button>
-            </div>
+          Pomiń personalizację
+          <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+        </button>
+      </div>
 
-            {/* ── PASEK POSTĘPU (2 segmenty) ────────────────────────── */}
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2">
-                {[1, 2].map(indeks => {
-                  const czyWypelniony = indeks <= krok
-                  const czyBiezacy = indeks === krok
-                  return (
-                    <div
-                      key={indeks}
-                      className={cn(
-                        'h-1.5 flex-1 rounded-full transition-all duration-300',
-                        czyBiezacy
-                          ? 'bg-primary shadow-[0_0_12px_hsl(var(--primary))]'
-                          : czyWypelniony
-                            ? 'bg-primary/60'
-                            : 'bg-foreground/[0.08]',
-                      )}
-                    />
-                  )
-                })}
-              </div>
-
-              <div className="flex items-center justify-between font-sans text-xs">
-                <span className="font-semibold text-foreground/85 tracking-wide">
-                  {krok === 1 ? 'Narzędzia AI' : 'Twoje cele'}
-                </span>
-                <span className="font-mono text-foreground/45">
-                  Krok {krok} z 2
-                </span>
-              </div>
-            </div>
-
-            {/* ════════════════════════════════════════════════════════════
-                KROK 1: Z jakich narzędzi AI już korzystasz?
-                ════════════════════════════════════════════════════════════ */}
-            {krok === 1 && (
-              <div className="mt-8 animate-in fade-in slide-in-from-bottom-2 duration-250">
-                {/* Tytuł i Podtytuł */}
-                <div className="text-center">
-                  <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                    Z jakich narzędzi AI już korzystasz?
-                  </h1>
-                  <p className="mt-2 font-sans text-sm sm:text-[15px] text-foreground/55">
-                    Dzięki temu dopasujemy start do Twojego poziomu
-                  </p>
-                </div>
-
-                {/* Siatka 6 kafelków (2 kolumny x 3 wiersze) */}
-                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                  {NARZEDZIA_AI.map(narzedzie => {
-                    const Icon = narzedzie.ikona
-                    const zaznaczone = wybraneNarzedzia.includes(narzedzie.id)
-
-                    return (
-                      <button
-                        key={narzedzie.id}
-                        type="button"
-                        onClick={() => przelaczNarzedzie(narzedzie.id)}
-                        className={cn(
-                          'group relative flex items-start gap-4 rounded-2xl p-4 sm:p-5 text-left transition-all duration-200 cursor-pointer select-none',
-                          'border backdrop-blur-sm',
-                          zaznaczone
-                            ? 'border-primary/60 bg-primary/[0.08] shadow-[0_0_24px_-4px_hsl(var(--primary)/0.3)] scale-[1.01]'
-                            : 'border-foreground/[0.08] bg-foreground/[0.025] hover:border-foreground/[0.22] hover:bg-foreground/[0.05] hover:scale-[1.008]',
-                        )}
-                      >
-                        {/* Wskaźnik zaznaczenia w prawym górnym rogu */}
-                        <div
-                          className={cn(
-                            'absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full transition-all duration-200',
-                            zaznaczone
-                              ? 'bg-primary text-primary-foreground shadow-[0_0_10px_hsl(var(--primary)/0.8)]'
-                              : 'border border-foreground/20 bg-foreground/[0.04] opacity-0 group-hover:opacity-100',
-                          )}
-                        >
-                          {zaznaczone && <Check className="h-3 w-3 stroke-[3]" />}
-                        </div>
-
-                        {/* Ikona w zaokrąglonym kafelku */}
-                        <div
-                          className={cn(
-                            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors duration-200',
-                            zaznaczone
-                              ? 'bg-primary/20 text-primary border border-primary/40 shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]'
-                              : 'bg-foreground/[0.06] text-foreground/60 border border-foreground/[0.08] group-hover:text-foreground group-hover:border-foreground/20',
-                          )}
-                        >
-                          <Icon className="h-5 w-5 stroke-[2]" />
-                        </div>
-
-                        {/* Teksty */}
-                        <div className="min-w-0 flex-1 pr-6">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-sans text-[15.5px] font-semibold text-foreground tracking-tight">
-                              {narzedzie.nazwa}
-                            </h3>
-                          </div>
-                          {narzedzie.opis && (
-                            <p className="mt-1 font-sans text-[12.5px] leading-relaxed text-foreground/50">
-                              {narzedzie.opis}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Dolny pasek akcji */}
-                <div className="mt-10 flex items-center justify-between border-t border-foreground/[0.08] pt-6">
-                  <GhostButton
-                    size="md"
-                    onClick={() => setKrok(2)}
-                    className="h-[46px] px-6 text-[13px] text-foreground/60 hover:text-foreground"
-                  >
-                    Pomiń ten krok
-                  </GhostButton>
-
-                  <GlowButton size="lg" onClick={() => setKrok(2)} className="h-[48px] px-8">
-                    Dalej
-                  </GlowButton>
-                </div>
-              </div>
+      {/* Postęp — cienki pasek zamiast grubych segmentów z neonem */}
+      <div className="mt-3 flex items-center gap-1.5">
+        {[1, 2].map(indeks => (
+          <span
+            key={indeks}
+            className={cn(
+              'h-[3px] flex-1 rounded-full transition-colors duration-300',
+              indeks <= krok ? 'bg-primary' : 'bg-foreground/[0.10]',
             )}
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-between font-sans text-[12px]">
+        <span className="font-medium text-foreground/70">
+          {pierwszyKrok ? 'Narzędzia AI' : 'Twoje cele'}
+        </span>
+        <span className="font-mono text-foreground/35">Krok {krok} z 2</span>
+      </div>
 
-            {/* ════════════════════════════════════════════════════════════
-                KROK 2: Na czym zależy Ci najbardziej?
-                ════════════════════════════════════════════════════════════ */}
-            {krok === 2 && (
-              <div className="mt-8 animate-in fade-in slide-in-from-bottom-2 duration-250">
-                {/* Tytuł i Podtytuł */}
-                <div className="text-center">
-                  <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                    Na czym zależy Ci najbardziej?
-                  </h1>
-                  <p className="mt-2 font-sans text-sm sm:text-[15px] text-foreground/55">
-                    Od tego zaczniemy Twój pierwszy dzień
-                  </p>
-                </div>
+      {/* Zmienna część kroku — wysokość animowana, zawartość wjeżdża z boku.
+          overflow-hidden przycina wsuwający się blok do krawędzi, przez co
+          czyta się jak przesuwanie kart, a nie skok. */}
+      <div
+        ref={trescRef}
+        onTransitionEnd={e => {
+          if (e.propertyName === 'height' && e.target === e.currentTarget) {
+            e.currentTarget.style.height = ''
+          }
+        }}
+        className="overflow-hidden transition-[height] duration-300 ease-[cubic-bezier(.16,1,.3,1)]"
+      >
+        <div
+          key={krok}
+          className={kierunek === 1 ? 'nb-krok-prawo' : 'nb-krok-lewo'}
+        >
+          {/* Nagłówek kroku */}
+          <div className="mt-10 text-center">
+            <h1 className="font-sans text-[24px] font-bold leading-tight tracking-[-0.8px] text-foreground">
+              {pierwszyKrok ? 'Z jakich narzędzi AI już korzystasz?' : 'Na czym zależy Ci najbardziej?'}
+            </h1>
+            <p className="mt-1.5 font-sans text-[13.5px] text-foreground/40">
+              {pierwszyKrok
+                ? 'Dzięki temu dopasujemy start do Twojego poziomu'
+                : 'Od tego zaczniemy Twój pierwszy dzień'}
+            </p>
+          </div>
 
-                {/* Siatka 8 kafelków (2 kolumny x 4 wiersze) */}
-                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                  {CELE_UZYTKOWNIKA.map(cel => {
-                    const Icon = cel.ikona
-                    const zaznaczony = wybraneCele.includes(cel.id)
+          {/* Siatka wyboru — jeden komponent kafelka dla obu kroków */}
+          <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {pozycje.map(poz => (
+              <Kafelek
+                key={poz.id}
+                ikona={poz.ikona}
+                tytul={poz.tytul}
+                opis={poz.opis}
+                zaznaczony={zaznaczone.includes(poz.id)}
+                onClick={() => przelacz(poz.id)}
+              />
+            ))}
+          </div>
 
-                    return (
-                      <button
-                        key={cel.id}
-                        type="button"
-                        onClick={() => przelaczCel(cel.id)}
-                        className={cn(
-                          'group relative flex items-start gap-4 rounded-2xl p-4 sm:p-5 text-left transition-all duration-200 cursor-pointer select-none',
-                          'border backdrop-blur-sm',
-                          zaznaczony
-                            ? 'border-primary/60 bg-primary/[0.08] shadow-[0_0_24px_-4px_hsl(var(--primary)/0.3)] scale-[1.01]'
-                            : 'border-foreground/[0.08] bg-foreground/[0.025] hover:border-foreground/[0.22] hover:bg-foreground/[0.05] hover:scale-[1.008]',
-                        )}
-                      >
-                        {/* Wskaźnik zaznaczenia w prawym górnym rogu */}
-                        <div
-                          className={cn(
-                            'absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full transition-all duration-200',
-                            zaznaczony
-                              ? 'bg-primary text-primary-foreground shadow-[0_0_10px_hsl(var(--primary)/0.8)]'
-                              : 'border border-foreground/20 bg-foreground/[0.04] opacity-0 group-hover:opacity-100',
-                          )}
-                        >
-                          {zaznaczony && <Check className="h-3 w-3 stroke-[3]" />}
-                        </div>
+          {/* Akcje — jedno główne działanie po prawej, reszta jako link */}
+          <div className="mt-9 flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => idzDo(pierwszyKrok ? 2 : 1)}
+              className="inline-flex items-center gap-1.5 font-sans text-[13px] text-foreground/40 transition-colors hover:text-foreground/75 cursor-pointer"
+            >
+              {pierwszyKrok ? (
+                'Pomiń ten krok'
+              ) : (
+                <>
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Wstecz
+                </>
+              )}
+            </button>
 
-                        {/* Ikona */}
-                        <div
-                          className={cn(
-                            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors duration-200',
-                            zaznaczony
-                              ? 'bg-primary/20 text-primary border border-primary/40 shadow-[0_0_14px_-2px_hsl(var(--primary)/0.5)]'
-                              : 'bg-foreground/[0.06] text-foreground/60 border border-foreground/[0.08] group-hover:text-foreground group-hover:border-foreground/20',
-                          )}
-                        >
-                          <Icon className="h-5 w-5 stroke-[2]" />
-                        </div>
-
-                        {/* Treść */}
-                        <div className="min-w-0 flex-1 pr-6">
-                          <h3 className="font-sans text-[15px] font-semibold text-foreground tracking-tight leading-snug">
-                            {cel.tytul}
-                          </h3>
-                          <p className="mt-1 font-sans text-[12.5px] leading-relaxed text-foreground/50">
-                            {cel.podtytul}
-                          </p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Dolny pasek akcji */}
-                <div className="mt-10 flex items-center justify-between border-t border-foreground/[0.08] pt-6">
-                  <GhostButton
-                    size="md"
-                    onClick={() => setKrok(1)}
-                    icon={ArrowLeft}
-                    className="h-[46px] px-6 text-[13px]"
-                  >
-                    Wstecz
-                  </GhostButton>
-
-                  <div className="flex items-center gap-3">
-                    <GhostButton
-                      size="md"
-                      onClick={obsluzKoniec}
-                      className="h-[46px] px-6 text-[13px] text-foreground/60 hover:text-foreground"
-                    >
-                      Pomiń
-                    </GhostButton>
-
-                    <GlowButton
-                      size="lg"
-                      onClick={obsluzKoniec}
-                      className="h-[48px] px-8"
-                    >
-                      Przejdź do platformy
-                    </GlowButton>
-                  </div>
-                </div>
-              </div>
-            )}
+            <GlowButton
+              size="lg"
+              onClick={() => (pierwszyKrok ? idzDo(2) : obsluzKoniec())}
+              className="h-[46px] px-7"
+            >
+              {pierwszyKrok ? 'Dalej' : 'Przejdź do platformy'}
+            </GlowButton>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+/* Kafelek wyboru — wspólny dla obu kroków. Wcześniej ten sam markup był
+   zduplikowany w kroku 1 i 2, przez co każda poprawka wymagała dwóch edycji. */
+function Kafelek({
+  ikona: Icon, tytul, opis, zaznaczony, onClick,
+}: {
+  ikona: React.ElementType
+  tytul: string
+  opis?: string
+  zaznaczony: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={zaznaczony}
+      className={cn(
+        'group relative flex items-start gap-3.5 rounded-xl p-4 text-left transition-all duration-150 cursor-pointer select-none',
+        'ring-1 ring-inset',
+        zaznaczony
+          ? 'bg-primary/[0.08] ring-primary/45'
+          : 'bg-foreground/[0.03] ring-foreground/[0.08] hover:bg-foreground/[0.055] hover:ring-foreground/20',
+      )}
+    >
+      <span className={cn(
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-150',
+        zaznaczony
+          ? 'bg-primary/15 text-primary'
+          : 'bg-foreground/[0.05] text-foreground/45 group-hover:text-foreground/75',
+      )}>
+        <Icon className="h-4 w-4" />
+      </span>
+
+      <span className="min-w-0 flex-1 pr-5">
+        <span className="block font-sans text-[13.5px] font-semibold leading-snug text-foreground">
+          {tytul}
+        </span>
+        {opis && (
+          <span className="mt-0.5 block font-sans text-[12px] leading-snug text-foreground/40">
+            {opis}
+          </span>
+        )}
+      </span>
+
+      <span className={cn(
+        'absolute right-3 top-3 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity duration-150',
+        zaznaczony ? 'opacity-100' : 'opacity-0',
+      )}>
+        <Check className="h-2.5 w-2.5" strokeWidth={3.5} />
+      </span>
+    </button>
   )
 }

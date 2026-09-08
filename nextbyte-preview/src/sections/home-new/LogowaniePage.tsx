@@ -1,58 +1,53 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { Mail, Lock, Eye, EyeOff, Check, X, User, AlertCircle, ShieldCheck } from 'lucide-react'
-import { AnimStyles, FadeIn, GlowButton } from './shared'
+import { Mail, Lock, Eye, EyeOff, Check, User, AlertCircle } from 'lucide-react'
+import { AnimStyles, GlowButton } from './shared'
 import { WeryfikacjaEmailModal } from './WeryfikacjaEmailModal'
 import { OnboardingFlow } from './OnboardingFlow'
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PANEL LOGOWANIA / REJESTRACJI
-
-   Makieta do design systemu — formularz jest CELOWO bezczynny: pola trzymają
-   stan tylko lokalnie, a „Kontynuuj" i logowanie Google nic nie wysyłają.
-   To podgląd wyglądu, nie działający mechanizm uwierzytelniania.
-
-   Płynne animacje rozsuwania i zsuwania (FLUID ACCORDION & MORPH):
-   - Płynne rozszerzanie i zwężanie karty (452px <-> 880px) z krzywą cubic-bezier
-   - Ślizgająca się pigułka przełącznika Logowanie / Rejestracja
-   - Płynne przejście pionowe nagłówka ("Witaj ponownie" <-> "Dołącz do ekosystemu...")
-   - Płynne rozsuwanie/zsuwanie prawej kolumny (zgody + akcje) bez łamania tekstu
-   - Płynne rozsuwanie pól rejestracji (Imię, Nazwisko, Potwierdź hasło)
-   - Płynne rozwijanie checklisty wymagań hasła przy wpisywaniu
-   - Płynne rozwijanie komunikatu błędu niezgodności haseł
+   LOGOWANIE / REJESTRACJA — maksymalny minimalizm
+   Bez karty, bez ramek, bez szyny bocznej: jedna wyśrodkowana kolumna
+   wprost na tle strony. Cała dekoracja zdjęta, zostaje sama ścieżka
+   do założenia konta.
    ═══════════════════════════════════════════════════════════════════════ */
 
 type Tryb = 'logowanie' | 'rejestracja'
 
+/* Własne keyframe'y — projekt nie ma pluginu tailwindcss-animate, więc klasy
+   `animate-in` / `fade-in` nic tu nie robią. Bez fill-mode: gdyby animacja nie
+   wystartowała, pola i tak są widoczne zamiast zostać na opacity 0.
+   Krzywa 0.4,0,0.2,1 zamiast expo-out: tamta przy 60% czasu była już na 97%
+   dystansu, więc ogon rozciągał się na ponad 100 ms i wyglądał jak zacięcie. */
+function StyleTrybu() {
+  return (
+    <style>{`
+      @keyframes nbPoleWjazd { from { opacity: 0; transform: translateY(-6px) } }
+      .nb-pole { animation: nbPoleWjazd .26s cubic-bezier(0.4, 0, 0.2, 1) }
+      @media (prefers-reduced-motion: reduce) { .nb-pole { animation: none } }
+    `}</style>
+  )
+}
+
 const DOKUMENTY = ['Regulamin', 'Polityka prywatności', 'Cookies'] as const
-
-/* Wzorce, które same w sobie przekreślają hasło niezależnie od reszty reguł. */
-/* Rozstaw kropek zgodności: kropka 8px (w-2) + odstęp 6px (gap-1.5).
-   Własna karetka pozycjonuje się z tej samej liczby, więc zawsze stoi
-   dokładnie tam, gdzie jest kursor w polu. */
-const KROPKA_SKOK = 14
-
-const KOLOR_OK = 'text-emerald-500'
-const TLO_OK = 'bg-emerald-500'
-const OBRYS_OK = 'ring-emerald-500/50'
-
+const OBRYS_OK = 'ring-primary/45'
 const POPULARNE_WZORCE = ['123456', 'password', 'haslo', 'qwerty', 'admin', '111111', 'iloveyou']
 
-/** Lista wymagań hasła wraz z informacją, które są już spełnione. */
+/* `krotki` służy do sklejenia listy braków w jedno zdanie — pełna lista
+   siedmiu reguł jako stały element była zbyt hałaśliwa. */
 function wymaganiaHasla(h: string) {
   return [
-    { t: 'Co najmniej 12 znaków',                        ok: h.length >= 12 },
-    { t: 'Co najmniej jedna wielka litera (A-Z)',        ok: /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(h) },
-    { t: 'Co najmniej jedna mała litera (a-z)',          ok: /[a-ząćęłńóśźż]/.test(h) },
-    { t: 'Co najmniej jedna cyfra (0-9)',                ok: /[0-9]/.test(h) },
-    { t: 'Co najmniej jeden znak specjalny (!@#$%^&*)',  ok: /[!@#$%^&*]/.test(h) },
-    { t: 'Brak popularnych wzorców (123456, password, itp.)',
+    { krotki: '12 znaków',             ok: h.length >= 12 },
+    { krotki: 'wielka litera',         ok: /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(h) },
+    { krotki: 'mała litera',           ok: /[a-ząćęłńóśźż]/.test(h) },
+    { krotki: 'cyfra',                 ok: /[0-9]/.test(h) },
+    { krotki: 'znak specjalny',        ok: /[!@#$%^&*]/.test(h) },
+    { krotki: 'bez popularnych wzorców',
       ok: h.length > 0 && !POPULARNE_WZORCE.some(w => h.toLowerCase().includes(w)) },
-    { t: 'Maksymalnie 2 identyczne znaki pod rząd',      ok: h.length > 0 && !/(.)\1{2,}/.test(h) },
+    { krotki: 'maks. 2 te same znaki pod rząd', ok: h.length > 0 && !/(.)\1{2,}/.test(h) },
   ]
 }
 
-/** Logo Google — jedyne miejsce ze stałymi barwami, bo to cudzy znak firmowy. */
 function GoogleMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden>
@@ -64,7 +59,6 @@ function GoogleMark({ className }: { className?: string }) {
   )
 }
 
-/** Pole tekstowe z ikoną wiodącą i opcjonalnym slotem po prawej. */
 function Pole({
   icon: Icon, typ, placeholder, wartosc, onChange, prawy,
 }: {
@@ -76,701 +70,502 @@ function Pole({
   prawy?: React.ReactNode
 }) {
   return (
-    <div className="group relative flex items-center rounded-2xl bg-foreground/[0.04] ring-1 ring-inset ring-foreground/[0.07] transition-all duration-200 focus-within:bg-foreground/[0.06] focus-within:ring-primary/45">
-      <Icon className="pointer-events-none absolute left-4 h-[17px] w-[17px] text-foreground/30 transition-colors group-focus-within:text-primary" />
+    <div className="group relative flex items-center rounded-xl bg-foreground/[0.035] ring-1 ring-inset ring-foreground/[0.08] transition-all duration-200 focus-within:bg-foreground/[0.055] focus-within:ring-primary/45">
+      <Icon className="pointer-events-none absolute left-3.5 h-4 w-4 text-foreground/30 transition-colors group-focus-within:text-primary" />
       <input
         type={typ}
         placeholder={placeholder}
         value={wartosc}
         onChange={e => onChange(e.target.value)}
         className={cn(
-          'h-[52px] w-full bg-transparent pl-12 font-sans text-[14.5px] text-foreground outline-none',
-          'placeholder:text-foreground/30',
-          prawy ? 'pr-12' : 'pr-4',
+          'h-11 w-full bg-transparent pl-10 font-sans text-[14px] text-foreground outline-none placeholder:text-foreground/30',
+          prawy ? 'pr-10' : 'pr-3.5',
         )}
       />
-      {prawy && <div className="absolute right-3 flex items-center">{prawy}</div>}
+      {prawy && <div className="absolute right-2.5 flex items-center">{prawy}</div>}
     </div>
   )
 }
 
-/** Wiersz zgody: interaktywny kafelek z oznaczeniem tylko dla wymaganych */
 function Zgoda({
-  zaznaczona,
-  onZmien,
-  tytul,
-  status,
-  opis,
+  zaznaczona, onZmien, tekst, wymagana,
 }: {
   zaznaczona: boolean
   onZmien: () => void
-  tytul: React.ReactNode
-  status?: 'wymagana' | 'opcjonalna'
-  opis: React.ReactNode
+  tekst: React.ReactNode
+  wymagana?: boolean
 }) {
-  const jestWymagana = status === 'wymagana'
-
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={zaznaczona}
       onClick={onZmien}
-      className={cn(
-        'group flex w-full items-start gap-3 rounded-xl p-2.5 text-left transition-all duration-150 cursor-pointer select-none',
-        'border',
-        zaznaczona
-          ? 'border-primary/30 bg-primary/[0.04]'
-          : 'border-foreground/[0.07] bg-foreground/[0.015] hover:border-foreground/[0.16] hover:bg-foreground/[0.03]',
-      )}
+      className="group flex w-full items-center gap-2.5 py-0.5 text-left transition-colors cursor-pointer select-none"
     >
-      <span
-        className={cn(
-          'mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] transition-all duration-200',
-          zaznaczona
-            ? 'bg-primary text-primary-foreground shadow-[0_0_12px_-2px_hsl(var(--primary)/0.8)]'
-            : 'bg-foreground/[0.06] ring-1 ring-inset ring-foreground/15 group-hover:ring-foreground/30',
-        )}
-      >
-        {zaznaczona && <Check className="h-3 w-3" strokeWidth={3.5} />}
+      <span className={cn(
+        'flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-[5px] transition-all duration-200',
+        zaznaczona
+          ? 'bg-primary text-primary-foreground'
+          : 'bg-foreground/[0.06] ring-1 ring-inset ring-foreground/20 group-hover:ring-foreground/40',
+      )}>
+        {zaznaczona && <Check className="h-2.5 w-2.5" strokeWidth={3.5} />}
       </span>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-sans text-[13px] font-semibold text-foreground tracking-tight">
-            {tytul}
-          </span>
-          {jestWymagana && (
-            <span className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider bg-foreground/[0.06] text-foreground/50 border border-foreground/[0.09]">
-              Wymagane
-            </span>
-          )}
-        </div>
-        <div className="mt-1 font-sans text-[12px] leading-relaxed text-foreground/50">
-          {opis}
-        </div>
-      </div>
+      <span className="flex-1 font-sans text-[12.5px] leading-snug text-foreground/55">{tekst}</span>
+      {wymagana && (
+        <span className="shrink-0 font-sans text-[10.5px] text-foreground/30">wymagane</span>
+      )}
     </button>
   )
 }
 
-export function LogowaniePage() {
-  const [tryb, setTryb] = useState<Tryb>('logowanie')
-  const [animuje, setAnimuje] = useState(false)
+/* Przełącznik trybu — 1:1 ze stylem przełącznika okresu z Cennika:
+   obramowanie i tło karty na kontenerze, wskaźnik z poświatą primary
+   i świetlną krawędzią u góry, aktywna etykieta biała (nie niebieska).
+   Oba segmenty są równej szerokości, więc wskaźnik przesuwa się o własną
+   szerokość — Cennik mierzy przyciski, bo tam etykiety mają różną długość. */
+function PrzelacznikTrybu({ tryb, onZmien }: { tryb: Tryb; onZmien: (t: Tryb) => void }) {
+  return (
+    <div className="relative flex h-10 w-full items-center rounded-xl border border-foreground/[0.12] bg-[hsl(var(--card)/0.7)] p-1 shadow-inner backdrop-blur-md">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-lg border border-primary/45 bg-[hsl(var(--primary)/0.14)] shadow-[0_0_16px_-2px_hsl(var(--primary)/0.25)] backdrop-blur-sm"
+        style={{
+          transform: tryb === 'logowanie' ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 260ms cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.6)] to-transparent" />
+      </span>
+
+      {(['logowanie', 'rejestracja'] as Tryb[]).map(t => (
+        <button
+          key={t}
+          type="button"
+          onClick={() => onZmien(t)}
+          aria-pressed={tryb === t}
+          className={cn(
+            'relative z-10 flex h-full flex-1 basis-0 items-center justify-center rounded-lg font-heading text-[13px] transition-colors duration-200 cursor-pointer select-none',
+            tryb === t
+              ? 'text-foreground font-semibold'
+              : 'text-muted-foreground hover:text-foreground font-normal',
+          )}
+        >
+          {t === 'logowanie' ? 'Logowanie' : 'Rejestracja'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════
+   GŁÓWNY KOMPONENT
+   ══════════════════════════════════════════════════════ */
+export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Tryb }) {
+  const [tryb, setTryb] = useState<Tryb>(initialTryb)
   const [email, setEmail] = useState('')
   const [haslo, setHaslo] = useState('')
   const [pokazHaslo, setPokazHaslo] = useState(false)
   const [zapamietaj, setZapamietaj] = useState(false)
 
-  // Pola wyłącznie rejestracyjne
   const [imie, setImie] = useState('')
   const [nazwisko, setNazwisko] = useState('')
   const [haslo2, setHaslo2] = useState('')
   const [pokazHaslo2, setPokazHaslo2] = useState(false)
+  /* Zakres zaznaczenia w polu potwierdzenia — natywne zaznaczenie jest ukryte,
+     więc rysujemy je sami na kropkach. */
   const [zakres, setZakres] = useState({ od: 0, do: 0 })
-  const [skupione, setSkupione] = useState(false)
-  const [zgody, setZgody] = useState({ regulamin: false, marketing: false, ciasteczka: false })
+  const poleHaslo2 = useRef<HTMLInputElement>(null)
+  const odczytajZakres = (el: HTMLInputElement) =>
+    setZakres({ od: el.selectionStart ?? 0, do: el.selectionEnd ?? 0 })
 
-  // Ekrany po rejestracji (Weryfikacja kodem OTP + Onboarding)
+  /* `selectionchange` na dokumencie to jedyne zdarzenie lecące w trakcie
+     przeciągania myszą — onMouseUp/onSelect odpalają się dopiero po puszczeniu,
+     więc podświetlenie doganiało kursor z opóźnieniem. */
+  useEffect(() => {
+    const wTrakcieZaznaczania = () => {
+      const el = poleHaslo2.current
+      if (!el || document.activeElement !== el) return
+      odczytajZakres(el)
+    }
+    document.addEventListener('selectionchange', wTrakcieZaznaczania)
+    return () => document.removeEventListener('selectionchange', wTrakcieZaznaczania)
+  }, [])
+  const [zgody, setZgody] = useState({ regulamin: false, prywatnosc: false, marketing: false })
+
   type WidokEkranu = 'formularz' | 'onboarding'
   const [aktywnyWidok, setAktywnyWidok] = useState<WidokEkranu>('formularz')
   const [pokazModalWeryfikacji, setPokazModalWeryfikacji] = useState(false)
   const [onboardingKrok, setOnboardingKrok] = useState<1 | 2 | 3>(1)
+  const [pokazBladWalidacji, setPokazBladWalidacji] = useState(false)
 
   const logowanie = tryb === 'logowanie'
   const wymagania = wymaganiaHasla(haslo)
   const spelnioneWymogi = wymagania.filter(w => w.ok).length
-  const hasloPoprawne = wymagania.every(w => w.ok)
+  const braki = wymagania.filter(w => !w.ok)
+  const hasloPoprawne = braki.length === 0
   const zgodneHasla = haslo2.length > 0 && haslo2 === haslo
   const emailPoprawny = email.trim().length > 0 && email.includes('@')
   const daneOsobowePoprawne = imie.trim().length > 0 && nazwisko.trim().length > 0
 
   const wszystkieWarunkiSpelnione =
-    emailPoprawny &&
-    daneOsobowePoprawne &&
-    hasloPoprawne &&
-    zgodneHasla &&
-    zgody.regulamin
+    emailPoprawny && daneOsobowePoprawne && hasloPoprawne && zgodneHasla &&
+    zgody.regulamin && zgody.prywatnosc
 
-  const [pokazBladWalidacji, setPokazBladWalidacji] = useState(false)
+  useEffect(() => { setTryb(initialTryb) }, [initialTryb])
+
+  const zmienTryb = (t: Tryb) => { setTryb(t); setPokazBladWalidacji(false) }
+
+  /* Rejestracja dokłada pięć pól, więc kolumna zmienia wysokość skokowo,
+     a że jest wyśrodkowana — całość podskakuje. Wysokości nie da się animować
+     z „auto”: mierzymy docelową, cofamy do poprzedniej i puszczamy przejście.
+     overflow-hidden włączamy tylko na czas animacji, bo na stałe przycinałby
+     poświatę przycisku CTA. */
+  const kolumnaRef = useRef<HTMLDivElement>(null)
+  const poprzedniaWys = useRef<number | null>(null)
+  const [animujeWysokosc, setAnimujeWysokosc] = useState(false)
+
+  useLayoutEffect(() => {
+    const el = kolumnaRef.current
+    if (!el) return
+    const start = poprzedniaWys.current
+    el.style.height = ''
+    const cel = el.offsetHeight
+    poprzedniaWys.current = cel
+    if (start == null || start === cel) return
+    setAnimujeWysokosc(true)
+    el.style.height = `${start}px`
+    void el.offsetHeight // wymuś reflow, inaczej przeglądarka zobaczy tylko stan końcowy
+    el.style.height = `${cel}px`
+  }, [tryb])
 
   const obsluzUtworzKonto = () => {
-    if (!wszystkieWarunkiSpelnione) {
-      setPokazBladWalidacji(true)
-      return
-    }
+    if (!wszystkieWarunkiSpelnione) { setPokazBladWalidacji(true); return }
     setPokazBladWalidacji(false)
     setPokazModalWeryfikacji(true)
   }
 
-  const zmienTryb = (nowy: Tryb) => {
-    if (nowy === tryb) return
-    setTryb(nowy)
-    setAnimuje(true)
-  }
-
-  useEffect(() => {
-    if (!animuje) return
-    const t = setTimeout(() => setAnimuje(false), 100)
-    return () => clearTimeout(t)
-  }, [animuje, tryb])
-
-  /** Przepisuje zaznaczenie z pola do stanu — stąd rysujemy karetkę i podświetlenie. */
-  const czytajZakres = (el: HTMLInputElement) =>
-    setZakres({ od: el.selectionStart ?? 0, do: el.selectionEnd ?? 0 })
-
-  return (
-    <div className="relative flex min-h-[80vh] w-full flex-col items-center justify-center px-4 py-16 font-landing text-foreground sm:px-6 sm:py-20">
-      <AnimStyles />
-
-      {/* Siatka techniczna — ten sam skok 60px co siatka tła aplikacji */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            'linear-gradient(hsl(var(--foreground)/0.055) 1px, transparent 1px),' +
-            'linear-gradient(90deg, hsl(var(--foreground)/0.055) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-          maskImage: 'radial-gradient(ellipse 75% 65% at 50% 45%, #000 15%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 75% 65% at 50% 45%, #000 15%, transparent 80%)',
-        }}
-      />
-
-      {/* Poziom światła za kartą */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[26%] h-[420px] w-[900px] max-w-[100vw] -translate-x-1/2 blur-3xl"
-        style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, hsl(var(--primary)/0.18) 0%, transparent 72%)' }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 bottom-[6%] h-[280px] w-[520px] max-w-[92vw] -translate-x-1/2 blur-3xl"
-        style={{ background: 'radial-gradient(ellipse at center, hsl(var(--primary)/0.08) 0%, transparent 70%)' }}
-      />
-
-      {/* Widok Onboardingu */}
-      {aktywnyWidok === 'onboarding' ? (
+  if (aktywnyWidok === 'onboarding') {
+    return (
+      <div className="relative flex min-h-full w-full items-center justify-center px-5 py-5 font-landing text-foreground">
+        <AnimStyles />
+        {/* Jedna szeroka poświata pod całą treścią — bez plam po rogach ani
+            halo na poszczególnych kafelkach, żeby czytała się jako jedno
+            źródło światła, a nie kilka osobnych. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 100% 80% at 50% 45%, hsl(var(--primary)/0.05) 0%, hsl(var(--primary)/0.015) 45%, transparent 80%)',
+          }}
+        />
         <OnboardingFlow
           key={onboardingKrok}
           poczatkowyKrok={onboardingKrok}
           onWrocDoFormularza={() => setAktywnyWidok('formularz')}
           onZakoncz={() => setAktywnyWidok('formularz')}
         />
-      ) : (
-        /* Kontener wejścia na scroll (Formularz) */
-        <FadeIn className="relative z-10 flex w-full flex-col items-center">
-        {/* Główna karta — dynamicznie rozsuwa się horyzontalnie z 452px do 880px bez teleportacji */}
-        <div
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative flex min-h-full w-full items-center justify-center px-5 py-5 font-landing text-foreground">
+      <AnimStyles />
+
+      {/* Jedna szeroka poświata pod treścią — bez siatki i bez dodatkowych
+          plam po rogach, żeby było jedno źródło światła. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 100% 80% at 50% 45%, hsl(var(--primary)/0.05) 0%, hsl(var(--primary)/0.015) 45%, transparent 80%)',
+        }}
+      />
+
+      <StyleTrybu />
+
+      <div
+        ref={kolumnaRef}
+        onTransitionEnd={e => {
+          if (e.propertyName === 'height' && e.target === e.currentTarget) {
+            e.currentTarget.style.height = ''
+            setAnimujeWysokosc(false)
+          }
+        }}
+        className={cn(
+          'relative z-10 w-full max-w-[400px] transition-[height] duration-[260ms] ease-[cubic-bezier(0.4,0,0.2,1)]',
+          animujeWysokosc && 'overflow-hidden',
+        )}
+      >
+
+        {/* Przełącznik trybu — jeden ekran obsługuje logowanie i rejestrację */}
+        <PrzelacznikTrybu tryb={tryb} onZmien={zmienTryb} />
+
+        {/* Nagłówek */}
+        <div className="mt-6 text-center">
+          <h1 className="font-heading text-[24px] font-bold leading-tight tracking-[-0.8px] text-foreground">
+            {logowanie ? 'Zaloguj się' : 'Utwórz konto'}
+          </h1>
+          {logowanie && (
+            <p className="mt-1.5 font-sans text-[13px] text-foreground/40">
+              Wróć do swoich projektów w NextByte.
+            </p>
+          )}
+        </div>
+
+        {/* Google */}
+        <button
+          type="button"
           className={cn(
-            'relative w-full transition-[max-width] duration-[100ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-            logowanie ? 'max-w-[452px]' : 'max-w-[880px]',
+            'mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl',
+            'border border-foreground/[0.12] bg-foreground/[0.03] font-sans text-[14px] font-semibold text-foreground/85',
+            'transition-all duration-200 hover:border-foreground/25 hover:bg-foreground/[0.06] hover:text-foreground active:scale-[0.99] cursor-pointer',
           )}
         >
-          {/* Gradientowa obwódka */}
-          <div
-            className="relative rounded-[26px] p-px shadow-[0_30px_80px_-30px_hsl(var(--primary)/0.45)]"
-            style={{
-              background:
-                'linear-gradient(180deg, hsl(var(--primary)/0.5), hsl(var(--foreground)/0.08) 38%, hsl(var(--foreground)/0.03))',
-            }}
-          >
-            <div
-              className="relative overflow-hidden rounded-[25px] px-7 py-8 backdrop-blur-xl sm:px-9 sm:py-10"
-              style={{
-                background:
-                  'radial-gradient(130% 70% at 50% -8%, hsl(var(--primary)/0.14), transparent 60%),' +
-                  'linear-gradient(180deg, hsl(var(--card)/0.96), hsl(var(--card)/0.9))',
-              }}
-            >
-              {/* Nagłówek ze zgrabnym pionowym przejściem */}
-              <div className="relative h-8 sm:h-9 overflow-hidden">
-                <h1
-                  className={cn(
-                    'font-heading text-[24px] sm:text-[27px] font-bold leading-[1.14] tracking-[-1px] text-foreground transition-all duration-[80ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-                    logowanie
-                      ? 'translate-y-0 opacity-100'
-                      : '-translate-y-full opacity-0 pointer-events-none absolute inset-x-0 top-0',
-                  )}
-                >
-                  Witaj ponownie
-                </h1>
-                <h1
-                  className={cn(
-                    'font-heading text-[24px] sm:text-[27px] font-bold leading-[1.14] tracking-[-1px] text-foreground transition-all duration-[80ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-                    !logowanie
-                      ? 'translate-y-0 opacity-100'
-                      : 'translate-y-full opacity-0 pointer-events-none absolute inset-x-0 top-0',
-                  )}
-                >
-                  Dołącz do ekosystemu NextByte
-                </h1>
-              </div>
+          <GoogleMark className="h-4 w-4" />
+          Kontynuuj z Google
+        </button>
 
-              {/* Przełącznik trybu — dynamicznie ślizgająca się sprężysta pigułka */}
-              <div
-                className={cn(
-                  'relative mt-6 grid grid-cols-2 gap-1 rounded-xl border border-foreground/[0.12] bg-[hsl(var(--card)/0.7)] p-1 shadow-inner backdrop-blur-md transition-all duration-[80ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-                  logowanie ? 'max-w-[380px]' : 'max-w-[340px]',
-                )}
-              >
-                {/* Dynamiczna pigułka stanu aktywnego */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute top-1 bottom-1 rounded-lg border border-primary/45 bg-[hsl(var(--primary)/0.14)] shadow-[0_0_16px_-2px_hsl(var(--primary)/0.25)] backdrop-blur-sm transition-all duration-[70ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  style={{
-                    left: tryb === 'logowanie' ? '4px' : 'calc(50% + 2px)',
-                    width: 'calc(50% - 6px)',
-                  }}
-                >
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.6)] to-transparent"
-                  />
-                </div>
+        {/* Separator */}
+        <div className="my-3 flex items-center gap-3">
+          <span className="h-px flex-1 bg-foreground/[0.08]" />
+          <span className="font-sans text-[11px] text-foreground/25">lub e-mailem</span>
+          <span className="h-px flex-1 bg-foreground/[0.08]" />
+        </div>
 
-              {(['logowanie', 'rejestracja'] as const).map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => zmienTryb(t)}
-                  aria-pressed={tryb === t}
-                  className={cn(
-                    'relative z-10 overflow-hidden rounded-lg py-2.5 font-heading text-[13.5px] capitalize transition-colors duration-200 cursor-pointer text-center',
-                    tryb === t
-                      ? 'font-semibold text-foreground'
-                      : 'font-normal text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
+        {/* Pola */}
+        <div className="space-y-2">
+          {!logowanie && (
+            <div className="nb-pole grid grid-cols-2 gap-2.5">
+              <Pole icon={User} typ="text" placeholder="Imię" wartosc={imie} onChange={setImie} />
+              <Pole icon={User} typ="text" placeholder="Nazwisko" wartosc={nazwisko} onChange={setNazwisko} />
             </div>
+          )}
 
-            {/* Układ kolumn: na desktopie/tablecie rozsuwa się horyzontalnie, na mobile pionowo */}
-            <div className="mt-5 flex flex-col items-start md:flex-row">
-              {/* ── LEWA KOLUMNA: podstawowe pola + rozwijane pola rejestracji + akcje logowania ── */}
-              <div className="w-full shrink-0 md:w-[380px]">
-                {/* Stałe pola: Email i Hasło */}
-                <div className="space-y-3">
-                  <Pole
-                    icon={Mail}
-                    typ="email"
-                    placeholder="twoj@email.com"
-                    wartosc={email}
-                    onChange={setEmail}
-                  />
-                  <Pole
-                    icon={Lock}
-                    typ={pokazHaslo ? 'text' : 'password'}
-                    placeholder={logowanie ? 'Twoje hasło' : 'Ustaw hasło'}
-                    wartosc={haslo}
-                    onChange={setHaslo}
-                    prawy={
-                      <button
-                        type="button"
-                        onClick={() => setPokazHaslo(v => !v)}
-                        aria-label={pokazHaslo ? 'Ukryj hasło' : 'Pokaż hasło'}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/35 transition-colors hover:text-foreground/80 cursor-pointer"
-                      >
-                        {pokazHaslo ? <EyeOff className="h-[17px] w-[17px]" /> : <Eye className="h-[17px] w-[17px]" />}
-                      </button>
-                    }
-                  />
-                </div>
+          <Pole icon={Mail} typ="email" placeholder="twoj@email.com" wartosc={email} onChange={setEmail} />
 
-                {/* Rozsuwane pola wyłącznie rejestracyjne (Imię, Nazwisko, Potwierdź hasło, Wymagania) */}
-                <div
-                  className="grid transition-[grid-template-rows,opacity] duration-[90ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  style={{
-                    gridTemplateRows: !logowanie ? '1fr' : '0fr',
-                    opacity: !logowanie ? 1 : 0,
-                  }}
-                  inert={logowanie ? true : undefined}
-                >
-                  <div className={cn("min-h-0 pt-3", !logowanie && !animuje ? "overflow-visible" : "overflow-hidden")}>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Pole icon={User} typ="text" placeholder="Imię" wartosc={imie} onChange={setImie} />
-                      <Pole icon={User} typ="text" placeholder="Nazwisko" wartosc={nazwisko} onChange={setNazwisko} />
-                    </div>
-
-                    {/* Potwierdzenie hasła z kropkami zgodności */}
-                    <div className="mt-3">
-                      <div
-                        className={cn(
-                          'group relative flex items-center rounded-2xl bg-foreground/[0.04] ring-1 ring-inset transition-all duration-200',
-                          haslo2.length === 0
-                            ? 'ring-foreground/[0.07] focus-within:ring-primary/45'
-                            : zgodneHasla
-                              ? OBRYS_OK
-                              : 'ring-destructive/60',
-                        )}
-                      >
-                        <Lock className="pointer-events-none absolute left-4 h-[17px] w-[17px] text-foreground/30 transition-colors group-focus-within:text-primary" />
-                        <input
-                          type={pokazHaslo2 ? 'text' : 'password'}
-                          placeholder="Potwierdź hasło"
-                          value={haslo2}
-                          onChange={e => { setHaslo2(e.target.value); czytajZakres(e.target) }}
-                          onSelect={e => czytajZakres(e.target as HTMLInputElement)}
-                          onKeyUp={e => czytajZakres(e.target as HTMLInputElement)}
-                          onClick={e => czytajZakres(e.target as HTMLInputElement)}
-                          onMouseUp={e => czytajZakres(e.target as HTMLInputElement)}
-                          onFocus={e => { setSkupione(true); czytajZakres(e.target) }}
-                          onBlur={() => setSkupione(false)}
-                          className={cn(
-                            'h-[52px] w-full bg-transparent pl-12 pr-12 font-sans text-[14.5px] outline-none placeholder:text-foreground/30',
-                            pokazHaslo2 || haslo2.length === 0 ? 'caret-primary' : 'caret-transparent',
-                            pokazHaslo2 || haslo2.length === 0
-                              ? 'text-foreground'
-                              : 'text-transparent selection:bg-transparent selection:text-transparent',
-                          )}
-                        />
-
-                        {!pokazHaslo2 && haslo2.length > 0 && (
-                          <div className="pointer-events-none absolute left-12 flex items-center gap-1.5">
-                            {haslo2.split('').map((z, i) => (
-                              <span
-                                key={i}
-                                className={cn(
-                                  'h-2 w-2 rounded-full transition-transform duration-150',
-                                  z === haslo[i] ? TLO_OK : 'bg-destructive',
-                                )}
-                              />
-                            ))}
-                            {skupione && zakres.do > zakres.od && (
-                              <span
-                                aria-hidden
-                                className="absolute top-1/2 h-[22px] -translate-y-1/2 rounded-[3px] bg-primary/25 transition-all duration-150 ease-out"
-                                style={{
-                                  left: zakres.od * KROPKA_SKOK - 3,
-                                  width: (zakres.do - zakres.od) * KROPKA_SKOK,
-                                }}
-                              />
-                            )}
-                            {skupione && zakres.do === zakres.od && (
-                              <span
-                                aria-hidden
-                                className="nb-blink absolute top-1/2 h-[18px] w-px -translate-y-1/2 bg-primary transition-[left] duration-150 ease-out"
-                                style={{ left: zakres.od * KROPKA_SKOK - 3 }}
-                              />
-                            )}
-                          </div>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => setPokazHaslo2(v => !v)}
-                          aria-label={pokazHaslo2 ? 'Ukryj hasło' : 'Pokaż hasło'}
-                          className="absolute right-3 flex h-8 w-8 items-center justify-center rounded-lg text-foreground/35 transition-colors hover:text-foreground/80 cursor-pointer"
-                        >
-                          {pokazHaslo2 ? <EyeOff className="h-[17px] w-[17px]" /> : <Eye className="h-[17px] w-[17px]" />}
-                        </button>
-                      </div>
-
-                      {/* Płynnie rozsuwany błąd niezgodności haseł — idealnie symetryczny w obie strony */}
-                      <div
-                        className="grid transition-[grid-template-rows,opacity] duration-[70ms] ease-[cubic-bezier(0.35,0,0.65,1)]"
-                        style={{
-                          gridTemplateRows: haslo2.length > 0 && !zgodneHasla ? '1fr' : '0fr',
-                          opacity: haslo2.length > 0 && !zgodneHasla ? 1 : 0,
-                        }}
-                      >
-                        <div className="min-h-0 overflow-hidden">
-                          <p className="pt-2 flex items-center gap-1.5 font-sans text-[12.5px] text-destructive">
-                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                            Hasła jeszcze się nie zgadzają
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Zgody rejestracyjne (pod powtórz hasło) */}
-                    <div className="mt-4 space-y-2.5">
-                      <Zgoda
-                        zaznaczona={zgody.regulamin}
-                        onZmien={() => setZgody(z => ({ ...z, regulamin: !z.regulamin }))}
-                        tytul="Regulamin i prywatność"
-                        status="wymagana"
-                        opis={
-                          <>
-                            Akceptuję{' '}
-                            <span
-                              onClick={e => e.stopPropagation()}
-                              className="text-primary underline underline-offset-2 hover:text-primary/80 cursor-pointer font-medium"
-                            >
-                              Regulamin
-                            </span>{' '}
-                            oraz{' '}
-                            <span
-                              onClick={e => e.stopPropagation()}
-                              className="text-primary underline underline-offset-2 hover:text-primary/80 cursor-pointer font-medium"
-                            >
-                              Politykę prywatności
-                            </span>
-                            .
-                          </>
-                        }
-                      />
-
-                      <Zgoda
-                        zaznaczona={zgody.marketing}
-                        onZmien={() => setZgody(z => ({ ...z, marketing: !z.marketing }))}
-                        tytul="Komunikacja i nowości"
-                        status="opcjonalna"
-                        opis="Informacje o aktualizacjach modeli i poradach. Zgodę cofniesz w każdej chwili."
-                      />
-
-                      <Zgoda
-                        zaznaczona={zgody.ciasteczka}
-                        onZmien={() => setZgody(z => ({ ...z, ciasteczka: !z.ciasteczka }))}
-                        tytul="Ciasteczka analityczne"
-                        status="opcjonalna"
-                        opis="Optymalizacja serwisu i personalizacja. Bez nich platforma działa tak samo."
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Rozsuwana / zsuwana sekcja akcji wyłącznie dla Logowania (w lewej kolumnie) */}
-                <div
-                  className="grid transition-[grid-template-rows,opacity] duration-[90ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  style={{
-                    gridTemplateRows: logowanie ? '1fr' : '0fr',
-                    opacity: logowanie ? 1 : 0,
-                  }}
-                  inert={!logowanie ? true : undefined}
-                >
-                  <div className={cn("min-h-0 px-2 -mx-2 py-2 -my-2", logowanie && !animuje ? "overflow-visible" : "overflow-hidden")}>
-                    {/* Zapamiętaj + reset hasła */}
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        role="checkbox"
-                        aria-checked={zapamietaj}
-                        onClick={() => setZapamietaj(v => !v)}
-                        className="group flex items-center gap-2.5 font-sans text-[13px] text-foreground/55 transition-colors hover:text-foreground/85 cursor-pointer"
-                      >
-                        <span
-                          className={cn(
-                            'flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[6px] transition-all duration-200',
-                            zapamietaj
-                              ? 'bg-primary text-primary-foreground shadow-[0_0_12px_-2px_hsl(var(--primary)/0.8)]'
-                              : 'bg-foreground/[0.06] ring-1 ring-inset ring-foreground/15 group-hover:ring-foreground/30',
-                          )}
-                        >
-                          {zapamietaj && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-                        </span>
-                        Zapamiętaj na 30 dni
-                      </button>
-
-                      <button
-                        type="button"
-                        className="font-sans text-[13px] text-foreground/50 transition-colors hover:text-primary cursor-pointer"
-                      >
-                        Nie pamiętasz hasła?
-                      </button>
-                    </div>
-
-                    {/* CTA Logowania */}
-                    <div className="relative z-10 mt-6">
-                      <GlowButton size="lg" className="h-[52px] w-full justify-center">
-                        Zaloguj się
-                      </GlowButton>
-                    </div>
-
-                    {/* Separator */}
-                    <div className="my-5 flex items-center gap-4">
-                      <span className="h-px flex-1 bg-foreground/[0.07]" />
-                      <span className="font-sans text-[11.5px] text-foreground/30">lub</span>
-                      <span className="h-px flex-1 bg-foreground/[0.07]" />
-                    </div>
-
-                    {/* Google button */}
-                    <button
-                      type="button"
-                      className={cn(
-                        'group relative flex h-[52px] w-full items-center justify-center gap-3 overflow-hidden rounded-xl',
-                        'border border-foreground/[0.14] bg-card/75 font-sans text-[14.5px] font-semibold text-foreground/90 backdrop-blur-xl',
-                        'shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]',
-                        'transition-all duration-200 ease-out hover:border-foreground/[0.28] hover:bg-card hover:text-foreground hover:scale-[1.015] active:scale-[0.98] cursor-pointer',
-                      )}
-                    >
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent transition-all duration-200 group-hover:via-foreground/30"
-                      />
-                      <GoogleMark className="h-[18px] w-[18px]" />
-                      Kontynuuj z Google
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── PRAWA KOLUMNA (REJESTRACJA): Płynnie rozsuwana na desktopie i mobile ── */}
-              <div
-                className={cn(
-                  'transition-all duration-[100ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-                  logowanie
-                    ? 'overflow-hidden md:w-0 md:pl-0 md:opacity-0 md:pointer-events-none md:translate-x-6 max-md:grid max-md:grid-rows-[0fr] max-md:opacity-0 max-md:pointer-events-none'
-                    : cn(
-                        'md:w-[412px] md:pl-8 md:opacity-100 md:translate-x-0 md:pointer-events-auto max-md:grid max-md:grid-rows-[1fr] max-md:opacity-100 max-md:pt-5',
-                        !animuje ? 'overflow-visible' : 'overflow-hidden',
-                      ),
-                )}
-                inert={logowanie ? true : undefined}
+          <Pole
+            icon={Lock}
+            typ={pokazHaslo ? 'text' : 'password'}
+            placeholder={logowanie ? 'Twoje hasło' : 'Ustaw hasło'}
+            wartosc={haslo}
+            onChange={setHaslo}
+            prawy={
+              <button
+                type="button"
+                onClick={() => setPokazHaslo(v => !v)}
+                aria-label={pokazHaslo ? 'Ukryj hasło' : 'Pokaż hasło'}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/30 transition-colors hover:text-foreground/70 cursor-pointer"
               >
-                <div className={cn("min-h-0 w-full md:w-[380px] px-2 -mx-2 py-2 -my-2 flex flex-col", !logowanie && !animuje ? "overflow-visible" : "overflow-hidden")}>
-                  {/* Sekcja wymagań hasła i bezpieczeństwa — wariant ghost (bez ramki i tła kafelka) */}
-                  <div className="px-1 py-0.5">
-                    <div className="flex items-center justify-between pb-3 border-b border-foreground/[0.08]">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck className={cn("h-4 w-4 shrink-0 transition-colors duration-200", spelnioneWymogi === 7 ? "text-emerald-500" : "text-primary")} />
-                        <span className="font-sans text-[13.5px] font-semibold text-foreground tracking-tight">Wymagania hasła</span>
-                      </div>
-                      <span className={cn(
-                        "rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold transition-colors duration-200",
-                        spelnioneWymogi === 7
-                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                          : "bg-foreground/[0.06] text-foreground/50 border border-foreground/[0.08]"
-                      )}>
-                        {spelnioneWymogi} / 7
-                      </span>
-                    </div>
+                {pokazHaslo ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            }
+          />
 
-                    {/* Dynamiczny pasek postępu siły hasła */}
-                    <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.07]">
-                      <div
-                        className={cn(
-                          "h-full transition-all duration-300 ease-out",
-                          spelnioneWymogi === 7
-                            ? "bg-emerald-500 shadow-[0_0_10px_hsl(142_70%_45%/0.7)]"
-                            : spelnioneWymogi >= 4
-                            ? "bg-sky-400 shadow-[0_0_8px_hsl(199_89%_48%/0.5)]"
-                            : "bg-primary/80",
-                        )}
-                        style={{ width: `${Math.max((spelnioneWymogi / 7) * 100, haslo.length > 0 ? 8 : 0)}%` }}
-                      />
-                    </div>
-
-                    {/* Lista kryteriów */}
-                    <ul className="mt-3.5 space-y-2">
-                      {wymagania.map(w => (
-                        <li
-                          key={w.t}
+          {!logowanie && (
+            <div className="nb-pole">
+              <div className={cn(
+                'group relative flex items-center rounded-xl bg-foreground/[0.035] ring-1 ring-inset transition-all duration-200',
+                haslo2.length === 0
+                  ? 'ring-foreground/[0.08] focus-within:ring-primary/45'
+                  : zgodneHasla ? OBRYS_OK : 'ring-destructive/60',
+              )}>
+                <Lock className="pointer-events-none absolute left-3.5 h-4 w-4 text-foreground/30 transition-colors group-focus-within:text-primary" />
+                <input
+                  ref={poleHaslo2}
+                  type={pokazHaslo2 ? 'text' : 'password'}
+                  placeholder="Potwierdź hasło"
+                  value={haslo2}
+                  onChange={e => { setHaslo2(e.target.value); odczytajZakres(e.target) }}
+                  onBlur={() => setZakres({ od: 0, do: 0 })}
+                  className={cn(
+                    'h-11 w-full bg-transparent pl-10 pr-10 font-sans text-[14px] outline-none placeholder:text-foreground/30',
+                    pokazHaslo2 || haslo2.length === 0
+                      ? 'text-foreground caret-primary'
+                      // Natywne zaznaczenie całkiem ukryte: przeglądarka rysuje
+                      // przy nim własny prostokąt i wymusza widoczność tekstu,
+                      // więc spod przezroczystego tekstu wychodziły natywne
+                      // kropki. Zaznaczenie rysujemy sami, na kropkach niżej.
+                      : 'text-transparent caret-transparent selection:bg-transparent selection:text-transparent',
+                  )}
+                />
+                {/* Kropki zgodności znak po znaku. Kontener musi mieć prawą
+                    krawędź i overflow-hidden — bez tego przy dłuższym haśle
+                    kropki wylewały się poza pole przez pół ekranu. shrink-0
+                    trzyma je okrągłe: mają być przycięte, nie ściśnięte.
+                    Każda kropka siedzi w komórce bez odstępu — dzięki temu
+                    podświetlenie zaznaczenia układa się w ciągły pasek. */}
+                {!pokazHaslo2 && haslo2.length > 0 && (
+                  <div className="pointer-events-none absolute inset-y-0 left-10 right-10 flex items-center overflow-hidden">
+                    {haslo2.split('').map((z, i) => {
+                      const wZaznaczeniu = i >= zakres.od && i < zakres.do
+                      return (
+                        <span
+                          key={i}
                           className={cn(
-                            'flex items-center gap-2.5 font-sans text-[12.5px] transition-colors duration-200',
-                            w.ok ? 'text-emerald-400 font-medium' : 'text-foreground/45',
+                            'flex h-5 w-2.5 shrink-0 items-center justify-center',
+                            wZaznaczeniu && 'bg-primary/25',
+                            wZaznaczeniu && i === zakres.od && 'rounded-l-[3px]',
+                            wZaznaczeniu && i === zakres.do - 1 && 'rounded-r-[3px]',
                           )}
                         >
                           <span
                             className={cn(
-                              'flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition-all duration-200',
-                              w.ok
-                                ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_8px_-1px_hsl(142_70%_45%/0.6)] ring-1 ring-emerald-500/40'
-                                : 'bg-foreground/[0.06] text-foreground/30',
+                              'h-1.5 w-1.5 rounded-full',
+                              z === haslo[i] ? 'bg-primary' : 'bg-destructive',
                             )}
-                          >
-                            {w.ok ? (
-                              <Check className="h-2.5 w-2.5 stroke-[3.5]" />
-                            ) : (
-                              <span className="h-1 w-1 rounded-full bg-current" />
-                            )}
-                          </span>
-                          <span className="leading-tight">{w.t}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* CTA Rejestracji */}
-                  <div className="relative z-10 mt-6">
-                    {pokazBladWalidacji && !wszystkieWarunkiSpelnione && (
-                      <div className="mb-3 flex items-center gap-2 rounded-xl bg-destructive/10 p-3 text-[12.5px] text-destructive border border-destructive/20 font-sans animate-in fade-in">
-                        <AlertCircle className="h-4 w-4 shrink-0" />
-                        <span>
-                          {!daneOsobowePoprawne
-                            ? 'Wpisz imię i nazwisko.'
-                            : !emailPoprawny
-                            ? 'Podaj poprawny adres e-mail.'
-                            : !hasloPoprawne
-                            ? 'Spełnij wszystkie wymagania dotyczące hasła.'
-                            : !zgodneHasla
-                            ? 'Hasła w obu polach muszą być identyczne.'
-                            : !zgody.regulamin
-                            ? 'Zaakceptuj Regulamin oraz Politykę prywatności.'
-                            : 'Uzupełnij wymagane pola.'}
+                          />
                         </span>
-                      </div>
-                    )}
-                    <GlowButton
-                      size="lg"
-                      className="h-[52px] w-full justify-center"
-                      onClick={obsluzUtworzKonto}
-                    >
-                      Utwórz konto
-                    </GlowButton>
+                      )
+                    })}
                   </div>
-
-                  {/* Separator */}
-                  <div className="my-3.5 flex items-center gap-4">
-                    <span className="h-px flex-1 bg-foreground/[0.07]" />
-                    <span className="font-sans text-[11.5px] text-foreground/30">lub</span>
-                    <span className="h-px flex-1 bg-foreground/[0.07]" />
-                  </div>
-
-                  {/* Google button */}
-                  <button
-                    type="button"
-                    className={cn(
-                      'group relative flex h-[52px] w-full items-center justify-center gap-3 overflow-hidden rounded-xl',
-                      'border border-foreground/[0.14] bg-card/75 font-sans text-[14.5px] font-semibold text-foreground/90 backdrop-blur-xl',
-                      'shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]',
-                      'transition-all duration-200 ease-out hover:border-foreground/[0.28] hover:bg-card hover:text-foreground hover:scale-[1.015] active:scale-[0.98] cursor-pointer',
-                    )}
-                  >
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent transition-all duration-200 group-hover:via-foreground/30"
-                    />
-                    <GoogleMark className="h-[18px] w-[18px]" />
-                    Kontynuuj z Google
-                  </button>
-                </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPokazHaslo2(v => !v)}
+                  className="absolute right-2.5 flex h-8 w-8 items-center justify-center rounded-lg text-foreground/30 hover:text-foreground/70 cursor-pointer"
+                >
+                  {pokazHaslo2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {/* Slot stałej wysokości — komunikat nie przesuwa układu */}
+              <div className="h-[18px] pt-1">
+                {haslo2.length > 0 && !zgodneHasla && (
+                  <p className="flex items-center gap-1.5 font-sans text-[11.5px] leading-none text-destructive">
+                    <AlertCircle className="h-3 w-3 shrink-0" /> Hasła się nie zgadzają
+                  </p>
+                )}
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Siła hasła — bez ramki, zawsze widoczna w rejestracji, żeby
+            pojawienie się po pierwszym znaku nie przesuwało układu */}
+        {!logowanie && (
+          <div className="nb-pole mt-1">
+            <div className="flex items-center gap-2">
+              <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-foreground/[0.09]">
+                <div
+                  className={cn('h-full rounded-full transition-all duration-300',
+                    hasloPoprawne ? 'bg-primary' : spelnioneWymogi >= 4 ? 'bg-primary/70' : 'bg-primary/45')}
+                  style={{ width: haslo.length === 0 ? '0%' : `${Math.max((spelnioneWymogi / 7) * 100, 6)}%` }}
+                />
+              </div>
+              <span className={cn('shrink-0 font-mono text-[10.5px]', hasloPoprawne ? 'text-primary' : 'text-foreground/35')}>
+                {spelnioneWymogi}/7
+              </span>
+            </div>
+            {/* Jedna linia o stałej wysokości zamiast listy siedmiu reguł.
+                Zmienia treść, nie pojawia się — więc nic nie przesuwa układu,
+                a przy niespełnionym haśle nazywa konkretne braki, żeby nie
+                zostawiać użytkownika z samym licznikiem typu 6/7. */}
+            <p className={cn(
+              'mt-2 truncate h-[16px] font-sans text-[11.5px] leading-[16px]',
+              hasloPoprawne ? 'text-primary/80' : 'text-foreground/35',
+            )}>
+              {haslo.length === 0
+                ? 'Min. 12 znaków, wielka i mała litera, cyfra oraz znak specjalny.'
+                : hasloPoprawne
+                  ? 'Hasło spełnia wszystkie wymagania.'
+                  : `Brakuje: ${braki.slice(0, 2).map(w => w.krotki).join(', ')}${braki.length > 2 ? ' i inne' : ''}.`}
+            </p>
           </div>
-        </div>
-        </div>
+        )}
 
-        {/* Pod kartą: zapewnienie o bezpieczeństwie, dokumenty, prawa autorskie */}
-        <p className="mt-6 text-center font-mono text-[9.5px] uppercase tracking-[0.2em] text-foreground/30">
-          Szyfrowanie AES-256 · Serwery w UE
-        </p>
-
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          {DOKUMENTY.map(t => (
+        {/* Zapamiętaj / reset */}
+        {logowanie && (
+          <div className="nb-pole mt-4 flex items-center justify-between">
             <button
-              key={t}
               type="button"
-              className="font-sans text-[12px] text-foreground/35 transition-colors duration-200 hover:text-foreground/70 cursor-pointer"
+              onClick={() => setZapamietaj(v => !v)}
+              className="group flex items-center gap-2 font-sans text-[12.5px] text-foreground/45 hover:text-foreground/75 cursor-pointer transition-colors"
             >
-              {t}
+              <span className={cn(
+                'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] transition-all',
+                zapamietaj ? 'bg-primary text-primary-foreground' : 'bg-foreground/[0.06] ring-1 ring-inset ring-foreground/20 group-hover:ring-foreground/40',
+              )}>
+                {zapamietaj && <Check className="h-2.5 w-2.5" strokeWidth={3.5} />}
+              </span>
+              Zapamiętaj na 30 dni
             </button>
-          ))}
+            <button type="button" className="font-sans text-[12.5px] text-foreground/40 hover:text-primary cursor-pointer transition-colors">
+              Nie pamiętasz hasła?
+            </button>
+          </div>
+        )}
+
+        {/* Zgody */}
+        {!logowanie && (
+          <div className="nb-pole mt-3">
+            <Zgoda
+              zaznaczona={zgody.regulamin}
+              onZmien={() => setZgody(z => ({ ...z, regulamin: !z.regulamin }))}
+              wymagana
+              tekst={<>Akceptuję <span className="text-foreground/80 underline underline-offset-2">Regulamin</span></>}
+            />
+            <Zgoda
+              zaznaczona={zgody.prywatnosc}
+              onZmien={() => setZgody(z => ({ ...z, prywatnosc: !z.prywatnosc }))}
+              wymagana
+              tekst={<>Akceptuję <span className="text-foreground/80 underline underline-offset-2">Politykę prywatności</span></>}
+            />
+            <Zgoda
+              zaznaczona={zgody.marketing}
+              onZmien={() => setZgody(z => ({ ...z, marketing: !z.marketing }))}
+              tekst="Chcę dostawać informacje o nowych funkcjach"
+            />
+          </div>
+        )}
+
+        {/* Błąd walidacji */}
+        {pokazBladWalidacji && !wszystkieWarunkiSpelnione && (
+          <div className="mt-4 flex items-center gap-2 font-sans text-[12.5px] text-destructive">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              {!daneOsobowePoprawne ? 'Wpisz imię i nazwisko.' :
+               !emailPoprawny ? 'Podaj poprawny adres e-mail.' :
+               !hasloPoprawne ? 'Hasło nie spełnia wymagań.' :
+               !zgodneHasla ? 'Hasła muszą być identyczne.' :
+               !zgody.regulamin ? 'Zaakceptuj Regulamin.' :
+               !zgody.prywatnosc ? 'Zaakceptuj Politykę prywatności.' : 'Uzupełnij wymagane pola.'}
+            </span>
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className="mt-3.5">
+          <GlowButton
+            size="lg"
+            className="h-11 w-full justify-center"
+            onClick={logowanie ? undefined : obsluzUtworzKonto}
+          >
+            {logowanie ? 'Zaloguj się' : 'Utwórz konto'}
+          </GlowButton>
         </div>
 
-        <p className="mt-5 text-center font-sans text-[11.5px] text-foreground/25">
-          © 2025 – 2026 NextByte
-        </p>
-      </FadeIn>
-      )}
+        {/* Linki prawne tylko przy logowaniu — w rejestracji Regulamin
+            i Polityka są już linkami w zgodach tuż nad przyciskiem. */}
+        {logowanie && (
+          <div className="nb-pole mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
+            {DOKUMENTY.map(t => (
+              <button key={t} type="button" className="font-sans text-[11px] text-foreground/25 hover:text-foreground/50 cursor-pointer transition-colors">
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Modal Weryfikacji Email z kodem OTP */}
+      {/* Modal weryfikacji email */}
       <WeryfikacjaEmailModal
         otwarty={pokazModalWeryfikacji}
         email={email}
         onZamknij={() => setPokazModalWeryfikacji(false)}
-        onZatwierdz={(kod) => {
+        onZatwierdz={() => {
           setPokazModalWeryfikacji(false)
           setAktywnyWidok('onboarding')
           setOnboardingKrok(1)

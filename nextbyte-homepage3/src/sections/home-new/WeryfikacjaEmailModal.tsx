@@ -1,18 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import {
-  Mail,
-  CheckCircle2,
-  Clock,
-  RotateCw,
-  ArrowLeft,
-  X,
-  ArrowRight,
-  ShieldCheck,
-  Check,
-  AlertCircle,
-} from 'lucide-react'
+import { RotateCw, X, Check, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { GlowButton, GhostButton } from './shared'
+import { GlowButton } from './shared'
 
 interface WeryfikacjaEmailModalProps {
   otwarty: boolean
@@ -66,15 +55,22 @@ export function WeryfikacjaEmailModal({
 
   const obsluzZatwierdzenie = () => {
     const calyKod = cyfry.join('')
-    const kodDoWeryfikacji = calyKod.length === 6 ? calyKod : '842109'
+    /* Bez obejścia: wcześniej przy niepełnym kodzie pole samo uzupełniało się
+       fikcyjnym „842109” i przepuszczało dalej. Teraz brak sześciu cyfr
+       zatrzymuje weryfikację. */
     if (calyKod.length < 6) {
-      setCyfry(['8', '4', '2', '1', '0', '9'])
+      setBlad('Wpisz pełny 6-cyfrowy kod')
+      return
+    }
+    if (sekundy === 0) {
+      setBlad('Kod wygasł — wyślij nowy')
+      return
     }
     setBlad(null)
     setWeryfikuje(true)
     setTimeout(() => {
       setWeryfikuje(false)
-      onZatwierdz(kodDoWeryfikacji)
+      onZatwierdz(calyKod)
     }, 400)
   }
 
@@ -168,172 +164,150 @@ export function WeryfikacjaEmailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      {/* Ciemne tło z rozmyciem szkła */}
+    <div className="nb-modal-tlo fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      {/* Klasy `animate-in` / `zoom-in-95` w tym projekcie nic nie robiły —
+          nie ma pluginu tailwindcss-animate. Własne keyframe'y, bez fill-mode,
+          żeby brak animacji nie zostawił okna niewidocznego. */}
+      <style>{`
+        @keyframes nbModalTlo { from { opacity: 0 } }
+        @keyframes nbModalOkno { from { opacity: 0; transform: scale(.96) translateY(8px) } }
+        .nb-modal-tlo { animation: nbModalTlo .2s ease-out }
+        .nb-modal-okno { animation: nbModalOkno .24s cubic-bezier(.16,1,.3,1) }
+        @media (prefers-reduced-motion: reduce) {
+          .nb-modal-tlo, .nb-modal-okno { animation: none }
+        }
+      `}</style>
+      {/* Cały ekran za modalem idzie w rozmycie — bez tego okno nie czytało się
+          jako popup, tylko jako kolejna karta na stronie. */}
       <div
-        className="fixed inset-0 bg-background/80 backdrop-blur-xl transition-opacity"
+        className="fixed inset-0 bg-black/40 backdrop-blur-xl transition-opacity"
         onClick={onZamknij}
       />
 
-      {/* Karta Modalu */}
+      {/* Szyba modalu — glassmorphism: półprzezroczysta tafla z mocnym
+          rozmyciem tła, podbiciem nasycenia, cienką jasną krawędzią
+          i refleksem u góry. Tokeny foreground/background zamiast bieli,
+          żeby działało też w jasnych motywach. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="weryfikacja-tytul"
         className={cn(
-          'relative w-full max-w-[480px] overflow-hidden rounded-[28px] p-6 sm:p-8',
-          'border border-primary/25 bg-card/95 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.9),0_0_50px_-10px_hsl(var(--primary)/0.25)] backdrop-blur-2xl',
-          'animate-in zoom-in-95 duration-200 ease-out',
+          'relative w-full max-w-[380px] overflow-hidden rounded-[26px] p-8',
+          // Tafla musi być odrobinę jaśniejsza od przyciemnionego, rozmytego
+          // tła — inaczej zlewa się z nim i przestaje czytać jako szyba.
+          // Bez backdrop-saturate: podbijało nasycenie niebieskiej poświaty
+          // zza szyby i cała tafla wychodziła niebieska. Neutralny tint
+          // (foreground) jest teraz mocniejszy, żeby przykryć to, co prześwituje.
+          'bg-gradient-to-b from-foreground/[0.10] to-foreground/[0.05]',
+          'backdrop-blur-md',
+          'ring-1 ring-inset ring-foreground/[0.18]',
+          'nb-modal-okno',
         )}
+        style={{
+          boxShadow:
+            '0 24px 70px -18px rgba(0,0,0,0.7),' +
+            'inset 0 1px 0 0 hsl(var(--foreground)/0.14)',
+        }}
       >
-        {/* Poświata ambientowa w tle karty */}
+        {/* Refleks na górnej krawędzi — jedyna dekoracja, definiuje krawędź szkła */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full bg-primary/15 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/25 to-transparent"
         />
 
-        {/* Górna linia świetlna */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
-        />
-
-        {/* Nagłówek z ikoną i przyciskiem zamknięcia */}
+        {/* Nagłówek — bez kafla z ikoną. Podtytuł niesie adres e-mail zamiast
+            instrukcji, bo sześć pól poniżej i tak mówi, czego się oczekuje. */}
         <div className="relative flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 to-primary text-primary-foreground shadow-[0_0_24px_-2px_hsl(var(--primary)/0.6)]">
-              <Mail className="h-6 w-6 stroke-[2.2]" />
-            </div>
-            <div>
-              <h2
-                id="weryfikacja-tytul"
-                className="font-sans text-xl font-bold tracking-tight text-foreground"
-              >
-                Weryfikacja email
-              </h2>
-              <p className="font-sans text-[13px] text-foreground/50 mt-0.5">
-                Wprowadź 6-cyfrowy kod weryfikacyjny
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h2
+              id="weryfikacja-tytul"
+              className="font-sans text-[21px] font-bold tracking-tight text-foreground"
+            >
+              Weryfikacja email
+            </h2>
+            <p className="mt-1.5 truncate font-sans text-[13.5px] text-foreground/45">
+              Kod wysłaliśmy na <span className="text-foreground/70">{email || 'Twój adres'}</span>
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onZamknij}
-            aria-label="Zamknij modal"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-foreground/[0.08] hover:text-foreground cursor-pointer"
+            aria-label="Zamknij"
+            className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground/35 transition-colors hover:bg-foreground/[0.07] hover:text-foreground cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Sekcja Kod Weryfikacyjny */}
-        <div className="relative mt-6">
-          <div className="flex items-center justify-between">
-            <label className="font-sans text-[13.5px] font-semibold text-foreground">
-              Kod weryfikacyjny
-            </label>
-            <span className="font-sans text-[12px] text-foreground/40">
-              6 cyfr
-            </span>
-          </div>
-
-          {/* 6 kafelków OTP */}
-          <div className="mt-3 flex items-center justify-between gap-2 sm:gap-2.5" onPaste={obsluzWklej}>
-            {cyfry.map((cyfra, i) => {
-              const czySkupiony = false
-              return (
-                <input
-                  key={i}
-                  ref={el => { inputRefs.current[i] = el }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={cyfra}
-                  onChange={e => obsluzWprowadzanie(i, e.target.value)}
-                  onKeyDown={e => obsluzKeyDown(i, e)}
-                  aria-label={`Cyfra ${i + 1} kodu`}
-                  className={cn(
-                    'h-14 w-11 sm:h-16 sm:w-14 rounded-2xl text-center font-mono text-2xl font-bold outline-none transition-all duration-150',
-                    cyfra
-                      ? 'border-primary/50 bg-primary/[0.08] text-primary shadow-[0_0_16px_-4px_hsl(var(--primary)/0.3)]'
-                      : 'border-foreground/[0.12] bg-foreground/[0.04] text-foreground hover:border-foreground/25',
-                    'focus:border-primary focus:bg-primary/[0.12] focus:text-primary focus:shadow-[0_0_24px_-2px_hsl(var(--primary)/0.6)] focus:ring-2 focus:ring-primary/40 focus:scale-[1.04]',
-                  )}
-                />
-              )
-            })}
-          </div>
-
-          {/* Komunikat błędu */}
-          {blad && (
-            <p className="mt-2.5 flex items-center gap-1.5 font-sans text-[12.5px] text-destructive animate-in fade-in">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              {blad}
-            </p>
-          )}
-
-          {/* Toast ponownego wysłania */}
-          {komunikatWyslano && (
-            <div className="mt-2.5 flex items-center gap-2 rounded-xl bg-emerald-500/10 px-3 py-2 text-emerald-400 border border-emerald-500/20 font-sans text-[12.5px] animate-in fade-in">
-              <Check className="h-3.5 w-3.5 shrink-0" />
-              Wysłano nowy kod weryfikacyjny na Twój adres e-mail!
-            </div>
-          )}
-
-          {/* Licznik wygaśnięcia */}
-          <div className="mt-4 flex items-center justify-center gap-2 font-mono text-[13px] text-foreground/50">
-            <Clock className={cn("h-4 w-4 text-primary", sekundy > 0 && "animate-pulse")} />
-            <span>
-              {sekundy > 0 ? (
-                <>Kod wygasa za: <strong className="text-foreground font-semibold">{formatowanyCzas}</strong></>
-              ) : (
-                <span className="text-destructive font-semibold">Kod wygasł — kliknij Wyślij ponownie</span>
+        {/* Pola kodu — bez etykiety i licznika „6 cyfr”, sześć pól jest samo
+            w sobie czytelne. Cienki ring zamiast neonu. */}
+        <div className="relative mt-9 grid grid-cols-6 gap-2" onPaste={obsluzWklej}>
+          {cyfry.map((cyfra, i) => (
+            <input
+              key={i}
+              ref={el => { inputRefs.current[i] = el }}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={cyfra}
+              onChange={e => obsluzWprowadzanie(i, e.target.value)}
+              onKeyDown={e => obsluzKeyDown(i, e)}
+              aria-label={`Cyfra ${i + 1} kodu`}
+              className={cn(
+                'h-[62px] w-full rounded-xl text-center font-mono text-[21px] font-semibold outline-none transition-all duration-150',
+                'ring-1 ring-inset',
+                cyfra
+                  ? 'bg-primary/[0.07] text-primary ring-primary/35'
+                  : 'bg-foreground/[0.05] text-foreground ring-foreground/[0.10] hover:ring-foreground/25',
+                'focus:bg-primary/[0.09] focus:text-primary focus:ring-primary/60',
               )}
-            </span>
-          </div>
+            />
+          ))}
         </div>
 
-        {/* Przyciski operacyjne */}
-        <div className="relative mt-6 grid grid-cols-2 gap-3">
-          <GhostButton
-            size="lg"
-            onClick={onZamknij}
-            icon={ArrowLeft}
-            className="w-full justify-center h-[48px] text-[13.5px]"
-          >
-            Anuluj
-          </GhostButton>
+        {/* Komunikat błędu */}
+        {blad && (
+          <p className="relative mt-3 flex items-center gap-1.5 font-sans text-[12.5px] text-destructive nb-modal-tlo">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            {blad}
+          </p>
+        )}
 
-          <GhostButton
-            size="lg"
-            onClick={obsluzWyslijPonownie}
-            icon={RotateCw}
-            className={cn(
-              'w-full justify-center h-[48px] text-[13.5px]',
-              wysylanie && 'opacity-60 pointer-events-none',
-            )}
-          >
-            {wysylanie ? 'Wysyłanie...' : 'Wyślij ponownie'}
-          </GhostButton>
-        </div>
+        {/* Potwierdzenie ponownej wysyłki — bez ramki i tła */}
+        {komunikatWyslano && (
+          <p className="relative mt-3 flex items-center gap-1.5 font-sans text-[12.5px] text-primary nb-modal-tlo">
+            <Check className="h-3.5 w-3.5 shrink-0" />
+            Wysłaliśmy nowy kod
+          </p>
+        )}
 
-        {/* Przycisk potwierdzenia z neonowym efektem */}
-        <div className="relative mt-3">
+        {/* Licznik — bez ikony i pulsowania */}
+        <p className="relative mt-6 text-center font-mono text-[12.5px] text-foreground/40">
+          {sekundy > 0 ? (
+            <>Kod wygasa za <span className="text-foreground/70">{formatowanyCzas}</span></>
+          ) : (
+            <span className="text-destructive">Kod wygasł — wyślij nowy</span>
+          )}
+        </p>
+
+        {/* Jedno główne działanie */}
+        <div className="relative mt-8">
           <GlowButton
             size="lg"
             onClick={obsluzZatwierdzenie}
-            className="w-full justify-center h-[50px]"
+            className={cn(
+              'w-full justify-center h-[52px]',
+              // Widoczny stan zamiast cichej blokady po kliknięciu
+              !kodPelen && 'pointer-events-none opacity-45',
+            )}
             icon={!weryfikuje}
           >
             {weryfikuje ? (
               <span className="flex items-center gap-2">
                 <RotateCw className="h-4 w-4 animate-spin text-primary" />
-                Weryfikacja kodu...
+                Weryfikacja kodu…
               </span>
             ) : (
               'Zatwierdź i kontynuuj'
@@ -341,18 +315,28 @@ export function WeryfikacjaEmailModal({
           </GlowButton>
         </div>
 
-        {/* Notka pomocnicza na dole */}
-        <p className="mt-5 text-center font-sans text-[12px] leading-relaxed text-foreground/35">
-          Nie otrzymałeś kodu? Sprawdź folder spam lub kliknij{' '}
+        {/* Akcje poboczne jako linki — dwa duże przyciski obok CTA robiły
+            trzy równorzędne działania zamiast jednego głównego. */}
+        <div className="relative mt-6 flex items-center justify-center gap-3 font-sans text-[13px]">
+          <button
+            type="button"
+            onClick={onZamknij}
+            className="text-foreground/40 transition-colors hover:text-foreground/75 cursor-pointer"
+          >
+            Anuluj
+          </button>
+          <span aria-hidden className="text-foreground/15">·</span>
           <button
             type="button"
             onClick={obsluzWyslijPonownie}
-            className="text-foreground/60 underline hover:text-primary cursor-pointer transition-colors"
+            className={cn(
+              'text-foreground/40 transition-colors hover:text-primary cursor-pointer',
+              wysylanie && 'pointer-events-none opacity-50',
+            )}
           >
-            &quot;Wyślij ponownie&quot;
+            {wysylanie ? 'Wysyłanie…' : 'Wyślij ponownie'}
           </button>
-          .
-        </p>
+        </div>
       </div>
     </div>
   )
