@@ -79,7 +79,7 @@ export const PRESET_SNIPPETS: CodeSnippet[] = [
     title: 'Wzory Tła (Background Grid / Dots / Plus)',
     category: 'Dekoracje',
     description: 'Wzory svg dla zaawansowanych teł technicznych.',
-    importPath: "import { BackgroundGrid, BackgroundDots, BackgroundPlus } from '@/components/ui/background-patterns'",
+    importPath: "import { BackgroundGrid, BackgroundDots, BackgroundPlus } from '@/grafiki/wzory-tla'",
     tsx: `<div className="relative h-48 w-full rounded-xl overflow-hidden border border-border">
   <BackgroundGrid opacity={0.15} size={32} />
   <div className="relative z-10 p-6">

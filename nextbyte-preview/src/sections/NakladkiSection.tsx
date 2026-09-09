@@ -63,7 +63,7 @@ export function NakladkiSection() {
           title="Informacje o projekcie"
           description="Szczegóły konfiguracji i statusu projektu."
           footer={
-            <GlassButton onClick={() => setModalOpen(false)}>Zamknij</GlassButton>
+            <GlassButton variant="primary" onClick={() => setModalOpen(false)}>Zamknij</GlassButton>
           }
         >
           <div className="space-y-3 text-sm text-foreground/70">
@@ -81,7 +81,7 @@ export function NakladkiSection() {
           footer={
             <>
               <GlassButton variant="ghost" onClick={() => setConfirmOpen(false)}>Anuluj</GlassButton>
-              <GlassButton onClick={() => { setConfirmOpen(false); toast.error('Usunięto') }}>
+              <GlassButton variant="danger" onClick={() => { setConfirmOpen(false); toast.error('Usunięto') }}>
                 Usuń <AlertTriangle className="h-4 w-4" />
               </GlassButton>
             </>
@@ -99,7 +99,7 @@ export function NakladkiSection() {
           footer={
             <>
               <GlassButton variant="ghost" onClick={() => setModelOpen(false)}>Anuluj</GlassButton>
-              <GlassButton onClick={() => { setModelOpen(false); toast.success('Zapisano konfigurację') }}>
+              <GlassButton variant="primary" onClick={() => { setModelOpen(false); toast.success('Zapisano konfigurację') }}>
                 Zapisz <ArrowRight className="h-4 w-4" />
               </GlassButton>
             </>
@@ -188,7 +188,7 @@ export function NakladkiSection() {
           footer={
             <div className="flex justify-end gap-2">
               <GlassButton size="sm" variant="ghost" onClick={() => setDrawer(null)}>Anuluj</GlassButton>
-              <GlassButton size="sm" onClick={() => setDrawer(null)}>Zapisz</GlassButton>
+              <GlassButton size="sm" variant="primary" onClick={() => setDrawer(null)}>Zapisz</GlassButton>
             </div>
           }
         >
@@ -210,7 +210,7 @@ export function NakladkiSection() {
         </SectionLabel>
 
         <div className="flex flex-wrap items-center gap-3">
-          <GlassButton onClick={() => palette.setOpen(true)} className="gap-2">
+          <GlassButton variant="primary" onClick={() => palette.setOpen(true)} className="gap-2">
             <Command className="h-3.5 w-3.5" />
             Otwórz paletę
           </GlassButton>

@@ -165,7 +165,7 @@ export function GlassActivityFeed({
           >
             <div className={cn(
               'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold',
-              isGlass ? 'nb-szklo text-foreground/70' : 'bg-muted text-foreground/70 border border-border',
+              isGlass ? 'nb-szklo text-foreground/70' : 'nb-wglobienie text-foreground/70',
             )}>
               {Icon ? <Icon className="h-3.5 w-3.5 text-primary" /> : fallback}
             </div>

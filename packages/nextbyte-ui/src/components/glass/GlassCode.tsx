@@ -37,7 +37,7 @@ export function GlassCodeBlock({
   return (
     <div className={cn(
       'overflow-hidden rounded-2xl',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       {(filename || language) && (
@@ -183,7 +183,7 @@ export function GlassJsonViewer({ data, className }: { data: unknown; className?
   return (
     <div className={cn(
       'overflow-x-auto rounded-2xl p-3.5 font-mono text-[11.5px] leading-relaxed',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       <JsonNode value={data} depth={0} last />
@@ -229,7 +229,7 @@ export function GlassLogView({
     <div
       className={cn(
         'overflow-auto rounded-2xl p-3 font-mono text-[11px] leading-relaxed',
-        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
         className,
       )}
       style={{ maxHeight }}

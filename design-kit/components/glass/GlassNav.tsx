@@ -16,7 +16,7 @@ export function GlassNav({
   return (
     <nav
       className={cn(
-        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
         'flex items-center gap-3 rounded-2xl border px-4 py-2',
         position === 'top' && 'sticky top-4 z-50',
         className,
@@ -36,7 +36,10 @@ export function GlassNavItem({ active = false, className, children, ...props }: 
   return (
     <button
       className={cn(
-        'relative flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors duration-150',
+        /* Prostokąt z zaokrągleniem, nie pigułka — ten sam promień co pozycje
+           w panelu bocznym (`rounded-xl` = --r-lg). Owal na pozycji z etykietą
+           rozjeżdżał się z resztą chromu, które jest kanciaste. */
+        'relative flex h-8 items-center gap-1.5 rounded-xl px-3 text-sm font-medium transition-colors duration-150',
         active
           ? 'text-foreground'
           : 'text-foreground/60 hover:text-foreground hover:bg-foreground/5',

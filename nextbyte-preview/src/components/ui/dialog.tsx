@@ -39,9 +39,8 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
-        "rounded-2xl border border-border bg-card p-6",
-        "shadow-[0_2px_4px_0_rgb(0_0_0/0.08),0_16px_40px_-16px_rgb(0_0_0/0.4),inset_0_1px_0_0_rgb(255_255_255/0.06)]",
+        "nb-nakladka fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
+        "nb-plyta rounded-2xl p-6",
         "focus:outline-none",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -146,9 +145,8 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
-        "rounded-2xl border border-border bg-card p-6",
-        "shadow-[0_2px_4px_0_rgb(0_0_0/0.08),0_16px_40px_-16px_rgb(0_0_0/0.4),inset_0_1px_0_0_rgb(255_255_255/0.06)]",
+        "nb-nakladka fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
+        "nb-plyta rounded-2xl p-6",
         "focus:outline-none",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -229,10 +227,10 @@ const AlertDialogCancel = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold",
-      "border border-border bg-foreground/[0.02] text-foreground",
-      "hover:bg-foreground/[0.06]",
-      "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card",
-      "transition-colors duration-150",
+      // Wycofanie stoi obok potwierdzenia jako wezwanie drugoplanowe —
+      // ta sama bryła, neutralny rejestr.
+      "nb-cta-drugi nb-refleks-krawedzi-slaby",
+      "focus:outline-none",
       className,
     )}
     {...props}

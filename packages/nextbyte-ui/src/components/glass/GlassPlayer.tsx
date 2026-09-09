@@ -94,7 +94,7 @@ export function GlassVideoPlayer({
   return (
     <div className={cn(
       'group relative aspect-video w-full overflow-hidden rounded-2xl',
-      isGlass ? 'nb-szklo' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo' : 'nb-plyta',
       className,
     )}>
       <div className="absolute inset-0">
@@ -191,7 +191,7 @@ export function GlassAudioPlayer({
   return (
     <div className={cn(
       'flex items-center gap-3 rounded-2xl p-3',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       <button

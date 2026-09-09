@@ -97,7 +97,7 @@ export function GlassTable<T extends Record<string, unknown>>({
       'w-full overflow-hidden rounded-2xl',
       isGlass
         ? 'nb-szklo nb-szklo-plynne nb-powierzchnia'
-        : 'border border-border bg-card',
+        : 'nb-plyta',
       className,
     )}>
       {caption && (

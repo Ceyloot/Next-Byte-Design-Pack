@@ -906,14 +906,14 @@ table,
 }
 
 /* ── SZKŁO LIQUID GLASS — Refrakcja Fali Cieczy na Dolnej Krawędzi ── */
-.is-glass .nb-szklo:not(header):not(nav):not(.nb-nav-nocontain),
-.is-glass .glass-card:not(header):not(nav) {
+.is-glass .nb-szklo:not(header):not(nav):not(.nb-nav-nocontain):not(.nb-nakladka),
+.is-glass .glass-card:not(header):not(nav):not(.nb-nakladka) {
   position: relative;
   isolation: isolate;
   contain: layout paint;
 }
-.is-glass .nb-szklo,
-.is-glass .glass-card {
+.is-glass .nb-szklo:not(.nb-nakladka),
+.is-glass .glass-card:not(.nb-nakladka) {
   position: relative;
 
   /* Czyste półprzezroczyste tło */
@@ -1241,4 +1241,365 @@ html:not(.is-glass) .nb-szklo button.border {
 @keyframes nb-carousel-fill {
   from { width: 0%; }
   to { width: 100%; }
+}
+/* ═══════════════════════════════════════════════════════════════════
+   JĘZYK STRONY GŁÓWNEJ — wspólne traktowanie dla całej biblioteki
+   ═══════════════════════════════════════════════════════════════════
+   Landing (StronaGlowna, LogowaniePage, dashboard) wypracował własny
+   sposób budowania powierzchni: półprzezroczysta tafla + realne blur,
+   refleks u górnej krawędzi zamiast ramki dookoła, poświata zamiast
+   płaskiego wypełnienia na CTA, uniesienie zamiast zmiany koloru na
+   hover. Te reguły były rozsypane po `sections/wspolne/shared.tsx`
+   jako łańcuchy klas Tailwinda — tutaj dostają nazwy, żeby komponenty
+   biblioteki mówiły tym samym językiem i żeby zmiana szła w jednym
+   miejscu, a nie w 78 plikach.
+
+   Tokeny są liczone z istniejących zmiennych motywu (--primary,
+   --card, --foreground), więc wszystkie motywy — również „przyjazny"
+   z koralowym primary — dostają spójne traktowanie za darmo. */
+
+:root {
+  /* Refleks u górnej krawędzi — światło pada z góry, więc powierzchnia
+     ma jasną nitkę na styku, nie ramkę dookoła. */
+  --nb-refleks: inset 0 1px 0 0 hsl(210 40% 100% / .06);
+  --nb-refleks-mocny: inset 0 1px 0 0 hsl(210 40% 100% / .25);
+
+  /* Poświata CTA — jedyny element, któremu wolno świecić. */
+  --nb-poblask: 0 0 24px -2px hsl(var(--primary) / .45);
+  --nb-poblask-mocny: 0 0 36px 0 hsl(var(--primary) / .6);
+
+  /* Cień panelu — daleki i miękki, buduje dystans od tła. */
+  --nb-cien-panel: 0 20px 50px -30px hsl(215 40% 2% / .7);
+  --nb-cien-panel-hover: 0 32px 64px -20px hsl(215 40% 2% / .9);
+  --nb-poblask-panel: 0 0 40px -10px hsl(var(--primary) / .2);
+
+  /* Rozmycie tła pod powierzchnią. */
+  --nb-blur: 24px;
+}
+
+/* ── POWIERZCHNIA ────────────────────────────────────────────────────
+   Odpowiednik `Panel` z landingu. Karta nie jest prostokątem z ramką,
+   tylko taflą uniesioną nad atmosferą tła — tło przemywa się przez nią
+   rozmyciem, a nie jest z niej wycięte. */
+.nb-plyta {
+  /* BEZ `position` — ta klasa stoi w arkuszu po `@tailwind utilities`, więc
+     każda własność, którą tu ustawimy, wygrywa z narzędziówką o tej samej
+     specyficzności. `position: relative` nadpisywało `fixed` na szufladzie
+     i modalu, przez co nakładka renderowała się w toku dokumentu. Kontekst
+     pozycjonowania dla refleksu wnosi `.nb-refleks-krawedzi`. */
+  overflow: hidden;
+  background-color: hsl(var(--card) / .55);
+  border: 1px solid hsl(var(--foreground) / .07);
+  box-shadow: var(--nb-refleks), var(--nb-cien-panel);
+  -webkit-backdrop-filter: blur(var(--nb-blur));
+  backdrop-filter: blur(var(--nb-blur));
+}
+
+/* Uniesienie na hover — dla powierzchni, które da się kliknąć.
+   Ruch w górę + ocieplenie krawędzi kolorem marki; bez zmiany
+   wypełnienia, żeby treść nie migała. */
+.nb-plyta-int {
+  transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+
+.nb-plyta-int:hover {
+  transform: translateY(-6px);
+  border-color: hsl(var(--primary) / .25);
+  box-shadow:
+    var(--nb-refleks),
+    var(--nb-cien-panel-hover),
+    var(--nb-poblask-panel);
+}
+
+/* Powierzchnia wyróżniona — dla planu polecanego, aktywnego kroku itp. */
+.nb-plyta-akcent {
+  border-color: hsl(var(--primary) / .25);
+  box-shadow: 0 0 50px -12px hsl(var(--primary) / .35);
+}
+
+/* ── REFLEKS KRAWĘDZI ────────────────────────────────────────────────
+   Nitka światła na górnej krawędzi, wygaszana ku bokom. W landingu był
+   to ręcznie wstawiany <span aria-hidden>; tutaj robi to pseudoelement,
+   więc nie zaśmieca drzewa i nie da się go zgubić przy kopiowaniu. */
+/* Refleks potrzebuje kontekstu pozycjonowania — i wnosi go sam, zamiast
+   zrzucać ten obowiązek na klasę powierzchni. Dzięki temu `.nb-plyta`
+   i `.nb-cta` nie mieszają się w układ strony. */
+.nb-refleks-krawedzi,
+.nb-refleks-krawedzi-slaby {
+  position: relative;
+}
+
+.nb-refleks-krawedzi::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, hsl(var(--foreground) / .4), transparent);
+}
+
+.nb-refleks-krawedzi-slaby::before {
+  background: linear-gradient(90deg, transparent, hsl(var(--foreground) / .15), transparent);
+  transition: background .2s ease;
+}
+
+.nb-refleks-krawedzi-slaby:hover::before {
+  background: linear-gradient(90deg, transparent, hsl(var(--foreground) / .3), transparent);
+}
+
+/* ── WEZWANIE (CTA) ──────────────────────────────────────────────────
+   Odpowiednik `GlowButton`. Kolor marki wchodzi tu jako świecąca tafla,
+   nie jako płaskie wypełnienie — to jedyne miejsce w interfejsie, gdzie
+   primary ma prawo świecić, więc CTA wygrywa uwagę bez podnoszenia
+   rozmiaru czy wersalików. */
+.nb-cta {
+  overflow: hidden;
+  border: 1px solid hsl(var(--primary) / .6);
+  background-color: hsl(var(--primary) / .2);
+  color: hsl(var(--foreground));
+  box-shadow: var(--nb-poblask), var(--nb-refleks-mocny);
+  -webkit-backdrop-filter: blur(var(--nb-blur));
+  backdrop-filter: blur(var(--nb-blur));
+  transition: transform .2s ease-out, background-color .2s ease-out,
+              border-color .2s ease-out, box-shadow .2s ease-out;
+}
+
+.nb-cta:hover {
+  background-color: hsl(var(--primary) / .3);
+  border-color: hsl(var(--primary));
+  transform: scale(1.02);
+  box-shadow: var(--nb-poblask-mocny), inset 0 1px 0 0 hsl(210 40% 100% / .4);
+}
+
+.nb-cta:active {
+  transform: scale(.98);
+}
+
+/* ── WEZWANIE DRUGOPLANOWE ───────────────────────────────────────────
+   Odpowiednik `GhostButton`. Ta sama bryła co CTA, ale neutralna —
+   stoi obok wezwania nie konkurując z nim kolorem. */
+.nb-cta-drugi {
+  overflow: hidden;
+  border: 1px solid hsl(var(--foreground) / .14);
+  background-color: hsl(var(--card) / .75);
+  color: hsl(var(--foreground) / .9);
+  box-shadow: 0 2px 12px -2px hsl(215 40% 2% / .35), var(--nb-refleks);
+  -webkit-backdrop-filter: blur(var(--nb-blur));
+  backdrop-filter: blur(var(--nb-blur));
+  transition: transform .2s ease-out, background-color .2s ease-out,
+              border-color .2s ease-out, color .2s ease-out;
+}
+
+.nb-cta-drugi:hover {
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--foreground) / .28);
+  background-color: hsl(var(--card));
+  transform: scale(1.015);
+}
+
+.nb-cta-drugi:active {
+  transform: scale(.98);
+}
+
+/* Wyłączony przycisk nie unosi się i nie świeci — sam brak reakcji
+   niesie komunikat, nie trzeba do tego kursora „zakaz". */
+.nb-cta:disabled,
+.nb-cta-drugi:disabled {
+  transform: none;
+  box-shadow: none;
+  opacity: .5;
+  pointer-events: none;
+}
+
+/* ── TRYB SZKŁA ──────────────────────────────────────────────────────
+   Gdy włączone jest szkło, powierzchnie prowadzi `.nb-szklo` z własnym
+   filtrem refrakcji. Nasze rozmycie i cień zeszłyby się z nim w kaszę,
+   więc oddajemy pole — poświata CTA zostaje, bo to sygnał, nie materiał. */
+.is-glass .nb-plyta {
+  background-color: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* ── POLE FORMULARZA ─────────────────────────────────────────────────
+   Wzorzec z ekranu logowania. Pole to wgłębienie, nie wypukłość: lekkie
+   przyciemnienie i wewnętrzny pierścień zamiast ramki dookoła — dzięki
+   `ring-inset` obrys nie dokłada wysokości, więc rząd pól i przycisków
+   ma równe krawędzie. Fokus podnosi wypełnienie o oczko i przejmuje
+   pierścień kolorem marki; ikona wiodąca zapala się razem z nim. */
+.nb-pole {
+  position: relative;
+  background-color: hsl(var(--foreground) / .035);
+  box-shadow: inset 0 0 0 1px hsl(var(--foreground) / .08);
+  transition: background-color .2s ease, box-shadow .2s ease;
+}
+
+.nb-pole:hover {
+  box-shadow: inset 0 0 0 1px hsl(var(--foreground) / .14);
+}
+
+.nb-pole:focus-within,
+.nb-pole:focus {
+  background-color: hsl(var(--foreground) / .055);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .45);
+  outline: none;
+}
+
+/* Ikona wiodąca w polu — gaśnie w spoczynku, zapala się przy fokusie. */
+.nb-pole .nb-pole-ikona {
+  color: hsl(var(--foreground) / .3);
+  transition: color .2s ease;
+}
+
+.nb-pole:focus-within .nb-pole-ikona {
+  color: hsl(var(--primary));
+}
+
+/* Pole z błędem — pierścień niesie komunikat, treść zostaje czytelna.
+   Osobna klasa, nie klasa narzędziowa: `.nb-pole` stoi w arkuszu po
+   `@tailwind utilities`, więc nadpisałby każdy `shadow-[...]` z JSX-a. */
+.nb-pole-blad,
+.nb-pole[data-blad="true"],
+.nb-pole:has([aria-invalid="true"]) {
+  box-shadow: inset 0 0 0 1px hsl(var(--destructive) / .55);
+}
+
+.nb-pole-blad:hover {
+  box-shadow: inset 0 0 0 1px hsl(var(--destructive) / .7);
+}
+
+.nb-pole-blad:focus-within,
+.nb-pole-blad:focus {
+  background-color: hsl(var(--destructive) / .06);
+  box-shadow: inset 0 0 0 1px hsl(var(--destructive) / .8);
+}
+
+/* Wariant „ghost" — pole bez własnej powierzchni, ujawnia się dopiero
+   pod kursorem i przy fokusie. Do gęstych tabel i pasków narzędzi. */
+.nb-pole-ghost {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.nb-pole-ghost:hover {
+  background-color: hsl(var(--foreground) / .04);
+  box-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BARWY DANYCH — paleta kategorialna
+   ═══════════════════════════════════════════════════════════════════
+   Jedyne kolory w systemie, które NIE idą za motywem — i to celowo.
+
+   Kolor kategorii jest jej tożsamością: „AI Chat" ma być tym samym
+   kolorem niezależnie od tego, czy ktoś włączył motyw koralowy, czy
+   złoty. Gdyby kategorie przemalowywały się razem z marką, zestaw
+   trzeba by walidować od nowa przy każdym motywie — a walidacja jest
+   tym, co gwarantuje, że daltonista odróżni segmenty.
+
+   Zestaw przeszedł pełny komplet testów (pasmo jasności, próg
+   nasycenia, rozdzielność przy CVD, próg dla widzenia normalnego,
+   kontrast do tła) na powierzchni karty w obu trybach:
+     ciemny  — najgorsza para ΔE 9.4 (deuteranopia), 20.9 (norma)
+     jasny   — najgorsza para ΔE 9.2 (deuteranopia), 24.0 (norma)
+   W trybie jasnym akwamaryna schodzi poniżej 3:1 wobec tła, więc
+   obowiązuje reguła ulgi: legenda z etykietą i wartością jest
+   wymagana, nie opcjonalna. Kolor nigdy nie niesie znaczenia sam.
+
+   Kroki dla trybu jasnego są DOBRANE, nie odwrócone automatycznie.
+
+   Trzy sloty to nie oszczędność, tylko granica: przy czterech
+   nasyconych barwach żółty ląduje obok pomarańczowego i para przestaje
+   przechodzić progi. Czwarta i dalsze kategorie idą do „Inne", które
+   jest neutralne z definicji — brak barwy sam mówi „reszta". */
+:root {
+  --kat-1: #3987e5;
+  /* niebieski   */
+  --kat-2: #d95926;
+  /* pomarańcz   */
+  --kat-3: #199e70;
+  /* akwamaryna  */
+  --kat-inne: hsl(var(--muted-foreground));
+}
+
+[data-theme="light-apple"],
+[data-theme="nextbyte-light"],
+[data-theme="scandinavian"],
+[data-theme="snowy-white"] {
+  --kat-1: #2a78d6;
+  --kat-2: #eb6834;
+  --kat-3: #1baf7a;
+}
+
+/* ── NAKŁADKI POZA TOKIEM DOKUMENTU ───────────────────────────────────
+   `.is-glass .nb-szklo` ustawia `position: relative`, żeby warstwy
+   refrakcji miały do czego się przyczepić. Ta reguła ma specyficzność
+   0,2,0 i wygrywa z narzędziowym `fixed` (0,1,0) — więc szuflada, modal
+   i paleta poleceń, wszystkie stojące na szkle, wypadały z pozycjonowania
+   i renderowały się w toku dokumentu: zamiast przykleić się do krawędzi
+   okna, wpychały się między treść i przy otwarciu przeskakiwały.
+
+   Nakładki są wykluczone z tamtych reguł wprost (`:not(.nb-nakladka)`),
+   zamiast licytować się specyficznością: `:not()` po stronie szkła dokłada
+   wagi swoich argumentów, więc wyścigu i tak nie dałoby się wygrać czysto,
+   a `!important` zostawiłby minę na przyszłość. */
+.nb-nakladka.nb-nakladka {
+  position: fixed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WYŁĄCZONE SZKŁO ZNACZY: NIC NIE ROZMYWA TŁA
+   ═══════════════════════════════════════════════════════════════════════
+   Przełącznik „Liquid Glass" ma być przełącznikiem, nie sugestią. Blok
+   „TRYB NORMAL" wyżej pilnował tego dla `.nb-szklo`, ale rozmycie wsiąkało
+   do interfejsu trzema innymi drogami:
+
+     · `.nb-plyta`, `.nb-cta`, `.nb-cta-drugi` — klasy języka strony
+       głównej, które miały `backdrop-filter` w obu trybach,
+     · narzędziówka `backdrop-blur-*` wpisana wprost w JSX (nagłówek,
+       pasek nawigacji),
+     · `.nb-glass` z własnym `saturate() blur()`.
+
+   Efekt: po wyłączeniu szkła 38 elementów nadal rozmywało tło. Zamiast
+   łatać każdą drogę osobno, zamykamy je jedną regułą — bo reguła brzmi
+   „w trybie normalnym NIC nie rozmywa", a nie „te konkretne rzeczy nie
+   rozmywają". Selektor uniwersalny jest tu narzędziem właściwym: nie ma
+   wyjątku, który chcielibyśmy zachować.
+
+   `!important` jest konieczne, bo część rozmyć siedzi w klasach
+   narzędziowych o tej samej specyfice — i jest zgodne z konwencją
+   sąsiedniego bloku „TRYB NORMAL", który stosuje ją z tego samego powodu. */
+html:not(.is-glass) * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Zdjęcie rozmycia obnaża półprzezroczystość: powierzchnia bez szkła
+   przepuszczałaby tło wprost, co czyta się jak brud, nie jak materiał.
+   Dlatego w trybie normalnym płyta i wgłębienie stają się kryjące —
+   dokładnie tak, jak zapowiada kontrakt „100% solidne" wyżej. */
+html:not(.is-glass) .nb-plyta {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--border) / 0.8);
+  box-shadow:
+    0 1px 3px 0 hsl(215 40% 2% / .35),
+    0 6px 20px -6px hsl(215 40% 2% / .45);
+}
+
+/* Wezwanie zostaje barwne i zachowuje poświatę — to sygnał, nie materiał,
+   więc nie znika razem ze szkłem. Traci tylko rozmycie (reguła wyżej)
+   i dostaje mocniejsze wypełnienie, żeby na kryjącej karcie miało tę samą
+   siłę co na szkle. */
+html:not(.is-glass) .nb-cta {
+  background-color: hsl(var(--primary) / .28);
+}
+
+html:not(.is-glass) .nb-cta:hover {
+  background-color: hsl(var(--primary) / .38);
+}
+
+html:not(.is-glass) .nb-cta-drugi {
+  background-color: hsl(var(--card));
 }

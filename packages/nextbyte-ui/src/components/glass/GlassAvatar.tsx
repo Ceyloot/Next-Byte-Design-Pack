@@ -112,7 +112,7 @@ export function GlassAvatarGroup({
           className={cn(
             '-ml-2 rounded-full flex items-center justify-center font-semibold text-foreground/70',
             sz.avatar, sz.text,
-            isGlass ? 'nb-szklo' : 'border border-border bg-muted/50',
+            isGlass ? 'nb-szklo' : 'nb-wglobienie',
           )}
         >
           +{overflow}

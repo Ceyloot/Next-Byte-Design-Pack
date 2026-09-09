@@ -36,11 +36,12 @@ export function GlassInput({
         className={cn(
           isGlass
             ? 'nb-szklo bg-transparent'
-            : 'border border-border bg-input',
+            : 'nb-pole',
           'w-full rounded-xl outline-none',
           'text-foreground placeholder:text-foreground/40',
-          'transition-[border-color,box-shadow] duration-200',
-          'focus:border-primary/50 focus:ring-2 focus:ring-primary/20',
+          /* Fokus prowadzi `.nb-pole` wewnętrznym pierścieniem — bez
+             zewnętrznego ringu, który rozpychał rząd pól. */
+          isGlass && 'transition-[border-color,box-shadow] duration-200 focus:border-primary/50 focus:ring-2 focus:ring-primary/20',
           sizeMap[size],
           hasLeft  && 'pl-9',
           hasRight && 'pr-9',

@@ -10,7 +10,7 @@ import { useGlass } from '@/lib/glass-context'
 function shell(isGlass: boolean) {
   return isGlass
     ? 'nb-szklo nb-szklo-plynne nb-powierzchnia'
-    : 'border border-border bg-card'
+    : 'nb-plyta'
 }
 
 /** Zastępuje <img> tam, gdzie nie ma realnego zasobu — gradient
@@ -200,10 +200,10 @@ export function GlassProductCard({
           className={cn(
             'mt-1 h-8 w-full rounded-xl text-[11px] font-bold transition-all',
             soldOut
+              /* Niedostępny nie świeci i nie unosi się — brak reakcji sam
+                 niesie komunikat. */
               ? 'cursor-not-allowed bg-foreground/[0.06] text-foreground/30'
-              : isGlass
-                ? 'bg-primary/25 text-primary hover:bg-primary/35 shadow-[0_0_10px_hsl(var(--primary)/0.25)]'
-                : 'bg-primary text-primary-foreground hover:brightness-110',
+              : 'nb-cta nb-refleks-krawedzi',
           )}
         >
           {soldOut ? 'Niedostępny' : 'Dodaj do koszyka'}

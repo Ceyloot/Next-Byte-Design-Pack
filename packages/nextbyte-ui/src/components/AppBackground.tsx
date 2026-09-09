@@ -78,53 +78,27 @@ function NextByteBg() {
 
       {/* Siatka — inline SVG żeby kolor primary śledził motyw */}
       <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-40"
         style={{ maskImage: MASKA_LATARNIA, WebkitMaskImage: MASKA_LATARNIA }}
         aria-hidden
       >
         <defs>
           <pattern id="nb-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="hsl(var(--primary))" strokeWidth="1" strokeOpacity="0.14" />
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="hsl(var(--primary))" strokeWidth="1" strokeOpacity="0.12" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#nb-grid)" />
       </svg>
 
-      {/* Kontener świateł — overflow-hidden przycina rogi, blur pływa. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Światło 1 — lewo-góra, cieplejsze, z primary 15% */}
-        <div
-          className="absolute -left-[15%] -top-[25%] h-[70%] w-[65%] rounded-full blur-[90px]"
-          style={{
-            background:
-              'radial-gradient(circle, color-mix(in oklab, hsl(var(--foreground)) 6%, color-mix(in oklab, hsl(var(--primary)) 15%, hsl(var(--background)))), transparent 70%)',
-          }}
-        />
-        {/* Światło 2 — prawo-góra, chłodniejsze, primary 10% */}
-        <div
-          className="absolute -right-[10%] top-[10%] h-[60%] w-[50%] rounded-full blur-[100px]"
-          style={{
-            background:
-              'radial-gradient(circle, color-mix(in oklab, hsl(var(--foreground)) 4%, color-mix(in oklab, hsl(var(--primary)) 10%, hsl(var(--background)))), transparent 70%)',
-          }}
-        />
-        {/* Światło 3 — dół, czysta biel bez primary */}
-        <div
-          className="absolute -bottom-[30%] left-[20%] h-[60%] w-[70%] rounded-full blur-[110px]"
-          style={{
-            background:
-              'radial-gradient(circle, color-mix(in oklab, hsl(var(--foreground)) 6%, hsl(var(--background))), transparent 70%)',
-          }}
-        />
-        {/* Winieta — ściaga uwage do srodka */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(120% 90% at 50% 40%, transparent 40%, hsl(var(--background) / 0.6) 100%)',
-          }}
-        />
-      </div>
+      {/* Winieta — ściąga uwagę do środka, bez ostrych ruchomych plam */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(120% 90% at 50% 30%, transparent 50%, hsl(var(--background) / 0.8) 100%)',
+        }}
+      />
     </>
   )
 }

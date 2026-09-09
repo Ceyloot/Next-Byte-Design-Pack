@@ -18,7 +18,7 @@ export function GlassList({
   return (
     <div className={cn(
       'flex flex-col overflow-hidden rounded-2xl',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       divided && (isGlass ? 'divide-y divide-foreground/[0.06]' : 'divide-y divide-border'),
       className,
     )}>

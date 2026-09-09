@@ -5,7 +5,7 @@ import { Layers, Sparkles, LayoutGrid, Navigation, PanelTop, PanelBottom, PanelL
 
 export type NavPosition = 'top' | 'bottom' | 'left' | 'right'
 import { GlassProvider, useGlass } from '@/lib/glass-context'
-import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
+import { NbGlassFilters } from '@/grafiki/filtry-szkla'
 import { AppBackground, BgToggle, BG_OPTIONS, type BgKey } from '@/components/AppBackground'
 import { PreviewSection }   from '@/sections/PreviewSection'
 import { cn } from '@/lib/utils'

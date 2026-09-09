@@ -1,22 +1,25 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
-import { useGlass } from "@/lib/glass-context"
 
 const inputVariants = cva(
   [
-    "flex w-full rounded-xl border transition-colors duration-200",
-    "bg-input text-foreground placeholder:text-muted-foreground",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    // Pole w języku ekranu logowania: wgłębienie z wewnętrznym pierścieniem
+    // zamiast ramki dookoła (`.nb-pole` w index.css). Pierścień jest inset,
+    // więc nie dokłada wysokości i pole równa się z przyciskiem obok.
+    "nb-pole flex w-full rounded-xl",
+    "text-foreground placeholder:text-foreground/30",
+    "focus-visible:outline-none",
     "disabled:pointer-events-none disabled:opacity-50",
     "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
   ].join(" "),
   {
     variants: {
       variant: {
-        default: "border-border hover:border-border/70",
-        error:   "border-destructive/50 hover:border-destructive/70 focus-visible:ring-destructive/60",
-        ghost:   "border-transparent bg-foreground/[0.04] hover:bg-foreground/[0.06] focus-visible:bg-input focus-visible:border-border",
+        default: "",
+        // Błąd niesie pierścień, nie kolor tekstu — treść zostaje czytelna.
+        error:   "nb-pole-blad",
+        ghost:   "nb-pole-ghost",
       },
       inputSize: {
         sm:      "h-8 px-3 text-xs",
@@ -40,36 +43,49 @@ export interface InputProps
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant, inputSize, type, iconLeft, iconRight, ...props }, ref) => {
-    const { isGlass } = useGlass()
-    const glassClass = isGlass ? 'nb-szklo' : ''
+    /* Pole nie dostaje soczewki nawet w trybie szkła. `.nb-szklo` ma
+       wyższą specyficzność niż `.nb-pole` i zjadał wewnętrzny pierścień,
+       przez co fokus i błąd przestawały być widoczne. Zgodnie zresztą z
+       tym, co arkusz nazywa „tylko chrome": soczewka należy się nawigacji,
+       panelom i modalom, nie kontrolkom formularza. */
+    const bezIkon = !iconLeft && !iconRight
 
-    const inputEl = (
-      <input
-        type={type}
-        className={cn(
-          inputVariants({ variant, inputSize }),
-          iconLeft && 'pl-9',
-          iconRight && 'pr-9',
-          glassClass,
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
-    )
+    /* Bez ikon polem jest sam <input> — nie ma sensu opakowywać go dla
+       samego opakowania. */
+    if (bezIkon) {
+      return (
+        <input
+          type={type}
+          className={cn(inputVariants({ variant, inputSize }), className)}
+          ref={ref}
+          {...props}
+        />
+      )
+    }
 
-    if (!iconLeft && !iconRight) return inputEl
-
+    /* Z ikonami polem jest KONTENER, a <input> siedzi w nim przezroczysty —
+       tak samo jak `PoleLogowania` na ekranie logowania. Inaczej ikona,
+       będąc rodzeństwem inputa, nie miałaby jak zareagować na fokus:
+       `:focus-within` musi siedzieć na wspólnym rodzicu. */
     return (
-      <div className="relative w-full">
+      <div className={cn(inputVariants({ variant, inputSize }), 'relative items-center p-0', className)}>
         {iconLeft && (
-          <span className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground flex items-center">
+          <span className="nb-pole-ikona pointer-events-none absolute left-3.5 flex h-4 w-4 items-center">
             {iconLeft}
           </span>
         )}
-        {inputEl}
+        <input
+          type={type}
+          className={cn(
+            'h-full w-full bg-transparent text-inherit outline-none placeholder:text-foreground/30',
+            iconLeft ? 'pl-10' : 'pl-3',
+            iconRight ? 'pr-10' : 'pr-3',
+          )}
+          ref={ref}
+          {...props}
+        />
         {iconRight && (
-          <span className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground flex items-center">
+          <span className="nb-pole-ikona absolute right-3.5 flex h-4 w-4 items-center">
             {iconRight}
           </span>
         )}

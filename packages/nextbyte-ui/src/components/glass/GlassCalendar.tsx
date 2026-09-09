@@ -94,7 +94,7 @@ export function GlassCalendar({
   return (
     <div className={cn(
       'inline-flex flex-col gap-2 rounded-2xl p-3',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       {/* Nagłówek z nawigacją miesięcy */}
@@ -190,7 +190,6 @@ export function GlassDatePicker({
   placeholder = 'Wybierz datę',
   className,
 }: GlassDatePickerProps) {
-  const { isGlass } = useGlass()
   const [open, setOpen] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
 
@@ -217,7 +216,7 @@ export function GlassDatePicker({
         onClick={() => setOpen((v) => !v)}
         className={cn(
           'flex h-10 w-full min-w-[200px] items-center gap-2 rounded-xl px-3 text-sm transition-all',
-          isGlass ? 'nb-szklo nb-szklo-plynne' : 'border border-border bg-input',
+          'nb-pole',
           open && 'ring-2 ring-primary/30',
         )}
       >

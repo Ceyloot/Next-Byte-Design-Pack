@@ -1,6 +1,5 @@
 import * as React from "react"
-import { cn } from "../../lib/utils"
-import { useGlass } from "../../lib/glass-context"
+import { cn } from "@/lib/utils"
 
 export interface OtpInputProps {
   length?: number
@@ -16,7 +15,6 @@ export interface OtpInputProps {
 export const OtpInput: React.FC<OtpInputProps> = ({
   length = 6, value, defaultValue, onChange, onComplete, error, disabled, className,
 }) => {
-  const { isGlass } = useGlass()
   const [internal, setInternal] = React.useState<string[]>(
     () => (value ?? defaultValue ?? "").padEnd(length, " ").slice(0, length).split(""),
   )
@@ -77,11 +75,10 @@ export const OtpInput: React.FC<OtpInputProps> = ({
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
           className={cn(
-            "h-11 w-9 rounded-xl border bg-input text-center text-lg font-semibold text-foreground",
-            "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            "nb-pole h-11 w-9 rounded-xl text-center text-lg font-semibold text-foreground",
+            "focus-visible:outline-none",
             "disabled:pointer-events-none disabled:opacity-50",
-            error ? "border-destructive/50 focus-visible:ring-destructive/60" : "border-border hover:border-border/70",
-            isGlass && "nb-szklo",
+            error && "nb-pole-blad",
           )}
         />
       ))}

@@ -1,7 +1,6 @@
 import * as React from "react"
 import * as SwitchPrimitive from "@radix-ui/react-switch"
 import { cn } from "@/lib/utils"
-import { useGlass } from "@/lib/glass-context"
 
 /* ── Rozmiary ────────────────────────────────────────────────────── */
 const TRACK = {
@@ -28,17 +27,17 @@ const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitive.Root>,
   SwitchProps
 >(({ className, switchSize = "default", ...props }, ref) => {
-  const { isGlass } = useGlass()
   return (
   <SwitchPrimitive.Root
     className={cn(
       "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
       "transition-colors duration-200",
-      "bg-muted/60 data-[state=checked]:bg-primary",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      // Tor przełącznika to wgłębienie; zapalony bierze pełny kolor marki,
+      // bo to stan, nie zaproszenie — więc nie świeci jak CTA.
+      "nb-pole data-[state=checked]:bg-primary data-[state=checked]:shadow-none",
+      "focus-visible:outline-none",
       "disabled:cursor-not-allowed disabled:opacity-50",
       TRACK[switchSize],
-      isGlass && 'nb-szklo',
       className,
     )}
     {...props}

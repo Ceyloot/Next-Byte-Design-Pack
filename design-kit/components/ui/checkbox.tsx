@@ -1,8 +1,7 @@
 import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
 import { Check, Minus } from "lucide-react"
-import { cn } from "../../lib/utils"
-import { useGlass } from "../../lib/glass-context"
+import { cn } from "@/lib/utils"
 
 const SIZE = {
   sm: "h-4 w-4",
@@ -27,20 +26,16 @@ const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   CheckboxProps
 >(({ className, checkboxSize = "default", ...props }, ref) => {
-  const { isGlass } = useGlass()
   return (
     <CheckboxPrimitive.Root
       ref={ref}
       className={cn(
-        "peer shrink-0 rounded-md border border-border bg-input",
-        "transition-colors duration-200",
-        "hover:border-border/70",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "peer shrink-0 rounded-md nb-pole",
+        "focus-visible:outline-none",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[state=checked]:bg-primary data-[state=checked]:border-primary",
         "data-[state=indeterminate]:bg-primary data-[state=indeterminate]:border-primary",
         SIZE[checkboxSize],
-        isGlass && "nb-szklo",
         className,
       )}
       {...props}

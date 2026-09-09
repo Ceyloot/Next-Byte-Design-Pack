@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "../../lib/utils"
+import { cn } from "@/lib/utils"
 
 /* ── FormSection — nagłówek + opis + treść pola ──────────────────── */
 export interface FormSectionProps {

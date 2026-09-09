@@ -80,7 +80,7 @@ export function GlassAccordionItem({
     <div
       className={cn(
         'overflow-hidden rounded-2xl',
-        isGlass ? 'nb-szklo' : 'border border-border bg-card',
+        isGlass ? 'nb-szklo' : 'nb-plyta',
         disabled && 'opacity-50',
         className,
       )}

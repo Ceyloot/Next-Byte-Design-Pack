@@ -1,6 +1,5 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
-import { useGlass } from '@/lib/glass-context'
 
 export interface GlassProgressProps {
   value: number                        // 0–100
@@ -21,7 +20,6 @@ export function GlassProgress({
   showMarker = false,
   className,
 }: GlassProgressProps) {
-  const { isGlass } = useGlass()
   const pct = Math.min(100, Math.max(0, value))
   const h   = size === 'sm' ? 'h-1' : 'h-1.5'
 
@@ -37,7 +35,7 @@ export function GlassProgress({
         {/* Track */}
         <div className={cn(
           h, 'w-full rounded-full',
-          isGlass ? 'bg-foreground/8' : 'bg-muted/50',
+          'bg-foreground/[0.08]',
         )} />
         {/* Fill */}
         <div
@@ -46,7 +44,9 @@ export function GlassProgress({
             width: `${pct}%`,
             background: color,
             transition: 'width 0.7s cubic-bezier(.4,0,.2,1)',
-            boxShadow: isGlass && pct > 0 ? `0 0 8px ${color}` : undefined,
+            /* Bez poświaty pod wypełnieniem. Neon rozmywał koniec paska,
+               przez co odczyt „ile dokładnie" stawał się nieostry — a to
+               jedyne, co ten element ma pokazać. */
           }}
         />
         {/* Limit marker */}

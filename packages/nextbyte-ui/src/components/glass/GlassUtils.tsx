@@ -204,7 +204,7 @@ export function GlassQrCode({
 
   return (
     <div className={cn('inline-flex flex-col items-center gap-2', className)}>
-      <div className={cn('rounded-2xl p-2.5', isGlass ? 'nb-szklo' : 'border border-border bg-card')}>
+      <div className={cn('rounded-2xl p-2.5', isGlass ? 'nb-szklo' : 'nb-plyta')}>
         <svg
           width={size} height={size} viewBox={`0 0 ${total} ${total}`}
           shapeRendering="crispEdges" role="img" aria-label={label ?? `Kod QR: ${value}`}
@@ -270,7 +270,7 @@ export function GlassCountdown({
           key={p.label}
           className={cn(
             'flex min-w-[52px] flex-col items-center rounded-xl px-2 py-1.5',
-            isGlass ? 'nb-szklo' : 'border border-border bg-card',
+            isGlass ? 'nb-szklo' : 'nb-plyta',
           )}
         >
           <span className={cn('font-mono text-lg font-bold tabular-nums text-foreground', isGlass && 'drop-shadow-[0_0_6px_hsl(var(--primary)/0.3)]')}>
@@ -358,7 +358,7 @@ export function GlassBackToTop({
         'fixed bottom-5 right-5 z-50 flex h-10 w-10 items-center justify-center rounded-full transition-all animate-in fade-in-0 zoom-in-90',
         isGlass
           ? 'nb-szklo nb-szklo-plynne text-primary shadow-[0_0_14px_hsl(var(--primary)/0.25)]'
-          : 'border border-border bg-card text-primary shadow-lg',
+          : 'nb-plyta text-primary',
         'hover:-translate-y-0.5',
         className,
       )}
@@ -405,7 +405,7 @@ export function GlassToc({
   return (
     <nav className={cn(
       'flex flex-col gap-1 rounded-2xl p-3',
-      isGlass ? 'nb-szklo nb-szklo-plynne' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne' : 'nb-plyta',
       className,
     )}>
       <p className="mb-1 flex items-center gap-1.5 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-foreground/35">

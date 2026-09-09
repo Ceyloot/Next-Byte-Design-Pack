@@ -31,7 +31,7 @@ export function GlassCompareTable({ columns, rows, highlightLast = true, classNa
   return (
     <div className={cn(
       'rounded-2xl border overflow-hidden',
-      isGlass ? 'nb-szklo nb-szklo-plynne' : 'nb-tafla',
+      isGlass ? 'nb-szklo nb-szklo-plynne' : 'nb-plyta',
       className,
     )}>
       <div className="overflow-x-auto">

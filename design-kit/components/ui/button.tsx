@@ -2,24 +2,26 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { cn } from "../../lib/utils"
-import { useGlass } from "../../lib/glass-context"
+import { cn } from "@/lib/utils"
+import { useGlass } from "@/lib/glass-context"
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-foreground",
+        // Wezwanie w języku strony głównej: kolor marki jako świecąca
+        // tafla, nie płaskie wypełnienie. Reguły w `.nb-cta` (index.css).
+        default: "nb-cta nb-refleks-krawedzi font-semibold",
         // Jezyk obwodek, tak jak `nextbyte` i TileAction. Pelne czerwone
         // wypelnienie bylo jedyna plama koloru w calym systemie i wylamywalo sie
         // z reszty — ostrzezenie niesie obwodka i kolor tekstu.
         destructive:
-          "border border-destructive/40 bg-destructive/[0.06] text-destructive hover:border-destructive/70 hover:bg-destructive/[0.12]",
+          "nb-cta-drugi nb-refleks-krawedzi-slaby border-destructive/40 bg-destructive/[0.06] text-destructive hover:border-destructive/70 hover:bg-destructive/[0.12]",
         outline:
-          "border border-border/50 bg-muted/20 hover:bg-muted/40 hover:border-border/70 transition-all duration-200",
+          "nb-cta-drugi nb-refleks-krawedzi-slaby bg-transparent",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "nb-cta-drugi nb-refleks-krawedzi-slaby",
         ghost: "hover:bg-muted/40 transition-all duration-200",
         link: "text-primary underline-offset-4 hover:underline",
         gradient: "bg-transparent",
@@ -39,7 +41,7 @@ const buttonVariants = cva(
         // powietrzu, w każdym z tych 717 plików.
         // `--foreground` odwraca się razem z motywem: w ciemnych daje 2% bieli
         // (czyli to samo co dotąd), w jasnych 2% czerni. Widoczne w obu.
-        nextbyte: "relative border border-border text-primary hover:text-primary font-semibold rounded-xl hover:border-transparent transition-all duration-300 bg-foreground/[0.02] backdrop-blur-2xl overflow-hidden group/nextbyte",
+        nextbyte: "relative border border-border text-primary hover:text-primary font-semibold rounded-xl hover:border-transparent transition-all duration-300 bg-foreground/[0.02] backdrop-blur-2xl overflow-hidden group/nextbyte nb-refleks-krawedzi-slaby",
         // Mocniejszy rejestr TEGO SAMEGO przycisku — nie osobny komponent.
         // Do wezwań na stronie wejściowej i miejsc pokazowych. Cały wygląd
         // siedzi w `.nb-glass` w index.css i liczy się od zmiennych motywu,

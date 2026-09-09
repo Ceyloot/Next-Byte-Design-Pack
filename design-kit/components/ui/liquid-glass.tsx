@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect, useRef, useCallback } from 'react'
-import { Renderer, Program, Mesh, Geometry, type OGLRenderingContext } from 'ogl'
+import { Renderer, Program, Mesh, Geometry } from 'ogl'
 import { cn } from '../../lib/utils'
 
 const VERT = /* glsl */ `
@@ -170,7 +170,7 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
   function LiquidGlass({ radius = 16, intensity = 1, className, children, ...rest }, ref) {
     const wrapRef    = useRef<HTMLDivElement>(null)
     const canvasRef  = useRef<HTMLCanvasElement>(null)
-    const glRef      = useRef<OGLRenderingContext | null>(null)
+    const glRef      = useRef<ReturnType<typeof Renderer.prototype.gl> | null>(null)
     const programRef = useRef<InstanceType<typeof Program> | null>(null)
     const meshRef    = useRef<InstanceType<typeof Mesh> | null>(null)
     const rendRef    = useRef<InstanceType<typeof Renderer> | null>(null)

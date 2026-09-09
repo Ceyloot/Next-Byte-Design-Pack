@@ -35,7 +35,10 @@ export function GlassStat({
         )}
       </div>
       <div className="flex items-end justify-between gap-2">
-        <span className="nb-liczby text-2xl font-semibold leading-none text-primary">{value}</span>
+        {/* Liczba niesie kontrast wagą i rozmiarem, nie kolorem — tak samo
+            jak `StatCell` na stronie głównej. Primary zostaje dla zmiany
+            (odznaka obok), gdzie realnie coś znaczy. */}
+        <span className="nb-liczby font-heading text-[28px] font-extrabold leading-none tracking-tight text-foreground">{value}</span>
         {delta && (
           <GlassBadge intent={trendIntent} size="sm" dot>
             {delta}

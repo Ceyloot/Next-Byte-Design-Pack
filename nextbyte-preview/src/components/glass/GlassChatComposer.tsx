@@ -75,7 +75,7 @@ export function GlassChatComposer({
           'relative rounded-[1.75rem] border shadow-2xl transition-colors duration-200',
           isGlass
             ? 'nb-szklo nb-szklo-plynne shadow-primary/5 ring-1 ring-foreground/[0.04] border-border/60 hover:border-border/70'
-            : 'bg-card border-border/70 hover:border-border',
+            : 'nb-plyta',
         )}
       >
         {/* Górny pasek — pigułka modelu + przełączniki źródeł */}
@@ -87,7 +87,10 @@ export function GlassChatComposer({
           />
 
           {toggles.length > 0 && (
-            <div className="flex shrink-0 items-center gap-1">
+            /* Bez `shrink-0` i z możliwością zawijania: na wąskim ekranie
+               przełączniki schodzą do drugiego rzędu, zamiast wypychać
+               pasek poza ekran. */
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
               {toggles.map((t) => (
                 <button
                   key={t.id}
@@ -98,7 +101,7 @@ export function GlassChatComposer({
                     'relative inline-flex h-7 items-center gap-1 overflow-hidden rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all duration-200',
                     t.active
                       ? 'border-primary/30 bg-gradient-to-br from-primary/15 via-transparent to-primary/5 text-primary shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.4)] after:absolute after:inset-x-3 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary/60 after:to-transparent'
-                      : 'border-muted-foreground/20 bg-muted/30 text-muted-foreground/70 hover:bg-muted/50 hover:text-foreground',
+                      : 'border-foreground/[0.12] bg-foreground/[0.04] text-foreground/55 hover:bg-foreground/[0.08] hover:text-foreground',
                   )}
                 >
                   <t.icon className="h-3 w-3" />
@@ -186,7 +189,7 @@ function ComposerTool({ icon: Icon, title }: { icon: React.ComponentType<{ class
     <button
       type="button"
       title={title}
-      className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/50 bg-muted/30 p-0 transition-colors duration-200 hover:border-border hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-40 sm:h-9 sm:w-9"
+      className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-foreground/[0.10] bg-foreground/[0.04] p-0 transition-colors duration-200 hover:border-foreground/[0.20] hover:bg-foreground/[0.08] disabled:cursor-not-allowed disabled:opacity-40 sm:h-9 sm:w-9"
     >
       <Icon className="h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:scale-110 group-hover:text-foreground" />
     </button>

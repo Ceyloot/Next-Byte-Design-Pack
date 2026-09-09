@@ -60,25 +60,16 @@ export function GlassRing({
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="-rotate-90">
           <circle cx={CX} cy={CY} r={R} stroke="hsl(var(--foreground) / 0.10)" strokeWidth={thickness} />
           {segments.map((seg, i) => {
-            const gapDeg = segments.length > 1 ? 1.5 : 0
+            /* Przerwa między segmentami to szczelina tła, nie cieńsza
+               kreska — dzięki niej sąsiednie kategorie czyta się jako
+               osobne bryły nawet przy zaburzonym widzeniu barw. */
+            const gapDeg = segments.length > 1 ? 2.5 : 0
             const segCirc = (seg.pct / 100) * circ
             const dash = Math.max(0, segCirc - (gapDeg / 360) * circ)
             const rotation = (cum / 100) * 360
             cum += seg.pct
             return (
               <g key={i}>
-                {isGlass && (
-                  <circle
-                    cx={CX} cy={CY} r={R}
-                    stroke={seg.color}
-                    strokeWidth={thickness + 3}
-                    strokeDasharray={`${dash} ${circ - dash}`}
-                    strokeLinecap="butt"
-                    transform={`rotate(${rotation} ${CX} ${CY})`}
-                    opacity={0.08}
-                    style={{ filter: 'blur(3px)' }}
-                  />
-                )}
                 <circle
                   cx={CX} cy={CY} r={R}
                   stroke={seg.color}

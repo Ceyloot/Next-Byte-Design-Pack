@@ -157,7 +157,7 @@ function BillingToggle({ billing, onChange, isGlass }: { billing: Billing; onCha
 
 function PlanBadge({ visible, savings }: { visible: boolean; savings?: string }) {
   return (
-    <div className="mb-3 flex items-center justify-between h-7">
+    <div className="mb-3 flex min-h-7 flex-wrap items-center justify-between gap-2">
       <span aria-hidden={!visible} className={cn('transition-opacity', visible ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
         <GlassBadge intent="primary" className="whitespace-nowrap">★ NAJLEPSZA OFERTA</GlassBadge>
       </span>
@@ -462,7 +462,10 @@ export function CennikSection() {
       <BillingToggle billing={billing} onChange={setBilling} isGlass={isGlass} />
 
       {/* ── Plan Cards ── */}
-      <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
+      {/* Trzy kolumny dopiero od 1024 px. Przy 768 px karta planu miała
+          ~215 px szerokości i nie mieściła plakietek nagłówka — „OSZCZĘDZASZ
+          43%" wychodziła poza kartę i była ucinana przez `overflow-hidden`. */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
 
         {/* ─── BEZPŁATNY ─── */}
         <GlassCard radius="rounded-2xl" padding="p-6" className="flex flex-col">

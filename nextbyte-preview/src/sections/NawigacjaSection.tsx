@@ -78,7 +78,18 @@ export function NawigacjaSection() {
             </div>
             <span className="text-[13px] font-bold text-foreground tracking-tight">NextByte</span>
           </div>
-          <nav className="flex-1 flex items-center justify-center gap-0.5">
+          {/* Pigułki przewijają się poziomo, gdy przestają się mieścić —
+              logo i klaster akcji zostają przypięte do krawędzi. Bez tego
+              `overflow-hidden` na <header> ucinał środek i prawą stronę
+              paska, i nie dało się do nich dojść (na 768 px treść miała
+              1554 px przy kontenerze 736 px).
+
+              `min-w-0` jest konieczne: element flex domyślnie nie kurczy się
+              poniżej rozmiaru treści, więc bez tego `overflow-x` nie ma czego
+              przewijać. `w-max min-w-full` wewnątrz pozwala wyśrodkować
+              pigułki, gdy jest luz, i rozciągnąć pasek, gdy go brakuje. */}
+          <nav className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-max min-w-full items-center justify-center gap-0.5">
             {NAV_ITEMS.map((item) => {
               const isActive = activeNav === item.label
               return (
@@ -86,7 +97,7 @@ export function NawigacjaSection() {
                   key={item.label}
                   onClick={() => setActiveNav(item.label)}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
                     isActive
                       ? 'bg-primary/20 text-primary border border-primary/40'
                       : 'text-foreground/55 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent',
@@ -97,12 +108,13 @@ export function NawigacjaSection() {
                 </button>
               )
             })}
+            </div>
           </nav>
           <div className="flex items-center gap-1.5 shrink-0 pl-2">
-            <button className="flex items-center gap-1 px-2 h-7 rounded-full text-[11px] font-semibold bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10] transition-all duration-200">
+            <button className="flex items-center gap-1 px-2 h-7 rounded-lg text-[11px] font-semibold bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10] transition-all duration-200">
               <Settings className="w-3 h-3 shrink-0" /><span className="hidden sm:inline">Ustawienia</span>
             </button>
-            <button className="flex items-center gap-1 px-2 h-7 rounded-full text-[11px] font-semibold bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10] transition-all duration-200">
+            <button className="flex items-center gap-1 px-2 h-7 rounded-lg text-[11px] font-semibold bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:bg-foreground/[0.10] transition-all duration-200">
               <Type className="w-3 h-3 shrink-0" /><span>Aa</span>
             </button>
             <button className="w-7 h-7 flex items-center justify-center rounded-full bg-foreground/[0.04] hover:bg-foreground/[0.08] transition-all duration-200">
@@ -119,7 +131,7 @@ export function NawigacjaSection() {
         <SectionLabel>Pasek wyszukiwania (⌘K)</SectionLabel>
         <div className={cn(
           isGlass ? 'nb-szklo' : 'border border-border bg-card',
-          'relative flex items-center gap-2.5 rounded-full h-10 px-3.5 w-full max-w-md',
+          'relative flex items-center gap-2.5 rounded-xl h-10 px-3.5 w-full max-w-md',
         )}>
           <Search className="w-3.5 h-3.5 text-foreground/40 shrink-0" />
           <span className="flex-1 text-xs text-foreground/40">Szukaj w notatkach, zadaniach...</span>

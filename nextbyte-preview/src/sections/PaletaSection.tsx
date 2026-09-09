@@ -71,9 +71,12 @@ export function PaletaSection() {
             { cls: 'text-xs text-foreground/60', label: 'text-xs / muted', sample: 'Podpis, hint, metadane, czas' },
             { cls: 'text-[10px] uppercase tracking-widest font-bold text-foreground/40', label: 'nb-etykieta / uppercase', sample: 'ETYKIETA SEKCJI' },
           ].map((row) => (
-            <div key={row.label} className="flex items-baseline gap-4 border-b border-border/40 pb-3">
-              <span className={`flex-1 ${row.cls}`}>{row.sample}</span>
-              <code className="text-[10px] font-mono text-foreground/35 shrink-0">{row.label}</code>
+            /* Na wąskim ekranie nazwa klasy schodzi pod próbkę zamiast stać
+               obok niej: `shrink-0` na kodzie sprawiał, że etykieta o 247 px
+               rozpychała stronę o 26 px przy oknie 375 px. */
+            <div key={row.label} className="flex flex-col gap-1 border-b border-border/40 pb-3 sm:flex-row sm:items-baseline sm:gap-4">
+              <span className={`min-w-0 flex-1 ${row.cls}`}>{row.sample}</span>
+              <code className="text-[10px] font-mono text-foreground/35 sm:shrink-0">{row.label}</code>
             </div>
           ))}
         </div>

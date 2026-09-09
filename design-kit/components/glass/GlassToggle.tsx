@@ -58,7 +58,7 @@ export function GlassToggle({
               : 'bg-primary'
             : isGlass
               ? 'nb-szklo'
-              : 'bg-muted',
+              : 'bg-foreground/[0.08]',
         )}
       >
         <span

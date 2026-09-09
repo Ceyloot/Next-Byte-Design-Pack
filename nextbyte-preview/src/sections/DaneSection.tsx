@@ -11,7 +11,7 @@ import {
 import type { GlassTableColumn, TimelineEvent, FeedItem } from '@/components/glass'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { CHART_1, CHART_2, CHART_3, CHART_4, CHART_NEUTRAL, TINT_1, TINT_2, TINT_3, TINT_4 } from '@/lib/chart-colors'
+import { CHART_1, CHART_2, CHART_3, CHART_4, CHART_NEUTRAL, TINT_1, TINT_2, TINT_3, KAT_1, KAT_2, KAT_3, KAT_INNE } from '@/lib/chart-colors'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-3">{children}</p>
@@ -257,21 +257,30 @@ export function DaneSection() {
             label="Pamięć RAM"
             value={48}
             valueLabel={<><strong className="text-foreground">7.7 GB</strong> z 16 GB</>}
-            color="hsl(160 60% 45%)"
+            color="hsl(var(--primary))"
             showMarker
           />
+          {/* Jedyny pasek z inną barwą — i to dlatego, że przekroczył próg.
+              Kolor idzie w parze z ikoną i słowem, więc ostrzeżenie dociera
+              też do kogoś, kto tej barwy nie widzi. */}
           <GlassProgress
             label="Dysk"
             value={91}
-            valueLabel={<><strong className="text-amber-400">910 GB</strong> z 1 TB</>}
-            color="hsl(38 92% 50%)"
+            valueLabel={
+              <span className="inline-flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-[hsl(38_92%_58%)]" />
+                <strong className="text-foreground">910 GB</strong>
+                <span className="text-foreground/50">z 1 TB · blisko limitu</span>
+              </span>
+            }
+            color="hsl(38 92% 58%)"
             showMarker
           />
           <GlassProgress
             label="Transfer"
             value={23}
             valueLabel={<><strong className="text-foreground">230 GB</strong> z 1 TB</>}
-            color="hsl(270 70% 60%)"
+            color="hsl(var(--primary))"
             size="sm"
           />
         </GlassCard>
@@ -280,14 +289,14 @@ export function DaneSection() {
       {/* DONUT — wielosegmentowy GlassRing */}
       <div className="space-y-4">
         <h3 id="donut" className="text-sm font-semibold text-foreground/70">Donut / Kołowy (GlassRing — segments)</h3>
-        <SectionLabel>Kategorialny podział — każdy segment ma inny kolor, zwalidowany pod CVD</SectionLabel>
+        <SectionLabel>Podział kategorialny — trzy barwy o sprawdzonej rozdzielności, reszta neutralnie jako „Inne”</SectionLabel>
         <GlassCard className="flex flex-col sm:flex-row items-center gap-8">
           <GlassRing
             segments={[
-              { pct: 41, color: TINT_1 },
-              { pct: 28, color: TINT_2 },
-              { pct: 19, color: TINT_3 },
-              { pct: 12, color: TINT_4 },
+              { pct: 41, color: KAT_1 },
+              { pct: 28, color: KAT_2 },
+              { pct: 19, color: KAT_3 },
+              { pct: 12, color: KAT_INNE },
             ]}
             size={160}
             thickness={14}
@@ -295,10 +304,10 @@ export function DaneSection() {
           />
           <div className="flex flex-col gap-2.5 flex-1">
             {[
-              { pct: 41, color: TINT_1, label: 'AI Chat',       count: '1 167' },
-              { pct: 28, color: TINT_2, label: 'Studio Zdęć',   count: '797' },
-              { pct: 19, color: TINT_3, label: 'Prompty',        count: '541' },
-              { pct: 12, color: TINT_4, label: 'Inne',           count: '342' },
+              { pct: 41, color: KAT_1,    label: 'AI Chat',     count: '1 167' },
+              { pct: 28, color: KAT_2,    label: 'Studio Zdjęć', count: '797' },
+              { pct: 19, color: KAT_3,    label: 'Prompty',      count: '541' },
+              { pct: 12, color: KAT_INNE, label: 'Inne',         count: '342' },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-3">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />

@@ -7,11 +7,11 @@ import {
   Check, Edit2, FileText, Layers, Folder, Calendar, BarChart3,
   MonitorPlay, LayoutGrid, Navigation as NavIcon, BarChart2, Loader, Palette, Tag,
   PanelTop, PanelLeft, PanelBottom, PanelRight, Settings, GripVertical, GripHorizontal, Move,
-  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon, Activity,
+  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon, Activity, LogIn,
 } from 'lucide-react'
 import type { NavPosition } from '@/App'
 import { cn } from '@/lib/utils'
-import { NbGlassFilters } from '@/components/glass/NbGlassFilters'
+import { NbGlassFilters } from '@/grafiki/filtry-szkla'
 import { useLiquidGlassScroll } from '@/hooks/useLiquidGlassScroll'
 import { Tile, TileRow, TilePill, TileAction } from '@/components/Tile'
 import { useGlass } from '@/lib/glass-context'
@@ -26,27 +26,24 @@ import { PaletaSection } from '@/sections/PaletaSection'
 import { DaneSection } from '@/sections/DaneSection'
 import { StanySection } from '@/sections/StanySection'
 import { CennikSection } from '@/sections/CennikSection'
-import { StudioSection } from '@/sections/StudioSection'
 import { CzatSection } from '@/sections/CzatSection'
 import { StronaGlownaSection } from '@/sections/StronaGlownaSection'
-import { StronaGlownaNewSection } from '@/sections/StronaGlownaNewSection'
-import type { HomePageId } from '@/sections/StronaGlownaNewSection'
-import { STRONY as HOME_NEW_STRONY } from '@/sections/home-new/types'
-import { AKTUALNOSCI } from '@/sections/home-new/aktualnosci'
-import { HomePage2 } from '@/sections/home-new/HomePage2'
-import { HomePage3 } from '@/sections/home-new/HomePage3'
+import type { HomePageId } from '@/sections/StronaGlownaSection'
+import { LogowanieSection } from '@/sections/LogowanieSection'
+import { STRONY, STRONY_AUTH, jestEkranemAuth } from '@/sections/strona-glowna/types'
+import type { EkranAuth } from '@/sections/strona-glowna/types'
+import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
+import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'homepage' | 'homepage-new' | 'homepage-2' | 'homepage-3' }
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'strona-glowna' | 'logowanie' }
 
 const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
   { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [
-    { name: 'Strona główna 3', icon: Sparkles, badge: '3 · KILLER', subView: 'homepage-3' },
-    { name: 'Strona główna 2', icon: Sparkles, badge: '2', subView: 'homepage-2' },
-    { name: 'Strona główna NEW', icon: Sparkles, badge: 'NEW', subView: 'homepage-new' },
-    { name: 'Strona główna', icon: Zap,        badge: 'nextbyte.space', subView: 'homepage' },
+    { name: 'Strona główna', icon: Sparkles, subView: 'strona-glowna' },
+    { name: 'Logowanie',     icon: LogIn,      subView: 'logowanie' },
     { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
   ] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
@@ -117,7 +114,6 @@ const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ cla
     { name: 'Dostępność (a11y)', icon: Shield,       scrollId: 'a11y' },
   ]},
   { key: 'cennik',     label: 'Cennik',     icon: TagIcon,      items: [] },
-  { key: 'studio',     label: 'Studio',     icon: Layers,       items: [] },
 ]
 
 // ── Chart Data ────────────────────────────────────────────────────
@@ -485,7 +481,6 @@ function renderSection(key: string): React.ReactNode {
     case 'stany':      return <StanySection />
     case 'paleta':     return <PaletaSection />
     case 'cennik':     return <CennikSection />
-    case 'studio':     return <StudioSection />
     case 'czat':       return <CzatSection />
     default:           return null
   }
@@ -494,9 +489,32 @@ function renderSection(key: string): React.ReactNode {
 export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
-  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'homepage' | 'homepage-new' | 'homepage-2' | 'homepage-3'>('homepage-3')
-  /** Aktywna podstrona publicznej witryny (Strona główna NEW) */
-  const [homeNewPage, setHomeNewPage] = useState<HomePageId>('home')
+  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'strona-glowna' | 'logowanie'>('strona-glowna')
+  /** Aktywna podstrona publicznej witryny w podglądzie „Strona główna" */
+  const [stronaPage, setStronaPage] = useState<HomePageId>('home')
+  /** Aktywny ekran w podglądzie „Logowanie" */
+  const [ekranAuth, setEkranAuth] = useState<EkranAuth>('logowanie')
+
+  /* Pod-nawigacja podglądu. Strona główna ma własny navbar w treści, więc
+     na niej pasek się nie pokazuje — dopiero na podstronach (Cennik, Dla
+     firm, Historia) i na ekranach auth, które inaczej nie mają jak wrócić. */
+  const podNawigacja =
+    activeTab !== 'preview' ? []
+      : previewSubView === 'logowanie' ? STRONY_AUTH
+      : previewSubView === 'strona-glowna' && stronaPage !== 'home' ? STRONY
+      : []
+
+  /** Jedno wejście dla nawigacji między podstronami — ekrany auth mieszkają
+   *  w osobnym podglądzie, więc trafienie w nie przełącza cały widok. */
+  const idzDoPodstrony = (p: HomePageId) => {
+    if (jestEkranemAuth(p)) {
+      setEkranAuth(p)
+      setPreviewSubView('logowanie')
+      return
+    }
+    setStronaPage(p)
+    setPreviewSubView('strona-glowna')
+  }
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [flyoutY, setFlyoutY] = useState(0)
   const [navCompact, setNavCompact] = useState(false)
@@ -663,7 +681,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         onClick={onToggleSettings}
         title="Ustawienia wyglądu"
         className={cn(
-          'flex items-center gap-1 px-2 h-7 rounded-full border text-[12px] font-semibold transition-all duration-200',
+          'flex items-center gap-1 px-2 h-7 rounded-lg border text-[12px] font-semibold transition-all duration-200',
           'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
         )}
       >
@@ -674,7 +692,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         onClick={() => setNavCompact(!navCompact)}
         title={navCompact ? 'Pokaż etykiety' : 'Ukryj etykiety'}
         className={cn(
-          'flex items-center gap-1 px-2 h-7 rounded-full border text-[12px] font-semibold transition-all duration-200',
+          'flex items-center gap-1 px-2 h-7 rounded-lg border text-[12px] font-semibold transition-all duration-200',
           navCompact ? 'border-primary/40 bg-primary/[0.15] text-primary' : 'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
         )}
       >
@@ -752,7 +770,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                     }
                   }}
                   className={cn(
-                    'flex items-center rounded-full text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer',
+                    'flex items-center rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer',
                     navCompact ? 'px-2.5 py-2' : 'gap-1.5 px-3 py-1.5',
                     isActive || isOpen
                       ? 'bg-primary/20 text-primary border border-primary/40 shadow-sm shadow-primary/10'
@@ -803,6 +821,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                   e.stopPropagation()
                   if (openMenu === 'preview' && item.subView) {
                     setPreviewSubView(item.subView)
+                    if (item.subView === 'strona-glowna') setStronaPage('home')
+                    if (item.subView === 'logowanie') setEkranAuth('logowanie')
                   }
                   setActiveSection(openMenu)
                   onSelectTab?.(openMenu)
@@ -934,6 +954,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                   onSelectTab?.(openMenu!)
                   if (openMenu === 'preview' && item.subView) {
                     setPreviewSubView(item.subView)
+                    if (item.subView === 'strona-glowna') setStronaPage('home')
+                    if (item.subView === 'logowanie') setEkranAuth('logowanie')
                   }
                   openMenuDelayed(null)
                 }}
@@ -970,7 +992,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       }
 
       {/* ── Homepage Sub-Nav — kafelki ── */}
-      {activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new') && (
+      {activeTab === 'preview' && podNawigacja.length > 0 && (
         <div
           className="nb-homepage-nav z-[200] shrink-0 border-b border-foreground/[0.06]"
           style={{
@@ -990,29 +1012,16 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               skąd bez przewijania nie było już do nich dostępu. */}
           <div className="h-12 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex h-full w-max min-w-full items-center justify-center gap-1.5 px-4">
-            {(previewSubView === 'homepage-new'
-              ? [
-                  ...HOME_NEW_STRONY,
-                ]
-              : [
-                  { label: 'Strona główna', id: 'home' as HomePageId },
-                  { label: 'Cennik', id: 'cennik' as HomePageId },
-                  { label: 'Dla firm', id: 'b2b' as HomePageId },
-                  { label: 'Historia', id: 'historia' as HomePageId },
-                ]
-            ).map((item) => {
-              const aktywna = previewSubView === 'homepage-new'
-                ? homeNewPage === item.id
-                : item.id === 'home'
+            {podNawigacja.map((item) => {
+              const aktywna = previewSubView === 'logowanie'
+                ? ekranAuth === item.id
+                : stronaPage === item.id
               const skrot = 'skrot' in item && item.skrot
               return (
                 <React.Fragment key={item.id}>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (item.id === 'home') { setPreviewSubView('homepage-3'); return }
-                      if (previewSubView === 'homepage-new') setHomeNewPage(item.id)
-                    }}
+                    onClick={() => idzDoPodstrony(item.id)}
                     className={cn(
                       'h-8 px-4 rounded-lg font-sans text-[13px] transition-all duration-200 cursor-pointer',
                       skrot ? 'font-normal italic' : 'font-medium',
@@ -1038,12 +1047,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         'flex-1 min-w-0 overflow-y-auto flex flex-col',
         activeTab !== 'preview'
           ? 'p-6 w-full'
-          : (previewSubView === 'homepage' || previewSubView === 'homepage-new' || previewSubView === 'homepage-2' || previewSubView === 'homepage-3')
+          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie')
             ? 'p-0 w-full'
             : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
       )}
       style={(
-        activeTab === 'preview' && (previewSubView === 'homepage' || previewSubView === 'homepage-new')
+        activeTab === 'preview' && podNawigacja.length > 0
           ? { paddingTop: '48px' }
           : {}
       )}
@@ -1055,19 +1064,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
         {activeTab === 'preview' && (
           <div className="space-y-4 w-full flex-1 flex flex-col min-h-0">
-            {previewSubView === 'homepage-3' ? (
-              <HomePage3 onNavigate={(p) => {
-                if (p === 'home') { setPreviewSubView('homepage-3'); return }
-                setHomeNewPage(p); setPreviewSubView('homepage-new')
-              }} />
-            ) : previewSubView === 'homepage' ? (
-              <StronaGlownaSection />
-            ) : previewSubView === 'homepage-new' ? (
-              <StronaGlownaNewSection page={homeNewPage} onPageChange={setHomeNewPage} />
-            ) : previewSubView === 'homepage-2' ? (
-              // CTA prowadzi do gotowego Cennika ze "Strony głównej NEW" —
-              // ta strona jest samodzielną wizytówką, nie ma własnych podstron.
-              <HomePage2 onNavigate={(p) => { setHomeNewPage(p); setPreviewSubView('homepage-new') }} />
+            {previewSubView === 'strona-glowna' ? (
+              <StronaGlownaSection page={stronaPage} onPageChange={idzDoPodstrony} />
+            ) : previewSubView === 'logowanie' ? (
+              <LogowanieSection ekran={ekranAuth} />
             ) : (
               <div className="flex flex-col gap-3.5 flex-1 min-h-0">
 

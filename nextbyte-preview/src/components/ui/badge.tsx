@@ -17,7 +17,7 @@ const intentGlass = {
 }
 
 const intentNormal = {
-  neutral: 'border-border bg-muted text-foreground',
+  neutral: 'border-foreground/20 bg-foreground/[0.06] text-foreground/80',
   primary: 'border-primary/40 bg-primary/10 text-primary',
   success: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-400',
   warning: 'border-amber-400/40 bg-amber-500/10 text-amber-400',

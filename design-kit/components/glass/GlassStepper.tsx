@@ -56,7 +56,7 @@ export function GlassStepper({
                       : 'bg-primary/15 text-primary ring-2 ring-primary/40'
                     : isGlass
                       ? 'nb-szklo text-foreground/40'
-                      : 'bg-muted text-foreground/40 border border-border',
+                      : 'nb-wglobienie text-foreground/40',
             )}
           >
             {failed ? <X className="h-4 w-4" /> : done ? <Check className="h-4 w-4" /> : Icon ? <Icon className="h-3.5 w-3.5" /> : i + 1}
@@ -153,7 +153,7 @@ export function GlassProgressSteps({
                 ? isGlass
                   ? 'bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.45)]'
                   : 'bg-primary'
-                : isGlass ? 'bg-foreground/12' : 'bg-muted',
+                : 'bg-foreground/[0.10]',
             )}
           />
         ))}

@@ -36,7 +36,7 @@ export function GlassPagination({
       base,
       isGlass
         ? 'hover:bg-foreground/[0.08]'
-        : 'hover:bg-muted/60',
+        : 'hover:bg-foreground/[0.06]',
     )
   }
 

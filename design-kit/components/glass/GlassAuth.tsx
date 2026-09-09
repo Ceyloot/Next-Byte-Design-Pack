@@ -26,7 +26,7 @@ export function GlassAuthCard({
   return (
     <div className={cn(
       'w-full max-w-sm rounded-2xl p-6',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card shadow-xl',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       <div className="mb-5 flex flex-col items-center text-center">
@@ -57,14 +57,13 @@ export function GlassPasswordField({
   error?: string
   className?: string
 }) {
-  const { isGlass } = useGlass()
   const [visible, setVisible] = React.useState(false)
 
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
       <div className={cn(
         'flex h-10 items-center gap-2 rounded-xl px-3 transition-all',
-        isGlass ? 'nb-szklo' : 'border border-border bg-input',
+        'nb-pole',
         error ? 'ring-2 ring-destructive/40' : 'focus-within:ring-2 focus-within:ring-primary/30',
       )}>
         <Lock className="h-3.5 w-3.5 shrink-0 text-foreground/40" />
@@ -228,7 +227,6 @@ export function GlassLoginForm({
   loading?: boolean
   className?: string
 }) {
-  const { isGlass } = useGlass()
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [remember, setRemember] = React.useState(true)
@@ -246,7 +244,7 @@ export function GlassLoginForm({
 
       <div className={cn(
         'flex h-10 items-center gap-2 rounded-xl px-3 transition-all focus-within:ring-2 focus-within:ring-primary/30',
-        isGlass ? 'nb-szklo' : 'border border-border bg-input',
+        'nb-pole',
       )}>
         <Mail className="h-3.5 w-3.5 shrink-0 text-foreground/40" />
         <input
@@ -273,10 +271,10 @@ export function GlassLoginForm({
         type="submit"
         disabled={loading}
         className={cn(
-          'mt-1 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px] font-bold transition-all disabled:opacity-50',
-          isGlass
-            ? 'bg-primary/25 text-primary shadow-[0_0_14px_hsl(var(--primary)/0.28)] hover:bg-primary/35'
-            : 'bg-primary text-primary-foreground hover:brightness-110',
+          'mt-1 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px] font-bold',
+          /* Wysyłka formularza to wezwanie — ta sama świecąca tafla co CTA
+             na stronie głównej, niezależnie od trybu szkła. */
+          'nb-cta nb-refleks-krawedzi',
         )}
       >
         {loading ? 'Logowanie…' : <>Zaloguj się <ArrowRight className="h-3.5 w-3.5" /></>}

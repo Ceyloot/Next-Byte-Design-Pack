@@ -25,3 +25,21 @@ export const TINT_5 = 'color-mix(in oklch, hsl(var(--primary)) 16%, black 84%)'
 export function tintFaded(color: string, pct: number): string {
   return `color-mix(in srgb, ${color} ${pct}%, transparent)`
 }
+
+/* ── PALETA KATEGORIALNA ──────────────────────────────────────────────
+   Do podziałów, gdzie segmenty są RÓWNORZĘDNE i różnią się tożsamością,
+   nie wielkością: donut, wykres skumulowany, seria na wykresie liniowym.
+
+   Nie mylić z rampą TINT_* wyżej. Rampa to jeden kolor w kilku krokach —
+   niesie MAGNITUDĘ („więcej/mniej"), więc na kategoriach kłamie: sugeruje
+   porządek, którego nie ma, a sąsiednie kroki tego samego odcienia są
+   dla daltonisty nie do rozróżnienia.
+
+   Wartości siedzą w `--kat-*` w index.css razem z opisem, dlaczego jako
+   jedyne w systemie nie idą za motywem. Kolejność slotów jest częścią
+   walidacji — przydzielamy po kolei, nigdy w kółko. */
+export const KAT_1    = 'var(--kat-1)'
+export const KAT_2    = 'var(--kat-2)'
+export const KAT_3    = 'var(--kat-3)'
+/** Czwarta i dalsze kategorie: „Inne". Neutralna z definicji. */
+export const KAT_INNE = 'var(--kat-inne)'

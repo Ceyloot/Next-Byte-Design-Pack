@@ -1,5 +1,5 @@
 export { GlassCard }        from './GlassCard'
-export { NbGlassFilters }   from './NbGlassFilters'
+export { NbGlassFilters }   from '@/grafiki/filtry-szkla'
 export { GlassPanel }       from './GlassPanel'
 export { GlassInput }       from './GlassInput'
 export { GlassSearch }      from './GlassSearch'
@@ -93,7 +93,7 @@ export type { BentoTile } from './GlassLayout'
 export {
   GlassDivider, GlassOrb, GlassNoise, GlassSpotlight,
   GlassMeshGradient, GlassAurora, GlassCornerDecor, GlassBorderGlow,
-} from './GlassDecor'
+} from '@/grafiki/dekoracje'
 
 // ── Listy ─────────────────────────────────────────────────────────
 export {

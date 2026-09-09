@@ -43,12 +43,16 @@ export function GlassCard({
            .nb-refrakcja-chrome  → tylko nav/panel/modal
            .nb-refrakcja-wszedzie → również karty i mniejsze elementy */
         isGlass
-          ? 'nb-szklo nb-szklo-plynne'
-          : cn('nb-tafla', interactive && 'nb-tafla-int'),
-        ELEWACJA_UNIESIONA,
+          ? cn('nb-szklo nb-szklo-plynne', ELEWACJA_UNIESIONA)
+          /* Poza szkłem karta mówi językiem strony głównej (`Panel`):
+             tafla card/55% z realnym rozmyciem, refleks u górnej krawędzi
+             zamiast ramki dookoła i daleki, miękki cień. Interaktywna
+             unosi się i ociepla krawędź kolorem marki, zamiast zmieniać
+             wypełnienie — treść pod kursorem nie miga. */
+          : cn('nb-plyta', interactive && 'nb-plyta-int'),
         radius,
         padding,
-        interactive && 'cursor-pointer hover:border-primary/40',
+        interactive && 'cursor-pointer',
         className,
       )}
       {...props}

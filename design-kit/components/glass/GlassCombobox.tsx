@@ -110,7 +110,7 @@ export function GlassCombobox({
         onClick={() => !disabled && setOpen((v) => !v)}
         className={cn(
           'flex min-h-10 w-full cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm transition-all',
-          isGlass ? 'nb-szklo nb-szklo-plynne' : 'border border-border bg-input',
+          'nb-pole',
           open && 'ring-2 ring-primary/30',
           disabled && 'cursor-not-allowed opacity-50',
         )}
@@ -153,7 +153,7 @@ export function GlassCombobox({
         <div className={cn(
           'absolute left-0 top-full z-50 mt-2 w-full overflow-hidden rounded-2xl',
           'animate-in fade-in-0 zoom-in-[0.98] slide-in-from-top-1 duration-150',
-          isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card shadow-xl',
+          isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
         )}>
           <div className={cn('flex items-center gap-2 px-3 py-2', isGlass ? 'border-b border-foreground/[0.08]' : 'border-b border-border')}>
             <Search className="h-3.5 w-3.5 shrink-0 text-foreground/35" />

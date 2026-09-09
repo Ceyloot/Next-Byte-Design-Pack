@@ -1,22 +1,23 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
-import { useGlass } from "@/lib/glass-context"
 
 const textareaVariants = cva(
   [
-    "flex w-full rounded-xl border transition-colors duration-200",
-    "bg-input text-foreground placeholder:text-muted-foreground",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    // Ten sam wzorzec co `Input`: wgłębienie z wewnętrznym pierścieniem
+    // (`.nb-pole`), bez zewnętrznego ringu rozpychającego rząd kontrolek.
+    "nb-pole flex w-full rounded-xl",
+    "text-foreground placeholder:text-foreground/30",
+    "focus-visible:outline-none",
     "disabled:pointer-events-none disabled:opacity-50",
     "px-3 py-2 text-sm",
   ].join(" "),
   {
     variants: {
       variant: {
-        default: "border-border hover:border-border/70",
-        error:   "border-destructive/50 hover:border-destructive/70 focus-visible:ring-destructive/60",
-        ghost:   "border-transparent bg-foreground/[0.04] hover:bg-foreground/[0.06] focus-visible:bg-input focus-visible:border-border",
+        default: "",
+        error:   "nb-pole-blad",
+        ghost:   "nb-pole-ghost",
       },
       resize: {
         none: "resize-none",
@@ -40,7 +41,6 @@ export interface TextareaProps
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, variant, resize, showCount, maxLength, autoGrow, onChange, value, defaultValue, ...props }, ref) => {
-    const { isGlass } = useGlass()
     const innerRef = React.useRef<HTMLTextAreaElement>(null)
     React.useImperativeHandle(ref, () => innerRef.current as HTMLTextAreaElement)
 
@@ -66,7 +66,6 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           maxLength={maxLength}
           className={cn(
             textareaVariants({ variant, resize: autoGrow ? "none" : resize }),
-            isGlass && "nb-szklo",
             className,
           )}
           onChange={(e) => {

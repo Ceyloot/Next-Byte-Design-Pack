@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
+import { promien } from '../../grafiki/krzywizna'
 import { useGlass } from '../../lib/glass-context'
 
 export type GlassButtonVariant = 'primary' | 'hero' | 'solid' | 'ghost' | 'outline' | 'danger' | 'success'
@@ -10,37 +11,51 @@ interface GlassButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
   size?:    GlassButtonSize
 }
 
-// rounded-xl = promień TileAction/TileRow z @/components/Tile.tsx (kontrolki),
-// nie rounded-nb (8px) — ta sama konwencja co reszta aplikacji.
+/* Promień KAŻDEGO rozmiaru wynika z prawa napięcia (`grafiki/krzywizna.ts`),
+   nie z wpisanej ręcznie klasy Tailwinda. Wcześniej `sm` (32 px) i `icon`
+   (40 px) miały ten sam `rounded-xl` — czyli napięcie 75% kontra 60%, dwa
+   wyraźnie różne kształty stojące obok siebie. */
 const sizeMap: Record<GlassButtonSize, string> = {
-  sm:      'h-8  px-3   text-xs  gap-1.5 rounded-xl',
-  default: 'h-10 px-4   text-sm  gap-2   rounded-xl',
-  lg:      'h-12 px-6   text-base gap-2   rounded-2xl',
-  icon:    'h-10 w-10   text-sm          rounded-xl',
+  sm:      'h-8  px-3   text-xs  gap-1.5',
+  default: 'h-10 px-4   text-sm  gap-2',
+  lg:      'h-12 px-6   text-base gap-2',
+  icon:    'h-10 w-10   text-sm',
 }
 
-/* --- Klasy w trybie NORMAL (bez glass) --- */
-const normalBase = 'border font-medium transition-all duration-200'
+/** Krótszy bok kontrolki — z niego prawo napięcia liczy promień. */
+const bokMap: Record<GlassButtonSize, number> = {
+  sm: 32, default: 40, lg: 48, icon: 40,
+}
+
+/* --- Klasy w trybie NORMAL (język strony głównej) --------------------
+   Traktowanie przyniesione z landingu (`GlowButton`/`GhostButton`):
+   wezwanie to świecąca tafla koloru marki, nie płaskie wypełnienie;
+   reszta to ta sama bryła, tylko neutralna. Same reguły siedzą w
+   index.css jako `.nb-cta` / `.nb-cta-drugi` — tutaj zostaje wybór
+   roli i to, co odróżnia warianty semantyczne. */
+const normalBase = 'font-semibold'
 const normalMap: Record<GlassButtonVariant, string> = {
-  /* CTA — pełny kolor marki. To jest to jedno miejsce, gdzie primary działa
-     jako powierzchnia, nie jako szept. Domyślny wybór dla wezwań. */
-  primary: 'border-transparent bg-primary text-primary-foreground shadow-[0_1px_0_0_hsl(210_40%_100%/.15)_inset,0_8px_18px_-8px_hsl(var(--primary)/.5)] hover:brightness-110',
-  /* CTA-gwiazda strony — jedyne miejsce z mocnym poświatowym cieniem.
-     Dla "wybierz to" momentów (plan Ultimate, finałowe zaproszenie). */
-  hero:    'border-primary/60 bg-primary text-primary-foreground font-bold shadow-[0_0_24px_-4px_hsl(var(--primary)/0.55)] hover:brightness-110 active:scale-[0.98]',
-  solid:   'border-border/60 bg-muted/30 text-foreground hover:bg-muted/60 hover:border-border/80',
-  ghost:   'border-transparent text-foreground/70 hover:bg-muted/40 hover:text-foreground hover:border-border/40',
-  outline: 'border-border/70 bg-transparent text-foreground hover:bg-muted/30',
-  danger:  'border-destructive/40 bg-destructive/8 text-destructive hover:bg-destructive/14 hover:border-destructive/60',
-  success: 'border-emerald-500/40 bg-emerald-500/8 text-emerald-400 hover:bg-emerald-500/14 hover:border-emerald-500/60',
+  /* CTA — kolor marki jako świecąca powierzchnia. Domyślny wybór dla
+     wezwań; to jedyne miejsce, gdzie primary ma prawo świecić. */
+  primary: 'nb-cta nb-refleks-krawedzi',
+  /* CTA-gwiazda strony: ta sama tafla, mocniejsza waga i poświata —
+     dla „wybierz to" momentów (plan Ultimate, finałowe zaproszenie). */
+  hero:    'nb-cta nb-refleks-krawedzi font-bold shadow-[var(--nb-poblask-mocny),var(--nb-refleks-mocny)]',
+  solid:   'nb-cta-drugi nb-refleks-krawedzi-slaby',
+  ghost:   'border border-transparent text-foreground/70 transition-all duration-200 hover:bg-muted/40 hover:text-foreground hover:border-border/40',
+  outline: 'nb-cta-drugi nb-refleks-krawedzi-slaby bg-transparent',
+  danger:  'nb-cta-drugi nb-refleks-krawedzi-slaby border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/16 hover:border-destructive/60',
+  success: 'nb-cta-drugi nb-refleks-krawedzi-slaby border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/16 hover:border-emerald-500/60',
 }
 
-/* --- Klasy w trybie GLASS (nb-szklo jako baza) --- */
+/* --- Klasy w trybie GLASS (nb-szklo jako baza) ------------------------
+   Wezwanie wygląda tak samo w obu trybach: `.nb-cta` to już świecąca
+   tafla z rozmyciem, więc nie ma czego dokładać szkłem — a dwie warstwy
+   refrakcji na sobie zjadały poświatę. Reszta wariantów bierze `nb-szklo`
+   i dokłada tylko kolor treści. */
 const glassOverlay: Record<GlassButtonVariant, string> = {
-  /* Nawet w glass, primary CTA ma realne wypełnienie — glass to podkład
-     scenerii, primary to element interakcji. Nie mieszamy. */
-  primary: 'bg-primary text-primary-foreground border-transparent hover:brightness-110',
-  hero:    'bg-primary text-primary-foreground font-bold border-primary shadow-[0_0_24px_-4px_hsl(var(--primary)/0.55)] hover:brightness-110 active:scale-[0.98]',
+  primary: 'nb-cta nb-refleks-krawedzi',
+  hero:    'nb-cta nb-refleks-krawedzi font-bold shadow-[var(--nb-poblask-mocny),var(--nb-refleks-mocny)]',
   solid:   'text-foreground',
   ghost:   'text-foreground/80 hover:text-foreground',
   outline: 'text-foreground border-foreground/25 hover:border-foreground/45',
@@ -61,20 +76,18 @@ export function GlassButton({
   return (
     <button
       disabled={disabled}
+      style={{ borderRadius: promien(bokMap[size]) }}
       className={cn(
         'inline-flex items-center justify-center font-medium select-none cursor-pointer',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
         'disabled:pointer-events-none disabled:opacity-50',
         sizeMap[size],
         isGlass
+          // CTA prowadzi własna tafla `.nb-cta` — nakładanie na nią
+          // `nb-szklo` dawało dwie warstwy refrakcji i gasiło poświatę.
           ? (variant === 'primary' || variant === 'hero')
-            // `.is-glass .nb-szklo` ma wyższą specyficzność niż `bg-primary`
-            // (2 klasy vs 1) i nadpisuje wypełnienie kolorem — dlatego CTA
-            // z pełnym kolorem NIE dostaje bazy nb-szklo, tylko realną
-            // krawędź + wypełnienie wprost (patrz komentarz przy primary
-            // w glassOverlay: "nie mieszamy").
-            ? cn('border', glassOverlay[variant])
-            : cn('nb-szklo', glassOverlay[variant])
+            ? glassOverlay[variant]
+            : cn('nb-szklo border', glassOverlay[variant])
           : cn(normalBase, normalMap[variant]),
         className,
       )}

@@ -1,7 +1,6 @@
 import * as React from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useGlass } from "@/lib/glass-context"
 
 export interface TagInputProps {
   value?: string[]
@@ -17,7 +16,6 @@ export const TagInput: React.FC<TagInputProps> = ({
   value, defaultValue = [], onChange, placeholder = "Dodaj i naciśnij Enter...",
   maxTags, disabled, className,
 }) => {
-  const { isGlass } = useGlass()
   const [internal, setInternal] = React.useState<string[]>(defaultValue)
   const [draft, setDraft] = React.useState("")
   const tags = value ?? internal
@@ -51,10 +49,9 @@ export const TagInput: React.FC<TagInputProps> = ({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-input px-2.5 py-2",
-        "transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
+        "flex flex-wrap items-center gap-1.5 rounded-xl nb-pole px-2.5 py-2",
+        "transition-colors",
         disabled && "pointer-events-none opacity-50",
-        isGlass && "nb-szklo",
         className,
       )}
     >

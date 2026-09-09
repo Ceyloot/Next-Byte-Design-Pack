@@ -81,7 +81,7 @@ export function GlassSkeletonCard({
     <div
       className={cn(
         'space-y-3 rounded-2xl p-5',
-        isGlass ? 'nb-szklo' : 'border border-border bg-card',
+        isGlass ? 'nb-szklo' : 'nb-plyta',
         className,
       )}
     >
@@ -106,7 +106,7 @@ export function GlassSkeletonTable({
     <div
       className={cn(
         'overflow-hidden rounded-2xl',
-        isGlass ? 'nb-szklo' : 'border border-border bg-card',
+        isGlass ? 'nb-szklo' : 'nb-plyta',
         className,
       )}
     >

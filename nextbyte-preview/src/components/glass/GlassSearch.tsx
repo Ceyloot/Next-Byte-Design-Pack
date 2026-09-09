@@ -1,7 +1,6 @@
 import React, { useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useGlass } from '@/lib/glass-context'
 
 interface GlassSearchProps {
   placeholder?: string
@@ -28,7 +27,6 @@ export function GlassSearch({
   className,
   autoFocus,
 }: GlassSearchProps) {
-  const { isGlass } = useGlass()
   const inputRef = useRef<HTMLInputElement>(null)
   const sz = sizeMap[size]
 
@@ -39,7 +37,7 @@ export function GlassSearch({
 
   return (
     <div className={cn(
-      isGlass ? 'nb-szklo' : 'border border-border bg-input',
+      'nb-pole',
       'relative flex items-center rounded-full',
       sz.wrap,
       className,

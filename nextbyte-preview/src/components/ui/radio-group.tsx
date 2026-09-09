@@ -2,7 +2,6 @@ import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useGlass } from "@/lib/glass-context"
 
 const SIZE = {
   sm: "h-4 w-4",
@@ -35,18 +34,16 @@ const RadioGroupItem = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Item>,
   RadioGroupItemProps
 >(({ className, radioSize = "default", ...props }, ref) => {
-  const { isGlass } = useGlass()
   return (
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "aspect-square shrink-0 rounded-full border border-border bg-input",
+        "aspect-square shrink-0 rounded-full nb-pole",
         "transition-colors duration-200 hover:border-border/70",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[state=checked]:border-primary",
         SIZE[radioSize],
-        isGlass && "nb-szklo",
         className,
       )}
       {...props}

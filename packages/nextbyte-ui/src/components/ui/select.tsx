@@ -26,15 +26,13 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-input px-3",
+      "flex w-full items-center justify-between gap-2 rounded-xl nb-pole px-3",
       "text-foreground placeholder:text-muted-foreground",
-      "transition-colors duration-200 hover:border-border/70",
-      "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
+      "focus:outline-none",
       "disabled:pointer-events-none disabled:opacity-50",
       "[&>span]:line-clamp-1",
-      error && "border-destructive/50 hover:border-destructive/70 focus:ring-destructive/60",
+      error && "nb-pole-blad",
       SIZE_H[triggerSize],
-      isGlass && 'nb-szklo',
       className,
     )}
     {...props}

@@ -31,9 +31,9 @@ export function Toaster(props: ToasterProps) {
             "group-[.toaster]:border group-[.toaster]:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.28)]",
           description: "group-[.toast]:text-muted-foreground",
           actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+            "group-[.toast]:nb-cta group-[.toast]:rounded-lg",
           cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group-[.toast]:nb-cta-drugi group-[.toast]:rounded-lg",
         },
       }}
       {...props}

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useGlass } from '../../lib/glass-context'
-import { Checkbox } from '../../components/ui/checkbox'
+import { Checkbox } from '../ui/checkbox'
 
 export interface GlassTableColumn<T = Record<string, unknown>> {
   key: string
@@ -97,7 +97,7 @@ export function GlassTable<T extends Record<string, unknown>>({
       'w-full overflow-hidden rounded-2xl',
       isGlass
         ? 'nb-szklo nb-szklo-plynne nb-powierzchnia'
-        : 'border border-border bg-card',
+        : 'nb-plyta',
       className,
     )}>
       {caption && (

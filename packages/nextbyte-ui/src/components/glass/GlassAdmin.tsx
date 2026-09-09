@@ -40,7 +40,7 @@ export function GlassFilterBar({
       <div className="flex items-center gap-2">
         <div className={cn(
           'flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl px-3 transition-all focus-within:ring-2 focus-within:ring-primary/25',
-          isGlass ? 'nb-szklo nb-szklo-plynne' : 'border border-border bg-input',
+          'nb-pole',
         )}>
           <Search className="h-3.5 w-3.5 shrink-0 text-foreground/40" />
           <input
@@ -57,7 +57,7 @@ export function GlassFilterBar({
         </div>
         <button className={cn(
           'flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-medium text-foreground/65 transition-colors hover:text-foreground',
-          isGlass ? 'nb-szklo' : 'border border-border bg-card',
+          isGlass ? 'nb-szklo' : 'nb-plyta',
         )}>
           <SlidersHorizontal className="h-3.5 w-3.5" /> Filtry
         </button>
@@ -117,7 +117,7 @@ export function GlassBulkActionBar({
   return (
     <div className={cn(
       'flex items-center gap-3 rounded-2xl px-4 py-2.5',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card shadow-lg',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       floating && 'fixed bottom-5 left-1/2 z-50 -translate-x-1/2 animate-in slide-in-from-bottom-3 duration-200',
       className,
     )}>
@@ -168,7 +168,7 @@ export function GlassSettingsSection({
   return (
     <div className={cn(
       'grid gap-4 rounded-2xl p-4 sm:grid-cols-[1fr_1.4fr]',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       <div>
@@ -254,7 +254,7 @@ export function GlassApiKey({
   return (
     <div className={cn(
       'flex flex-col gap-2 rounded-2xl p-3',
-      isGlass ? 'nb-szklo nb-szklo-plynne' : 'border border-border bg-card',
+      isGlass ? 'nb-szklo nb-szklo-plynne' : 'nb-plyta',
       className,
     )}>
       <div className="flex items-baseline gap-2">
@@ -265,7 +265,7 @@ export function GlassApiKey({
       <div className="flex items-center gap-1.5">
         <code className={cn(
           'min-w-0 flex-1 truncate rounded-lg px-2.5 py-1.5 font-mono text-[11px]',
-          isGlass ? 'bg-foreground/[0.06] text-foreground/75' : 'bg-muted/60 text-foreground/75',
+          isGlass ? 'bg-foreground/[0.06] text-foreground/75' : 'nb-wglobienie text-foreground/75',
         )}>
           {visible ? value : masked}
         </code>
@@ -379,7 +379,7 @@ export function GlassNotificationCenter({
   return (
     <div className={cn(
       'flex w-full max-w-sm flex-col overflow-hidden rounded-2xl',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card shadow-xl',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       <div className={cn(

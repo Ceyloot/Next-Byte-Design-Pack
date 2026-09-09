@@ -67,7 +67,7 @@ export function GlassSlider({
         {/* Track bg */}
         <div className={cn(
           'absolute inset-y-0 my-auto h-1.5 w-full rounded-full',
-          isGlass ? 'nb-szklo' : 'bg-muted/60',
+          'nb-pole',
         )} />
         {/* Active range fill */}
         <div

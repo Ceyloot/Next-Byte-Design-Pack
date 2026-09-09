@@ -18,7 +18,7 @@ interface GlassChipProps {
 const colorMap: Record<ChipColor, { glass: string; normal: string }> = {
   default: {
     glass:  'border-foreground/20 bg-foreground/6 text-foreground/80',
-    normal: 'border-border bg-muted/50 text-foreground/80',
+    normal: 'border-foreground/[0.09] bg-foreground/[0.05] text-foreground/80',
   },
   primary: {
     glass:  'border-primary/35 bg-primary/10 text-primary',

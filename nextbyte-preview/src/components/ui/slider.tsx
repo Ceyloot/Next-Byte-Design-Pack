@@ -1,7 +1,6 @@
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 import { cn } from "@/lib/utils"
-import { useGlass } from "@/lib/glass-context"
 
 export interface SliderProps
   extends React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
@@ -13,7 +12,6 @@ const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   SliderProps
 >(({ className, showValue, formatValue, defaultValue, value, ...props }, ref) => {
-  const { isGlass } = useGlass()
   const [internal, setInternal] = React.useState<number[]>(
     (value as number[]) ?? (defaultValue as number[]) ?? [0],
   )
@@ -38,8 +36,7 @@ const Slider = React.forwardRef<
       >
         <SliderPrimitive.Track
           className={cn(
-            "relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted/60",
-            isGlass && "nb-szklo",
+            "nb-pole relative h-1.5 w-full grow overflow-hidden rounded-full",
           )}
         >
           <SliderPrimitive.Range className="absolute h-full bg-primary" />
@@ -49,7 +46,7 @@ const Slider = React.forwardRef<
             key={i}
             className={cn(
               "block h-4 w-4 rounded-full border-2 border-primary bg-background shadow-sm",
-              "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "transition-colors focus-visible:outline-none",
               "disabled:pointer-events-none",
               "hover:scale-110 transition-transform",
             )}

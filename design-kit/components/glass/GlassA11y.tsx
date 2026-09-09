@@ -118,7 +118,7 @@ export function GlassKbd({ keys, className }: { keys: string[]; className?: stri
       {keys.map((k, i) => (
         <React.Fragment key={i}>
           {i > 0 && <span className="text-[9px] text-foreground/25">+</span>}
-          <kbd className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-md border border-foreground/12 bg-foreground/[0.05] px-1.5 font-mono text-[10px] font-semibold text-foreground/60">
+          <kbd className="nb-wglobienie inline-flex h-5 min-w-[20px] items-center justify-center rounded-md px-1.5 font-mono text-[10px] font-semibold text-foreground/60">
             {k}
           </kbd>
         </React.Fragment>

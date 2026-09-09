@@ -79,7 +79,7 @@ export function GlassEmpty({
           compact ? 'h-10 w-10' : 'h-14 w-14',
           isGlass
             ? 'border border-foreground/10 bg-foreground/[0.06]'
-            : 'border border-border bg-muted/50',
+            : 'nb-wglobienie',
           cfg.tone,
         )}
       >

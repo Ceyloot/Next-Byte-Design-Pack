@@ -1,7 +1,6 @@
 import * as React from "react"
 import { Upload, File as FileIcon, X, Image as ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useGlass } from "@/lib/glass-context"
 import { Button } from "@/components/ui/button"
 
 /* ── FileUploadButton — trigger + hidden input ───────────────────── */
@@ -58,7 +57,6 @@ export interface FileDropzoneProps {
 export const FileDropzone: React.FC<FileDropzoneProps> = ({
   onFiles, accept, multiple, disabled, hint = "PNG, JPG do 10MB", className,
 }) => {
-  const { isGlass } = useGlass()
   const [dragging, setDragging] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -79,9 +77,10 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       className={cn(
         "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-8 text-center cursor-pointer",
         "transition-colors duration-200",
-        dragging ? "border-primary bg-primary/[0.06]" : "border-border hover:border-border/70",
+        dragging
+          ? "border-primary bg-primary/[0.06]"
+          : "border-foreground/[0.14] bg-foreground/[0.02] hover:border-foreground/[0.24]",
         disabled && "pointer-events-none opacity-50",
-        isGlass && "nb-szklo",
         className,
       )}
     >

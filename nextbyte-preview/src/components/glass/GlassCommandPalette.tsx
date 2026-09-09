@@ -98,7 +98,7 @@ export function GlassCommandPalette({
   const panel = (
     <div className={cn(
       'flex w-full flex-col overflow-hidden rounded-2xl',
-      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card shadow-2xl',
+      isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'nb-plyta',
       className,
     )}>
       {/* Pole wyszukiwania */}

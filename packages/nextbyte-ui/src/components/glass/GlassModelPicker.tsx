@@ -86,7 +86,10 @@ export function GlassModelPicker({
     : 'bg-card border border-border'
 
   return (
-    <div className={cn('flex items-start gap-4', className)}>
+    /* Na telefonie panele idą jeden pod drugim. Wcześniej prawy panel miał
+       sztywne 360 px i `shrink-0`, więc przy oknie 375 px cała sekcja
+       rozpychała stronę o 365 px. */
+    <div className={cn('flex flex-col items-stretch gap-4 lg:flex-row lg:items-start', className)}>
 
       {/* ── Lewy panel: lista modeli ── */}
       <div className={cn('w-[340px] shrink-0 overflow-hidden rounded-2xl', panelCls)}>
@@ -178,7 +181,7 @@ export function GlassModelPicker({
       </div>
 
       {/* ── Prawy panel: szczegóły wybranego modelu ── */}
-      <div className={cn('w-[360px] shrink-0 rounded-2xl p-5', panelCls)}>
+      <div className={cn('w-full rounded-2xl p-5 lg:w-[360px] lg:shrink-0', panelCls)}>
 
         {/* Nagłówek: nazwa + badge dostawcy */}
         <div className="flex items-start justify-between gap-2">

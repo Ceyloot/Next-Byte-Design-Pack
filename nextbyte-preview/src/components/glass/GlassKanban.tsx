@@ -55,7 +55,7 @@ export function GlassKanbanCard({
       onDragEnd={onDragEnd}
       className={cn(
         'cursor-grab rounded-xl p-2.5 transition-all active:cursor-grabbing',
-        isGlass ? 'nb-szklo' : 'border border-border bg-card',
+        isGlass ? 'nb-szklo' : 'nb-plyta',
         dragging ? 'opacity-40' : 'hover:-translate-y-0.5 hover:shadow-md',
         className,
       )}
@@ -126,7 +126,7 @@ export function GlassKanbanColumn({
       {...dropProps}
       className={cn(
         'flex w-64 shrink-0 flex-col gap-2 rounded-2xl p-2.5 transition-colors',
-        isGlass ? 'nb-szklo nb-szklo-plynne' : 'border border-border bg-card/60',
+        isGlass ? 'nb-szklo nb-szklo-plynne' : 'nb-plyta',
         isDropTarget && 'ring-2 ring-primary/40',
       )}
     >

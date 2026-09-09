@@ -5,11 +5,17 @@ import { useGlass } from '../../lib/glass-context'
 
 export type DrawerSide = 'right' | 'left' | 'bottom' | 'top'
 
+/* Zaokrąglona jest wyłącznie krawędź WEWNĘTRZNA — ta zwrócona do treści.
+   Krawędź przylegająca do brzegu okna zostaje ostra, bo zaokrąglenie w tym
+   miejscu odsłaniałoby tło i szuflada przestawałaby przylegać. Promień 16 px
+   (`rounded-2xl`) to ten sam stopień co karta, więc szuflada nie wypada ze
+   skali; wcześniej boczne warianty nie miały go wcale, a górny i dolny miały
+   24 px — trzy różne języki w jednym komponencie. */
 const PANEL: Record<DrawerSide, string> = {
-  right:  'inset-y-0 right-0 h-full w-full max-w-md border-l',
-  left:   'inset-y-0 left-0  h-full w-full max-w-md border-r',
-  bottom: 'inset-x-0 bottom-0 w-full max-h-[85vh] border-t rounded-t-3xl',
-  top:    'inset-x-0 top-0    w-full max-h-[85vh] border-b rounded-b-3xl',
+  right:  'inset-y-0 right-0 h-full w-full max-w-md border-l rounded-l-2xl',
+  left:   'inset-y-0 left-0  h-full w-full max-w-md border-r rounded-r-2xl',
+  bottom: 'inset-x-0 bottom-0 w-full max-h-[85vh] border-t rounded-t-2xl',
+  top:    'inset-x-0 top-0    w-full max-h-[85vh] border-b rounded-b-2xl',
 }
 
 /* Stan zamknięty — panel zsunięty poza krawędź */
@@ -79,13 +85,17 @@ export function GlassDrawer({
         aria-modal="true"
         aria-hidden={!open}
         className={cn(
-          'fixed z-[141] flex flex-col',
-          'transition-transform duration-300 ease-out',
+          'nb-nakladka fixed z-[141] flex flex-col',
+          /* `will-change` wypycha panel na własną warstwę na czas ruchu —
+             bez tego przeglądarka przemalowuje rozmycie tła w każdej klatce
+             i wjazd się szarpie. */
+          'transition-transform duration-300 ease-out will-change-transform',
+          !open && 'pointer-events-none',
           PANEL[side],
           !open && HIDDEN[side],
           isGlass
             ? 'nb-szklo nb-szklo-plynne nb-powierzchnia border-foreground/12'
-            : 'border-border bg-card',
+            : 'nb-plyta',
           className,
         )}
       >

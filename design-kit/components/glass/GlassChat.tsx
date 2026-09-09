@@ -52,7 +52,7 @@ export function GlassChatBubble({
       <div className={cn('flex justify-center py-1', className)}>
         <span className={cn(
           'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] text-foreground/50',
-          isGlass ? 'nb-szklo' : 'bg-muted/60 border border-border',
+          isGlass ? 'nb-szklo' : 'nb-wglobienie',
         )}>
           {children}
         </span>
@@ -69,7 +69,7 @@ export function GlassChatBubble({
           'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
           isUser
             ? 'bg-primary/20 text-primary border border-primary/30'
-            : isGlass ? 'nb-szklo text-foreground/70' : 'bg-muted text-foreground/70 border border-border',
+            : isGlass ? 'nb-szklo text-foreground/70' : 'nb-wglobienie text-foreground/70',
         )}>
           {avatar}
         </div>
@@ -115,7 +115,7 @@ export function GlassChatTyping({ avatar, label, className }: { avatar?: React.R
       {avatar && (
         <div className={cn(
           'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
-          isGlass ? 'nb-szklo text-foreground/70' : 'bg-muted text-foreground/70 border border-border',
+          isGlass ? 'nb-szklo text-foreground/70' : 'nb-wglobienie text-foreground/70',
         )}>
           {avatar}
         </div>

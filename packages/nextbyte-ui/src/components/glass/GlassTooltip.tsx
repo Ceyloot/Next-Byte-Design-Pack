@@ -49,7 +49,7 @@ export function GlassTooltip({
             cfg.pos,
             isGlass
               ? 'nb-szklo text-foreground border-foreground/15'
-              : 'bg-card border-border text-foreground shadow-lg',
+              : 'nb-plyta text-foreground',
             'animate-in fade-in-0 zoom-in-95 duration-150',
             className,
           )}
