@@ -1377,10 +1377,6 @@ function ByteCalculatorSection() {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
 /* ═══════════════════════════════════════════════════════════════
    STRONA CENNIKA
    ═══════════════════════════════════════════════════════════════ */
@@ -1448,13 +1444,6 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
               <PlanFinder onWybierz={wybierzRekomendacje} okres={okres} />
             </div>
           </Rozwijane>
-        </div>
-
-        {/* ══════════ WYJAŚNIENIE BYTE'ÓW ══════════ */}
-        <div className="relative mx-auto w-full max-w-[92rem] px-4 pb-8 pt-8 sm:px-6 lg:px-8">
-          <FadeIn>
-            <ByteCalculatorSection />
-          </FadeIn>
         </div>
 
         {/* ══════════ KARTY PLANÓW ══════════ */}

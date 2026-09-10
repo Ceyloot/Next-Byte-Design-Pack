@@ -770,26 +770,70 @@ export const B2B_LICZBY = [
   { value: '0 zł', label: 'Koszt modeli lokalnych offline', sub: 'Bezpieczna praca bez chmury' },
 ] as const
 
+/* Wpisy historii wydań. Kształt musi zgadzać się z `HistoriaPage`, która
+   czyta `wersja`, `data`, `typ`, `color` i `punkty` — brak tych pól wywalał
+   stronę na `w.punkty.map` (TypeError: undefined). Punkty są rozpisane
+   z istniejących opisów, nie dopisane od siebie. */
 export const HISTORIA = [
   {
     rok: '2024 Q1',
+    wersja: 'v0.1',
+    data: 'Styczeń 2024',
+    typ: 'major',
+    color: AKCENT.neutral,
+    icon: Layers,
     tytul: 'Początek: Chaos subskrypcji AI',
     opis: 'Przełączanie między 6 różnymi aplikacjami, 5 faktur w USD z przewalutowaniami i ciągłe gubienie kontekstu rozmów zmotywowało nas do stworzenia zintegrowanej platformy.',
+    punkty: [
+      'Sześć osobnych aplikacji zamiast jednego miejsca pracy',
+      'Pięć faktur w dolarach, każda z własnym przewalutowaniem',
+      'Kontekst rozmowy ginął przy każdej zmianie narzędzia',
+    ],
   },
   {
     rok: '2024 Q3',
+    wersja: 'v1.0',
+    data: 'Wrzesień 2024',
+    typ: 'major',
+    color: AKCENT.chat,
+    icon: Sparkles,
     tytul: 'Ekosystem NextByte v1.0',
     opis: 'Wypuszczenie wspólnego interfejsu dla Gemini, Claude, GPT-4o oraz Studia Zdjęć na jednej puli Byte z polską fakturą VAT.',
+    punkty: [
+      'Jeden interfejs dla Gemini, Claude i GPT-4o',
+      'Studio Zdjęć na tej samej puli Byte co czat',
+      'Polska faktura VAT zamiast pięciu rozliczeń w USD',
+    ],
   },
   {
     rok: '2025 Q1',
+    wersja: 'v2.0',
+    data: 'Marzec 2025',
+    typ: 'major',
+    color: AKCENT.studio,
+    icon: Shield,
     tytul: 'Panel B2B i Tryb Lokalny (Offline)',
     opis: 'Wdrożenie modułów dla firm z zarządzaniem uprawnieniami, audytem oraz 100% prywatnymi modelami LM Studio / Ollama dla wrażliwych danych.',
+    punkty: [
+      'Zarządzanie uprawnieniami i audyt dla zespołów',
+      'Modele lokalne LM Studio i Ollama — dane nie opuszczają maszyny',
+      'Tryb offline dla materiałów wrażliwych',
+    ],
   },
   {
     rok: '2026',
+    wersja: 'v3.0',
+    data: 'Luty 2026',
+    typ: 'feature',
+    color: AKCENT.notes,
+    icon: Calendar,
     tytul: 'Kalendarz AI, Studio Wideo i Głos AI',
     opis: 'Pełny zestaw twórcy: generowanie klipów, transkrypcje spotkań i kalendarz spięty z tablicami Kanban.',
+    punkty: [
+      'Generowanie klipów wideo w Studiu',
+      'Transkrypcje spotkań z rozpoznaniem mówców',
+      'Kalendarz spięty z tablicami Kanban',
+    ],
   },
 ] as const
 
