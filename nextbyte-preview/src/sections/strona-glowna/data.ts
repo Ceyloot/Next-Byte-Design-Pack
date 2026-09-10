@@ -3,7 +3,7 @@ import {
   Shield, Sparkles, Layers, Clock, Building2, Lock, Gauge, GitBranch,
   Rocket, BadgeCheck, Headphones, KeyRound, ServerCog, FileStack,
   Calendar, Mic, Bot, Repeat, CheckCircle2, Radar, ImagePlus, FileSearch,
-  MessagesSquare, ZoomIn, LayoutGrid, Database,
+  MessagesSquare, ZoomIn, LayoutGrid, Database, HardDrive,
   Coins, ShoppingCart, GraduationCap, Globe, Search, Upload, Wand2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -233,6 +233,7 @@ export type Plan = {
   /** Podpis pod ceną — tylko plan bezpłatny ma własny (reszta liczy się z okresu). */
   podCena: string | null
   unlimited: { label: string; icon: LucideIcon }[]
+  cloudStorage: string
   cechyNaglowek: string
   cechy: Cecha[]
   cta: string
@@ -253,10 +254,13 @@ export const PLANY: Plan[] = [
     podCena: 'Płacisz tylko za zużyte Byte z paczek',
     unlimited: [
       { label: 'Chat AI', icon: MessagesSquare },
-      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
-      { label: 'Baza Danych', icon: Database },
+      { label: 'Kalendarz', icon: Calendar },
+      { label: 'Zadania', icon: CheckCircle2 },
+      { label: 'Notatki', icon: NotebookPen },
+      { label: 'System Cloud', icon: Database },
       { label: 'Szyfrowanie', icon: Lock },
     ],
+    cloudStorage: '1 GB',
     cechyNaglowek: 'W planie Bezpłatnym:',
     cechy: [
       { t: 'Płacisz tylko za zużycie', icon: Coins },
@@ -267,7 +271,7 @@ export const PLANY: Plan[] = [
       { t: 'Kalendarz', icon: Calendar, badge: { t: 'Unlimited', ton: 'blue' } },
       { t: 'Zadania', icon: CheckCircle2, badge: { t: 'Unlimited', ton: 'blue' } },
       { t: 'Notatki', icon: NotebookPen, badge: { t: 'Unlimited', ton: 'blue' } },
-      { t: 'Baza Danych', icon: Database, badge: { t: 'Unlimited', ton: 'blue' } },
+      { t: 'System Cloud', icon: Database, badge: { t: 'Unlimited', ton: 'blue' } },
       { t: 'Szyfrowanie', icon: Lock, badge: { t: 'Unlimited', ton: 'blue' } },
       { t: 'Listy Zakupowe', icon: ShoppingCart },
       { t: 'Pętle AI', icon: Repeat, badge: { t: '1 pętla', ton: 'pink' } },
@@ -290,10 +294,13 @@ export const PLANY: Plan[] = [
     podCena: null,
     unlimited: [
       { label: 'Chat AI', icon: MessagesSquare },
-      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
-      { label: 'Baza Danych', icon: Database },
+      { label: 'Kalendarz', icon: Calendar },
+      { label: 'Zadania', icon: CheckCircle2 },
+      { label: 'Notatki', icon: NotebookPen },
+      { label: 'System Cloud', icon: Database },
       { label: 'Szyfrowanie', icon: Lock },
     ],
+    cloudStorage: '5 GB',
     cechyNaglowek: 'W planie Lite:',
     cechy: [
       { t: '140 Byte co miesiąc', icon: Coins, badge: { t: '140 ⟠', ton: 'blue' } },
@@ -325,10 +332,13 @@ export const PLANY: Plan[] = [
     podCena: null,
     unlimited: [
       { label: 'Chat AI', icon: MessagesSquare },
-      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
-      { label: 'Baza Danych', icon: Database },
+      { label: 'Kalendarz', icon: Calendar },
+      { label: 'Zadania', icon: CheckCircle2 },
+      { label: 'Notatki', icon: NotebookPen },
+      { label: 'System Cloud', icon: Database },
       { label: 'Szyfrowanie', icon: Lock },
     ],
+    cloudStorage: '20 GB',
     cechyNaglowek: 'W planie Premium:',
     cechy: [
       { t: 'Pełny dostęp do Chat AI', icon: Sparkles },
@@ -340,7 +350,6 @@ export const PLANY: Plan[] = [
       { t: 'Pamięć AI', icon: Brain },
       { t: 'Miesięczne odnowienie do limitu', icon: Repeat },
       { t: 'Wsparcie Email', icon: Headphones },
-      { t: 'Tryb Ultra AI', icon: Globe, badge: { t: 'Ultra', ton: 'violet' } },
       { t: 'Deep Research', icon: Search, badge: { t: 'Pro', ton: 'blue' } },
       { t: 'Równoległe generacje', icon: Layers, badge: { t: '3x', ton: 'green' } },
       { t: 'Pętle AI', icon: Repeat, badge: { t: '3 pętle', ton: 'pink' } },
@@ -367,12 +376,15 @@ export const PLANY: Plan[] = [
     podCena: null,
     unlimited: [
       { label: 'Chat AI', icon: MessagesSquare },
-      { label: 'Kalendarz, Zadania, Notatki', icon: LayoutGrid },
-      { label: 'Baza Danych', icon: Database },
+      { label: 'Kalendarz', icon: Calendar },
+      { label: 'Zadania', icon: CheckCircle2 },
+      { label: 'Notatki', icon: NotebookPen },
+      { label: 'System Cloud', icon: Database },
       { label: 'Szyfrowanie', icon: Lock },
       { label: 'Enhancer 2x', icon: ZoomIn },
     ],
-    cechyNaglowek: 'Wszystko z Premium, plus:',
+    cloudStorage: '50 GB',
+    cechyNaglowek: 'W planie Ultimate:',
     cechy: [
       { t: 'Priorytetowa kolejka', icon: Clock, badge: { t: 'Fast', ton: 'green' } },
       { t: 'Równoległe generacje', icon: Layers, badge: { t: '5x', ton: 'green' } },
@@ -426,7 +438,7 @@ export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string
     v: ['Z paczek Byte', true, true, true],
   },
   {
-    f: 'Deep Research i Tryb Ultra',
+    f: 'Deep Research',
     v: [false, true, true, true],
   },
   {
@@ -750,16 +762,22 @@ export const KOSZT_BYTE = {
   mocnyModel: 11,
 } as const
 
+// Claude Sonnet 5 input: $2/1M tokenów = 8 zł/1M (kurs 4 zł/USD)
+const SONNET5_INPUT_ZL_PER_1M = 8
+
 /**
  * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
- * Używane na karcie planu w cenniku — zwraca wiersze gotowe do wyrenderowania.
+ * Gdy podasz zlPerByte (cena_mc / bytes_mc) pierwszy wiersz pokazuje tokeny
+ * wg referencyjnej ceny Claude Sonnet 5 input zamiast liczby rozmów.
  */
-export function przelicznikByte(byte: number) {
+export function przelicznikByte(byte: number, zlPerByte?: number) {
+  const pierwszyWiersz = zlPerByte && zlPerByte > 0
+    ? { icon: Zap, label: 'tokenów', value: Math.floor(byte * zlPerByte / (SONNET5_INPUT_ZL_PER_1M / 1_000_000)), isTokens: true, isImages: false }
+    : { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa), isTokens: false, isImages: false }
+
   return [
-    { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa) },
-    { icon: ImagePlus, label: 'obrazów w Studiu Zdjęć', value: Math.floor(byte / KOSZT_BYTE.obraz) },
-    { icon: Sparkles, label: 'zadań Asystenta', value: Math.floor(byte / KOSZT_BYTE.zadanieAsystenta) },
-    { icon: FileSearch, label: 'rozmów na mocnym modelu', value: Math.floor(byte / KOSZT_BYTE.mocnyModel) },
+    pierwszyWiersz,
+    { icon: ImagePlus, label: 'Graphic AI', value: Math.floor(byte / KOSZT_BYTE.obraz), isTokens: false, isImages: true },
   ]
 }
 

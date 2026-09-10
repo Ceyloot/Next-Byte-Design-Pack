@@ -372,7 +372,7 @@ export const PLANY: Plan[] = [
       { label: 'Szyfrowanie', icon: Lock },
       { label: 'Enhancer 2x', icon: ZoomIn },
     ],
-    cechyNaglowek: 'Wszystko z Premium, plus:',
+    cechyNaglowek: 'W planie Ultimate:',
     cechy: [
       { t: 'Priorytetowa kolejka', icon: Clock, badge: { t: 'Fast', ton: 'green' } },
       { t: 'Równoległe generacje', icon: Layers, badge: { t: '5x', ton: 'green' } },
@@ -750,16 +750,22 @@ export const KOSZT_BYTE = {
   mocnyModel: 11,
 } as const
 
+// Claude Sonnet 5 input: $2/1M tokenów = 8 zł/1M (kurs 4 zł/USD)
+const SONNET5_INPUT_ZL_PER_1M = 8
+
 /**
  * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
- * Używane na karcie planu w cenniku — zwraca wiersze gotowe do wyrenderowania.
+ * Gdy podasz zlPerByte (cena_mc / bytes_mc) pierwszy wiersz pokazuje tokeny
+ * wg referencyjnej ceny Claude Sonnet 5 input zamiast liczby rozmów.
  */
-export function przelicznikByte(byte: number) {
+export function przelicznikByte(byte: number, zlPerByte?: number) {
+  const pierwszyWiersz = zlPerByte && zlPerByte > 0
+    ? { icon: MessageSquare, label: 'tokenów', value: Math.floor(byte * zlPerByte / (SONNET5_INPUT_ZL_PER_1M / 1_000_000)), isTokens: true, isImages: false }
+    : { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa), isTokens: false, isImages: false }
+
   return [
-    { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa) },
-    { icon: ImagePlus, label: 'obrazów w Studiu Zdjęć', value: Math.floor(byte / KOSZT_BYTE.obraz) },
-    { icon: Sparkles, label: 'zadań Asystenta', value: Math.floor(byte / KOSZT_BYTE.zadanieAsystenta) },
-    { icon: FileSearch, label: 'rozmów na mocnym modelu', value: Math.floor(byte / KOSZT_BYTE.mocnyModel) },
+    pierwszyWiersz,
+    { icon: ImagePlus, label: 'Graphic AI', value: Math.floor(byte / KOSZT_BYTE.obraz), isTokens: false, isImages: true },
   ]
 }
 

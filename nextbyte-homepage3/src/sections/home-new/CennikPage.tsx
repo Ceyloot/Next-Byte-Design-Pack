@@ -3,13 +3,13 @@ import { cn } from '@/lib/utils'
 import {
   Check, Sparkles, Wand2, ChevronDown, ArrowRight,
   MessageSquare, ImagePlus, Bot, Layers, FileStack, FileSearch,
-  Gauge,
+  Gauge, Coins,
 } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton, FadeIn, akcentTlo,
   AnimStyles,
 } from './shared'
-import { SecRule, NextByteMarkIcon } from './HomePage'
+import { SecRule, NextByteMarkIcon, AnthropicIcon, GeminiIcon } from './HomePage'
 import { PLANY, PLAN_MACIERZ, BYTE_KARTY, przelicznikByte, KOSZT_BYTE, CENNIK_FAQ } from './data'
 import type { Plan, Cecha, TonPlakietki } from './data'
 import type { HomePage as HomePageId } from './types'
@@ -212,7 +212,7 @@ function AnimNum({ value, decimals = 0 }: { value: number; decimals?: number }) 
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SUWAK PULI BYTE — zgodny z HSL i kolorami planu
+   SUWAK PULI BYTE — NOWOCZESNY, DYNAMICZNY CYBER-GLASS STEPPER
    ═══════════════════════════════════════════════════════════════ */
 function ByteSlider({
   progi, indeks, onChange, kolor,
@@ -223,93 +223,128 @@ function ByteSlider({
   kolor: string
 }) {
   const pct = (indeks / (progi.length - 1)) * 100
+  const etykietyKrokow = progi.length === 3 ? ['Start', 'Optimum', 'Maks'] : []
 
   return (
-    <div className="space-y-3">
-      {/* Nagłówek: etykieta cicha (xs, muted), a liczba niesie akcent w kolorze planu */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Byte miesięcznie:</span>
-        <span className="flex items-center gap-1.5">
+    <div className="space-y-2.5 select-none">
+      {/* Nagłówek: czytelna etykieta i neonowy readout z ikoną ⟠ */}
+      <div className="flex items-center justify-between h-6">
+        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          <span>Byte miesięcznie:</span>
+        </span>
+        <div
+          className="flex items-center gap-1.5 rounded-lg border px-2 py-0.5 shadow-sm transition-all duration-300"
+          style={{
+            borderColor: akcentTlo(kolor, 35),
+            backgroundColor: akcentTlo(kolor, 12),
+            boxShadow: `0 0 12px -2px ${akcentTlo(kolor, 30)}`,
+          }}
+        >
           <span className="text-sm font-bold tabular-nums" style={{ color: kolor }}>
             <AnimNum value={progi[indeks].byte} />
           </span>
           <span className="text-xs font-semibold" style={{ color: kolor }}>⟠</span>
-        </span>
+        </div>
       </div>
 
-      {/* Tor suwaka */}
-      <div className="relative py-2.5">
-        <div className="relative h-1.5 w-full rounded-full bg-foreground/[0.08] shadow-inner">
+      {/* Tor suwaka z natywnym wsparciem przeciągania (drag & click) */}
+      <div className="relative py-2.5 group">
+        {/* Niewidoczny input range na całej powierzchni — obsługa dragowania, kliknięcia i strzałek klawiatury */}
+        <input
+          type="range"
+          min={0}
+          max={progi.length - 1}
+          step={1}
+          value={indeks}
+          onChange={e => onChange(Number(e.target.value))}
+          className="absolute inset-0 z-30 h-full w-full opacity-0 cursor-pointer"
+          aria-label="Wybierz pulę Byte"
+        />
+
+        {/* Baza toru: ciemne szkło z subtelną ramką */}
+        <div className="relative h-2 w-full rounded-full bg-foreground/[0.08] border border-foreground/[0.06] shadow-inner overflow-hidden">
+          {/* Wypełniony pasek z gradientem i poświatą */}
           <div
-            className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-300"
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-300 ease-out"
             style={{
               width: `${pct}%`,
               background: `linear-gradient(90deg, ${akcentTlo(kolor, 45)}, ${kolor})`,
-              boxShadow: `0 0 10px ${akcentTlo(kolor, 35)}`,
+              boxShadow: `0 0 14px ${akcentTlo(kolor, 50)}`,
             }}
           />
         </div>
 
-        {/* Punkty kroków */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none">
-          {progi.map((p, i) => {
-            const aktywny = i <= indeks
-            const biezacy = i === indeks
-            const left = (i / (progi.length - 1)) * 100
-            return (
-              <div
-                key={p.byte}
-                className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto flex items-center justify-center"
-                style={{ left: `${left}%` }}
-              >
-                <button
-                  type="button"
-                  onClick={() => onChange(i)}
-                  aria-label={`${p.byte} Byte`}
-                  className={cn(
-                    'flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer',
-                    biezacy
-                      ? 'h-4 w-4 bg-white border-[3px] shadow-[0_0_12px_hsl(var(--primary)/0.75),0_2px_4px_rgba(0,0,0,0.6)] hover:scale-115'
-                      : 'h-6 w-6 group'
-                  )}
-                  style={{
-                    borderColor: biezacy ? kolor : undefined,
-                  }}
+        {/* Punkty kroków & gałka suwaka */}
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 px-1">
+          <div className="relative w-full">
+            {progi.map((p, i) => {
+              const left = (i / (progi.length - 1)) * 100
+              const jestAktywny = i <= indeks
+              const jestBiezacy = i === indeks
+
+              return (
+                <div
+                  key={p.byte}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 top-0 flex items-center justify-center transition-all duration-300"
+                  style={{ left: `${left}%` }}
                 >
-                  {!biezacy && (
+                  {/* Znacznik kroku (gdy gałka nie stoi na nim) */}
+                  {!jestBiezacy && (
                     <span
-                      className="h-1.5 w-1.5 rounded-full transition-all duration-200 group-hover:scale-150"
-                      style={{
-                        background: aktywny ? kolor : 'hsl(var(--foreground)/0.25)',
-                        opacity: aktywny ? 0.75 : 0.35,
-                      }}
+                      className={cn(
+                        'h-2 w-2 rounded-full border transition-all duration-200',
+                        jestAktywny
+                          ? 'border-white/80 bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]'
+                          : 'border-foreground/25 bg-background/90'
+                      )}
                     />
                   )}
-                </button>
-              </div>
-            )
-          })}
+
+                  {/* Gałka suwaka na bieżącym kroku */}
+                  {jestBiezacy && (
+                    <div
+                      className="h-5 w-5 rounded-full border-2 border-white flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
+                      style={{
+                        backgroundColor: kolor,
+                        boxShadow: `0 0 0 3px ${akcentTlo(kolor, 30)}, 0 0 16px ${kolor}, 0 2px 6px rgba(0,0,0,0.7)`,
+                      }}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-white shadow-sm" />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Etykiety numeryczne progów pod linią */}
-      <div className="relative h-4 mt-0.5">
+      {/* Pigułki / kafelki kroków — klikalne z natychmiastowym feedbackiem */}
+      <div className="grid grid-cols-3 gap-1.5 pt-0.5">
         {progi.map((p, i) => {
-          const left = (i / (progi.length - 1)) * 100
-          const biezacy = i === indeks
+          const jestBiezacy = i === indeks
           return (
             <button
               key={p.byte}
               type="button"
               onClick={() => onChange(i)}
               className={cn(
-                'absolute top-0 text-[11px] tabular-nums transition-all cursor-pointer select-none',
-                i === 0 ? 'left-0' : i === progi.length - 1 ? 'right-0' : '-translate-x-1/2',
-                biezacy ? 'font-bold drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]' : 'text-muted-foreground/50 hover:text-foreground font-normal',
+                'relative flex flex-col items-center justify-center rounded-lg py-1 px-1 text-center transition-all duration-200 cursor-pointer border select-none h-[36px]',
+                jestBiezacy
+                  ? 'border-primary/50 bg-primary/[0.14] text-primary shadow-[0_0_12px_-2px_hsl(var(--primary)/0.35)]'
+                  : 'border-foreground/[0.06] bg-foreground/[0.02] text-muted-foreground/65 hover:text-foreground hover:bg-foreground/[0.06] hover:border-foreground/[0.14]'
               )}
-              style={{ left: i === 0 || i === progi.length - 1 ? undefined : `${left}%`, color: biezacy ? kolor : undefined }}
             >
-              {p.byte.toLocaleString('pl-PL')}
+              <span className="text-[11.5px] font-bold tabular-nums leading-tight flex items-center gap-0.5">
+                <span>{p.byte.toLocaleString('pl-PL')}</span>
+                <span className="text-[9px] opacity-70">⟠</span>
+              </span>
+              <span className={cn(
+                'text-[9px] leading-tight mt-0.5 transition-colors',
+                jestBiezacy ? 'text-primary/90 font-semibold' : 'text-muted-foreground/50'
+              )}>
+                {etykietyKrokow[i] || `Próg ${i + 1}`}
+              </span>
             </button>
           )
         })}
@@ -318,49 +353,167 @@ function ByteSlider({
   )
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BLOK "TO WYSTARCZY NA" + UNLIMITED — Panel w HSL
-   ═══════════════════════════════════════════════════════════════ */
-function PanelZuzycia({ byte, unlimited, kolor }: { byte: number | null; unlimited: Plan['unlimited']; kolor: string }) {
-  return (
-    <div className="space-y-1.5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] p-3">
-      {byte !== null && (
-        <>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
-            To wystarczy na:
-          </p>
-          {przelicznikByte(byte).map(r => (
-            <div key={r.label} className="flex items-center gap-2">
-              <r.icon className="h-3.5 w-3.5 shrink-0" style={{ color: akcentTlo(kolor, 70) }} />
-              <span className="text-xs text-muted-foreground">
-                ≈ <strong className="font-bold tabular-nums text-foreground"><AnimNum value={r.value} /></strong> {r.label}
-              </span>
-            </div>
-          ))}
-        </>
-      )}
-
-      {unlimited && unlimited.length > 0 && (
-        <div className={cn('space-y-1.5', byte !== null && 'mt-2 border-t border-foreground/[0.06] pt-2')}>
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
-            Unlimited:
-          </p>
-          {unlimited.map(u => (
-            <div key={u.label} className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <u.icon className="h-3.5 w-3.5 shrink-0" style={{ color: akcentTlo(kolor, 70) }} />
-                <span className="text-xs text-muted-foreground">{u.label}</span>
-              </div>
-              <span
-                className="rounded-full border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                style={{ color: kolor, background: akcentTlo(kolor, 15), borderColor: akcentTlo(kolor, 25) }}
-              >
-                Unlimited
-              </span>
-            </div>
-          ))}
+/** Statyczny wariant wiersza Byte dla planów bez suwaka (Lite, Free) — spójna geometria i wysokość */
+function ByteStaticRow({ plan, pulaByte, darmowy }: { plan: Plan; pulaByte: number | null; darmowy: boolean }) {
+  if (darmowy || pulaByte === null) {
+    return (
+      <div className="space-y-2.5 select-none">
+        <div className="flex items-center justify-between h-6">
+          <span className="text-xs font-medium text-muted-foreground">Pula Byte:</span>
+          <div className="flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-foreground/[0.04] px-2 py-0.5 text-muted-foreground">
+            <span className="text-xs font-semibold">Na żądanie</span>
+          </div>
         </div>
-      )}
+
+        <div className="relative py-2.5">
+          <div className="relative h-2 w-full rounded-full border border-dashed border-foreground/20 bg-foreground/[0.02]" />
+        </div>
+
+        <div className="rounded-lg border border-foreground/[0.06] bg-foreground/[0.02] px-3 flex items-center justify-between text-[11px] h-[36px]">
+          <span className="text-muted-foreground font-medium text-[11px]">Płatność za zużycie</span>
+          <span className="font-semibold text-muted-foreground/90 font-mono text-[11px]">Paczki Byte od 10 zł</span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2.5 select-none">
+      <div className="flex items-center justify-between h-6">
+        <span className="text-xs font-medium text-muted-foreground">Byte miesięcznie:</span>
+        <div
+          className="flex items-center gap-1.5 rounded-lg border px-2 py-0.5 shadow-sm"
+          style={{
+            borderColor: akcentTlo(plan.kolor, 35),
+            backgroundColor: akcentTlo(plan.kolor, 12),
+            boxShadow: `0 0 12px -2px ${akcentTlo(plan.kolor, 30)}`,
+          }}
+        >
+          <span className="text-sm font-bold tabular-nums" style={{ color: plan.kolor }}>
+            <AnimNum value={pulaByte} />
+          </span>
+          <span className="text-xs font-semibold" style={{ color: plan.kolor }}>⟠</span>
+        </div>
+      </div>
+
+      <div className="relative py-2.5">
+        <div className="relative h-2 w-full rounded-full bg-foreground/[0.08] border border-foreground/[0.06] shadow-inner overflow-hidden">
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `linear-gradient(90deg, ${akcentTlo(plan.kolor, 45)}, ${plan.kolor})`,
+              boxShadow: `0 0 14px ${akcentTlo(plan.kolor, 40)}`,
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-foreground/[0.06] bg-foreground/[0.02] px-3 flex items-center justify-between text-[11px] h-[36px]">
+        <span className="text-muted-foreground font-medium text-[11px]">Stała pula miesięczna</span>
+        <span className="font-bold tabular-nums text-[11.5px] flex items-center gap-0.5" style={{ color: plan.kolor }}>
+          <span>{pulaByte}</span>
+          <span className="text-[9px] opacity-70">⟠</span>
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function fmtTok(n: number): string {
+  if (n >= 1_000_000_000) return `~${(n / 1_000_000_000).toFixed(1).replace('.', ',')} mld`
+  if (n >= 1_000_000)     return `~${(n / 1_000_000).toFixed(1).replace('.', ',')} mln`
+  if (n >= 1_000)         return `~${Math.round(n / 1_000)} tys.`
+  return `~${n}`
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BLOK "TO WYSTARCZY NA" — 100% wyrównane chipsy (identyczna wysokość)
+   ═══════════════════════════════════════════════════════════════ */
+function PanelZuzycia({
+  byte, kolor, cena, darmowy,
+}: {
+  byte: number | null
+  kolor: string
+  cena?: number
+  darmowy?: boolean
+}) {
+  if (darmowy || byte === null) {
+    return (
+      <div className="pt-1">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 h-3.5 flex items-center">
+          To wystarczy na:
+        </p>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 rounded-lg border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1.5 text-[11px] h-[34px]">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-foreground/10 text-muted-foreground">
+              <Sparkles className="h-3 w-3" />
+            </span>
+            <strong className="font-semibold text-foreground">Workspace & Chat</strong>
+            <span className="text-muted-foreground">bez opłat</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1.5 text-[11px] h-[34px]">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-foreground/10 text-muted-foreground">
+              <Coins className="h-3 w-3" />
+            </span>
+            <strong className="font-semibold text-foreground">Paczki Byte</strong>
+            <span className="text-muted-foreground">wg potrzeb</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const zlPerByte = byte && byte > 0 && cena ? cena / byte : undefined
+  const rows = przelicznikByte(byte, zlPerByte)
+
+  return (
+    <div className="pt-1">
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 h-3.5 flex items-center">
+        To wystarczy na:
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {rows.map(r => (
+          <div
+            key={r.label}
+            className="flex items-center gap-2 rounded-lg border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1.5 text-[11px] h-[34px]"
+          >
+            {r.isTokens ? (
+              <>
+                <span
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                  style={{ background: akcentTlo(kolor, 18) }}
+                >
+                  <AnthropicIcon className="h-3 w-3" style={{ color: akcentTlo(kolor, 80) }} />
+                </span>
+                <strong className="font-semibold tabular-nums text-foreground">{fmtTok(r.value)}</strong>
+                <span className="text-muted-foreground">tokenów AI</span>
+              </>
+            ) : r.isImages ? (
+              <>
+                <span
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                  style={{ background: akcentTlo(kolor, 18) }}
+                >
+                  <GeminiIcon className="h-3 w-3" style={{ color: akcentTlo(kolor, 80) }} />
+                </span>
+                <strong className="font-semibold tabular-nums text-foreground">~<AnimNum value={r.value} /></strong>
+                <span className="text-muted-foreground">{r.label}</span>
+              </>
+            ) : (
+              <>
+                <span
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                  style={{ background: akcentTlo(kolor, 18) }}
+                >
+                  <r.icon className="h-3 w-3" style={{ color: akcentTlo(kolor, 80) }} />
+                </span>
+                <strong className="font-semibold tabular-nums text-foreground">~<AnimNum value={r.value} /></strong>
+                <span className="text-muted-foreground">{r.label}</span>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -405,59 +558,42 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
       />
 
       <div>
-        {/* Rząd odznaki planu */}
-        <div className="flex items-center justify-between min-h-[24px] mb-2">
-          <span className="font-heading text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {plan.nazwa} Plan
-          </span>
-
-          {plan.polecany && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-              style={{ color: plan.kolor, background: akcentTlo(plan.kolor, 15), borderColor: akcentTlo(plan.kolor, 30) }}
-            >
-              ★ Najlepsza oferta
+        {/* Rząd odznaki planu — spójna wysokość dla wszystkich 4 kart */}
+        <div className="flex items-center justify-between min-h-[26px] mb-2">
+          {plan.polecany ? (
+            <div className="ml-auto">
+              <span
+                className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-0.5 text-[11px] font-semibold"
+                style={{ color: plan.kolor, background: akcentTlo(plan.kolor, 15), borderColor: akcentTlo(plan.kolor, 30) }}
+              >
+                ★ Najlepsza oferta
+              </span>
+            </div>
+          ) : (
+            <span className="text-[10.5px] font-mono uppercase tracking-[0.14em] text-muted-foreground/45">
+              {plan.id === 'free' ? 'Na start' : plan.id === 'lite' ? 'Podstawowy' : 'Zaawansowany'}
             </span>
           )}
         </div>
 
-        {/* Tytuł & krótki opis — przy rozliczeniu rocznym obok nazwy siada rabat */}
+        {/* Tytuł & krótki opis — spójny blok */}
         <div className="mb-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 min-h-[32px]">
             <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {plan.nazwa}
             </h3>
             {!darmowy && okres === 'rocznie' && (
-              <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 font-sans text-[11.5px] font-bold text-primary">
+              <span className="shrink-0 rounded-md bg-primary/15 px-2 py-0.5 font-sans text-[11.5px] font-bold text-primary">
                 −{Math.round(RABAT_ROCZNY * 100)}%
               </span>
             )}
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{plan.opis}</p>
-
-          {/* A — Anchoring konkurencji */}
-          {plan.id === 'lite' && (
-            <p className="mt-2 text-[11px] text-foreground/50">
-              <strong className="text-foreground/70">vs ChatGPT Plus:</strong> 80 zł za 1 model — Tu 10 modeli za 27,90 zł
-            </p>
-          )}
-          {plan.id === 'premium' && (
-            <p className="mt-2 text-[11px] text-foreground/50">
-              <strong className="text-foreground/70">vs Midjourney + ChatGPT:</strong> 200+ zł razem — Tutaj all-in-one za 99 zł
-            </p>
-          )}
-          {plan.id === 'ultimate' && (
-            <p className="mt-2 text-[11px] text-foreground/50">
-              <strong className="text-foreground/70">vs 5 subskrypcji:</strong> 450 zł/mc — Tutaj 10 modeli za 349 zł
-            </p>
-          )}
+          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1 h-4">{plan.opis}</p>
         </div>
 
-        {/* Cena: czytelna i przejrzysta. Przy rozliczeniu rocznym obok nowej kwoty
-            stoi przekreślona cena miesięczna — przecena musi być widoczna od razu,
-            bez czytania drobnego druku pod spodem. */}
+        {/* Cena: czytelna i przejrzysta, identyczna wysokość */}
         <div className="mb-4">
-          <div className="flex items-baseline gap-2 whitespace-nowrap">
+          <div className="flex items-baseline gap-2 whitespace-nowrap h-10">
             <span className="font-heading text-3xl sm:text-4xl font-bold text-foreground">
               {darmowy ? (
                 'Free'
@@ -480,69 +616,57 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
             )}
           </div>
 
-          <div className="mt-1 min-h-[32px] space-y-0.5">
+          <div className="mt-1 h-[36px] flex flex-col justify-center space-y-0.5 text-[11.5px]">
             {!darmowy && okres === 'rocznie' ? (
               <>
-                <p className="text-[11.5px] text-muted-foreground font-light">
+                <p className="text-muted-foreground font-light leading-tight">
                   Rozliczane rocznie — faktura <AnimNum value={cena * 12} /> PLN
                 </p>
-                <p className="text-[11.5px] font-medium text-primary">
+                <p className="font-medium text-primary leading-tight">
                   Oszczędzasz <AnimNum value={(cenaBazowa - cena) * 12} /> zł rocznie
                 </p>
               </>
             ) : darmowy ? (
-              <p className="text-[11.5px] text-muted-foreground font-light">bez karty kredytowej</p>
+              <>
+                <p className="text-muted-foreground font-light leading-tight">bez karty kredytowej</p>
+                <p className="text-muted-foreground/60 font-light leading-tight">płatność tylko za zużyte Byte</p>
+              </>
             ) : (
-              <p className="text-[11.5px] text-muted-foreground font-light">rozliczane miesięcznie</p>
+              <>
+                <p className="text-muted-foreground font-light leading-tight">rozliczane miesięcznie</p>
+                <p className="text-muted-foreground/60 font-light leading-tight">anulujesz w dowolnym momencie</p>
+              </>
             )}
           </div>
         </div>
 
-        {/* ══════════ PRZYCISK CTA ZARAZ POD CENĄ (ERGONOMICZNE UMIEJSZCZENIE) ══════════ */}
+        {/* PRZYCISK CTA ZARAZ POD CENĄ — identyczna pozycja wertykalna */}
         <div className="mb-5">
           {plan.polecany ? (
-            <GlowButton className="w-full justify-center" icon={false}>
+            <GlowButton className="w-full justify-center h-10" icon={false}>
               {plan.cta || 'Wybierz plan'}
             </GlowButton>
           ) : (
-            <GhostButton className="w-full justify-center" icon={undefined}>
+            <GhostButton className="w-full justify-center h-10" icon={undefined}>
               {plan.cta || 'Wybierz plan'}
             </GhostButton>
           )}
         </div>
 
-        {/* Suwak progów Byte / Pula Byte + Panel Zużycia */}
+        {/* Suwak progów Byte / Pula Byte + "To wystarczy na" — 100% wyrównane w pionie */}
         <div className="mb-5 space-y-3">
           {plan.progi ? (
             <ByteSlider progi={plan.progi} indeks={prog} onChange={setProg} kolor={plan.kolor} />
           ) : (
-            <>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Byte miesięcznie:</span>
-                {pulaByte !== null && (
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold tabular-nums" style={{ color: plan.kolor }}>
-                      <AnimNum value={pulaByte} />
-                    </span>
-                    <span className="text-xs font-semibold" style={{ color: plan.kolor }}>⟠</span>
-                  </span>
-                )}
-              </div>
-              {plan.notka && (
-                <p className="rounded-lg border border-foreground/[0.08] bg-foreground/[0.03] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-                  {plan.notkaTytul && <strong className="block text-foreground/70">{plan.notkaTytul}</strong>}
-                  {plan.notka}
-                </p>
-              )}
-            </>
+            <ByteStaticRow plan={plan} pulaByte={pulaByte} darmowy={darmowy} />
           )}
 
-          <PanelZuzycia byte={pulaByte} unlimited={plan.unlimited} kolor={plan.kolor} />
+          <PanelZuzycia byte={pulaByte} kolor={plan.kolor} cena={cenaBazowa} darmowy={darmowy} />
         </div>
 
         {/* Lista cech */}
-        <div className="space-y-2.5 pt-2 border-t border-foreground/[0.08]">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        <div className="space-y-2 pt-3 border-t border-foreground/[0.08]">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 h-4 flex items-center">
             {plan.cechyNaglowek || 'W pakiecie:'}
           </p>
 
@@ -552,7 +676,7 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
 
           {ukryte > 0 && (
             <Rozwijane otwarte={rozwiniete}>
-              <div className="space-y-2.5 pt-2.5">
+              <div className="space-y-2 pt-2">
                 {plan.cechy.slice(WIDOCZNE).map(c => (
                   <CechaWiersz key={c.t} cecha={c} />
                 ))}
@@ -585,14 +709,14 @@ const TON_PLAKIETKI: Record<TonPlakietki, string> = {
 
 function CechaWiersz({ cecha }: { cecha: Cecha }) {
   return (
-    <div className="flex items-center gap-3 py-1">
+    <div className="flex items-center gap-3 min-h-[34px] py-0.5">
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.1] bg-foreground/5">
         <cecha.icon className="h-3.5 w-3.5 text-muted-foreground" />
       </span>
       <span className="flex-1 text-sm font-medium leading-snug text-foreground">{cecha.t}</span>
       {cecha.badge && (
         <span
-          className="shrink-0 self-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          className="shrink-0 self-center rounded-lg border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
           style={{
             color: TON_PLAKIETKI[cecha.badge.ton],
             background: akcentTlo(TON_PLAKIETKI[cecha.badge.ton], 15),

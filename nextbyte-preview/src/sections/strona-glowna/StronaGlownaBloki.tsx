@@ -5,7 +5,7 @@ import {
   Sparkles, Bot, Zap, Shield, ImagePlus, Search, Clock, Building2,
   HelpCircle, CheckCircle2, ChevronDown, Layers, FileText, Lock,
   Database, LayoutGrid, MessagesSquare, Repeat, GraduationCap,
-  Upload, Wand2, Globe, ShieldCheck, ChevronRight,
+  Upload, Wand2, Globe, ShieldCheck, ChevronRight, HardDrive,
 } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton, FadeIn, Stars,
@@ -1356,49 +1356,49 @@ function PricingByteSlider({
   )
 }
 
-/** Telemetria wydajności w HSL */
-function PricingUsagePanel({ byte, unlimited, kolor }: { byte: number | null; unlimited?: Plan['unlimited']; kolor: string }) {
-  const kalkulacja = byte !== null ? przelicznikByte(byte) : []
+function fmtTok(n: number): string {
+  if (n >= 1_000_000_000) return `~${(n / 1_000_000_000).toFixed(1).replace('.', ',')} mld`
+  if (n >= 1_000_000)     return `~${(n / 1_000_000).toFixed(1).replace('.', ',')} mln`
+  if (n >= 1_000)         return `~${Math.round(n / 1_000)} tys.`
+  return `~${n}`
+}
+
+/** Inline "To wystarczy na" chipsy bez własnego boxa */
+function PricingUsagePanel({ byte, kolor, cena }: { byte: number | null; kolor: string; cena?: number }) {
+  const zlPerByte = byte && byte > 0 && cena ? cena / byte : undefined
+  const kalkulacja = byte !== null ? przelicznikByte(byte, zlPerByte) : []
+  if (!kalkulacja.length) return null
 
   return (
-    <div className="space-y-1.5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] p-3">
-      {byte !== null && (
-        <>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
-            To wystarczy na:
-          </p>
-          {kalkulacja.map((r) => (
-            <div key={r.label} className="flex items-center gap-2">
-              <r.icon className="h-3.5 w-3.5 shrink-0" style={{ color: akcentTlo(kolor, 70) }} />
-              <span className="text-xs text-muted-foreground">
-                ≈ <strong className="font-bold tabular-nums text-foreground"><PricingAnimNum value={r.value} /></strong> {r.label}
-              </span>
-            </div>
-          ))}
-        </>
-      )}
-
-      {unlimited && unlimited.length > 0 && (
-        <div className={cn('space-y-1.5', byte !== null && 'mt-2 border-t border-foreground/[0.06] pt-2')}>
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
-            Unlimited:
-          </p>
-          {unlimited.map((u) => (
-            <div key={u.label} className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <u.icon className="h-3.5 w-3.5 shrink-0" style={{ color: akcentTlo(kolor, 70) }} />
-                <span className="text-xs text-muted-foreground">{u.label}</span>
-              </div>
-              <span
-                className="rounded-full border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                style={{ color: kolor, background: akcentTlo(kolor, 15), borderColor: akcentTlo(kolor, 25) }}
-              >
-                Unlimited
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+    <div>
+      <div className="flex flex-wrap gap-1.5">
+        {kalkulacja.map((r) => (
+          <span
+            key={r.label}
+            className="flex items-center gap-2 rounded-lg border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1.5 text-[11px]"
+          >
+            {r.isTokens ? (
+              <>
+                <strong className="font-semibold tabular-nums text-foreground">{fmtTok(r.value)}</strong>
+                <span className="text-muted-foreground flex-1">tokenów AI</span>
+                <AnthropicIcon className="h-3.5 w-3.5 shrink-0 opacity-50" style={{ color: akcentTlo(kolor, 80) }} />
+              </>
+            ) : r.isImages ? (
+              <>
+                <strong className="font-semibold tabular-nums text-foreground">~<PricingAnimNum value={r.value} /></strong>
+                <span className="text-muted-foreground flex-1">{r.label}</span>
+                <GeminiIcon className="h-3.5 w-3.5 shrink-0 opacity-50" style={{ color: akcentTlo(kolor, 80) }} />
+              </>
+            ) : (
+              <>
+                <strong className="font-semibold tabular-nums text-foreground">~<PricingAnimNum value={r.value} /></strong>
+                <span className="text-muted-foreground flex-1">{r.label}</span>
+                <r.icon className="h-3.5 w-3.5 shrink-0 opacity-40" style={{ color: akcentTlo(kolor, 80) }} />
+              </>
+            )}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
@@ -1519,8 +1519,8 @@ function PricingCard({
           )}
         </div>
 
-        {/* Suwak progów Byte jeśli plan ma warianty */}
-        <div className="mb-5 space-y-3">
+        {/* Suwak progów Byte / Pula Byte + "To wystarczy na" */}
+        <div className="mb-5 min-h-[192px] space-y-3">
           {plan.progi ? (
             <PricingByteSlider
               progi={plan.progi}
@@ -1528,32 +1528,22 @@ function PricingCard({
               onChange={setProg}
               kolor={plan.kolor}
             />
-          ) : (
-            <>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Byte miesięcznie:</span>
-                {pulaByte !== null && (
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold tabular-nums" style={{ color: plan.kolor }}>
-                      <PricingAnimNum value={pulaByte} />
-                    </span>
-                    <span className="text-xs font-semibold" style={{ color: plan.kolor }}>⟠</span>
-                  </span>
-                )}
-              </div>
-              {plan.notka && (
-                <p className="rounded-lg border border-foreground/[0.08] bg-foreground/[0.03] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-                  {plan.notkaTytul && <strong className="block text-foreground/70">{plan.notkaTytul}</strong>}
-                  {plan.notka}
-                </p>
-              )}
-            </>
-          )}
+          ) : pulaByte !== null ? (
+            <div className="flex items-center h-5 gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Byte miesięcznie:</span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-sm font-bold tabular-nums" style={{ color: plan.kolor }}>
+                  <PricingAnimNum value={pulaByte} />
+                </span>
+                <span className="text-xs font-semibold" style={{ color: plan.kolor }}>⟠</span>
+              </span>
+            </div>
+          ) : null}
 
           <PricingUsagePanel
             byte={pulaByte ?? null}
-            unlimited={plan.unlimited}
             kolor={plan.kolor}
+            cena={cenaBazowa}
           />
         </div>
 
