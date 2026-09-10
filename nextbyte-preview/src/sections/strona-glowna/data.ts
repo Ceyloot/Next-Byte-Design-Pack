@@ -762,17 +762,17 @@ export const KOSZT_BYTE = {
   mocnyModel: 11,
 } as const
 
-// Claude Sonnet 5 input: $2/1M tokenów = 8 zł/1M (kurs 4 zł/USD)
-const SONNET5_INPUT_ZL_PER_1M = 8
+// GPT Terra input: $2/1M tokenów = 8 zł/1M (kurs 4 zł/USD)
+const GPT_TERRA_INPUT_ZL_PER_1M = 8
 
 /**
  * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
  * Gdy podasz zlPerByte (cena_mc / bytes_mc) pierwszy wiersz pokazuje tokeny
- * wg referencyjnej ceny Claude Sonnet 5 input zamiast liczby rozmów.
+ * wg referencyjnej ceny GPT Terra input zamiast liczby rozmów.
  */
 export function przelicznikByte(byte: number, zlPerByte?: number) {
   const pierwszyWiersz = zlPerByte && zlPerByte > 0
-    ? { icon: Zap, label: 'tokenów', value: Math.floor(byte * zlPerByte / (SONNET5_INPUT_ZL_PER_1M / 1_000_000)), isTokens: true, isImages: false }
+    ? { icon: Zap, label: 'tokenów', value: Math.floor(byte * zlPerByte / (GPT_TERRA_INPUT_ZL_PER_1M / 1_000_000)), isTokens: true, isImages: false }
     : { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa), isTokens: false, isImages: false }
 
   return [

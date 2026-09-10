@@ -10,7 +10,7 @@ import {
   AnimStyles,
 } from '@/sections/wspolne/shared'
 import { SecRule } from './bloki-wspolne'
-import { NextByteMarkIcon, AnthropicIcon, GeminiIcon } from '@/grafiki/znaki-marek'
+import { NextByteMarkIcon, OpenAIIcon, GeminiIcon } from '@/grafiki/znaki-marek'
 import { PLANY, PLAN_MACIERZ, BYTE_KARTY, przelicznikByte, KOSZT_BYTE, CENNIK_FAQ } from './data'
 import type { Plan, Cecha, TonPlakietki } from './data'
 import type { HomePage as HomePageId } from './types'
@@ -321,17 +321,19 @@ function ByteStaticRow({ plan, pulaByte, darmowy }: { plan: Plan; pulaByte: numb
         </span>
       </div>
       <div className="relative py-2.5">
-        <div className="relative h-2 w-full rounded-full bg-foreground/[0.08] border border-foreground/[0.06] shadow-inner overflow-hidden">
+        <div className="flex items-center gap-2">
           <div
-            className="absolute inset-0 rounded-full"
+            className="h-2 flex-1 rounded-full"
             style={{
               background: `linear-gradient(90deg, ${akcentTlo(plan.kolor, 45)}, ${plan.kolor})`,
               boxShadow: `0 0 14px ${akcentTlo(plan.kolor, 40)}`,
             }}
           />
-        </div>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <Lock className="h-3 w-3 opacity-50 text-white" />
+          <Lock
+            className="shrink-0 opacity-85 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+            style={{ height: '18px', width: '18px' }}
+          />
+          <div className="h-2 flex-1 rounded-full bg-foreground/[0.08] border border-foreground/[0.06]" />
         </div>
       </div>
     </div>
@@ -384,7 +386,7 @@ function PanelZuzycia({
             <>
               <strong className="font-semibold tabular-nums text-foreground">{fmtTok(r.value)}</strong>
               <span className="text-muted-foreground flex-1">tokenów AI</span>
-              <AnthropicIcon className="h-3.5 w-3.5 shrink-0 opacity-50" style={{ color: akcentTlo(kolor, 80) }} />
+              <OpenAIIcon className="h-3.5 w-3.5 shrink-0 opacity-50" style={{ color: akcentTlo(kolor, 80) }} />
             </>
           ) : r.isImages ? (
             <>
@@ -411,6 +413,9 @@ function PanelZuzycia({
 function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Okres; podswietlony?: boolean }) {
   const [prog, setProg] = useState(0)
   const [rozwiniete, setRozwiniete] = useState(false)
+  const WIDOCZNE = 6
+  const ukryte = (plan.cechy?.length ?? 0) - WIDOCZNE
+
   const konfiguracja = plan.progi?.[prog] ?? null
   const stalaCena = plan.cena
   const cenaBazowa = konfiguracja ? konfiguracja.miesiecznie : stalaCena ?? 0
@@ -419,8 +424,6 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
   const wyroznione = plan.polecany || podswietlony
   const pulaByte = konfiguracja?.byte ?? plan.stalaPula
 
-  const WIDOCZNE = 6
-  const ukryte = plan.cechy.length - WIDOCZNE
 
   return (
     <div
@@ -552,36 +555,30 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
         </div>
 
         {/* Lista cech */}
-        <div className="space-y-2 pt-3 border-t border-foreground/[0.08]">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 h-4 flex items-center">
-            {plan.cechyNaglowek || 'W pakiecie:'}
-          </p>
+        {plan.cechy && plan.cechy.length > 0 && (
+          <div className="space-y-2 pt-3 border-t border-foreground/[0.08]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50 pb-1">
+              {plan.cechyNaglowek || 'W pakiecie:'}
+            </p>
+            {plan.cechy.slice(0, WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} />)}
+            {ukryte > 0 && (
+              <Rozwijane otwarte={rozwiniete}>
+                {plan.cechy.slice(WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} />)}
+              </Rozwijane>
+            )}
+            {ukryte > 0 && (
+              <button
+                type="button"
+                onClick={() => setRozwiniete(v => !v)}
+                className="flex w-full items-center justify-center gap-1.5 pt-1 text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+              >
+                {rozwiniete ? 'Pokaż mniej' : `+${ukryte} więcej`}
+                <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', rozwiniete && 'rotate-180')} />
+              </button>
+            )}
+          </div>
+        )}
 
-          {plan.cechy.slice(0, WIDOCZNE).map(c => (
-            <CechaWiersz key={c.t} cecha={c} />
-          ))}
-
-          {ukryte > 0 && (
-            <Rozwijane otwarte={rozwiniete}>
-              <div className="space-y-2 pt-2">
-                {plan.cechy.slice(WIDOCZNE).map(c => (
-                  <CechaWiersz key={c.t} cecha={c} />
-                ))}
-              </div>
-            </Rozwijane>
-          )}
-
-          {ukryte > 0 && (
-            <button
-              type="button"
-              onClick={() => setRozwiniete(v => !v)}
-              className="pt-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <span>{rozwiniete ? 'Zwiń listę' : `+ Więcej (${ukryte})`}</span>
-              <ChevronDown className={cn('h-3 w-3 transition-transform', rozwiniete && 'rotate-180')} />
-            </button>
-          )}
-        </div>
       </div>
     </div>
   )
