@@ -435,6 +435,23 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
             )}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{plan.opis}</p>
+
+          {/* Anchoring konkurencji */}
+          {plan.id === 'lite' && (
+            <p className="mt-2 text-[11px] text-foreground/50">
+              <strong className="text-foreground/70">vs ChatGPT Plus:</strong> 80 zł za 1 model — Tu 10 modeli za 27,90 zł
+            </p>
+          )}
+          {plan.id === 'premium' && (
+            <p className="mt-2 text-[11px] text-foreground/50">
+              <strong className="text-foreground/70">vs Midjourney + ChatGPT:</strong> 200+ zł razem — Tutaj all-in-one za 99 zł
+            </p>
+          )}
+          {plan.id === 'ultimate' && (
+            <p className="mt-2 text-[11px] text-foreground/50">
+              <strong className="text-foreground/70">vs 5 subskrypcji:</strong> 450 zł/mc — Tutaj 10 modeli za 349 zł
+            </p>
+          )}
         </div>
 
         {/* Cena: czytelna i przejrzysta. Przy rozliczeniu rocznym obok nowej kwoty
@@ -1281,6 +1298,90 @@ function Rozwijane({ otwarte, children }: { otwarte: boolean; children: React.Re
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   KALKULATOR BYTE'ÓW — Interaktywny helper
+   ═══════════════════════════════════════════════════════════════ */
+function ByteCalculatorSection() {
+  const [rozmowy, setRozmowy] = useState(5)
+  const byteDaily = rozmowy * 5
+  const byteMonthly = byteDaily * 30
+
+  const getRekRecommendation = () => {
+    if (byteMonthly <= 140) return { plan: 'Lite', byte: 140, cena: '27,90' }
+    if (byteMonthly <= 950) return { plan: 'Premium', byte: 950, cena: '99' }
+    return { plan: 'Ultimate', byte: 2450, cena: '349' }
+  }
+
+  const rek = getRekRecommendation()
+
+  return (
+    <div className="space-y-5">
+      {/* Operacje */}
+      <div>
+        <h3 className="font-heading text-sm font-semibold text-foreground mb-4">Ile kosztuje każda operacja?</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-foreground/70">💬 Rozmowa z AI</span>
+            <span className="font-mono font-semibold text-primary">5 ⟠ (~0,05 zł)</span>
+          </div>
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-foreground/70">🎨 Obraz w Studio</span>
+            <span className="font-mono font-semibold text-primary">4 ⟠ (~0,04 zł)</span>
+          </div>
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-foreground/70">🎤 Transkrypcja</span>
+            <span className="font-mono font-semibold text-primary">10 ⟠ (~0,10 zł)</span>
+          </div>
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-foreground/70">🔊 Głos AI</span>
+            <span className="font-mono font-semibold text-primary">8 ⟠ (~0,08 zł)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Kalkulator */}
+      <div className="rounded-xl border border-foreground/[0.08] bg-foreground/[0.02] p-5 sm:p-6">
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-foreground">
+              Ile rozmów dziennie planujesz? <span className="font-mono text-primary">{rozmowy}</span>
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="50"
+              value={rozmowy}
+              onChange={(e) => setRozmowy(parseInt(e.target.value))}
+              className="w-full mt-2"
+            />
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-foreground/[0.08]">
+            <div className="flex justify-between text-[13px]">
+              <span className="text-foreground/70">{rozmowy} rozmów/dzień × 5 Byte =</span>
+              <span className="font-mono font-semibold">{byteDaily} ⟠/dzień</span>
+            </div>
+            <div className="flex justify-between text-[13px]">
+              <span className="text-foreground/70">{byteDaily} ⟠/dzień × 30 dni =</span>
+              <span className="font-mono font-semibold text-primary text-base">{byteMonthly} ⟠/mc</span>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-foreground/[0.08] bg-primary/5 -m-5 p-5 rounded-lg">
+            <p className="text-[12px] text-foreground/60 mb-2">Rekomendacja:</p>
+            <p className="text-[14px] font-semibold text-foreground">
+              Plan <span className="text-primary">{rek.plan}</span> ({rek.byte} Byte'ów) — {rek.cena} zł/mc
+            </p>
+            <p className="text-[11px] text-foreground/50 mt-1.5">
+              {byteMonthly > rek.byte ? '✓ Wystarczająco' : '✓ Zawsze będzie ci zostać'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
    STRONA CENNIKA
    ═══════════════════════════════════════════════════════════════ */
 export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
@@ -1347,6 +1448,13 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
               <PlanFinder onWybierz={wybierzRekomendacje} okres={okres} />
             </div>
           </Rozwijane>
+        </div>
+
+        {/* ══════════ WYJAŚNIENIE BYTE'ÓW ══════════ */}
+        <div className="relative mx-auto w-full max-w-[92rem] px-4 pb-8 pt-8 sm:px-6 lg:px-8">
+          <FadeIn>
+            <ByteCalculatorSection />
+          </FadeIn>
         </div>
 
         {/* ══════════ KARTY PLANÓW ══════════ */}
