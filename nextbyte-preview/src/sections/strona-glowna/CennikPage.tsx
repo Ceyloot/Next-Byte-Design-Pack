@@ -483,7 +483,7 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
         </div>
 
         {/* ══════════ PRZYCISK CTA ZARAZ POD CENĄ (ERGONOMICZNE UMIEJSZCZENIE) ══════════ */}
-        <div className="mb-5">
+        <div className="mb-5 space-y-2.5">
           {plan.polecany ? (
             <GlowButton className="w-full justify-center" icon={false}>
               {plan.cta || 'Wybierz plan'}
@@ -492,6 +492,19 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
             <GhostButton className="w-full justify-center" icon={undefined}>
               {plan.cta || 'Wybierz plan'}
             </GhostButton>
+          )}
+
+          {/* Scroll hint do sekcji Byte */}
+          {!darmowy && (
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById('byte-info')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className="w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-1.5 hover:bg-foreground/5 rounded-md"
+            >
+              Ile Byte'ów potrzebujesz? ↓
+            </button>
           )}
         </div>
 
@@ -1363,7 +1376,7 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
       </div>
 
       {/* ══════════ JEDNA WALUTA. PEŁNA KONTROLA. (UKŁAD JAK W DEEP RESEARCH) ══════════ */}
-      <Section className="py-16 sm:py-24">
+      <Section id="byte-info" className="py-16 sm:py-24">
         <FadeIn>
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
             {/* LEWA KOLUMNA — DOKŁADNIE FORMAT JAK NA WZORZE (IMAGE 2) */}
