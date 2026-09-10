@@ -18,7 +18,12 @@ const FILTRY: { id: Filtr; label: string }[] = [
 
 export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
   const [filtr, setFiltr] = useState<Filtr>('wszystko')
-  const wpisy = HISTORIA.filter(h => filtr === 'wszystko' || h.typ === filtr)
+  /* Dane leżą od najstarszego wydania; historia zmian czyta się od
+     najnowszego. Bez odwrócenia plakietka „Aktualna" — przypięta do
+     pierwszego wpisu — lądowała na v0.1 zamiast na ostatnim wydaniu. */
+  const wpisy = [...HISTORIA]
+    .reverse()
+    .filter(h => filtr === 'wszystko' || h.typ === filtr)
 
   return (
     <div className="flex w-full flex-col">
@@ -47,7 +52,7 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
                 type="button"
                 onClick={() => setFiltr(f.id)}
                 className={cn(
-                  'h-9 rounded-full px-4 text-[12.5px] font-semibold transition-all duration-200',
+                  'h-9 rounded-lg px-4 text-[12.5px] font-semibold transition-all duration-200',
                   filtr === f.id
                     ? 'bg-primary text-background shadow-[0_4px_16px_-4px_hsl(var(--primary)/0.6)]'
                     : 'text-foreground/45 hover:text-foreground/75',
@@ -78,7 +83,7 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
                 <div key={w.wersja} className="relative pl-14">
                   {/* węzeł */}
                   <span
-                    className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-full border-2"
+                    className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-lg border-2"
                     style={{
                       background: 'hsl(var(--card))',
                       borderColor: akcentTlo(w.color, 35),
@@ -100,13 +105,13 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
                         {w.data}
                       </span>
                       {w.typ === 'major' && (
-                        <span className="rounded-full bg-primary/12 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-primary">
+                        <span className="rounded-lg bg-primary/12 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-primary">
                           Duże wydanie
                         </span>
                       )}
                       {najnowszy && (
-                        <span className="ml-auto flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.08] px-2.5 py-1">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                        <span className="ml-auto flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/[0.08] px-2.5 py-1">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-md bg-primary" />
                           <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-primary">
                             Aktualna
                           </span>
@@ -125,7 +130,7 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
                       {w.punkty.map(p => (
                         <li key={p} className="flex items-start gap-2.5 text-[12.5px] text-foreground/60">
                           <span
-                            className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                            className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-md"
                             style={{ background: akcentTlo(w.color, 15) }}
                           >
                             <Check className="h-2.5 w-2.5" style={{ color: w.color }} />
@@ -142,7 +147,7 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
 
           {/* zakończenie osi */}
           <div className="relative mt-6 pl-14">
-            <span className="absolute left-[13px] top-2 h-3.5 w-3.5 rounded-full border-2 border-foreground/15 bg-[hsl(var(--card))]" />
+            <span className="absolute left-[13px] top-2 h-3.5 w-3.5 rounded-md border-2 border-foreground/15 bg-[hsl(var(--card))]" />
             <p className="text-[12.5px] text-foreground/30">
               Pierwsza publiczna wersja platformy — październik 2025
             </p>
