@@ -733,13 +733,6 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           >
             <GripVertical className="w-3.5 h-3.5" />
           </button>
-          <div className="w-7 h-7 rounded-[8px] bg-primary flex items-center justify-center shadow-md shadow-primary/30">
-            <Zap className="w-3.5 h-3.5 text-background" />
-          </div>
-          {!navCompact && (showContent
-            ? <span className="text-[13px] font-bold text-foreground tracking-tight">NextByte</span>
-            : <div className="h-3 w-14 bg-foreground/25 rounded-full" />
-          )}
         </div>
 
         <nav className="flex-1 flex items-center justify-center gap-0.5 h-full">

@@ -3,8 +3,9 @@ import { cn } from '@/lib/utils'
 import {
   Check, Sparkles, Wand2, ChevronDown, ArrowRight,
   MessageSquare, ImagePlus, Bot, Layers, FileStack, FileSearch,
-  Gauge, HardDrive, Coins, Lock,
+  Gauge, HardDrive, Coins, Lock, Brain, Upload, Gift,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton, FadeIn, akcentTlo,
   AnimStyles,
@@ -351,13 +352,46 @@ function fmtTok(n: number): string {
    BLOK "TO WYSTARCZY NA" — 100% wyrównane chipsy (identyczna wysokość)
    ═══════════════════════════════════════════════════════════════ */
 function PanelZuzycia({
-  byte, kolor, cena, darmowy,
+  byte, kolor, cena, darmowy, cloudStorage, rownolegleGeneracje, kontekst, pliki,
 }: {
+  kontekst: string
+  pliki: string
   byte: number | null
   kolor: string
   cena?: number
   darmowy?: boolean
+  cloudStorage: string
+  rownolegleGeneracje: string | null
 }) {
+  // Private Cloud i równoległe generacje — te same wiersze co tokeny/grafiki
+  // (wartość + etykieta + ikona), bez chipów/ramek, doklejane na końcu.
+  const dodatkoweWiersze = (
+    <>
+      <div className="flex items-center gap-2 text-[13px]">
+        <strong className="font-semibold tabular-nums text-foreground">{cloudStorage}</strong>
+        <span className="text-muted-foreground flex-1">Private Cloud</span>
+        <HardDrive className="h-3.5 w-3.5 shrink-0 opacity-40" style={{ color: akcentTlo(kolor, 80) }} />
+      </div>
+      {rownolegleGeneracje && (
+        <div className="flex items-center gap-2 text-[13px]">
+          <strong className="font-semibold tabular-nums text-foreground">{rownolegleGeneracje}</strong>
+          <span className="text-muted-foreground flex-1">Równoległe generacje</span>
+          <Layers className="h-3.5 w-3.5 shrink-0 opacity-40" style={{ color: akcentTlo(kolor, 80) }} />
+        </div>
+      )}
+      <div className="flex items-center gap-2 text-[13px]">
+        <strong className="font-semibold tabular-nums text-foreground">{kontekst}</strong>
+        <span className="text-muted-foreground flex-1">Kontekst w czacie</span>
+        <Brain className="h-3.5 w-3.5 shrink-0 opacity-40" style={{ color: akcentTlo(kolor, 80) }} />
+      </div>
+      <div className="flex items-center gap-2 text-[13px]">
+        <strong className="font-semibold tabular-nums text-foreground">{pliki}</strong>
+        <span className="text-muted-foreground flex-1">Przesyłanie plików</span>
+        <Upload className="h-3.5 w-3.5 shrink-0 opacity-40" style={{ color: akcentTlo(kolor, 80) }} />
+      </div>
+    </>
+  )
+
   if (darmowy || byte === null) {
     return (
       <div className="flex flex-col gap-2">
@@ -367,10 +401,11 @@ function PanelZuzycia({
           <Sparkles className="h-3.5 w-3.5 opacity-40 text-muted-foreground shrink-0" />
         </div>
         <div className="flex items-center gap-2 text-[13px]">
-          <strong className="font-semibold text-foreground">AI</strong>
+          <strong className="font-semibold text-foreground">Rozmowy głosowe</strong>
           <span className="text-muted-foreground flex-1">z paczek Byte</span>
           <Coins className="h-3.5 w-3.5 opacity-40 text-muted-foreground shrink-0" />
         </div>
+        {dodatkoweWiersze}
       </div>
     )
   }
@@ -384,7 +419,11 @@ function PanelZuzycia({
         <div key={r.label} className="flex items-center gap-2 text-[13px]">
           {r.isTokens ? (
             <>
-              <strong className="font-semibold tabular-nums text-foreground">{fmtTok(r.value)}</strong>
+              <strong className="font-semibold tabular-nums text-foreground">
+                {r.value >= 1_000_000
+                  ? <>~<AnimNum value={Math.round(r.value / 100_000) / 10} decimals={1} /> mln</>
+                  : fmtTok(r.value)}
+              </strong>
               <span className="text-muted-foreground flex-1">tokenów AI</span>
               <OpenAIIcon className="h-3.5 w-3.5 shrink-0 opacity-50" style={{ color: akcentTlo(kolor, 80) }} />
             </>
@@ -393,6 +432,14 @@ function PanelZuzycia({
               <strong className="font-semibold tabular-nums text-foreground">~<AnimNum value={r.value} /></strong>
               <span className="text-muted-foreground flex-1">grafik AI</span>
               <GeminiIcon className="h-3.5 w-3.5 shrink-0 opacity-50" style={{ color: akcentTlo(kolor, 80) }} />
+            </>
+          ) : 'isVoice' in r && r.isVoice ? (
+            <>
+              <strong className="font-semibold tabular-nums text-foreground">
+                ~{r.value >= 120 ? <><AnimNum value={Math.floor(r.value / 60)} /> h</> : <><AnimNum value={r.value} /> min</>}
+              </strong>
+              <span className="text-muted-foreground flex-1">{r.label}</span>
+              <r.icon className="h-3.5 w-3.5 shrink-0 opacity-40" style={{ color: akcentTlo(kolor, 80) }} />
             </>
           ) : (
             <>
@@ -403,6 +450,7 @@ function PanelZuzycia({
           )}
         </div>
       ))}
+      {dodatkoweWiersze}
     </div>
   )
 }
@@ -413,7 +461,8 @@ function PanelZuzycia({
 function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Okres; podswietlony?: boolean }) {
   const [prog, setProg] = useState(0)
   const [rozwiniete, setRozwiniete] = useState(false)
-  const WIDOCZNE = 6
+  // Wszystkie cechy widoczne — długość listy ma rosnąć z planem
+  const WIDOCZNE = 20
   const ukryte = (plan.cechy?.length ?? 0) - WIDOCZNE
 
   const konfiguracja = plan.progi?.[prog] ?? null
@@ -423,6 +472,11 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
   const darmowy = plan.cena === 0
   const wyroznione = plan.polecany || podswietlony
   const pulaByte = konfiguracja?.byte ?? plan.stalaPula
+  const wartosci = (() => {
+    if (!pulaByte || !cenaBazowa) return undefined
+    const [tok, obr, glos] = przelicznikByte(pulaByte, cenaBazowa / pulaByte)
+    return { pula: pulaByte, tokeny: tok.value, obrazy: obr.value, glosMin: glos.value }
+  })()
 
 
   return (
@@ -551,16 +605,31 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
             <ByteStaticRow plan={plan} pulaByte={pulaByte} darmowy={darmowy} />
           )}
 
-          <PanelZuzycia byte={pulaByte} kolor={plan.kolor} cena={cenaBazowa} darmowy={darmowy} />
+          <p className="flex items-center gap-1.5 pt-1 text-[12px] font-semibold text-foreground">
+            <Gift className="h-3.5 w-3.5 text-primary" />
+            {darmowy ? 'Korzystasz, kiedy chcesz:' : <>Każdego miesiąca aż:</>}
+          </p>
+          <PanelZuzycia
+            pliki={plan.pliki}
+            byte={pulaByte}
+            kolor={plan.kolor}
+            cena={cenaBazowa}
+            darmowy={darmowy}
+            cloudStorage={plan.cloudStorage}
+            rownolegleGeneracje={plan.rownolegleGeneracje}
+            kontekst={plan.kontekst}
+          />
         </div>
 
-        {/* Lista cech */}
+        {/* Lista cech — Premium/Ultimate pokazują tylko NOWE pozycje względem
+            niższego planu (nagłówek dziedziczenia), zamiast fałszywie
+            sugerować, że mają mniej albo powtarzać to co już wiadomo. */}
         {plan.cechy && plan.cechy.length > 0 && (
           <div className="space-y-2 pt-3 border-t border-foreground/[0.08]">
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50 pb-1">
-              {plan.cechyNaglowek || 'W pakiecie:'}
+              {plan.dziedziczyZ ? `Wszystko z ${plan.dziedziczyZ}, plus:` : 'W pakiecie:'}
             </p>
-            {plan.cechy.slice(0, WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} />)}
+            {plan.cechy.slice(0, WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} wartosci={wartosci} />)}
             {ukryte > 0 && (
               <Rozwijane otwarte={rozwiniete}>
                 {plan.cechy.slice(WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} />)}
@@ -589,22 +658,47 @@ const TON_PLAKIETKI: Record<TonPlakietki, string> = {
   green: 'hsl(var(--primary))',
   pink: 'hsl(var(--primary))',
   violet: 'hsl(var(--primary))',
+  ghost: 'hsl(var(--foreground)/0.6)',
 }
 
-function CechaWiersz({ cecha }: { cecha: Cecha }) {
+type WartosciProgu = { pula: number; tokeny: number; obrazy: number; glosMin: number }
+
+/** Animowana liczba dla cech zależnych od progu — ta sama animacja co cena. */
+function DynWartosc({ dyn, w }: { dyn: NonNullable<Cecha['dyn']>; w: WartosciProgu }) {
+  if (dyn === 'pula') return <AnimNum value={w.pula} />
+  if (dyn === 'obrazy') return <AnimNum value={w.obrazy} />
+  if (dyn === 'tokeny') return <><AnimNum value={Math.round(w.tokeny / 100_000) / 10} decimals={1} /> mln</>
+  return w.glosMin >= 120
+    ? <><AnimNum value={Math.floor(w.glosMin / 60)} /> h</>
+    : <><AnimNum value={w.glosMin} /> min</>
+}
+
+function CechaWiersz({ cecha, wartosci }: { cecha: Cecha; wartosci?: WartosciProgu }) {
+  const jestGhost = cecha.badge?.ton === 'ghost'
   return (
     <div className="flex items-center gap-3 min-h-[34px] py-0.5">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.1] bg-foreground/5">
-        <cecha.icon className="h-3.5 w-3.5 text-muted-foreground" />
+      {/* Wszystkie pozycje w pełni widoczne — lista rośnie z planem */}
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-primary/35 bg-primary/10">
+        <cecha.icon className="h-3.5 w-3.5 text-primary" />
       </span>
-      <span className="flex-1 text-sm font-medium leading-snug text-foreground">{cecha.t}</span>
+      <span className="flex-1 text-sm font-medium leading-snug text-foreground">
+        {cecha.t.split(/\*\*(.+?)\*\*/g).map((cz, i) =>
+          i % 2 ? (
+            <strong key={i} className="font-semibold text-foreground">
+              {cecha.dyn && wartosci && cz.includes('{v}')
+                ? <>{cz.split('{v}')[0]}<DynWartosc dyn={cecha.dyn} w={wartosci} />{cz.split('{v}')[1]}</>
+                : cz}
+            </strong>
+          ) : cz,
+        )}
+      </span>
       {cecha.badge && (
         <span
           className="shrink-0 self-center rounded-lg border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
           style={{
             color: TON_PLAKIETKI[cecha.badge.ton],
-            background: akcentTlo(TON_PLAKIETKI[cecha.badge.ton], 15),
-            borderColor: akcentTlo(TON_PLAKIETKI[cecha.badge.ton], 30),
+            background: jestGhost ? 'transparent' : akcentTlo(TON_PLAKIETKI[cecha.badge.ton], 15),
+            borderColor: jestGhost ? 'hsl(var(--foreground)/0.18)' : akcentTlo(TON_PLAKIETKI[cecha.badge.ton], 30),
           }}
         >
           {cecha.badge.t}
@@ -619,7 +713,43 @@ function CechaWiersz({ cecha }: { cecha: Cecha }) {
    ═══════════════════════════════════════════════════════════════ */
 type CompareGroup = { kategoria: string; rows: typeof PLAN_MACIERZ }
 
-function CompareFeaturesAccordion() {
+/**
+ * Odstęp dla przyklejonego nagłówka tabeli porównania — liczony na żywo
+ * względem realnego górnego paska nawigacji (a nie sztywnej stałej), żeby
+ * nagłówek trzymał się dokładnie pod nim niezależnie od layoutu strony.
+ *
+ * UWAGA: position:sticky liczy `top` od PADDING-BOXA kontenera przewijania,
+ * a nie od jego krawędzi. Kontener (main) ma własny padding-top pod stały
+ * navbar, więc bez odjęcia go offset dublował się i pasek zatrzymywał się
+ * o tę wartość za nisko — nad nim przewijały się wtedy widoczne wiersze.
+ */
+function useStickyOffset() {
+  const [top, setTop] = useState(0)
+  useEffect(() => {
+    const calc = () => {
+      const nav = document.querySelector('.nb-homepage-nav') || document.querySelector('[data-navbar]')
+      const scroller = document.querySelector('main.overflow-y-auto')
+      if (nav && scroller) {
+        const paddingTop = parseFloat(getComputedStyle(scroller).paddingTop) || 0
+        const scrollportTop = scroller.getBoundingClientRect().top + paddingTop
+        setTop(nav.getBoundingClientRect().bottom - scrollportTop)
+      } else if (nav) {
+        setTop(nav.getBoundingClientRect().bottom)
+      }
+    }
+    calc()
+    const ro = new ResizeObserver(calc)
+    const nav = document.querySelector('.nb-homepage-nav') || document.querySelector('[data-navbar]')
+    if (nav) ro.observe(nav)
+    window.addEventListener('resize', calc)
+    return () => { ro.disconnect(); window.removeEventListener('resize', calc) }
+  }, [])
+  return top
+}
+
+function CompareFeaturesAccordion({ okres }: { okres: Okres }) {
+  const stickyTop = useStickyOffset()
+
   const groups = React.useMemo<CompareGroup[]>(() => {
     const result: CompareGroup[] = []
     let current: CompareGroup | null = null
@@ -633,7 +763,10 @@ function CompareFeaturesAccordion() {
     return result
   }, [])
 
-  const [openSet, setOpenSet] = useState<Set<string>>(() => new Set([groups[0]?.kategoria ?? '']))
+  // Domyślnie otwarte: rozliczenia i funkcje. Długie listy tokenów/grafik zwinięte.
+  const [openSet, setOpenSet] = useState<Set<string>>(
+    () => new Set(groups.filter(g => !/^(Tokeny|Grafiki) AI/.test(g.kategoria)).map(g => g.kategoria)),
+  )
 
   const toggle = (kat: string) =>
     setOpenSet(prev => {
@@ -642,51 +775,193 @@ function CompareFeaturesAccordion() {
       return next
     })
 
-  const planNames = ['Free', 'Lite', 'Premium', 'Ultimate']
-  const colGrid = 'grid grid-cols-[1fr_68px_68px_80px_80px] sm:grid-cols-[1fr_80px_80px_96px_96px]'
+  // Jak w cenniku Higgsfield: domyślnie podgląd kilku wierszy z wygaszeniem
+  // i przyciskiem, po rozwinięciu cała tabela + "Zwiń tabelę" na dole.
+  const [rozwinieta, setRozwinieta] = useState(false)
+  const tabelaRef = useRef<HTMLDivElement>(null)
+  const naglowekRef = useRef<HTMLDivElement>(null)
+  const grupyRef = useRef<Record<string, HTMLDivElement | null>>({})
+
+  // Kategoria, której wiersze są właśnie pod przyklejonym nagłówkiem. Jej
+  // przełącznik pokazujemy W nagłówku (jedna warstwa sticky — patrz niżej),
+  // więc długą kategorię da się zwinąć bez przewijania do jej początku.
+  const [aktywna, setAktywna] = useState<string | null>(null)
+  useEffect(() => {
+    const scroller: HTMLElement | Window = document.querySelector<HTMLElement>('main.overflow-y-auto') ?? window
+    const licz = () => {
+      const dol = naglowekRef.current?.getBoundingClientRect().bottom ?? 0
+      let wynik: string | null = null
+      for (const g of groups) {
+        const el = grupyRef.current[g.kategoria]
+        if (!el || !openSet.has(g.kategoria)) continue
+        const r = el.getBoundingClientRect()
+        // przycisk kategorii (~60px) już schowany pod nagłówkiem, a wiersze jeszcze widać
+        if (r.top + 60 < dol && r.bottom > dol + 40) wynik = g.kategoria
+      }
+      setAktywna(wynik)
+    }
+    licz()
+    scroller.addEventListener('scroll', licz, { passive: true })
+    return () => scroller.removeEventListener('scroll', licz)
+  }, [groups, openSet, rozwinieta])
+
+  const zwinAktywna = () => {
+    if (!aktywna) return
+    const el = grupyRef.current[aktywna]
+    const dol = naglowekRef.current?.getBoundingClientRect().bottom ?? 0
+    toggle(aktywna)
+    // Po zwinięciu przewiń tak, żeby przycisk kategorii stanął tuż pod nagłówkiem
+    if (el) {
+      const scroller = document.querySelector<HTMLElement>('main.overflow-y-auto')
+      const delta = el.getBoundingClientRect().top - dol
+      scroller ? scroller.scrollBy({ top: delta }) : window.scrollBy({ top: delta })
+    }
+  }
+
+  const zwinTabele = () => {
+    setRozwinieta(false)
+    requestAnimationFrame(() => tabelaRef.current?.scrollIntoView({ block: 'start' }))
+  }
+
+  // Kolumny liczone z PLANY — ceny w nagłówku nie mogą rozjechać się z kartami.
+  const KOLOR_KOLUMNY = [
+    'hsl(var(--foreground)/0.35)',
+    'hsl(var(--primary)/0.55)',
+    'hsl(var(--primary)/0.8)',
+    'hsl(var(--primary))',
+  ]
+  const planCols = PLANY.map((p, i) => {
+    const baza = p.cena ?? p.progi?.[0]?.miesiecznie ?? 0
+    const kwota = cenaZaOkres(baza, okres)
+    const kwotaTekst = kwota.toLocaleString('pl-PL', {
+      minimumFractionDigits: kwota % 1 !== 0 ? 2 : 0,
+      maximumFractionDigits: 2,
+    })
+    return {
+      name: p.cena === 0 ? 'Free' : p.nazwa,
+      cena: p.cena === 0 ? 'za darmo' : `${p.progi ? 'od ' : ''}${kwotaTekst} zł/m`,
+      color: KOLOR_KOLUMNY[i] ?? KOLOR_KOLUMNY[3],
+      polecany: p.polecany,
+    }
+  })
+  const KATEGORIA_IKONA: Record<string, LucideIcon> = {
+    'Rozliczenia i pula Byte': Coins,
+    'Tokeny AI — ile dostajesz na plan': MessageSquare,
+    'Grafiki AI — ile wygenerujesz na plan': ImagePlus,
+    'Chat AI i asystent': Sparkles,
+    'Studio Zdjęć': ImagePlus,
+    'Organizacja pracy': Layers,
+    'Dane i prywatność': Lock,
+  }
+  const colGrid = 'grid grid-cols-[2fr_repeat(4,1fr)] sm:grid-cols-[2.2fr_repeat(4,1fr)]'
+  const ROW_H = 64
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-foreground/[0.08] bg-[hsl(var(--card)/0.6)] backdrop-blur-sm">
-      {/* Plan headers */}
-      <div className={cn(colGrid, 'border-b border-foreground/[0.1] px-4 py-3.5')}>
-        <div />
-        {planNames.map((name, i) => (
-          <div key={name} className="text-center">
-            <span
-              className="font-mono text-[10px] font-bold uppercase tracking-[0.16em]"
-              style={{ color: i === 3 ? 'hsl(var(--primary))' : 'hsl(var(--foreground)/0.4)' }}
+    <div ref={tabelaRef} style={{ scrollMarginTop: `${stickyTop + 16}px` }}>
+    <div className="rounded-2xl border border-foreground/[0.09] bg-[hsl(var(--card))]">
+      {/* Plan headers — przyklejone pod navbarem. UWAGA: tło musi być w pełni
+          kryjące i BEZ backdrop-blur — blur na sticky elemencie podczas
+          scrolla dawał widoczne "przycięcie"/artefakt na krawędzi w tym
+          layoutcie. Musi też żyć poza kontenerem z overflow-hidden (niżej),
+          bo inny overflow niż visible na przodku łamie position:sticky. */}
+      <div
+        ref={naglowekRef}
+        className={cn(
+          colGrid,
+          'sticky z-20 rounded-t-2xl border-b border-foreground/[0.1] bg-[hsl(var(--card))]',
+          'shadow-[0_12px_28px_-20px_rgba(0,0,0,0.95)]',
+        )}
+        style={{ top: `${stickyTop}px` }}
+      >
+        {/* Lewa komórka: zakładka aktualnie przeglądanej kategorii — jedzie w dół
+            razem z nagłówkiem i pozwala ją zwinąć w dowolnym miejscu */}
+        <div className="flex items-center pl-3 pr-2">
+          {aktywna && (
+            <button
+              type="button"
+              onClick={zwinAktywna}
+              className="group flex min-w-0 items-center gap-2 rounded-lg border border-foreground/[0.1] bg-foreground/[0.03] px-2.5 py-1.5 text-left transition-colors hover:border-primary/40 hover:bg-primary/[0.06] cursor-pointer"
             >
-              {name}
+              {(() => { const Ik = KATEGORIA_IKONA[aktywna] ?? Layers; return <Ik className="h-3.5 w-3.5 shrink-0 text-primary" /> })()}
+              <span className="truncate font-sans text-[12px] font-semibold text-foreground/85">{aktywna}</span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 rotate-180 text-muted-foreground/60 group-hover:text-primary" />
+            </button>
+          )}
+        </div>
+        {planCols.map(col => (
+          <div
+            key={col.name}
+            className={cn(
+              'relative flex flex-col items-center justify-center gap-0.5 py-4',
+              col.polecany && 'bg-primary/[0.07] border-x border-primary/[0.12]',
+            )}
+          >
+            <span
+              className="font-sans text-[13.5px] font-bold uppercase tracking-[0.1em] leading-none"
+              style={{ color: col.color }}
+            >
+              {col.name}
             </span>
+            <span className="font-sans text-[11px] font-medium tabular-nums text-muted-foreground/55 leading-none">
+              {col.cena}
+            </span>
+            {/* Podkreślenie jak w zakładkach — pełna szerokość tylko dla planu polecanego */}
+            <span
+              className={cn('absolute inset-x-0 bottom-0 h-[2px]', !col.polecany && 'opacity-0')}
+              style={{ backgroundColor: col.color }}
+            />
           </div>
         ))}
       </div>
 
+      <div
+        className="relative"
+        style={rozwinieta ? undefined : { maxHeight: '520px', overflow: 'hidden' }}
+      >
       {groups.map((group, gi) => {
         const isOpen = openSet.has(group.kategoria)
+        const isLast = gi === groups.length - 1
+        const Ikona = KATEGORIA_IKONA[group.kategoria] ?? Layers
         return (
-          <div key={group.kategoria} className={cn('border-b border-foreground/[0.06]', gi === groups.length - 1 && 'border-b-0')}>
-            {/* Category toggle */}
+          <div
+            key={group.kategoria}
+            ref={el => { grupyRef.current[group.kategoria] = el }}
+            className={cn('border-b border-foreground/[0.06]', isLast && 'border-b-0')}
+          >
+            {/* Category toggle — świadomie NIE sticky. Dwie nakładające się
+                warstwy sticky (nagłówek planów + ten przycisk) dawały
+                niestabilne, migające przerwy przy szybkim scrollu mimo
+                matematycznie poprawnych offsetów — jedna warstwa sticky
+                (pasek FREE/LITE/PREMIUM/ULTIMATE) jest w pełni stabilna. */}
             <button
               onClick={() => toggle(group.kategoria)}
-              className="flex w-full items-center justify-between px-4 py-4 text-left transition-colors hover:bg-foreground/[0.02]"
+              className="flex w-full items-center justify-between gap-3 bg-[hsl(var(--card))] px-5 py-4 text-left transition-colors hover:bg-foreground/[0.025]"
             >
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
-                {group.kategoria}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <Ikona className="h-3.5 w-3.5" />
+                </span>
+                <span className="font-sans text-[14px] font-bold tracking-[-0.1px] text-foreground/90">
+                  {group.kategoria}
+                </span>
+                <span className="hidden sm:inline font-sans text-[11.5px] font-medium text-muted-foreground/45">
+                  {group.rows.length} {group.rows.length === 1 ? 'pozycja' : 'pozycji'}
+                </span>
+              </div>
               <ChevronDown
-                className="h-4 w-4 text-muted-foreground/40 transition-transform duration-250"
+                className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-transform duration-250"
                 style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </button>
 
-            {/* Rows container with smooth max-height transition */}
+            {/* Rows */}
             <div
+              className={cn(isLast && 'rounded-b-2xl')}
               style={{
-                maxHeight: isOpen ? `${group.rows.length * 52}px` : '0px',
+                maxHeight: isOpen ? `${group.rows.length * ROW_H}px` : '0px',
                 opacity: isOpen ? 1 : 0,
                 overflow: 'hidden',
-                transition: 'max-height 300ms cubic-bezier(0.4,0,0.2,1), opacity 200ms ease',
+                transition: 'max-height 320ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease',
               }}
             >
               {group.rows.map((r, ri) => (
@@ -694,37 +969,72 @@ function CompareFeaturesAccordion() {
                   key={r.f + ri}
                   className={cn(
                     colGrid,
-                    'items-center border-t border-foreground/[0.04] px-4 py-3 transition-colors hover:bg-foreground/[0.015]',
+                    'items-stretch border-t border-foreground/[0.045] transition-colors hover:bg-foreground/[0.02]',
+                    ri % 2 === 1 && 'bg-foreground/[0.012]',
                   )}
+                  style={{ minHeight: `${ROW_H}px` }}
                 >
-                  <span className="font-sans text-[12.5px] font-normal leading-snug text-foreground/70">
+                  <span className="flex items-center pl-5 pr-4 font-sans text-[14px] font-normal leading-snug text-foreground/75">
                     {r.f}
                   </span>
-                  {r.v.map((v, vi) => (
-                    <div
-                      key={vi}
-                      className={cn(
-                        'flex items-center justify-center',
-                        vi === 3 && 'rounded-sm bg-primary/[0.04]',
-                      )}
-                    >
-                      {v === true ? (
-                        <Check className="h-3.5 w-3.5 text-primary" strokeWidth={2.5} />
-                      ) : v === false ? (
-                        <span className="block h-px w-3 bg-foreground/15" />
-                      ) : (
-                        <span className={cn('font-mono text-[10.5px] font-semibold', vi === 3 ? 'text-primary' : 'text-foreground/55')}>
-                          {v}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                  {r.v.map((v, vi) => {
+                    const isUlt = vi === 3
+                    const colColor = planCols[vi].color
+                    return (
+                      <div
+                        key={vi}
+                        className={cn(
+                          'flex items-center justify-center px-2',
+                          isUlt && 'bg-primary/[0.05] border-x border-primary/[0.08]',
+                        )}
+                      >
+                        {v === true ? (
+                          <Check className="h-4 w-4" strokeWidth={2.5} style={{ color: colColor }} />
+                        ) : v === false ? (
+                          <span className="block h-px w-3.5 rounded-full bg-foreground/10" />
+                        ) : (
+                          <span
+                            className="font-sans text-[13px] font-semibold text-center leading-tight tabular-nums"
+                            style={{ color: isUlt ? 'hsl(var(--primary))' : vi === 0 ? 'hsl(var(--foreground)/0.45)' : 'hsl(var(--foreground)/0.68)' }}
+                          >
+                            {v}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               ))}
             </div>
           </div>
         )
       })}
+      {/* Wygaszenie podglądu — tabela "urywa się" jak na Higgsfield */}
+      {!rozwinieta && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 rounded-b-2xl"
+          style={{ background: 'linear-gradient(to bottom, transparent, hsl(var(--card)) 90%)' }}
+        />
+      )}
+      </div>
+    </div>
+
+    <div className="mt-5 flex justify-center">
+      <button
+        type="button"
+        onClick={() => (rozwinieta ? zwinTabele() : setRozwinieta(true))}
+        className="inline-flex h-10 items-center gap-2 rounded-xl border border-foreground/[0.12] bg-[hsl(var(--card)/0.7)] px-5 font-heading text-[13px] font-semibold text-foreground/85 transition-colors hover:border-primary/45 hover:text-primary cursor-pointer"
+      >
+        {rozwinieta ? 'Zwiń tabelę' : 'Porównaj wszystkie funkcje'}
+        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', rozwinieta && 'rotate-180')} />
+      </button>
+    </div>
+
+    <p className="mt-4 text-center font-sans text-[11.5px] font-light text-foreground/35">
+      Przeliczniki to szacunek przy założeniu, że cała miesięczna pula Byte trafia w całości do jednego modelu — wg jego referencyjnej ceny.
+      Dla planów z suwakiem liczone dla domyślnego, najniższego progu puli.
+    </p>
     </div>
   )
 }
@@ -804,7 +1114,7 @@ const OPCJE_UZYCIA = [
 /** Suwaki zużycia — dopasowują dokładną liczbę operacji.
  *  `stawka` to koszt jednej operacji w Byte. */
 const SUWAKI_ZUZYCIA = [
-  { id: 'rozmowy', icon: MessageSquare, etykieta: 'Rozmowy z AI', jednostka: 'za rozmowę', stawka: KOSZT_BYTE.rozmowa, max: 400, krok: 10, domyslnie: 50 },
+  { id: 'rozmowy', icon: MessageSquare, etykieta: 'Tokeny AI', jednostka: 'za 1 mln tokenów', stawka: KOSZT_BYTE.tokeny1mlnTerra, max: 30, krok: 0.5, domyslnie: 1 },
   { id: 'obrazy', icon: ImagePlus, etykieta: 'Obrazy i grafiki', jednostka: 'za obraz', stawka: KOSZT_BYTE.obraz, max: 500, krok: 5, domyslnie: 0 },
 ] as const
 
@@ -831,7 +1141,7 @@ function SuwakZuzycia({
           <Icon className="h-3.5 w-3.5 shrink-0 text-primary/70" />
           <span className="text-[13px] font-medium text-foreground">{etykieta}</span>
           <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-primary">
-            {wartosc}
+            {etykieta === 'Tokeny AI' ? `${wartosc.toLocaleString('pl-PL')} mln` : wartosc}
           </span>
         </div>
         <span className="font-mono text-xs tabular-nums text-muted-foreground/80">{koszt} ⟠</span>
@@ -857,7 +1167,7 @@ function SuwakZuzycia({
 function PlanFinder({ onWybierz, okres }: { onWybierz: (id: string) => void; okres: Okres }) {
   const [wybrane, setWybrane] = useState<Set<string>>(() => new Set(['rozmowy']))
   const [ilosci, setIlosci] = useState<Record<string, number>>(() => ({
-    rozmowy: 50,
+    rozmowy: 1,
     obrazy: 0,
   }))
   const [mocne, setMocne] = useState(false)
@@ -870,14 +1180,14 @@ function PlanFinder({ onWybierz, okres }: { onWybierz: (id: string) => void; okr
       if (wlaczony) {
         nast.add(id)
         if (id === 'rozmowy') {
-          setIlosci(il => ({ ...il, rozmowy: Math.max(50, il.rozmowy + 50) }))
+          setIlosci(il => ({ ...il, rozmowy: Math.max(1, il.rozmowy + 1) }))
         } else if (id === 'grafika') {
           setIlosci(il => ({ ...il, obrazy: Math.max(25, il.obrazy + 25) }))
         }
       } else {
         nast.delete(id)
         if (id === 'rozmowy') {
-          setIlosci(il => ({ ...il, rozmowy: Math.max(0, il.rozmowy - 50) }))
+          setIlosci(il => ({ ...il, rozmowy: Math.max(0, il.rozmowy - 1) }))
         } else if (id === 'grafika') {
           setIlosci(il => ({ ...il, obrazy: Math.max(0, il.obrazy - 25) }))
         }
@@ -897,10 +1207,10 @@ function PlanFinder({ onWybierz, okres }: { onWybierz: (id: string) => void; okr
     })
   }
 
-  // Tryb "mocniejsze modele" podnosi koszt rozmowy do stawki mocnego modelu
+  // Tryb "mocniejsze modele" przelicza tokeny po cenie Claude Opus 5 zamiast GPT-5.6 Terra
   const pozycje = SUWAKI_ZUZYCIA.map(s => {
-    const stawka = s.id === 'rozmowy' && mocne ? KOSZT_BYTE.mocnyModel : s.stawka
-    return { ...s, stawkaAktualna: stawka, koszt: ilosci[s.id] * stawka }
+    const stawka = s.id === 'rozmowy' && mocne ? KOSZT_BYTE.tokeny1mlnOpus : s.stawka
+    return { ...s, stawkaAktualna: stawka, koszt: Math.round(ilosci[s.id] * stawka) }
   })
 
   // Zaznaczone kategorie bez własnego suwaka dokładają swoje typowe zużycie.
@@ -1079,8 +1389,10 @@ function PlanFinder({ onWybierz, okres }: { onWybierz: (id: string) => void; okr
                   <div className="flex items-center gap-2.5">
                     <Gauge className={cn('h-4 w-4 transition-colors', mocne ? 'text-primary' : 'text-foreground/40')} />
                     <div>
-                      <p className="text-[12.5px] font-medium text-foreground">Zaawansowane modele myślenia</p>
-                      <p className="text-[10.5px] text-muted-foreground/60">GPT-5 / Claude 3.5 Sonnet / o3</p>
+                      <p className="text-[12.5px] font-medium text-foreground">Mocniejsze modele</p>
+                      <p className="text-[10.5px] text-muted-foreground/60">
+                        Przelicznik: {mocne ? 'Claude Opus 5' : 'GPT-5.6 Terra'}
+                      </p>
                     </div>
                   </div>
                   <span
@@ -1504,6 +1816,7 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
           <p className="relative mt-4 text-center font-sans text-[11.5px] font-light text-foreground/30">
             Wszystkie ceny netto. Przy rozliczeniu rocznym rabat do 17% względem ceny miesięcznej.
             Miesięczna pula Byte odnawia się z każdym cyklem, a dokupione pakiety zachowują ważność przez 12 miesięcy.
+            Orientacyjna liczba tokenów liczona wg referencyjnej ceny GPT-5.6 Terra, a liczba grafik — wg Nano Banana Pro.
           </p>
         </div>
       </div>
@@ -1520,15 +1833,14 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                   <span className="font-normal text-primary">Pełna kontrola.</span>
                 </h2>
                 <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
-                  Jedna wpłata w PLN. Zero osobnych subskrypcji. Płacisz za zużycie, nie za dostęp.
+                  Całe AI w jednej walucie. Jedna pula zamiast kilku subskrypcji.
                 </p>
               </div>
 
               {/* LISTA PUNKTÓW Z AKCENTEM */}
               <div className="space-y-4 pt-1 font-sans">
                 {BYTE_KARTY.map((k) => (
-                  <div key={k.t} className="flex items-start gap-3 text-[13.5px] font-light leading-snug">
-                    <span className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] mt-2" />
+                  <div key={k.t} className="text-[13.5px] font-light leading-snug">
                     <div>
                       <strong className="font-semibold text-foreground mr-1.5">{k.t}:</strong>
                       <span className="text-foreground/75">{k.d}</span>
@@ -1546,7 +1858,7 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
                     requestAnimationFrame(() => byteRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
                   }}
                 >
-                  Wybierz plan idealny dla ciebie
+                  Wybierz swój plan
                 </GlowButton>
               </div>
             </div>
@@ -1560,13 +1872,16 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
       </Section>
 
       {/* ══════════ PORÓWNANIE FUNKCJI — collapsible accordion ══════════ */}
-      <Section className="pb-24">
+      <Section wide className="pb-24">
         <FadeIn>
           <BlockHead center title="Porównaj" accent="wszystkie funkcje." className="mx-auto" />
         </FadeIn>
-        <FadeIn delay={80} className="mt-12">
-          <CompareFeaturesAccordion />
-        </FadeIn>
+        {/* Bez FadeIn — ten wrapper nakłada transform na przodka, a każdy
+            transform tworzy nowy układ odniesienia i przesuwa position:sticky
+            nagłówka tabeli (o dokładnie tyle, ile wynosi translateY). */}
+        <div className="mt-12">
+          <CompareFeaturesAccordion okres={okres} />
+        </div>
       </Section>
 
       {/* ══════════ FAQ ══════════ */}

@@ -130,7 +130,11 @@ export function FadeIn({
       className={cn(className)}
       style={{
         opacity:   visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(28px)',
+        // 'none' zamiast 'translateY(0)' po zakończeniu animacji — jakikolwiek
+        // transform różny od none na przodku tworzy nowy containing block i
+        // trwale psuje position:sticky u potomków (np. przyklejony nagłówek
+        // tabeli porównania planów), nawet przy wartości tożsamościowej.
+        transform: visible ? 'none' : 'translateY(28px)',
         transition: `opacity .65s cubic-bezier(.22,1,.36,1) ${delay}ms, transform .65s cubic-bezier(.22,1,.36,1) ${delay}ms`,
       }}
     >

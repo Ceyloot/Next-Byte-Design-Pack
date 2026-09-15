@@ -1961,20 +1961,6 @@ function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
   return (
     <div ref={navRef} data-navbar className="sticky top-0 z-50 w-full shrink-0 border-b border-foreground/[0.06] bg-background/92 backdrop-blur-md">
       <div className="flex items-center px-5 h-12 gap-4">
-        {/* Logo */}
-        <button
-          type="button"
-          onClick={() => {}}
-          className="flex items-center gap-2 shrink-0 cursor-pointer"
-        >
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
-            <svg viewBox="0 0 12 12" className="h-3 w-3 text-primary-foreground" fill="currentColor">
-              <path d="M6 1L10 4V8L6 11L2 8V4L6 1Z" />
-            </svg>
-          </div>
-          <span className="font-heading text-[14px] font-bold tracking-[-0.4px] text-foreground">NextByte</span>
-        </button>
-
         {/* Nav linki — wycentrowane. Bez CTA po prawej: ekrany logowania mają
             własny podgląd, landing do nich nie linkuje.
 

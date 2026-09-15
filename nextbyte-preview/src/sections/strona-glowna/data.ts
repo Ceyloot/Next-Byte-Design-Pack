@@ -208,13 +208,60 @@ export const POROWNANIE = {
 
 /** Ton plakietki przy cesze planu. Kolory idą za produkcją: niebieski = pojemność/limit,
  *  zielony = przywilej techniczny, różowy = limit ekskluzywny, fiolet = tryb AI. */
-export type TonPlakietki = 'blue' | 'green' | 'pink' | 'violet'
+export type TonPlakietki = 'blue' | 'green' | 'pink' | 'violet' | 'ghost'
 
 export type Cecha = {
   t: string
   icon: LucideIcon
   badge?: { t: string; ton: TonPlakietki }
+  /** Wartość zależna od wybranego progu — `{v}` w `t` zastępuje animowana liczba. */
+  dyn?: 'pula' | 'tokeny' | 'obrazy' | 'glos'
+  /** Funkcja odblokowana dopiero w tym planie — wyróżniona na karcie. */
+  nowa?: boolean
 }
+
+/* Każdy plan pokazuje TYLKO to, co dokłada względem niższego (nagłówek
+   "Wszystko z X, plus:"). Bez bezwzględnych ilości (Byte, GB, tokeny) — te są
+   w panelu zużycia, a tutaj nie da się ich zsumować z niższym planem.
+   Przewagi ilościowe opisane względnie (3×, 4× więcej), więc widać wzrost. */
+/* Funkcje przeniesione z nextbyte.space/cennik (bez Pętli AI i wsparcia,
+   limity plików/kontekstu/GB są w panelu zużycia). */
+const CECHY_BEZPLATNY: Cecha[] = [
+  { t: '**Płacisz** tylko za zużycie', icon: Coins },
+  { t: '**Chat AI**', icon: Sparkles },
+  { t: '**Tryb Ultra** AI', icon: Cpu },
+  { t: '**Studio Zdjęć**', icon: ImagePlus },
+  { t: '**Personalny Asystent**', icon: Bot },
+  { t: '**PromptEx**', icon: Wand2 },
+  { t: '**Kalendarz**, Zadania, Notatki', icon: Calendar },
+  { t: '**Listy** zakupowe', icon: ShoppingCart },
+  { t: '**Szyfrowanie** danych', icon: Lock },
+]
+const CECHY_LITE: Cecha[] = [
+  { t: '**Wszystkie modele** AI', icon: Globe },
+  { t: '**Pamięć** AI', icon: Brain },
+  { t: '**Lokalny AI** offline', icon: Database },
+  { t: '**Kalendarz AI** i Zadania', icon: Calendar },
+  { t: '**Studio Zdjęć AI**', icon: ImagePlus },
+  { t: '**Akademia** Premium', icon: GraduationCap },
+  { t: '**Miesięczne** odnowienie puli', icon: Repeat },
+]
+const CECHY_PREMIUM: Cecha[] = [
+  { t: '**Deep Research** — raporty AI', icon: Search },
+  { t: '**Wybór progu** puli Byte', icon: Gauge },
+  { t: '**Taniej** za Byte na wyższych progach', icon: Coins },
+  { t: '**3×** równoległe generacje', icon: Layers },
+  { t: '**Więcej miejsca** w Private Cloud', icon: HardDrive },
+]
+const CECHY_ULTIMATE: Cecha[] = [
+  { t: '**Priorytetowa** kolejka zapytań', icon: Clock },
+  { t: '**5×** równoległe generacje', icon: Layers },
+  { t: '**Wczesny dostęp** do nowości', icon: Rocket },
+  { t: '**Ekskluzywne** modele AI', icon: Sparkles },
+  { t: '**Enhancer** zdjęć 2× bez limitu', icon: ZoomIn },
+  { t: '**Najtańszy** Byte ze wszystkich planów', icon: Coins },
+  { t: '**Największy** kontekst i pliki', icon: Upload },
+]
 
 export type Plan = {
   id: string
@@ -233,7 +280,19 @@ export type Plan = {
   /** Podpis pod ceną — tylko plan bezpłatny ma własny (reszta liczy się z okresu). */
   podCena: string | null
   unlimited: { label: string; icon: LucideIcon }[]
+  /** Prywatna przestrzeń dyskowa (Private Cloud) — osobny wiersz w panelu
+   *  zużycia, w tym samym stylu co tokeny/grafiki (wartość + etykieta + ikona). */
   cloudStorage: string
+  /** Mnożnik równoległych generacji obrazów — null gdy plan tego nie ma (Free). */
+  rownolegleGeneracje: string | null
+  /** Kontekst plików w czacie AI — wiersz w panelu zużycia. */
+  kontekst: string
+  /** Limit rozmiaru przesyłanego pliku. */
+  pliki: string
+  /** Nazwa planu niżej w hierarchii — Premium/Ultimate pokazują wtedy
+   *  "Wszystko z {dziedziczyZ}, plus:" zamiast pełnej listy od zera, a
+   *  `cechy` niżej zawiera WYŁĄCZNIE nowe pozycje względem tego planu. */
+  dziedziczyZ?: string
   cechyNaglowek: string
   cechy: Cecha[]
   cta: string
@@ -261,23 +320,11 @@ export const PLANY: Plan[] = [
       { label: 'Szyfrowanie', icon: Lock },
     ],
     cloudStorage: '1 GB',
+    rownolegleGeneracje: '1×',
+    kontekst: '50k',
+    pliki: '20 MB',
     cechyNaglowek: 'W planie Bezpłatnym:',
-    cechy: [
-      { t: 'Płacisz tylko za zużycie', icon: Coins },
-      { t: 'Chat AI', icon: Sparkles },
-      { t: 'Studio Zdjęć', icon: ImagePlus },
-      { t: 'Personalny Asystent', icon: Bot },
-      { t: 'PromptEx', icon: Wand2 },
-      { t: 'Kalendarz', icon: Calendar, badge: { t: 'Unlimited', ton: 'blue' } },
-      { t: 'Zadania', icon: CheckCircle2, badge: { t: 'Unlimited', ton: 'blue' } },
-      { t: 'Notatki', icon: NotebookPen, badge: { t: 'Unlimited', ton: 'blue' } },
-      { t: 'System Cloud', icon: Database, badge: { t: 'Unlimited', ton: 'blue' } },
-      { t: 'Szyfrowanie', icon: Lock, badge: { t: 'Unlimited', ton: 'blue' } },
-      { t: 'Listy Zakupowe', icon: ShoppingCart },
-      { t: 'Pętle AI', icon: Repeat, badge: { t: '1 pętla', ton: 'pink' } },
-      { t: 'Przesyłanie plików do 20 MB', icon: Upload },
-      { t: 'Kontekst plików projektu w AI Chat', icon: Brain, badge: { t: '50k tok', ton: 'green' } },
-    ],
+    cechy: CECHY_BEZPLATNY,
     cta: 'Zacznij za darmo',
   },
   {
@@ -301,17 +348,12 @@ export const PLANY: Plan[] = [
       { label: 'Szyfrowanie', icon: Lock },
     ],
     cloudStorage: '5 GB',
+    rownolegleGeneracje: '1×',
+    kontekst: '100k',
+    pliki: '47 MB',
+    dziedziczyZ: 'Bezpłatnego',
     cechyNaglowek: 'W planie Lite:',
-    cechy: [
-      { t: '140 Byte co miesiąc', icon: Coins, badge: { t: '140 ⟠', ton: 'blue' } },
-      { t: 'Wszystkie funkcje Premium', icon: Sparkles },
-      { t: 'Wszystkie modele AI', icon: Gauge },
-      { t: 'Miesięczne odnowienie', icon: Repeat },
-      { t: 'Doładowania paczkami', icon: ShoppingCart },
-      { t: 'Akademia Premium', icon: GraduationCap },
-      { t: 'Pamięć AI', icon: Brain },
-      { t: 'Mniejsza pula niż w Premium', icon: Layers },
-    ],
+    cechy: CECHY_LITE,
     cta: 'Wybierz Lite',
   },
   {
@@ -339,23 +381,12 @@ export const PLANY: Plan[] = [
       { label: 'Szyfrowanie', icon: Lock },
     ],
     cloudStorage: '20 GB',
+    rownolegleGeneracje: '3×',
+    kontekst: '100k',
+    pliki: '47 MB',
+    dziedziczyZ: 'Lite',
     cechyNaglowek: 'W planie Premium:',
-    cechy: [
-      { t: 'Pełny dostęp do Chat AI', icon: Sparkles },
-      { t: 'Personalny Asystent', icon: Bot },
-      { t: 'Lokalny AI', icon: Database, badge: { t: 'Private', ton: 'green' } },
-      { t: 'Kalendarz AI i Zadania', icon: Calendar },
-      { t: 'Akademia Premium', icon: GraduationCap },
-      { t: 'Studio Zdjęć AI', icon: ImagePlus },
-      { t: 'Pamięć AI', icon: Brain },
-      { t: 'Miesięczne odnowienie do limitu', icon: Repeat },
-      { t: 'Wsparcie Email', icon: Headphones },
-      { t: 'Deep Research', icon: Search, badge: { t: 'Pro', ton: 'blue' } },
-      { t: 'Równoległe generacje', icon: Layers, badge: { t: '3x', ton: 'green' } },
-      { t: 'Pętle AI', icon: Repeat, badge: { t: '3 pętle', ton: 'pink' } },
-      { t: 'Przesyłanie plików do 47 MB', icon: Upload },
-      { t: 'Kontekst plików projektu w AI Chat', icon: Brain, badge: { t: '100k tok', ton: 'green' } },
-    ],
+    cechy: CECHY_PREMIUM,
     cta: 'Wybierz Premium',
   },
   {
@@ -384,17 +415,12 @@ export const PLANY: Plan[] = [
       { label: 'Enhancer 2x', icon: ZoomIn },
     ],
     cloudStorage: '50 GB',
+    rownolegleGeneracje: '5×',
+    kontekst: '200k',
+    pliki: '100 MB',
+    dziedziczyZ: 'Premium',
     cechyNaglowek: 'W planie Ultimate:',
-    cechy: [
-      { t: 'Priorytetowa kolejka', icon: Clock, badge: { t: 'Fast', ton: 'green' } },
-      { t: 'Równoległe generacje', icon: Layers, badge: { t: '5x', ton: 'green' } },
-      { t: 'Wczesny dostęp', icon: Rocket, badge: { t: 'Wczesny dostęp', ton: 'blue' } },
-      { t: 'Ekskluzywne modele AI', icon: Globe, badge: { t: 'Ekskluzywne', ton: 'pink' } },
-      { t: 'Priorytetowe wsparcie', icon: Zap, badge: { t: 'Priorytet', ton: 'pink' } },
-      { t: 'Pętle AI — MAX', icon: Repeat, badge: { t: '5 pętli', ton: 'pink' } },
-      { t: 'Przesyłanie plików do 100 MB', icon: Upload, badge: { t: '100 MB', ton: 'blue' } },
-      { t: 'Kontekst plików projektu w AI Chat — MAX', icon: Brain, badge: { t: '200k tok', ton: 'green' } },
-    ],
+    cechy: CECHY_ULTIMATE,
     cta: 'Wybierz Ultimate',
   },
 ]
@@ -404,14 +430,30 @@ export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string
   {
     kategoria: 'Rozliczenia i pula Byte',
     f: 'Comiesięczna pula Byte',
-    v: ['Z paczek', '140 Byte', '495 - 1500 Byte', '2450 - 6070 Byte'],
+    v: ['Z paczek', '140 Byte', '495 – 1500 Byte', '2450 – 6070 Byte'],
   },
   {
     f: 'Dostosowanie puli suwakiem',
     v: [false, 'Stała pula', '3 progi do wyboru', '3 progi do wyboru'],
   },
   {
-    f: 'Ważność dokupionych paczek Byte',
+    f: 'Miesięczne odnowienie puli',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Taniej za Byte na wyższych progach',
+    v: [false, false, true, 'Najtaniej'],
+  },
+  {
+    f: 'Równoległe generacje',
+    v: ['1×', '1×', '3×', '5×'],
+  },
+  {
+    f: 'Dokupienie paczek Byte w dowolnym momencie',
+    v: [true, true, true, true],
+  },
+  {
+    f: 'Ważność dokupionych paczek',
     v: ['12 miesięcy', '12 miesięcy', '12 miesięcy', '12 miesięcy'],
   },
   {
@@ -419,73 +461,202 @@ export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string
     v: [true, true, true, true],
   },
 
-  // ── Modele AI i generowanie ──
+  // ── Tokeny AI — per model, wg jego ceny input. Liczone dla DOMYŚLNEGO
+  //    (najniższego) progu puli, tak jak startują suwaki na kartach planów:
+  //    Lite 140 ⟠ / 27,90 zł, Premium 495 ⟠ / 99 zł, Ultimate 2450 ⟠ / 349 zł ──
   {
-    kategoria: 'Modele AI i generowanie',
-    f: 'Chat AI (GPT-5.4, Claude, Gemini, Grok)',
-    v: ['Z paczek Byte', true, true, true],
+    kategoria: 'Tokeny AI — ile dostajesz na plan',
+    f: 'Claude Sonnet 5',
+    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~43,6 mln'],
   },
   {
-    f: 'Lokalny AI offline (Ollama / LM Studio)',
-    v: [false, true, true, true],
+    f: 'Claude Opus 5',
+    v: ['Z paczek', '~1,4 mln', '~5 mln', '~17,5 mln'],
   },
   {
-    f: 'Personalny Asystent AI',
-    v: [false, true, true, true],
+    f: 'GPT-5.6 Sol',
+    v: ['Z paczek', '~1,7 mln', '~6,2 mln', '~21,8 mln'],
   },
   {
-    f: 'Studio Zdjęć i Grafik 4K',
-    v: ['Z paczek Byte', true, true, true],
+    f: 'GPT-5.6 Terra',
+    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~43,6 mln'],
   },
   {
-    f: 'Deep Research',
-    v: [false, true, true, true],
+    f: 'GPT-5.6 Luna',
+    v: ['Z paczek', '~34,9 mln', '~123,8 mln', '~436,3 mln'],
   },
   {
-    f: 'Równoległe generacje obrazów',
-    v: [false, '1x', '3x', '5x'],
+    f: 'Grok 4.3 (≤200k tok)',
+    v: ['Z paczek', '~5,6 mln', '~19,8 mln', '~69,8 mln'],
+  },
+  {
+    f: 'Grok 4.3 (>200k tok)',
+    v: ['Z paczek', '~2,8 mln', '~9,9 mln', '~34,9 mln'],
+  },
+  {
+    f: 'Gemini 3.1 Flash-Lite',
+    v: ['Z paczek', '~27,9 mln', '~99 mln', '~349 mln'],
+  },
+  {
+    f: 'Gemini 3.1 Flash Live',
+    v: ['Z paczek', '~9,3 mln', '~33 mln', '~116,3 mln'],
+  },
+  {
+    f: 'Gemini 3.1 Pro (≤200k tok)',
+    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~43,6 mln'],
+  },
+  {
+    f: 'Gemini 3.1 Pro (>200k tok)',
+    v: ['Z paczek', '~1,7 mln', '~6,2 mln', '~21,8 mln'],
   },
 
-  // ── Narzędzia i organizacja pracy ──
+  // ── Grafiki AI — liczba sztuk = pula Byte / koszt modelu, dla domyślnego
+  //    (najniższego) progu: Lite 140 ⟠, Premium 495 ⟠, Ultimate 2450 ⟠ ──
   {
-    kategoria: 'Narzędzia i organizacja pracy',
-    f: 'Notatki, Zadania, Tablice i Kalendarz',
+    kategoria: 'Grafiki AI — ile wygenerujesz na plan',
+    f: 'Z-Image Turbo · 1 ⟠',
+    v: ['Z paczek', '~140', '~495', '~2450'],
+  },
+  {
+    f: 'FLUX.2 Klein 9B · 1 ⟠',
+    v: ['Z paczek', '~140', '~495', '~2450'],
+  },
+  {
+    f: 'FLUX.2 Pro · 2 ⟠',
+    v: ['Z paczek', '~70', '~247', '~1225'],
+  },
+  {
+    f: 'Qwen Image 3.0 Pro · 2 ⟠',
+    v: ['Z paczek', '~70', '~247', '~1225'],
+  },
+  {
+    f: 'Kling Image O3 · 2 ⟠',
+    v: ['Z paczek', '~70', '~247', '~1225'],
+  },
+  {
+    f: 'Nano Banana 2 · 3 ⟠',
+    v: ['Z paczek', '~46', '~165', '~816'],
+  },
+  {
+    f: 'Seedream 5.0 Pro · 3 ⟠',
+    v: ['Z paczek', '~46', '~165', '~816'],
+  },
+  {
+    f: 'Ideogram 4.0 · 3 ⟠',
+    v: ['Z paczek', '~46', '~165', '~816'],
+  },
+  {
+    f: 'Nano Banana Pro · 4 ⟠',
+    v: ['Z paczek', '~35', '~123', '~612'],
+  },
+  {
+    f: 'Grok Imagine · 6 ⟠',
+    v: ['Z paczek', '~23', '~82', '~408'],
+  },
+  {
+    f: 'GPT Image 2 · 8 ⟠',
+    v: ['Z paczek', '~17', '~61', '~306'],
+  },
+
+  // ── Funkcje — zgodne z listami na kartach planów (CECHY_*) ──
+  {
+    kategoria: 'Chat AI i asystent',
+    f: 'Chat AI',
+    v: ['Z paczek', true, true, true],
+  },
+  {
+    f: 'Wszystkie modele AI',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Tryb Ultra AI',
     v: [true, true, true, true],
-  },
-  {
-    f: 'Pamięć długoterminowa AI',
-    v: [false, true, true, true],
-  },
-  {
-    f: 'Akademia wiedzy AI',
-    v: [false, true, true, true],
-  },
-  {
-    f: 'Maksymalny rozmiar pliku',
-    v: ['20 MB', '47 MB', '47 MB', '100 MB'],
-  },
-  {
-    f: 'Pamięć kontekstu w AI Chat',
-    v: ['50k tok', '100k tok', '100k tok', '200k tok'],
-  },
-
-  // ── Korzyści planu Ultimate ──
-  {
-    kategoria: 'Korzyści planu Ultimate',
-    f: 'Priorytetowa kolejka zapytań',
-    v: [false, false, false, true],
   },
   {
     f: 'Ekskluzywne modele AI',
     v: [false, false, false, true],
   },
   {
-    f: 'Wczesny dostęp do nowości beta',
+    f: 'Pamięć AI',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Personalny Asystent',
+    v: [true, true, true, true],
+  },
+  {
+    f: 'Deep Research — raporty AI',
+    v: [false, false, true, true],
+  },
+  {
+    f: 'PromptEx',
+    v: [true, true, true, true],
+  },
+  {
+    f: 'Kontekst plików w czacie',
+    v: ['50k tok', '100k tok', '100k tok', '200k tok'],
+  },
+
+  {
+    kategoria: 'Studio Zdjęć',
+    f: 'Studio Zdjęć',
+    v: ['Z paczek', true, true, true],
+  },
+  {
+    f: 'Studio Zdjęć AI',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Enhancer zdjęć 2× bez limitu',
     v: [false, false, false, true],
   },
   {
-    f: 'Dedykowane wsparcie priorytetowe',
+    f: 'Priorytetowa kolejka zapytań',
     v: [false, false, false, true],
+  },
+
+  {
+    kategoria: 'Organizacja pracy',
+    f: 'Kalendarz, Zadania, Notatki',
+    v: ['Unlimited', 'Unlimited', 'Unlimited', 'Unlimited'],
+  },
+  {
+    f: 'Kalendarz AI i Zadania',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Listy zakupowe',
+    v: [true, true, true, true],
+  },
+  {
+    f: 'Akademia Premium',
+    v: [false, true, true, true],
+  },
+  {
+    f: 'Wczesny dostęp do nowości',
+    v: [false, false, false, true],
+  },
+
+  {
+    kategoria: 'Dane i prywatność',
+    f: 'Private Cloud',
+    v: ['1 GB', '5 GB', '20 GB', '50 GB'],
+  },
+  {
+    f: 'System Cloud',
+    v: ['Unlimited', 'Unlimited', 'Unlimited', 'Unlimited'],
+  },
+  {
+    f: 'Przesyłanie plików',
+    v: ['20 MB', '47 MB', '47 MB', '100 MB'],
+  },
+  {
+    f: 'Szyfrowanie danych',
+    v: [true, true, true, true],
+  },
+  {
+    f: 'Lokalny AI offline',
+    v: [false, true, true, true],
   },
 ]
 
@@ -493,23 +664,23 @@ export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string
 export const BYTE_KARTY = [
   {
     tag: '// 01 / EKOSYSTEM',
-    t: 'Jeden portfel AI',
-    d: 'GPT, Claude, Gemini i grafiki 4K rozliczają się z jednego konta, bez osobnych limitów na modele.',
+    t: 'Wszystkie modele, jedna pula',
+    d: 'Chat, obrazy i research z tych samych Byte.',
   },
   {
     tag: '// 02 / CYKL ROZLICZENIOWY',
-    t: 'Świeża pula co miesiąc',
-    d: 'Miesięczna pula Byte odnawia się z każdym nowym okresem rozliczeniowym.',
+    t: 'Pełna pula co miesiąc',
+    d: 'Każdy okres rozliczeniowy zaczynasz od pełnej puli.',
   },
   {
-    tag: '// 03 / WAŻNOŚĆ PACZEK',
-    t: 'Pakiety nie wygasają',
-    d: 'Dokupione dodatkowo paczki Byte zachowują ważność przez 12 miesięcy.',
+    tag: '// 03 / DOŁADOWANIA',
+    t: 'Doładowanie w każdej chwili',
+    d: 'Bez zmiany planu, ważne 12 miesięcy.',
   },
   {
-    tag: '// 04 / DOŁADOWANIA',
-    t: 'Pakiety od ręki',
-    d: 'Większy projekt? Dokupujesz Byte w każdej chwili, bez zmiany planu.',
+    tag: '// 04 / KOLEJNOŚĆ',
+    t: 'Pełna kontrola',
+    d: 'Stan Byte widzisz na bieżąco w panelu.',
   },
 ] as const
 
@@ -757,13 +928,70 @@ export const LOGOTYPY = TECH_PARTNERZY
  */
 export const KOSZT_BYTE = {
   rozmowa: 5,
-  obraz: 4,
+  obraz: 4, // referencyjny model do przelicznika grafik: Nano Banana Pro
   zadanieAsystenta: 5,
   mocnyModel: 11,
+  rozmowaGlosowaMin: 2, // 1 minuta rozmowy głosowej z AI
+  // 1 mln tokenów input przy ~0,20 zł/Byte (Premium 99 zł / 495 ⟠):
+  tokeny1mlnTerra: 40, // GPT-5.6 Terra — 8 zł / 1M
+  tokeny1mlnOpus: 100, // Claude Opus 5 — 20 zł / 1M
 } as const
 
 // GPT Terra input: $2/1M tokenów = 8 zł/1M (kurs 4 zł/USD)
 const GPT_TERRA_INPUT_ZL_PER_1M = 8
+
+/**
+ * Modele aktualnie dostępne na platformie i ich referencyjna cena input
+ * (kurs 4 zł/USD) — zasila przelicznik "ile tokenów na danym planie"
+ * w tabeli porównania (patrz PLAN_MACIERZ, kategoria "Tokeny AI").
+ */
+export const MODELE_TOKENOWE = [
+  { nazwa: 'Claude Sonnet 5',            zlPer1M: 8 },   // $2 / 1M in
+  { nazwa: 'Claude Opus 5',              zlPer1M: 20 },  // $5 / 1M in
+  { nazwa: 'GPT-5.6 Sol',                zlPer1M: 16 },  // $4 / 1M in — flagship
+  { nazwa: 'GPT-5.6 Terra',              zlPer1M: 8 },   // $2 / 1M in — balanced
+  { nazwa: 'GPT-5.6 Luna',               zlPer1M: 0.8 }, // $0,2 / 1M in — cost
+  { nazwa: 'Grok 4.3 (≤200k tok)',       zlPer1M: 5 },   // $1,25 / 1M in
+  { nazwa: 'Grok 4.3 (>200k tok)',       zlPer1M: 10 },  // $2,5 / 1M in
+  { nazwa: 'Gemini 3.1 Flash-Lite',      zlPer1M: 1 },   // $0,25 / 1M in — szybki w NextByte
+  { nazwa: 'Gemini 3.1 Flash Live',      zlPer1M: 3 },   // $0,75 / 1M in
+  { nazwa: 'Gemini 3.1 Pro (≤200k tok)', zlPer1M: 8 },   // $2 / 1M in — pro w NextByte
+  { nazwa: 'Gemini 3.1 Pro (>200k tok)', zlPer1M: 16 },  // $4 / 1M in
+] as const
+
+/**
+ * Modele graficzne dostępne w generatorze i ich koszt w Byte za sztukę
+ * (cena bazowej jakości — 1K, jeśli model ją ma; wyższe jakości kosztują
+ * więcej). Zasila kategorię "Grafiki AI" w tabeli porównania: liczba sztuk
+ * = pula Byte / koszt modelu.
+ */
+export const MODELE_GRAFICZNE = [
+  { nazwa: 'Z-Image Turbo',      byte: 1 },
+  { nazwa: 'FLUX.2 Klein 9B',    byte: 1 },
+  { nazwa: 'FLUX.2 Pro',         byte: 2 },
+  { nazwa: 'Qwen Image 3.0 Pro', byte: 2 },
+  { nazwa: 'Kling Image O3',     byte: 2 },
+  { nazwa: 'Nano Banana 2',      byte: 3 },
+  { nazwa: 'Seedream 5.0 Pro',   byte: 3 },
+  { nazwa: 'Ideogram 4.0',       byte: 3 },
+  { nazwa: 'Nano Banana Pro',    byte: 4 },
+  { nazwa: 'Grok Imagine',       byte: 6 },
+  { nazwa: 'GPT Image 2',        byte: 8 },
+] as const
+
+/** Formatuje liczbę tokenów jak w karcie planu: ~3,5 mln / ~465 tys. */
+function fmtTokeny(n: number): string {
+  if (n >= 1_000_000_000) return `~${(n / 1_000_000_000).toFixed(1).replace('.', ',')} mld`
+  if (n >= 1_000_000)     return `~${(n / 1_000_000).toFixed(1).replace('.', ',')} mln`
+  if (n >= 1_000)         return `~${Math.round(n / 1_000)} tys.`
+  return `~${n}`
+}
+
+/** Ile tokenów danego modelu daje pula Byte przy określonej cenie miesięcznej. */
+export function tokenyDlaModelu(byte: number, cenaMiesieczna: number, zlPer1M: number): string {
+  const zlPerByte = byte > 0 ? cenaMiesieczna / byte : 0
+  return fmtTokeny(Math.floor(byte * zlPerByte / (zlPer1M / 1_000_000)))
+}
 
 /**
  * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
@@ -778,6 +1006,7 @@ export function przelicznikByte(byte: number, zlPerByte?: number) {
   return [
     pierwszyWiersz,
     { icon: ImagePlus, label: 'Graphic AI', value: Math.floor(byte / KOSZT_BYTE.obraz), isTokens: false, isImages: true },
+    { icon: Mic, label: 'rozmowy głosowej z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowaGlosowaMin), isTokens: false, isImages: false, isVoice: true },
   ]
 }
 
