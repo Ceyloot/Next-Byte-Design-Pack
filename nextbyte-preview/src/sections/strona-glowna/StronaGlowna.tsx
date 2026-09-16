@@ -27,9 +27,10 @@ import interiorImg from '@/assets/studio/interior.jpg'
 import carImg from '@/assets/studio/car.jpg'
 import landscapeImg from '@/assets/studio/landscape.jpg'
 import animalImg from '@/assets/studio/animal.jpg'
-import { getNavbarOffset, ton, tonAkc, D2R, CAM, RING, DIAL, circleToEllipse, silhouette, makeScene, useScrollProgress, type V3 } from '@/grafiki/podstawy'
+import { getNavbarOffset, ton, kol, bryla, D2R, CAM, RING, DIAL, circleToEllipse, silhouette, makeScene, useScrollProgress, type V3 } from '@/grafiki/podstawy'
 import { AssistantOrbitVisual, DeepResearchVisual, AcademyVisual, MemoryVisual, WorkspaceVisual } from '@/grafiki/wizualizacje'
 import { HeroWispyBackground } from '@/grafiki/tlo-hero'
+import { PrivateCloudVisual } from '@/grafiki/wizualizacja-private-cloud'
 
 /* ═══════════════════════════════════════════════════════════════════════
    STRONA GŁÓWNA 3 — ARCHITEKTURA TECHNICZNA (FLEEK NETWORK BLUEPRINT)
@@ -1279,7 +1280,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
   }) => {
     const a = P3(0, 0, z0), b = P3(0, 0, z1)
     const ox = SIL_Z.x * r * S, oy = SIL_Z.y * r * S
-    const st = o.stroke ?? tonAkc(55, 15)
+    const st = o.stroke ?? kol(55, 15)
     const sw = o.sw ?? 1.3
     const bore = (o.bore ?? 0.60) * r
     const quad = `M ${(a.x + ox).toFixed(1)} ${(a.y + oy).toFixed(1)} L ${(b.x + ox).toFixed(1)} ${(b.y + oy).toFixed(1)} L ${(b.x - ox).toFixed(1)} ${(b.y - oy).toFixed(1)} L ${(a.x - ox).toFixed(1)} ${(a.y - oy).toFixed(1)} Z`
@@ -1291,14 +1292,14 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
         <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke={st} strokeWidth={sw} />
         <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke={st} strokeWidth={sw} />
         {/* ścianka wewnętrzna widoczna w głębi otworu */}
-        {Ring(z0, bore, { fill: 'none', stroke: tonAkc(21, 12), strokeWidth: 1.6, strokeOpacity: 0.8 })}
+        {Ring(z0, bore, { fill: 'none', stroke: kol(21, 12), strokeWidth: 1.6, strokeOpacity: 0.8 })}
         {Annulus(z1, r, bore, { fill: o.cap, stroke: st, strokeWidth: sw })}
       </>
     )
   }
 
   /** Walec pionowy (pokrętła na płycie). */
-  const VTube = (x: number, z: number, y0: number, y1: number, r: number, band: string, cap: string, st = tonAkc(68, 15), sw = 1.1) => {
+  const VTube = (x: number, z: number, y0: number, y1: number, r: number, band: string, cap: string, st = kol(68, 15), sw = 1.1) => {
     const a = P3(x, y0, z), b = P3(x, y1, z)
     const ox = SIL_Y.x * r * S, oy = SIL_Y.y * r * S
     return (
@@ -1314,7 +1315,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
 
   /** Radełkowanie — żłobki tylko po widocznej połowie walca, z jasnością
       rosnącą ku krawędzi sylwetki, jak na realnym toczonym metalu. */
-  const Knurl = (z0: number, z1: number, r: number, n: number, color = tonAkc(63, 13)) => {
+  const Knurl = (z0: number, z1: number, r: number, n: number, color = kol(63, 13)) => {
     const out = []
     for (let i = 0; i < n; i++) {
       const t = (i / n) * Math.PI * 2
@@ -1335,11 +1336,11 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
     const hi = rim(zf, r * 0.58, 2.5)
     return (
       <g opacity={o}>
-        {Ring(zb, r, { fill: 'none', stroke: tonAkc(78, 47), strokeWidth: 1, strokeOpacity: 0.32 })}
-        <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke={tonAkc(81, 36)} strokeWidth={1.2} strokeOpacity={0.55} />
-        <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke={tonAkc(81, 36)} strokeWidth={1.2} strokeOpacity={0.55} />
-        {Ring(zf, r, { fill, fillOpacity: 0.34, stroke: tonAkc(81, 36), strokeWidth: 1.5 })}
-        {Ring(zf, r * 0.84, { fill: 'none', stroke: tonAkc(94, 11), strokeWidth: 0.8, strokeOpacity: 0.3 })}
+        {Ring(zb, r, { fill: 'none', stroke: kol(78, 47), strokeWidth: 1, strokeOpacity: 0.32 })}
+        <line x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke={kol(81, 36)} strokeWidth={1.2} strokeOpacity={0.55} />
+        <line x1={a.x - ox} y1={a.y - oy} x2={b.x - ox} y2={b.y - oy} stroke={kol(81, 36)} strokeWidth={1.2} strokeOpacity={0.55} />
+        {Ring(zf, r, { fill, fillOpacity: 0.34, stroke: kol(81, 36), strokeWidth: 1.5 })}
+        {Ring(zf, r * 0.84, { fill: 'none', stroke: kol(94, 11), strokeWidth: 0.8, strokeOpacity: 0.3 })}
         <ellipse
           cx={0} cy={0} rx={r * RING.rx * S * 0.30} ry={r * RING.ry * S * 0.11}
           transform={`translate(${hi.x.toFixed(1)} ${hi.y.toFixed(1)}) rotate(${(RING.rot + 24).toFixed(1)})`}
@@ -1365,9 +1366,9 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
     }
     return (
       <g opacity={o}>
-        {Tube(z - 5, z + 5, r, { band: 'url(#nbBarrel)', cap: tonAkc(11, 10), stroke: tonAkc(61, 17), sw: 1.3, bore: 0.93 })}
+        {Tube(z - 5, z + 5, r, { band: 'url(#nbBarrel)', cap: kol(11, 10), stroke: kol(61, 17), sw: 1.3, bore: 0.93 })}
         {edges}
-        <polygon points={hole.join(' ')} fill={tonAkc(7, 7)} fillOpacity={0.55} stroke="hsl(var(--primary))" strokeWidth={1.3} />
+        <polygon points={hole.join(' ')} fill={kol(7, 7)} fillOpacity={0.55} stroke="hsl(var(--primary))" strokeWidth={1.3} />
       </g>
     )
   }
@@ -1400,33 +1401,33 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
           <>
             {[0.35, 2.45, 4.55].map((a, i) => {
               const q = rim(z1, t.r * 0.94, a), w = rim(z1, t.r * 0.78, a)
-              return <line key={`by${i}`} x1={q.x} y1={q.y} x2={w.x} y2={w.y} stroke={tonAkc(83, 8)} strokeWidth={2.6} opacity={0.6} />
+              return <line key={`by${i}`} x1={q.x} y1={q.y} x2={w.x} y2={w.y} stroke={kol(83, 8)} strokeWidth={2.6} opacity={0.6} />
             })}
           </>
         )
       } else if (t.id === 'T2') {
         inner = (
           <>
-            {Knurl(z0 + 3, z1 - 3, t.r, 46, tonAkc(45, 15))}
+            {Knurl(z0 + 3, z1 - 3, t.r, 46, kol(45, 15))}
           </>
         )
       } else if (t.id === 'T3') {
         inner = (
           <>
-            {Knurl(z0 + 4, z1 - 4, t.r, 64, tonAkc(63, 13))}
-            {Ring(z1 - 4, t.r * 1.01, { fill: 'none', stroke: tonAkc(83, 8), strokeWidth: 1, strokeOpacity: 0.4 })}
+            {Knurl(z0 + 4, z1 - 4, t.r, 64, kol(63, 13))}
+            {Ring(z1 - 4, t.r * 1.01, { fill: 'none', stroke: kol(83, 8), strokeWidth: 1, strokeOpacity: 0.4 })}
           </>
         )
       } else if (t.id === 'T4') {
         inner = (
           <>
-            {Knurl(z0 + 3, z1 - 3, t.r, 54, tonAkc(63, 13))}
+            {Knurl(z0 + 3, z1 - 3, t.r, 54, kol(63, 13))}
           </>
         )
       } else {
         inner = (
           <>
-            {Ring(z1, t.r * 0.90, { fill: 'none', stroke: tonAkc(83, 8), strokeWidth: 2.4, strokeOpacity: 0.55 })}
+            {Ring(z1, t.r * 0.90, { fill: 'none', stroke: kol(83, 8), strokeWidth: 2.4, strokeOpacity: 0.55 })}
           </>
         )
       }
@@ -1437,7 +1438,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
           <g key={t.id}>
             {Tube(z0, z1, t.r, {
               band: t.id === 'T5' ? 'url(#nbBezel)' : 'url(#nbBarrel)',
-              cap: 'url(#nbCap)', stroke: tonAkc(61, 17), sw: 1.4,
+              cap: 'url(#nbCap)', stroke: kol(61, 17), sw: 1.4,
               bore: t.id === 'T1' ? 0.68 : 0.60,
             })}
             {inner}
@@ -1529,36 +1530,36 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
             <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="nbSkinF" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(15, 9)} /><stop offset="55%" stopColor={tonAkc(9, 6)} /><stop offset="100%" stopColor={ton(6)} />
+                  <stop offset="0%" stopColor={bryla(15, 9)} /><stop offset="55%" stopColor={bryla(9, 6)} /><stop offset="100%" stopColor={ton(6)} />
                 </linearGradient>
                 <linearGradient id="nbSkinS" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(11, 8)} /><stop offset="100%" stopColor={ton(6)} />
+                  <stop offset="0%" stopColor={bryla(11, 8)} /><stop offset="100%" stopColor={ton(6)} />
                 </linearGradient>
                 <linearGradient id="nbSkinT" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(17, 9)} /><stop offset="100%" stopColor={ton(8)} />
+                  <stop offset="0%" stopColor={bryla(17, 9)} /><stop offset="100%" stopColor={ton(8)} />
                 </linearGradient>
                 <linearGradient id="nbMagT" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(88, 6)} /><stop offset="42%" stopColor={tonAkc(59, 12)} /><stop offset="100%" stopColor={tonAkc(29, 10)} />
+                  <stop offset="0%" stopColor={bryla(88, 6)} /><stop offset="42%" stopColor={bryla(59, 12)} /><stop offset="100%" stopColor={bryla(29, 10)} />
                 </linearGradient>
                 <linearGradient id="nbMagF" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(67, 11)} /><stop offset="58%" stopColor={tonAkc(35, 11)} /><stop offset="100%" stopColor={tonAkc(20, 9)} />
+                  <stop offset="0%" stopColor={bryla(67, 11)} /><stop offset="58%" stopColor={bryla(35, 11)} /><stop offset="100%" stopColor={bryla(20, 9)} />
                 </linearGradient>
                 <linearGradient id="nbMagS" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(46, 13)} /><stop offset="100%" stopColor={tonAkc(16, 8)} />
+                  <stop offset="0%" stopColor={bryla(46, 13)} /><stop offset="100%" stopColor={bryla(16, 8)} />
                 </linearGradient>
                 {/* Anodowany tubus — pas boczny walca oświetlony od góry */}
                 <linearGradient id="nbBarrel" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(34, 15)} /><stop offset="15%" stopColor={tonAkc(64, 15)} />
-                  <stop offset="35%" stopColor={tonAkc(17, 9)} /><stop offset="72%" stopColor={ton(7)} />
-                  <stop offset="92%" stopColor={tonAkc(15, 8)} /><stop offset="100%" stopColor={tonAkc(27, 13)} />
+                  <stop offset="0%" stopColor={bryla(34, 15)} /><stop offset="15%" stopColor={bryla(64, 15)} />
+                  <stop offset="35%" stopColor={bryla(17, 9)} /><stop offset="72%" stopColor={ton(7)} />
+                  <stop offset="92%" stopColor={bryla(15, 8)} /><stop offset="100%" stopColor={bryla(27, 13)} />
                 </linearGradient>
                 <linearGradient id="nbBezel" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(38, 14)} /><stop offset="16%" stopColor={tonAkc(73, 12)} />
-                  <stop offset="38%" stopColor={tonAkc(16, 8)} /><stop offset="74%" stopColor={ton(6)} />
-                  <stop offset="94%" stopColor={tonAkc(16, 8)} /><stop offset="100%" stopColor={tonAkc(31, 11)} />
+                  <stop offset="0%" stopColor={bryla(38, 14)} /><stop offset="16%" stopColor={bryla(73, 12)} />
+                  <stop offset="38%" stopColor={bryla(16, 8)} /><stop offset="74%" stopColor={ton(6)} />
+                  <stop offset="94%" stopColor={bryla(16, 8)} /><stop offset="100%" stopColor={bryla(31, 11)} />
                 </linearGradient>
                 <linearGradient id="nbCap" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor={tonAkc(22, 10)} /><stop offset="55%" stopColor={tonAkc(11, 8)} /><stop offset="100%" stopColor={ton(7)} />
+                  <stop offset="0%" stopColor={bryla(22, 10)} /><stop offset="55%" stopColor={bryla(11, 8)} /><stop offset="100%" stopColor={ton(7)} />
                 </linearGradient>
                 <radialGradient id="nbGlassR" cx="34%" cy="26%" r="80%">
                   <stop offset="0%" stopColor={ton(100)} stopOpacity="0.75" />
@@ -1576,7 +1577,7 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
                   <stop offset="100%" stopColor={ton(8)} />
                 </linearGradient>
                 <radialGradient id="nbFloor" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.8" /><stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
+                  <stop offset="0%" stopColor={bryla(6, 8)} stopOpacity="0.8" /><stop offset="100%" stopColor={bryla(6, 8)} stopOpacity="0" />
                 </radialGradient>
               </defs>
 
@@ -1587,9 +1588,9 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g>
                 {Trail(P3(0, 0, DOOR.z1), P3(0, 0, DOOR.z0 + zDoor), fade(0.08))}
                 {Box(-DOOR.x, -DOOR.y, DOOR.z0 + zDoor, DOOR.x, DOOR.y, DOOR.z1 + zDoor,
-                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', tonAkc(31, 14), 1.2)}
+                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', kol(31, 14), 1.2)}
                 <g transform={plane(0, 0, DOOR.z1 + zDoor, ...FRONT)}>
-                  <rect x={-74} y={-34} width={148} height={68} rx={4} fill={tonAkc(8, 6)} stroke={tonAkc(18, 11)} strokeWidth={0.8} />
+                  <rect x={-74} y={-34} width={148} height={68} rx={4} fill={kol(8, 6)} stroke={kol(18, 11)} strokeWidth={0.8} />
                   <rect x={-58} y={-22} width={116} height={44} rx={3} fill="none" stroke="hsl(var(--primary))" strokeWidth={0.5} strokeOpacity={0.28} strokeDasharray="3 3" />
                 </g>
               </g>
@@ -1599,36 +1600,36 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g opacity={0.3 + fade(0.05, 0.2) * 0.7}>
                 {Trail(P3(0, 0, SENS.z1), P3(xSens, ySens, SENS.z0 + zSens), fade(0.06))}
                 {Box(-SENS.x + xSens, -SENS.y + ySens, SENS.z0 + zSens, SENS.x + xSens, SENS.y + ySens, SENS.z1 + zSens,
-                  ton(8), tonAkc(13, 6), 'url(#nbSensor)', 'hsl(var(--primary))', 1.2)}
+                  ton(8), kol(13, 6), 'url(#nbSensor)', 'hsl(var(--primary))', 1.2)}
                 <g transform={plane(xSens, ySens, SENS.z1 + zSens, ...FRONT)}>
                   <rect x={-32} y={-18} width={64} height={36} fill={ton(7)} stroke="hsl(var(--primary))" strokeWidth={0.9} />
                   {[-12, -4, 4, 12].map((yy) => <line key={yy} x1={-30} y1={yy} x2={30} y2={yy} stroke="hsl(var(--primary))" strokeWidth={0.4} strokeOpacity={0.4} />)}
                   {[-24, -12, 0, 12, 24].map((xx) => <line key={xx} x1={xx} y1={-16} x2={xx} y2={16} stroke="hsl(var(--primary))" strokeWidth={0.4} strokeOpacity={0.4} />)}
                   <text x={0} y={3.5} fill={ton(100)} fontSize={12} fontFamily="sans-serif" fontWeight="900" textAnchor="middle">4K</text>
-                  {[-40, 40].map((xx) => <rect key={xx} x={xx - 1.5} y={-14} width={3} height={28} fill={tonAkc(63, 13)} opacity={0.6} />)}
+                  {[-40, 40].map((xx) => <rect key={xx} x={xx - 1.5} y={-14} width={3} height={28} fill={kol(63, 13)} opacity={0.6} />)}
                 </g>
               </g>
               {/* ── 3. KORPUS (skórzana obudowa) ── */}
               <g>
                 {Box(-BODY.x, BODY.y0, -BODY.z, BODY.x, BODY.y1, BODY.z,
-                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', tonAkc(32, 15), 1.5)}
+                  'url(#nbSkinS)', 'url(#nbSkinT)', 'url(#nbSkinF)', kol(32, 15), 1.5)}
 
                 <g transform={plane(0, -6, BODY.z, ...FRONT)}>
-                  <rect x={-88} y={-46} width={176} height={92} rx={5} fill={ton(7)} stroke={tonAkc(16, 9)} strokeWidth={0.7} />
+                  <rect x={-88} y={-46} width={176} height={92} rx={5} fill={ton(7)} stroke={kol(16, 9)} strokeWidth={0.7} />
                   {Array.from({ length: 12 }, (_, i) => (
-                    <line key={`vt${i}`} x1={-82 + i * 15} y1={-42} x2={-82 + i * 15} y2={42} stroke={tonAkc(45, 22)} strokeWidth={0.3} strokeOpacity={0.13} />
+                    <line key={`vt${i}`} x1={-82 + i * 15} y1={-42} x2={-82 + i * 15} y2={42} stroke={kol(45, 22)} strokeWidth={0.3} strokeOpacity={0.13} />
                   ))}
                   <g transform="translate(-66 12)">
-                    <circle r={11} fill={tonAkc(10, 8)} stroke={tonAkc(58, 14)} strokeWidth={0.9} />
-                    <path d="M 0 0 L 8 -7" stroke={tonAkc(83, 8)} strokeWidth={2.4} strokeLinecap="round" />
+                    <circle r={11} fill={kol(10, 8)} stroke={kol(58, 14)} strokeWidth={0.9} />
+                    <path d="M 0 0 L 8 -7" stroke={kol(83, 8)} strokeWidth={2.4} strokeLinecap="round" />
                   </g>
-                  <circle cx={64} cy={0} r={6} fill={tonAkc(13, 10)} stroke={tonAkc(58, 14)} strokeWidth={0.9} />
+                  <circle cx={64} cy={0} r={6} fill={kol(13, 10)} stroke={kol(58, 14)} strokeWidth={0.9} />
                 </g>
 
                 <g transform={plane(BODY.x, -6, 0, ...SIDE)}>
-                  <rect x={-28} y={-44} width={56} height={88} rx={4} fill={ton(6)} stroke={tonAkc(16, 9)} strokeWidth={0.7} />
+                  <rect x={-28} y={-44} width={56} height={88} rx={4} fill={ton(6)} stroke={kol(16, 9)} strokeWidth={0.7} />
                   {Array.from({ length: 10 }, (_, i) => (
-                    <line key={i} x1={-24} y1={-36 + i * 8} x2={24} y2={-36 + i * 8} stroke={tonAkc(45, 22)} strokeWidth={0.6} strokeOpacity={0.18} />
+                    <line key={i} x1={-24} y1={-36 + i * 8} x2={24} y2={-36 + i * 8} stroke={kol(45, 22)} strokeWidth={0.6} strokeOpacity={0.18} />
                   ))}
                 </g>
               </g>
@@ -1637,31 +1638,31 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g>
                 {Trail(P3(0, PLATE.y0, 0), P3(0, PLATE.y1 + yPlate, 0), fade(0.08))}
                 {Box(-BODY.x, PLATE.y0 + yPlate, -BODY.z, BODY.x, PLATE.y1 + yPlate, BODY.z,
-                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', tonAkc(81, 11), 1.3)}
+                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', kol(81, 11), 1.3)}
 
                 <g transform={plane(0, PLATE.y0 + yPlate + 9, BODY.z, ...FRONT)}>
-                  <rect x={-74} y={-6} width={26} height={12} rx={2} fill={tonAkc(10, 8)} stroke={tonAkc(77, 12)} strokeWidth={0.8} />
-                  <rect x={30} y={-6} width={20} height={12} rx={2} fill={tonAkc(10, 8)} stroke={tonAkc(77, 12)} strokeWidth={0.8} />
-                  <circle cx={-61} cy={0} r={3.4} fill={tonAkc(78, 47)} opacity={0.42} />
+                  <rect x={-74} y={-6} width={26} height={12} rx={2} fill={kol(10, 8)} stroke={kol(77, 12)} strokeWidth={0.8} />
+                  <rect x={30} y={-6} width={20} height={12} rx={2} fill={kol(10, 8)} stroke={kol(77, 12)} strokeWidth={0.8} />
+                  <circle cx={-61} cy={0} r={3.4} fill={kol(78, 47)} opacity={0.42} />
                 </g>
 
-                {VTube(48, -2, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 11, 19, tonAkc(28, 12), 'url(#nbMagT)', tonAkc(88, 6), 1.2)}
+                {VTube(48, -2, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 11, 19, bryla(28, 12), 'url(#nbMagT)', kol(88, 6), 1.2)}
                 {Array.from({ length: 18 }, (_, i) => {
                   const t = (i / 18) * Math.PI * 2
                   const c0 = P3(48 + Math.cos(t) * 15, PLATE.y1 + yPlate + 11, -2 + Math.sin(t) * 15)
                   const c1 = P3(48 + Math.cos(t) * 18.6, PLATE.y1 + yPlate + 11, -2 + Math.sin(t) * 18.6)
-                  return <line key={`sd${i}`} x1={c0.x} y1={c0.y} x2={c1.x} y2={c1.y} stroke={tonAkc(33, 13)} strokeWidth={1} opacity={0.75} />
+                  return <line key={`sd${i}`} x1={c0.x} y1={c0.y} x2={c1.x} y2={c1.y} stroke={kol(33, 13)} strokeWidth={1} opacity={0.75} />
                 })}
 
-                {VTube(-58, -4, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 9, 15, tonAkc(28, 12), 'url(#nbMagT)', tonAkc(88, 6), 1.1)}
+                {VTube(-58, -4, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 9, 15, bryla(28, 12), 'url(#nbMagT)', kol(88, 6), 1.1)}
 
-                {VTube(22, 8, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 6, 7.5, tonAkc(34, 11), tonAkc(81, 11), tonAkc(88, 6), 1)}
+                {VTube(22, 8, PLATE.y1 + yPlate, PLATE.y1 + yPlate + 6, 7.5, bryla(34, 11), bryla(81, 11), kol(88, 6), 1)}
 
                 {Box(-14, PLATE.y1 + yPlate, -14, 12, PLATE.y1 + yPlate + 6, 4,
-                  tonAkc(14, 9), tonAkc(19, 10), tonAkc(11, 8), tonAkc(58, 14), 0.9)}
+                  kol(14, 9), kol(19, 10), kol(11, 8), kol(58, 14), 0.9)}
 
                 <g transform={plane(0, PLATE.y1 + yPlate + 0.4, 0, ...TOPF)}>
-                  <path d="M 66 16 L 88 20 L 92 12 L 70 8 Z" fill={tonAkc(59, 12)} stroke={tonAkc(88, 6)} strokeWidth={0.6} />
+                  <path d="M 66 16 L 88 20 L 92 12 L 70 8 Z" fill={bryla(59, 12)} stroke={kol(88, 6)} strokeWidth={0.6} />
                 </g>
               </g>
 
@@ -1669,13 +1670,13 @@ function Module02VisualCreationZigzagSection({ onNavigate }: { onNavigate: (p: H
               <g opacity={0.45 + fade(0.04, 0.2) * 0.55}>
                 {Trail(P3(-10, PRISM.y0, 4), P3(-10 + xPrism, PRISM.y0 + yPrism, 4), fade(0.06))}
                 {Box(PRISM.x0 + xPrism, PRISM.y0 + yPrism, PRISM.z0, PRISM.x1 + xPrism, PRISM.y1 + yPrism, PRISM.z1,
-                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', tonAkc(81, 11), 1.3)}
+                  'url(#nbMagS)', 'url(#nbMagT)', 'url(#nbMagF)', kol(81, 11), 1.3)}
                 <g transform={plane(-10 + xPrism, PRISM.y0 + yPrism + 14, PRISM.z1, ...FRONT)}>
-                  <rect x={-17} y={-9} width={34} height={18} rx={2} fill={tonAkc(9, 8)} stroke="hsl(var(--primary))" strokeWidth={0.9} />
+                  <rect x={-17} y={-9} width={34} height={18} rx={2} fill={kol(9, 8)} stroke="hsl(var(--primary))" strokeWidth={0.9} />
                   <path d="M -14 7 L 0 -6 L 14 7 Z" fill="hsl(var(--primary))" fillOpacity="0.3" stroke="hsl(var(--primary))" strokeWidth={0.7} />
                 </g>
                 {Box(-24 + xPrism, PRISM.y0 + yPrism + 6, PRISM.z0 - 10, 4 + xPrism, PRISM.y1 + yPrism - 6, PRISM.z0,
-                  tonAkc(12, 9), tonAkc(17, 9), tonAkc(10, 8), tonAkc(48, 14), 0.9)}
+                  kol(12, 9), kol(17, 9), kol(10, 8), kol(48, 14), 0.9)}
               </g>
 
 
@@ -1791,6 +1792,8 @@ type ModuleCopy = {
   lead: string
   bullets: string[]
   cta: string
+  /** Dokąd prowadzi przycisk modułu. Domyślnie cennik. */
+  ctaTarget?: HomePageId
   visualLeft?: boolean
 }
 
@@ -1831,7 +1834,7 @@ function ModuleZigzagSection({
           </div>
 
           <div className="pt-2">
-            <GlowButton size="lg" onClick={() => onNavigate('cennik')}>
+            <GlowButton size="lg" onClick={() => onNavigate(copy.ctaTarget ?? 'cennik')}>
               {copy.cta}
             </GlowButton>
           </div>
@@ -1850,7 +1853,7 @@ function ModuleZigzagSection({
   )
 }
 
-/* Moduły 03–07: opisy przy animacjach — zwięzłe nagłówki i czysty język korzyści */
+/* Moduły 03–08: opisy przy animacjach — zwięzłe nagłówki i czysty język korzyści */
 const MODULE_COPY: ModuleCopy[] = [
   {
     id: 'assistant',
@@ -1916,8 +1919,24 @@ const MODULE_COPY: ModuleCopy[] = [
     cta: 'Zobacz Pamięć AI',
   },
   {
-    id: 'workspace',
+    id: 'private-cloud',
     num: '07',
+    tag: 'PRIVATE CLOUD',
+    titleLead: 'Twoje dane',
+    titleAccent: 'zawsze pod ręką',
+    lead: 'Twoje pliki, rozmowy i projekty w prywatnej chmurze. Otwierasz je z każdego miejsca i urządzenia, a dostęp do nich masz tylko Ty.',
+    bullets: [
+      'Prywatna przestrzeń, do której wchodzisz tylko Ty',
+      'Dostęp z komputera, telefonu i tabletu',
+      'Szyfrowanie przy przesyłaniu i przechowywaniu',
+      'Twoje dane nigdy nie trafiają do trenowania modeli',
+    ],
+    cta: 'Wypróbuj za darmo',
+    visualLeft: true,
+  },
+  {
+    id: 'workspace',
+    num: '08',
     tag: 'ZINTEGROWANY WORKSPACE',
     titleLead: 'Wszystkie narzędzia',
     titleAccent: 'Jeden panel',
@@ -1929,7 +1948,6 @@ const MODULE_COPY: ModuleCopy[] = [
       'Serwery w UE i wsparcie po polsku',
     ],
     cta: 'Zacznij za darmo',
-    visualLeft: true,
   },
 ]
 
@@ -2072,7 +2090,7 @@ export function StronaGlowna({ onNavigate = () => { } }: { onNavigate?: (p: Home
         </LazyBlock>
       </div>
 
-      {/* ══════════ 5. MODUŁY 03–06: ASYSTENT, DEEP RESEARCH, AKADEMIA, WORKSPACE ══════════ */}
+      {/* ══════════ 5. MODUŁY 03–08: ASYSTENT, RESEARCH, AKADEMIA, PAMIĘĆ, PRIVATE CLOUD, WORKSPACE ══════════ */}
       {MODULE_COPY.map((copy) => (
         <div key={copy.id} id={copy.id === 'assistant' ? 'asystent' : copy.id}>
           <TechDivider />
@@ -2087,8 +2105,9 @@ export function StronaGlowna({ onNavigate = () => { } }: { onNavigate?: (p: Home
                       : copy.id === 'research' ? <DeepResearchVisual />
                         : copy.id === 'academy' ? <AcademyVisual />
                           : copy.id === 'memory' ? <MemoryVisual />
-                            : copy.id === 'workspace' ? <WorkspaceVisual />
-                              : undefined
+                            : copy.id === 'private-cloud' ? <PrivateCloudVisual />
+                              : copy.id === 'workspace' ? <WorkspaceVisual />
+                                : undefined
                   }
                 />
               </FadeIn>

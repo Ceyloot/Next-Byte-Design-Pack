@@ -465,7 +465,7 @@ export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string
   //    (najniższego) progu puli, tak jak startują suwaki na kartach planów:
   //    Lite 140 ⟠ / 27,90 zł, Premium 495 ⟠ / 99 zł, Ultimate 2450 ⟠ / 349 zł ──
   {
-    kategoria: 'Tokeny AI — ile dostajesz na plan',
+    kategoria: 'Tokeny AI',
     f: 'Claude Sonnet 5',
     v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~43,6 mln'],
   },
@@ -513,7 +513,7 @@ export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string
   // ── Grafiki AI — liczba sztuk = pula Byte / koszt modelu, dla domyślnego
   //    (najniższego) progu: Lite 140 ⟠, Premium 495 ⟠, Ultimate 2450 ⟠ ──
   {
-    kategoria: 'Grafiki AI — ile wygenerujesz na plan',
+    kategoria: 'Grafiki AI',
     f: 'Z-Image Turbo · 1 ⟠',
     v: ['Z paczek', '~140', '~495', '~2450'],
   },

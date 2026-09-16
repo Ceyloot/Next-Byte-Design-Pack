@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { cn } from '@/lib/utils'
 import {
-  Check, Sparkles, Wand2, ChevronDown, ArrowRight,
+  Check, X, Sparkles, Wand2, ChevronDown, ArrowRight,
   MessageSquare, ImagePlus, Bot, Layers, FileStack, FileSearch,
   Gauge, HardDrive, Coins, Lock, Brain, Upload, Gift,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton, FadeIn, akcentTlo,
   AnimStyles,
@@ -709,7 +708,15 @@ function CechaWiersz({ cecha, wartosci }: { cecha: Cecha; wartosci?: WartosciPro
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   COMPARE FEATURES — collapsible accordion per category
+   COMPARE FEATURES — układ jak w cenniku Higgsfield
+
+   - duże nazwy planów wyrównane do lewej, pod nimi cena i rozliczenie;
+     żaden plan nie jest wyróżniony — porównanie ma mówić samo za siebie,
+   - działy zawsze widoczne jako zwykłe nagłówki, bez ikon i zwijania;
+     długie działy pokazują kilka pozycji i „Pokaż więcej",
+   - wartości do lewej, ✓ / ✕, wiersze rozdzielone cienkimi liniami,
+   - na telefonie zamiast czterech ściśniętych kolumn jest przełącznik
+     planu — widać cechę i jedną kolumnę naraz.
    ═══════════════════════════════════════════════════════════════ */
 type CompareGroup = { kategoria: string; rows: typeof PLAN_MACIERZ }
 
@@ -763,278 +770,227 @@ function CompareFeaturesAccordion({ okres }: { okres: Okres }) {
     return result
   }, [])
 
-  // Domyślnie otwarte: rozliczenia i funkcje. Długie listy tokenów/grafik zwinięte.
-  const [openSet, setOpenSet] = useState<Set<string>>(
-    () => new Set(groups.filter(g => !/^(Tokeny|Grafiki) AI/.test(g.kategoria)).map(g => g.kategoria)),
-  )
-
-  const toggle = (kat: string) =>
-    setOpenSet(prev => {
+  /** Ile pozycji działu widać, zanim ktoś kliknie „Pokaż więcej". */
+  const POKAZ = 4
+  const [pelne, setPelne] = useState<Set<string>>(() => new Set())
+  const przelaczPelne = (kat: string) =>
+    setPelne(prev => {
       const next = new Set(prev)
       next.has(kat) ? next.delete(kat) : next.add(kat)
       return next
     })
 
-  // Jak w cenniku Higgsfield: domyślnie podgląd kilku wierszy z wygaszeniem
-  // i przyciskiem, po rozwinięciu cała tabela + "Zwiń tabelę" na dole.
-  const [rozwinieta, setRozwinieta] = useState(false)
+  // Na start otwarte tylko dwa główne działy (rozliczenia i tokeny);
+  // reszta czeka zwinięta jako same nagłówki, które da się rozwinąć.
+  const startowe = () => new Set(groups.slice(0, 2).map(g => g.kategoria))
+  const [otwarte, setOtwarte] = useState<Set<string>>(startowe)
+  const przelaczDzial = (kat: string) =>
+    setOtwarte(prev => {
+      const next = new Set(prev)
+      next.has(kat) ? next.delete(kat) : next.add(kat)
+      return next
+    })
+
+  // Działy, w których cokolwiek jest schowane pod „Pokaż więcej".
+  // Chowanie jednej pozycji nie ma sensu — taki dział pokazujemy od razu w całości.
+  const zUkrytymi = groups.filter(g => g.rows.length - POKAZ > 1).map(g => g.kategoria)
+  const wszystkoWidac =
+    otwarte.size === groups.length && zUkrytymi.every(k => pelne.has(k))
+
   const tabelaRef = useRef<HTMLDivElement>(null)
-  const naglowekRef = useRef<HTMLDivElement>(null)
-  const grupyRef = useRef<Record<string, HTMLDivElement | null>>({})
-
-  // Kategoria, której wiersze są właśnie pod przyklejonym nagłówkiem. Jej
-  // przełącznik pokazujemy W nagłówku (jedna warstwa sticky — patrz niżej),
-  // więc długą kategorię da się zwinąć bez przewijania do jej początku.
-  const [aktywna, setAktywna] = useState<string | null>(null)
-  useEffect(() => {
-    const scroller: HTMLElement | Window = document.querySelector<HTMLElement>('main.overflow-y-auto') ?? window
-    const licz = () => {
-      const dol = naglowekRef.current?.getBoundingClientRect().bottom ?? 0
-      let wynik: string | null = null
-      for (const g of groups) {
-        const el = grupyRef.current[g.kategoria]
-        if (!el || !openSet.has(g.kategoria)) continue
-        const r = el.getBoundingClientRect()
-        // przycisk kategorii (~60px) już schowany pod nagłówkiem, a wiersze jeszcze widać
-        if (r.top + 60 < dol && r.bottom > dol + 40) wynik = g.kategoria
-      }
-      setAktywna(wynik)
-    }
-    licz()
-    scroller.addEventListener('scroll', licz, { passive: true })
-    return () => scroller.removeEventListener('scroll', licz)
-  }, [groups, openSet, rozwinieta])
-
-  const zwinAktywna = () => {
-    if (!aktywna) return
-    const el = grupyRef.current[aktywna]
-    const dol = naglowekRef.current?.getBoundingClientRect().bottom ?? 0
-    toggle(aktywna)
-    // Po zwinięciu przewiń tak, żeby przycisk kategorii stanął tuż pod nagłówkiem
-    if (el) {
-      const scroller = document.querySelector<HTMLElement>('main.overflow-y-auto')
-      const delta = el.getBoundingClientRect().top - dol
-      scroller ? scroller.scrollBy({ top: delta }) : window.scrollBy({ top: delta })
+  const przelaczWszystko = () => {
+    if (wszystkoWidac) {
+      setOtwarte(startowe())
+      setPelne(new Set())
+      requestAnimationFrame(() => tabelaRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+    } else {
+      setOtwarte(new Set(groups.map(g => g.kategoria)))
+      setPelne(new Set(zUkrytymi))
     }
   }
 
-  const zwinTabele = () => {
-    setRozwinieta(false)
-    requestAnimationFrame(() => tabelaRef.current?.scrollIntoView({ block: 'start' }))
-  }
+  // Plan widoczny na telefonie. Domyślnie polecany — to jego porównanie
+  // najczęściej kogoś interesuje.
+  const [planMobile, setPlanMobile] = useState(() => Math.max(0, PLANY.findIndex(p => p.polecany)))
 
   // Kolumny liczone z PLANY — ceny w nagłówku nie mogą rozjechać się z kartami.
-  const KOLOR_KOLUMNY = [
-    'hsl(var(--foreground)/0.35)',
-    'hsl(var(--primary)/0.55)',
-    'hsl(var(--primary)/0.8)',
-    'hsl(var(--primary))',
-  ]
-  const planCols = PLANY.map((p, i) => {
+  const planCols = PLANY.map(p => {
     const baza = p.cena ?? p.progi?.[0]?.miesiecznie ?? 0
     const kwota = cenaZaOkres(baza, okres)
     const kwotaTekst = kwota.toLocaleString('pl-PL', {
       minimumFractionDigits: kwota % 1 !== 0 ? 2 : 0,
       maximumFractionDigits: 2,
     })
+    const darmowy = p.cena === 0
     return {
-      name: p.cena === 0 ? 'Free' : p.nazwa,
-      cena: p.cena === 0 ? 'za darmo' : `${p.progi ? 'od ' : ''}${kwotaTekst} zł/m`,
-      color: KOLOR_KOLUMNY[i] ?? KOLOR_KOLUMNY[3],
-      polecany: p.polecany,
+      name: darmowy ? 'Free' : p.nazwa,
+      cena: darmowy ? 'Za darmo' : `${p.progi ? 'od ' : ''}${kwotaTekst} zł/mies.`,
+      opis: darmowy ? 'Płacisz tylko za zużycie' : okres === 'rocznie' ? 'Rozliczane rocznie' : 'Rozliczane miesięcznie',
     }
   })
-  const KATEGORIA_IKONA: Record<string, LucideIcon> = {
-    'Rozliczenia i pula Byte': Coins,
-    'Tokeny AI — ile dostajesz na plan': MessageSquare,
-    'Grafiki AI — ile wygenerujesz na plan': ImagePlus,
-    'Chat AI i asystent': Sparkles,
-    'Studio Zdjęć': ImagePlus,
-    'Organizacja pracy': Layers,
-    'Dane i prywatność': Lock,
-  }
-  const colGrid = 'grid grid-cols-[2fr_repeat(4,1fr)] sm:grid-cols-[2.2fr_repeat(4,1fr)]'
-  const ROW_H = 64
+
+  // Telefon: cecha + jedna kolumna planu. Od `sm` — pełna tabela.
+  const colGrid = 'grid grid-cols-[1.4fr_1fr] sm:grid-cols-[1.6fr_repeat(4,1fr)] gap-x-6'
+  /** Komórka planu: na telefonie widać tylko wybrany plan. */
+  const komorkaPlanu = (i: number) => cn(i !== planMobile && 'hidden sm:flex')
 
   return (
     <div ref={tabelaRef} style={{ scrollMarginTop: `${stickyTop + 16}px` }}>
-    <div className="rounded-2xl border border-foreground/[0.09] bg-[hsl(var(--card))]">
-      {/* Plan headers — przyklejone pod navbarem. UWAGA: tło musi być w pełni
-          kryjące i BEZ backdrop-blur — blur na sticky elemencie podczas
-          scrolla dawał widoczne "przycięcie"/artefakt na krawędzi w tym
-          layoutcie. Musi też żyć poza kontenerem z overflow-hidden (niżej),
-          bo inny overflow niż visible na przodku łamie position:sticky. */}
-      <div
-        ref={naglowekRef}
-        className={cn(
-          colGrid,
-          'sticky z-20 rounded-t-2xl border-b border-foreground/[0.1] bg-[hsl(var(--card))]',
-          'shadow-[0_12px_28px_-20px_rgba(0,0,0,0.95)]',
-        )}
-        style={{ top: `${stickyTop}px` }}
-      >
-        {/* Lewa komórka: zakładka aktualnie przeglądanej kategorii — jedzie w dół
-            razem z nagłówkiem i pozwala ją zwinąć w dowolnym miejscu */}
-        <div className="flex items-center pl-3 pr-2">
-          {aktywna && (
-            <button
-              type="button"
-              onClick={zwinAktywna}
-              className="group flex min-w-0 items-center gap-2 rounded-lg border border-foreground/[0.1] bg-foreground/[0.03] px-2.5 py-1.5 text-left transition-colors hover:border-primary/40 hover:bg-primary/[0.06] cursor-pointer"
-            >
-              {(() => { const Ik = KATEGORIA_IKONA[aktywna] ?? Layers; return <Ik className="h-3.5 w-3.5 shrink-0 text-primary" /> })()}
-              <span className="truncate font-sans text-[12px] font-semibold text-foreground/85">{aktywna}</span>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 rotate-180 text-muted-foreground/60 group-hover:text-primary" />
-            </button>
-          )}
-        </div>
-        {planCols.map(col => (
-          <div
+
+      {/* ── TELEFON: przełącznik planu zamiast czterech ściśniętych kolumn ── */}
+      <div className="mb-4 grid grid-cols-4 gap-1 rounded-xl border border-foreground/[0.09] p-1 sm:hidden">
+        {planCols.map((col, i) => (
+          <button
             key={col.name}
+            type="button"
+            onClick={() => setPlanMobile(i)}
             className={cn(
-              'relative flex flex-col items-center justify-center gap-0.5 py-4',
-              col.polecany && 'bg-primary/[0.07] border-x border-primary/[0.12]',
+              'rounded-lg py-2 font-sans text-[12px] font-semibold transition-colors cursor-pointer',
+              planMobile === i ? 'bg-foreground/[0.08] text-foreground' : 'text-muted-foreground/60',
             )}
           >
-            <span
-              className="font-sans text-[13.5px] font-bold uppercase tracking-[0.1em] leading-none"
-              style={{ color: col.color }}
-            >
+            {col.name}
+          </button>
+        ))}
+      </div>
+
+      {/* ── NAGŁÓWEK PLANÓW — przyklejony pod paskiem nawigacji. Tło musi być
+             w pełni kryjące i bez backdrop-blur (blur na sticky dawał artefakt
+             na krawędzi), a przodkowie nie mogą mieć overflow innego niż visible. ── */}
+      <div
+        className={cn(colGrid, 'sticky z-20 border-b border-foreground/[0.08] bg-background pb-5 pt-4')}
+        style={{ top: `${stickyTop}px` }}
+      >
+        <div />
+        {planCols.map((col, ci) => (
+          <div key={col.name} className={cn('flex flex-col items-start', komorkaPlanu(ci))}>
+            <span className="font-heading text-[20px] font-semibold leading-tight tracking-[-0.3px] text-foreground">
               {col.name}
             </span>
-            <span className="font-sans text-[11px] font-medium tabular-nums text-muted-foreground/55 leading-none">
-              {col.cena}
-            </span>
-            {/* Podkreślenie jak w zakładkach — pełna szerokość tylko dla planu polecanego */}
-            <span
-              className={cn('absolute inset-x-0 bottom-0 h-[2px]', !col.polecany && 'opacity-0')}
-              style={{ backgroundColor: col.color }}
-            />
+            <span className="mt-2 font-sans text-[14px] font-medium tabular-nums text-foreground/85">{col.cena}</span>
+            <span className="font-sans text-[12.5px] text-muted-foreground/60">{col.opis}</span>
           </div>
         ))}
       </div>
 
-      <div
-        className="relative"
-        style={rozwinieta ? undefined : { maxHeight: '520px', overflow: 'hidden' }}
-      >
+      {/* ── DZIAŁY — rozwijane nagłówki ──
+             Nagłówek działu to jeden szeroki przycisk: po prawej zawsze stoi
+             „Rozwiń"/„Zwiń" ze strzałką, a najechanie podświetla całą linię,
+             więc od razu widać, że dział da się otworzyć. Treść otwiera się
+             płynnie (grid-template-rows 0fr → 1fr), więc lista nie „skacze". */}
       {groups.map((group, gi) => {
-        const isOpen = openSet.has(group.kategoria)
-        const isLast = gi === groups.length - 1
-        const Ikona = KATEGORIA_IKONA[group.kategoria] ?? Layers
-        return (
-          <div
-            key={group.kategoria}
-            ref={el => { grupyRef.current[group.kategoria] = el }}
-            className={cn('border-b border-foreground/[0.06]', isLast && 'border-b-0')}
-          >
-            {/* Category toggle — świadomie NIE sticky. Dwie nakładające się
-                warstwy sticky (nagłówek planów + ten przycisk) dawały
-                niestabilne, migające przerwy przy szybkim scrollu mimo
-                matematycznie poprawnych offsetów — jedna warstwa sticky
-                (pasek FREE/LITE/PREMIUM/ULTIMATE) jest w pełni stabilna. */}
-            <button
-              onClick={() => toggle(group.kategoria)}
-              className="flex w-full items-center justify-between gap-3 bg-[hsl(var(--card))] px-5 py-4 text-left transition-colors hover:bg-foreground/[0.025]"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-                  <Ikona className="h-3.5 w-3.5" />
-                </span>
-                <span className="font-sans text-[14px] font-bold tracking-[-0.1px] text-foreground/90">
-                  {group.kategoria}
-                </span>
-                <span className="hidden sm:inline font-sans text-[11.5px] font-medium text-muted-foreground/45">
-                  {group.rows.length} {group.rows.length === 1 ? 'pozycja' : 'pozycji'}
-                </span>
+        const otwarty = otwarte.has(group.kategoria)
+        const rozwiniety = pelne.has(group.kategoria)
+        const ukryte = group.rows.length - POKAZ > 1 ? group.rows.length - POKAZ : 0
+        const stale = ukryte ? group.rows.slice(0, POKAZ) : group.rows
+        const dodatkowe = ukryte ? group.rows.slice(POKAZ) : []
+        const idTresci = `porownanie-dzial-${gi}`
+        const wiersz = (r: (typeof group.rows)[number], klucz: string, styl?: React.CSSProperties) => (
+          <div key={klucz} style={styl} className={cn(colGrid, 'items-center border-t border-foreground/[0.07] py-4')}>
+            <span className="font-sans text-[14.5px] leading-snug text-foreground/90">{r.f}</span>
+            {r.v.map((v, vi) => (
+              <div key={vi} className={cn('flex items-center', komorkaPlanu(vi))}>
+                {v === true ? (
+                  <Check className="h-4 w-4 text-foreground/85" strokeWidth={2} />
+                ) : v === false ? (
+                  <X className="h-4 w-4 text-foreground/35" strokeWidth={1.75} />
+                ) : (
+                  <span className="font-sans text-[14px] leading-tight tabular-nums text-foreground/85">{v}</span>
+                )}
               </div>
-              <ChevronDown
-                className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-transform duration-250"
-                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              />
-            </button>
-
-            {/* Rows */}
-            <div
-              className={cn(isLast && 'rounded-b-2xl')}
-              style={{
-                maxHeight: isOpen ? `${group.rows.length * ROW_H}px` : '0px',
-                opacity: isOpen ? 1 : 0,
-                overflow: 'hidden',
-                transition: 'max-height 320ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease',
-              }}
-            >
-              {group.rows.map((r, ri) => (
-                <div
-                  key={r.f + ri}
-                  className={cn(
-                    colGrid,
-                    'items-stretch border-t border-foreground/[0.045] transition-colors hover:bg-foreground/[0.02]',
-                    ri % 2 === 1 && 'bg-foreground/[0.012]',
-                  )}
-                  style={{ minHeight: `${ROW_H}px` }}
-                >
-                  <span className="flex items-center pl-5 pr-4 font-sans text-[14px] font-normal leading-snug text-foreground/75">
-                    {r.f}
-                  </span>
-                  {r.v.map((v, vi) => {
-                    const isUlt = vi === 3
-                    const colColor = planCols[vi].color
-                    return (
-                      <div
-                        key={vi}
-                        className={cn(
-                          'flex items-center justify-center px-2',
-                          isUlt && 'bg-primary/[0.05] border-x border-primary/[0.08]',
-                        )}
-                      >
-                        {v === true ? (
-                          <Check className="h-4 w-4" strokeWidth={2.5} style={{ color: colColor }} />
-                        ) : v === false ? (
-                          <span className="block h-px w-3.5 rounded-full bg-foreground/10" />
-                        ) : (
-                          <span
-                            className="font-sans text-[13px] font-semibold text-center leading-tight tabular-nums"
-                            style={{ color: isUlt ? 'hsl(var(--primary))' : vi === 0 ? 'hsl(var(--foreground)/0.45)' : 'hsl(var(--foreground)/0.68)' }}
-                          >
-                            {v}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         )
+        return (
+          <section key={group.kategoria} className="border-b border-foreground/[0.12]">
+            <button
+              type="button"
+              onClick={() => przelaczDzial(group.kategoria)}
+              aria-expanded={otwarty}
+              aria-controls={idTresci}
+              className="group flex w-full items-center justify-between gap-4 py-6 text-left cursor-pointer"
+            >
+              <span className="flex min-w-0 items-baseline gap-3">
+                <span className="font-mono text-[11px] font-medium tracking-[0.16em] text-primary/80">
+                  {String(gi + 1).padStart(2, '0')}
+                </span>
+                <span className="truncate font-heading text-[22px] font-semibold tracking-[-0.4px] text-foreground transition-colors group-hover:text-primary">
+                  {group.kategoria}
+                </span>
+                <span className="hidden shrink-0 font-sans text-[12.5px] text-muted-foreground/50 sm:inline">
+                  {group.rows.length} {group.rows.length === 1 ? 'pozycja' : 'pozycji'}
+                </span>
+              </span>
+              <span className="flex shrink-0 items-center gap-2 font-sans text-[13px] font-medium text-muted-foreground/70 transition-colors group-hover:text-primary">
+                <span className="hidden sm:inline">{otwarty ? 'Zwiń' : 'Rozwiń'}</span>
+                <ChevronDown className={cn('h-4 w-4 transition-transform duration-300', otwarty && 'rotate-180')} />
+              </span>
+            </button>
+
+            <div
+              id={idTresci}
+              className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+              style={{ gridTemplateRows: otwarty ? '1fr' : '0fr' }}
+              aria-hidden={!otwarty}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <div
+                  className="pb-4 transition-opacity duration-300"
+                  style={{ opacity: otwarty ? 1 : 0 }}
+                >
+                  {stale.map((r, ri) => wiersz(r, r.f + ri))}
+
+                  {dodatkowe.length > 0 && (
+                    <div
+                      className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                      style={{ gridTemplateRows: rozwiniety ? '1fr' : '0fr' }}
+                      aria-hidden={!rozwiniety}
+                    >
+                      <div className="min-h-0 overflow-hidden">
+                        {dodatkowe.map((r, ri) =>
+                          wiersz(r, r.f + 'x' + ri, {
+                            opacity: rozwiniety ? 1 : 0,
+                            transform: rozwiniety ? 'translateY(0)' : 'translateY(-6px)',
+                            transition: 'opacity 320ms ease, transform 420ms cubic-bezier(0.22,1,0.36,1)',
+                            transitionDelay: rozwiniety ? `${80 + ri * 45}ms` : '0ms',
+                          }),
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {ukryte > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => przelaczPelne(group.kategoria)}
+                      className="mt-1 inline-flex items-center gap-2 border-t border-transparent py-3 font-sans text-[14px] text-muted-foreground/70 transition-colors hover:text-foreground cursor-pointer"
+                    >
+                      <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', rozwiniety && 'rotate-180')} />
+                      {rozwiniety ? 'Pokaż mniej' : `Pokaż więcej (${ukryte})`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )
       })}
-      {/* Wygaszenie podglądu — tabela "urywa się" jak na Higgsfield */}
-      {!rozwinieta && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 rounded-b-2xl"
-          style={{ background: 'linear-gradient(to bottom, transparent, hsl(var(--card)) 90%)' }}
-        />
-      )}
+
+      <div className="mt-10 flex justify-center">
+        <button
+          type="button"
+          onClick={przelaczWszystko}
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-foreground/[0.12] px-5 font-heading text-[13px] font-semibold text-foreground/85 transition-colors hover:border-primary/45 hover:text-primary cursor-pointer"
+        >
+          {wszystkoWidac ? 'Zwiń tabelę' : 'Porównaj wszystkie funkcje'}
+          <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', wszystkoWidac && 'rotate-180')} />
+        </button>
       </div>
-    </div>
 
-    <div className="mt-5 flex justify-center">
-      <button
-        type="button"
-        onClick={() => (rozwinieta ? zwinTabele() : setRozwinieta(true))}
-        className="inline-flex h-10 items-center gap-2 rounded-xl border border-foreground/[0.12] bg-[hsl(var(--card)/0.7)] px-5 font-heading text-[13px] font-semibold text-foreground/85 transition-colors hover:border-primary/45 hover:text-primary cursor-pointer"
-      >
-        {rozwinieta ? 'Zwiń tabelę' : 'Porównaj wszystkie funkcje'}
-        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', rozwinieta && 'rotate-180')} />
-      </button>
-    </div>
-
-    <p className="mt-4 text-center font-sans text-[11.5px] font-light text-foreground/35">
-      Przeliczniki to szacunek przy założeniu, że cała miesięczna pula Byte trafia w całości do jednego modelu — wg jego referencyjnej ceny.
-      Dla planów z suwakiem liczone dla domyślnego, najniższego progu puli.
-    </p>
+      <p className="mt-4 text-center font-sans text-[11.5px] font-light text-foreground/35">
+        Przeliczniki to szacunek przy założeniu, że cała miesięczna pula Byte trafia w całości do jednego modelu — wg jego referencyjnej ceny.
+        Dla planów z suwakiem liczone dla domyślnego, najniższego progu puli.
+      </p>
     </div>
   )
 }
