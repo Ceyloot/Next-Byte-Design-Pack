@@ -1603,3 +1603,12 @@ html:not(.is-glass) .nb-cta:hover {
 html:not(.is-glass) .nb-cta-drugi {
   background-color: hsl(var(--card));
 }
+
+/* ── Przyciski strony Historia — 1:1 z nextbyte.space (nb-obwodka, nb-glass) ── */
+.nb-obwodka.nb-obwodka{border:1px solid hsl(var(--foreground) / .1);background-color:hsl(var(--foreground) / .02);backdrop-filter:saturate(130%) blur(8.8px);color:hsl(var(--foreground));transition:border-color .2s ease,background-color .2s ease,color .2s ease}
+.nb-obwodka.nb-obwodka:hover{border-color:hsl(var(--primary) / .4);background-color:hsl(var(--foreground) / .06)}
+.nb-obwodka.nb-obwodka:focus-visible{outline:none;border-color:hsl(var(--primary) / .6);box-shadow:0 0 0 2px hsl(var(--ring) / .4)}
+.nb-glass{position:relative;isolation:isolate;background:linear-gradient(180deg,hsl(var(--foreground) / .07),hsl(var(--foreground) / .02) 45%,hsl(var(--primary) / .05)),hsl(var(--card) / .55);border:1px solid hsl(var(--primary) / .2);backdrop-filter:blur(20px) saturate(1.6);box-shadow:inset 0 1px hsl(var(--foreground) / .16),inset 0 -1px hsl(var(--primary) / .08),0 1px 2px #0000002e,0 10px 30px -12px hsl(0 0% 0% / .34);transition:box-shadow .32s ease,border-color .32s ease,background .32s ease}
+.nb-glass:hover{border-color:hsl(var(--primary) / .35);box-shadow:inset 0 1px hsl(var(--foreground) / .22),inset 0 -1px hsl(var(--primary) / .16),0 1px 2px #0003,0 14px 38px -12px #0000006b,0 0 0 1px hsl(var(--primary) / .16),0 6px 26px -6px hsl(var(--primary) / .3)}
+.nb-glass:after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:linear-gradient(105deg,transparent 30%,hsl(var(--foreground) / .12) 48%,transparent 66%);transition:opacity .32s ease}
+.nb-glass:hover:after{opacity:1}

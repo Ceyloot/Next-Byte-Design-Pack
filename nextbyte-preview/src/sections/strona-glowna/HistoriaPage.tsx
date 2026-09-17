@@ -1,223 +1,304 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { Section, GlowButton, GhostButton, FadeIn, SecRule } from '@/sections/wspolne/shared'
 import { cn } from '@/lib/utils'
-import { History, Check, GitBranch, Rss, ArrowRight } from 'lucide-react'
-import {
-  Section, SectionHead, Eyebrow, GlowButton, GhostButton,
-  Panel, IconTile, GridBackdrop, Glow, HairLine, AKCENT, akcentTlo,
-} from '@/sections/wspolne/shared'
-import { HISTORIA } from './data'
+import { HeroWispyBackground } from '@/grafiki/tlo-hero'
 import type { HomePage as HomePageId } from './types'
 
-type Filtr = 'wszystko' | 'major' | 'feature'
+/* ═══════════════════════════════════════════════════════════════
+   HISTORIA — treść 1:1 z nextbyte.space/historia, forma ghost:
+   bez paneli, kafelków, plakietek i kropek. Porządek niosą
+   typografia i cienkie linie. Założyciele: zdjęcie naprzeciw opisu.
+   ═══════════════════════════════════════════════════════════════ */
 
-const FILTRY: { id: Filtr; label: string }[] = [
-  { id: 'wszystko', label: 'Wszystkie' },
-  { id: 'major',    label: 'Duże wydania' },
-  { id: 'feature',  label: 'Nowe funkcje' },
+const AKTY = [
+  {
+    akt: 'Akt I — Iskra',
+    t: 'Bariera, która zaczęła wszystko',
+    p: [
+      'Michał od nastoletnich lat budował automatyzacje dla firm i upraszczał ludziom technologię, której się obawiali. Z czasem został twórcą technologicznym z kilkusettysięcznym zasięgiem — ale najważniejszą pracę wykonywał poza kamerą: budował innym twórcom całe biznesy.',
+      'W którymś momencie napotkał ograniczenie, które okazało się początkiem wszystkiego: doba ma 24 godziny. Mógł prowadzić jednego twórcę naraz, a zainteresowanie rosło szybciej, niż był w stanie obsłużyć.',
+    ],
+    cytat: '„A gdyby zamknąć to wszystko w jednym miejscu i udostępnić tysiącom?"',
+  },
+  {
+    akt: 'Akt II — Dwa światy',
+    t: 'Ten sam problem z drugiej perspektywy',
+    p: [
+      'Do historii dołączył Kajetan — przedsiębiorca z branży budowlanej, którego Michał znał ze współpracy. Inny świat, ta sama obserwacja: AI jest dziś czarną skrzynką dla większości firm, a nie musi być.',
+      'Wniósł stronę firmową — i zasadę, której zespół trzyma się do dziś: buduje się to, co rozwiązuje realny problem, a nie to, co dobrze wygląda na slajdzie.',
+    ],
+    cytat: '„Dwóch założycieli, dwa światy, jedna obserwacja."',
+  },
+  {
+    akt: 'Akt III — Trzeci element',
+    t: 'Most do dużego biznesu',
+    p: [
+      'Brakowało kogoś, kto połączy to z dużym biznesem i nada całości sens szerszy niż sam produkt. W tym miejscu dołączyła Łucja — z dwudziestu lat w Digital i e-commerce, z sal Akademii Leona Koźmińskiego, ze szkoleń dla zespołów dużych marek.',
+      'Weszła w to z jednego powodu: jest przekonana, że rewolucja AI ma sens tylko wtedy, gdy służy ludziom. Wielkie modele pozostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają.',
+    ],
+    cytat: '„Tak z bariery jednego człowieka powstało przedsięwzięcie, które miało ją usunąć dla wszystkich."',
+  },
 ]
 
-export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
-  const [filtr, setFiltr] = useState<Filtr>('wszystko')
-  /* Dane leżą od najstarszego wydania; historia zmian czyta się od
-     najnowszego. Bez odwrócenia plakietka „Aktualna" — przypięta do
-     pierwszego wpisu — lądowała na v0.1 zamiast na ostatnim wydaniu. */
-  const wpisy = [...HISTORIA]
-    .reverse()
-    .filter(h => filtr === 'wszystko' || h.typ === filtr)
+type Zalozyciel = {
+  segment: string
+  rola: string
+  imie: string
+  foto: string | null
+  motto: string
+  p: string[]
+  tagi: string[]
+}
 
+const ZALOZYCIELE: Zalozyciel[] = [
+  {
+    segment: 'Twórcy',
+    rola: 'Pomysłodawca, Founder',
+    imie: 'Michał',
+    foto: '/assets/zalozyciele/michal.jpg',
+    motto: '„Wyprzedza rynek w adopcji AI, bo żyje tym na co dzień — kosztem snu."',
+    p: [
+      'Od nastoletnich lat budował automatyzacje dla firm i upraszczał technologię ludziom, którzy się jej obawiali. Z czasem został twórcą technologicznym z kilkusettysięcznym zasięgiem na TikToku, Instagramie i YouTube — tłumacząc AI tak, jak nie robił tego nikt z „technicznej" strony.',
+      'Równolegle stawiał innym twórcom całe biznesy: strony sprzedażowe, automatyzacje, zaplecze pod kursy — od trenerów keto po coachów. Z realnym skutkiem: ich marki zarabiały na poważną skalę. Ale doba ma 24 godziny. Mógł obsłużyć jednego twórcę naraz.',
+      'NextByte to jego odpowiedź na ten limit: zamknąć metodologię w narzędziu i oddać tysiącom twórców naraz.',
+    ],
+    tagi: ['B2P', 'Twórcy', 'Adopcja AI', 'Społeczność'],
+  },
+  {
+    segment: 'Firmy',
+    rola: 'Współzałożyciel, strona firmowa',
+    imie: 'Kajetan',
+    foto: '/assets/zalozyciele/kajetan.jpg',
+    motto: '„Wdrożył AI u siebie — wie, co działa w praktyce, nie na slajdzie."',
+    p: [
+      'Prowadzi wiodącą w swoim regionie firmę usługową w branży budowlanej — zbudował ją od zera i z sukcesem skaluje. Nie jest entuzjastą technologii, który przeczytał o AI. To przedsiębiorca, który zna z pierwszej ręki, gdzie zacina się mała i średnia firma — bo sam taką prowadzi.',
+      'Wniósł do projektu rzecz, której nie da się odtworzyć kodem: wdrożył AI we własnej, realnie działającej firmie. Z tego doświadczenia powstała warstwa B2B i Plug&Go — budowana pod konkretny problem MSP, a nie pod kolejne demo.',
+      'Aktywny członek klubu biznesowego — zna potrzeby przedsiębiorców w regionie z rozmów, nie z badań. To dzięki niemu NextByte mówi do firm językiem konkretu, nie obietnic.',
+    ],
+    tagi: ['B2B', 'MSP', 'Plug&Go', 'Pipeline'],
+  },
+  {
+    segment: 'Most do dużego biznesu',
+    rola: 'Współzałożycielka, strona ludzka i rynkowa',
+    imie: 'Łucja',
+    foto: null,
+    motto: '„Głos człowieka w projekcie. Rewolucja AI ma sens tylko wtedy, gdy służy ludziom."',
+    p: [
+      'Ekspertka Digital i e-commerce z 20-letnim doświadczeniem, w tym po stronie korporacji i dużego biznesu. Wykłada transformację cyfrową i AI na Akademii Leona Koźmińskiego, szkoli zespoły dużych marek — m.in. Decathlon i Kompanii Piwowarskiej.',
+      'Wnosi profesjonalizację — przełożenie produktu na język rynku, strategii i wdrożeń. I drugą rzecz, dla tej marki kluczową: jest w projekcie głosem człowieka.',
+      'Skoro technologią rządzą dziś wielkie koncerny, warto budować miejsce, w którym decydujący głos ma społeczność — nie roadmapa zarządu odpowiadającego przed inwestorami. Wielkie modele zostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają.',
+    ],
+    tagi: ['Korporacje', 'Edukacja', 'Strategia', 'Misja'],
+  },
+]
+
+const WARTOSCI = [
+  { t: 'AI musi służyć ludziom', d: 'Rewolucja AI ma sens tylko wtedy, gdy służy ich pracy i życiu — nie odwrotnie. Głos człowieka jest w tym projekcie kierunkiem, nie dodatkiem.' },
+  { t: 'Konkret, nie obietnica', d: 'Budujemy to, co rozwiązuje realny problem małej i średniej firmy — nie kolejną funkcję pod demo. Zasada wniesiona z prawdziwego wdrożenia AI w działającej firmie.' },
+  { t: 'Społeczność wyznacza kierunek', d: 'Wielkie modele zostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają — nie roadmapa zarządu odpowiadającego przed inwestorami.' },
+]
+
+const linia = 'border-t border-foreground/[0.1]'
+const akapit = 'font-sans text-[15px] font-light leading-relaxed text-foreground/65'
+const h2 = 'font-heading text-[clamp(26px,3.2vw,38px)] font-light tracking-[-1.2px] text-foreground'
+
+function Modul({ z, i }: { z: Zalozyciel; i: number }) {
+  const zdjecieLewo = i % 2 === 0
+  // Zdjęcie, które się nie wczyta, zastępujemy inicjałem zamiast pustej ramki.
+  const [fotoBlad, setFotoBlad] = React.useState(false)
+  const foto = fotoBlad ? null : z.foto
   return (
-    <div className="flex w-full flex-col">
+    <FadeIn className="py-12 sm:py-16">
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-16">
+        <div className={cn('lg:col-span-5', !zdjecieLewo && 'lg:order-2')}>
+          <div className="mx-auto aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-lg bg-foreground/[0.03]">
+            {foto ? (
+              <img src={foto} alt={z.imie} loading="lazy" onError={() => setFotoBlad(true)} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <span className="font-heading text-[140px] font-extralight text-foreground/15">{z.imie[0]}</span>
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* ══════════ NAGŁÓWEK ══════════ */}
-      <section className="relative overflow-hidden px-4 pb-14 pt-16 sm:px-6 lg:px-8">
-        <GridBackdrop />
-        <Glow className="left-1/2 top-[-150px] -translate-x-1/2" size={760} opacity={0.12} />
-
-        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center text-center">
-          <Eyebrow icon={History} className="mb-6">Historia zmian</Eyebrow>
-          <h1 className="font-heading text-[36px] font-extrabold leading-[1.07] tracking-tight text-foreground sm:text-[50px]">
-            Co zbudowaliśmy<br />
-            <span className="text-primary drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]">i co dopiero powstaje</span>
-          </h1>
-          <p className="mt-6 max-w-xl text-[15.5px] leading-relaxed text-foreground/50">
-            Pełen zapis wydań platformy. Każda wersja z listą zmian, datą i opisem tego,
-            co faktycznie zmieniło się w codziennej pracy użytkowników.
+        <div className={cn('lg:col-span-7', !zdjecieLewo && 'lg:order-1')}>
+          <SecRule label={`0${i + 1} // ${z.segment}`} />
+          <h3 className="font-heading text-[clamp(40px,5vw,64px)] font-light leading-none tracking-[-2px] text-foreground">
+            {z.imie}
+          </h3>
+          <p className="mt-2 font-sans text-[14px] text-foreground/45">{z.rola}</p>
+          <p className="mt-6 font-heading text-[clamp(18px,1.8vw,22px)] font-light italic leading-snug text-primary">
+            {z.motto}
           </p>
-
-          {/* filtry */}
-          <div className="mt-8 inline-flex gap-1 rounded-full border border-foreground/[0.08] bg-foreground/[0.03] p-1">
-            {FILTRY.map(f => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFiltr(f.id)}
-                className={cn(
-                  'h-9 rounded-lg px-4 text-[12.5px] font-semibold transition-all duration-200',
-                  filtr === f.id
-                    ? 'bg-primary text-background shadow-[0_4px_16px_-4px_hsl(var(--primary)/0.6)]'
-                    : 'text-foreground/45 hover:text-foreground/75',
-                )}
-              >
-                {f.label}
-              </button>
+          <div className={cn(linia, 'mt-8 space-y-4 pt-6')}>
+            {z.p.map((t, k) => <p key={k} className={akapit}>{t}</p>)}
+          </div>
+          <div className={cn(linia, 'mt-6 flex flex-wrap gap-x-6 gap-y-2 pt-5')}>
+            {z.tagi.map(t => (
+              <span key={t} className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/45">{t}</span>
             ))}
           </div>
         </div>
-      </section>
+      </div>
+    </FadeIn>
+  )
+}
 
-      {/* ══════════ OŚ CZASU ══════════ */}
-      <Section className="pb-24">
-        <div className="relative mx-auto max-w-3xl">
-          {/* pionowa linia */}
-          <div
-            aria-hidden
-            className="absolute bottom-8 left-[19px] top-4 w-px"
-            style={{ background: 'linear-gradient(180deg, hsl(var(--primary)/0.45), hsl(var(--foreground)/0.08) 40%, transparent)' }}
-          />
+export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
+  return (
+    <div className="flex w-full flex-col">
 
-          <div className="space-y-6">
-            {wpisy.map((w, i) => {
-              const Icon = w.icon
-              const najnowszy = i === 0 && filtr === 'wszystko'
+      {/* ══════════ HERO ══════════
+          To samo tło z falami co na stronie głównej, podciągnięte pod
+          sticky navbar (ujemny margines o jego wysokość). */}
+      <div className="relative overflow-hidden" style={{ marginTop: 'calc(var(--nb-navbar-h, 49px) * -1)' }}>
+        <HeroWispyBackground />
+        <section className="relative px-4 pb-16 pt-[130px] sm:px-6 sm:pb-24 sm:pt-[160px] lg:px-8">
+          <FadeIn className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
+            <div className="mb-4 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/75">Historia // Początek</div>
+            <h1 className="font-heading text-[clamp(40px,6vw,76px)] font-light leading-[1.02] tracking-[-2.5px] text-foreground">
+              Od pytania <br />
+              <span className="font-normal text-primary drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]">do platformy.</span>
+            </h1>
+            <p className="mt-6 max-w-xl font-sans text-[16px] font-light leading-relaxed text-foreground/70">
+              Wszystko zaczęło się od jednej bariery i jednego pytania. Dziś odpowiadają na nie trzy osoby z trzech różnych światów — twórców, firm i korporacji.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <GlowButton size="lg" onClick={() => onNavigate('rejestracja')}>Dołącz do NextByte</GlowButton>
+              <GhostButton size="lg" onClick={() => onNavigate('cennik')}>Zobacz plany</GhostButton>
+            </div>
+          </FadeIn>
+        </section>
+      </div>
+
+      {/* ══════════ MANIFEST ══════════
+          Ma być dobrze widoczny: pełnej szerokości pas między liniami
+          w kolorze akcentu, poświata pośrodku, duży tekst na osi. */}
+      <Section className="pb-16 sm:pb-24">
+        <FadeIn>
+          <figure className="relative overflow-hidden border-y border-primary/25 px-2 py-16 text-center sm:py-24">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[820px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/[0.12] blur-[120px]"
+            />
+            <div aria-hidden className="absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-primary to-transparent" />
+            <div aria-hidden className="absolute bottom-0 left-1/2 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-primary to-transparent" />
+            <div className="relative mx-auto max-w-4xl">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Nasz manifest</div>
+              <blockquote className="mt-8 font-heading text-[clamp(28px,4.2vw,52px)] font-light leading-[1.15] tracking-[-1.4px] text-foreground">
+                AI nie powinno być kolejną zakładką w przeglądarce. Powinno być{' '}
+                <span className="font-normal text-primary drop-shadow-[0_0_30px_hsl(var(--primary)/0.45)]">niewidoczną warstwą</span>, dzięki której każda praca idzie prościej.
+              </blockquote>
+              <figcaption className="mt-10 flex items-center justify-center gap-4 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/55">
+                <span aria-hidden className="h-px w-10 bg-primary/60" />
+                Zespół NextByte
+                <span aria-hidden className="h-px w-10 bg-primary/60" />
+              </figcaption>
+            </div>
+          </figure>
+        </FadeIn>
+      </Section>
+
+      {/* ══════════ GENEZA ══════════ */}
+      <Section className="pb-16 sm:pb-24">
+        <FadeIn>
+          <SecRule label="Rozdział 01 // Geneza" />
+          <h2 className={cn(h2, 'mb-8')}>
+            Trzy drogi, <span className="font-normal text-primary">jeden wniosek.</span>
+          </h2>
+          {/* Szachownica czytana z góry na dół: numer i nazwa aktu stoją na
+              zmianę po lewej i prawej, naprzeciw nich opowieść. Środkiem
+              biegnie cienka oś. */}
+          <div className="relative mt-14">
+            <div aria-hidden className="absolute bottom-0 left-1/2 top-0 hidden w-px -translate-x-1/2 bg-gradient-to-b from-primary/40 via-foreground/[0.1] to-transparent md:block" />
+            {AKTY.map((a, i) => {
+              const numerLewo = i % 2 === 0
               return (
-                <div key={w.wersja} className="relative pl-14">
-                  {/* węzeł */}
-                  <span
-                    className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-lg border-2"
-                    style={{
-                      background: 'hsl(var(--card))',
-                      borderColor: akcentTlo(w.color, 35),
-                      boxShadow: najnowszy ? `0 0 22px ${akcentTlo(w.color, 55)}` : 'none',
-                    }}
-                  >
-                    <Icon className="h-4 w-4" style={{ color: w.color }} />
-                  </span>
-
-                  <Panel hover className="p-6">
-                    <div className="mb-4 flex flex-wrap items-center gap-2.5">
-                      <span
-                        className="rounded-lg border px-2.5 py-1 font-mono text-[11px] font-extrabold"
-                        style={{ color: w.color, borderColor: akcentTlo(w.color, 30), background: akcentTlo(w.color, 10) }}
-                      >
-                        {w.wersja}
-                      </span>
-                      <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-foreground/30">
-                        {w.data}
-                      </span>
-                      {w.typ === 'major' && (
-                        <span className="rounded-lg bg-primary/12 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-primary">
-                          Duże wydanie
-                        </span>
-                      )}
-                      {najnowszy && (
-                        <span className="ml-auto flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/[0.08] px-2.5 py-1">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-md bg-primary" />
-                          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-primary">
-                            Aktualna
-                          </span>
-                        </span>
-                      )}
+                <FadeIn key={a.t} className="relative grid grid-cols-1 gap-6 py-10 md:grid-cols-2 md:gap-0 md:py-16">
+                  {/* numer i nazwa aktu */}
+                  <div className={cn('md:px-14', numerLewo ? 'md:text-right' : 'md:order-2')}>
+                    <div className="font-heading text-[clamp(64px,8vw,112px)] font-extralight leading-none tracking-[-4px] text-primary">
+                      0{i + 1}
                     </div>
+                    <div className="mt-3 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/45">
+                      {a.akt.replace(' — ', ' // ')}
+                    </div>
+                  </div>
 
-                    <h2 className="font-heading text-[19px] font-extrabold leading-snug tracking-tight text-foreground">
-                      {w.tytul}
-                    </h2>
-                    <p className="mt-2.5 text-[13.5px] leading-relaxed text-foreground/50">{w.opis}</p>
-
-                    <HairLine className="my-5" />
-
-                    <ul className="space-y-2.5">
-                      {w.punkty.map(p => (
-                        <li key={p} className="flex items-start gap-2.5 text-[12.5px] text-foreground/60">
-                          <span
-                            className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-md"
-                            style={{ background: akcentTlo(w.color, 15) }}
-                          >
-                            <Check className="h-2.5 w-2.5" style={{ color: w.color }} />
-                          </span>
-                          {p}
-                        </li>
-                      ))}
-                    </ul>
-                  </Panel>
-                </div>
+                  {/* opowieść */}
+                  <div className={cn('md:px-14 md:pt-3', !numerLewo && 'md:order-1 md:text-right')}>
+                    <h3 className="font-heading text-[clamp(22px,2.2vw,28px)] font-medium leading-snug tracking-[-0.5px] text-foreground">{a.t}</h3>
+                    <div className="mt-4 space-y-4">
+                      {a.p.map((t, k) => <p key={k} className={akapit}>{t}</p>)}
+                    </div>
+                    <p className="mt-6 font-heading text-[clamp(18px,1.8vw,22px)] font-light italic leading-snug text-foreground/90">
+                      {a.cytat}
+                    </p>
+                  </div>
+                </FadeIn>
               )
             })}
           </div>
+        </FadeIn>
+      </Section>
 
-          {/* zakończenie osi */}
-          <div className="relative mt-6 pl-14">
-            <span className="absolute left-[13px] top-2 h-3.5 w-3.5 rounded-md border-2 border-foreground/15 bg-[hsl(var(--card))]" />
-            <p className="text-[12.5px] text-foreground/30">
-              Pierwsza publiczna wersja platformy — październik 2025
-            </p>
-          </div>
+      {/* ══════════ ZAŁOŻYCIELE ══════════ */}
+      <Section className="pb-8">
+        <FadeIn>
+          <SecRule label="Założyciele // Trio" />
+          <h2 className={h2}>
+            Ludzie <span className="font-normal text-primary">za projektem.</span>
+          </h2>
+          <p className="mt-4 max-w-2xl font-sans text-[15px] font-light leading-relaxed text-foreground/60">
+            Trzy perspektywy, trzy segmenty, jedna obserwacja: AI jest dziś czarną skrzynką dla większości ludzi. A nie musi nią być.
+          </p>
+        </FadeIn>
+        <div className="divide-y divide-foreground/[0.08]">
+          {ZALOZYCIELE.map((z, i) => <Modul key={z.imie} z={z} i={i} />)}
         </div>
       </Section>
 
-      {/* ══════════ W PRZYGOTOWANIU ══════════ */}
-      <Section className="pb-24">
-        <Panel className="relative overflow-hidden p-8 sm:p-12">
-          <Glow className="right-[-80px] top-[-70px]" size={460} opacity={0.10} />
-          <div className="relative z-10">
-            <SectionHead
-              eyebrow="W przygotowaniu"
-              eyebrowIcon={GitBranch}
-              eyebrowColor={AKCENT.auto}
-              title="Nad czym pracujemy teraz"
-              lead="Kolejność może się zmienić — priorytety ustawiamy na podstawie tego, o co najczęściej prosicie."
-              align="left"
-              className="mb-11 max-w-2xl"
-            />
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {[
-                { t: 'Aplikacja mobilna', d: 'Pełny dostęp do Chat AI i Notatek z telefonu, z synchronizacją sesji.', s: 'testy wewnętrzne', p: 75 },
-                { t: 'Współdzielone przestrzenie', d: 'Wspólne projekty zespołowe z historią i uprawnieniami na poziomie folderu.', s: 'w budowie', p: 45 },
-                { t: 'Wtyczka do przeglądarki', d: 'Wywołanie modelu na dowolnej stronie bez przełączania karty.', s: 'projektowanie', p: 20 },
-              ].map(k => (
-                <div key={k.t} className="rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] p-5">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-foreground/30">
-                      {k.s}
-                    </span>
-                    <span className="font-mono text-[11px] font-bold" style={{ color: AKCENT.auto }}>{k.p}%</span>
-                  </div>
-                  <h3 className="mb-2 font-heading text-[15px] font-bold tracking-tight text-foreground">{k.t}</h3>
-                  <p className="mb-4 text-[12.5px] leading-relaxed text-foreground/45">{k.d}</p>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${k.p}%`, background: AKCENT.auto, boxShadow: `0 0 12px ${akcentTlo(AKCENT.auto, 60)}` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* ══════════ WARTOŚCI ══════════ */}
+      <Section className="py-16 sm:py-24">
+        <FadeIn>
+          <SecRule label="Filozofia // Wartości" />
+          <h2 className={cn(h2, 'mb-8')}>
+            W co <span className="font-normal text-primary">wierzymy.</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 md:gap-10">
+            {WARTOSCI.map((w, i) => (
+              <div key={w.t} className={cn(linia, 'py-6')}>
+                <span className="font-mono text-[12px] text-primary">0{i + 1}</span>
+                <div className="mt-3 font-heading text-[20px] font-medium tracking-[-0.3px] text-foreground">{w.t}</div>
+                <p className="mt-2 font-sans text-[14.5px] font-light leading-relaxed text-foreground/60">{w.d}</p>
+              </div>
+            ))}
           </div>
-        </Panel>
+        </FadeIn>
+
+        <FadeIn className="mx-auto mt-20 max-w-3xl text-center">
+          <p className="font-heading text-[clamp(18px,2.4vw,26px)] font-light leading-[1.45] tracking-[-0.3px] text-foreground/70">
+            NextByte nie jest kolejnym czatem AI. Jest tym, czym jest, bo zbudowali go ludzie, którzy{' '}
+            <span className="font-normal text-primary">nie zgodzili się, by ktokolwiek został z tyłu</span>.
+          </p>
+        </FadeIn>
       </Section>
 
       {/* ══════════ CTA ══════════ */}
-      <Section className="pb-24">
-        <Panel glow className="relative overflow-hidden rounded-3xl px-6 py-14 text-center sm:px-12 sm:py-16">
-          <GridBackdrop className="opacity-[0.25]" />
-          <Glow className="left-1/2 top-[-100px] -translate-x-1/2" size={640} opacity={0.18} />
-          <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center">
-            <Eyebrow icon={Rss} className="mb-5">Aktualizacje co dwa tygodnie</Eyebrow>
-            <h2 className="font-heading text-[30px] font-extrabold leading-tight tracking-tight text-foreground sm:text-[42px]">
-              Rozwijamy platformę razem z Wami
-            </h2>
-            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-foreground/55">
-              Większość funkcji na tej liście powstała z konkretnych próśb użytkowników.
-              Jeśli czegoś Ci brakuje — napisz, trafi to prosto do planu prac.
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-              <GlowButton>Zacznij za darmo</GlowButton>
-              <GhostButton onClick={() => onNavigate('home')}>Wróć do strony głównej</GhostButton>
-            </div>
+      <Section className="py-16 sm:py-24">
+        <FadeIn className="mx-auto flex max-w-2xl flex-col items-center text-center">
+          <h2 className="font-heading text-[clamp(28px,5vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
+            Przestań gonić AI. <br />
+            <span className="font-normal text-primary">Zacznij go używać.</span>
+          </h2>
+          <p className="mt-4 max-w-lg font-sans text-[15px] font-light leading-relaxed text-foreground/60">
+            Dołącz do NextByte i dostawaj konkret zamiast szumu. Bez spamu, bez korpo-gadki — możesz wyjść jednym kliknięciem.
+          </p>
+          <div className="mt-8">
+            <GlowButton onClick={() => onNavigate('rejestracja')}>Dołączam do NextByte</GlowButton>
           </div>
-        </Panel>
+        </FadeIn>
       </Section>
     </div>
   )

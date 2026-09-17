@@ -7,7 +7,6 @@ import type { HomePage as HomePageId } from './types'
 
 export function Footer({ onNavigate }: { onNavigate: (p: HomePageId) => void }) {
   const mapaLinkow: Record<string, HomePageId> = {
-    'Dla firm': 'b2b',
     'Cennik': 'cennik',
   }
 

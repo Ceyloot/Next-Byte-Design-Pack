@@ -976,16 +976,18 @@ function CompareFeaturesAccordion({ okres }: { okres: Okres }) {
         )
       })}
 
-      <div className="mt-10 flex justify-center">
-        <button
-          type="button"
-          onClick={przelaczWszystko}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-foreground/[0.12] px-5 font-heading text-[13px] font-semibold text-foreground/85 transition-colors hover:border-primary/45 hover:text-primary cursor-pointer"
-        >
-          {wszystkoWidac ? 'Zwiń tabelę' : 'Porównaj wszystkie funkcje'}
-          <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', wszystkoWidac && 'rotate-180')} />
-        </button>
-      </div>
+      {!wszystkoWidac && (
+        <div className="mt-10 flex justify-center">
+          <button
+            type="button"
+            onClick={przelaczWszystko}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-foreground/[0.12] px-5 font-heading text-[13px] font-semibold text-foreground/85 transition-colors hover:border-primary/45 hover:text-primary cursor-pointer"
+          >
+            Porównaj wszystkie funkcje
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       <p className="mt-4 text-center font-sans text-[11.5px] font-light text-foreground/35">
         Przeliczniki to szacunek przy założeniu, że cała miesięczna pula Byte trafia w całości do jednego modelu — wg jego referencyjnej ceny.
@@ -1880,7 +1882,6 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
             <GlowButton size="lg">Załóż darmowe konto</GlowButton>
-            <GhostButton size="lg" onClick={() => onNavigate('b2b')}>Rozwiązania dla firm</GhostButton>
           </div>
           <p className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/30">
             <span className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary/60" /> bez karty</span>

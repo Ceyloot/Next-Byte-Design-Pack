@@ -1958,7 +1958,6 @@ function LandingNavbar({ onNavigate }: { onNavigate: (p: HomePageId) => void }) 
   const navItems: { label: string; id: HomePageId }[] = [
     { label: 'Strona główna', id: 'home' },
     { label: 'Cennik', id: 'cennik' },
-    { label: 'Dla firm', id: 'b2b' },
     { label: 'Historia', id: 'historia' },
   ]
 

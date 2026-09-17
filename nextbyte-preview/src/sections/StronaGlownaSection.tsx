@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { StronaGlowna } from './strona-glowna/StronaGlowna'
 import { CennikPage } from './strona-glowna/CennikPage'
-import { DlaFirmPage } from './strona-glowna/DlaFirmPage'
 import { HistoriaPage } from './strona-glowna/HistoriaPage'
 import { Footer } from './strona-glowna/Footer'
 import type { HomePage as HomePageId } from './strona-glowna/types'
@@ -35,7 +34,6 @@ export function StronaGlownaSection({
     <div ref={rootRef} className="w-full font-landing text-foreground">
       {page === 'home'     && <StronaGlowna onNavigate={idz} />}
       {page === 'cennik'   && <CennikPage   onNavigate={idz} />}
-      {page === 'b2b'      && <DlaFirmPage  onNavigate={idz} />}
       {page === 'historia' && <HistoriaPage onNavigate={idz} />}
 
       {/* Strona główna ma własną stopkę w środku — tu domykamy podstrony. */}

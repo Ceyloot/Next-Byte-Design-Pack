@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import {
   CircleCheck, X, Check, ArrowRight, Play, Pause,
-  Sparkles, Bot, Zap, Shield, ImagePlus, Search, Clock, Building2,
+  Sparkles, Bot, Zap, Shield, ImagePlus, Search, Clock,
   HelpCircle, CheckCircle2, ChevronDown, Layers, FileText, Lock,
   Database, LayoutGrid, MessagesSquare, Repeat, GraduationCap,
   Upload, Wand2, Globe, ShieldCheck, ChevronRight, HardDrive,
@@ -1626,38 +1626,11 @@ export function HomePagePricingSection({ onNavigate = () => { } }: { onNavigate?
           </div>
         </FadeIn>
 
-        {/* Dolny pasek: B2B Enterprise & Trust Guarantees w spójnym szklanym stylu */}
+        {/* Dolny pasek: gwarancje */}
         <FadeIn delay={160}>
           <div className="mt-14 rounded-[28px] border border-foreground/[0.1] bg-card/60 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4 text-left">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-foreground/[0.12] bg-foreground/[0.04] text-foreground shadow-inner">
-                  <Building2 className="h-6 w-6 text-foreground/85" />
-                </div>
-                <div>
-                  <h4 className="font-heading text-base font-bold text-foreground">
-                    Potrzebujesz rozwiązania dla zespołu lub całej firmy?
-                  </h4>
-                  <p className="mt-0.5 font-sans text-[13px] font-light text-foreground/55">
-                    Wspólna pula Byte, dedykowane stanowiska, faktury zbiorcze, centralne zarządzanie uprawnieniami i SLA.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => onNavigate('b2b')}
-                  className="group inline-flex items-center gap-2 rounded-full border border-foreground/[0.15] bg-foreground/[0.05] hover:bg-foreground/[0.1] hover:border-foreground/[0.25] px-5 py-2.5 text-xs font-heading font-semibold text-foreground transition-all duration-200 cursor-pointer shadow-sm"
-                >
-                  <span>Zobacz ofertę dla firm (B2B)</span>
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 text-foreground/55 group-hover:text-foreground" />
-                </button>
-              </div>
-            </div>
-
             {/* 4 Gwarancje */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-foreground/[0.06] pt-5 font-mono text-[11px] text-foreground/55">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono text-[11px] text-foreground/55">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                 <span className="text-foreground/70">Faktura VAT 23% w PLN</span>

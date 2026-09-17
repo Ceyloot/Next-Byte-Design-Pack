@@ -913,10 +913,6 @@ export const CENNIK_FAQ = [
     q: 'Co się dzieje po anulowaniu subskrypcji?',
     a: 'Subskrypcję możesz anulować w każdej chwili jednym kliknięciem w panelu konta, bez okresów wypowiedzenia i bez ukrytych opłat. Po anulowaniu zachowujesz pełen dostęp do platformy oraz wszystkich swoich Byte do końca opłaconego okresu rozliczeniowego. Kolejne opłaty z Twojej karty nie zostaną pobrane.',
   },
-  {
-    q: 'Czy są dostępne plany dla zespołów i firm?',
-    a: 'Tak. NextByte oferuje dedykowaną platformę B2B ze wspólną pulą Byte dla całego zespołu, współdzielonym workspace, zarządzaniem rolami i granularnymi uprawnieniami. Sprawdź zakładkę Dla firm w górnym przełączniku cennika.',
-  },
 ] as const
 
 export const LOGOTYPY = TECH_PARTNERZY
@@ -1091,7 +1087,7 @@ export const STOPKA = [
   },
   {
     tytul: 'Dla Biznesu',
-    linki: ['Dla firm', 'Cennik', 'Wspólna pula Byte', 'RODO & Bezpieczeństwo'],
+    linki: ['Cennik', 'Wspólna pula Byte', 'RODO & Bezpieczeństwo'],
   },
   {
     tytul: 'Zasoby',
