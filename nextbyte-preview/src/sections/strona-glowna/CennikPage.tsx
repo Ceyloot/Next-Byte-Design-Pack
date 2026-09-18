@@ -501,23 +501,8 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
       />
 
       <div>
-        {/* Rząd odznaki planu — spójna wysokość dla wszystkich 4 kart */}
-        <div className="flex items-center justify-between min-h-[26px] mb-2">
-          {plan.polecany ? (
-            <div className="ml-auto">
-              <span
-                className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-0.5 text-[11px] font-semibold"
-                style={{ color: plan.kolor, background: akcentTlo(plan.kolor, 15), borderColor: akcentTlo(plan.kolor, 30) }}
-              >
-                ★ Najlepsza oferta
-              </span>
-            </div>
-          ) : (
-            <span className="text-[10.5px] font-mono uppercase tracking-[0.14em] text-muted-foreground/45">
-              {plan.id === 'free' ? 'Na start' : plan.id === 'lite' ? 'Podstawowy' : 'Zaawansowany'}
-            </span>
-          )}
-        </div>
+        {/* Bez odznaki „Najlepsza oferta" i bez podpisów typu „Na start" —
+            o wyborze planu ma decydować sama treść karty. */}
 
         {/* Tytuł & krótki opis — spójny blok */}
         <div className="mb-3">
