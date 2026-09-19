@@ -222,26 +222,40 @@ export function Panel2Page({ onWyjscie }: { onWyjscie?: () => void }) {
             style={{ background: 'radial-gradient(60% 100% at 50% 0%, hsl(var(--primary) / 0.07), transparent 70%)' }}
           />
 
-          <div className="relative mx-auto w-full max-w-[1320px] px-6 pb-16 pt-6 lg:px-8">
-            <div className="mb-5">
-              <h1 className="text-[19px] font-bold leading-none text-foreground">Panel Główny</h1>
-              <p className="mt-1.5 text-[12.5px] text-foreground/45">Czwartek, 19 września 2026</p>
-            </div>
+          {/* Układ 1:1 z panelu 1.0: jedna kolumna treści, siatka 3/3. */}
+          <div className="relative mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-4 md:px-6 md:py-5">
+            <Wejscie opoznienie={0} className="shrink-0">
+              <PasAktywnosci saldo={saldo} />
+            </Wejscie>
 
-            <div className="grid gap-x-5 gap-y-5 xl:grid-cols-[minmax(0,1fr)_336px]">
-              <div className="min-w-0 space-y-5">
-                <Wejscie opoznienie={0}><PasAktywnosci saldo={saldo} /></Wejscie>
-                <Wejscie opoznienie={70}><Kompozytor saldo={saldo} /></Wejscie>
-                <Wejscie opoznienie={140}><Ostatnie /></Wejscie>
-                <Wejscie opoznienie={210}><Chmury /></Wejscie>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4 lg:col-span-2">
+                <Wejscie opoznienie={70} className="shrink-0">
+                  <Kompozytor saldo={saldo} />
+                </Wejscie>
+                <Wejscie opoznienie={140} className="flex min-h-[15rem] flex-1 basis-0 flex-col">
+                  <Ostatnie />
+                </Wejscie>
               </div>
 
-              <div className="min-w-0 space-y-5">
-                <Wejscie opoznienie={100}><NicNieCzeka /></Wejscie>
-                <Wejscie opoznienie={170}><Kalendarz /></Wejscie>
-                <Wejscie opoznienie={240}><SzybkaPodroz /></Wejscie>
+              <div className="flex flex-col">
+                <Wejscie opoznienie={100} className="shrink-0">
+                  <NicNieCzeka />
+                </Wejscie>
+                <Wejscie opoznienie={170} className="mt-4 flex min-h-0 flex-1 flex-col">
+                  <Kalendarz />
+                </Wejscie>
               </div>
             </div>
+
+            <section className="grid shrink-0 grid-cols-1 gap-4 lg:grid-cols-3">
+              <Wejscie opoznienie={210} className="lg:col-span-2">
+                <Chmury />
+              </Wejscie>
+              <Wejscie opoznienie={240}>
+                <SzybkaPodroz />
+              </Wejscie>
+            </section>
           </div>
         </main>
 

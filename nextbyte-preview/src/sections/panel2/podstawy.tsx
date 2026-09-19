@@ -31,6 +31,14 @@ export function Panel2Anim() {
         from { transform: translateX(-100%); }
         to   { transform: translateX(300%); }
       }
+      @keyframes p2-pojaw {
+        from { opacity: 0; transform: translateX(-4px); }
+        to   { opacity: 1; transform: none; }
+      }
+      /* Etykiety w pasku dochodzą po tym, jak szerokość zdąży się ustawić —
+         inaczej tekst miga i zawija się w trakcie rozwijania. */
+      .p2-etykieta { animation: p2-pojaw .22s ease .12s both; }
+
       .p2-wejscie { animation: p2-wejscie .5s ${EASE} both; }
       .p2-rozwin  { animation: p2-rozwin .18s ${EASE} both; }
       .p2-puls    { animation: p2-puls 2.4s ease-in-out infinite; }
@@ -56,7 +64,7 @@ export function Panel2Anim() {
       .p2-scroll::-webkit-scrollbar-track { background: transparent; }
 
       @media (prefers-reduced-motion: reduce) {
-        .p2-wejscie, .p2-rozwin, .p2-puls { animation: none !important; }
+        .p2-wejscie, .p2-rozwin, .p2-puls, .p2-etykieta { animation: none !important; }
         .p2-smuga::after { animation: none; opacity: 0; }
         .p2-wskaznik { transition: none; }
       }
@@ -91,15 +99,19 @@ const KontekstKafelkow = createContext(true)
 export const KafelkiProvider = KontekstKafelkow.Provider
 export const useKafelki = () => useContext(KontekstKafelkow)
 
-/** Sekcja panelu — z obudową albo bez, zależnie od trybu. */
+/** Sekcja panelu — z obudową kafelka albo bez, zależnie od trybu. */
 export function Blok({
   children, className, zawszeBezKafelka = false, wypelnienie = 'p-4',
+  promien = 'rounded-2xl', akcent = false,
 }: {
   children: React.ReactNode
   className?: string
   /** Elementy, które mają zostać „gołe" niezależnie od trybu. */
   zawszeBezKafelka?: boolean
   wypelnienie?: string
+  promien?: string
+  /** Kafelek wiodący — obwódka w kolorze akcentu, jak górny pas w 1.0. */
+  akcent?: boolean
 }) {
   const kafelki = useKafelki()
   const zKafelkiem = kafelki && !zawszeBezKafelka
@@ -112,8 +124,9 @@ export function Blok({
           // jaśniejsza od tła, hairline światła u górnej krawędzi (światło
           // pada z góry) i miękki cień pod spodem.
           ? cn(
-            'rounded-2xl border border-foreground/[0.07] bg-card/50',
-            'bg-gradient-to-b from-foreground/[0.035] to-transparent',
+            promien,
+            'border bg-card/50 bg-gradient-to-b from-foreground/[0.03] to-transparent',
+            akcent ? 'border-primary/25' : 'border-border',
             'shadow-[var(--cien-uniesiony),var(--swiatlo-gorne)]',
             wypelnienie,
           )

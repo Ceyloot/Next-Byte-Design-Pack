@@ -433,7 +433,7 @@ export function Nawigacja({
       {MENU.map((grupa, i) => (
         <div key={grupa.id} className={cn(i > 0 && 'mt-4')}>
           {grupa.etykieta && !zwiniety && (
-            <p className="px-3 pb-1.5 font-mono text-[9.5px] font-bold uppercase tracking-[0.18em] text-foreground/28">
+            <p className="p2-etykieta px-3 pb-1.5 font-mono text-[9.5px] font-bold uppercase tracking-[0.18em] text-foreground/28">
               {grupa.etykieta}
             </p>
           )}
@@ -467,8 +467,8 @@ export function Nawigacja({
                   </span>
                   {!zwiniety && (
                     <>
-                      <span className="min-w-0 flex-1 truncate text-left">{p.etykieta}</span>
-                      {p.znacznik && <p.znacznik className="h-3 w-3 shrink-0 text-foreground/25" />}
+                      <span className="p2-etykieta min-w-0 flex-1 truncate text-left">{p.etykieta}</span>
+                      {p.znacznik && <p.znacznik className="p2-etykieta h-3 w-3 shrink-0 text-foreground/25" />}
                     </>
                   )}
                 </button>
@@ -501,7 +501,7 @@ export function Nawigacja({
             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg">
               <p.ikona className="h-[15px] w-[15px]" />
             </span>
-            {!zwiniety && <span className="min-w-0 flex-1 truncate text-left">{p.etykieta}</span>}
+            {!zwiniety && <span className="p2-etykieta min-w-0 flex-1 truncate text-left">{p.etykieta}</span>}
           </button>
         ))}
       </div>
@@ -509,11 +509,11 @@ export function Nawigacja({
   )
 
   /* ── Obudowa: sam pasek jest kafelkiem ── */
+  /* Pasek jest kafelkiem: odklejony od krawędzi, zaokrąglony ze wszystkich
+     stron, ten sam promień i ta sama tafla co górny pasek platformy. */
   const obudowa = cn(
-    'flex overflow-hidden rounded-2xl border border-foreground/[0.08] backdrop-blur-md',
-    // Głębia jak w systemie: schodek jasności + hairline światła u góry
-    // + cień uniesienia. Płaska plama tła nie odkleiłaby paska od treści.
-    'bg-card/60 bg-gradient-to-b from-foreground/[0.05] to-transparent',
+    'flex overflow-hidden rounded-2xl border border-foreground/[0.09] backdrop-blur-md',
+    'bg-card/70 bg-gradient-to-b from-foreground/[0.05] to-transparent',
     'shadow-[var(--cien-uniesiony),var(--swiatlo-gorne)]',
     pionowo ? 'h-full flex-col' : 'w-full flex-row items-center',
   )
@@ -523,7 +523,7 @@ export function Nawigacja({
       <aside
         ref={ref as React.RefObject<HTMLElement>}
         className={cn(
-          'relative z-[60] shrink-0 transition-[width,height] duration-300',
+          'relative z-[60] shrink-0 transition-[width,height] duration-200',
           pionowo ? 'h-full py-3' : 'w-full px-3',
           pozycja === 'lewo'  && 'pl-3 pr-1.5',
           pozycja === 'prawo' && 'pr-3 pl-1.5',
@@ -531,8 +531,9 @@ export function Nawigacja({
           pozycja === 'dol'   && 'pb-3 pt-1.5',
         )}
         style={{
-          width:  pionowo ? (pelna ? (zwiniety ? 76 : 256) : 68) : undefined,
-          height: pionowo ? undefined : 68,
+          // Szerokość liczona z marginesem: kafelek ma 244 / 64 / 56 px.
+          width:  pionowo ? (pelna ? (zwiniety ? 82 : 262) : 74) : undefined,
+          height: pionowo ? undefined : 74,
           transitionTimingFunction: 'cubic-bezier(.22,1,.36,1)',
         }}
       >
@@ -540,15 +541,15 @@ export function Nawigacja({
           {/* Uchwyt + marka */}
           <div className={cn(
             'flex shrink-0 items-center gap-2',
-            // Kolumna tylko na wąskiej szynie — w pełnym menu marka
-            // stoi w rządku z uchwytem, jak w panelu 1.0.
-            pionowo && !pelna ? 'flex-col px-2 pt-2.5' : 'px-2.5 py-2.5',
+            // Rządek tylko wtedy, gdy jest miejsce na nazwę. Zwinięty
+            // kafelek i szyna układają wszystko w jedną kolumnę.
+            pionowo && (!pelna || zwiniety) ? 'flex-col px-2 pt-2.5' : 'px-2.5 py-2.5',
           )}>
             <Uchwyt pionowo={pionowo} onPointerDown={start} />
             {marka}
             {pelna && !zwiniety && (
               <>
-                <span className="min-w-0 flex-1 truncate text-[13px] font-black uppercase tracking-[0.12em] text-foreground">
+                <span className="p2-etykieta min-w-0 flex-1 truncate text-[13px] font-black uppercase tracking-[0.12em] text-foreground">
                   Nextbyte
                 </span>
                 <PrzyciskIkony ikona={PanelLeftClose} tytul="Zwiń pasek" onClick={() => setZwiniety(true)} />
@@ -564,7 +565,7 @@ export function Nawigacja({
               {zwiniety ? (
                 <PrzyciskIkony ikona={Search} tytul="Wyszukaj (⌘K)" />
               ) : (
-                <label className="flex h-9 items-center gap-2.5 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] px-3 shadow-[inset_0_1px_2px_hsl(var(--background)/.45)] transition-colors duration-200 focus-within:border-primary/40">
+                <label className="p2-etykieta flex h-9 items-center gap-2.5 rounded-xl border border-foreground/[0.07] bg-foreground/[0.03] px-3 shadow-[inset_0_1px_2px_hsl(var(--background)/.45)] transition-colors duration-200 focus-within:border-primary/40">
                   <Search className="h-3.5 w-3.5 shrink-0 text-foreground/40" />
                   <input
                     placeholder="Wyszukaj..."
@@ -597,7 +598,11 @@ export function Nawigacja({
             // Pełna lista jest szeroka — narzędzia układają się w rządek
             // i zawijają, zamiast ciągnąć się kolumną przez pół ekranu.
             pionowo
-              ? cn('border-t border-foreground/[0.08]', pelna ? 'flex-row flex-wrap justify-center' : 'flex-col')
+              ? cn(
+                'm-2 mt-0 rounded-xl border border-foreground/[0.07] bg-foreground/[0.025] p-1',
+                'shadow-[var(--swiatlo-gorne)]',
+                pelna && !zwiniety ? 'flex-row justify-between' : 'flex-col',
+              )
               : 'flex-row border-l border-foreground/[0.08]',
           )}>
             {przyciskiDoku}
@@ -647,7 +652,7 @@ export function UchwytPowrotu({ pozycja, onPokaz }: { pozycja: PozycjaNawigacji;
       onClick={onPokaz}
       title="Pokaż nawigację"
       className={cn(
-        'fixed z-[80] border border-primary/25 bg-primary/20 transition-all duration-200 hover:bg-primary/40',
+        'fixed z-[80] border border-primary/25 bg-primary/25 transition-all duration-200 hover:bg-primary/45',
         bok,
       )}
     />
