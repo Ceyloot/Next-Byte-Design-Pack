@@ -34,17 +34,19 @@ import { STRONY, STRONY_AUTH, jestEkranemAuth } from '@/sections/strona-glowna/t
 import type { EkranAuth } from '@/sections/strona-glowna/types'
 import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
 import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
+import { Panel2Page } from '@/sections/panel2/Panel2Page'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'strona-glowna' | 'logowanie' }
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' }
 
 const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
   { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [
     { name: 'Strona główna', icon: Sparkles, subView: 'strona-glowna' },
     { name: 'Logowanie',     icon: LogIn,      subView: 'logowanie' },
     { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
+    { name: 'Dashboard 2.0', icon: Grid,       badge: 'NEW', subView: 'dashboard2' },
   ] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
     { name: 'Podstawowe',       icon: Square,        scrollId: 'karta' },
@@ -489,7 +491,7 @@ function renderSection(key: string): React.ReactNode {
 export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
-  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'strona-glowna' | 'logowanie'>('strona-glowna')
+  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie'>('strona-glowna')
   /** Aktywna podstrona publicznej witryny w podglądzie „Strona główna" */
   const [stronaPage, setStronaPage] = useState<HomePageId>('home')
   /** Aktywny ekran w podglądzie „Logowanie" */
@@ -498,6 +500,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   /* Pod-nawigacja podglądu. Strona główna ma własny navbar w treści, więc
      na niej pasek się nie pokazuje — dopiero na podstronach (Cennik, Dla
      firm, Historia) i na ekranach auth, które inaczej nie mają jak wrócić. */
+  /** Panel 2.0 zajmuje cały ekran — chrome podglądu (górny/boczny pasek)
+   *  znika, a powrót prowadzi przez „Wyjdź" w jego własnej nawigacji. */
+  const pelnyEkran = activeTab === 'preview' && previewSubView === 'dashboard2'
+
   const podNawigacja =
     activeTab !== 'preview' ? []
       : previewSubView === 'logowanie' ? STRONY_AUTH
@@ -979,7 +985,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       <NbGlassFilters />
 
       {/* ── Navbar — pozycja zależna od navPosition ── */}
-      {isSidebar ? <SidebarNav /> : navPosition === 'bottom'
+      {pelnyEkran ? null : isSidebar ? <SidebarNav /> : navPosition === 'bottom'
         ? null  /* bottom: renderowany po <main> */
         : <HorizontalNav />
       }
@@ -1040,7 +1046,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         'flex-1 min-w-0 overflow-y-auto flex flex-col',
         activeTab !== 'preview'
           ? 'p-6 w-full'
-          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie')
+          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'dashboard2')
             ? 'p-0 w-full'
             : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
       )}
@@ -1057,7 +1063,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
         {activeTab === 'preview' && (
           <div className="space-y-4 w-full flex-1 flex flex-col min-h-0">
-            {previewSubView === 'strona-glowna' ? (
+            {previewSubView === 'dashboard2' ? (
+              <Panel2Page onWyjscie={() => setPreviewSubView('strona-glowna')} />
+            ) : previewSubView === 'strona-glowna' ? (
               <StronaGlownaSection page={stronaPage} onPageChange={idzDoPodstrony} />
             ) : previewSubView === 'logowanie' ? (
               <LogowanieSection ekran={ekranAuth} />
@@ -1610,7 +1618,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       </main>
 
       {/* Bottom navbar — renderowany po <main> żeby był na dole */}
-      {!isSidebar && navPosition === 'bottom' && <HorizontalNav />}
+      {!pelnyEkran && !isSidebar && navPosition === 'bottom' && <HorizontalNav />}
 
       {/* ── DRAG TO DOCK OVERLAY ZONES ── */}
       {isDraggingNav && (
