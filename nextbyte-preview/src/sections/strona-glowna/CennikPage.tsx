@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import {
   Section, GlowButton, GhostButton, FadeIn, akcentTlo,
-  AnimStyles,
+  AnimStyles, TechDivider,
 } from '@/sections/wspolne/shared'
 import { SecRule } from './bloki-wspolne'
 import { NextByteMarkIcon, OpenAIIcon, GeminiIcon } from '@/grafiki/znaki-marek'
@@ -1770,27 +1770,34 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
             {/* LEWA KOLUMNA — DOKŁADNIE FORMAT JAK NA WZORZE (IMAGE 2) */}
             <div className="lg:col-span-5 text-left space-y-6">
-              <div className="space-y-2.5">
+              <div className="space-y-3">
+                <SecRule label="Czym jest Byte" />
                 <h2 className="font-heading text-[clamp(28px,4vw,48px)] font-light leading-[1.08] tracking-[-2px] text-foreground">
                   Jedna waluta. <br className="hidden sm:block" />
                   <span className="font-normal text-primary">Pełna kontrola.</span>
                 </h2>
+                {/* Definicja w dwóch zdaniach — dłuższy wykład nikt tu nie czyta. */}
                 <p className="font-sans text-[15px] font-light leading-relaxed text-foreground/75">
-                  Całe AI w jednej walucie. Jedna pula zamiast kilku subskrypcji.
+                  <strong className="font-semibold text-foreground">Byte (<span className="text-primary">⟠</span>) to jednostka zużycia AI.</strong>{' '}
+                  Jedna pula na wszystkie modele — płacisz za to, czego użyjesz, nie za pięć
+                  subskrypcji naraz.
                 </p>
               </div>
 
-              {/* LISTA PUNKTÓW Z AKCENTEM */}
-              <div className="space-y-4 pt-1 font-sans">
-                {BYTE_KARTY.map((k) => (
-                  <div key={k.t} className="text-[13.5px] font-light leading-snug">
-                    <div>
-                      <strong className="font-semibold text-foreground mr-1.5">{k.t}:</strong>
-                      <span className="text-foreground/75">{k.d}</span>
-                    </div>
-                  </div>
+              {/* Zasady puli — numerowane, żeby czytało się jak reguły, nie hasła */}
+              <ol className="space-y-3 font-sans">
+                {BYTE_KARTY.map((k, i) => (
+                  <li key={k.t} className="flex gap-3 text-[13.5px] font-light leading-snug">
+                    <span className="mt-[3px] shrink-0 font-mono text-[10px] tabular-nums text-primary/55">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span>
+                      <strong className="mr-1.5 font-semibold text-foreground">{k.t}:</strong>
+                      <span className="text-foreground/70">{k.d}</span>
+                    </span>
+                  </li>
                 ))}
-              </div>
+              </ol>
 
               {/* PRZYCISK CTA */}
               <div className="pt-2">
@@ -1814,8 +1821,12 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
         </FadeIn>
       </Section>
 
+      {/* Bez tej kreski „Jedna waluta" i „Porównaj funkcje" czytały się jak
+          jedna sekcja — ten sam rytm rozdzielania co na stronie głównej. */}
+      <TechDivider />
+
       {/* ══════════ PORÓWNANIE FUNKCJI — collapsible accordion ══════════ */}
-      <Section wide className="pb-24">
+      <Section wide className="pb-24 pt-8 sm:pt-12">
         <FadeIn>
           <BlockHead center title="Porównaj" accent="wszystkie funkcje." className="mx-auto" />
         </FadeIn>
@@ -1827,8 +1838,10 @@ export function CennikPage({ onNavigate }: { onNavigate: (p: HomePageId) => void
         </div>
       </Section>
 
+      <TechDivider />
+
       {/* ══════════ FAQ ══════════ */}
-      <Section className="pb-24">
+      <Section className="pb-24 pt-8 sm:pt-12">
         <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-24">

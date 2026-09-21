@@ -321,7 +321,7 @@ export function Ostatnie() {
         })}
       </div>
 
-      <div className="p2-scroll -mr-1 min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="p2-scroll -mr-1 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
         <h4 className="px-2 pb-1 pt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-foreground/45">
           Wcześniej
         </h4>
@@ -529,7 +529,7 @@ export function Chmury() {
             key={c.id}
             opoznienie={i * 70}
             className={cn(
-              'group flex cursor-pointer flex-col p-5 transition-[box-shadow,border-color,background-color,transform] duration-200',
+              'group flex cursor-pointer flex-col p-5 transition-[border-color,background-color,transform] duration-200',
               kafelki
                 ? 'rounded-2xl border border-border bg-card/50 shadow-[var(--cien-uniesiony),var(--swiatlo-gorne)] hover:-translate-y-0.5 hover:border-primary/40'
                 : 'px-0 py-1',
@@ -586,7 +586,7 @@ export function SzybkaPodroz() {
           <button
             key={s.id}
             type="button"
-            className={cn('group flex h-full min-h-[74px] cursor-pointer flex-col items-center justify-center gap-2 p-2 transition-all duration-200', kafelek)}
+            className={cn('group flex h-full min-h-[74px] cursor-pointer flex-col items-center justify-center gap-2 p-2 transition-[border-color,background-color,transform] duration-200', kafelek)}
           >
             <span
               className="flex h-8 w-8 items-center justify-center rounded-lg border transition-transform duration-200 group-hover:-translate-y-0.5"
@@ -607,7 +607,7 @@ export function SzybkaPodroz() {
             key={`pusty-${i}`}
             type="button"
             title="Dodaj skrót"
-            className={cn('group flex h-full min-h-[74px] cursor-pointer flex-col items-center justify-center gap-2 p-2 transition-all duration-200', kafelek)}
+            className={cn('group flex h-full min-h-[74px] cursor-pointer flex-col items-center justify-center gap-2 p-2 transition-[border-color,background-color,transform] duration-200', kafelek)}
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/20 text-muted-foreground/60 transition-colors group-hover:bg-primary/10 group-hover:text-primary">
               <Plus className="h-4 w-4" />

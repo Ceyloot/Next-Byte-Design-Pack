@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════════════════════════ */
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import { ton, tonAkc, D2R, ASSIST_CAM, getNavbarOffset, makeScene, useScrollProgress, circleToEllipse, type V3 } from '@/grafiki/podstawy'
+import { ton, tonAkc, kol, bryla, D2R, ASSIST_CAM, getNavbarOffset, makeScene, useScrollProgress, circleToEllipse, type V3 } from '@/grafiki/podstawy'
 
 export /** Deterministyczny szum — bez Math.random, żeby układ był zawsze ten sam
     i dało się go zestroić raz na zawsze. */
@@ -522,7 +522,7 @@ export function DeepResearchVisual() {
   }
 
   const glyph = (kind: number, x: number, y: number, k: number) => {
-    const st = { stroke: 'hsl(var(--primary))', strokeWidth: 1.2, fill: tonAkc(10, 9) }
+    const st = { stroke: 'hsl(var(--primary))', strokeWidth: 1.2, fill: kol(10, 9) }
     const r = 5 * k
     if (kind === 0) return <circle cx={x} cy={y} r={r} {...st} />
     if (kind === 1) return <rect x={x - r * 0.9} y={y - r * 1.15} width={r * 1.8} height={r * 2.3} rx={1} {...st} />
@@ -548,14 +548,14 @@ export function DeepResearchVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbRsBase" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(67, 12)} /><stop offset="100%" stopColor={tonAkc(28, 12)} />
+            <stop offset="0%" stopColor={bryla(67, 12)} /><stop offset="100%" stopColor={bryla(28, 12)} />
           </linearGradient>
           <linearGradient id="nbRsLid" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(48, 14)} /><stop offset="100%" stopColor={tonAkc(22, 9)} />
+            <stop offset="0%" stopColor={bryla(48, 14)} /><stop offset="100%" stopColor={bryla(22, 9)} />
           </linearGradient>
           <radialGradient id="nbRsFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.72" />
-            <stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
+            <stop offset="0%" stopColor={bryla(6, 8)} stopOpacity="0.72" />
+            <stop offset="100%" stopColor={bryla(6, 8)} stopOpacity="0" />
           </radialGradient>
           <filter id="nbRsGlow" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="3" result="b" />
@@ -586,8 +586,8 @@ export function DeepResearchVisual() {
           {(() => { const e = P3(0, -3, 0); return <ellipse cx={e.x} cy={e.y} rx={128} ry={30} fill="url(#nbRsFloor)" /> })()}
 
           {/* klapa z ekranem */}
-          <polygon points={poly([[-58, 0, -40], [58, 0, -40], [52, 58, -56], [-52, 58, -56]])} fill="url(#nbRsLid)" stroke={tonAkc(84, 10)} strokeWidth={1.3} strokeLinejoin="round" />
-          <polygon points={poly([[-49, 6, -43], [49, 6, -43], [44, 52, -55], [-44, 52, -55]])} fill={tonAkc(9, 8)} stroke="hsl(var(--primary))" strokeWidth={0.9} strokeOpacity={0.5} />
+          <polygon points={poly([[-58, 0, -40], [58, 0, -40], [52, 58, -56], [-52, 58, -56]])} fill="url(#nbRsLid)" stroke={kol(84, 10)} strokeWidth={1.3} strokeLinejoin="round" />
+          <polygon points={poly([[-49, 6, -43], [49, 6, -43], [44, 52, -55], [-44, 52, -55]])} fill={kol(9, 8)} stroke="hsl(var(--primary))" strokeWidth={0.9} strokeOpacity={0.5} />
           {/* zawartość ekranu: pasek wyszukiwania i wyniki */}
           <g transform={plane(0, 29, -49, [1, 0, 0], [0, -1, 0])} opacity={0.92}>
             <rect x={-38} y={-19} width={76} height={10} rx={5} fill="hsl(var(--primary)/0.12)" stroke="hsl(var(--primary))" strokeWidth={0.9} />
@@ -597,23 +597,23 @@ export function DeepResearchVisual() {
             {[-3, 4, 11].map((y, i) => (
               <g key={y}>
                 <rect x={-38} y={y} width={4.4} height={4.4} rx={0.8} fill="hsl(var(--primary))" opacity={0.6} />
-                <line x1={-30} y1={y + 2.2} x2={38 - i * 12} y2={y + 2.2} stroke={tonAkc(47, 23)} strokeWidth={1.1} />
+                <line x1={-30} y1={y + 2.2} x2={38 - i * 12} y2={y + 2.2} stroke={kol(47, 23)} strokeWidth={1.1} />
               </g>
             ))}
           </g>
 
           {/* podstawa z klawiaturą i gładzikiem */}
-          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [52, 0, -40], [-52, 0, -40]])} fill="url(#nbRsBase)" stroke={tonAkc(86, 8)} strokeWidth={1.3} strokeLinejoin="round" />
-          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [61, -5, 38], [-61, -5, 38]])} fill={tonAkc(21, 9)} stroke={tonAkc(55, 15)} strokeWidth={1} />
+          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [52, 0, -40], [-52, 0, -40]])} fill="url(#nbRsBase)" stroke={kol(86, 8)} strokeWidth={1.3} strokeLinejoin="round" />
+          <polygon points={poly([[-61, 0, 38], [61, 0, 38], [61, -5, 38], [-61, -5, 38]])} fill={kol(21, 9)} stroke={kol(55, 15)} strokeWidth={1} />
           <g transform={plane(0, 0.4, 0, [1, 0, 0], [0, 0, 1])} opacity={0.75}>
             {Array.from({ length: 4 }, (_, r) => (
               <g key={r}>
                 {Array.from({ length: 13 }, (_, c) => (
-                  <rect key={c} x={-45 + c * 7.1} y={-26 + r * 7.4} width={5.8} height={5.6} rx={1} fill={tonAkc(16, 8)} opacity={0.9} />
+                  <rect key={c} x={-45 + c * 7.1} y={-26 + r * 7.4} width={5.8} height={5.6} rx={1} fill={kol(16, 8)} opacity={0.9} />
                 ))}
               </g>
             ))}
-            <rect x={-16} y={9} width={32} height={19} rx={2.2} fill="none" stroke={tonAkc(50, 16)} strokeWidth={1} />
+            <rect x={-16} y={9} width={32} height={19} rx={2.2} fill="none" stroke={kol(50, 16)} strokeWidth={1} />
           </g>
         </g>
 
@@ -631,7 +631,7 @@ export function DeepResearchVisual() {
                   <text
                     x={q.x + (n.x < 0 ? -15 : 15)} y={q.y + 4.2}
                     textAnchor={n.x < 0 ? 'end' : 'start'}
-                    fill={tonAkc(77, 21)} fontSize={15} fontFamily="monospace" letterSpacing="0.3"
+                    fill={kol(77, 21)} fontSize={15} fontFamily="monospace" letterSpacing="0.3"
                   >
                     {n.tag}
                   </text>
@@ -659,7 +659,7 @@ export function DeepResearchVisual() {
         })()}
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={598} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill={kol(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`PRZESZUKANO ${String(shown * 9).padStart(3, '0')} ŹRÓDEŁ`}
           </text>
         </g>
@@ -702,17 +702,17 @@ export function AcademyVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbAcCover" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(25, 11)} /><stop offset="100%" stopColor={tonAkc(13, 7)} />
+            <stop offset="0%" stopColor={bryla(25, 11)} /><stop offset="100%" stopColor={bryla(13, 7)} />
           </linearGradient>
           <linearGradient id="nbAcPage" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(85, 9)} /><stop offset="100%" stopColor={tonAkc(55, 13)} />
+            <stop offset="0%" stopColor={bryla(85, 9)} /><stop offset="100%" stopColor={bryla(55, 13)} />
           </linearGradient>
           <linearGradient id="nbAcLesson" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(20, 12)} /><stop offset="100%" stopColor={tonAkc(12, 7)} />
+            <stop offset="0%" stopColor={bryla(20, 12)} /><stop offset="100%" stopColor={bryla(12, 7)} />
           </linearGradient>
           <radialGradient id="nbAcFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.7" />
-            <stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
+            <stop offset="0%" stopColor={bryla(6, 8)} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={bryla(6, 8)} stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -721,22 +721,22 @@ export function AcademyVisual() {
         {/* ── KSIĄŻKA: dwie połówki rozchylone wokół grzbietu ── */}
         <g>
           {/* lewa okładka + kartki */}
-          <polygon points={poly([[-BW, 0, -BD], [0, 0, -BD], [0, 0, BD], [-BW, 0, BD]])} fill="url(#nbAcCover)" stroke={tonAkc(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
-          <polygon points={poly([[-BW + 8, lift * 0.35, -BD + 8], [-4, 0, -BD + 8], [-4, 0, BD - 8], [-BW + 8, lift * 0.35, BD - 8]])} fill="url(#nbAcPage)" stroke={tonAkc(92, 6)} strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
+          <polygon points={poly([[-BW, 0, -BD], [0, 0, -BD], [0, 0, BD], [-BW, 0, BD]])} fill="url(#nbAcCover)" stroke={kol(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
+          <polygon points={poly([[-BW + 8, lift * 0.35, -BD + 8], [-4, 0, -BD + 8], [-4, 0, BD - 8], [-BW + 8, lift * 0.35, BD - 8]])} fill="url(#nbAcPage)" stroke={kol(92, 6)} strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
           {/* prawa okładka + kartki */}
-          <polygon points={poly([[0, 0, -BD], [BW, 0, -BD], [BW, 0, BD], [0, 0, BD]])} fill="url(#nbAcCover)" stroke={tonAkc(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
-          <polygon points={poly([[4, 0, -BD + 8], [BW - 8, lift * 0.35, -BD + 8], [BW - 8, lift * 0.35, BD - 8], [4, 0, BD - 8]])} fill="url(#nbAcPage)" stroke={tonAkc(92, 6)} strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
+          <polygon points={poly([[0, 0, -BD], [BW, 0, -BD], [BW, 0, BD], [0, 0, BD]])} fill="url(#nbAcCover)" stroke={kol(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
+          <polygon points={poly([[4, 0, -BD + 8], [BW - 8, lift * 0.35, -BD + 8], [BW - 8, lift * 0.35, BD - 8], [4, 0, BD - 8]])} fill="url(#nbAcPage)" stroke={kol(92, 6)} strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
           {/* grzbiet */}
-          <polygon points={poly([[-5, 0, -BD], [5, 0, -BD], [5, 5, BD], [-5, 5, BD]])} fill={tonAkc(11, 7)} stroke={tonAkc(44, 15)} strokeWidth={1} />
+          <polygon points={poly([[-5, 0, -BD], [5, 0, -BD], [5, 5, BD], [-5, 5, BD]])} fill={kol(11, 7)} stroke={kol(44, 15)} strokeWidth={1} />
           {/* linie tekstu na kartkach */}
           <g transform={plane(-BW / 2 - 4, lift * 0.18, 0, [1, 0, 0], [0, 0, -1])} opacity={0.45 * open}>
             {[-22, -14, -6, 2, 10, 18].map((y, i) => (
-              <line key={y} x1={-32} y1={y} x2={i % 3 === 2 ? 8 : 30} y2={y} stroke={tonAkc(35, 14)} strokeWidth={1.4} />
+              <line key={y} x1={-32} y1={y} x2={i % 3 === 2 ? 8 : 30} y2={y} stroke={kol(35, 14)} strokeWidth={1.4} />
             ))}
           </g>
           <g transform={plane(BW / 2 + 4, lift * 0.18, 0, [1, 0, 0], [0, 0, -1])} opacity={0.45 * open}>
             {[-22, -14, -6, 2, 10, 18].map((y, i) => (
-              <line key={y} x1={-30} y1={y} x2={i % 3 === 1 ? 6 : 32} y2={y} stroke={tonAkc(35, 14)} strokeWidth={1.4} />
+              <line key={y} x1={-30} y1={y} x2={i % 3 === 1 ? 6 : 32} y2={y} stroke={kol(35, 14)} strokeWidth={1.4} />
             ))}
           </g>
         </g>
@@ -759,11 +759,11 @@ export function AcademyVisual() {
             <g key={t} opacity={Math.min(1, e * 1.8)}>
               <polygon
                 points={poly([[cx - w, cy + h, cz], [cx + w, cy + h, cz], [cx + w, cy - h, cz], [cx - w, cy - h, cz]])}
-                fill="url(#nbAcLesson)" stroke={sell > 0.4 ? tonAkc(78, 47) : tonAkc(44, 17)} strokeWidth={sell > 0.4 ? 1.5 : 1.1} strokeLinejoin="round"
+                fill="url(#nbAcLesson)" stroke={sell > 0.4 ? kol(78, 47) : kol(44, 17)} strokeWidth={sell > 0.4 ? 1.5 : 1.1} strokeLinejoin="round"
               />
               <g transform={plane(cx, cy, cz, [1, 0, 0], [0, -1, 0])}>
-                <text x={0} y={-8} fill={tonAkc(78, 47)} fontSize={16} fontFamily="monospace" fontWeight="bold" textAnchor="middle">{`0${i + 1}`}</text>
-                <text x={0} y={14} fill={sell > 0.4 ? tonAkc(94, 11) : tonAkc(78, 13)} fontSize={14} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">{t}</text>
+                <text x={0} y={-8} fill={kol(78, 47)} fontSize={16} fontFamily="monospace" fontWeight="bold" textAnchor="middle">{`0${i + 1}`}</text>
+                <text x={0} y={14} fill={sell > 0.4 ? kol(94, 11) : kol(78, 13)} fontSize={14} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">{t}</text>
               </g>
             </g>
           )
@@ -780,8 +780,8 @@ export function AcademyVisual() {
             <g opacity={Math.min(1, e * 1.6)}>
               {/* Panel z wykresem — u samej góry kadru, w pełnej czytelności */}
               <g transform={plane(EX, EY, EZ, [1, 0, 0], [0, -1, 0])}>
-                <rect x={-118} y={-92} width={236} height={184} rx={8} fill={tonAkc(10, 8)} stroke={tonAkc(41, 20)} strokeWidth={1.8} />
-                <text x={-100} y={-62} fill={tonAkc(74, 22)} fontSize={17} fontFamily="monospace" letterSpacing="1.6">PRZYCHÓD</text>
+                <rect x={-118} y={-92} width={236} height={184} rx={8} fill={kol(10, 8)} stroke={kol(41, 20)} strokeWidth={1.8} />
+                <text x={-100} y={-62} fill={kol(74, 22)} fontSize={17} fontFamily="monospace" letterSpacing="1.6">PRZYCHÓD</text>
                 {bars.map((v, i) => {
                   const bq = Math.max(0, Math.min(1, (e - i * 0.1) / 0.4))
                   const bt = bq * bq * (3 - 2 * bq)
@@ -791,7 +791,7 @@ export function AcademyVisual() {
                       fill={i === bars.length - 1 ? 'hsl(var(--primary))' : 'hsl(var(--primary)/0.25)'} stroke="hsl(var(--primary)/0.5)" strokeWidth={1.1} />
                   )
                 })}
-                <line x1={-104} y1={62} x2={104} y2={62} stroke={tonAkc(37, 17)} strokeWidth={1.6} />
+                <line x1={-104} y1={62} x2={104} y2={62} stroke={kol(37, 17)} strokeWidth={1.6} />
                 <path d="M -92 30 L -34 -2 L 12 14 L 84 -56" fill="none" stroke="hsl(var(--primary))" strokeWidth={3.4}
                   strokeLinecap="round" strokeLinejoin="round" opacity={Math.max(0, (e - 0.3) / 0.5)} />
                 <path d="M 60 -56 L 88 -56 L 88 -28" fill="none" stroke="hsl(var(--primary))" strokeWidth={3.4}
@@ -808,14 +808,14 @@ export function AcademyVisual() {
                   <g key={`note${i}`} opacity={nt}>
                     <polygon
                       points={poly([[bx - 62, by, bz - 34], [bx + 62, by, bz - 34], [bx + 62, by, bz + 34], [bx - 62, by, bz + 34]])}
-                      fill={tonAkc(19, 16)} stroke={tonAkc(78, 47)} strokeWidth={1.3} strokeLinejoin="round"
+                      fill={kol(19, 16)} stroke={kol(78, 47)} strokeWidth={1.3} strokeLinejoin="round"
                     />
                     {i === 2 && (
                       <g transform={plane(bx, by + 0.6, bz, [1, 0, 0], [0, 0, -1])}>
-                        <circle cx={0} cy={0} r={13} fill="none" stroke={tonAkc(80, 31)} strokeWidth={1.4} />
-                        <text x={0} y={5} fill={tonAkc(91, 14)} fontSize={14} fontFamily="monospace" fontWeight="bold" textAnchor="middle">zł</text>
-                        <line x1={-46} y1={-18} x2={-22} y2={-18} stroke={tonAkc(55, 35)} strokeWidth={1.4} />
-                        <line x1={22} y1={18} x2={46} y2={18} stroke={tonAkc(55, 35)} strokeWidth={1.4} />
+                        <circle cx={0} cy={0} r={13} fill="none" stroke={kol(80, 31)} strokeWidth={1.4} />
+                        <text x={0} y={5} fill={kol(91, 14)} fontSize={14} fontFamily="monospace" fontWeight="bold" textAnchor="middle">zł</text>
+                        <line x1={-46} y1={-18} x2={-22} y2={-18} stroke={kol(55, 35)} strokeWidth={1.4} />
+                        <line x1={22} y1={18} x2={46} y2={18} stroke={kol(55, 35)} strokeWidth={1.4} />
                       </g>
                     )}
                   </g>
@@ -839,13 +839,13 @@ export function AcademyVisual() {
                     const hw = Math.hypot(R * discE.rx * Math.cos(rot), R * discE.ry * Math.sin(rot))
                     return (
                       <g key={i} opacity={ct}>
-                        {Disc(st.x, y, st.z, R, { fill: tonAkc(15, 13), stroke: tonAkc(47, 30), strokeWidth: 1 })}
+                        {Disc(st.x, y, st.z, R, { fill: kol(15, 13), stroke: kol(47, 30), strokeWidth: 1 })}
                         <path
                           d={`M ${(bot.x - hw).toFixed(1)} ${bot.y.toFixed(1)} L ${(bot.x + hw).toFixed(1)} ${bot.y.toFixed(1)} L ${(top.x + hw).toFixed(1)} ${top.y.toFixed(1)} L ${(top.x - hw).toFixed(1)} ${top.y.toFixed(1)} Z`}
-                          fill={tonAkc(20, 18)} stroke={tonAkc(55, 35)} strokeWidth={1}
+                          fill={kol(20, 18)} stroke={kol(55, 35)} strokeWidth={1}
                         />
-                        {Disc(st.x, y + TH, st.z, R, { fill: tonAkc(27, 23), stroke: tonAkc(84, 30), strokeWidth: 1.5 })}
-                        {Disc(st.x, y + TH + 0.4, st.z, R * 0.62, { fill: 'none', stroke: tonAkc(62, 33), strokeWidth: 1 })}
+                        {Disc(st.x, y + TH, st.z, R, { fill: kol(27, 23), stroke: kol(84, 30), strokeWidth: 1.5 })}
+                        {Disc(st.x, y + TH + 0.4, st.z, R * 0.62, { fill: 'none', stroke: kol(62, 33), strokeWidth: 1 })}
                       </g>
                     )
                   })}
@@ -856,7 +856,7 @@ export function AcademyVisual() {
         })()}
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={598} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill={kol(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {p > 0.74 ? 'UCZ SIĘ · WYSTAW · ZARABIAJ' : `LEKCJE ${Math.min(LESSON_CARDS.length, Math.max(0, Math.round((p - 0.16) / 0.12) + 1))} / ${LESSON_CARDS.length}`}
           </text>
         </g>
@@ -910,39 +910,39 @@ export function MemoryVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbMmFront" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(55, 14)} /><stop offset="100%" stopColor={tonAkc(19, 9)} />
+            <stop offset="0%" stopColor={bryla(55, 14)} /><stop offset="100%" stopColor={bryla(19, 9)} />
           </linearGradient>
           <linearGradient id="nbMmInner" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(18, 10)} /><stop offset="100%" stopColor={tonAkc(10, 6)} />
+            <stop offset="0%" stopColor={bryla(18, 10)} /><stop offset="100%" stopColor={bryla(10, 6)} />
           </linearGradient>
           <linearGradient id="nbMmCard" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(22, 13)} /><stop offset="100%" stopColor={tonAkc(13, 8)} />
+            <stop offset="0%" stopColor={bryla(22, 13)} /><stop offset="100%" stopColor={bryla(13, 8)} />
           </linearGradient>
           <radialGradient id="nbMmFloor" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={tonAkc(6, 8)} stopOpacity="0.7" />
-            <stop offset="100%" stopColor={tonAkc(6, 8)} stopOpacity="0" />
+            <stop offset="0%" stopColor={bryla(6, 8)} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={bryla(6, 8)} stopOpacity="0" />
           </radialGradient>
         </defs>
 
         {(() => { const e = P3(0, -8, 50); return <ellipse cx={e.x} cy={e.y} rx={256} ry={50} fill="url(#nbMmFloor)" /> })()}
 
         {/* ── SZAFKA, Z KTÓREJ SZUFLADA WYJEŻDŻA ── */}
-        <polygon points={poly([[-TX - 12, -6, -TZ - 10], [TX + 12, -6, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [-TX - 12, TY + 22, -TZ - 10]])} fill={ton(7)} stroke={tonAkc(23, 12)} strokeWidth={1.1} />
-        <polygon points={poly([[TX + 12, -6, -TZ - 10], [TX + 12, -6, -TZ + 52], [TX + 12, TY + 22, -TZ + 52], [TX + 12, TY + 22, -TZ - 10]])} fill={tonAkc(10, 7)} stroke={tonAkc(27, 15)} strokeWidth={1} />
-        <polygon points={poly([[-TX - 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ + 52], [-TX - 12, TY + 22, -TZ + 52]])} fill={tonAkc(12, 8)} stroke={tonAkc(31, 15)} strokeWidth={1} />
+        <polygon points={poly([[-TX - 12, -6, -TZ - 10], [TX + 12, -6, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [-TX - 12, TY + 22, -TZ - 10]])} fill={ton(7)} stroke={kol(23, 12)} strokeWidth={1.1} />
+        <polygon points={poly([[TX + 12, -6, -TZ - 10], [TX + 12, -6, -TZ + 52], [TX + 12, TY + 22, -TZ + 52], [TX + 12, TY + 22, -TZ - 10]])} fill={kol(10, 7)} stroke={kol(27, 15)} strokeWidth={1} />
+        <polygon points={poly([[-TX - 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ - 10], [TX + 12, TY + 22, -TZ + 52], [-TX - 12, TY + 22, -TZ + 52]])} fill={kol(12, 8)} stroke={kol(31, 15)} strokeWidth={1} />
 
         {/* ── DNO ── */}
-        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [-TX, 0, Z(TZ)]])} fill={tonAkc(10, 7)} stroke={tonAkc(34, 16)} strokeWidth={1.1} strokeLinejoin="round" />
+        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [-TX, 0, Z(TZ)]])} fill={kol(10, 7)} stroke={kol(34, 16)} strokeWidth={1.1} strokeLinejoin="round" />
 
         {/* ── TYLNA ŚCIANKA (wnętrze) ── */}
-        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, TY, Z(-TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke={tonAkc(34, 15)} strokeWidth={1.1} />
+        <polygon points={poly([[-TX, 0, Z(-TZ)], [TX, 0, Z(-TZ)], [TX, TY, Z(-TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke={kol(34, 15)} strokeWidth={1.1} />
 
         {/* ── LEWA ŚCIANKA. Jej ściana ZEWNĘTRZNA jest przy tej kamerze tyłem,
                dlatego wcześniej wyglądało, jakby szuflada nie miała lewego boku.
                Rysujemy powierzchnię wewnętrzną plus grubość na górnej krawędzi. ── */}
-        <polygon points={poly([[-TX, 0, Z(-TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke={tonAkc(49, 17)} strokeWidth={1.2} strokeLinejoin="round" />
-        <polygon points={poly([[-TX, TY, Z(-TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)], [-TX - WT, TY, Z(-TZ)]])} fill={tonAkc(58, 15)} stroke={tonAkc(81, 11)} strokeWidth={1.1} strokeLinejoin="round" />
-        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill={tonAkc(36, 13)} stroke={tonAkc(63, 15)} strokeWidth={1} />
+        <polygon points={poly([[-TX, 0, Z(-TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX, TY, Z(-TZ)]])} fill="url(#nbMmInner)" stroke={kol(49, 17)} strokeWidth={1.2} strokeLinejoin="round" />
+        <polygon points={poly([[-TX, TY, Z(-TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)], [-TX - WT, TY, Z(-TZ)]])} fill={bryla(58, 15)} stroke={kol(81, 11)} strokeWidth={1.1} strokeLinejoin="round" />
+        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [-TX, 0, Z(TZ)], [-TX, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill={bryla(36, 13)} stroke={kol(63, 15)} strokeWidth={1} />
 
         {/* ── KARTY ── */}
         {MEMORY_CARDS.map((m, i) => {
@@ -958,16 +958,16 @@ export function MemoryVisual() {
             <g key={m} opacity={Math.min(1, t * 2)}>
               <polygon
                 points={poly([[-CW / 2, y0, z], [CW / 2, y0, z], [CW / 2, y1, z], [-CW / 2, y1, z]])}
-                fill="url(#nbMmCard)" stroke={hot ? tonAkc(78, 47) : tonAkc(43, 17)} strokeWidth={hot ? 1.6 : 1.1} strokeLinejoin="round"
+                fill="url(#nbMmCard)" stroke={hot ? kol(78, 47) : kol(43, 17)} strokeWidth={hot ? 1.6 : 1.1} strokeLinejoin="round"
               />
               <g transform={plane(0, (y0 + y1) / 2, z, [1, 0, 0], [0, -1, 0])}>
-                <text x={-56} y={-30} fill={hot ? tonAkc(94, 11) : tonAkc(78, 14)} fontSize={12} fontFamily="monospace" letterSpacing="0.2">{m}</text>
-                <line x1={-50} y1={-19} x2={22} y2={-19} stroke={tonAkc(32, 16)} strokeWidth={1.1} />
-                <line x1={-50} y1={-10} x2={0} y2={-10} stroke={tonAkc(32, 16)} strokeWidth={1.1} />
+                <text x={-56} y={-30} fill={hot ? kol(94, 11) : kol(78, 14)} fontSize={12} fontFamily="monospace" letterSpacing="0.2">{m}</text>
+                <line x1={-50} y1={-19} x2={22} y2={-19} stroke={kol(32, 16)} strokeWidth={1.1} />
+                <line x1={-50} y1={-10} x2={0} y2={-10} stroke={kol(32, 16)} strokeWidth={1.1} />
                 {hot && (
                   <g>
-                    <circle cx={48} cy={-32} r={9} fill={tonAkc(12, 11)} stroke={tonAkc(78, 47)} strokeWidth={1.3} />
-                    <path d="M 44 -36 L 52 -28 M 52 -36 L 44 -28" stroke={tonAkc(91, 15)} strokeWidth={1.6} strokeLinecap="round" />
+                    <circle cx={48} cy={-32} r={9} fill={kol(12, 11)} stroke={kol(78, 47)} strokeWidth={1.3} />
+                    <path d="M 44 -36 L 52 -28 M 52 -36 L 44 -28" stroke={kol(91, 15)} strokeWidth={1.6} strokeLinecap="round" />
                   </g>
                 )}
               </g>
@@ -976,18 +976,18 @@ export function MemoryVisual() {
         })}
 
         {/* ── PRAWA ŚCIANKA I FRONT (karty siedzą za nimi) ── */}
-        <polygon points={poly([[TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [TX, TY, Z(TZ)], [TX, TY, Z(-TZ)]])} fill={tonAkc(16, 9)} stroke={tonAkc(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
-        <polygon points={poly([[TX, TY, Z(-TZ)], [TX, TY, Z(TZ)], [TX + WT, TY, Z(TZ)], [TX + WT, TY, Z(-TZ)]])} fill={tonAkc(58, 15)} stroke={tonAkc(81, 11)} strokeWidth={1.1} strokeLinejoin="round" />
-        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [TX + WT, 0, Z(TZ)], [TX + WT, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill="url(#nbMmFront)" stroke={tonAkc(81, 11)} strokeWidth={1.4} strokeLinejoin="round" />
+        <polygon points={poly([[TX, 0, Z(-TZ)], [TX, 0, Z(TZ)], [TX, TY, Z(TZ)], [TX, TY, Z(-TZ)]])} fill={kol(16, 9)} stroke={kol(55, 15)} strokeWidth={1.2} strokeLinejoin="round" />
+        <polygon points={poly([[TX, TY, Z(-TZ)], [TX, TY, Z(TZ)], [TX + WT, TY, Z(TZ)], [TX + WT, TY, Z(-TZ)]])} fill={bryla(58, 15)} stroke={kol(81, 11)} strokeWidth={1.1} strokeLinejoin="round" />
+        <polygon points={poly([[-TX - WT, 0, Z(TZ)], [TX + WT, 0, Z(TZ)], [TX + WT, TY, Z(TZ)], [-TX - WT, TY, Z(TZ)]])} fill="url(#nbMmFront)" stroke={kol(81, 11)} strokeWidth={1.4} strokeLinejoin="round" />
 
         {/* uchwyt i podpis frontu */}
         <g transform={plane(0, TY / 2, Z(TZ), [1, 0, 0], [0, -1, 0])}>
-          <rect x={-46} y={-11} width={92} height={22} rx={4} fill={tonAkc(11, 7)} stroke={tonAkc(68, 14)} strokeWidth={1.1} />
-          <text x={0} y={5} fill={tonAkc(88, 11)} fontSize={13} fontFamily="monospace" textAnchor="middle" letterSpacing="2.2">PAMIĘĆ</text>
+          <rect x={-46} y={-11} width={92} height={22} rx={4} fill={kol(11, 7)} stroke={kol(68, 14)} strokeWidth={1.1} />
+          <text x={0} y={5} fill={kol(88, 11)} fontSize={13} fontFamily="monospace" textAnchor="middle" letterSpacing="2.2">PAMIĘĆ</text>
         </g>
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={598} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={598} fill={kol(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`ZAPAMIĘTANE WPISY ${Math.min(N, Math.max(0, Math.round((p - 0.16) / 0.075) + 1))} / ${N}`}
           </text>
         </g>
@@ -1072,10 +1072,10 @@ export function WorkspaceVisual() {
       <svg viewBox="0 0 900 620" className="absolute inset-0 h-full w-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="nbPcbCore" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={tonAkc(26, 22)} /><stop offset="55%" stopColor={tonAkc(16, 13)} /><stop offset="100%" stopColor={tonAkc(10, 8)} />
+            <stop offset="0%" stopColor={bryla(26, 22)} /><stop offset="55%" stopColor={bryla(16, 13)} /><stop offset="100%" stopColor={bryla(10, 8)} />
           </linearGradient>
           <linearGradient id="nbPcbPad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={tonAkc(15, 9)} /><stop offset="100%" stopColor={tonAkc(11, 7)} />
+            <stop offset="0%" stopColor={bryla(15, 9)} /><stop offset="100%" stopColor={bryla(11, 7)} />
           </linearGradient>
           <filter id="nbPcbGlow" x="-80%" y="-80%" width="260%" height="260%">
             <feGaussianBlur stdDeviation="6" result="b" />
@@ -1112,7 +1112,7 @@ export function WorkspaceVisual() {
               <g key={`tr${i}`}>
                 <polyline points={pts} fill="none" stroke="hsl(var(--primary))" strokeWidth={6} opacity={0.13} strokeLinejoin="round" strokeLinecap="round" />
                 <polyline points={pts} fill="none" stroke="hsl(var(--primary))" strokeWidth={2} opacity={0.88} strokeLinejoin="round" strokeLinecap="round" />
-                <circle cx={r0[1]![0]} cy={r0[1]![1]} r={3.4} fill={tonAkc(10, 9)} stroke="hsl(var(--primary))" strokeWidth={1.4} opacity={t} />
+                <circle cx={r0[1]![0]} cy={r0[1]![1]} r={3.4} fill={kol(10, 9)} stroke="hsl(var(--primary))" strokeWidth={1.4} opacity={t} />
               </g>
             )
           })}
@@ -1130,12 +1130,12 @@ export function WorkspaceVisual() {
               <rect x={x} y={y} width={m.w} height={PAD_H} rx={6} fill="url(#nbPcbPad)" stroke="hsl(var(--primary))" strokeWidth={1.7} />
               {[-0.3, 0, 0.3].map((u) => (
                 m.axis === 'h' ? (
-                  <line key={u} x1={m.padX} y1={m.padY + u * PAD_H} x2={m.padX + m.dir * 10} y2={m.padY + u * PAD_H} stroke={tonAkc(70, 17)} strokeWidth={2.2} opacity={0.8} />
+                  <line key={u} x1={m.padX} y1={m.padY + u * PAD_H} x2={m.padX + m.dir * 10} y2={m.padY + u * PAD_H} stroke={kol(70, 17)} strokeWidth={2.2} opacity={0.8} />
                 ) : (
-                  <line key={u} x1={m.padX + u * m.w} y1={m.padY - m.dir * PAD_H / 2} x2={m.padX + u * m.w} y2={m.padY - m.dir * (PAD_H / 2 + 10)} stroke={tonAkc(70, 17)} strokeWidth={2.2} opacity={0.8} />
+                  <line key={u} x1={m.padX + u * m.w} y1={m.padY - m.dir * PAD_H / 2} x2={m.padX + u * m.w} y2={m.padY - m.dir * (PAD_H / 2 + 10)} stroke={kol(70, 17)} strokeWidth={2.2} opacity={0.8} />
                 )
               ))}
-              <text x={x + m.w / 2} y={m.padY + 6} fill={tonAkc(93, 12)} fontSize={16} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">
+              <text x={x + m.w / 2} y={m.padY + 6} fill={kol(93, 12)} fontSize={16} fontFamily="monospace" textAnchor="middle" letterSpacing="0.6">
                 {m.t}
               </text>
             </g>
@@ -1152,16 +1152,16 @@ export function WorkspaceVisual() {
         <g opacity={0.85}>
           {[-52, -34, -16, 4, 22, 40, 58].map((d) => (
             <g key={`pin${d}`}>
-              <line x1={PCB_CX - PCB_R} y1={PCB_CY + d} x2={PCB_CX - PCB_R - 11} y2={PCB_CY + d} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
-              <line x1={PCB_CX + PCB_R} y1={PCB_CY + d} x2={PCB_CX + PCB_R + 11} y2={PCB_CY + d} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
-              <line x1={PCB_CX + d} y1={PCB_CY - PCB_R} x2={PCB_CX + d} y2={PCB_CY - PCB_R - 11} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
-              <line x1={PCB_CX + d} y1={PCB_CY + PCB_R} x2={PCB_CX + d} y2={PCB_CY + PCB_R + 11} stroke={tonAkc(70, 17)} strokeWidth={2.6} />
+              <line x1={PCB_CX - PCB_R} y1={PCB_CY + d} x2={PCB_CX - PCB_R - 11} y2={PCB_CY + d} stroke={kol(70, 17)} strokeWidth={2.6} />
+              <line x1={PCB_CX + PCB_R} y1={PCB_CY + d} x2={PCB_CX + PCB_R + 11} y2={PCB_CY + d} stroke={kol(70, 17)} strokeWidth={2.6} />
+              <line x1={PCB_CX + d} y1={PCB_CY - PCB_R} x2={PCB_CX + d} y2={PCB_CY - PCB_R - 11} stroke={kol(70, 17)} strokeWidth={2.6} />
+              <line x1={PCB_CX + d} y1={PCB_CY + PCB_R} x2={PCB_CX + d} y2={PCB_CY + PCB_R + 11} stroke={kol(70, 17)} strokeWidth={2.6} />
             </g>
           ))}
         </g>
 
         {/* Prawdziwy znak NextByte na rdzeniu (viewBox ikony 278.5 45.5 642 775) */}
-        <g transform={`translate(${PCB_CX} ${PCB_CY}) scale(0.104) translate(-599.5 -433)`} fill={tonAkc(95, 9)}>
+        <g transform={`translate(${PCB_CX} ${PCB_CY}) scale(0.104) translate(-599.5 -433)`} fill={kol(95, 9)}>
           <path d="M299,65.5 L298,225 L900,800.5 L900,641 Z" />
           <path d="M784,68 L900,68 L900,460 L784,460 Z" />
           <path d="M299,264 L416,377 L415,797 L298,797 Z" />
@@ -1169,7 +1169,7 @@ export function WorkspaceVisual() {
         </g>
 
         <g className="hidden sm:block" opacity={Math.min(1, p * 3)}>
-          <text x={28} y={604} fill={tonAkc(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
+          <text x={28} y={604} fill={kol(45, 15)} fontSize={12} fontFamily="monospace" letterSpacing="1">
             {`PODŁĄCZONE MODUŁY ${PCB_MODS.filter((m) => p > m.at + 0.13).length} / ${PCB_MODS.length}`}
           </text>
         </g>

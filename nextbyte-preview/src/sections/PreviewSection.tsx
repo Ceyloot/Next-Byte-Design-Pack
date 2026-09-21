@@ -7,7 +7,7 @@ import {
   Check, Edit2, FileText, Layers, Folder, Calendar, BarChart3,
   MonitorPlay, LayoutGrid, Navigation as NavIcon, BarChart2, Loader, Palette, Tag,
   PanelTop, PanelLeft, PanelBottom, PanelRight, Settings, GripVertical, GripHorizontal, Move,
-  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon, Activity, LogIn,
+  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon, Activity, LogIn, BookOpen,
 } from 'lucide-react'
 import type { NavPosition } from '@/App'
 import { cn } from '@/lib/utils'
@@ -35,11 +35,12 @@ import type { EkranAuth } from '@/sections/strona-glowna/types'
 import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
 import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
 import { Panel2Page } from '@/sections/panel2/Panel2Page'
+import { NotebookSection } from '@/sections/NotebookSection'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' }
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'notebook' }
 
 const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
   { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [
@@ -47,6 +48,7 @@ const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ cla
     { name: 'Logowanie',     icon: LogIn,      subView: 'logowanie' },
     { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
     { name: 'Dashboard 2.0', icon: Grid,       badge: 'NEW', subView: 'dashboard2' },
+    { name: 'Your Notebook', icon: BookOpen,  badge: 'WIP', subView: 'notebook' },
   ] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
     { name: 'Podstawowe',       icon: Square,        scrollId: 'karta' },
@@ -1046,7 +1048,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         'flex-1 min-w-0 overflow-y-auto flex flex-col',
         activeTab !== 'preview'
           ? 'p-6 w-full'
-          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'dashboard2')
+          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'dashboard2' || previewSubView === 'notebook')
             ? 'p-0 w-full'
             : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
       )}
@@ -1063,7 +1065,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
         {activeTab === 'preview' && (
           <div className="space-y-4 w-full flex-1 flex flex-col min-h-0">
-            {previewSubView === 'dashboard2' ? (
+            {previewSubView === 'notebook' ? (
+              <NotebookSection />
+            ) : previewSubView === 'dashboard2' ? (
               <Panel2Page onWyjscie={() => setPreviewSubView('strona-glowna')} />
             ) : previewSubView === 'strona-glowna' ? (
               <StronaGlownaSection page={stronaPage} onPageChange={idzDoPodstrony} />

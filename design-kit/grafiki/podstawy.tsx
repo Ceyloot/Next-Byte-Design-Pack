@@ -25,6 +25,33 @@ export const ton = (n: number) =>
 export const tonAkc = (n: number, a: number) =>
   `color-mix(in srgb, hsl(var(--primary)) ${a}%, ${ton(n)})`
 
+/** Ton z WYRAZISTYM akcentem — ta sama skala co `tonAkc`, ale kreski
+    i obrysy dostają kolor marki na serio, a nie kilkuprocentową domieszkę.
+
+    `tonAkc(45, 15)` daje szaroniebieską kreskę: 15% marki w szarości.
+    Obok grafik malowanych wprost `hsl(var(--primary))` (asystent, chat,
+    szyfrowanie, lokalne AI) takie rysunki wyglądały na wyblakłe.
+    Tu podział jest prosty:
+    - bryły (n ≤ 30) zostają ciemne i nieprzezroczyste, tylko chłodniejsze,
+    - jasne podpisy (n ≥ 85, a ≤ 11) zostają neutralne, żeby dało się je czytać,
+    - cała reszta — linie, obrysy, akcenty — idzie w kolor marki.
+    Do WYPEŁNIEŃ brył służy `bryla` — `kol` robi z jasnej ściany pastelę. */
+export const kol = (n: number, a: number) => {
+  if (n <= 30) return tonAkc(n, Math.min(40, Math.round(a * 1.6)))
+  if (a <= 11 && n >= 85) return tonAkc(n, a)
+  const marka = Math.max(45, Math.min(92, Math.round(a * 3.2)))
+  return `color-mix(in srgb, hsl(var(--primary)) ${marka}%, ${ton(n)})`
+}
+
+/** Ton WYPEŁNIENIA bryły. Ta sama skala co `tonAkc`, ale ściśnięta w ciemny
+    zakres: jasna ściana (n ≈ 90) wychodzi ok. 19%, ciemna (n ≈ 10) ok. 7%.
+    Kolejność jasności zostaje, więc cieniowanie brył się nie rozsypuje,
+    a bryły wyglądają jak w chacie i asystencie — ciemne szkło, na którym
+    świecą dopiero krawędzie. Wcześniej jasne ściany w kolorze marki dawały
+    pastelę i całe sceny wyglądały na wyblakłe. */
+export const bryla = (n: number, a: number) =>
+  tonAkc(Math.round((5 + n * 0.16) * 10) / 10, Math.min(40, Math.round(a * 1.8)))
+
 /* ═══════════════════════════════════════════════════════════════════════
    SILNIK AKSONOMETRYCZNY 3D → SVG (rozstrzelony aparat)
 

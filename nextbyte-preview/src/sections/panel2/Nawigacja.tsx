@@ -512,7 +512,9 @@ export function Nawigacja({
   /* Pasek jest kafelkiem: odklejony od krawędzi, zaokrąglony ze wszystkich
      stron, ten sam promień i ta sama tafla co górny pasek platformy. */
   const obudowa = cn(
-    'flex overflow-hidden rounded-2xl border border-foreground/[0.09] backdrop-blur-md',
+    // transform-gpu: rozmyte tło paska zostaje na własnej warstwie, więc
+    // przewijanie treści obok nie wymusza jego ponownego rozmywania.
+    'flex overflow-hidden rounded-2xl border border-foreground/[0.09] backdrop-blur-md transform-gpu',
     'bg-card/70 bg-gradient-to-b from-foreground/[0.05] to-transparent',
     'shadow-[var(--cien-uniesiony),var(--swiatlo-gorne)]',
     pionowo ? 'h-full flex-col' : 'w-full flex-row items-center',

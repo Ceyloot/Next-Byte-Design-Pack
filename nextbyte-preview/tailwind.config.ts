@@ -2,7 +2,10 @@ import type { Config } from 'tailwindcss'
 
 export default {
   darkMode: ['class'],
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  // jsx/js są tu, bo makieta notatnika (`src/sections/notebook`) przyjechała
+  // z `your-notebook` w JSX. Bez nich Tailwind po cichu wyrzuca każdą klasę
+  // występującą wyłącznie w tych plikach — układ rozsypuje się bez błędu.
+  content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {
     screens: { xs: '475px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px' },
     extend: {

@@ -1,5 +1,7 @@
 // ── Kafelek (Tile) i tło aplikacji ───────────────────────────────
 export * from './components/Tile'
+// Prymitywy stylu „duch” — Blok, Naglowek, Przycisk, Segmenty, Wejscie.
+export * from './components/duch'
 export * from './components/AppBackground'
 
 // ── Prymitywy UI ──────────────────────────────────────────────────
