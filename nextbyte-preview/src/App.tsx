@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from '@/components/ui/toaster'
 import { NbTabs } from '@/components/ui/NbTabs'
-import { Layers, Sparkles, LayoutGrid, Navigation, PanelTop, PanelBottom, PanelLeft, PanelRight, Palette, BarChart2, Loader, MonitorPlay, ChevronRight, Tag } from 'lucide-react'
+import { Layers, Sparkles, LayoutGrid, Navigation, PanelTop, PanelBottom, PanelLeft, PanelRight, Palette, BarChart2, Loader, MonitorPlay, ChevronRight, Tag, PenTool } from 'lucide-react'
 
 export type NavPosition = 'top' | 'bottom' | 'left' | 'right'
 import { GlassProvider, useGlass } from '@/lib/glass-context'
@@ -46,6 +46,7 @@ const TABS = [
   { key: 'stany',      label: 'Stany',      icon: <Loader      className="h-3.5 w-3.5" /> },
   { key: 'paleta',     label: 'Paleta',     icon: <Palette     className="h-3.5 w-3.5" /> },
   { key: 'cennik',     label: 'Cennik',     icon: <Tag         className="h-3.5 w-3.5" /> },
+  { key: 'edytor',     label: 'Edytor',     icon: <PenTool     className="h-3.5 w-3.5" /> },
 ] as const
 
 type TabKey = (typeof TABS)[number]['key']

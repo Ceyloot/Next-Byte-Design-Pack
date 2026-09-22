@@ -754,13 +754,24 @@ export const KOSZT_BYTE = {
 const SONNET5_INPUT_ZL_PER_1M = 8
 
 /**
- * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
- * Gdy podasz zlPerByte (cena_mc / bytes_mc) pierwszy wiersz pokazuje tokeny
- * wg referencyjnej ceny Claude Sonnet 5 input zamiast liczby rozmów.
+ * Stały kurs jednostki Byte. Jeden Byte kupuje tyle samo mocy modelu
+ * niezależnie od planu, w którym został nabyty — plan decyduje wyłącznie
+ * o tym, ile złotówek płacisz za jeden Byte. Dlatego przelicznik tokenów
+ * idzie z PULI Byte przez tę stałą, a nigdy z ceny miesięcznej planu:
+ * liczenie z ceny skraca pulę ze wzoru i sprawia, że wyższe progi — te
+ * z najtańszym Byte — wypadają najgorzej.
  */
-export function przelicznikByte(byte: number, zlPerByte?: number) {
-  const pierwszyWiersz = zlPerByte && zlPerByte > 0
-    ? { icon: MessageSquare, label: 'tokenów', value: Math.floor(byte * zlPerByte / (SONNET5_INPUT_ZL_PER_1M / 1_000_000)), isTokens: true, isImages: false }
+export const ZL_ZA_BYTE = 0.2
+
+/**
+ * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
+ * Gdy ustawisz pokazTokeny, pierwszy wiersz pokazuje tokeny wg referencyjnej
+ * ceny Claude Sonnet 5 input zamiast liczby rozmów — liczone z puli przez
+ * stały kurs ZL_ZA_BYTE.
+ */
+export function przelicznikByte(byte: number, pokazTokeny?: boolean) {
+  const pierwszyWiersz = pokazTokeny
+    ? { icon: MessageSquare, label: 'tokenów', value: Math.floor(byte * ZL_ZA_BYTE * 1_000_000 / SONNET5_INPUT_ZL_PER_1M), isTokens: true, isImages: false }
     : { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa), isTokens: false, isImages: false }
 
   return [

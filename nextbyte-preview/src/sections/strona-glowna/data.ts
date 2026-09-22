@@ -461,53 +461,55 @@ export const PLAN_MACIERZ: { kategoria?: string; f: string; v: (boolean | string
     v: [true, true, true, true],
   },
 
-  // ── Tokeny AI — per model, wg jego ceny input. Liczone dla DOMYŚLNEGO
-  //    (najniższego) progu puli, tak jak startują suwaki na kartach planów:
-  //    Lite 140 ⟠ / 27,90 zł, Premium 495 ⟠ / 99 zł, Ultimate 2450 ⟠ / 349 zł ──
+  // ── Tokeny AI — per model, wg jego ceny input. Liczone jako
+  //    pula Byte × ZL_ZA_BYTE / cena_1M — z PULI, nie z ceny planu, więc
+  //    wyższe progi (tańszy Byte) dają proporcjonalnie więcej tokenów.
+  //    Dla DOMYŚLNEGO (najniższego) progu, tak jak startują suwaki na
+  //    kartach planów: Lite 140 ⟠, Premium 495 ⟠, Ultimate 2450 ⟠ ──
   {
     kategoria: 'Tokeny AI',
     f: 'Claude Sonnet 5',
-    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~43,6 mln'],
+    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~61,3 mln'],
   },
   {
     f: 'Claude Opus 5',
-    v: ['Z paczek', '~1,4 mln', '~5 mln', '~17,5 mln'],
+    v: ['Z paczek', '~1,4 mln', '~5 mln', '~24,5 mln'],
   },
   {
     f: 'GPT-5.6 Sol',
-    v: ['Z paczek', '~1,7 mln', '~6,2 mln', '~21,8 mln'],
+    v: ['Z paczek', '~1,7 mln', '~6 mln', '~29,8 mln'],
   },
   {
     f: 'GPT-5.6 Terra',
-    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~43,6 mln'],
+    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~61,3 mln'],
   },
   {
     f: 'GPT-5.6 Luna',
-    v: ['Z paczek', '~34,9 mln', '~123,8 mln', '~436,3 mln'],
+    v: ['Z paczek', '~35 mln', '~123,8 mln', '~612,5 mln'],
   },
   {
     f: 'Grok 4.3 (≤200k tok)',
-    v: ['Z paczek', '~5,6 mln', '~19,8 mln', '~69,8 mln'],
+    v: ['Z paczek', '~5,6 mln', '~19,8 mln', '~98 mln'],
   },
   {
     f: 'Grok 4.3 (>200k tok)',
-    v: ['Z paczek', '~2,8 mln', '~9,9 mln', '~34,9 mln'],
+    v: ['Z paczek', '~2,8 mln', '~9,9 mln', '~49 mln'],
   },
   {
     f: 'Gemini 3.1 Flash-Lite',
-    v: ['Z paczek', '~27,9 mln', '~99 mln', '~349 mln'],
+    v: ['Z paczek', '~28 mln', '~99 mln', '~490 mln'],
   },
   {
     f: 'Gemini 3.1 Flash Live',
-    v: ['Z paczek', '~9,3 mln', '~33 mln', '~116,3 mln'],
+    v: ['Z paczek', '~9,3 mln', '~33 mln', '~163,3 mln'],
   },
   {
     f: 'Gemini 3.1 Pro (≤200k tok)',
-    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~43,6 mln'],
+    v: ['Z paczek', '~3,5 mln', '~12,4 mln', '~61,3 mln'],
   },
   {
     f: 'Gemini 3.1 Pro (>200k tok)',
-    v: ['Z paczek', '~1,7 mln', '~6,2 mln', '~21,8 mln'],
+    v: ['Z paczek', '~1,8 mln', '~6,2 mln', '~30,6 mln'],
   },
 
   // ── Grafiki AI — liczba sztuk = pula Byte / koszt modelu, dla domyślnego
@@ -928,10 +930,20 @@ export const KOSZT_BYTE = {
   zadanieAsystenta: 5,
   mocnyModel: 11,
   rozmowaGlosowaMin: 2, // 1 minuta rozmowy głosowej z AI
-  // 1 mln tokenów input przy ~0,20 zł/Byte (Premium 99 zł / 495 ⟠):
+  // 1 mln tokenów input przy stałym kursie ZL_ZA_BYTE:
   tokeny1mlnTerra: 40, // GPT-5.6 Terra — 8 zł / 1M
   tokeny1mlnOpus: 100, // Claude Opus 5 — 20 zł / 1M
 } as const
+
+/**
+ * Stały kurs jednostki Byte. Jeden Byte kupuje tyle samo mocy modelu
+ * niezależnie od planu, w którym został nabyty — plan decyduje wyłącznie
+ * o tym, ile złotówek płacisz za jeden Byte. Dlatego wszystkie przeliczniki
+ * tokenów idą z PULI Byte przez tę stałą, a nigdy z ceny miesięcznej planu:
+ * liczenie z ceny skraca pulę ze wzoru i sprawia, że wyższe progi — te
+ * z najtanszym Byte — wypadają w tabeli najgorzej.
+ */
+export const ZL_ZA_BYTE = 0.2
 
 // GPT Terra input: $2/1M tokenów = 8 zł/1M (kurs 4 zł/USD)
 const GPT_TERRA_INPUT_ZL_PER_1M = 8
@@ -944,7 +956,11 @@ const GPT_TERRA_INPUT_ZL_PER_1M = 8
 export const MODELE_TOKENOWE = [
   { nazwa: 'Claude Sonnet 5',            zlPer1M: 8 },   // $2 / 1M in
   { nazwa: 'Claude Opus 5',              zlPer1M: 20 },  // $5 / 1M in
-  { nazwa: 'GPT-5.6 Sol',                zlPer1M: 16 },  // $4 / 1M in — flagship
+  // Sol ma jawną stawkę tok/Byte zamiast wyliczanej z ceny. Z ceny listowej
+  // $4/1M (16 zł) wyszłoby 12 500 tok/Byte i ~30,6 mln na Ultimate; rewizja
+  // cennika potwierdziła 12 143 tok/Byte, czyli wiersz 1,7 / 6,0 / 29,8 mln.
+  // Do pogodzenia z byteCost.ts — Sol liczy +1 Byte za reasoning 'high'.
+  { nazwa: 'GPT-5.6 Sol',                zlPer1M: 16, tokPerByte: 12143 },  // $4 / 1M in — flagship
   { nazwa: 'GPT-5.6 Terra',              zlPer1M: 8 },   // $2 / 1M in — balanced
   { nazwa: 'GPT-5.6 Luna',               zlPer1M: 0.8 }, // $0,2 / 1M in — cost
   { nazwa: 'Grok 4.3 (≤200k tok)',       zlPer1M: 5 },   // $1,25 / 1M in
@@ -983,20 +999,25 @@ function fmtTokeny(n: number): string {
   return `~${n}`
 }
 
-/** Ile tokenów danego modelu daje pula Byte przy określonej cenie miesięcznej. */
-export function tokenyDlaModelu(byte: number, cenaMiesieczna: number, zlPer1M: number): string {
-  const zlPerByte = byte > 0 ? cenaMiesieczna / byte : 0
-  return fmtTokeny(Math.floor(byte * zlPerByte / (zlPer1M / 1_000_000)))
+/**
+ * Ile tokenów danego modelu daje pula Byte. Domyślnie kurs wychodzi z ceny
+ * input przez stałą ZL_ZA_BYTE; model może jednak podać własne tokPerByte,
+ * jeśli jego realna stawka rozjechała się z ceną listową (patrz GPT-5.6 Sol).
+ */
+export function tokenyDlaModelu(byte: number, zlPer1M: number, tokPerByte?: number): string {
+  const kurs = tokPerByte ?? ZL_ZA_BYTE * 1_000_000 / zlPer1M
+  return fmtTokeny(Math.floor(byte * kurs))
 }
 
 /**
  * Zamienia pulę Byte na orientacyjną liczbę operacji ("To wystarczy na...").
- * Gdy podasz zlPerByte (cena_mc / bytes_mc) pierwszy wiersz pokazuje tokeny
- * wg referencyjnej ceny GPT Terra input zamiast liczby rozmów.
+ * Gdy ustawisz pokazTokeny, pierwszy wiersz pokazuje tokeny wg referencyjnej
+ * ceny GPT Terra input zamiast liczby rozmów — liczone z puli przez stały
+ * kurs ZL_ZA_BYTE, tak samo jak kategoria "Tokeny AI" w tabeli porównania.
  */
-export function przelicznikByte(byte: number, zlPerByte?: number) {
-  const pierwszyWiersz = zlPerByte && zlPerByte > 0
-    ? { icon: Zap, label: 'tokenów', value: Math.floor(byte * zlPerByte / (GPT_TERRA_INPUT_ZL_PER_1M / 1_000_000)), isTokens: true, isImages: false }
+export function przelicznikByte(byte: number, pokazTokeny?: boolean) {
+  const pierwszyWiersz = pokazTokeny
+    ? { icon: Zap, label: 'tokenów', value: Math.floor(byte * ZL_ZA_BYTE * 1_000_000 / GPT_TERRA_INPUT_ZL_PER_1M), isTokens: true, isImages: false }
     : { icon: MessageSquare, label: 'rozmów z AI', value: Math.floor(byte / KOSZT_BYTE.rozmowa), isTokens: false, isImages: false }
 
   return [

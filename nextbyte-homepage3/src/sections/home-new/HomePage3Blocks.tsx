@@ -1648,9 +1648,16 @@ export function ComparisonSection({ onNavigate = () => { } }: { onNavigate?: (p:
    ═══════════════════════════════════════════════════════════════════════ */
 
 type PricingOkres = 'miesiecznie' | 'rocznie'
-const RABAT_ROCZNY = 0.17
+/** Rok w produkcji kosztuje 10 miesięcy — dwa gratis, czyli płaskie ~17%.
+ *  Kwotą wiodącą jest faktura roczna (27,90 → 279, 99 → 990, 349 → 3490),
+ *  a cena "zł/m" to dopiero jej 1/12 w dół. Nie wolno tego odwracać — zaokrąglenie
+ *  miesięcznej i przemnożenie przez 12 daje faktury 276 / 984 / 3480, czyli nie te,
+ *  które klient realnie płaci. */
+const MIESIECY_W_ROKU_PLATNE = 10
+/** Faktura roczna — kwota wiodąca. */
+const fakturaRoczna = (miesiecznie: number) => miesiecznie * MIESIECY_W_ROKU_PLATNE
 const cenaZaOkres = (miesiecznie: number, okres: PricingOkres) =>
-  okres === 'rocznie' ? Math.round(miesiecznie * (1 - RABAT_ROCZNY)) : miesiecznie
+  okres === 'rocznie' ? Math.floor(fakturaRoczna(miesiecznie) / 12) : miesiecznie
 
 function PricingAnimNum({ value, decimals = 0 }: { value: number; decimals?: number }) {
   const [pokaz, setPokaz] = useState(value)
@@ -1978,7 +1985,7 @@ function PricingCard({
           <div className="mt-1 min-h-[18px]">
             {!darmowy && okres === 'rocznie' ? (
               <span className="text-[11.5px] text-primary font-medium">
-                faktura roczna: <PricingAnimNum value={cena * 12} /> PLN
+                faktura roczna: <PricingAnimNum value={fakturaRoczna(cenaBazowa)} /> PLN
               </span>
             ) : darmowy ? (
               <span className="text-[11.5px] text-muted-foreground font-light">bez karty kredytowej</span>

@@ -26,10 +26,17 @@ import type { HomePage as HomePageId } from './types'
 
 type Okres = 'miesiecznie' | 'rocznie'
 
-/** Rabat roczny jest w produkcji płaski (17%) — nie osobno tabelaryzowany per próg. */
-const RABAT_ROCZNY = 0.17
+/** Rok w produkcji kosztuje 10 miesięcy — dwa gratis, czyli płaskie ~17%.
+ *  Kwotą wiodącą jest faktura roczna (27,90 → 279, 99 → 990, 349 → 3490),
+ *  a cena "zł/m" to dopiero jej 1/12 w dół. Nie wolno tego odwracać — zaokrąglenie
+ *  miesięcznej i przemnożenie przez 12 daje faktury 276 / 984 / 3480, czyli nie te,
+ *  które klient realnie płaci. */
+const MIESIECY_W_ROKU_PLATNE = 10
+const RABAT_ROCZNY = 1 - MIESIECY_W_ROKU_PLATNE / 12
+/** Faktura roczna — kwota wiodąca. */
+const fakturaRoczna = (miesiecznie: number) => miesiecznie * MIESIECY_W_ROKU_PLATNE
 const cenaZaOkres = (miesiecznie: number, okres: Okres) =>
-  okres === 'rocznie' ? Math.round(miesiecznie * (1 - RABAT_ROCZNY)) : miesiecznie
+  okres === 'rocznie' ? Math.floor(fakturaRoczna(miesiecznie) / 12) : miesiecznie
 
 /** Nagłówek bloku — ten sam rytm co BlockHead ze strony głównej 3. */
 function BlockHead({
@@ -409,8 +416,9 @@ function PanelZuzycia({
     )
   }
 
-  const zlPerByte = byte && byte > 0 && cena ? cena / byte : undefined
-  const rows = przelicznikByte(byte, zlPerByte)
+  // Tokeny liczą się z puli Byte przez stały kurs, nie z ceny planu — cena
+  // decyduje tylko o tym, czy w ogóle pokazujemy wiersz tokenowy.
+  const rows = przelicznikByte(byte, Boolean(byte && byte > 0 && cena))
 
   return (
     <div className="flex flex-col gap-2">
@@ -473,7 +481,7 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
   const pulaByte = konfiguracja?.byte ?? plan.stalaPula
   const wartosci = (() => {
     if (!pulaByte || !cenaBazowa) return undefined
-    const [tok, obr, glos] = przelicznikByte(pulaByte, cenaBazowa / pulaByte)
+    const [tok, obr, glos] = przelicznikByte(pulaByte, true)
     return { pula: pulaByte, tokeny: tok.value, obrazy: obr.value, glosMin: glos.value }
   })()
 
@@ -548,10 +556,10 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
             {!darmowy && okres === 'rocznie' ? (
               <>
                 <p className="text-muted-foreground font-light leading-tight">
-                  Rozliczane rocznie — faktura <AnimNum value={cena * 12} /> PLN
+                  Rozliczane rocznie — faktura <AnimNum value={fakturaRoczna(cenaBazowa)} /> PLN
                 </p>
                 <p className="font-medium text-primary leading-tight">
-                  Oszczędzasz <AnimNum value={(cenaBazowa - cena) * 12} /> zł rocznie
+                  Oszczędzasz <AnimNum value={cenaBazowa * 12 - fakturaRoczna(cenaBazowa)} /> zł rocznie
                 </p>
               </>
             ) : darmowy ? (
@@ -1396,7 +1404,7 @@ function PlanFinder({ onWybierz, okres }: { onWybierz: (id: string) => void; okr
               </p>
               {prog && okres === 'rocznie' && (
                 <p className="text-[11px] text-primary font-medium">
-                  faktura roczna: <AnimNum value={cena * 12} /> PLN
+                  faktura roczna: <AnimNum value={fakturaRoczna(prog?.miesiecznie ?? 0)} /> PLN
                 </p>
               )}
 
