@@ -253,10 +253,17 @@ export const SzybkiKreator: React.FC = () => {
       data-tour="szybki-kreator"
       className="nb-szklo nb-szklo-plynne nb-kafelek relative flex flex-col overflow-hidden rounded-2xl border"
     >
-      {/* Nitka akcentu — ten sam idiom, co pastylka kart i nagłówek paska. */}
+      {/* Nitka akcentu — ten sam idiom, co pastylka kart i nagłówek paska.
+          `top-px`, NIE `top-0`: na `top-0` nitka siadała na tej samej linii
+          co obwódka karty i ją zasłaniała na środku góry (widoczna została
+          tylko przy narożnikach) — karta wyglądała inaczej niż reszta, która
+          ma pełną, ciągłą krawędź. Nitka teraz leży JEDEN piksel niżej, pod
+          obwódką: obwódka idzie w całości dookoła jak w innych kafelkach,
+          a nitka jest osobną, węższą warstwą tuż pod nią — i rusza się z nią
+          razem, bo obie są dziećmi tej samej karty. */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-4 top-0 z-10 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
+        className="pointer-events-none absolute inset-x-4 top-px z-10 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
       />
 
       {/* ── WYBÓR TRYBU ──────────────────────────────────────────────────
