@@ -1,0 +1,609 @@
+/* Design System CSS - Piękny styl z zarządzania kursami */
+
+/* Custom utility classes for our design system */
+/* MATERIAŁ PLATFORMY, NIE ZASZYTA CZERŃ.
+
+   Było: `bg-black/40 backdrop-blur-sm border-white/10` — czyli 40% czystej
+   czerni (ta sama płyta na wszystkich dziewięciu motywach), rant z bieli
+   (niewidoczny na motywach jasnych) i 4 px rozmycia zamiast 8.8 z tokenu.
+   Sprawdzone: klasa NIE występuje w panelach firmowych, tylko w 4 miejscach
+   platformy (Aktualności, kategorie w Zarządzie), więc podmiana nie wchodzi
+   w zakres, który Michał odłożył. */
+.glass-card {
+  @apply nb-szklo nb-szklo-plynne rounded-xl border;
+}
+
+.glass-card-primary {
+  @apply bg-gradient-to-br from-brand-primary/10 to-blue-500/10 border border-brand-primary/30 backdrop-blur-sm rounded-xl;
+}
+
+.glass-card-blue {
+  @apply bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/30 backdrop-blur-sm rounded-xl;
+}
+
+.glass-card-purple {
+  @apply bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 backdrop-blur-sm rounded-xl;
+}
+
+.glass-card-green {
+  @apply bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/30 backdrop-blur-sm rounded-xl;
+}
+
+.glass-card-orange {
+  @apply bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/30 backdrop-blur-sm rounded-xl;
+}
+
+.glass-card-red {
+  @apply bg-gradient-to-br from-red-500/10 to-red-600/10 border border-red-500/30 backdrop-blur-sm rounded-xl;
+}
+
+/* Gradient Buttons */
+.btn-glass-primary {
+  @apply bg-gradient-to-r from-brand-primary to-blue-500 hover:from-brand-primary/80 hover:to-blue-500/80 text-white shadow-lg shadow-brand-primary/25 border-0 backdrop-blur-sm transition-all duration-300;
+}
+
+.btn-glass-blue {
+  @apply bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-500/30 backdrop-blur-sm transition-all duration-300;
+}
+
+.btn-glass-purple {
+  @apply bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30 backdrop-blur-sm transition-all duration-300;
+}
+
+.btn-glass-green {
+  @apply bg-green-500/20 hover:bg-green-500/30 text-green-200 border border-green-500/30 backdrop-blur-sm transition-all duration-300;
+}
+
+/* Dark Page Background */
+.dark-page-bg {
+  @apply min-h-screen bg-gradient-to-br from-black via-gray-900 to-black;
+}
+
+/* Input Styles */
+.glass-input {
+  @apply bg-black/60 border-brand-primary/40 text-white focus:border-brand-primary transition-colors backdrop-blur-sm;
+}
+
+.glass-input-blue {
+  @apply bg-black/60 border-blue-500/40 text-white focus:border-blue-500 transition-colors backdrop-blur-sm;
+}
+
+.glass-input-purple {
+  @apply bg-black/60 border-purple-500/40 text-white focus:border-purple-500 transition-colors backdrop-blur-sm;
+}
+
+.glass-input-green {
+  @apply bg-black/60 border-green-500/40 text-white focus:border-green-500 transition-colors backdrop-blur-sm;
+}
+
+/* Text Styles */
+.text-primary-gradient {
+  @apply bg-gradient-to-r from-brand-primary to-blue-400 bg-clip-text text-transparent;
+}
+
+.section-title {
+  @apply text-2xl font-bold text-white flex items-center gap-2;
+}
+
+.section-description {
+  @apply text-white/70 mt-1;
+}
+
+/* Hover Effects */
+.hover-lift {
+  @apply hover:scale-105 transition-transform duration-200;
+}
+
+.hover-glow-primary {
+  @apply hover:shadow-lg hover:shadow-brand-primary/25 transition-shadow duration-300;
+}
+
+/* Badge Styles */
+.badge-blue {
+  @apply bg-blue-500/20 text-blue-300 border-blue-500/30;
+}
+
+.badge-purple {
+  @apply bg-purple-500/20 text-purple-300 border-purple-500/30;
+}
+
+.badge-green {
+  @apply bg-green-500/20 text-green-300 border-green-500/30;
+}
+
+.badge-orange {
+  @apply bg-orange-500/20 text-orange-300 border-orange-500/30;
+}
+
+.badge-red {
+  @apply bg-red-500/20 text-red-300 border-red-500/30;
+}
+
+.badge-primary {
+  @apply bg-brand-primary/20 text-brand-primary border-brand-primary/30;
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: 200% 0;
+  }
+  50% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 4s linear infinite;
+}
+
+/* Tab Styles for our design system */
+.glass-tabs {
+  @apply bg-black/40 backdrop-blur-md border-b border-brand-primary/20 rounded-none;
+}
+
+.glass-tab {
+  @apply h-12 text-base font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-primary/90 data-[state=active]:to-blue-500/90 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-white/10;
+}
+
+/* Form Section Styles */
+.form-section-blue {
+  @apply p-6 bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/30 rounded-xl;
+}
+
+.form-section-purple {
+  @apply p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl;
+}
+
+.form-section-green {
+  @apply p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/30 rounded-xl;
+}
+
+.form-section-primary {
+  @apply p-6 bg-gradient-to-br from-brand-primary/10 to-blue-500/10 border border-brand-primary/30 rounded-xl;
+}
+
+/* Glass Container - Standardowy kontener glassmorphism dla platformy */
+.glass-container {
+  @apply bg-black/40 backdrop-blur-xl border border-primary/20 shadow-xl rounded-lg hover:border-primary/40 transition-all duration-300;
+}
+
+.glass-container-primary {
+  @apply bg-black/40 backdrop-blur-xl border border-primary/30 shadow-xl shadow-primary/10 rounded-lg;
+}
+
+.glass-container-blue {
+  @apply bg-black/40 backdrop-blur-xl border border-blue-500/20 shadow-xl shadow-blue-500/10 rounded-lg;
+}
+
+.glass-container-purple {
+  @apply bg-black/40 backdrop-blur-xl border border-purple-500/20 shadow-xl shadow-purple-500/10 rounded-lg;
+}
+
+.glass-container-green {
+  @apply bg-black/40 backdrop-blur-xl border border-green-400/20 shadow-xl shadow-green-400/10 rounded-lg;
+}
+
+/* Company Panel NextByte Glassmorphism Styles */
+.company-glass-card {
+  @apply relative backdrop-blur-sm border border-primary/20 rounded-2xl 
+         hover:border-primary/30
+         transition-all duration-300 overflow-hidden;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 100%);
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+.company-glass-card:hover {
+  box-shadow: 0 4px 16px 0 rgb(0 0 0 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.company-stat-card {
+  @apply relative overflow-hidden backdrop-blur-sm border border-primary/20 rounded-2xl
+         hover:border-primary/30
+         transition-all duration-300;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 100%);
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+.company-stat-card:hover {
+  box-shadow: 0 4px 16px 0 rgb(0 0 0 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.company-gradient-text {
+  @apply bg-gradient-to-r from-foreground via-primary to-foreground 
+         bg-clip-text text-transparent;
+}
+
+.company-icon-glow {
+  @apply relative transition-all duration-300;
+}
+
+.company-icon-glow:hover {
+  filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.5));
+}
+
+.company-tool-card {
+  @apply relative backdrop-blur-sm border border-primary/20 rounded-xl
+         hover:border-primary/30
+         hover:scale-[1.02] transition-all duration-300 overflow-hidden;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.04) 0%, hsl(var(--primary) / 0.01) 100%);
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+.company-activity-item {
+  @apply relative backdrop-blur-sm border border-primary/15 rounded-xl
+         hover:border-primary/25 transition-all duration-300;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.04) 0%, hsl(var(--primary) / 0.01) 100%);
+  box-shadow: 0 1px 4px 0 rgb(0 0 0 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.02);
+}
+
+.company-member-card {
+  @apply relative backdrop-blur-sm border border-primary/20 rounded-xl
+         hover:border-primary/30
+         transition-all duration-300;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.04) 0%, hsl(var(--primary) / 0.01) 100%);
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+/* Generic company card class for Card components */
+.company-card-bg {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.04) 0%, hsl(var(--primary) / 0.01) 100%) !important;
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+/* ============================================
+   Tinted Cards — opcjonalne klasy do globalnego użycia
+   Styl identyczny jak company-glass-card, ale dostępny
+   wszędzie na platformie (np. <div className="tinted-card p-4">)
+   ============================================ */
+
+/* Subtelna karta z primary tintem (jak company-tool-card) */
+.tinted-card {
+  @apply relative backdrop-blur-sm border border-primary/20 rounded-xl
+         hover:border-primary/30
+         transition-all duration-300 overflow-hidden;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.04) 0%, hsl(var(--primary) / 0.01) 100%);
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+/* Mocniejszy wariant (jak company-glass-card / company-stat-card) */
+.tinted-card-strong {
+  @apply relative backdrop-blur-sm border border-primary/20 rounded-2xl
+         hover:border-primary/30
+         transition-all duration-300 overflow-hidden;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 100%);
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+.tinted-card-strong:hover,
+.tinted-card:hover {
+  box-shadow: 0 4px 16px 0 rgb(0 0 0 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+/* Wariant statyczny — bez efektów hover (np. dla dialogów / sekcji) */
+.tinted-surface {
+  @apply relative backdrop-blur-sm border border-primary/15 rounded-2xl overflow-hidden;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.05) 0%, hsl(var(--primary) / 0.015) 100%);
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+/* Neumorphic adaptation dla motywu jasnego NextByte */
+[data-theme="nextbyte-light"] .tinted-card,
+[data-theme="nextbyte-light"] .tinted-card-strong,
+[data-theme="nextbyte-light"] .tinted-surface {
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--primary) / 0.15) !important;
+}
+
+
+/*
+ * Usage: Wrap your element with .animated-gradient-border container
+ * The inner element should have .animated-gradient-border-inner class
+ * Add 'group/gradient' to the parent to trigger on focus-within
+ * 
+ * Example:
+ * <div class="relative group/gradient">
+ *   <div class="animated-gradient-border opacity-0 group-focus-within/gradient:opacity-100">
+ *     <div class="animated-gradient-border-glow"></div>
+ *     <div class="animated-gradient-border-mask"></div>
+ *   </div>
+ *   <input class="animated-gradient-border-content" />
+ * </div>
+ */
+.animated-gradient-border {
+  @apply absolute -inset-[1px] rounded-xl transition-opacity duration-300 pointer-events-none overflow-hidden;
+}
+
+.animated-gradient-border-glow {
+  @apply absolute inset-[-200%];
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--primary) / 0.3) 0deg,
+    hsl(var(--primary) / 0.6) 60deg,
+    hsl(var(--primary)) 120deg,
+    hsl(var(--primary) / 0.6) 180deg,
+    hsl(var(--primary) / 0.3) 240deg,
+    hsl(var(--primary) / 0.1) 300deg,
+    hsl(var(--primary) / 0.1) 360deg
+  );
+  animation: spin-slow 4s linear infinite;
+}
+
+.animated-gradient-border-mask {
+  @apply absolute inset-[1px] rounded-[10px] bg-card;
+}
+
+.animated-gradient-border-content {
+  @apply relative bg-transparent !border-none !ring-0 !outline-none;
+}
+
+.animated-gradient-border-content:focus,
+.animated-gradient-border-content:focus-visible {
+  @apply !border-none !ring-0 !outline-none ring-offset-0;
+}
+
+/* ============================================
+   Rainbow RGB Theme - Animowane Tęczowe Kolory
+   ============================================ */
+
+/* CSS Property dla animowanego hue */
+@property --rainbow-hue {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+/* Animacja zmiany hue przez całe spektrum */
+@keyframes rainbow-hue-cycle {
+  0% { --rainbow-hue: 0; }
+  100% { --rainbow-hue: 360; }
+}
+
+/* Rainbow gradient shift dla border glow */
+@keyframes rainbow-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Motyw Tęczowy RGB - nadpisanie wszystkich kolorów primary */
+[data-theme="teczowy"] {
+  animation: rainbow-hue-cycle 8s linear infinite;
+  
+  /* Animowane kolory primary */
+  --primary: var(--rainbow-hue) 100% 60%;
+  --ring: var(--rainbow-hue) 100% 60%;
+  --brand-primary: var(--rainbow-hue) 100% 60%;
+  --brand-primary-light: var(--rainbow-hue) 100% 70%;
+  --brand-primary-dark: var(--rainbow-hue) 100% 50%;
+  --brand-primary-glow: var(--rainbow-hue) 100% 60%;
+  
+  /* Sidebar colors */
+  --sidebar-primary: var(--rainbow-hue) 100% 60%;
+  --sidebar-ring: var(--rainbow-hue) 100% 60%;
+  
+  /* Chart colors - różne offsety dla różnorodności */
+  --chart-1: var(--rainbow-hue) 100% 60%;
+  --chart-2: calc(var(--rainbow-hue) + 60) 100% 60%;
+  --chart-3: calc(var(--rainbow-hue) + 120) 100% 60%;
+  --chart-4: calc(var(--rainbow-hue) + 180) 100% 60%;
+  --chart-5: calc(var(--rainbow-hue) + 240) 100% 60%;
+  
+  /* Visx bar chart vars */
+  --chart-background: 0 0% 7%;
+  --chart-foreground: 0 0% 85%;
+  --chart-foreground-muted: 0 0% 55%;
+  --chart-line-primary: var(--rainbow-hue) 100% 60%;
+  --chart-line-secondary: calc(var(--rainbow-hue) + 60) 100% 60%;
+  --chart-crosshair: 0 0% 30%;
+  --chart-grid: 0 0% 18%;
+  --chart-label: 0 0% 55%;
+}
+
+/* Rainbow gradient dla animated border glow */
+.animated-gradient-border-glow-rainbow,
+[data-theme="teczowy"] .animated-gradient-border-glow {
+  background: linear-gradient(
+    90deg,
+    #ff0000, #ff8000, #ffff00, #00ff00, 
+    #00ffff, #0080ff, #8000ff, #ff00ff, #ff0000
+  );
+  background-size: 400% 100%;
+  animation: rainbow-shift 8s linear infinite;
+}
+
+/* ===== Motyw Jasny NextByte — Neumorphic Soft Blue ===== */
+
+/* --- Neumorphic shadow tokens --- */
+[data-theme="nextbyte-light"] {
+  --neu-shadow-dark: hsl(220 25% 82% / 0.45);
+  --neu-shadow-light: hsl(0 0% 100% / 0.8);
+  --neu-bg-card: hsl(228 25% 93%);
+  --neu-bg-base: hsl(228 33% 97%);
+  --neu-border: hsl(220 20% 88%);
+  --neu-text: hsl(222 47% 11%);
+  --neu-text-muted: hsl(215 16% 47%);
+}
+
+/* --- Cards: neumorphic outset --- */
+[data-theme="nextbyte-light"] .company-glass-card,
+[data-theme="nextbyte-light"] .company-stat-card,
+[data-theme="nextbyte-light"] .company-tool-card,
+[data-theme="nextbyte-light"] .company-activity-item,
+[data-theme="nextbyte-light"] .company-member-card,
+[data-theme="nextbyte-light"] .company-card-bg,
+[data-theme="nextbyte-light"] .glass-card,
+[data-theme="nextbyte-light"] .glass-card-primary,
+[data-theme="nextbyte-light"] .glass-card-blue,
+[data-theme="nextbyte-light"] .glass-card-purple,
+[data-theme="nextbyte-light"] .glass-card-green,
+[data-theme="nextbyte-light"] .glass-card-orange,
+[data-theme="nextbyte-light"] .glass-card-red,
+[data-theme="nextbyte-light"] .bento-card {
+  background: var(--neu-bg-card) !important;
+  border-color: var(--neu-border) !important;
+  backdrop-filter: none !important;
+}
+
+
+/* --- Glass containers --- */
+[data-theme="nextbyte-light"] .glass-container,
+[data-theme="nextbyte-light"] .glass-container-primary,
+[data-theme="nextbyte-light"] .glass-container-blue,
+[data-theme="nextbyte-light"] .glass-container-purple,
+[data-theme="nextbyte-light"] .glass-container-green {
+  background: var(--neu-bg-card) !important;
+  border-color: var(--neu-border) !important;
+  backdrop-filter: none !important;
+}
+
+/* --- Tabs --- */
+[data-theme="nextbyte-light"] .glass-tabs {
+  background: var(--neu-bg-card) !important;
+  border-color: var(--neu-border) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme="nextbyte-light"] .glass-tab {
+  color: var(--neu-text-muted) !important;
+}
+
+[data-theme="nextbyte-light"] .glass-tab:hover {
+  background: hsl(220 20% 88% / 0.5) !important;
+}
+
+/* --- Glass buttons --- */
+[data-theme="nextbyte-light"] .btn-glass-blue,
+[data-theme="nextbyte-light"] .btn-glass-purple,
+[data-theme="nextbyte-light"] .btn-glass-green {
+  backdrop-filter: none !important;
+}
+
+/* --- Form sections --- */
+[data-theme="nextbyte-light"] .form-section-blue,
+[data-theme="nextbyte-light"] .form-section-purple,
+[data-theme="nextbyte-light"] .form-section-green,
+[data-theme="nextbyte-light"] .form-section-primary {
+  background: var(--neu-bg-card) !important;
+  backdrop-filter: none !important;
+}
+
+/* --- Inputs: neumorphic inset --- */
+[data-theme="nextbyte-light"] .glass-input,
+[data-theme="nextbyte-light"] .glass-input-blue,
+[data-theme="nextbyte-light"] .glass-input-purple,
+[data-theme="nextbyte-light"] .glass-input-green {
+  background: var(--neu-bg-base) !important;
+  color: var(--neu-text) !important;
+  backdrop-filter: none !important;
+}
+
+
+/* --- Section titles override --- */
+[data-theme="nextbyte-light"] .section-title {
+  color: var(--neu-text) !important;
+}
+
+[data-theme="nextbyte-light"] .section-description {
+  color: var(--neu-text-muted) !important;
+}
+
+/* --- Text gradient override --- */
+[data-theme="nextbyte-light"] .text-primary-gradient {
+  -webkit-text-fill-color: initial;
+  background: none !important;
+  color: hsl(213 60% 45%) !important;
+}
+
+/* --- Buttons: soft raised neumorphic --- */
+
+
+/* --- Slider thumb --- */
+[data-theme="nextbyte-light"] .nextbyte-slider::-webkit-slider-thumb {
+  background: hsl(213 60% 50%);
+}
+
+/* --- Tone down animated glow effects --- */
+[data-theme="nextbyte-light"] .animated-gradient-border-glow {
+  opacity: 0.1;
+}
+
+/* --- Sidebar neumorphic --- */
+/* `[data-sidebar="sidebar"]`, NIE `[data-sidebar]` (19.08.2026).
+   Selektor bez wartości łapał KAŻDY element oznaczony tym atrybutem, a shadcn
+   znaczy nim praktycznie cały pasek: `menu`, `menu-item`, `menu-button`,
+   `group`, `group-label`, `header`, `footer`, `content`, `input`… Zmierzone
+   w jasnym motywie: wiersz „Chat AI", jego `<li>`, `<ul>` i nagłówek sekcji
+   miały wszystkie ten sam cień `rgba(198,205,221,.3) 4px 0 16px`. Tła i obwódki
+   były przezroczyste — te „pudełka" wokół każdej pozycji menu, widoczne tylko
+   na jasnym, były wyłącznie tym rozlanym cieniem.
+
+   Cień miał być JEDEN: odcięcie tafli paska od treści. Wartość bez zmian. */
+[data-theme="nextbyte-light"] [data-sidebar="sidebar"] {
+  box-shadow: 4px 0 16px hsl(220 25% 82% / 0.3);
+}
+
+/* --- Popover / dropdown neumorphic --- */
+
+/* --- Scrollbar --- */
+[data-theme="nextbyte-light"] ::-webkit-scrollbar-thumb {
+  background: hsl(220 20% 82%);
+}
+[data-theme="nextbyte-light"] ::-webkit-scrollbar-track {
+  background: hsl(228 33% 97%);
+}
+
+/* --- Badges: improve contrast on light bg --- */
+[data-theme="nextbyte-light"] .badge-blue { color: hsl(217 91% 40%) !important; }
+[data-theme="nextbyte-light"] .badge-purple { color: hsl(271 76% 45%) !important; }
+[data-theme="nextbyte-light"] .badge-green { color: hsl(142 71% 35%) !important; }
+[data-theme="nextbyte-light"] .badge-orange { color: hsl(25 95% 45%) !important; }
+[data-theme="nextbyte-light"] .badge-red { color: hsl(0 72% 45%) !important; }
+[data-theme="nextbyte-light"] .badge-primary { color: hsl(213 60% 40%) !important; }
+
+/* --- Dark page bg override --- */
+[data-theme="nextbyte-light"] .dark-page-bg {
+  background: var(--neu-bg-base) !important;
+}

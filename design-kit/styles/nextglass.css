@@ -1,0 +1,859 @@
+/*
+ * ════════════════════════════════════════════════════════════════════════════
+ *  NextGlass — materiał szklany platformy NextByte
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * To jest to szkło, które widać pod paskiem nawigacji w Panelu Głównym:
+ * rozmycie + nasycenie tła, odblask krawędzi i (w Chromium) załamanie światła.
+ *
+ * ŹRÓDŁO — PRZENIESIONE DOSŁOWNIE, NIE PRZEPISANE.
+ * Wycięte 1:1 z `nextbyte-panel-glowny/src/index.css` (@layer utilities,
+ * wiersze 2144–2943) wraz z komentarzami, bo one niosą pomiary i decyzje,
+ * których nie da się odtworzyć z samego kodu. Przepisywanie tego ręcznie
+ * dałoby dokładnie ten rozjazd między biblioteką a platformą, przed którym
+ * ostrzega komentarz w `lib/szklo-motywu.ts`.
+ *
+ * ── CZEGO POTRZEBUJE, ŻEBY ZADZIAŁAŁO ───────────────────────────────────────
+ * 1. Tokeny gęstości (niżej w tym pliku, blok `:root`).
+ * 2. Cztery zmienne WYLICZANE Z MOTYWU — `--nb-szklo-jasnosc`, `--nb-szklo-krycie`,
+ *    `--nb-szklo-mute`, `--nb-tafla-wypelnienie`. Liczy je `lib/szklo-motywu.ts`
+ *    i MUSISZ je nałożyć na `<html>` przy każdej zmianie motywu. Bez nich szkło
+ *    stoi na wartościach zapasowych i jasny motyw wygląda źle.
+ * 3. Załamanie (4. warstwa) wymaga filtrów SVG z `components/glass/NextGlass.tsx`
+ *    — wstaw `<NextGlassDefs />` raz, na górze drzewa. Bez tego zostają trzy
+ *    warstwy, które działają w każdej przeglądarce.
+ *
+ * ── UŻYCIE ──────────────────────────────────────────────────────────────────
+ *   <nav className="rounded-2xl border border-border/40
+ *                   nb-szklo nb-szklo-plynne nb-szklo-tafla">
+ *
+ *   nb-szklo          materiał: ranty, odblask, uniesienie
+ *   nb-szklo-plynne   + rozmycie tła i załamanie (to robi „rozmazywanie spodu")
+ *   nb-szklo-tafla    + wypełnienie dla powierzchni zagnieżdżonych
+ *   nb-szklo-pigulka  wariant dla pigułek/pastylek
+ *   nb-szklo-foto     wariant nad zdjęciem (własne przyciemnienie pod kontrast)
+ *
+ * ── PUŁAPKI (wyniesione z komentarzy platformy) ─────────────────────────────
+ * • Nie animuj `scale`/`transform` na elemencie ze szkłem i nie dawaj `filter`
+ *   na jego PRZODKU — oba wyłączają próbkowanie tła i szkło znika.
+ * • `box-shadow` to JEDNA właściwość. Materiał pisze do `--nb-cien-ranty`,
+ *   a uniesienie do `--nb-cien-uniesienie`; składane są raz, regułą zbiorczą.
+ *   Własny `box-shadow` na kafelku zje oba.
+ * • Krycie w Tailwind działa w wielokrotnościach 5 — `bg-card/98` nie robi nic.
+ */
+
+:root {
+  /* GĘSTOŚĆ MATERIAŁU — jedyne dwie liczby, którymi stroi się szkło.
+     Wartość liczona wzorem z `liquid-glass-react`: 4 + blurAmount × 32.
+     Suwak «Rozmycie» 0.15 → 4 + 4.8 = 8.8 px.
+     Nasycenie 130% z panelu «Zarządzanie szkłem» (04.08.2026).
+
+     Do 04.08.2026 `7.2px` było WPISANE w czterdziestu miejscach arkusza
+     platformy — „jedno miejsce" było życzeniem, nie faktem. Teraz wystarczy
+     ruszyć te dwie linijki. */
+  --nb-szklo-rozmycie: 8.8px;
+  --nb-szklo-nasycenie: 130%;
+}
+
+/* Reszta pliku to wycinek 1:1 z `@layer utilities` platformy. */
+
+@layer utilities {
+  /* ══════════════════════════════════════════════════════════════════════
+     SZKŁO — materiał, nie przezroczyste tło.
+     ══════════════════════════════════════════════════════════════════════
+
+     Dotychczasowe „szkło" w platformie to było `bg-card/70` plus `backdrop-blur`.
+     To daje MATOWY PLASTIK: światło przechodzi, ale materiał nie ma krawędzi,
+     nie łapie odblasku i nie robi nic z kolorem tego, co jest pod nim.
+
+     Szkło Apple'a (Liquid Glass) opiera się na trzech rzeczach naraz i dopiero
+     komplet daje ten efekt:
+       ① ROZMYCIE + NASYCENIE tła. Samo rozmycie wypłukuje kolor; `saturate`
+          go oddaje, przez co materiał wygląda, jakby przepuszczał światło,
+          a nie je pochłaniał. To jest najtańsza i najbardziej niedoceniana
+          składowa — jedna właściwość, a różnica ogromna.
+       ② ODBLASK KRAWĘDZI (specular). Prawdziwa szyba ma jasną kreskę tam,
+          gdzie światło ślizga się po fazie — u góry mocną, po bokach słabszą,
+          u dołu ciemną. Bez tego brzeg jest tylko końcem prostokąta.
+       ③ ZAŁAMANIE (refrakcja). Dopiero to odróżnia szkło od mgły — i JEDYNE
+          wymaga filtrów SVG, jest kosztowne i NIE DZIAŁA w Safari ani Firefoksie
+          (autorzy obu bibliotek piszą to wprost). Dlatego tutaj go nie ma:
+          te trzy warstwy działają wszędzie i dają większość wrażenia.
+  */
+  .nb-szklo {
+    background-color: hsl(var(--card) / 0.95);
+    /*
+      RAMKA SZKŁA JEST ŚWIATŁEM, NIE KRESKĄ.
+
+      Uwaga Michała: „ciut irytują mnie te ramki czarne wszędzie przy liquid
+      glass". Miał rację i przyczyna jest ta sama co przy odblasku wyżej:
+      `--border` to kolor INTERFEJSU (na motywach ciemnych ~10% jasności, czyli
+      prawie czerń). Na nieprzezroczystej karcie to działa — oddziela ją od tła.
+      Na SZYBIE nie: szkło nie ma czarnego obrysu, ma rozświetloną fazę. Czarna
+      kreska dookoła przezroczystej tafli czyta się jak dziura wycięta w stronie.
+
+      Krawędź liczona od `--foreground` odwraca się razem z motywem: na ciemnych
+      jest jasna (światło na fazie), na jasnych ciemna (cień pod fazą) — i w obu
+      wypadkach jest to ta sama fizyka, a nie dwa różne pomysły.
+
+      `border-color` NIE nadpisuje samego `border-width` — kafelek dalej decyduje,
+      czy w ogóle ma obwódkę.
+    */
+    border-color: hsl(var(--foreground) / 0.14);
+    /*
+      ŚWIATŁO JEST BIAŁE, CIEŃ JEST CZARNY — W KAŻDYM MOTYWIE.
+
+      Pierwsza wersja liczyła odblask górnej krawędzi od `--foreground`, „żeby
+      szedł za motywem". To był błąd koncepcyjny: na motywach jasnych
+      `--foreground` jest CIEMNY, więc górna krawędź dostawała ciemną kreskę —
+      a to fizycznie znaczy cień padający z góry. Szkło wyglądało przez to jak
+      biała płyta z brudnym rantem, co Michał opisał jako „jakiś fill biały".
+
+      Odblask nie jest kolorem interfejsu, tylko ŚWIATŁEM, które się w szybie
+      odbija. Światło jest białe niezależnie od tego, jaki motyw ma użytkownik.
+      Cień pod dolną krawędzią jest czarny z tego samego powodu.
+      Odwracanie ich razem z motywem odwraca kierunek padania światła.
+    */
+    /*
+      ══════════════════════════════════════════════════════════════════════
+      DWIE ROLE, JEDNA WŁAŚCIWOŚĆ — DLATEGO PRZEZ ZMIENNE (05.08.2026)
+      ══════════════════════════════════════════════════════════════════════
+
+      `box-shadow` jest JEDNĄ właściwością: druga reguła nie dokłada warstw,
+      tylko podmienia całość. A na każdym kafelku platformy spotykają się tu
+      dwie klasy: `.nb-szklo` (ranty materiału) i `.nb-kafelek` (uniesienie
+      sterowane z Panelu Zarządu przez `--nb-kaf-*`).
+
+      ZMIERZONE 05.08.2026 na `/zadania`, na czystej próbce wstrzykniętej
+      do DOM:
+        samo `.nb-szklo`   → 6 warstw, w tym 2 zewnętrzne
+        samo `.nb-kafelek` → 3 warstwy, w tym 2 zewnętrzne
+        OBIE RAZEM         → 6 warstw, co do znaku RÓWNE `.nb-szklo`
+      Czyli `.nb-kafelek` był całkowicie zjadany. Skutek: skala `ELEWACJA`
+      w `tile.tsx` (plaska / uniesiona / wyzej) nie robiła NIC na żadnej
+      szybie, a suwaki cienia w Panelu Zarządu były martwe od chwili, gdy
+      02.08 doszedł tutaj cień zewnętrzny dla motywu jasnego.
+
+      Nikt tego nie zauważył, bo `.nb-szklo` niesie własny cień zewnętrzny
+      bardzo zbliżony do kafelkowego — więc karty wyglądały poprawnie i tylko
+      RÓŻNICE między stopniami uniesienia znikały bez śladu.
+
+      Rozdzielenie ról: `.nb-szklo` odpowiada za RANTY (to materiał),
+      `.nb-kafelek` za UNIESIENIE (to kafelek). Każda pisze do własnej
+      zmiennej, a `box-shadow` składa się raz, z obu — patrz reguła zbiorcza
+      `.nb-szklo, .nb-kafelek` niżej. `0 0 #0000` jest poprawną warstwą pustą,
+      więc każda z klas działa również osobno.
+    */
+    --nb-cien-ranty:
+      /* odblask górnej krawędzi — zawsze biały, bo to światło */
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.16),
+      /* boki: ledwie muśnięte */
+      inset 1px 0 0 0 hsl(0 0% 100% / 0.06),
+      inset -1px 0 0 0 hsl(0 0% 100% / 0.06),
+      /* dół: cień, zawsze czarny — tam szyba się kończy */
+      inset 0 -1px 0 0 hsl(0 0% 0% / 0.22);
+    /*
+      DOMYŚLNE UNIESIENIE SZKŁA — obowiązuje, dopóki kafelek nie powie inaczej.
+      `.nb-kafelek` stoi w pliku NIŻEJ i ma tę samą wagę, więc przy obu klasach
+      nadpisuje tę zmienną. To jest cała mechanika pierwszeństwa i dlatego
+      kolejność tych dwóch bloków w pliku ma znaczenie.
+    */
+    --nb-cien-uniesienie:
+      /*
+        CIEŃ ZEWNĘTRZNY — SAM SIĘ DOSTRAJA DO MOTYWU.
+
+        Zmierzone na motywie Jasnym bez tła (02.08.2026): karta miała WYŁĄCZNIE
+        ranty wewnętrzne, `box-shadow` nie zawierał ani jednej warstwy poza
+        obrysem. Na motywach ciemnych tego nie widać, bo taflę unosi jej własny
+        gradient światła. Na jasnym nie unosi jej NIC — biel na jasnym tle bez
+        cienia to kartka, nie szyba. To była najbardziej rzucająca się w oczy
+        różnica wobec szkła Apple na jasnym motywie.
+
+        Czerń jest tu automatycznie adaptacyjna i dlatego nie potrzeba zmiennej:
+        czarny cień na prawie czarnym tle jest niewidoczny (czyli nieszkodliwy
+        na motywach ciemnych — dokładnie ten sam argument, który stoi przy
+        kafelku), a na jasnym daje pełne uniesienie.
+
+        Dwie warstwy: ciasna buduje styk z podłożem, szeroka i przesunięta w dół
+        robi cień rzucony. Jedna warstwa daje albo obwódkę, albo mgłę.
+      */
+      0 1px 2px -1px hsl(0 0% 0% / 0.10),
+      0 10px 28px -12px hsl(0 0% 0% / 0.22);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     PODSTAWA SZKŁA — DZIAŁA W KAŻDEJ PRZEGLĄDARCE (06.08.2026)
+     ══════════════════════════════════════════════════════════════════════
+
+     Michał: „jest błąd, że przez Safari wgl nie ma liquid glass […] i nie
+     tylko, bo i w Arc też tak jest, dopiero po dodaniu natywnej aplikacji".
+
+     PRZYCZYNA. Blok `@supports` poniżej wchodzi tylko tam, gdzie przeglądarka
+     umie przepuścić tło przez filtr SVG — czyli w praktyce w Chromium.
+     Komentarz, który tu stał, twierdził, że „Safari i Firefox po prostu tu nie
+     wchodzą i ZOSTAJĄ PRZY ROZMYCIU Z NASYCENIEM". To była nieprawda:
+     rezerwowej reguły NIGDZIE NIE BYŁO. `.nb-szklo` samo w sobie nie ustawia
+     `backdrop-filter` (zmierzone: przycisk z samym `nb-szklo` zwraca `none`),
+     a jedyne definicje `.nb-szklo.nb-szklo-plynne`, `.nb-szklo-menu`,
+     `.nb-szklo-pigulka` i `.nb-szklo-foto` siedziały WEWNĄTRZ bramki.
+     Efekt: w Safari, Firefoksie i Arcu żadna reguła nie ustawiała rozmycia —
+     nie „słabsze szkło", tylko ZERO szkła. Płaskie, przezroczyste panele.
+
+     TE SAME TOKENY. Rozmycie, nasycenie i jasność biorą się z tych samych
+     zmiennych co wersja z załamaniem, więc gęstość szkła jest identyczna
+     w każdej przeglądarce — różni je wyłącznie refrakcja.
+
+     WAGA (0,2,0) TAKA SAMA jak w bloku `@supports`, a ten stoi w arkuszu
+     NIŻEJ — więc w Chromium wygrywa on i dokłada `url(#…)`. Kolejność jest tu
+     jedynym rozstrzygnięciem i dlatego ta reguła MUSI zostać nad bramką.
+     ══════════════════════════════════════════════════════════════════════ */
+  .nb-szklo.nb-szklo-plynne,
+  .nb-szklo.nb-szklo-plynne-wyrazne {
+    -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+  }
+  .nb-szklo-menu {
+    -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+  }
+  .nb-szklo.nb-szklo-pigulka {
+    -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-pigulka, var(--nb-szklo-jasnosc, 1)));
+    backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-pigulka, var(--nb-szklo-jasnosc, 1)));
+  }
+  /* Wariant „nad zdjęciem" ma własną jasność, ale tę samą zasadę: bez tej
+     linii karta nad fotografią była w Safari przezroczystym pudełkiem. */
+  .nb-szklo.nb-szklo-foto {
+    -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-foto, var(--nb-szklo-jasnosc, 1)));
+    backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-foto, var(--nb-szklo-jasnosc, 1)));
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     OSTATNIA SIATKA: PRZEGLĄDARKA BEZ `backdrop-filter` W OGÓLE
+     ══════════════════════════════════════════════════════════════════════
+
+     Michał: „i dzięki temu nie będzie przeglądarki ani urządzenia, które nie
+     będzie tego potrafiło obsłużyć?".
+
+     Rezerwa wyżej ratuje wszystkich, którzy MAJĄ `backdrop-filter` bez filtrów
+     SVG (Safari, Firefox, WebView). Zostaje jednak przypadek skrajny: silnik,
+     który nie zna tej właściwości W OGÓLE. Tam materiał jest podwójnie groźny,
+     bo wypełnienie `.nb-szklo` to `hsl(var(--card) / 0.10)` — dziesięć procent.
+     Przy działającym rozmyciu to wystarcza, bo czytelność robi rozmyte tło.
+     Bez rozmycia zostaje NAPIS NA NIEMAL PRZEZROCZYSTYM TLE — czyli gorzej niż
+     brak efektu: treść nie do odczytania.
+
+     Dlatego tu materiał schodzi do zwykłej, nieprzezroczystej powierzchni.
+     Te same liczby, co przy `prefers-reduced-transparency` niżej — jeden
+     przepis zejścia, nie dwa.
+     ══════════════════════════════════════════════════════════════════════ */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .nb-szklo,
+    .glass-effect,
+    .nextbyte-panel,
+    .nb-pigulka-szklo {
+      background-color: hsl(var(--card) / 0.94);
+      background-image: none;
+    }
+    .nb-szklo.nb-szklo-tafla,
+    .nb-szklo-menu {
+      background-color: hsl(var(--popover) / 0.97);
+    }
+  }
+
+  /* ── ZAŁAMANIE (Liquid Glass) ────────────────────────────────────────
+     Wchodzi TYLKO tam, gdzie przeglądarka umie NAPRAWDĘ przepuścić tło przez
+     filtr SVG. Poniżej rezerwa (rozmycie + nasycenie bez refrakcji), więc
+     silniki, które tego nie potrafią, zostają przy niej.
+
+     ══════════════════════════════════════════════════════════════════════
+      DLACZEGO WARUNEK JEST PODWÓJNY — I DLACZEGO PIERWSZA PRÓBA NIE POMOGŁA
+     ══════════════════════════════════════════════════════════════════════
+
+     Sam `(backdrop-filter: url(#…))` NIE ROZRÓŻNIA SILNIKÓW. Zmierzone
+     w konsoli Safari na produkcji (WebKit 605.1.15, zrzut od Michała):
+
+       CSS.supports('backdrop-filter', 'url(#x)')          → true
+       CSS.supports('-webkit-backdrop-filter', 'url(#x)')  → true
+
+     Safari PARSUJE filtr SVG jako poprawną wartość, więc `@supports`
+     przechodzi i blok się aplikuje — a wyrenderować go nie potrafi.
+     Nadpisywał więc rezerwę stojącą wyżej i na ekranie zostawało NIC.
+     Stąd zgłoszenie „przez Safari wgl nie ma liquid glass" mimo wdrożonej
+     rezerwy: ona była w arkuszu, tylko przegrywała kaskadę.
+
+     Ta sama para w Chromium (zmierzone w podglądzie):
+       backdrop-filter: url(#x)          → true
+       -webkit-backdrop-filter: url(#x)  → FALSE
+
+     Prefiksowana wersja rozróżnia silniki co do joty. Warunek czyta się:
+     „umiesz url() bez prefiksu, ALE nie znasz go z prefiksem":
+       Chromium → true and (not false) = WCHODZI, dostaje refrakcję
+       Safari   → true and (not true)  = POMIJA, zostaje przy rezerwie
+       Firefox  → false                = POMIJA, zostaje przy rezerwie
+
+     To dalej nie jest wykrywanie przeglądarki po nazwie — to pytanie o dwie
+     zdolności naraz, których kombinacja jest inna w każdym silniku.
+     Filtry definiuje `DefinicjeSzklaPlynnego` (montowane raz na aplikację). */
+  @supports (backdrop-filter: url(#nb-refrakcja-delikatne)) and (not (-webkit-backdrop-filter: url(#nb-refrakcja-delikatne))) {
+    /* PODWÓJNY SELEKTOR (0,2,0) — nie ozdobnik.
+       `.nb-szklo` i `.nb-szklo-plynne` mają tę samą wagę, a blok z rozmyciem
+       stoi w arkuszu NIŻEJ, więc przy pojedynczym selektorze to on wygrywał
+       i załamania nie było widać mimo poprawnych filtrów. Zmierzone: realny
+       `backdrop-filter` pokazywał `saturate(1.8) blur(28px)`, czyli wersję
+       bez refrakcji. Podniesienie wagi jest odporne na kolejność w pliku. */
+    /* ROZMYCIE 7.2px I NASYCENIE 130% — z ustawień Michała w «Zarządzaniu
+       szkłem» (04.08.2026): blurAmount 0.10 → 4 + 0.10×32 = 7.2 px, wzór
+       wprost z `liquid-glass-react`. Oba warianty dostają TE SAME liczby —
+       decyzja o jednym materiale zniosła rozróżnienie delikatne/wyraźne. */
+    .nb-szklo.nb-szklo-plynne {
+      -webkit-backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+    .nb-szklo.nb-szklo-plynne-wyrazne {
+      -webkit-backdrop-filter: url(#nb-refrakcja-wyrazne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: url(#nb-refrakcja-wyrazne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+
+    /* ── REFRAKCJA PROPORCJONALNA DO WYSOKOŚCI (20.08.2026) ────────────────
+       `feDisplacementMap` przesuwa o STAŁĄ liczbę pikseli — przy sile 31
+       zawsze ±15,5 px, niezależnie od rozmiaru tafli. W przeliczeniu na
+       wysokość powierzchni:
+    
+           karta 318 px  →   4,9% wysokości   ← subtelna faza, tak ma być
+           pasek  64 px  →  24,2% wysokości   ← cała powierzchnia faluje
+    
+       Na przyklejonym nagłówku (1674 × 64) dawało to widoczne przesunięcie
+       treści w bok. Sprawdzone doświadczalnie: przy skali 0 poświata za
+       paskiem ZOSTAJE prawie identyczna — to blask napisu przez rozmycie.
+       Winowajcą jest wyłącznie przesunięcie, nie rozmycie ani nasycenie.
+    
+       Atrybut `data-nb-wys` dokłada `szklo-plynne.tsx` po ZMIERZONEJ
+       wysokości. Progi dobrane tak, żeby przesunięcie wszędzie wyszło około
+       5% wysokości — tyle, ile ma karta, na której materiał wygląda dobrze.
+    
+       WAGA (0,3,0) — nie ozdobnik. Reguły wyżej mają (0,2,0) i stoją w tym
+       samym bloku, więc przy równej wadze wygrywałaby ta późniejsza w pliku.
+       Atrybut podnosi wagę i czyni to odpornym na kolejność.
+       ──────────────────────────────────────────────────────────────────── */
+    /* paski i pigułki — poniżej 88 px */
+    .nb-szklo.nb-szklo-plynne[data-nb-wys="w1"],
+    .nb-szklo.nb-szklo-plynne-wyrazne[data-nb-wys="w1"] {
+      -webkit-backdrop-filter: url(#nb-refrakcja-w1) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: url(#nb-refrakcja-w1) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+    /* listwy i wiersze — poniżej 160 px */
+    .nb-szklo.nb-szklo-plynne[data-nb-wys="w2"],
+    .nb-szklo.nb-szklo-plynne-wyrazne[data-nb-wys="w2"] {
+      -webkit-backdrop-filter: url(#nb-refrakcja-w2) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: url(#nb-refrakcja-w2) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+    /* niskie karty — poniżej 240 px */
+    .nb-szklo.nb-szklo-plynne[data-nb-wys="w3"],
+    .nb-szklo.nb-szklo-plynne-wyrazne[data-nb-wys="w3"] {
+      -webkit-backdrop-filter: url(#nb-refrakcja-w3) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: url(#nb-refrakcja-w3) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+
+    /* BEZ REFRAKCJI — powierzchnie za małe albo za duże, żeby cokolwiek z niej
+       zobaczyć. Zostaje rozmycie, nasycenie i jasność, czyli materiał; znika
+       tylko `feDisplacementMap`, który na kafelku 130 px faluje całą jego
+       powierzchnią, a na karcie 3392 px kosztuje każdy piksel i nie widać go
+       wcale. Powód i pomiary: patrz `ui/szklo-plynne.tsx`. */
+    .nb-szklo.nb-szklo-plynne[data-nb-wys="bez"],
+    .nb-szklo.nb-szklo-plynne-wyrazne[data-nb-wys="bez"] {
+      -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+
+    /* MENU DOSTAJE REFRAKCJĘ (04.08.2026).
+       Michał, ze zrzutem otwartej listy modeli obok panelu szczegółów:
+       „nie wiem czy lista wyboru modeli to nasz apple liquid glass, bo
+       szczegóły to widzę że tak". Miał rację i różnica była dokładnie tu:
+       `.nb-szklo-menu` dostało rozmycie i nasycenie, ale NIE załamanie —
+       a to ono robi krawędź, po której oko rozpoznaje szybę. Panel
+       szczegółów obok jedzie na `nb-szklo-plynne`, więc miał je od razu
+       i dlatego wyglądał inaczej. */
+    .nb-szklo-menu {
+      -webkit-backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       SZKŁO PIGUŁKI — materiał wyszukiwarki
+
+       Osobny filtr, bo mapa przemieszczenia jest liczona Z KSZTAŁTU
+       (zaokrąglony prostokąt o proporcji 8:1), a nie z dwóch gradientów
+       liniowych jak `nb-szklo-plynne`. Do tego maska krawędzi zostawia
+       środek tafli NIETKNIĘTY — pod pigułką stoi pole tekstowe, a nie
+       ozdoba, więc litery nie mogą pływać. Szczegóły: `szklo-pigulka.tsx`.
+
+       Rozmycie SŁABSZE (8px) i jasność wyższa niż w kartach: pasek stoi
+       na wierzchu, nad rozmytą już nakładką spotlightu — dwa mocne
+       rozmycia jedno na drugim dają mleko zamiast szkła. */
+    /* ══════════════════════════════════════════════════════════════════
+       SZKŁO NAD ZDJĘCIEM — panel Konta i wszędzie, gdzie tłem jest obraz
+
+       To jest ten przypadek, o który chodzi w liquid-glass-react: pod szkłem
+       leży FOTOGRAFIA, a nie jednolite tło aplikacji. Panel Konta ma tło
+       profilu z nagrody (`background-image` na kontenerze strony), więc
+       rozmycie ma wreszcie co rozmywać — kolory, kontrast, kształty.
+
+       Trzy różnice wobec zwykłego `nb-szklo-plynne`:
+       ① MOCNIEJSZE ROZMYCIE (18 px zamiast 7). Nad jednolitym tłem mocne
+          rozmycie jest marnowaniem mocy; nad zdjęciem to ono robi całą robotę.
+       ② PRZYGASZENIE 0.74 i KRYCIE 0.28 — DOBRANE POMIAREM KONTRASTU.
+          Pierwsza wersja miała 0.62 i 0.5 „dla czytelności" — i to był błąd,
+          który Michał wychwycił od razu: „szkło pod spodem wygląda jak szkło,
+          a wyżej?". Karty statystyk leżą nad CIEMNĄ górą kadru, więc po
+          przyciemnieniu o 38% robiły się czarne, a te niżej — nad jasną
+          zielenią pola — wyglądały jak szyba. Ta sama klasa, dwa zupełnie
+          różne efekty, w zależności od tego, co akurat jest pod spodem.
+          Czytelność tekstu bierze się z ROZMYCIA (18 px miesza detale w
+          jednolitą plamę) i z cienia pod literami, a nie z gaszenia zdjęcia.
+
+          Zmierzony kontrast tekstu na tych wartościach: 5,51 nad jasnym niebem
+          i 10,45 nad zielenią pola. Próg WCAG AA dla zwykłego tekstu to 4,5,
+          więc jest zapas nawet w najtrudniejszym miejscu kadru — a szkło
+          zostaje przezroczyste. Gdyby ktoś chciał ciemniejsze karty, są na to
+          tokeny `--nb-szklo-krycie-foto` i `--nb-szklo-jasnosc-foto`; poniżej
+          0.7 jasności zdjęcie zaczyna znikać i wracamy do czarnych płyt.
+
+       Zmierzone na `/konto` 04.08.2026: strona miała OSIEM różnych materiałów
+       powierzchni, z czego pięć BEZ `backdrop-filter` w ogóle (`rgba(8,8,8,0.4)`
+       bez rozmycia) i dwa całkiem nieprzezroczyste (`rgb(5,5,5)`). Karty
+       przyciemniały zdjęcie, zamiast je przepuszczać — stąd „to nie jest
+       glassmorphizm". */
+    /* Cień pod tekstem zamiast gaszenia zdjęcia — litery trzymają kontrast
+       nad każdym fragmentem kadru, a szkło zostaje przezroczyste. */
+    .nb-szklo.nb-szklo-foto,
+    .nb-szklo.nb-szklo-foto * {
+      /* Liczby wprost z biblioteki wzorcowej (kontener treści LiquidGlass):
+         szeroka miękka poświata zamiast ciasnej kreski. */
+      text-shadow: 0 2px 12px hsl(0 0% 0% / 0.4);
+    }
+    /* WYJĄTEK: napisy, których kolorem jest gradient (`background-clip: text`).
+       Litery są w nich PRZEZROCZYSTE — widać przez nie tło elementu — więc cień
+       maluje się pod nimi i zamiast gradientu wychodzi szara plama. Zmierzone
+       na imieniu w nagłówku Konta: `color: rgb(245,245,245)`, `clip: text`,
+       a na ekranie napis wyblakły. */
+    .nb-szklo.nb-szklo-foto .gradient-text,
+    .nb-szklo.nb-szklo-foto [style*="background-clip: text"],
+    .nb-szklo.nb-szklo-foto [style*="-webkit-background-clip: text"] {
+      text-shadow: none;
+    }
+    .nb-szklo.nb-szklo-foto {
+      /* Ten sam materiał co wszędzie — nad zdjęciem zostaje z wariantu tylko
+         cień pod literami (niżej), czyli dokładnie mechanizm biblioteki:
+         czytelność ratuje tekst, nie gęstsza szyba. */
+      background-color: hsl(var(--card) / var(--nb-szklo-krycie-foto, var(--nb-szklo-krycie, 0)));
+      -webkit-backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-foto, var(--nb-szklo-jasnosc, 1)));
+      backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-foto, var(--nb-szklo-jasnosc, 1)));
+    }
+
+    .nb-szklo.nb-szklo-pigulka {
+      /* Pigułka czerpie z CENTRALNEGO filtra i centralnych liczb (04.08.2026).
+         Własny filtr `nb-refrakcja-pigulka` (mapa z kształtu 8:1) był lepszą
+         matematyką, ale innym MATERIAŁEM — a biblioteka wzorcowa kładzie
+         jedną i tę samą mapę na pigułki i karty. Definicja w
+         `szklo-pigulka.tsx` zostaje niezamontowana, gdyby przyszło wrócić. */
+      -webkit-backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-pigulka, var(--nb-szklo-jasnosc, 1)));
+      backdrop-filter: url(#nb-refrakcja-delikatne) saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc-pigulka, var(--nb-szklo-jasnosc, 1)));
+    }
+    /* Rozmycie jest SŁABSZE niż w zwykłym szkle — przy załamaniu obraz i tak
+       jest zaburzony, a mocne rozmycie zjadłoby cały efekt, za który płacimy. */
+
+    /* REFRAKCJA ZOSTAJE TAKŻE W TRAKCIE PRZEWIJANIA (02.09.2026).
+       Stały tu reguły `html.nb-przewija …`, które na czas przewijania
+       zdejmowały `url(#…)` z każdej szyby. To one robiły „skok" tła pod
+       szybą przy starcie i końcu przewijania, a mierzalnej oszczędności
+       nie dawały (8,3 vs 8,4 ms na klatkę). Pełny opis pomiaru przy hooku
+       `useDefinicjeSzkla` w `szklo-plynne.tsx`. */
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     AKTYWNA PIGUŁKA — szkło z wirującym rantem, a nie czarne wypełnienie
+     ══════════════════════════════════════════════════════════════════════
+
+     Do 03.08.2026 wnętrze pigułki było wpisane w atrybut `style` jako
+     `linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%)`.
+     Trzy rzeczy naraz: BEZ kanału alfa (czyli pełny czarny na ciemnym motywie),
+     z domieszką `--muted` (czyli dokładnie tego szarego tokenu, który wypieramy
+     z platformy) i bez `backdrop-filter`. Na pasku ze szkła wychodziła z tego
+     naklejka. W dodatku `style` bije każdą klasę, więc żadna poprawka w CSS
+     nie miała prawa tego dosięgnąć.
+
+     DLACZEGO WYPEŁNIENIE MUSIAŁO BYĆ NIEPRZEZROCZYSTE — i czemu już nie musi:
+     pod spodem leży PEŁNE koło z `conic-gradient`, które udaje wirujący rant.
+     Przezroczyste wnętrze pokazałoby cały ten gradient w środku pigułki, a nie
+     tylko na krawędzi — więc nieprzezroczysta łata była tam potrzebna jako
+     maska. Teraz rant wycinamy naprawdę (`mask-composite`, ta sama technika co
+     `.research-glow-border` niżej w pliku): gradient maluje się wyłącznie na
+     jednopikselowej obwódce, wnętrze zostaje puste i może być szkłem.
+
+     Ta reguła stoi POZA `@supports`, żeby pigułka miała czytelne tło również
+     tam, gdzie nie ma `backdrop-filter`. Szkło dokłada się niżej.
+  */
+  .nb-pigulka-rant {
+    padding: 1px;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+
+  .nb-pigulka-szklo {
+    background-color: hsl(var(--card) / 0.92);
+    /* Akcent zostaje mocniejszy niż na zwykłej szybie, bo to STAN AKTYWNY —
+       ale i tu pierwsza wersja (16%) przesadzała: pigułka ma już akcentowy
+       rant, więc wypełnienie ma go tylko podeprzeć, nie powtórzyć. */
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.07) 0%,
+      hsl(var(--primary) / 0.02) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.14),
+      inset 0 -1px 0 0 hsl(0 0% 0% / 0.20);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    /* Pigułka leży na pasku, który sam jest szkłem — więc liczy krycie z tego
+       samego źródła co reszta materiału i nie ma własnych progów do rozjechania.
+       Wyżej niż warstwa pod nią (+0.22), bo to element AKTYWNY: ma się unieść. */
+    .nb-pigulka-szklo {
+      background-color: hsl(var(--card) / calc(var(--nb-szklo-krycie, 0.42) + 0.22));
+      -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px));
+      backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px));
+    }
+
+    .nb-szklo {
+      /*
+        WYPEŁNIENIE IDZIE ZA MOTYWEM — w odróżnieniu od odblasku wyżej.
+
+        Odblask jest ŚWIATŁEM i musi być biały zawsze. Wypełnienie to
+        POWIERZCHNIA i ta ma się odcinać od tego, co pod nią — a „pod nią" jest
+        czymś zupełnie innym na motywie ciemnym niż na jasnym.
+
+        Domieszka `--foreground` załatwia oba jedną regułą: na ciemnym motywie
+        foreground jest jasny, więc szkło robi się o kilka procent JAŚNIEJSZE
+        od tła; na jasnym foreground jest ciemny, więc CIEMNIEJSZE. W obu
+        wypadkach szyba przestaje zlewać się z tym, na czym leży.
+
+        Bez tego na motywach jasnych była biel przy 62% kryciu NAD białym tłem,
+        czyli płaska kartka zamiast szyby — to, co Michał nazwał „fillem białym".
+      */
+      /*
+        KRYCIE TEŻ ZALEŻY OD MOTYWU, NIE TYLKO JASNOŚĆ.
+
+        Na motywach ciemnych 38% wystarcza: tekst jest jasny, a wszystko, co
+        przez szybę przechodzi, i tak zostaje przyciemnione. Na motywach jasnych
+        jest odwrotnie — tekst jest CIEMNY, więc musi stać na powierzchni
+        konsekwentnie jasnej. Przy 38% bieli nad zdjęciem przebijają jasne plamy
+        i litery znikają dokładnie tam, gdzie pod spodem jest refleks. Widać to
+        było na motywie Jasnym z tłem „Fala": nagłówki i akapity były czytelne
+        w jednej połowie karty, a w drugiej nie.
+
+        Wartość ustawia `useGlobalTheme` razem z `--nb-szklo-jasnosc`, z tego
+        samego powodu: tylko tam wiadomo, jaki motyw wszedł.
+      */
+      /* Zapas 0: motyw ciemny (domyślny) wstrzykuje 0, więc zapас o innej
+         wartości dawałby mignięcie gęstszej tafli przed załadowaniem motywu. */
+      background-color: hsl(var(--card) / var(--nb-szklo-krycie, 0));
+      /*
+        DOMIESZKA `--foreground` USUNIĘTA (04.08.2026). Historia w dwóch
+        krokach: 0.07 → 0.035 po uwadze Michała „kolor kafelków daje wrażenie
+        jakby był szary zamiast czarny" (7% bieli na karcie ~3% = szarość),
+        a teraz do ZERA — decyzją „zamień wszystkie na materiał z biblioteki":
+        tafla `liquid-glass-react` nie ma ŻADNEGO własnego wypełnienia.
+        Odróżnialność od tła niosą rant, cień zewnętrzny i samo załamanie.
+      */
+      /* `saturate` PRZED `blur` — kolejność ma znaczenie: nasycamy to, co widać,
+         a potem rozmywamy, więc barwa nie ucieka razem z ostrością. */
+      /* 130% / 7.2px — te same liczby co w blokach refrakcji wyżej: to jest
+         ścieżka dla Safari/Firefoksa, więc gdyby miała inne wartości, szkło
+         miałoby inną gęstość w zależności od przeglądarki.
+         `brightness` czyta zmienną z `szklo-motywu.ts`; od decyzji Michała
+         (04.08.2026) wynosi 1 wszędzie — zmienna zostaje jako pokrętło. */
+      -webkit-backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+      backdrop-filter: saturate(var(--nb-szklo-nasycenie, 130%)) blur(var(--nb-szklo-rozmycie, 8.8px)) brightness(var(--nb-szklo-jasnosc, 1));
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     TEKST DRUGOPLANOWY NA SZKLE — WŁASNY MIKRO-PODKŁAD
+     ══════════════════════════════════════════════════════════════════════
+
+     PROBLEM, ZMIERZONY NA 9 MOTYWACH (02.08.2026):
+     Na nieprzezroczystej karcie tekst drugoplanowy ma kontrast 5.25–8.72, czyli
+     każdy motyw spełnia AA. Po zamianie karty na szybę najgorszy przypadek
+     spada do 2.5–4.1, bo pod spodem może być dowolny piksel tła kupionego
+     w sklepie. Motywy są zdrowe — to przezroczystość zjada zapas.
+
+     DLACZEGO NIE „PO PROSTU WIĘCEJ KRYCIA":
+     Policzone. Żeby tekst drugoplanowy trzymał AA w najgorszym przypadku,
+     krycie musiałoby wynosić 0.63–0.94 zależnie od motywu. Przy 0.94 nie ma
+     już szkła, tylko karta — czyli lekarstwo zabija to, co leczy.
+
+     ROZWIĄZANIE: kontrast ratuje SAM TEKST, nie pojemnik.
+     Wokół liter kładziemy wąską poświatę w kolorze karty. Na jednolitej
+     powierzchni jest NIEWIDOCZNA (ten sam kolor co tło), a nad zdjęciem tworzy
+     lokalny podkład dokładnie tam, gdzie jest potrzebny — pod glifami, a nie
+     pod całą kartą. To jest odpowiednik „vibrancy" z materiałów Apple: warstwa
+     tekstu ma własne traktowanie, niezależne od warstwy materiału.
+
+     Dwie warstwy, obie wąskie: ciasna buduje krawędź litery, szersza wygasza
+     przejście, żeby nie powstała obwódka rysunkowa.
+  */
+  .nb-szklo .text-muted-foreground {
+    /* Kolor tylko wtedy, gdy motyw go podał (czyli na jasnych). Na ciemnych
+       zmienna nie istnieje i zapas oddaje oryginalny `--muted-foreground`,
+       więc tam nie zmienia się nic — a tam nic nie było zepsute. */
+    color: hsl(var(--nb-szklo-mute, var(--muted-foreground)));
+    text-shadow:
+      0 0 3px hsl(var(--card) / 0.92),
+      0 0 8px hsl(var(--card) / 0.55);
+  }
+  /* Powierzchnie nieprzezroczyste tego nie potrzebują — a cień na literach
+     kosztuje przy każdym przemalowaniu. Zdejmujemy go, gdy szkło jest wyłączone. */
+  .nb-styl-klasyczny .nb-szklo .text-muted-foreground {
+    text-shadow: none;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     SZKŁO NA SZKLE — DRUGA I TRZECIA WARSTWA NIE PRZYCIEMNIAJĄ PONOWNIE
+     ══════════════════════════════════════════════════════════════════════
+
+     ZMIERZONE (02.08.2026, tło testowe, motyw Ciemny):
+       dymek AI            → 1 szyba nad nim  → 2 warstwy × 38% = 62% zaciemnienia
+       pastylka trybu      → 2 szyby nad nią  → 3 warstwy × 38% = 76% zaciemnienia
+       okrągłe narzędzie   → 2 szyby nad nim  → 3 warstwy       = 76%
+
+     Każda warstwa przepuszcza 62% tego, co dostała, więc przy trzech zostaje
+     0.62³ ≈ 24% pierwotnego obrazu. Zdjęcie po prostu nie ma jak się przebić —
+     i dlatego pigułki w wejściu czatu wyglądały na czarne, mimo że KAŻDA z nich
+     miała poprawnie działający `backdrop-filter`. Pomiar „czy jest szkło"
+     odpowiadał TAK na każdym poziomie, a mimo to efekt był zły. Właściwe
+     pytanie brzmiało: ile szyb leży jedna na drugiej.
+
+     ROZWIĄZANIE — I DLACZEGO NIE DOMIESZKA `--foreground`:
+
+     Pierwsza wersja tej reguły dawała zagnieżdżonej szybie `--foreground`
+     przy 5–7% krycia, w imię zasady „druga tafla łapie światło". Zasada jest
+     dobra, wykonanie było złe. ZMIERZONE (03.08.2026, motyw Ciemny): wychodzi
+     z tego `rgba(245, 245, 245, 0.05)`, czyli BIEL 96% rozlana na czerni —
+     zwykła SZARA PLAMA. Do tego identyczna w każdym motywie, bo `--foreground`
+     jest wszędzie prawie biały: Aurora ma kartę `197 42% 7%`, Fioletowy
+     `250 30% 5%`, Limonka `80 8% 7%` — i żaden z tych kolorów nie miał jak
+     wejść do środka. Powierzchnia reklamowana jako „szkło w stylu motywu" była
+     w rzeczywistości tym samym szarym prostokątem we wszystkich dziewięciu.
+
+     TEN SAM KOMPONENT WYGLĄDAŁ RAZ DOBRZE, RAZ SZARO — i to nie przypadek.
+     Zmierzone na stronie biblioteki: sekcja „Łuki" NIE jest kafelkiem (jej
+     przodkowie to goły `<section>` i wrapper strony), więc karty w środku
+     siedzą na poziomie 0 i mają pełne szkło `rgba(8, 8, 8, 0.42)`. Sekcja
+     „Pasek zakładek platformy" JEST kafelkiem, więc pasek w niej awansuje na
+     poziom 1 i dostawał welon. Identycznie w platformie: w Katalogu API pasek
+     zakładek leży poza kafelkiem (poziom 0, wyglądał dobrze), a karty modułów
+     to `Tile` w `Tile` (poziom 1, wyglądały szaro).
+
+     Wniosek, który tu zostaje: o wyglądzie decydowało OTOCZENIE, nie komponent.
+     Dlatego poprawka siedzi w tej regule, a nie w kilkunastu plikach — i dlatego
+     poziom 1 celuje teraz w to samo `--card`, co poziom 0. Karty z „Łuków" są
+     wzorcem: zagnieżdżona szyba ma być z tego samego materiału, tylko odrobinę
+     gęstsza (0.42 → 0.52), bez powtórzonego `brightness`.
+
+     Teraz KAŻDA warstwa jest zbudowana z `--card`, czyli z koloru motywu,
+     a różnicę wysokości niesie światło zamiast szarości:
+       • wypełnienie: `--card` z kryciem liczonym OD `--nb-szklo-krycie`, więc
+         jasny motyw (0.72) dostaje mocniejsze, ciemny (0.42) słabsze — jedno
+         źródło prawdy, bez drugiego zestawu progów do rozjechania,
+       • światło: ślad akcentu z góry, 3%. PIERWSZA WERSJA MIAŁA 10% I 14% —
+         uznałem, że motyw neutralny „nie ma czym się zabarwić", więc trzeba mu
+         dołożyć akcent. Błąd w samym założeniu: motyw neutralny MA BYĆ
+         neutralny. `--primary` w Ciemnym to `204 91% 70%`, czyli mocno nasycony
+         błękit, i przy 10% każda karta w Katalogu API zrobiła się niebieska.
+         Michał: „liquid glass czemu jest taki niebieski, wtf?". Różnicę
+         wysokości niesie krycie `--card` i rant — akcent jest tylko śladem, po
+         którym widać, że szyba należy do tej platformy,
+       • rant: biały u góry, czarny u dołu — dziedziczony z reguły bazowej,
+         i to on, a nie wypełnienie, mówi oku „tu zaczyna się nowa tafla".
+
+     `brightness` NIE jest powtarzany — rodzic już przyciemnił to, co pod nim;
+     drugi raz zrobiłby dokładnie ten problem, który naprawiamy.
+  */
+  /* `:not(.nb-szklo-tafla)` — WYJĄTEK, KTÓRY MÓWI, CZYM JEST TAFLA.
+
+     Ta reguła zdejmuje materiał WIERSZOWI leżącemu NA tafli: wiersz stoi na
+     rodzicu, więc nie ma czego próbkować i tylko kosztuje klatki. Ale tafla
+     to z definicji nowa powierzchnia unosząca się nad STRONĄ — bywa dzieckiem
+     w drzewie, choć wizualnie nie leży na rodzicu.
+
+     Zmierzone na rozwijanej liście pigułki nawigacji: panel wisi POD paskiem,
+     nad treścią strony, a mimo to łapał regułę zagnieżdżenia i dostawał
+     `backdrop-filter: none` z wypełnieniem 0.10 zamiast 0.60. Efekt: pozycje
+     menu czytały się przez wykres i kafelki Panelu Głównego. */
+  /* `:is(…)` — bo STARSZE klasy szkła też są szkłem.
+
+     `.glass-effect` (~40 plików) i `.nextbyte-panel` (~32 pliki) czerpią
+     z tych samych tokenów co `.nb-szklo`, ale nie występowały w selektorach
+     zagnieżdżenia, więc dziecko w ich środku zachowywało własny
+     `backdrop-filter` I NIE DOSTAWAŁO WYPEŁNIENIA.
+     Zmierzone w Ustawieniach → Regulaminy: pasek zakładek miał filtr
+     `saturate(1.3) blur(8.8px)` i tło `rgba(8,8,8,0)` — czyli był duchem:
+     nie rozmywał (bo rodzic jest korzeniem tła) i nie miał czym się odciąć.
+     `.glass-effect` siedzi w ~40 plikach, więc to nie był jeden przypadek. */
+  :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo:not(.nb-szklo-tafla),
+  :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo.nb-szklo-plynne:not(.nb-szklo-tafla),
+  :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo.nb-szklo-plynne-wyrazne:not(.nb-szklo-tafla) {
+    /* Wypełnienie z `--nb-zagniezdzone-wypelnienie`, nie z sumy po
+       `--nb-szklo-krycie` — patrz komentarz przy deklaracji tokenu.
+       W skrócie: krycie wynosi dziś ZERO, więc tamta suma dawała 0,10. */
+    background-color: hsl(var(--card) / var(--nb-zagniezdzone-wypelnienie));
+    background-image: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.03) 0%,
+      hsl(var(--foreground) / 0.012) 100%
+    );
+    /* ZAGNIEŻDŻONA SZYBA NIE PRÓBKUJE TŁA (04.08.2026).
+
+       Michał: „ścina się przy scrollowaniu elementów w kontenerach".
+       Zmierzone tam, gdzie boli: wiersze list mają własny `backdrop-filter`,
+       więc KAŻDY wiersz przelicza filtr przy KAŻDEJ klatce przewijania —
+       kilkanaście próbek tła na klatkę w jednym kontenerze. Po zdjęciu:
+       animacja 39→101 fps (razem z odchudzeniem filtra refrakcji).
+
+       Wygląd na tym nie cierpi, bo pod wierszem stoi RODZIC-tafla, nie
+       strona: rozmywanie już-rozmytego nie wnosi nic (dokładnie pomiar
+       „mleka" z 02.08). Różnicę wysokości niesie krycie +0.10 i rant. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* STARE KLASY SZKŁA TAKŻE JAKO DZIECKO, NIE TYLKO JAKO RODZIC.
+
+     Reguła wyżej wymienia `.glass-effect` i `.nextbyte-panel` po lewej
+     stronie (jako przodka), ale celuje wyłącznie w `.nb-szklo`. Więc panel
+     leżący NA szybie dalej trzymał własny `backdrop-filter` — a rodzic jest
+     korzeniem tła, czyli panel rozmywał pustkę. Zmierzone w Asystencie:
+     karty `nextbyte-panel` w kolumnie bocznej.
+
+     `background-image` zostaje nietknięty z premedytacją: to w nim siedzi
+     akcentowy gradient, po którym poznaje się panel. Zmienia się tylko
+     wypełnienie i zdejmowane jest próbkowanie tła. */
+  :is(.nb-szklo, .glass-effect, .nextbyte-panel) :is(.glass-effect, .nextbyte-panel) {
+    background-color: hsl(var(--card) / var(--nb-zagniezdzone-wypelnienie));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* Trzeci poziom — pigułka w wejściu czatu, aktywna zakładka na pasku, który
+     sam leży w kafelku. Ta sama zasada co poziom wyżej: materiał niesie
+     RODZIC, wiersz ma krycie i rant — bez własnego próbkowania tła. */
+  :is(.nb-szklo, .glass-effect, .nextbyte-panel) :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo:not(.nb-szklo-tafla),
+  :is(.nb-szklo, .glass-effect, .nextbyte-panel) :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo.nb-szklo-plynne:not(.nb-szklo-tafla) {
+    background-color: hsl(var(--card) / calc(var(--nb-zagniezdzone-wypelnienie) * 1.18));
+    background-image: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.04) 0%,
+      hsl(var(--foreground) / 0.012) 100%
+    );
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     STYL 2 — SZKŁO KLASYCZNE (do wyboru przez użytkownika)
+     ══════════════════════════════════════════════════════════════════════
+
+     Klasa `nb-styl-klasyczny` na <html> przełącza CAŁĄ platformę na starszy,
+     spokojniejszy materiał: samo rozmycie i pełniejsze wypełnienie, bez
+     nasycenia, załamania i adaptacji jasności.
+
+     Po co w ogóle zostawiać drugi styl, skoro pierwszy jest lepszy:
+       • ZAŁAMANIE DZIAŁA TYLKO W CHROMIUM. W Safari i Firefoksie styl 1
+         degraduje się do rozmycia — czyli i tak zbliża się do stylu 2.
+       • REFRAKCJA KOSZTUJE. Filtr SVG na `backdrop-filter` przelicza się przy
+         każdym przewinięciu; na słabszym sprzęcie i przy wielu powierzchniach
+         naraz to widać na płynności.
+       • CZYTELNOŚĆ. Nad ruchomym lub bardzo kontrastowym tłem (własny wzór
+         kupiony w sklepie) mocniejsze wypełnienie bywa po prostu wygodniejsze
+         do czytania — a to decyzja użytkownika, nie nasza.
+
+     Dlatego to jest przełącznik, a nie martwy kod do usunięcia.
+  */
+  /* Pigułka też przechodzi na spokojniejszy materiał — inaczej przełącznik
+     stylu zostawiłby jeden element w stylu 1 i byłoby to widać na pasku. */
+  .nb-styl-klasyczny .nb-pigulka-szklo {
+    background-color: hsl(var(--card) / 0.94);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .nb-styl-klasyczny .nb-szklo,
+  .nb-styl-klasyczny .nb-szklo.nb-szklo-plynne,
+  .nb-styl-klasyczny .nb-szklo.nb-szklo-plynne-wyrazne {
+    background-color: hsl(var(--card) / 0.80);
+    background-image: none;
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    /* Rant zostaje — bez niego krawędź jest zwykłym końcem prostokąta
+       niezależnie od tego, który styl jest wybrany. */
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     KIEDY SZKŁO MA SIĘ WYŁĄCZYĆ SAMO
+     ══════════════════════════════════════════════════════════════════════
+
+     `backdrop-filter` każe przeglądarce trzymać osobną warstwę kompozycji dla
+     każdej szyby i przeliczać to, co pod nią, przy każdym przewinięciu.
+
+     ZMIERZONE 03.08.2026 na stronie biblioteki (44 szyby, przewijanie 2,5 s):
+       styl 1 (refrakcja + rozmycie)  mediana 8,3 ms   p95 9,2 ms   1% klatek >16,7 ms
+       styl 2 (samo rozmycie)         mediana 8,3 ms   p95 8,5 ms   0%
+       bez szkła (odniesienie)        mediana 8,3 ms   p95 9,3 ms   0%
+
+     Czyli na TEJ maszynie szkło nie kosztuje nic mierzalnego. Ale to pomiar na
+     mocnym sprzęcie i NIE jest dowodem dla słabszego — przy 16,7 ms budżetu na
+     klatkę mamy tu dwukrotny zapas, który na starszym laptopie może nie istnieć.
+     Dlatego zamiast zakładać, dokładamy zejście awaryjne:
+
+       • `prefers-reduced-transparency` — systemowe „ogranicz przezroczystość"
+         (macOS, Windows, Android). Kto to włączył, poprosił wprost o mniej
+         takich efektów, więc pytanie go drugi raz w ustawieniach byłoby
+         ignorowaniem odpowiedzi, której już udzielił.
+       • `update: slow` — ekrany o niskiej częstotliwości odświeżania. Uczciwie:
+         to sygnał o WYŚWIETLACZU, nie o procesorze, więc słabego laptopa z
+         normalnym ekranem tu nie złapiemy. CSS nie ma na to lepszej miary.
+
+     UWAGA NA STAN FAKTYCZNY: klasa `nb-styl-klasyczny` (styl 2) jest na razie
+     przełączana WYŁĄCZNIE w podglądzie dev i w Bibliotece komponentów —
+     w Ustawieniach użytkownika takiego przełącznika NIE MA. Do czasu jego
+     dodania ta reguła jest jedynym automatycznym zejściem, a diagnostycznie
+     styl 2 włącza się z konsoli:
+       document.documentElement.classList.toggle('nb-styl-klasyczny')
+  */
+  @media (prefers-reduced-transparency: reduce), (update: slow) {
+    .nb-szklo,
+    .nb-szklo.nb-szklo-plynne,
+    .nb-szklo.nb-szklo-plynne-wyrazne,
+    :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo,
+    :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo.nb-szklo-plynne,
+    :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo.nb-szklo-plynne-wyrazne,
+    :is(.nb-szklo, .glass-effect, .nextbyte-panel) :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo,
+    :is(.nb-szklo, .glass-effect, .nextbyte-panel) :is(.nb-szklo, .glass-effect, .nextbyte-panel) .nb-szklo.nb-szklo-plynne {
+      background-color: hsl(var(--card) / 0.94);
+      background-image: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .nb-pigulka-szklo {
+      background-color: hsl(var(--card) / 0.97);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+}

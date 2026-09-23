@@ -1,0 +1,46 @@
+/* Scroll-reveal: CSS-only animations triggered by shared IntersectionObserver */
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays via data attribute */
+.scroll-reveal[data-delay="1"] { transition-delay: 0.05s; }
+.scroll-reveal[data-delay="2"] { transition-delay: 0.1s; }
+.scroll-reveal[data-delay="3"] { transition-delay: 0.15s; }
+.scroll-reveal[data-delay="4"] { transition-delay: 0.2s; }
+.scroll-reveal[data-delay="5"] { transition-delay: 0.25s; }
+.scroll-reveal[data-delay="6"] { transition-delay: 0.3s; }
+.scroll-reveal[data-delay="7"] { transition-delay: 0.35s; }
+
+/* Variant: fade only (no transform) */
+.scroll-reveal-fade {
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity;
+}
+.scroll-reveal-fade.in-view {
+  opacity: 1;
+}
+
+/* Variant: slide from larger distance */
+.scroll-reveal-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.scroll-reveal-up.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}

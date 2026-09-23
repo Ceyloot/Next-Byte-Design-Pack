@@ -117,6 +117,21 @@ function AppInner() {
     else document.documentElement.setAttribute('data-theme', activeTheme)
   }, [activeTheme])
 
+  useEffect(() => {
+    const onZewnetrznaZmiana = (e: any) => {
+      const id = e?.detail?.id || document.documentElement.getAttribute('data-theme')
+      if (id && id !== activeTheme) {
+        setActiveTheme(id as ThemeKey)
+      }
+    }
+    window.addEventListener('themeChanged', onZewnetrznaZmiana)
+    window.addEventListener('nb-theme-change', onZewnetrznaZmiana)
+    return () => {
+      window.removeEventListener('themeChanged', onZewnetrznaZmiana)
+      window.removeEventListener('nb-theme-change', onZewnetrznaZmiana)
+    }
+  }, [activeTheme])
+
   return (
     <>
       {/* Filtry refrakcji — montowane WYŁĄCZNIE w trybie glass. */}

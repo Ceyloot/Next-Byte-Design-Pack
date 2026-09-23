@@ -33,9 +33,9 @@ import type { HomePageId } from '@/sections/StronaGlownaSection'
 import { LogowanieSection } from '@/sections/LogowanieSection'
 import { STRONY, STRONY_AUTH, jestEkranemAuth } from '@/sections/strona-glowna/types'
 import type { EkranAuth } from '@/sections/strona-glowna/types'
-import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
 import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
-import { Panel2Page } from '@/sections/panel2/Panel2Page'
+import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
+import { PanelGlownyOsadzony } from '@/sections/panel2/PanelGlownyOsadzony'
 import { NotebookSection } from '@/sections/NotebookSection'
 
 
@@ -1071,7 +1071,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
             {previewSubView === 'notebook' ? (
               <NotebookSection />
             ) : previewSubView === 'dashboard2' ? (
-              <Panel2Page onWyjscie={() => setPreviewSubView('strona-glowna')} />
+              <PanelGlownyOsadzony onWyjscie={() => setPreviewSubView('strona-glowna')} />
             ) : previewSubView === 'strona-glowna' ? (
               <StronaGlownaSection page={stronaPage} onPageChange={idzDoPodstrony} />
             ) : previewSubView === 'logowanie' ? (

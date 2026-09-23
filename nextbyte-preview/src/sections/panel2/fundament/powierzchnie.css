@@ -1,0 +1,151 @@
+/*
+ * ════════════════════════════════════════════════════════════════════════════
+ *  LIQUID GLASS & DRABINA POWIERZCHNI — fundament Panelu 2.0
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * Responsywny system Liquid Glass dla wszystkich motywów (ciemnych, jasnych,
+ * ciepłych, nasyconych). Zero reguł pod konkretne motywy, zero `!important`.
+ *
+ * ── ARCHITEKTURA OPTYKI SZKŁA ──────────────────────────────────────────────
+ *
+ * 1. POZIOM 1 (Karta):
+ *    Półprzezroczysta tafla szkła (Liquid Glass) łącząca `--card` z przezroczystością
+ *    i rozmyciem `backdrop-filter: blur(18px) saturate(135%)`.
+ *    Zamiast płaskiego plastiku z `color-mix`, tło pod kartą subtelnie prześwituje.
+ *    Krawędzie mają delikatne światło górne (specular highlight na fazie)
+ *    oraz miękki, dyfuzyjny cień uniesienia niepowodujący brudzenia rogów.
+ *
+ * 2. POZIOM 2 (Sekcja zagnieżdżona, np. niecka czatu):
+ *    Zagłębiona niecka szklana (`inset glass well`).
+ *    NIE JEST kredowo-białą deską. Jest półprzezroczystym zagłębieniem
+ *    o promieniu współśrodkowym do karty (R_inner = R_outer - padding).
+ *
+ * 3. POZIOM 3 (Kontrolka / Przycisk / Pigułka):
+ *    Interaktywny element szklany reagujący na hover płynną zmianą przezroczystości.
+ *
+ * 4. AKCENT & STATUS:
+ *    `--primary` dla tożsamości, `--destructive` dla błędów/braków.
+ */
+
+.p2 {
+  /* Promienie współśrodkowe: R_wewn = R_zewn - padding (20px - 6px = 14px) */
+  --p2-promien: var(--r-lg, 20px);
+  --p2-promien-sekcja: calc(var(--p2-promien) - 6px);
+  --p2-promien-maly: var(--r-md, 10px);
+
+  /* Baza półprzezroczysta szkła (Liquid Glass) — dynamicznie współpracuje z motywem */
+  --p2-powierzchnia-0: hsl(var(--background));
+  --p2-powierzchnia-1: color-mix(in srgb, hsl(var(--card)) 72%, transparent);
+  --p2-powierzchnia-2: color-mix(in srgb, hsl(var(--background)) 52%, transparent);
+  --p2-powierzchnia-3: color-mix(in srgb, hsl(var(--card)) 48%, transparent);
+  --p2-powierzchnia-3-hover: color-mix(in srgb, hsl(var(--foreground)) 9%, transparent);
+
+  /* Ranty i subtelne światła fazy szkła */
+  --p2-rant: hsl(var(--foreground) / 0.08);
+  --p2-rant-mocny: hsl(var(--foreground) / 0.13);
+  --p2-rant-sekcja: hsl(var(--foreground) / 0.06);
+
+  /* Filtry Liquid Glass */
+  --p2-blur-karta: blur(18px) saturate(135%);
+  --p2-blur-sekcja: blur(10px) saturate(120%);
+
+  /* Cienie:
+     - górne światło na krawędzi (faza)
+     - miękki cień uniesienia niepowodujący brudzenia rogów */
+  --p2-swiatlo: inset 0 1px 0 0 hsl(0 0% 100% / 0.16);
+  --p2-cien: 0 2px 5px -1px hsl(0 0% 0% / 0.04), 0 12px 32px -8px hsl(0 0% 0% / 0.08);
+  --p2-wglebienie: inset 0 1px 2px 0 hsl(var(--foreground) / 0.03);
+
+  color: hsl(var(--foreground));
+  background: var(--p2-powierzchnia-0);
+}
+
+/* ── Powierzchnie ───────────────────────────────────────────────────────── */
+.p2-pow-1 {
+  background: var(--p2-powierzchnia-1);
+}
+
+.p2-pow-2 {
+  background: var(--p2-powierzchnia-2);
+}
+
+.p2-pow-3 {
+  background: var(--p2-powierzchnia-3);
+}
+
+.p2-karta {
+  border: 1px solid var(--p2-rant-mocny);
+  border-radius: var(--p2-promien);
+  box-shadow: var(--p2-swiatlo), var(--p2-cien);
+  backdrop-filter: var(--p2-blur-karta);
+  -webkit-backdrop-filter: var(--p2-blur-karta);
+  position: relative;
+}
+
+.p2-sekcja {
+  border: 1px solid var(--p2-rant-sekcja);
+  border-radius: var(--p2-promien-sekcja);
+  box-shadow: var(--p2-wglebienie);
+  backdrop-filter: var(--p2-blur-sekcja);
+  -webkit-backdrop-filter: var(--p2-blur-sekcja);
+}
+
+/* Kontrolka: wiersz listy, przycisk wtórny, pole wyboru */
+.p2-kontrolka {
+  border: 1px solid var(--p2-rant);
+  border-radius: var(--p2-promien-maly);
+  background: var(--p2-powierzchnia-3);
+  transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.p2-kontrolka:hover {
+  background: var(--p2-powierzchnia-3-hover);
+  border-color: var(--p2-rant-mocny);
+}
+
+/* Interaktywna karta */
+.p2-klik {
+  cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.p2-klik:hover {
+  border-color: hsl(var(--primary) / 0.45);
+  box-shadow: var(--p2-swiatlo), var(--p2-cien), 0 0 0 1px hsl(var(--primary) / 0.2);
+}
+.p2-klik:active {
+  transform: scale(0.995);
+}
+.p2-klik:focus-visible {
+  outline: 2px solid hsl(var(--ring, var(--primary)));
+  outline-offset: 2px;
+}
+
+/* ── Akcent ────────────────────────────────────────────────────────────── */
+.p2-akcent {
+  color: hsl(var(--primary));
+}
+
+.p2-akcent-tlo {
+  background: hsl(var(--primary) / 0.14);
+  color: hsl(var(--primary));
+}
+
+.p2-akcent-rant {
+  border-color: hsl(var(--primary) / 0.35);
+}
+
+/* Tekst drugoplanowy i etykiety */
+.p2-cichy {
+  color: hsl(var(--muted-foreground));
+}
+
+.p2-etykieta {
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p2-kontrolka, .p2-klik { transition: none; }
+}

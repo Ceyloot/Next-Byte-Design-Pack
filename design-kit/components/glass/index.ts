@@ -8,6 +8,11 @@ export { GlassBadge }       from './GlassBadge'
 export { GlassStat }        from './GlassStat'
 export { GlassModal }       from './GlassModal'
 export { GlassNav, GlassNavItem, GlassNavBrand, GlassNavSpacer } from './GlassNav'
+/* NextGlass — materiał szklany platformy (Panel Główny). Patrz
+   `styles/nextglass.css` i `lib/szklo-motywu.ts`. */
+export { NextGlassBar, NextGlassBarSticky } from './NextGlassBar'
+export { NextGlassDefs, DefinicjeSzklaPlynnego, KLASA_SZKLA } from './NextGlass'
+export type { SilaSzkla } from './NextGlass'
 export { GlassModelSearch, DEFAULT_MODELS } from './GlassModelSearch'
 export { GlassChatComposer } from './GlassChatComposer'
 export type { ComposerToggle, GlassChatComposerProps } from './GlassChatComposer'
