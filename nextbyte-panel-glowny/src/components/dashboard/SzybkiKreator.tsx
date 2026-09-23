@@ -288,19 +288,22 @@ export const SzybkiKreator: React.FC = () => {
       </div>
 
       {/* ── POLE ─────────────────────────────────────────────────────────
-          Bez własnej ramki i bez tła: pole leży NA szybie kafelka, a szkło
-          na szkle daje mleko zamiast materiału. */}
-      <Textarea
-        value={tresc}
-        onChange={(e) => setTresc(e.target.value)}
-        onKeyDown={naKlawiszu}
-        placeholder={opis.podpowiedz}
-        rows={4}
-        className={cn(
-          'min-h-[104px] resize-none border-0 bg-transparent px-4 pt-3 text-sm',
-          'shadow-none focus-visible:ring-0 focus-visible:ring-offset-0'
-        )}
-      />
+          Niecka (Poziom 2): własne, stonowane tło i cienka krawędź od
+          `--foreground`, żeby pole odróżniało się od szyby kafelka —
+          bez pełnego szkła na szkle, które dawało „mleko" zamiast materiału. */}
+      <div className="mx-3 mt-1 rounded-xl border border-foreground/[0.07] bg-background/50">
+        <Textarea
+          value={tresc}
+          onChange={(e) => setTresc(e.target.value)}
+          onKeyDown={naKlawiszu}
+          placeholder={opis.podpowiedz}
+          rows={4}
+          className={cn(
+            'min-h-[104px] resize-none border-0 bg-transparent px-3 pt-2.5 text-sm',
+            'shadow-none focus-visible:ring-0 focus-visible:ring-offset-0'
+          )}
+        />
+      </div>
 
       {/* ── OPCJE ZALEŻNE OD TRYBU ───────────────────────────────────────
           Tylko to, co zmienia WYNIK. Pełna konfiguracja zostaje w module —
