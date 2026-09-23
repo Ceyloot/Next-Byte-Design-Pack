@@ -12,28 +12,28 @@ import type { HomePage as HomePageId } from './types'
 
 const AKTY = [
   {
-    akt: 'Akt I — Iskra',
+    akt: 'Akt I // Iskra',
     t: 'Bariera, która zaczęła wszystko',
     p: [
-      'Michał od nastoletnich lat budował automatyzacje dla firm i upraszczał ludziom technologię, której się obawiali. Z czasem został twórcą technologicznym z kilkusettysięcznym zasięgiem — ale najważniejszą pracę wykonywał poza kamerą: budował innym twórcom całe biznesy.',
+      'Michał od nastoletnich lat budował automatyzacje dla firm i upraszczał ludziom technologię, której się obawiali. Z czasem został twórcą technologicznym z kilkusettysięcznym zasięgiem, ale najważniejszą pracę wykonywał poza kamerą: budował innym twórcom całe biznesy.',
       'W którymś momencie napotkał ograniczenie, które okazało się początkiem wszystkiego: doba ma 24 godziny. Mógł prowadzić jednego twórcę naraz, a zainteresowanie rosło szybciej, niż był w stanie obsłużyć.',
     ],
     cytat: '„A gdyby zamknąć to wszystko w jednym miejscu i udostępnić tysiącom?"',
   },
   {
-    akt: 'Akt II — Dwa światy',
+    akt: 'Akt II // Dwa światy',
     t: 'Ten sam problem z drugiej perspektywy',
     p: [
-      'Do historii dołączył Kajetan — przedsiębiorca z branży budowlanej, którego Michał znał ze współpracy. Inny świat, ta sama obserwacja: AI jest dziś czarną skrzynką dla większości firm, a nie musi być.',
-      'Wniósł stronę firmową — i zasadę, której zespół trzyma się do dziś: buduje się to, co rozwiązuje realny problem, a nie to, co dobrze wygląda na slajdzie.',
+      'Do historii dołączył Kajetan, przedsiębiorca z branży budowlanej, którego Michał znał ze współpracy. Inny świat, ta sama obserwacja: AI jest dziś czarną skrzynką dla większości firm, a nie musi być.',
+      'Wniósł stronę firmową i zasadę, której zespół trzyma się do dziś: buduje się to, co rozwiązuje realny problem, a nie to, co dobrze wygląda na slajdzie.',
     ],
     cytat: '„Dwóch założycieli, dwa światy, jedna obserwacja."',
   },
   {
-    akt: 'Akt III — Trzeci element',
+    akt: 'Akt III // Trzeci element',
     t: 'Most do dużego biznesu',
     p: [
-      'Brakowało kogoś, kto połączy to z dużym biznesem i nada całości sens szerszy niż sam produkt. W tym miejscu dołączyła Łucja — z dwudziestu lat w Digital i e-commerce, z sal Akademii Leona Koźmińskiego, ze szkoleń dla zespołów dużych marek.',
+      'Brakowało kogoś, kto połączy to z dużym biznesem i nada całości sens szerszy niż sam produkt. W tym miejscu dołączyła Łucja: z dwudziestu lat w Digital i e-commerce, z sal Akademii Leona Koźmińskiego, ze szkoleń dla zespołów dużych marek.',
       'Weszła w to z jednego powodu: jest przekonana, że rewolucja AI ma sens tylko wtedy, gdy służy ludziom. Wielkie modele pozostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają.',
     ],
     cytat: '„Tak z bariery jednego człowieka powstało przedsięwzięcie, które miało ją usunąć dla wszystkich."',
@@ -56,10 +56,10 @@ const ZALOZYCIELE: Zalozyciel[] = [
     rola: 'Pomysłodawca, Founder',
     imie: 'Michał',
     foto: '/assets/zalozyciele/michal.jpg',
-    motto: '„Wyprzedza rynek w adopcji AI, bo żyje tym na co dzień — kosztem snu."',
+    motto: '„Wyprzedza rynek w adopcji AI, bo żyje tym na co dzień, kosztem snu."',
     p: [
-      'Od nastoletnich lat budował automatyzacje dla firm i upraszczał technologię ludziom, którzy się jej obawiali. Z czasem został twórcą technologicznym z kilkusettysięcznym zasięgiem na TikToku, Instagramie i YouTube — tłumacząc AI tak, jak nie robił tego nikt z „technicznej" strony.',
-      'Równolegle stawiał innym twórcom całe biznesy: strony sprzedażowe, automatyzacje, zaplecze pod kursy — od trenerów keto po coachów. Z realnym skutkiem: ich marki zarabiały na poważną skalę. Ale doba ma 24 godziny. Mógł obsłużyć jednego twórcę naraz.',
+      'Od nastoletnich lat budował automatyzacje dla firm i upraszczał technologię ludziom, którzy się jej obawiali. Z czasem został twórcą technologicznym z kilkusettysięcznym zasięgiem na TikToku, Instagramie i YouTube, tłumacząc AI tak, jak nie robił tego nikt z „technicznej" strony.',
+      'Równolegle stawiał innym twórcom całe biznesy: strony sprzedażowe, automatyzacje, zaplecze pod kursy, od trenerów keto po coachów. Z realnym skutkiem: ich marki zarabiały na poważną skalę. Ale doba ma 24 godziny. Mógł obsłużyć jednego twórcę naraz.',
       'NextByte to jego odpowiedź na ten limit: zamknąć metodologię w narzędziu i oddać tysiącom twórców naraz.',
     ],
     tagi: ['B2P', 'Twórcy', 'Adopcja AI', 'Społeczność'],
@@ -69,11 +69,11 @@ const ZALOZYCIELE: Zalozyciel[] = [
     rola: 'Współzałożyciel, strona firmowa',
     imie: 'Kajetan',
     foto: '/assets/zalozyciele/kajetan.jpg',
-    motto: '„Wdrożył AI u siebie — wie, co działa w praktyce, nie na slajdzie."',
+    motto: '„Wdrożył AI u siebie i wie, co działa w praktyce, nie na slajdzie."',
     p: [
-      'Prowadzi wiodącą w swoim regionie firmę usługową w branży budowlanej — zbudował ją od zera i z sukcesem skaluje. Nie jest entuzjastą technologii, który przeczytał o AI. To przedsiębiorca, który zna z pierwszej ręki, gdzie zacina się mała i średnia firma — bo sam taką prowadzi.',
-      'Wniósł do projektu rzecz, której nie da się odtworzyć kodem: wdrożył AI we własnej, realnie działającej firmie. Z tego doświadczenia powstała warstwa B2B i Plug&Go — budowana pod konkretny problem MSP, a nie pod kolejne demo.',
-      'Aktywny członek klubu biznesowego — zna potrzeby przedsiębiorców w regionie z rozmów, nie z badań. To dzięki niemu NextByte mówi do firm językiem konkretu, nie obietnic.',
+      'Prowadzi wiodącą w swoim regionie firmę usługową w branży budowlanej. Zbudował ją od zera i z sukcesem skaluje. Nie jest entuzjastą technologii, który przeczytał o AI. To przedsiębiorca, który zna z pierwszej ręki, gdzie zacina się mała i średnia firma, bo sam taką prowadzi.',
+      'Wniósł do projektu rzecz, której nie da się odtworzyć kodem: wdrożył AI we własnej, realnie działającej firmie. Z tego doświadczenia powstała warstwa B2B i Plug&Go, budowana pod konkretny problem MSP, a nie pod kolejne demo.',
+      'Aktywny członek klubu biznesowego, zna potrzeby przedsiębiorców w regionie z rozmów, nie z badań. To dzięki niemu NextByte mówi do firm językiem konkretu, nie obietnic.',
     ],
     tagi: ['B2B', 'MSP', 'Plug&Go', 'Pipeline'],
   },
@@ -84,18 +84,18 @@ const ZALOZYCIELE: Zalozyciel[] = [
     foto: null,
     motto: '„Głos człowieka w projekcie. Rewolucja AI ma sens tylko wtedy, gdy służy ludziom."',
     p: [
-      'Ekspertka Digital i e-commerce z 20-letnim doświadczeniem, w tym po stronie korporacji i dużego biznesu. Wykłada transformację cyfrową i AI na Akademii Leona Koźmińskiego, szkoli zespoły dużych marek — m.in. Decathlon i Kompanii Piwowarskiej.',
-      'Wnosi profesjonalizację — przełożenie produktu na język rynku, strategii i wdrożeń. I drugą rzecz, dla tej marki kluczową: jest w projekcie głosem człowieka.',
-      'Skoro technologią rządzą dziś wielkie koncerny, warto budować miejsce, w którym decydujący głos ma społeczność — nie roadmapa zarządu odpowiadającego przed inwestorami. Wielkie modele zostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają.',
+      'Ekspertka Digital i e-commerce z 20-letnim doświadczeniem, w tym po stronie korporacji i dużego biznesu. Wykłada transformację cyfrową i AI na Akademii Leona Koźmińskiego, szkoli zespoły dużych marek, m.in. Decathlon i Kompanii Piwowarskiej.',
+      'Wnosi profesjonalizację: przełożenie produktu na język rynku, strategii i wdrożeń. I drugą rzecz, dla tej marki kluczową: jest w projekcie głosem człowieka.',
+      'Skoro technologią rządzą dziś wielkie koncerny, warto budować miejsce, w którym decydujący głos ma społeczność, a nie roadmapa zarządu odpowiadającego przed inwestorami. Wielkie modele zostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają.',
     ],
     tagi: ['Korporacje', 'Edukacja', 'Strategia', 'Misja'],
   },
 ]
 
 const WARTOSCI = [
-  { t: 'AI musi służyć ludziom', d: 'Rewolucja AI ma sens tylko wtedy, gdy służy ich pracy i życiu — nie odwrotnie. Głos człowieka jest w tym projekcie kierunkiem, nie dodatkiem.' },
-  { t: 'Konkret, nie obietnica', d: 'Budujemy to, co rozwiązuje realny problem małej i średniej firmy — nie kolejną funkcję pod demo. Zasada wniesiona z prawdziwego wdrożenia AI w działającej firmie.' },
-  { t: 'Społeczność wyznacza kierunek', d: 'Wielkie modele zostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają — nie roadmapa zarządu odpowiadającego przed inwestorami.' },
+  { t: 'AI musi służyć ludziom', d: 'Rewolucja AI ma sens tylko wtedy, gdy służy ich pracy i życiu, a nie odwrotnie. Głos człowieka jest w tym projekcie kierunkiem, nie dodatkiem.' },
+  { t: 'Konkret, nie obietnica', d: 'Budujemy to, co rozwiązuje realny problem małej i średniej firmy, a nie kolejną funkcję pod demo. Zasada wniesiona z prawdziwego wdrożenia AI w działającej firmie.' },
+  { t: 'Społeczność wyznacza kierunek', d: 'Wielkie modele zostają silnikiem. Kierunek wyznaczają ludzie, którzy z nich korzystają, a nie roadmapa zarządu odpowiadającego przed inwestorami.' },
 ]
 
 const linia = 'border-t border-foreground/[0.1]'
@@ -162,7 +162,7 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
               <span className="font-normal text-primary drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]">do platformy.</span>
             </h1>
             <p className="mt-6 max-w-xl font-sans text-[16px] font-light leading-relaxed text-foreground/70">
-              Wszystko zaczęło się od jednej bariery i jednego pytania. Dziś odpowiadają na nie trzy osoby z trzech różnych światów — twórców, firm i korporacji.
+              Wszystko zaczęło się od jednej bariery i jednego pytania. Dziś odpowiadają na nie trzy osoby z trzech różnych światów: twórców, firm i korporacji.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <GlowButton size="lg" onClick={() => onNavigate('rejestracja')}>Dołącz do NextByte</GlowButton>
@@ -222,7 +222,7 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
                       0{i + 1}
                     </div>
                     <div className="mt-3 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/45">
-                      {a.akt.replace(' — ', ' // ')}
+                      {a.akt}
                     </div>
                   </div>
 
@@ -293,7 +293,7 @@ export function HistoriaPage({ onNavigate }: { onNavigate: (p: HomePageId) => vo
             <span className="font-normal text-primary">Zacznij go używać.</span>
           </h2>
           <p className="mt-4 max-w-lg font-sans text-[15px] font-light leading-relaxed text-foreground/60">
-            Dołącz do NextByte i dostawaj konkret zamiast szumu. Bez spamu, bez korpo-gadki — możesz wyjść jednym kliknięciem.
+            Dołącz do NextByte i dostawaj konkret zamiast szumu. Bez spamu, bez korpo-gadki. Możesz wyjść jednym kliknięciem.
           </p>
           <div className="mt-8">
             <GlowButton onClick={() => onNavigate('rejestracja')}>Dołączam do NextByte</GlowButton>

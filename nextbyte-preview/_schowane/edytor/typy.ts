@@ -7,6 +7,11 @@
  * backdrop-filter i gradienty działały tak samo jak w docelowym kodzie).
  */
 
+// Import tylko typów — dzięki temu cykl z `wyglad.ts` (który potrzebuje
+// stąd `nowyId`) znika przy kompilacji i nie powstaje w module runtime.
+import type { Cien, Obrys, Wypelnienie } from './wyglad'
+import type { Przejscie, Stan } from './stany'
+
 export type TypWezla =
   | 'prostokat'
   | 'elipsa'
@@ -14,6 +19,8 @@ export type TypWezla =
   | 'tekst'
   | 'kafelek'
   | 'przycisk'
+  | 'obraz'
+  | 'grupa'
 
 /** Punkt ścieżki. Uchwyty są w układzie lokalnym węzła, absolutnie (nie delty). */
 export interface Punkt {
@@ -63,10 +70,31 @@ export interface TrescKafelka {
 
 export type Efekt = 'brak' | 'glass' | 'liquid' | 'neon' | 'gradient' | 'siatka'
 
+/**
+ * Parametryczny wygląd — nowa ścieżka stylowania (gradienty, obrys z
+ * pozycją i bokami, lista cieni). Trzymamy to w osobnym obiekcie, a nie
+ * rozsypane po węźle, żeby stare pola (`wypelnienie: string`, `obrys`,
+ * `grubosc`) dalej działały jako zapas: gdy `wyglad` jest pusty,
+ * renderer i eksport czytają je tak jak wcześniej. Dzięki temu projekty
+ * zapisane w localStorage przed tą zmianą otwierają się bez migracji.
+ */
+export interface Wyglad {
+  wypelnienie?: Wypelnienie
+  obrys?: Obrys
+  cienie?: Cien[]
+  /** rozmycie tła pod warstwą (glass) w px; 0 = wyłączone */
+  rozmycieTla?: number
+  /** nasycenie tła pod warstwą w % (razem z rozmyciem daje szkło) */
+  nasycenieTla?: number
+}
+
 export interface Wezel {
   id: string
   typ: TypWezla
   nazwa: string
+
+  /** id węzła-grupy, do której warstwa należy; brak = korzeń sceny */
+  rodzic?: string
 
   /** ramka w układzie sceny */
   x: number
@@ -101,6 +129,15 @@ export interface Wezel {
   /** dodatkowe style CSS doklejane do warstwy (ucieczka awaryjna) */
   styl?: Record<string, string>
 
+  /* — parametryczny wygląd (ma pierwszeństwo nad polami wyżej) — */
+  wyglad?: Wyglad
+
+  /* — obraz — */
+  /** dataURL albo adres; trzymamy dataURL, żeby projekt był samowystarczalny */
+  zrodlo?: string
+  /** dopasowanie obrazu do ramki */
+  dopasowanie?: 'wypelnij' | 'zmiesc' | 'rozciagnij'
+
   /* — animacja — */
   klatki: Klatka[]
 }
@@ -113,9 +150,13 @@ export interface Projekt {
   /** długość osi czasu w ms */
   dlugosc: number
   wezly: Wezel[]
+  /** warianty komponentu; brak = projekt sprzed dodania stanów */
+  stany?: Stan[]
+  /** strzałki między stanami */
+  przejscia?: Przejscie[]
 }
 
-export type Narzedzie = 'wybor' | 'prostokat' | 'elipsa' | 'piora' | 'tekst' | 'reka'
+export type Narzedzie = 'wybor' | 'prostokat' | 'elipsa' | 'piora' | 'tekst' | 'reka' | 'obraz'
 
 let licznik = 0
 export function nowyId(prefiks = 'w'): string {

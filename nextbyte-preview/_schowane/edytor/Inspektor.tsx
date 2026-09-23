@@ -1,6 +1,8 @@
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, Lock, Spline, Trash2, Unlock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { wygladzPunkty, zaostrzPunkty } from './animacja'
+import { EdytorWygladu } from './EdytorWygladu'
+import { IkonaPrzycisk, KLASA_INPUT, Kolor, Liczba, MalyPrzycisk, Pole, Sekcja, Segment, Suwak } from './kontrolki'
 import type { Efekt, Projekt, Wezel } from './typy'
 
 interface Props {
@@ -40,6 +42,13 @@ export function Inspektor({
     if (!wezel) return
     onAktualizuj(wezel.id, zmiany)
     onZakonczOperacje()
+  }
+
+  // Suwaki i tarcze kąta sypią zmianami co ruch myszy — te idą bez wpisu
+  // w historii, a `onZakonczOperacje` woła się dopiero po puszczeniu.
+  const zmienBezHistorii = (zmiany: Partial<Wezel>) => {
+    if (!wezel) return
+    onAktualizuj(wezel.id, zmiany)
   }
 
   return (
@@ -154,22 +163,32 @@ export function Inspektor({
               <Suwak etykieta="Krycie" wartosc={wezel.krycie} onZmiana={v => zmien({ krycie: v })} />
             </Sekcja>
 
-            {(wezel.typ === 'prostokat' || wezel.typ === 'elipsa' || wezel.typ === 'sciezka') && (
-              <Sekcja tytul="Wektor">
-                <Pole etykieta="Wypełnienie">
-                  <Kolor wartosc={wezel.wypelnienie ?? 'none'} onZmiana={v => zmien({ wypelnienie: v })} />
-                </Pole>
-                <Pole etykieta="Obrys">
-                  <Kolor wartosc={wezel.obrys ?? 'transparent'} onZmiana={v => zmien({ obrys: v })} />
-                </Pole>
+            {wezel.typ !== 'grupa' && (
+              <Sekcja tytul="Geometria">
                 <div className="grid grid-cols-2 gap-2">
-                  <Liczba etykieta="Grubość" wartosc={wezel.grubosc ?? 0} onZmiana={v => zmien({ grubosc: Math.max(0, v) })} />
-                  {wezel.typ === 'prostokat' && (
-                    <Liczba etykieta="Promień" wartosc={wezel.promien ?? 0} onZmiana={v => zmien({ promien: Math.max(0, v) })} />
+                  <Liczba
+                    etykieta="Promień rogów"
+                    wartosc={wezel.promien ?? 0}
+                    onZmiana={v => zmien({ promien: Math.max(0, v) })}
+                  />
+                  {wezel.typ === 'obraz' && (
+                    <Pole etykieta="Dopasowanie">
+                      <Segment
+                        wartosc={wezel.dopasowanie ?? 'wypelnij'}
+                        opcje={[
+                          { klucz: 'wypelnij' as const, tytul: 'Wypełnij ramkę, obetnij nadmiar', etykieta: 'Wypełnij' },
+                          { klucz: 'zmiesc' as const, tytul: 'Zmieść cały obraz w ramce', etykieta: 'Zmieść' },
+                          { klucz: 'rozciagnij' as const, tytul: 'Rozciągnij bez proporcji', etykieta: 'Rozc.' },
+                        ]}
+                        onZmiana={d => zmien({ dopasowanie: d })}
+                      />
+                    </Pole>
                   )}
                 </div>
               </Sekcja>
             )}
+
+            <EdytorWygladu wezel={wezel} onZmiana={zmienBezHistorii} onKoniec={onZakonczOperacje} />
 
             {wezel.typ === 'sciezka' && (
               <Sekcja tytul="Ścieżka">
@@ -269,129 +288,5 @@ export function Inspektor({
         )}
       </div>
     </div>
-  )
-}
-
-/* ── Drobne kontrolki ───────────────────────────────────────────── */
-
-const KLASA_INPUT =
-  'w-full rounded-md border border-border/60 bg-background/60 px-2 py-1 text-[11px] text-foreground outline-none focus:border-primary/50'
-
-function Sekcja({ tytul, children }: { tytul: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-4 space-y-2">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">{tytul}</div>
-      {children}
-    </div>
-  )
-}
-
-function Pole({ etykieta, children }: { etykieta: string; children: React.ReactNode }) {
-  return (
-    <label className="block space-y-1">
-      <span className="text-[10px] text-foreground/45">{etykieta}</span>
-      {children}
-    </label>
-  )
-}
-
-function Liczba({
-  etykieta,
-  wartosc,
-  onZmiana,
-  krok = 1,
-}: {
-  etykieta: string
-  wartosc: number
-  onZmiana: (v: number) => void
-  krok?: number
-}) {
-  return (
-    <Pole etykieta={etykieta}>
-      <input
-        type="number"
-        step={krok}
-        value={Math.round(wartosc * 100) / 100}
-        onChange={e => {
-          const v = parseFloat(e.target.value)
-          if (!Number.isNaN(v)) onZmiana(v)
-        }}
-        className={KLASA_INPUT}
-      />
-    </Pole>
-  )
-}
-
-function Suwak({ etykieta, wartosc, onZmiana }: { etykieta: string; wartosc: number; onZmiana: (v: number) => void }) {
-  return (
-    <Pole etykieta={`${etykieta} — ${Math.round(wartosc * 100)}%`}>
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.01}
-        value={wartosc}
-        onChange={e => onZmiana(parseFloat(e.target.value))}
-        className="w-full accent-primary"
-      />
-    </Pole>
-  )
-}
-
-function Kolor({ wartosc, onZmiana }: { wartosc: string; onZmiana: (v: string) => void }) {
-  const hex = /^#[0-9a-fA-F]{6}$/.test(wartosc) ? wartosc : '#000000'
-  return (
-    <div className="flex items-center gap-1.5">
-      <input
-        type="color"
-        value={hex}
-        onChange={e => onZmiana(e.target.value)}
-        className="h-6 w-8 shrink-0 cursor-pointer rounded border border-border/60 bg-transparent"
-      />
-      <input value={wartosc} onChange={e => onZmiana(e.target.value)} className={KLASA_INPUT} />
-    </div>
-  )
-}
-
-function IkonaPrzycisk({
-  children,
-  onClick,
-  tytul,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-  tytul: string
-}) {
-  return (
-    <button
-      title={tytul}
-      onClick={e => {
-        e.stopPropagation()
-        onClick()
-      }}
-      className="opacity-0 transition-opacity hover:text-primary group-hover:opacity-60"
-    >
-      {children}
-    </button>
-  )
-}
-
-function MalyPrzycisk({
-  children,
-  onClick,
-  ikona,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-  ikona?: React.ReactNode
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center justify-center gap-1 rounded-md border border-border/60 bg-background/40 px-1.5 py-1 text-[10px] font-semibold text-foreground/65 transition-colors hover:border-primary/50 hover:text-foreground"
-    >
-      {ikona}
-      {children}
-    </button>
   )
 }

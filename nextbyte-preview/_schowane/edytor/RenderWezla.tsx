@@ -1,5 +1,6 @@
 import React from 'react'
 import { doAtrybutuD } from './animacja'
+import { filtrSvgCieni, maWyglad, naRgba, stylWygladu, svgWypelnienie } from './wyglad'
 import type { Efekt, Wezel } from './typy'
 
 /**
@@ -67,25 +68,101 @@ export function stylEfektu(efekt: Efekt | undefined, akcent: string, promien: nu
   }
 }
 
+/**
+ * Styl parametryczny warstwy DOM. Nakładany PO presecie efektu, żeby
+ * ustawienia z inspektora zawsze wygrywały z gotowcem z biblioteki.
+ */
+export function stylParametryczny(wezel: Wezel): React.CSSProperties {
+  if (!maWyglad(wezel.wyglad)) return {}
+  return stylWygladu(wezel.wyglad, wezel.promien ?? 12) as React.CSSProperties
+}
+
 /* ── Kształty wektorowe ──────────────────────────────────────────── */
 
 function Wektor({ wezel }: { wezel: Wezel }) {
-  const { w, h, wypelnienie = 'none', obrys = 'transparent', grubosc = 0, promien = 0 } = wezel
+  const { w, h, promien = 0 } = wezel
+  const wyg = wezel.wyglad
+  const idGradientu = `g-${wezel.id}`
+
+  // Wypełnienie i obrys biorą się z parametrów, gdy są ustawione; inaczej
+  // ze starych pól tekstowych — dzięki temu sceny zapisane wcześniej
+  // wyglądają identycznie jak przed dodaniem tej warstwy.
+  const parametryczne = maWyglad(wyg)
+  const svgWyp = parametryczne ? svgWypelnienie(wyg?.wypelnienie, idGradientu) : { fill: wezel.wypelnienie ?? 'none', defs: '' }
+  const obrysKolor = parametryczne && wyg?.obrys?.wlaczony
+    ? naRgba(wyg.obrys.kolor, wyg.obrys.krycie)
+    : (wezel.obrys ?? 'transparent')
+  const obrysGrubosc = parametryczne && wyg?.obrys?.wlaczony ? wyg.obrys.grubosc : (wezel.grubosc ?? 0)
+  const filtr = parametryczne ? filtrSvgCieni(wyg?.cienie) : undefined
+
   const wspolne = {
-    fill: wypelnienie,
-    stroke: obrys,
-    strokeWidth: grubosc,
+    fill: svgWyp.fill,
+    stroke: obrysKolor,
+    strokeWidth: obrysGrubosc,
     strokeLinejoin: 'round' as const,
     strokeLinecap: 'round' as const,
   }
+
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible', display: 'block' }}>
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      style={{ overflow: 'visible', display: 'block', filter: filtr }}
+    >
+      {svgWyp.defs && <defs dangerouslySetInnerHTML={{ __html: svgWyp.defs }} />}
       {wezel.typ === 'prostokat' && (
         <rect x={0} y={0} width={w} height={h} rx={Math.min(promien, Math.min(w, h) / 2)} {...wspolne} />
       )}
       {wezel.typ === 'elipsa' && <ellipse cx={w / 2} cy={h / 2} rx={w / 2} ry={h / 2} {...wspolne} />}
       {wezel.typ === 'sciezka' && <path d={doAtrybutuD(wezel.punkty ?? [], !!wezel.zamknieta)} {...wspolne} />}
     </svg>
+  )
+}
+
+/* ── Obraz ───────────────────────────────────────────────────────── */
+
+function Obraz({ wezel }: { wezel: Wezel }) {
+  const dopasowanie = wezel.dopasowanie ?? 'wypelnij'
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        borderRadius: wezel.promien ?? 0,
+        background: 'rgba(255,255,255,0.04)',
+        ...stylParametryczny(wezel),
+      }}
+    >
+      {wezel.zrodlo ? (
+        <img
+          src={wezel.zrodlo}
+          alt={wezel.nazwa}
+          draggable={false}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'block',
+            objectFit: dopasowanie === 'zmiesc' ? 'contain' : dopasowanie === 'rozciagnij' ? 'fill' : 'cover',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'grid',
+            placeItems: 'center',
+            fontSize: 11,
+            color: 'rgba(232,238,246,0.4)',
+          }}
+        >
+          Brak obrazu
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -108,6 +185,7 @@ function Kafelek({ wezel }: { wezel: Wezel }) {
         fontFamily: 'inherit',
         overflow: 'hidden',
         ...stylEfektu(wezel.efekt, akcent, wezel.promien ?? 18),
+        ...stylParametryczny(wezel),
         ...(wezel.styl as React.CSSProperties | undefined),
       }}
     >
@@ -200,7 +278,11 @@ function Przycisk({ wezel }: { wezel: Wezel }) {
           color: wezel.kolorTekstu ?? '#e8eef6',
           ...stylEfektu(efekt, akcent, wezel.promien ?? 12),
         }
-  return <div style={{ ...styl, ...(wezel.styl as React.CSSProperties | undefined) }}>{wezel.tekst ?? 'Przycisk'}</div>
+  return (
+    <div style={{ ...styl, ...stylParametryczny(wezel), ...(wezel.styl as React.CSSProperties | undefined) }}>
+      {wezel.tekst ?? 'Przycisk'}
+    </div>
+  )
 }
 
 function Tekst({ wezel }: { wezel: Wezel }) {
@@ -232,6 +314,12 @@ export function RenderWezla({ wezel }: { wezel: Wezel }) {
       return <Przycisk wezel={wezel} />
     case 'tekst':
       return <Tekst wezel={wezel} />
+    case 'obraz':
+      return <Obraz wezel={wezel} />
+    case 'grupa':
+      // Grupa sama nic nie rysuje — dzieci leżą w płaskiej liście sceny
+      // i renderują się osobno. Tu tylko opcjonalne tło/obrys grupy.
+      return <div style={{ width: '100%', height: '100%', ...stylParametryczny(wezel) }} />
     default:
       return <Wektor wezel={wezel} />
   }

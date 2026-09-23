@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { runwareProxy } from './src/sections/canvas/runware-proxy'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), runwareProxy()],
   server: {
     port: 5190,
     strictPort: true,

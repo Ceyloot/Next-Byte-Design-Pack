@@ -7,7 +7,7 @@ import {
   Check, Edit2, FileText, Layers, Folder, Calendar, BarChart3,
   MonitorPlay, LayoutGrid, Navigation as NavIcon, BarChart2, Loader, Palette, Tag,
   PanelTop, PanelLeft, PanelBottom, PanelRight, Settings, GripVertical, GripHorizontal, Move,
-  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Tag as TagIcon, Activity, LogIn, BookOpen,
+  ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Activity, LogIn, BookOpen,
   PenTool,
 } from 'lucide-react'
 import type { NavPosition } from '@/App'
@@ -26,8 +26,7 @@ import { NakladkiSection } from '@/sections/NakladkiSection'
 import { PaletaSection } from '@/sections/PaletaSection'
 import { DaneSection } from '@/sections/DaneSection'
 import { StanySection } from '@/sections/StanySection'
-import { CennikSection } from '@/sections/CennikSection'
-import { EdytorSection } from '@/sections/EdytorSection'
+import { CanvasSection } from '@/sections/CanvasSection'
 import { CzatSection } from '@/sections/CzatSection'
 import { StronaGlownaSection } from '@/sections/StronaGlownaSection'
 import type { HomePageId } from '@/sections/StronaGlownaSection'
@@ -119,8 +118,7 @@ const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ cla
     { name: 'Ikony',            icon: Sparkles,      scrollId: 'ikony' },
     { name: 'Dostępność (a11y)', icon: Shield,       scrollId: 'a11y' },
   ]},
-  { key: 'cennik',     label: 'Cennik',     icon: TagIcon,      items: [] },
-  { key: 'edytor',     label: 'Edytor',     icon: PenTool,      items: [] },
+  { key: 'canvas',     label: 'Canvas',     icon: PenTool,      items: [] },
 ]
 
 // ── Chart Data ────────────────────────────────────────────────────
@@ -487,8 +485,7 @@ function renderSection(key: string): React.ReactNode {
     case 'dane':       return <DaneSection />
     case 'stany':      return <StanySection />
     case 'paleta':     return <PaletaSection />
-    case 'cennik':     return <CennikSection />
-    case 'edytor':     return <EdytorSection />
+    case 'canvas':     return <CanvasSection />
     case 'czat':       return <CzatSection />
     default:           return null
   }
@@ -1050,7 +1047,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       {/* ── Main Workspace ── */}
       <main ref={mainRef} className={cn(
         'flex-1 min-w-0 overflow-y-auto flex flex-col',
-        activeTab === 'edytor'
+        activeTab === 'canvas'
           ? 'p-0 w-full overflow-hidden min-h-0'
           : activeTab !== 'preview'
           ? 'p-6 w-full'

@@ -76,6 +76,18 @@
       ],
       "port": 5210,
       "autoPort": false
+    },
+    {
+      "name": "strona-export",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "nextbyte-strona-export"
+      ],
+      "port": 5191,
+      "autoPort": false
     }
   ]
 }

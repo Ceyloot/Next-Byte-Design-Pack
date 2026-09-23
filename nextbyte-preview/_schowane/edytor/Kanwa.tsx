@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { doAtrybutuD, stanWCzasie } from './animacja'
+import { korzen, potomkowie, ramkaZbioru } from './grupy'
+import { przyciagnijKrawedz, przyciagnijRamke, type Linia, type Ramka } from './przyciaganie'
 import { RenderWezla } from './RenderWezla'
 import { bazowyWezel, type Narzedzie, type Projekt, type Punkt, type Wezel } from './typy'
 
@@ -20,16 +22,21 @@ export interface Widok {
 type UchwytId = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 
 interface Operacja {
-  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'rysowanie' | 'punkt' | 'uchwyt'
+  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'rysowanie' | 'punkt' | 'uchwyt' | 'zaznaczanie'
   startX: number
   startY: number
   uchwyt?: UchwytId
   /** migawka węzłów w chwili rozpoczęcia — liczymy zawsze od niej */
   migawka?: Record<string, Wezel>
+  /** id faktycznie zaznaczone (bez potomków) — one wyznaczają ramkę operacji */
+  korzenie?: string[]
   indeksPunktu?: number
   ktoryUchwyt?: 'w' | 'z'
   startWidok?: Widok
 }
+
+/** Ile pikseli ekranu łapie przyciąganie. Dzielone przez zoom przy użyciu. */
+const TOLERANCJA_PRZYCIAGANIA = 7
 
 interface KanwaProps {
   projekt: Projekt
@@ -45,6 +52,16 @@ interface KanwaProps {
   onDodaj: (wezel: Wezel) => void
   onNarzedzie: (n: Narzedzie) => void
   onZakonczOperacje: () => void
+  /**
+   * Tryb podglądu: kanwa przestaje być edytorem i zaczyna być komponentem.
+   * Bez tego nie da się sprawdzić, czy przejścia w ogóle działają, inaczej
+   * niż eksportując kod i wklejając go gdzie indziej.
+   */
+  podglad?: {
+    przejscie: string
+    onKlik: (idWezla: string) => void
+    onNajazd: (idWezla: string) => void
+  }
 }
 
 const MIN = 4
@@ -72,6 +89,7 @@ export function Kanwa({
   onDodaj,
   onNarzedzie,
   onZakonczOperacje,
+  podglad,
 }: KanwaProps) {
   const refKontener = useRef<HTMLDivElement>(null)
   const refOperacja = useRef<Operacja | null>(null)
@@ -81,6 +99,7 @@ export function Kanwa({
   // potrafi trafić przed przerysowaniem i stan byłby nieaktualny.
   const refRamka = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const [kursor, setKursor] = useState<{ x: number; y: number } | null>(null)
+  const [linie, setLinie] = useState<Linia[]>([])
 
   /* ── Układ współrzędnych ─────────────────────────────────────── */
 
@@ -169,13 +188,41 @@ export function Kanwa({
 
   /* ── Wskaźnik ────────────────────────────────────────────────── */
 
-  const migawkaWybranych = useCallback(() => {
-    const m: Record<string, Wezel> = {}
-    for (const w of projekt.wezly) if (wybrane.includes(w.id)) m[w.id] = structuredClone(w)
-    return m
-  }, [projekt.wezly, wybrane])
+  /** Migawka zaznaczenia razem z potomkami grup — to się rusza razem. */
+  const migawka = useCallback(
+    (ids: string[]) => {
+      const pelne = new Set(ids)
+      for (const id of ids) for (const p of potomkowie(projekt.wezly, id)) pelne.add(p.id)
+      const m: Record<string, Wezel> = {}
+      for (const w of projekt.wezly) if (pelne.has(w.id)) m[w.id] = structuredClone(w)
+      return m
+    },
+    [projekt.wezly],
+  )
+
+  /**
+   * Do czego wolno się przyciągać: wszystko widoczne poza tym, co właśnie
+   * ruszamy, plus ramka dokumentu i jej środek. Grupy pomijamy, bo ich
+   * krawędzie pokrywają się z dziećmi i podwajałyby linie.
+   */
+  const celePrzyciagania = useCallback(
+    (pomijane: Set<string>): Ramka[] => {
+      const cele: Ramka[] = [{ x: 0, y: 0, w: projekt.szerokosc, h: projekt.wysokosc }]
+      for (const w of projekt.wezly) {
+        if (pomijane.has(w.id) || !w.widoczny || w.typ === 'grupa') continue
+        cele.push({ x: w.x, y: w.y, w: w.w, h: w.h })
+      }
+      return cele
+    },
+    [projekt.wezly, projekt.szerokosc, projekt.wysokosc],
+  )
 
   function naTleWDol(e: React.PointerEvent) {
+    if (podglad) {
+      // Klik w tło komponentu też bywa wyzwalaczem („dowolne miejsce”).
+      podglad.onKlik('')
+      return
+    }
     const p = doSceny(e)
     przechwyc(e.target as Element, e.pointerId)
 
@@ -215,33 +262,51 @@ export function Kanwa({
       setRamka(refRamka.current)
       return
     }
-    onWybierz([])
+    // Przeciągnięcie po pustym tle zaznacza ramką; samo kliknięcie czyści.
+    refOperacja.current = { rodzaj: 'zaznaczanie', startX: p.x, startY: p.y }
+    refRamka.current = { x: p.x, y: p.y, w: 0, h: 0 }
+    if (!e.shiftKey) onWybierz([])
   }
 
   function naWezleWDol(e: React.PointerEvent, wezel: Wezel) {
     if (narzedzie !== 'wybor' || wezel.zablokowany) return
     e.stopPropagation()
     przechwyc(e.currentTarget as Element, e.pointerId)
+
+    // Klik trafia w grupę, nie w kształt w środku. Alt wchodzi do wnętrza —
+    // tak samo jak w narzędziach, które designer już zna.
+    const cel = e.altKey ? wezel.id : korzen(projekt.wezly, wezel.id)
     const nowaSelekcja = e.shiftKey
-      ? wybrane.includes(wezel.id)
-        ? wybrane.filter(id => id !== wezel.id)
-        : [...wybrane, wezel.id]
-      : wybrane.includes(wezel.id)
+      ? wybrane.includes(cel)
+        ? wybrane.filter(id => id !== cel)
+        : [...wybrane, cel]
+      : wybrane.includes(cel)
         ? wybrane
-        : [wezel.id]
+        : [cel]
     onWybierz(nowaSelekcja)
 
-    const m: Record<string, Wezel> = {}
-    for (const w of projekt.wezly) if (nowaSelekcja.includes(w.id)) m[w.id] = structuredClone(w)
     const p = doSceny(e)
-    refOperacja.current = { rodzaj: 'przesuwanie', startX: p.x, startY: p.y, migawka: m }
+    refOperacja.current = {
+      rodzaj: 'przesuwanie',
+      startX: p.x,
+      startY: p.y,
+      migawka: migawka(nowaSelekcja),
+      korzenie: nowaSelekcja,
+    }
   }
 
   function naUchwycieWDol(e: React.PointerEvent, uchwyt: UchwytId) {
     e.stopPropagation()
     przechwyc(e.currentTarget as Element, e.pointerId)
     const p = doSceny(e)
-    refOperacja.current = { rodzaj: 'skalowanie', startX: p.x, startY: p.y, uchwyt, migawka: migawkaWybranych() }
+    refOperacja.current = {
+      rodzaj: 'skalowanie',
+      startX: p.x,
+      startY: p.y,
+      uchwyt,
+      migawka: migawka(wybrane),
+      korzenie: wybrane,
+    }
   }
 
   function naPunkcieWDol(e: React.PointerEvent, indeks: number, ktory?: 'w' | 'z') {
@@ -254,7 +319,8 @@ export function Kanwa({
       startY: p.y,
       indeksPunktu: indeks,
       ktoryUchwyt: ktory,
-      migawka: migawkaWybranych(),
+      migawka: migawka(wybrane),
+      korzenie: wybrane,
     }
   }
 
@@ -269,7 +335,7 @@ export function Kanwa({
       return
     }
 
-    if (op.rodzaj === 'rysowanie') {
+    if (op.rodzaj === 'rysowanie' || op.rodzaj === 'zaznaczanie') {
       refRamka.current = {
         x: Math.min(op.startX, p.x),
         y: Math.min(op.startY, p.y),
@@ -284,35 +350,82 @@ export function Kanwa({
     const dy = p.y - op.startY
 
     if (op.rodzaj === 'przesuwanie' && op.migawka) {
+      const korzenie = op.korzenie ?? Object.keys(op.migawka)
+      const startowe = korzenie.map(id => op.migawka![id]).filter(Boolean)
+      if (startowe.length === 0) return
+
+      // Jedna wspólna delta dla całego zaznaczenia — przyciąganie liczone
+      // raz, na wspólnej ramce. Gdyby każdy węzeł przyciągał się osobno,
+      // zaznaczenie rozjeżdżałoby się przy każdym przesunięciu.
+      const ramkaStartu = ramkaZbioru(startowe)
+      let przesX = przyciagnij(ramkaStartu.x + dx) - ramkaStartu.x
+      let przesY = przyciagnij(ramkaStartu.y + dy) - ramkaStartu.y
+
+      if (!e.ctrlKey && !e.metaKey) {
+        const pomijane = new Set(Object.keys(op.migawka))
+        const wynik = przyciagnijRamke(
+          { x: ramkaStartu.x + przesX, y: ramkaStartu.y + przesY, w: ramkaStartu.w, h: ramkaStartu.h },
+          celePrzyciagania(pomijane),
+          TOLERANCJA_PRZYCIAGANIA / widok.zoom,
+        )
+        przesX += wynik.dx
+        przesY += wynik.dy
+        setLinie(wynik.linie)
+      } else {
+        setLinie([])
+      }
+
       for (const [id, start] of Object.entries(op.migawka)) {
-        const nx = przyciagnij(start.x + dx)
-        const ny = przyciagnij(start.y + dy)
         // Gdy pozycja jest animowana, przesuwamy też klatki — inaczej
         // węzeł „wracałby” do toru animacji i nie dało się go ułożyć.
-        const przesX = nx - start.x
-        const przesY = ny - start.y
         const klatki = start.klatki.map(k =>
-          k.wlasciwosc === 'x' ? { ...k, wartosc: k.wartosc + przesX } : k.wlasciwosc === 'y' ? { ...k, wartosc: k.wartosc + przesY } : k,
+          k.wlasciwosc === 'x'
+            ? { ...k, wartosc: k.wartosc + przesX }
+            : k.wlasciwosc === 'y'
+              ? { ...k, wartosc: k.wartosc + przesY }
+              : k,
         )
-        onAktualizuj(id, { x: nx, y: ny, klatki })
+        onAktualizuj(id, { x: start.x + przesX, y: start.y + przesY, klatki })
       }
       return
     }
 
     if (op.rodzaj === 'skalowanie' && op.migawka && op.uchwyt) {
+      const korzenie = op.korzenie ?? Object.keys(op.migawka)
+      const pomijane = new Set(Object.keys(op.migawka))
+      const cele = e.ctrlKey || e.metaKey ? [] : celePrzyciagania(pomijane)
+      const tol = TOLERANCJA_PRZYCIAGANIA / widok.zoom
+      const zebraneLinie: Linia[] = []
+
       for (const [id, s] of Object.entries(op.migawka)) {
+        // Potomki grupy skalują się proporcjonalnie razem z nią, więc ich
+        // nie liczymy z uchwytu — obsługuje je blok niżej.
+        if (!korzenie.includes(id)) continue
+
         let { x, y, w, h } = s
         const u = op.uchwyt
         if (u.includes('w')) {
-          x = przyciagnij(s.x + dx)
+          const przyciagnieta = przyciagnijKrawedz(przyciagnij(s.x + dx), cele, tol, 'x', s.y, s.y + s.h)
+          if (przyciagnieta.linia) zebraneLinie.push(przyciagnieta.linia)
+          x = przyciagnieta.wartosc
           w = s.w + (s.x - x)
         }
         if (u.includes('n')) {
-          y = przyciagnij(s.y + dy)
+          const przyciagnieta = przyciagnijKrawedz(przyciagnij(s.y + dy), cele, tol, 'y', s.x, s.x + s.w)
+          if (przyciagnieta.linia) zebraneLinie.push(przyciagnieta.linia)
+          y = przyciagnieta.wartosc
           h = s.h + (s.y - y)
         }
-        if (u.includes('e')) w = przyciagnij(s.w + dx)
-        if (u.includes('s')) h = przyciagnij(s.h + dy)
+        if (u.includes('e')) {
+          const przyciagnieta = przyciagnijKrawedz(przyciagnij(s.x + s.w + dx), cele, tol, 'x', s.y, s.y + s.h)
+          if (przyciagnieta.linia) zebraneLinie.push(przyciagnieta.linia)
+          w = przyciagnieta.wartosc - s.x
+        }
+        if (u.includes('s')) {
+          const przyciagnieta = przyciagnijKrawedz(przyciagnij(s.y + s.h + dy), cele, tol, 'y', s.x, s.x + s.w)
+          if (przyciagnieta.linia) zebraneLinie.push(przyciagnieta.linia)
+          h = przyciagnieta.wartosc - s.y
+        }
         if (e.shiftKey) {
           const proporcja = s.w / s.h
           if (Math.abs(dx) > Math.abs(dy)) h = w / proporcja
@@ -321,6 +434,22 @@ export function Kanwa({
         w = Math.max(MIN, w)
         h = Math.max(MIN, h)
         const zmiany: Partial<Wezel> = { x, y, w, h }
+
+        // Grupa ciągnie dzieci: te same współczynniki, licząc od ramki
+        // startowej grupy, żeby układ w środku został nietknięty.
+        if (s.typ === 'grupa') {
+          const sx = w / Math.max(s.w, 0.001)
+          const sy = h / Math.max(s.h, 0.001)
+          for (const [idDziecka, dziecko] of Object.entries(op.migawka)) {
+            if (idDziecka === id || korzenie.includes(idDziecka)) continue
+            onAktualizuj(idDziecka, {
+              x: x + (dziecko.x - s.x) * sx,
+              y: y + (dziecko.y - s.y) * sy,
+              w: Math.max(MIN, dziecko.w * sx),
+              h: Math.max(MIN, dziecko.h * sy),
+            })
+          }
+        }
         // Ścieżkę skalujemy razem z punktami — przechowujemy je w układzie węzła.
         if (s.typ === 'sciezka' && s.punkty) {
           const sx = w / Math.max(s.w, 0.001)
@@ -336,6 +465,7 @@ export function Kanwa({
         }
         onAktualizuj(id, zmiany)
       }
+      setLinie(zebraneLinie)
       return
     }
 
@@ -364,11 +494,33 @@ export function Kanwa({
     }
   }
 
-  function naGorze() {
+  function naGorze(e?: React.PointerEvent) {
     const op = refOperacja.current
     refOperacja.current = null
+    setLinie([])
 
     const ramkaKoncowa = refRamka.current
+
+    if (op?.rodzaj === 'zaznaczanie') {
+      refRamka.current = null
+      setRamka(null)
+      // Ramka mniejsza od progu to zwykły klik w tło — selekcję wyczyścił
+      // już handler wciśnięcia, więc tu nie ma co robić.
+      if (!ramkaKoncowa || (ramkaKoncowa.w < MIN && ramkaKoncowa.h < MIN)) return
+      const trafione = projekt.wezly
+        .filter(w => w.widoczny && !w.zablokowany && !w.rodzic)
+        .filter(
+          w =>
+            w.x < ramkaKoncowa.x + ramkaKoncowa.w &&
+            w.x + w.w > ramkaKoncowa.x &&
+            w.y < ramkaKoncowa.y + ramkaKoncowa.h &&
+            w.y + w.h > ramkaKoncowa.y,
+        )
+        .map(w => w.id)
+      onWybierz(e?.shiftKey ? [...new Set([...wybrane, ...trafione])] : trafione)
+      return
+    }
+
     if (op?.rodzaj === 'rysowanie' && ramkaKoncowa) {
       if (ramkaKoncowa.w > MIN && ramkaKoncowa.h > MIN) {
         onDodaj(
@@ -450,7 +602,9 @@ export function Kanwa({
           return (
             <div
               key={wezel.id}
-              onPointerDown={e => naWezleWDol(e, wezel)}
+              onPointerDown={e => !podglad && naWezleWDol(e, wezel)}
+              onClick={() => podglad?.onKlik(wezel.id)}
+              onMouseEnter={() => podglad?.onNajazd(wezel.id)}
               style={{
                 position: 'absolute',
                 left: stan.x,
@@ -460,9 +614,11 @@ export function Kanwa({
                 opacity: stan.krycie,
                 transform: `rotate(${stan.obrot}deg) scale(${stan.skala})`,
                 transformOrigin: 'center',
-                outline: zaznaczony ? `${skalaOdwrotna}px solid #38bdf8` : undefined,
+                outline: zaznaczony && !podglad ? `${skalaOdwrotna}px solid #38bdf8` : undefined,
                 outlineOffset: 0,
-                pointerEvents: wezel.zablokowany || narzedzie !== 'wybor' ? 'none' : 'auto',
+                transition: podglad?.przejscie,
+                cursor: podglad ? 'pointer' : undefined,
+                pointerEvents: podglad ? 'auto' : wezel.zablokowany || narzedzie !== 'wybor' ? 'none' : 'auto',
               }}
             >
               <RenderWezla wezel={wezel} />
@@ -471,7 +627,8 @@ export function Kanwa({
         })}
 
         {/* Uchwyty skalowania */}
-        {narzedzie === 'wybor' &&
+        {!podglad &&
+          narzedzie === 'wybor' &&
           !edycjaPunktow &&
           wybrane.map(id => {
             const wezel = projekt.wezly.find(w => w.id === id)
@@ -548,7 +705,40 @@ export function Kanwa({
           </div>
         )}
 
-        {/* Podgląd rysowanego prostokąta / elipsy */}
+        {/* Linie pomocnicze przyciągania */}
+        {linie.length > 0 && (
+          <svg
+            style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none' }}
+            width={1}
+            height={1}
+          >
+            {linie.map((l, i) =>
+              l.kierunek === 'pion' ? (
+                <line
+                  key={i}
+                  x1={l.pozycja}
+                  y1={l.od}
+                  x2={l.pozycja}
+                  y2={l.do}
+                  stroke="#f472b6"
+                  strokeWidth={skalaOdwrotna}
+                />
+              ) : (
+                <line
+                  key={i}
+                  x1={l.od}
+                  y1={l.pozycja}
+                  x2={l.do}
+                  y2={l.pozycja}
+                  stroke="#f472b6"
+                  strokeWidth={skalaOdwrotna}
+                />
+              ),
+            )}
+          </svg>
+        )}
+
+        {/* Ramka: podgląd rysowanego kształtu albo zaznaczanie przeciągnięciem */}
         {ramka && (
           <div
             style={{
@@ -557,9 +747,9 @@ export function Kanwa({
               top: ramka.y,
               width: ramka.w,
               height: ramka.h,
-              border: `${skalaOdwrotna}px dashed #38bdf8`,
-              borderRadius: narzedzie === 'elipsa' ? '50%' : 8,
-              background: 'rgba(56,189,248,0.12)',
+              border: `${skalaOdwrotna}px ${narzedzie === 'wybor' ? 'solid' : 'dashed'} #38bdf8`,
+              borderRadius: narzedzie === 'elipsa' ? '50%' : narzedzie === 'wybor' ? 0 : 8,
+              background: narzedzie === 'wybor' ? 'rgba(56,189,248,0.07)' : 'rgba(56,189,248,0.12)',
               pointerEvents: 'none',
             }}
           />

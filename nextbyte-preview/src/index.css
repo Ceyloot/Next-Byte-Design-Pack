@@ -1612,3 +1612,22 @@ html:not(.is-glass) .nb-cta-drugi {
 .nb-glass:hover{border-color:hsl(var(--primary) / .35);box-shadow:inset 0 1px hsl(var(--foreground) / .22),inset 0 -1px hsl(var(--primary) / .16),0 1px 2px #0003,0 14px 38px -12px #0000006b,0 0 0 1px hsl(var(--primary) / .16),0 6px 26px -6px hsl(var(--primary) / .3)}
 .nb-glass:after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:linear-gradient(105deg,transparent 30%,hsl(var(--foreground) / .12) 48%,transparent 66%);transition:opacity .32s ease}
 .nb-glass:hover:after{opacity:1}
+
+/* ── Szkło chrome'u Canvasu ─────────────────────────────────────────────
+   Panele Canvasu leżą nad zdjęciami, a nie nad tłem strony: przy 5%
+   korpusu tekst na jasnym zdjęciu przestaje być czytelny. Zamiast
+   nadpisywać tło i wychodzić z systemu, kręcimy jego własnymi zmiennymi.  */
+.nb-szklo-canvas {
+  --nb-p1-korpus: 0.72;
+  --nb-p1-obwodka: 0.10;
+  --nb-p1-refleks: 0.14;
+}
+
+/* Tryb „soczewka: chrome” przykrywa blur stałą wartością 4px dla płynności.
+   Panele Canvasu potrzebują mocniejszego rozmycia, bo pod nimi leżą zdjęcia,
+   a nie spokojne tło strony — stąd wyjątek z tą samą wagą selektora. */
+html.nb-refrakcja-chrome .nb-szklo.nb-szklo-canvas:not(.nb-powierzchnia),
+.is-glass .nb-szklo.nb-szklo-canvas:not(.nb-nakladka) {
+  -webkit-backdrop-filter: saturate(135%) blur(16px);
+  backdrop-filter: saturate(135%) blur(16px);
+}
