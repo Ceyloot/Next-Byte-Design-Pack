@@ -251,7 +251,7 @@ export const SzybkiKreator: React.FC = () => {
   return (
     <div
       data-tour="szybki-kreator"
-      className="nb-szklo nb-szklo-plynne nb-kafelek relative flex flex-col overflow-hidden rounded-2xl"
+      className="nb-szklo nb-szklo-plynne nb-kafelek relative flex flex-col overflow-hidden rounded-2xl border"
     >
       {/* Nitka akcentu — ten sam idiom, co pastylka kart i nagłówek paska. */}
       <span
