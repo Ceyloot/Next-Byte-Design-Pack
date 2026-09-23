@@ -235,12 +235,24 @@ export function wytnijOkolice(
   })
 }
 
-/** Stan ostatniej generacji — pokazywany przez panel „Ostatnia generacja”. */
+/**
+ * Stan generacji — od planu do oceny.
+ *
+ * Fazy `planuje` i `sprawdza` istnieją, bo pętla z agentem trwa dłużej niż
+ * sama generacja, a człowiek ma prawo wiedzieć, na co czeka. Bez nich
+ * kręciołek przez pół minuty nie mówiłby nic.
+ */
 export type StanGeneracji =
   | { faza: 'bezczynny' }
-  | { faza: 'trwa' }
+  | { faza: 'planuje' }
+  | { faza: 'trwa'; plan?: string }
+  | { faza: 'sprawdza'; wynik: import('./dostawca').Generacja }
   | { faza: 'blad'; tresc: string }
-  | { faza: 'gotowe'; wynik: import('./dostawca').Generacja }
+  | {
+      faza: 'gotowe'
+      wynik: import('./dostawca').Generacja
+      ocena?: import('./agent-proxy').Sprawdzenie
+    }
 
 /**
  * Zmniejszona kopia zdjęcia do analizy.

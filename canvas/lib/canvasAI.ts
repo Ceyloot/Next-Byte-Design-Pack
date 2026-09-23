@@ -1,62 +1,83 @@
-import { 
-  getClient, 
-  stripDataUrl, 
-  imageUrlToBase64Part, 
-  resizeImageForGemini,
-  GEMINI_VISION_MODEL,
-  GEMINI_MAIN_MODEL
-} from "../../../lib/gemini";
-import { Part, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { stripDataUrl } from './maskUtils';
 
 export type CanvasIntent =
-  | "character_transfer"
-  | "object_transfer"
-  | "character_swap"
-  | "object_swap"
-  | "background_edit"
-  | "remove_object"
-  | "add_text"
-  | "fusion"
-  | "style_change"
-  | "edit"
-  | "generate"
-  | "remove_bg";
+  | 'character_transfer'
+  | 'object_transfer'
+  | 'character_swap'
+  | 'object_swap'
+  | 'background_edit'
+  | 'remove_object'
+  | 'add_text'
+  | 'fusion'
+  | 'style_change'
+  | 'edit'
+  | 'generate'
+  | 'remove_bg';
+
+const GEMINI_VISION_MODEL = 'gemini-2.5-flash';
+
+async function callGeminiContent(
+  apiKey: string,
+  model: string,
+  parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>,
+  generationConfig?: Record<string, any>
+): Promise<string> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts }],
+      generationConfig,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+  }
+
+  const json = await response.json();
+  return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+}
 
 /**
- * TARGET OBJECT ANALYZER (v2.0 - RED DOT PROTOCOL)
- * Analyzes the specific object located under the Red marker.
+ * TARGET OBJECT ANALYZER
+ * Analyzes the specific object located under the Pin marker coordinates.
  */
 export async function geminiAnalyzeTargetObject(
-  apiKey: string, 
-  imageBase64: string, 
-  pinCoords: { x: number, y: number }
+  apiKey: string,
+  imageBase64: string,
+  pinCoords: { x: number; y: number }
 ): Promise<string> {
   try {
-    const client = getClient(apiKey);
-    const parts: Part[] = [];
-    const { data, mimeType } = await resizeImageForGemini(imageBase64);
-    parts.push(imageUrlToBase64Part(data, mimeType));
-    
-    parts.push({
-      text: `Identify the object located at the RED DOT marker at coordinates X: ${Math.round(pinCoords.x * 100)}%, Y: ${Math.round(pinCoords.y * 100)}% on this image.
-      
-      TASK:
-      1. Look at the specified location.
-      2. Describe the object, person, or part of the scene found there in 3-5 words.
-      3. Focus on identity: (e.g., "yellow thumbs-up emoji", "white duck's foot", "red car license plate").
-      
-      Response format: Just the description, nothing else.`
-    });
+    const stripped = stripDataUrl(imageBase64);
+    const parts = [
+      {
+        inlineData: {
+          mimeType: stripped.mimeType,
+          data: stripped.base64,
+        },
+      },
+      {
+        text: `Identify the object located at the pin marker at coordinates X: ${Math.round(
+          pinCoords.x * 100
+        )}%, Y: ${Math.round(pinCoords.y * 100)}% on this image.
+        
+TASK:
+1. Look at the specified location.
+2. Describe the object, person, or element found there in 2-4 words in Polish (e.g., "drewniany domek", "kamienna studnia", "czerwony samochód", "ganek").
+3. Focus on identity and object type.
 
-    const response = await client.models.generateContent({
-      model: GEMINI_VISION_MODEL,
-      contents: [{ role: "user", parts }],
-    });
+Response format: ONLY the short Polish description, nothing else.`,
+      },
+    ];
 
-    return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "object";
+    const result = await callGeminiContent(apiKey, GEMINI_VISION_MODEL, parts);
+    return result || 'obiekt';
   } catch (error) {
-    console.warn("geminiAnalyzeTargetObject failed:", error);
-    return "object";
+    console.warn('geminiAnalyzeTargetObject failed:', error);
+    return 'obiekt';
   }
 }
 
@@ -67,38 +88,35 @@ export async function geminiDetectPointObject(
   apiKey: string,
   imageBase64: string,
   x: number,
-  y: number,
+  y: number
 ): Promise<string[]> {
-  if (!apiKey) throw new Error("API key is required");
+  if (!apiKey) throw new Error('API key is required');
 
   try {
-    const client = getClient(apiKey);
-    const { data, mimeType } = stripDataUrl(imageBase64);
-    
-    const response = await client.models.generateContent({
-      model: GEMINI_MAIN_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            imageUrlToBase64Part(data, mimeType), 
-            { 
-              text: `Detect the object at coordinates X: ${Math.round(x * 100)}%, Y: ${Math.round(y * 100)}%. 
-              Return a JSON array of 3-5 short descriptions/suggestions for what this object could be.
-              Example: ["blue car", "vintage vehicle", "sedan"]
-              Return ONLY the raw JSON array.` 
-            }
-          ],
+    const stripped = stripDataUrl(imageBase64);
+    const parts = [
+      {
+        inlineData: {
+          mimeType: stripped.mimeType,
+          data: stripped.base64,
         },
-      ],
-    });
+      },
+      {
+        text: `Detect the object at coordinates X: ${Math.round(x * 100)}%, Y: ${Math.round(
+          y * 100
+        )}%.
+Return a JSON array of 3-5 short descriptions/suggestions in Polish for what this object is.
+Example: ["drewniany dom", "altana ogrodowa", "budynek gospodarczy"]
+Return ONLY the raw JSON array.`,
+      },
+    ];
 
-    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+    const text = await callGeminiContent(apiKey, GEMINI_VISION_MODEL, parts);
     const jsonMatch = text.match(/\[[\s\S]*\]/);
-    const suggestions = JSON.parse(jsonMatch ? jsonMatch[0] : "[]");
+    const suggestions = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
     return Array.isArray(suggestions) ? suggestions : [];
   } catch (error) {
-    console.warn("geminiDetectPointObject failed:", error);
+    console.warn('geminiDetectPointObject failed:', error);
     return [];
   }
 }
@@ -110,49 +128,41 @@ export async function geminiAnalyzeBrushMask(
   apiKey: string,
   imageBase64: string,
   maskBase64: string,
-  prompt: string,
+  prompt: string
 ): Promise<string> {
-  if (!apiKey) throw new Error("API key is required");
+  if (!apiKey) throw new Error('API key is required');
 
   try {
-    const client = getClient(apiKey);
-    const { data: imgData, mimeType: imgMime } = await resizeImageForGemini(imageBase64);
-    const { data: mData, mimeType: mMime } = await resizeImageForGemini(maskBase64);
+    const imgStripped = stripDataUrl(imageBase64);
+    const maskStripped = stripDataUrl(maskBase64);
 
-    const response = await client.models.generateContent({
-      model: GEMINI_VISION_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: "Original image for context:" },
-            imageUrlToBase64Part(imgData, imgMime),
-            { text: "Visual mask (White = Target area, Black = Ignore):" },
-            imageUrlToBase64Part(mData, mMime),
-            { text: prompt },
-          ],
+    const parts = [
+      { text: 'Original image for context:' },
+      {
+        inlineData: {
+          mimeType: imgStripped.mimeType,
+          data: imgStripped.base64,
         },
-      ],
-      config: {
-        safetySettings: [
-          { category: "HARM_CATEGORY_HATE_SPEECH" as HarmCategory, threshold: "BLOCK_NONE" as HarmBlockThreshold },
-          { category: "HARM_CATEGORY_HARASSMENT" as HarmCategory, threshold: "BLOCK_NONE" as HarmBlockThreshold },
-          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT" as HarmCategory, threshold: "BLOCK_NONE" as HarmBlockThreshold },
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT" as HarmCategory, threshold: "BLOCK_NONE" as HarmBlockThreshold },
-        ],
       },
-    });
+      { text: 'Visual mask (White = Target area, Black = Ignore):' },
+      {
+        inlineData: {
+          mimeType: maskStripped.mimeType,
+          data: maskStripped.base64,
+        },
+      },
+      { text: prompt },
+    ];
 
-    return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    return await callGeminiContent(apiKey, GEMINI_VISION_MODEL, parts);
   } catch (error) {
-    console.warn("geminiAnalyzeBrushMask failed:", error);
+    console.warn('geminiAnalyzeBrushMask failed:', error);
     throw error;
   }
 }
 
 /**
- * Uses Gemini to analyze the user's intent on the canvas.
- * Optimized for RED DOT PROTOCOL.
+ * Uses Gemini to analyze user intent on the canvas with Pin markers.
  */
 export async function geminiAnalyzeCanvasIntent(
   apiKey: string,
@@ -168,112 +178,85 @@ export async function geminiAnalyzeCanvasIntent(
   enhancedPrompt: string;
   sourcePinIdx?: number;
   targetPinIdx?: number;
-  swapType?: "identity" | "character" | "object";
+  swapType?: 'identity' | 'character' | 'object';
   objectName?: string;
   suggestedScale?: number;
   bBox?: [number, number, number, number];
 }> {
-  if (!apiKey) return { intent: "edit", enhancedPrompt: userPrompt };
+  if (!apiKey) return { intent: 'edit', enhancedPrompt: userPrompt };
 
   const pinInfo = pins
-    .map((p, idx) => `PIN ${idx + 1}: "${p.description || "no description"}" at [X: ${p.normalizedX.toFixed(2)}, Y: ${p.normalizedY.toFixed(2)}]`)
-    .join(" | ");
+    .map(
+      (p, idx) =>
+        `PIN ${idx + 1}: "${p.description || 'brak opisu'}" at [X: ${p.normalizedX.toFixed(
+          2
+        )}, Y: ${p.normalizedY.toFixed(2)}]`
+    )
+    .join(' | ');
 
   try {
-    const client = getClient(apiKey);
-    const parts: Part[] = [];
+    const parts: any[] = [];
 
     if (imageBase64) {
-      const { data, mimeType } = await resizeImageForGemini(imageBase64);
-      parts.push(imageUrlToBase64Part(data, mimeType));
+      const s = stripDataUrl(imageBase64);
+      parts.push({
+        inlineData: { mimeType: s.mimeType, data: s.base64 },
+      });
     }
     if (secondImageBase64) {
-      const { data, mimeType } = await resizeImageForGemini(secondImageBase64);
-      parts.push(imageUrlToBase64Part(data, mimeType));
+      const s = stripDataUrl(secondImageBase64);
+      parts.push({
+        inlineData: { mimeType: s.mimeType, data: s.base64 },
+      });
     }
-    
-    // Add Surgical Crops for high-fidelity identification
     if (sourceCrop) {
-      parts.push({ text: "SOURCE CROP (Zoom in on Pin 1):" });
-      const { data, mimeType } = await resizeImageForGemini(sourceCrop);
-      parts.push(imageUrlToBase64Part(data, mimeType));
+      parts.push({ text: 'SOURCE CROP (Zoom in on Pin 1 / Obiekt źródłowy):' });
+      const s = stripDataUrl(sourceCrop);
+      parts.push({
+        inlineData: { mimeType: s.mimeType, data: s.base64 },
+      });
     }
     if (targetCrop) {
-      parts.push({ text: "TARGET CROP (Zoom in on Pin 2):" });
-      const { data, mimeType } = await resizeImageForGemini(targetCrop);
-      parts.push(imageUrlToBase64Part(data, mimeType));
+      parts.push({ text: 'TARGET CROP (Zoom in on Pin 2 / Miejsce docelowe):' });
+      const s = stripDataUrl(targetCrop);
+      parts.push({
+        inlineData: { mimeType: s.mimeType, data: s.base64 },
+      });
     }
-
-    const imagesCount = (imageBase64 ? 1 : 0) + (secondImageBase64 ? 1 : 0);
 
     parts.push({
-      text: `Jesteś ekspertem-klasyfikatorem intencji dla edytora graficznego AI. Twoim celem jest chirurgiczne przeniesienie obiektu z zachowaniem fizyki i proporcji.
-      
+      text: `Jesteś ekspertem-klasyfikatorem intencji dla generatywnego Canvasu graficznego.
 POLECENIE: "${userPrompt}"
 LICZBA PINEZEK: ${pinCount}
-PINEZKI I OPISY: ${pinInfo}
-LICZBA OBRAZÓW: ${imagesCount}
+PINEZKI: ${pinInfo}
 
-### PROTOKÓŁ CZERWONEJ KROPKI (RED DOT PROTOCOL):
-- Obrazy posiadają CZERWONE KROPKI (#FF0000) wskazujące na kluczowe obiekty lub miejsca.
-- IMAGE 1 (Kadr źródłowy): Zawiera obiekt do pobrania pod CZERWONĄ KROPKĄ "1". To jest Twój wzorzec (BLUEPRINT).
-- IMAGE 2 (Kadr docelowy): Zawiera tło/scenerię, gdzie należy wstawić obiekt pod CZERWONĄ KROPKĄ "2". To jest Twój ŚWIAT DOCELOWY.
-- CROP: Dostarczono powiększenia okolic pinezek dla precyzyjnej identyfikacji.
+TWOJE ZADANIE:
+1. Zidentyfikuj operację (transfer, swap, addition, removal, style_change).
+2. Jeśli użytkownik wskazał 2 pinezki, jest to chirurgiczna relokacja obiektu: Pin 1 = Źródło, Pin 2 = Cel.
+3. Obiekt źródłowy z Pin 1 musi zostać usunięty ze starego miejsca (czysta płyta), a wstawiony w Pin 2.
 
-### TWOJE ZADANIE:
-1. IDENTYFIKACJA: Zidentyfikuj DOKŁADNIE jakie obiekty znajdują się pod CZERWONYMI KROPKAMI. Użyj CROPÓW dla detali.
-2. ROLE: Szanuj etykiety użytkownika ("ŹRÓDŁO" / "CEL"). ZAWSZE generuj wynik na IMAGE 2.
-3. SKALA I POZA: Nowy obiekt musi przejąć DOKŁADNIE taką samą pozę, kąt obrotu i orientację jak obiekt na IMAGE 2, który zastępuje.
-4. PROTOKÓŁ: Wybierz odpowiedni protokół (A-F).
-
-### FORMAT ODPOWIEDZI (6 linijek):
-INTENT: <character_transfer | object_transfer | character_swap | object_swap | background_edit | remove_object | add_text | fusion | style_change | edit | generate | remove_bg>
-SWAP_TYPE: <identity | character | object>
-OBJECT_NAME: <nazwa obiektu po angielsku>
-PROMPT: <Angielski prompt wg DIRECTOR'S PROTOCOL. Skup się na chirurgicznym dopasowaniu i zachowaniu tła.>
-SOURCE_PIN: <1 lub 2>
-TARGET_PIN: <1 lub 2>
-SUGGESTED_BBOX: <[ymin, xmin, ymax, xmax] (0-1000 scale) na obrazie docelowym>`
+FORMAT ODPOWIEDZI:
+INTENT: <object_transfer | object_swap | character_transfer | add_text | remove_object | edit>
+OBJECT_NAME: <nazwa obiektu>
+PROMPT: <szczegółowy prompt w języku angielskim>`,
     });
 
-    const response = await client.models.generateContent({
-      model: GEMINI_MAIN_MODEL,
-      contents: [{ role: "user", parts }],
-    });
-
-    const result = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    const result = await callGeminiContent(apiKey, GEMINI_VISION_MODEL, parts);
 
     const intentMatch = result.match(/INTENT:\s*(\w+)/i);
-    const swapTypeMatch = result.match(/SWAP_TYPE:\s*(\w+)/i);
     const objectNameMatch = result.match(/OBJECT_NAME:\s*(.+)/i);
     const promptMatch = result.match(/PROMPT:\s*(.+)/is);
-    const sourceMatch = result.match(/SOURCE_PIN:\s*(\d+)/i);
-    const targetMatch = result.match(/TARGET_PIN:\s*(\d+)/i);
-    const bboxMatch = result.match(/SUGGESTED_BBOX:\s*\[(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\]/i);
-
-    let bBox: [number, number, number, number] | undefined = undefined;
-    let suggestedScale = 0.35;
-    if (bboxMatch) {
-      const ymin = parseInt(bboxMatch[1], 10);
-      const xmin = parseInt(bboxMatch[2], 10);
-      const ymax = parseInt(bboxMatch[3], 10);
-      const xmax = parseInt(bboxMatch[4], 10);
-      bBox = [ymin, xmin, ymax, xmax];
-      suggestedScale = (ymax - ymin) / 1000;
-    }
 
     return {
-      intent: (intentMatch?.[1]?.toLowerCase() || "edit") as CanvasIntent,
-      swapType: swapTypeMatch?.[1]?.toLowerCase() as any,
+      intent: (intentMatch?.[1]?.toLowerCase() || 'edit') as CanvasIntent,
       objectName: objectNameMatch?.[1]?.trim(),
-      enhancedPrompt: promptMatch?.[1]?.trim(),
-      sourcePinIdx: sourceMatch ? parseInt(sourceMatch[1], 10) : undefined,
-      targetPinIdx: targetMatch ? parseInt(targetMatch[1], 10) : undefined,
-      suggestedScale,
-      bBox
+      enhancedPrompt: promptMatch?.[1]?.trim() || userPrompt,
+      sourcePinIdx: 0,
+      targetPinIdx: 1,
+      suggestedScale: 0.35,
     };
   } catch (error) {
-    console.warn("geminiAnalyzeCanvasIntent failed:", error);
-    return { intent: "edit", enhancedPrompt: userPrompt };
+    console.warn('geminiAnalyzeCanvasIntent failed:', error);
+    return { intent: 'edit', enhancedPrompt: userPrompt };
   }
 }

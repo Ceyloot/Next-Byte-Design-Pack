@@ -4,6 +4,7 @@
  * bez dotykania płótna, pinesek i paska polecenia.
  */
 import type { WynikGeneracji, ZadanieGeneracji } from './runware-proxy'
+import type { Plan, Sprawdzenie, ZadaniePlanu, ZadanieSprawdzenia } from './agent-proxy'
 import { etykietaPineski, zmniejszDoAnalizy, type Pineska, type Warstwa } from './typy'
 
 /** Koszt pokazywany przed generacją — z cennika NextByte („4 ⟠ za obraz”). */
@@ -124,4 +125,47 @@ export async function rozpoznajScene(zdjecie: string): Promise<string[]> {
   // a model opisujący odrzucał takie żądania błędem 500.
   const male = await zmniejszDoAnalizy(zdjecie)
   return rozpoznajObiekt(male || zdjecie, 'scena')
+}
+
+/* ── Agent reżyserski ────────────────────────────────────────────── */
+
+/**
+ * Plan przed generacją: agent ogląda zdjęcia i dokłada wiedzę o scenie.
+ *
+ * Zwraca `null` przy awarii — generacja ma iść dalej na samym rusztowaniu.
+ * Agent jest wzmocnieniem, nie warunkiem działania Canvasu.
+ */
+export async function zaplanuj(zadanie: ZadaniePlanu): Promise<Plan | null> {
+  try {
+    const odp = await fetch('/api/canvas/planuj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(zadanie),
+    })
+    if (!odp.ok) return null
+    return (await odp.json()) as Plan
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Kontrola po generacji: agent porównuje przed i po.
+ *
+ * To jest odpowiedź na powtarzający się problem — wynik wyglądał dobrze na
+ * miniaturze, a dopiero powiększenie pokazywało wypalony celownik albo
+ * obiekt w złym miejscu. Teraz patrzy na to maszyna, od razu.
+ */
+export async function sprawdzWynik(zadanie: ZadanieSprawdzenia): Promise<Sprawdzenie | null> {
+  try {
+    const odp = await fetch('/api/canvas/sprawdz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(zadanie),
+    })
+    if (!odp.ok) return null
+    return (await odp.json()) as Sprawdzenie
+  } catch {
+    return null
+  }
 }

@@ -1,25 +1,27 @@
-import { Check, Loader2, TriangleAlert, X } from 'lucide-react'
+import { Check, Eye, Loader2, TriangleAlert, X } from 'lucide-react'
 import type { StanGeneracji } from './typy'
 
 /**
- * Wynik generacji jako karta pływająca nad paskiem polecenia.
+ * Karta generacji — od planu do oceny.
  *
- * Sam obraz na płótnie nie mówi, co się stało ani czym to powstało — więc
- * karta niesie trzy rzeczy, których z kadru nie widać: miniaturę, nazwę
- * modelu z realnym kosztem i opis po polsku. Znika kliknięciem, bo ma
- * towarzyszyć pracy, a nie zajmować miejsce na stałe.
+ * Pokazuje cztery rzeczy, których z samego obrazu nie widać: co asystent
+ * zamierza zrobić, że trwa, czym to powstało i ile kosztowało, oraz czy
+ * zadanie faktycznie zostało wykonane. Ostatnie jest najważniejsze:
+ * miniatura potrafi wyglądać dobrze, a dopiero powiększenie pokazuje
+ * obiekt w złym miejscu albo wypalony znacznik.
  */
 export function KartaWyniku({ stan, onZamknij }: { stan: StanGeneracji; onZamknij: () => void }) {
   if (stan.faza === 'bezczynny') return null
 
   return (
     <div className="nb-szklo nb-szklo-canvas pointer-events-auto mb-2 rounded-2xl border border-border/60 bg-card/70 p-2.5 shadow-2xl">
+      {stan.faza === 'planuje' && <Praca tresc="Asystent ogląda zdjęcia…" />}
+
       {stan.faza === 'trwa' && (
-        <div className="flex items-center gap-2.5 px-0.5 text-[12px] text-foreground/70">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          Model pracuje nad zdjęciem…
-        </div>
+        <Praca tresc={stan.plan ? stan.plan : 'Model pracuje nad zdjęciem…'} />
       )}
+
+      {stan.faza === 'sprawdza' && <Praca tresc="Sprawdzam, czy wyszło zgodnie z zadaniem…" />}
 
       {stan.faza === 'blad' && (
         <div className="flex items-start gap-2.5">
@@ -45,13 +47,45 @@ export function KartaWyniku({ stan, onZamknij }: { stan: StanGeneracji; onZamkni
               </span>
               <span className="shrink-0 text-[9.5px] text-foreground/30">${stan.wynik.kosztUSD.toFixed(4)}</span>
             </div>
-            <p className="mt-0.5 line-clamp-3 text-[11px] leading-relaxed text-foreground/55">
+
+            <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-foreground/55">
               {stan.wynik.opis}
             </p>
+
+            {/* Ocena kontrolna — osobno i z własną ikoną, żeby nie zlewała
+                się z opisem tego, o co prosiliśmy. */}
+            {stan.ocena && (
+              <div
+                className={`mt-1.5 flex items-start gap-1.5 rounded-lg px-2 py-1.5 text-[10.5px] leading-snug ${
+                  stan.ocena.wykonane && !stan.ocena.znaczniki
+                    ? 'bg-emerald-400/10 text-emerald-200/80'
+                    : 'bg-amber-400/10 text-amber-200/85'
+                }`}
+              >
+                {stan.ocena.wykonane && !stan.ocena.znaczniki ? (
+                  <Eye className="mt-px h-3 w-3 shrink-0" />
+                ) : (
+                  <TriangleAlert className="mt-px h-3 w-3 shrink-0" />
+                )}
+                <span>
+                  {stan.ocena.znaczniki && <b>Uwaga: w wyniku widać znaczniki z mapy. </b>}
+                  {stan.ocena.ocena}
+                </span>
+              </div>
+            )}
           </div>
           <Zamknij onClick={onZamknij} />
         </div>
       )}
+    </div>
+  )
+}
+
+function Praca({ tresc }: { tresc: string }) {
+  return (
+    <div className="flex items-center gap-2.5 px-0.5 text-[12px] text-foreground/70">
+      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+      {tresc}
     </div>
   )
 }

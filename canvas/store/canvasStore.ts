@@ -94,6 +94,7 @@ export interface PinMarker {
   suggestions?: string[];
   isAnalyzing?: boolean;
   role?: "target" | "source";
+  cropThumb?: string;
 }
 
 interface CanvasState {
@@ -106,6 +107,11 @@ interface CanvasState {
   // What the user is doing with pins
   pinMode: "edit" | "adjust" | "transfer" | null;
 
+  // Loomic & AI State
+  selectedModel: string;
+  isGenerating: boolean;
+  generationStatus: string;
+
   // Text Editor UI State
   textEditorOpen: boolean;
   textAnalysis: string;
@@ -117,6 +123,11 @@ interface CanvasState {
   // Canvas dimensions (physical size of container)
   canvasDimensions: { width: number; height: number };
   clipboard: CanvasLayer | null;
+
+  setSelectedModel: (model: string) => void;
+  setIsGenerating: (isGenerating: boolean, status?: string) => void;
+  setPinRole: (id: string, role: "source" | "target") => void;
+  setPinCropThumb: (id: string, thumb: string) => void;
 
   setTextEditorOpen: (open: boolean) => void;
   setTextAnalysis: (analysis: string) => void;
@@ -166,12 +177,26 @@ export const useCanvasStore = create<CanvasState>()(
       stageScale: 1,
       stagePos: { x: 0, y: 0 },
       pinMode: null,
+      selectedModel: "gemini-3.1-flash-image-preview",
+      isGenerating: false,
+      generationStatus: "",
       textEditorOpen: false,
       textAnalysis: "",
       brushMode: null,
       textEditMask: null,
       canvasDimensions: { width: 0, height: 0 },
       clipboard: null,
+
+      setSelectedModel: (model) => set({ selectedModel: model }),
+      setIsGenerating: (isGenerating, status = "") => set({ isGenerating, generationStatus: status }),
+      setPinRole: (id, role) =>
+        set((s) => ({
+          pins: s.pins.map((p) => (p.id === id ? { ...p, role } : p)),
+        })),
+      setPinCropThumb: (id, cropThumb) =>
+        set((s) => ({
+          pins: s.pins.map((p) => (p.id === id ? { ...p, cropThumb } : p)),
+        })),
 
       setTextEditorOpen: (open) => set({ textEditorOpen: open }),
       setTextAnalysis: (analysis) => set({ textAnalysis: analysis }),

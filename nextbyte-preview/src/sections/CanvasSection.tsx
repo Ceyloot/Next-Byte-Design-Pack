@@ -18,17 +18,27 @@ import { cn } from '@/lib/utils'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PasekPolecenia } from '@/sections/canvas/PasekPolecenia'
 import { KartaWyniku } from '@/sections/canvas/KartaWyniku'
-import { generuj, nazwijWynik, opiszZmiane, rozpoznajObiekt, rozpoznajScene } from '@/sections/canvas/dostawca'
+import {
+  generuj,
+  nazwijWynik,
+  opiszZmiane,
+  rozpoznajObiekt,
+  rozpoznajScene,
+  sprawdzWynik,
+  zaplanuj,
+} from '@/sections/canvas/dostawca'
 import { Plotno } from '@/sections/canvas/Plotno'
 import { wykryjIntencje, zbudujPolecenie, type Intencja } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, opiszMape } from '@/sections/canvas/mapa-miejsc'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
+import type { ObrazDlaAgenta } from '@/sections/canvas/agent-proxy'
 import {
   kolejnoscObrazow,
   nowyId,
   pozycjaPineski,
   wczytajProjekt,
   wytnijOkolice,
+  zmniejszDoAnalizy,
   type Narzedzie,
   type Pineska,
   type Warstwa,
@@ -377,7 +387,7 @@ export function CanvasSection() {
   const powodBlokady = useMemo(() => {
     if (projekt.warstwy.length === 0) return 'Najpierw wrzuć zdjęcie na płótno'
     if (!projekt.tekst.trim()) return 'Napisz, co ma powstać'
-    if (stanGeneracji.faza === 'trwa') return 'Model właśnie pracuje'
+    if (['planuje', 'trwa', 'sprawdza'].includes(stanGeneracji.faza)) return 'Trwa praca nad zdjęciem'
     const blokujaca = uwagi.find(u => u.waga === 'blokada')
     if (blokujaca) return blokujaca.tresc
     return null
@@ -385,9 +395,20 @@ export function CanvasSection() {
 
   /* ── Generowanie ───────────────────────────────────────────────── */
 
+  /**
+   * Pełna pętla: plan → generacja → kontrola.
+   *
+   * Tak pracuje Lovart i to jest jego przewaga nad prostym wywołaniem
+   * modelu. Przed generacją agent ogląda zdjęcia i dokłada do polecenia
+   * wiedzę o scenie, której kod nie ma. Po generacji porównuje wynik
+   * z oryginałem i mówi, czy zadanie zostało wykonane.
+   *
+   * Oba kroki są nieobowiązkowe: gdy agent padnie, generacja idzie dalej
+   * na samym rusztowaniu. Ogniwo pomocnicze nie może blokować głównego.
+   */
   const uruchomGeneracje = useCallback(async () => {
     if (!warstwaZrodlowa) return
-    setStanGeneracji({ faza: 'trwa' })
+    setStanGeneracji({ faza: 'planuje' })
 
     try {
       // Mapa miejsc: kopia edytowanego zdjęcia z celownikami w punktach
@@ -395,8 +416,41 @@ export function CanvasSection() {
       // w inne miejsce — a pineska istnieje po to, żeby wskazać punkt.
       const mapa = await narysujMapeMiejsc(warstwaZrodlowa, projekt.pineski)
 
+      // Agent dostaje zdjęcia zmniejszone: do rozpoznania sceny wystarczy
+      // 768 px, a pełne oryginały potrafią mieć po 5 MB każdy.
+      const doAgenta: ObrazDlaAgenta[] = await Promise.all(
+        obrazyWejsciowe.map(async (w, i) => ({
+          rola: i === 0 ? ('plotno' as const) : ('material' as const),
+          nazwa: w.name,
+          dane: (await zmniejszDoAnalizy(w.src)) || w.src,
+        })),
+      )
+      if (mapa) {
+        doAgenta.push({
+          rola: 'mapa',
+          nazwa: 'mapa miejsc',
+          dane: (await zmniejszDoAnalizy(mapa)) || mapa,
+        })
+      }
+
+      const plan = await zaplanuj({
+        zadanie: projekt.tekst,
+        rusztowanie: polecenie,
+        obrazy: doAgenta,
+        uchwyty: legendaMapy,
+      })
+
+      if (plan?.plan) setStanGeneracji({ faza: 'trwa', plan: plan.plan })
+      else setStanGeneracji({ faza: 'trwa' })
+
+      // Wiedza agenta wchodzi jako osobna sekcja, tuż przed zadaniem —
+      // to opis tej konkretnej sceny, a nie kolejna reguła ogólna.
+      const pelnePolecenie = plan?.doprecyzowanie
+        ? `${polecenie}\n\nSCENA WIDZIANA PRZEZ ASYSTENTA:\n${plan.doprecyzowanie}`
+        : polecenie
+
       const wynik = await generuj({
-        polecenie,
+        polecenie: pelnePolecenie,
         // Wszystkie zdjęcia z pineskami, nie tylko edytowane: obiekt, który
         // ma się „tu pojawić”, często leży na zupełnie innym zdjęciu.
         // Mapa idzie na końcu, bo jest instrukcją, a nie materiałem.
@@ -407,18 +461,33 @@ export function CanvasSection() {
 
       const nazwa = nazwijWynik(projekt.tekst, projekt.pineski)
       dodajZeZrodla(wynik.obrazUrl, nazwa, 'wynik', warstwaZrodlowa)
-      setStanGeneracji({
-        faza: 'gotowe',
-        wynik: {
-          ...wynik,
-          nazwa,
-          opis: opiszZmiane(projekt.tekst, projekt.pineski, warstwaZrodlowa),
-        },
+
+      const gotowy = {
+        ...wynik,
+        nazwa,
+        opis: plan?.plan || opiszZmiane(projekt.tekst, projekt.pineski, warstwaZrodlowa),
+      }
+      setStanGeneracji({ faza: 'sprawdza', wynik: gotowy })
+
+      const ocena = await sprawdzWynik({
+        zadanie: projekt.tekst,
+        przed: (await zmniejszDoAnalizy(warstwaZrodlowa.src)) || warstwaZrodlowa.src,
+        wynik: wynik.obrazUrl,
       })
+
+      setStanGeneracji({ faza: 'gotowe', wynik: gotowy, ocena: ocena ?? undefined })
     } catch (e) {
       setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nieznany błąd' })
     }
-  }, [warstwaZrodlowa, obrazyWejsciowe, polecenie, projekt.tekst, projekt.pineski, dodajZeZrodla])
+  }, [
+    warstwaZrodlowa,
+    obrazyWejsciowe,
+    polecenie,
+    legendaMapy,
+    projekt.tekst,
+    projekt.pineski,
+    dodajZeZrodla,
+  ])
 
   /** Karta pineski chodzi za pineską, więc liczymy jej pozycję na ekranie. */
   const kartaPozycja = useMemo(() => {
@@ -589,7 +658,7 @@ export function CanvasSection() {
             podglad={polecenie}
             onGeneruj={uruchomGeneracje}
             powodBlokady={powodBlokady}
-            trwa={stanGeneracji.faza === 'trwa'}
+            trwa={['planuje', 'trwa', 'sprawdza'].includes(stanGeneracji.faza)}
             intencja={intencja}
             trybReczny={trybReczny}
             onTryb={setTrybReczny}

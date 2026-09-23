@@ -15,7 +15,6 @@ import {
   Hand, 
   MapPin, 
   Paintbrush, 
-  Type, 
   Square, 
   Upload, 
   Trash2, 
@@ -32,17 +31,20 @@ import {
   ChevronRight, 
   ChevronLeft, 
   Copy, 
-  ArrowUp, 
-  ArrowDown,
   Wand2,
-  Sliders,
-  CheckCircle2,
-  AlertCircle
+  Key,
+  Check,
+  RefreshCw,
+  ArrowRightLeft,
+  Crosshair
 } from 'lucide-react';
 import { useCanvasStore, CanvasLayer, PinMarker, ToolType } from './store/canvasStore';
 import { geminiAnalyzeTargetObject } from './lib/canvasAI';
-import { Button } from '@/components/ui/button';
-import { TechGrid } from '@/components/ui/TechGrid';
+import { generateGoogleImage, NANO_BANANA_MODELS } from './lib/googleGenAI';
+import { JsonPromptEngine } from './lib/jsonPromptEngine';
+import { cropImageAtPoint, createDualTransferMask, createBlobMaskAtPoint } from './lib/maskUtils';
+import { Button } from '../button';
+import { TechGrid } from '../TechGrid';
 import { toast } from 'sonner';
 
 /**
@@ -64,7 +66,6 @@ const ImageLayerItem: React.FC<{
       const stage = e.target.getStage();
       const pointer = stage.getPointerPosition();
       if (pointer) {
-        // Calculate relative coordinates inside image
         const transform = shapeRef.current.getAbsoluteTransform().copy().invert();
         const localPos = transform.point(pointer);
         const normX = Math.max(0, Math.min(1, localPos.x / layer.width));
@@ -102,7 +103,7 @@ const ImageLayerItem: React.FC<{
         stroke={isSelected ? 'hsl(204, 91%, 70%)' : undefined}
         strokeWidth={isSelected ? 2 : 0}
         shadowColor="rgba(0,0,0,0.5)"
-        shadowBlur={10}
+        shadowBlur={12}
         shadowOpacity={0.4}
         cornerRadius={8}
       />
@@ -118,6 +119,9 @@ export function Canvas() {
     pins,
     stageScale,
     stagePos,
+    selectedModel,
+    isGenerating,
+    generationStatus,
     addLayer,
     removeLayer,
     updateLayer,
@@ -125,17 +129,21 @@ export function Canvas() {
     setActiveTool,
     addPin,
     removePin,
+    clearPins,
     setStageScale,
     setStagePos,
-    moveLayerUp,
-    moveLayerDown,
-    duplicateLayer,
+    setSelectedModel,
+    setIsGenerating,
+    setPinRole,
+    setPinCropThumb,
+    updatePinDescription,
+    getNextPlacement,
   } = useCanvasStore();
 
   const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<'layers' | 'ai'>('layers');
+  const [activeTab, setActiveTab] = useState<'ai' | 'layers'>('ai');
   const [aiPrompt, setAiPrompt] = useState('');
-  const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [quality, setQuality] = useState<'standard' | 'hd' | 'ultra'>('hd');
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
 
   const stageRef = useRef<any>(null);
@@ -201,7 +209,6 @@ export function Canvas() {
       const src = reader.result as string;
       const img = new Image();
       img.onload = () => {
-        // Fit within 600px width/height while keeping ratio
         const maxDim = 600;
         let w = img.width;
         let h = img.height;
@@ -215,14 +222,13 @@ export function Canvas() {
           }
         }
 
-        const x = (dimensions.width / 2 - w / 2 - stagePos.x) / stageScale;
-        const y = (dimensions.height / 2 - h / 2 - stagePos.y) / stageScale;
+        const placement = getNextPlacement(w, h);
 
         const id = addLayer({
           type: 'image',
           src,
-          x,
-          y,
+          x: placement.x,
+          y: placement.y,
           width: w,
           height: h,
           naturalWidth: img.width,
@@ -239,13 +245,12 @@ export function Canvas() {
       img.src = src;
     };
     reader.readAsDataURL(file);
-    // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Add sample image if canvas is empty
+  // Add sample demo image
   const loadDemoImage = () => {
-    const sampleUrl = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+    const sampleUrl = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80';
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -255,11 +260,11 @@ export function Canvas() {
         x: (dimensions.width / 2 - 250 - stagePos.x) / stageScale,
         y: (dimensions.height / 2 - 200 - stagePos.y) / stageScale,
         width: 500,
-        height: 400,
+        height: 380,
         naturalWidth: img.width,
         naturalHeight: img.height,
         rotation: 0,
-        name: 'Przykładowa Sceneria 3D',
+        name: 'Przykładowy Produkt',
         visible: true,
         locked: false,
       });
@@ -269,17 +274,20 @@ export function Canvas() {
     img.src = sampleUrl;
   };
 
-  // Handle Pin click for Target Object Analyzer (Red Dot Protocol)
+  // Handle Pin click for Surgical Object Selection (Loomic Protocol)
   const handlePinPlacement = async (normX: number, normY: number, layerId: string) => {
     const targetLayer = layers.find((l) => l.id === layerId);
     if (!targetLayer || !targetLayer.src) return;
+
+    // Pin 1 is source, Pin 2 is target
+    const role: 'source' | 'target' = pins.length === 0 ? 'source' : 'target';
 
     const pinId = crypto.randomUUID();
     addPin(
       {
         layerId,
         description: 'Identyfikacja obiektu...',
-        role: 'target',
+        role,
         isAnalyzing: true,
       },
       targetLayer.x + normX * targetLayer.width,
@@ -289,19 +297,143 @@ export function Canvas() {
     );
 
     setActiveTab('ai');
-    toast.info('Pinezka Red Dot ustawiona. Analizuję obiekt...');
+    toast.info(`Pinezka (${role === 'source' ? 'Źródło' : 'Cel'}) ustawiona`);
 
-    // Call Gemini Vision via canvasAI
+    // 1. Generate zoom thumbnail
+    try {
+      const thumb = await cropImageAtPoint(targetLayer.src, normX, normY, 256);
+      setPinCropThumb(pinId, thumb);
+    } catch (e) {
+      console.warn('Crop thumb generation failed:', e);
+    }
+
+    // 2. Identify object with Gemini Vision
     try {
       const apiKey = localStorage.getItem('gemini_api_key') || '';
-      if (!apiKey) {
-        toast.warning('Podaj swój klucz API Gemini w ustawieniach, aby włączyć AI Analyzer');
+      if (apiKey) {
+        const desc = await geminiAnalyzeTargetObject(apiKey, targetLayer.src, { x: normX, y: normY });
+        updatePinDescription(pinId, desc);
+        toast.success(`Rozpoznano obiekt: ${desc}`);
+      }
+    } catch (err) {
+      console.warn('Object analysis failed:', err);
+    }
+  };
+
+  // Real Loomic Execution Engine
+  const handleExecuteAI = async () => {
+    const selectedLayer = layers.find((l) => selectedLayerIds.includes(l.id)) || layers[0];
+    if (!selectedLayer || !selectedLayer.src) {
+      toast.error('Zaznacz obraz na płótnie, na którym chcesz wykonać operację');
+      return;
+    }
+
+    let apiKey = localStorage.getItem('gemini_api_key') || '';
+    if (!apiKey) {
+      const keyInput = window.prompt('Wprowadź swój klucz API Google Gemini (wymagany do silnika Nano-Banana):');
+      if (!keyInput) {
+        toast.warning('Operacja anulowana — brak klucza API');
         return;
       }
-      const desc = await geminiAnalyzeTargetObject(apiKey, targetLayer.src, { x: normX, y: normY });
-      toast.success(`Rozpoznano obiekt: ${desc}`);
-    } catch (err) {
-      console.warn('Analysis skipped or failed:', err);
+      apiKey = keyInput.trim();
+      localStorage.setItem('gemini_api_key', apiKey);
+    }
+
+    setIsGenerating(true, 'Analizuję układ i kompiluję prompt Loomic...');
+
+    try {
+      const sourcePin = pins.find((p) => p.role === 'source') || (pins.length > 1 ? pins[0] : undefined);
+      const targetPin = pins.find((p) => p.role === 'target') || (pins.length === 1 ? pins[0] : pins[1]);
+
+      let action: 'transfer' | 'addition' | 'removal' | 'swap' | 'general_edit' = 'general_edit';
+      if (sourcePin && targetPin) {
+        action = 'transfer';
+      } else if (targetPin) {
+        action = 'addition';
+      }
+
+      // 1. Compile structured prompt (Solves duplication / double house bug!)
+      const plan = JsonPromptEngine.compile({
+        action,
+        userInstruction: aiPrompt.trim() || 'Przenieś wskazany obiekt w nowe miejsce, zachowując spójność tła',
+        sourcePin,
+        targetPin,
+        sourceObjectName: sourcePin?.description,
+        targetObjectName: targetPin?.description,
+      });
+
+      setIsGenerating(true, `Generuję w Nano-Banana (${plan.actionSummary})...`);
+      toast.info(`Rozpoczynam: ${plan.actionSummary}`);
+
+      // 2. Prepare Inpainting Mask
+      let maskImage: string | undefined = undefined;
+      const naturalW = selectedLayer.naturalWidth || selectedLayer.width;
+      const naturalH = selectedLayer.naturalHeight || selectedLayer.height;
+
+      if (plan.requiresDualMask && sourcePin && targetPin) {
+        const dual = createDualTransferMask(
+          naturalW,
+          naturalH,
+          { x: sourcePin.normalizedX, y: sourcePin.normalizedY },
+          { x: targetPin.normalizedX, y: targetPin.normalizedY },
+          0.2
+        );
+        maskImage = dual.combinedMask;
+      } else if (targetPin) {
+        maskImage = createBlobMaskAtPoint(
+          naturalW,
+          naturalH,
+          targetPin.normalizedX * naturalW,
+          targetPin.normalizedY * naturalH,
+          naturalW * 0.18,
+          naturalH * 0.18
+        );
+      }
+
+      // 3. Execute Google GenAI (Nano-Banana)
+      const result = await generateGoogleImage({
+        apiKey,
+        model: selectedModel,
+        prompt: plan.compiledPrompt,
+        inputImages: [selectedLayer.src],
+        maskImage,
+        aspectRatio: plan.recommendedAspectRatio,
+        quality,
+      });
+
+      setIsGenerating(true, 'Umieszczam wygenerowany kadr na płótnie...');
+
+      // 4. Place result on Canvas
+      const img = new Image();
+      img.onload = () => {
+        const placement = getNextPlacement(selectedLayer.width, selectedLayer.height);
+
+        const newId = addLayer({
+          type: 'image',
+          src: result.imageUrl,
+          x: placement.x,
+          y: placement.y,
+          width: selectedLayer.width,
+          height: selectedLayer.height,
+          naturalWidth: img.width,
+          naturalHeight: img.height,
+          rotation: 0,
+          name: `${action === 'transfer' ? 'Relokacja' : 'Synteza'} (${selectedModel.includes('3.1') ? 'NB-2' : 'NB'})`,
+          visible: true,
+          locked: false,
+        });
+
+        selectLayers([newId]);
+        clearPins();
+        setIsGenerating(false, '');
+        toast.success(`Gotowe! Wygenerowano w ${Math.round(result.durationMs / 1000)}s`);
+      };
+      img.src = result.imageUrl;
+
+    } catch (err: any) {
+      console.error('AI Generation Failed:', err);
+      setIsGenerating(false, '');
+      toast.error(err.message || 'Wystąpił błąd podczas generowania');
     }
   };
 
@@ -321,7 +453,7 @@ export function Canvas() {
   const selectedLayer = layers.find((l) => selectedLayerIds.includes(l.id));
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#050508] select-none text-foreground">
+    <div className="relative w-full h-screen overflow-hidden bg-[#050508] select-none text-foreground font-sans">
       {/* Background Subtle Tech Grid */}
       <TechGrid opacity={0.03} oczko={36} />
 
@@ -371,7 +503,7 @@ export function Canvas() {
               ? 'bg-primary text-black shadow-[0_0_12px_hsl(var(--primary)/0.4)]' 
               : 'text-muted-foreground hover:text-white hover:bg-muted/30'
           }`}
-          title="Red Dot Protocol - Pinezka AI obiektu (P)"
+          title="Loomic Pin Protocol - Wskaż obiekt lub cel (P)"
         >
           <MapPin size={18} />
           <span className="hidden sm:inline">Pinezka AI</span>
@@ -441,6 +573,18 @@ export function Canvas() {
         </button>
       </div>
 
+      {/* ================= BOTTOM BAR: ENGINE & STATUS ================= */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 hidden md:flex items-center gap-3 px-4 py-2 rounded-xl nb-szklo bg-card/60 backdrop-blur-xl border-border/70 text-xs">
+        <span className="flex items-center gap-1.5 text-primary font-mono font-semibold">
+          <span className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-yellow-400 animate-ping' : 'bg-emerald-400'}`} />
+          {NANO_BANANA_MODELS.find(m => m.id === selectedModel)?.displayName || 'Nano Banana'}
+        </span>
+        <span className="text-muted-foreground/60">•</span>
+        <span className="text-muted-foreground font-mono text-[11px]">
+          {isGenerating ? generationStatus || 'Przetwarzanie...' : 'Gotowy'}
+        </span>
+      </div>
+
       {/* ================= MAIN INTERACTIVE KONVA STAGE ================= */}
       <div 
         className="w-full h-full cursor-crosshair"
@@ -454,13 +598,12 @@ export function Canvas() {
               const src = reader.result as string;
               const img = new Image();
               img.onload = () => {
-                const x = (e.clientX - img.width / 4 - stagePos.x) / stageScale;
-                const y = (e.clientY - img.height / 4 - stagePos.y) / stageScale;
+                const placement = getNextPlacement(img.width / 2, img.height / 2);
                 const id = addLayer({
                   type: 'image',
                   src,
-                  x,
-                  y,
+                  x: placement.x,
+                  y: placement.y,
                   width: img.width / 2,
                   height: img.height / 2,
                   naturalWidth: img.width,
@@ -514,29 +657,42 @@ export function Canvas() {
               />
             ))}
 
-            {/* Render Pins (Red Dot Protocol) */}
-            {pins.map((pin) => {
+            {/* Render Pins (Loomic Surgical Pin Protocol) */}
+            {pins.map((pin, idx) => {
               const target = layers.find((l) => l.id === pin.layerId);
               if (!target) return null;
               const px = target.x + pin.normalizedX * target.width;
               const py = target.y + pin.normalizedY * target.height;
 
+              const isSource = pin.role === 'source';
+              const strokeColor = isSource ? '#00a8ff' : '#d946ef';
+              const fillColor = isSource ? 'rgba(0, 168, 255, 0.25)' : 'rgba(217, 70, 239, 0.25)';
+
               return (
                 <Group key={pin.id} x={px} y={py}>
                   {/* Outer pulsing ring */}
                   <KonvaCircle
-                    radius={14}
-                    fill="rgba(239, 68, 68, 0.25)"
-                    stroke="#ef4444"
-                    strokeWidth={1.5}
+                    radius={16}
+                    fill={fillColor}
+                    stroke={strokeColor}
+                    strokeWidth={2}
                   />
-                  {/* Inner solid red dot */}
+                  {/* Inner solid badge */}
                   <KonvaCircle
-                    radius={6}
-                    fill="#ef4444"
-                    shadowColor="#ef4444"
+                    radius={8}
+                    fill={strokeColor}
+                    shadowColor={strokeColor}
                     shadowBlur={8}
                     shadowOpacity={0.8}
+                  />
+                  {/* Pin Number */}
+                  <KonvaText
+                    text={String(idx + 1)}
+                    fontSize={10}
+                    fontStyle="bold"
+                    fill="#FFFFFF"
+                    x={-3}
+                    y={-5}
                   />
                 </Group>
               );
@@ -597,7 +753,7 @@ export function Canvas() {
       {/* ================= RIGHT SIDEBAR INSPECTOR ================= */}
       <div 
         className={`absolute top-0 right-0 bottom-0 z-40 transition-all duration-300 flex ${
-          inspectorOpen ? 'translate-x-0' : 'translate-x-[320px]'
+          inspectorOpen ? 'translate-x-0' : 'translate-x-[360px]'
         }`}
       >
         {/* Toggle Inspector Tab Handle */}
@@ -610,10 +766,20 @@ export function Canvas() {
         </button>
 
         {/* Panel Content */}
-        <div className="w-80 h-full nb-szklo-plynne bg-card/85 backdrop-blur-2xl border-l border-border flex flex-col shadow-2xl">
+        <div className="w-[360px] h-full nb-szklo-plynne bg-card/90 backdrop-blur-2xl border-l border-border flex flex-col shadow-2xl">
           {/* Header tabs */}
           <div className="p-3 border-b border-border/60 flex items-center justify-between">
             <div className="flex items-center gap-1 p-1 rounded-xl bg-background/50 border border-border/50 text-xs w-full">
+              <button
+                onClick={() => setActiveTab('ai')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === 'ai'
+                    ? 'bg-primary/15 text-primary border border-primary/25 shadow-sm'
+                    : 'text-muted-foreground hover:text-white'
+                }`}
+              >
+                <Wand2 size={14} /> Loomic AI Studio
+              </button>
               <button
                 onClick={() => setActiveTab('layers')}
                 className={`flex-1 py-1.5 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
@@ -624,20 +790,211 @@ export function Canvas() {
               >
                 <LayersIcon size={14} /> Warstwy ({layers.length})
               </button>
-              <button
-                onClick={() => setActiveTab('ai')}
-                className={`flex-1 py-1.5 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                  activeTab === 'ai'
-                    ? 'bg-primary/15 text-primary border border-primary/25 shadow-sm'
-                    : 'text-muted-foreground hover:text-white'
-                }`}
-              >
-                <Wand2 size={14} /> AI Studio
-              </button>
             </div>
           </div>
 
-          {/* Tab 1: Layers */}
+          {/* Tab 1: Loomic AI Studio */}
+          {activeTab === 'ai' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs no-scrollbar">
+              {/* Model Selector Cards */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] text-primary uppercase font-bold tracking-wider">
+                    // SILNIK NANO-BANANA (GOOGLE GENAI)
+                  </span>
+                  <button
+                    onClick={() => {
+                      const cur = localStorage.getItem('gemini_api_key') || '';
+                      const key = window.prompt('Wprowadź lub zmień klucz API Google Gemini:', cur);
+                      if (key !== null) {
+                        localStorage.setItem('gemini_api_key', key.trim());
+                        toast.success('Zaktualizowano klucz API Gemini');
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-white flex items-center gap-1 text-[10px]"
+                    title="Ustawienia klucza API"
+                  >
+                    <Key size={12} /> Klucz API
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-1.5">
+                  {NANO_BANANA_MODELS.map((m) => {
+                    const isSelected = selectedModel === m.id;
+                    return (
+                      <div
+                        key={m.id}
+                        onClick={() => setSelectedModel(m.id)}
+                        className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-primary/15 border-primary/50 text-white shadow-[0_0_12px_hsl(var(--primary)/0.15)]'
+                            : 'bg-background/40 border-border/40 hover:border-border text-muted-foreground'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white text-[11px]">{m.displayName}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded font-mono font-semibold bg-primary/20 text-primary border border-primary/30">
+                            {m.tag}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                          {m.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Quality & Resolution Chips */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-white/90">Jakość renderu:</label>
+                <div className="flex items-center gap-1.5">
+                  {(['standard', 'hd', 'ultra'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setQuality(q)}
+                      className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-mono font-semibold transition-all border ${
+                        quality === q
+                          ? 'bg-primary text-black border-primary'
+                          : 'bg-background/50 border-border/60 text-muted-foreground hover:text-white'
+                      }`}
+                    >
+                      {q === 'standard' ? '1K (Szybki)' : q === 'hd' ? '2K (HD)' : '4K (Ultra)'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Pins & Surgical Roles */}
+              <div className="space-y-2 pt-1 border-t border-border/50">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-white text-[11px] flex items-center gap-1.5">
+                    <Crosshair size={14} className="text-primary" />
+                    Pinezki i cele ({pins.length})
+                  </span>
+                  {pins.length > 0 && (
+                    <button
+                      onClick={() => clearPins()}
+                      className="text-muted-foreground hover:text-red-400 text-[10px]"
+                    >
+                      Wyczyść
+                    </button>
+                  )}
+                </div>
+
+                {pins.length > 0 ? (
+                  <div className="space-y-2">
+                    {pins.map((pin, index) => {
+                      const isSource = pin.role === 'source';
+                      return (
+                        <div
+                          key={pin.id}
+                          className="p-2.5 rounded-xl bg-background/60 border border-border/60 space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {/* Zoom Crop Thumbnail */}
+                              <div className="w-10 h-10 rounded-lg bg-black border border-border overflow-hidden flex-shrink-0">
+                                {pin.cropThumb ? (
+                                  <img src={pin.cropThumb} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">
+                                    P{index + 1}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white text-[11px]">
+                                  Pinezka {index + 1}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground font-mono block">
+                                  X: {Math.round(pin.normalizedX * 100)}%, Y: {Math.round(pin.normalizedY * 100)}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Role Toggle Badge */}
+                            <button
+                              onClick={() => setPinRole(pin.id, isSource ? 'target' : 'source')}
+                              className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1 ${
+                                isSource
+                                  ? 'bg-sky-500/20 text-sky-400 border-sky-500/40 hover:bg-sky-500/30'
+                                  : 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/40 hover:bg-fuchsia-500/30'
+                              }`}
+                              title="Kliknij, aby przełączyć rolę (Źródło vs Cel)"
+                            >
+                              <ArrowRightLeft size={10} />
+                              {isSource ? 'ŹRÓDŁO' : 'CEL'}
+                            </button>
+                          </div>
+
+                          {/* Editable Description */}
+                          <input
+                            type="text"
+                            value={pin.description || ''}
+                            onChange={(e) => updatePinDescription(pin.id, e.target.value)}
+                            placeholder="Opis obiektu pod pinezką..."
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-card/60 border border-border/80 text-white placeholder:text-muted-foreground/60 text-[11px] focus:outline-none focus:border-primary"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl border border-dashed border-border/60 text-center text-muted-foreground text-[11px] space-y-1">
+                    <p>Brak ustawionych pinezek.</p>
+                    <p className="text-[10px] opacity-75">
+                      Wybierz narzędzie <strong>Pinezka AI</strong> i kliknij obiekt (P1 = Źródło, P2 = Cel).
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Prompt Input */}
+              <div className="space-y-1.5 pt-1 border-t border-border/50">
+                <label className="text-[11px] font-bold text-white flex items-center justify-between">
+                  <span>Instrukcja dla AI (Prompt):</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">Format Loomic JSON</span>
+                </label>
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder={
+                    pins.length >= 2
+                      ? 'Np. Przenieś domek w nowe miejsce, usuń go ze wzgórza i odbuduj tło lasu...'
+                      : 'Np. Dodaj kamienną studnię z drewnianym daszkiem, dopasuj oświetlenie...'
+                  }
+                  className="w-full h-24 p-3 rounded-xl bg-background/60 border border-border/80 text-white placeholder:text-muted-foreground/50 text-xs focus:outline-none focus:border-primary transition-colors resize-none"
+                />
+              </div>
+
+              {/* Main Execute Button */}
+              <Button
+                disabled={isGenerating || !selectedLayer}
+                onClick={handleExecuteAI}
+                className="w-full bg-primary hover:bg-primary/90 text-black font-bold py-5 rounded-xl shadow-[0_0_15px_hsl(var(--primary)/0.25)] flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    <span>{generationStatus || 'Generowanie...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    <span>
+                      {pins.length >= 2
+                        ? 'Wykonaj chirurgiczną relokację (Loomic)'
+                        : 'Wykonaj syntezę Nano-Banana'}
+                    </span>
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Tab 2: Layers */}
           {activeTab === 'layers' && (
             <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar">
               {layers.length === 0 ? (
@@ -645,7 +1002,7 @@ export function Canvas() {
                   Brak warstw na płótnie
                 </div>
               ) : (
-                layers.map((layer, index) => {
+                layers.map((layer) => {
                   const isSel = selectedLayerIds.includes(layer.id);
                   return (
                     <div
@@ -715,86 +1072,10 @@ export function Canvas() {
             </div>
           )}
 
-          {/* Tab 2: AI Actions */}
-          {activeTab === 'ai' && (
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs no-scrollbar">
-              <div className="space-y-2">
-                <span className="font-mono text-[10px] text-primary uppercase font-bold">
-                  // RED DOT PROTOCOL & SYNTEZA
-                </span>
-                <h4 className="font-bold text-white text-sm">
-                  Precyzyjna edycja obiektowa
-                </h4>
-                <p className="text-muted-foreground leading-relaxed">
-                  Użyj narzędzia <strong className="text-primary">Pinezka AI</strong>, aby wskazać punkt na wybranym obiekcie. Silnik Gemini dokona analizy i umożliwi ukierunkowaną modyfikację.
-                </p>
-              </div>
-
-              {pins.length > 0 ? (
-                <div className="p-3 rounded-xl bg-background/50 border border-primary/30 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-primary">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                      Aktywny cel ({pins.length})
-                    </span>
-                    <button
-                      onClick={() => useCanvasStore.getState().clearPins()}
-                      className="text-muted-foreground hover:text-red-400 text-[10px]"
-                    >
-                      Wyczyść
-                    </button>
-                  </div>
-                  {pins.map((pin) => (
-                    <div key={pin.id} className="text-[11px] text-foreground/90 font-mono bg-card/60 p-2 rounded-lg border border-border/40">
-                      Cel: {pin.description || 'Wskazano współrzędne'}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-3 rounded-xl border border-dashed border-border/60 text-center text-muted-foreground text-[11px]">
-                  Brak ustawionych pinezek. Wybierz narzędzie pinezki i kliknij element na grafice.
-                </div>
-              )}
-
-              {/* Prompt Input */}
-              <div className="space-y-2 pt-2">
-                <label className="text-[11px] font-bold text-white">
-                  Instrukcja modyfikacji (Prompt AI):
-                </label>
-                <textarea
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Np. Zmień kolor samochodu na błękitny mat, dodaj filmowe odbicia neonów..."
-                  className="w-full h-24 p-3 rounded-xl bg-background/60 border border-border/80 text-white placeholder:text-muted-foreground/60 text-xs focus:outline-none focus:border-primary transition-colors resize-none"
-                />
-              </div>
-
-              <Button
-                disabled={isProcessingAI || !selectedLayer}
-                onClick={() => {
-                  if (!aiPrompt.trim()) {
-                    toast.error('Wpisz instrukcję dla AI');
-                    return;
-                  }
-                  setIsProcessingAI(true);
-                  toast.info('Generowanie modyfikacji w toku...');
-                  setTimeout(() => {
-                    setIsProcessingAI(false);
-                    toast.success('Pomyślnie zastosowano transformację!');
-                  }, 2000);
-                }}
-                className="w-full bg-primary hover:bg-primary/90 text-black font-bold py-5 rounded-xl shadow-[0_0_15px_hsl(var(--primary)/0.25)] flex items-center justify-center gap-2"
-              >
-                <Sparkles size={16} />
-                <span>{isProcessingAI ? 'Przetwarzanie...' : 'Wykonaj syntezę AI'}</span>
-              </Button>
-            </div>
-          )}
-
           {/* Footer stats */}
           <div className="p-3 border-t border-border/60 text-[10px] text-muted-foreground font-mono flex items-center justify-between">
             <span>Warstw: {layers.length}</span>
-            <span className="text-primary">NextByte Canvas Engine</span>
+            <span className="text-primary">NextByte Loomic Engine</span>
           </div>
         </div>
       </div>

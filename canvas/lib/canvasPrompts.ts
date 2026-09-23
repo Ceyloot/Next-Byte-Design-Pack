@@ -2,7 +2,13 @@
  * Ultra-Simplified AI Canvas Protocols (v3.0 - RED DOT PROTOCOL)
  * Strictly enforces scenery preservation and surgical object transfer.
  */
-import { MASTER_PROMPT_ENGINEER } from '@/lib/master-prompts';
+export const MASTER_PROMPT_ENGINEER = `
+[MASTER PHOTOREALISM & GEOMETRY SPEC]
+- Preserve exact camera angle, focal length, field of view, horizon, and perspective lines.
+- Seamless lighting integration: match ambient color temperature, rim lights, shadow angle, and falloff.
+- Zero artifacting: strictly prohibit duplicated geometry, phantom limbs, or residual artifacts.
+- Return pure output photograph matching professional cinematic capture.
+`.trim();
 
 export const CANVAS_TEMPLATES = {
 
