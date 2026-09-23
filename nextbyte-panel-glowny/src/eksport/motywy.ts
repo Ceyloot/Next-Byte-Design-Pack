@@ -474,10 +474,13 @@ export const MOTYWY = {
       '--warning': '32 92% 36%',
       '--nb-plama-nasycenie': '0.15',
       /* Krawędzie podbite razem z tłem (23.09.2026) — inaczej tło ciemniejsze
-         o 5 punktów zjada różnicę, którą krawędź miała pokazywać. */
-      '--nb-kafelek-krawedz': '0.18',
-      '--nb-szklo-krawedz': '0.14',
-      '--nb-tafla-krawedz': '0.22',
+         o 5 punktów zjada różnicę, którą krawędź miała pokazywać. Druga tura
+         tego samego dnia: 0.18 dalej ginęło na części ekranów (zgłoszenie:
+         "nie ma nic dookoła"), więc idzie wyraźnie mocniej — to ma być
+         widoczna linia karty, nie ledwo wyczuwalny cień. */
+      '--nb-kafelek-krawedz': '0.32',
+      '--nb-szklo-krawedz': '0.24',
+      '--nb-tafla-krawedz': '0.38',
     } as Record<string, string>,
   },
 };
