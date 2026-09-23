@@ -120,8 +120,8 @@ export function QuickShortcutsPanel({ wariant = 'kafelki' }: { wariant?: 'kafelk
             ? (slot.company_id && companyNameById.get(slot.company_id)) || 'Panel firmowy'
             : null;
 
+          const klucz = `slot-${index}-${slot.url}`;
           const wspolne = {
-            key: `slot-${index}-${slot.url}`,
             tytul: slot.title,
             ikona: slot.icon,
             url: slot.url,
@@ -132,8 +132,8 @@ export function QuickShortcutsPanel({ wariant = 'kafelki' }: { wariant?: 'kafelk
           /* Podpis firmowy odpada w wariancie ikonowym — przy 60 px nazwa firmy
              i tak byłaby trzema literami z wielokropkiem. Zostaje w `title`. */
           return ikonowy
-            ? <IkonaPodrozy {...wspolne} />
-            : <KafelekPodrozy {...wspolne} podpis={label} />;
+            ? <IkonaPodrozy key={klucz} {...wspolne} />
+            : <KafelekPodrozy key={klucz} {...wspolne} podpis={label} />;
         })}
       </div>
 

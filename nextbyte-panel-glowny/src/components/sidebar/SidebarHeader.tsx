@@ -116,7 +116,13 @@ export function AppSidebarHeader() {
         localStorage.removeItem('nextbyte_theme_colors_name');
         localStorage.removeItem('nextbyte_theme_expiry');
       } catch {}
-      window.dispatchEvent(new CustomEvent('themeChanged'));
+      /* `poZapisie` — TYLKO dla paczki eksportowej (`eksport/motyw.ts`).
+         Platforma na to zdarzenie odczytuje motyw z bazy, więc dwa
+         dispatche na jedno klikniecie sa u niej bez znaczenia. Paczka
+         PRZELACZA na nastepny motyw, wiec drugi dispatch cofal ja na
+         ciemny i jasny motyw nigdy sie nie utrzymywal. Pole `detail`
+         niczego nie importuje i platformy nie dotyka. */
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { poZapisie: true } }));
     } catch (err) {
       console.error('[ThemeToggle] Error:', err);
     } finally {
@@ -176,12 +182,64 @@ export function AppSidebarHeader() {
           */}
           <div className="relative flex-shrink-0 w-10 h-10">
             <div className={`absolute inset-0 rounded-full blur-2xl scale-150 transition-opacity ${isLight ? 'bg-primary/10 opacity-60' : 'bg-primary/20'}`} />
-            <div className="nb-szklo nb-szklo-plynne nb-kafelek relative w-full h-full rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center overflow-hidden p-1.5">
+            {/*
+              ── ZNAK ZOSTAJE BIAŁY, TO KAFELEK CIEMNIEJE (decyzja Michała) ──
+              Wcześniej w jasnym motywie znak dostawał `brightness-0
+              opacity-85`, czyli biały plik logo był programowo zaczerniany
+              (tak stało w CLAUDE.md §3.1.3). Michał: „to logo jednak białe —
+              po prostu tło takie o". Więc odwracamy stronę, która się
+              dostosowuje: plik zostaje taki, jaki jest, a kontrast robi
+              kafelek pod nim.
+
+              Kafelek bierze w jasnym motywie `nb-ikona-kafel` — tę samą klasę,
+              co włącznik motywu obok (index.css:5962), więc oba mają jedno
+              wypełnienie `hsl(var(--foreground) / ~0.039)`, jeden rant i jeden
+              hover. Blade tło zostaje zgodnie z decyzją Michała; czytelność
+              nadrabia sam znak, przyciemniony o stopień (patrz `<img>` niżej).
+
+              `nb-szklo`/`nb-kafelek` i gradient `from-primary/20` schodzą tu
+              ze względu na strażnika zagnieżdżenia z index.css:2570, który
+              zagnieżdżonej szybie PODMIENIA `background-image` na własne —
+              przykryłby wypełnienie z `nb-ikona-kafel` i kafelek przestałby
+              pasować do włącznika. Pasek boczny sam jest szybą, więc ten
+              strażnik łapie tutaj zawsze.
+
+              CIEMNY motyw zostaje bez zmian — tam szklany kafelek z tintem
+              marki wyglądał dobrze i nie było o nim mowy.
+            */}
+            <div
+              className={`relative w-full h-full rounded-2xl flex items-center justify-center overflow-hidden p-1.5 border ${
+                isLight
+                  ? 'nb-ikona-kafel'
+                  : 'nb-szklo nb-szklo-plynne nb-kafelek bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30'
+              }`}
+            >
               {getAssetUrl(logoAsset) ? (
                 <img
                   src={getAssetUrl(logoAsset)!}
                   alt="NextByte Logo"
-                  className={`w-full h-full object-contain rounded-xl transition-all duration-200 ${isLight ? 'brightness-0 opacity-85' : ''}`}
+                  /*
+                    Blade tło kafelka zostaje, więc znak nie może być biały —
+                    zniknąłby (kontrast ~1.05:1). Michał: „logo może być lekko
+                    ciemniejsze w takim razie", czyli przyciemniamy, ale NIE
+                    do czerni, jaką dawało samo `brightness-0`.
+
+                    `brightness-0` gasi biały plik do czerni, `invert-[0.3]`
+                    podnosi go z powrotem do `rgb(77,77,77)` — ciemna szarość,
+                    kontrast ~7,6:1 na bladym kafelku (WCAG AA z zapasem),
+                    a mimo to wyraźnie miękcej niż czarny znak.
+
+                    Kolejność filtrów jest tu istotna i nie jest przypadkiem:
+                    Tailwind składa `filter` w stałej kolejności, w której
+                    `brightness` wypada PRZED `invert` — czyli dokładnie tak,
+                    jak ten efekt wymaga. Zamiana klas miejscami w kodzie
+                    niczego nie zepsuje, ale podmiana na własny `style`
+                    z odwrotną kolejnością już tak.
+
+                    Nie używamy `opacity` do przyciemnienia: przepuszczałaby
+                    tło kafelka przez znak zamiast dać mu własny, równy kolor.
+                  */
+                  className={`w-full h-full object-contain rounded-xl transition-all duration-200 ${isLight ? 'brightness-0 invert-[0.3]' : ''}`}
                 />
               ) : (
                 <Bot className="text-primary w-4 h-4" />

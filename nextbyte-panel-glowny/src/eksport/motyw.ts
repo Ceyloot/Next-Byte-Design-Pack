@@ -75,10 +75,14 @@ export function zastosujMotyw(nazwa: NazwaMotywu): void {
  * W paczce `useGlobalTheme` nie ma — kolory idą z `eksport/motywy.ts` — więc
  * klikanie w przycisk zapisywało wybór do bazy i NIC nie zmieniało na ekranie.
  *
- * Zamiast dopisywać cokolwiek do pliku platformowego (wróciłby do repozytorium
- * z importem z `eksport/`, którego na platformie nie ma), paczka po prostu
- * SŁUCHA tego samego zdarzenia i nakłada swój motyw. Przycisk zostaje 1:1,
- * a mimo to działa.
+ * Zamiast dopisywać do pliku platformowego import z `eksport/` (wróciłby
+ * do repozytorium z zależnością, której na platformie nie ma), paczka po
+ * prostu SŁUCHA tego samego zdarzenia i nakłada swój motyw. Przycisk
+ * zostaje 1:1, a mimo to działa.
+ *
+ * JEDEN wyjątek: drugi dispatch w `handleThemeToggle` niesie teraz
+ * `detail: { poZapisie: true }` — patrz niżej. To pole, nie import;
+ * platforma czyta motyw z bazy i `detail` ignoruje.
  */
 type Obserwator = (nazwa: NazwaMotywu) => void;
 const obserwatorzy = new Set<Obserwator>();
@@ -116,7 +120,15 @@ export function podepnijPrzelacznikPlatformy(): () => void {
   if (nasluchPodpiety) return () => {};
   nasluchPodpiety = true;
 
-  const naZmiane = () => ustawMotyw(nastepnyMotyw());
+  /* Przycisk platformowy wysyła `themeChanged` DWA RAZY na jedno kliknięcie:
+     raz od razu (natychmiastowa reakcja) i raz po zapisie do bazy. Platformie
+     to nie przeszkadza — ona na każde zdarzenie czyta motyw z bazy. Paczka
+     PRZEŁĄCZA na następny, więc drugie zdarzenie cofało ją na ciemny.
+     Zdarzenie po zapisie jest oznaczone i tutaj je pomijamy. */
+  const naZmiane = (zdarzenie: Event) => {
+    if ((zdarzenie as CustomEvent).detail?.poZapisie) return;
+    ustawMotyw(nastepnyMotyw());
+  };
   window.addEventListener('themeChanged', naZmiane);
 
   return () => {
