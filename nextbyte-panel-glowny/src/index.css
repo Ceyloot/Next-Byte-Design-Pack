@@ -6652,7 +6652,9 @@ border-radius: 8px;
 [data-theme="scandinavian"] [data-sidebar="sidebar"] > .nb-szklo {
   border-color: hsl(var(--foreground) / var(--nb-kafelek-krawedz, 0.14)) !important;
   --nb-cien-ranty: inset 0 1px 0 0 hsl(0 0% 100% / 0.40);
-  --nb-cien-uniesienie: 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 8px 24px -8px hsl(0 0% 0% / 0.06);
+  /* Podbite 23.09.2026 razem z tłem/krawędzią — karta ma faktycznie
+     odrywać się od strony, nie tylko mieć teoretyczny cień 0.04. */
+  --nb-cien-uniesienie: 0 1px 3px 0 hsl(0 0% 0% / 0.06), 0 10px 28px -8px hsl(0 0% 0% / 0.10);
 }
 
 [data-theme="nextbyte-light"] .nb-szklo.nb-kafelek::before,

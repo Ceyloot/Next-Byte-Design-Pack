@@ -438,8 +438,13 @@ export const MOTYWY = {
     kolory: {
       '--accent': '210 40% 96%',
       '--accent-foreground': '0 0% 10%',
-      '--background': '0 0% 98%',
-      '--border': '214 32% 91%',
+      /* 23.09.2026 — tło i karta były o 2% jasności od siebie (98% vs 100%),
+         więc kafelki znikały w tle strony (zgłoszenie: "wszystko się zlewa
+         w jasnym motywie"). Tło schodzi do chłodnego szarego 95%, karta
+         zostaje bielą 100% — te 5 punktów jasności to różnica, którą oko
+         faktycznie widzi jako "kartka na blacie", bez szarzenia motywu. */
+      '--background': '220 16% 95%',
+      '--border': '217 22% 85%',
       '--brand-primary': '215 85% 55%',
       '--brand-primary-dark': '215 85% 45%',
       '--brand-primary-light': '215 85% 65%',
@@ -468,9 +473,11 @@ export const MOTYWY = {
       '--success': '152 62% 32%',
       '--warning': '32 92% 36%',
       '--nb-plama-nasycenie': '0.15',
-      '--nb-kafelek-krawedz': '0.12',
-      '--nb-szklo-krawedz': '0.10',
-      '--nb-tafla-krawedz': '0.14',
+      /* Krawędzie podbite razem z tłem (23.09.2026) — inaczej tło ciemniejsze
+         o 5 punktów zjada różnicę, którą krawędź miała pokazywać. */
+      '--nb-kafelek-krawedz': '0.18',
+      '--nb-szklo-krawedz': '0.14',
+      '--nb-tafla-krawedz': '0.22',
     } as Record<string, string>,
   },
 };
