@@ -15,6 +15,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { DefinicjeSzklaPlynnego } from '@/components/ui/szklo-plynne';
 import { AppShell } from '@/components/AppShell';
 import { UstawieniaWygladu } from '@/eksport/UstawieniaWygladu';
+import { BramkaLogowania } from '@/eksport/BramkaLogowania';
 import { PozaEksportem } from '@/eksport/PozaEksportem';
 import { ProbaMaterialu } from '@/eksport/ProbaMaterialu';
 
@@ -54,6 +55,7 @@ export default function App() {
                                 konta się nie wyświetli, a materiał trzeba widzieć. */}
                             <Route path="/proba-materialu" element={<ProbaMaterialu />} />
                             <Route path="*" element={
+                          <BramkaLogowania>
                             <Routes>
                               <Route path="/" element={<Navigate to="/panel-glowny" replace />} />
                               <Route
@@ -69,6 +71,7 @@ export default function App() {
                               {/* Reszta menu prowadzi do modułów spoza paczki. */}
                               <Route path="*" element={<AppShell><PozaEksportem /></AppShell>} />
                             </Routes>
+                          </BramkaLogowania>
                             } />
                           </Routes>
                         </PanicModeProvider>
