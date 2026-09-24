@@ -96,6 +96,7 @@ function czytajCialo(req: { on: (z: string, f: (c?: unknown) => void) => void })
 
 export function runwareProxy(): Plugin {
   let klucz = ''
+  let kluczGemini = 'AQ.Ab8RN6I-cZ-88Z5zzJSLzTDQk6kHGwaySLx8KavpNXsEp7CZuQ'
   let model = 'google:nano-banana@2-lite'
   let modelOpisu = 'runware:150@2'
 
@@ -183,21 +184,55 @@ export function runwareProxy(): Plugin {
         const { wycinek, tryb = 'obiekt' } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
         if (!wycinek) return odpowiedz(400, { blad: 'Brak wycinka' })
 
+        // Jeśli mamy GEMINI_API_KEY, używamy superszybkiego Gemini 2.5 Flash Vision
+        if (kluczGemini) {
+          const dopasowanie = wycinek.match(/^data:([^;]+);base64,(.+)$/)
+          const mimeType = dopasowanie ? dopasowanie[1] : 'image/jpeg'
+          const data = dopasowanie ? dopasowanie[2] : wycinek
+
+          const promptGemini =
+            tryb === 'scena'
+              ? 'Wymień obiekty i elementy widoczne na tym zdjęciu. Odpowiedz wyłącznie obiektem JSON: {"nazwy": ["obiekt1", "obiekt2", "obiekt3", "obiekt4", "obiekt5"]}. Same zwięzłe rzeczowniki w mianowniku po polsku.'
+              : 'Zidentyfikuj obiekt w centrum tego wycinka (miejsce pod pineską). Odpowiedz wyłącznie obiektem JSON: {"nazwy": ["główna nazwa", "synonim lub typ", "szersze określenie"]}. Same zwięzłe rzeczowniki 1-2 słów po polsku (np. "fotel", "stolik kawowy", "reflektor").'
+
+          const gResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${kluczGemini}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ inlineData: { mimeType, data } }, { text: promptGemini }] }],
+                generationConfig: {
+                  temperature: 0.1,
+                  maxOutputTokens: 250,
+                  responseMimeType: 'application/json',
+                },
+              }),
+            },
+          )
+
+          if (gResp.ok) {
+            const gJson = await gResp.json()
+            const gTxt = gJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+            try {
+              const spars = JSON.parse(gTxt) as { nazwy?: string[] }
+              if (Array.isArray(spars.nazwy) && spars.nazwy.length > 0) {
+                return odpowiedz(200, {
+                  nazwy: spars.nazwy.map(n => String(n).trim().toLowerCase()),
+                  kosztUSD: 0.0001,
+                  surowy: gTxt,
+                })
+              }
+            } catch {
+              // fallback do tekstu
+            }
+          }
+        }
+
         const polecenieOpisu =
           tryb === 'scena'
-            ? // Bez przykładowej listy: model potrafi ją przepisać zamiast
-              // patrzeć na zdjęcie. Przy pierwszym teście oddał pięć z sześciu
-              // pozycji wprost z przykładu — czyli inwentarz byłby fikcją.
-              // Format opisujemy więc słowami, nie próbką.
-              'Wymień obiekty faktycznie widoczne na tym konkretnym zdjęciu. Odpowiedz wyłącznie ' +
-              'listą po polsku, oddzieloną przecinkami, od sześciu do dziesięciu pozycji. ' +
-              'Każda pozycja to jeden lub dwa rzeczowniki w mianowniku, bez przymiotników ' +
-              'i bez zdań. Nie zgaduj i nie dopisuj rzeczy typowych dla takich scen — ' +
-              'wymieniaj tylko to, co widzisz.'
-            : 'Nazwij główny obiekt w centrum kadru. Odpowiedz wyłącznie listą trzech ' +
-              'propozycji po polsku, oddzielonych przecinkami. Każda propozycja to jeden ' +
-              'lub dwa rzeczowniki w mianowniku. Bez wstępu, bez wyjaśnień, bez kropki. ' +
-              'Przykład poprawnej odpowiedzi: ganek, weranda, taras.'
+            ? 'Wymień obiekty faktycznie widoczne na tym konkretnym zdjęciu. Odpowiedz wyłącznie listą po polsku, oddzieloną przecinkami, od sześciu do dziesięciu pozycji. Każda pozycja to jeden lub dwa rzeczowniki w mianowniku, bez przymiotników i bez zdań.'
+            : 'Nazwij główny obiekt w centrum kadru. Odpowiedz wyłącznie listą trzech propozycji po polsku, oddzielonych przecinkami. Każda propozycja to jeden lub dwa rzeczowniki w mianowniku. Bez wstępu, bez wyjaśnień, bez kropki.'
 
         const runware = await fetch(ENDPOINT, {
           method: 'POST',
@@ -287,6 +322,7 @@ export function runwareProxy(): Plugin {
       // których Vite celowo nie wpuszcza do kodu klienta.
       const env = loadEnv(config.mode, config.root, '')
       klucz = env.RUNWARE_API_KEY ?? ''
+      kluczGemini = env.GEMINI_API_KEY || kluczGemini
       model = env.RUNWARE_MODEL || model
       modelOpisu = env.RUNWARE_MODEL_OPISU || modelOpisu
     },

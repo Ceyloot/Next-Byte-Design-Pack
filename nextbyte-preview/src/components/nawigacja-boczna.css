@@ -1,0 +1,95 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAWIGACJA BOCZNA — materiał 1:1 z platformy
+   Źródło: nextbyte-panel-glowny/src/index.css (reguły .nb-szklo,
+   .nb-nav-*, .nb-ikona-kafel, tinta paska z 08.09.2026).
+   Wszystko zamknięte pod `.nbb`, bo podgląd ma własne `.nb-szklo`
+   o innych wartościach — tu nie może ich przejąć.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Tafla paska: `[data-sidebar="sidebar"].nb-szklo.nb-szklo-plynne` */
+.nbb-tafla {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid hsl(var(--foreground) / 0.14);
+  border-radius: 1rem;
+  background-color: hsl(var(--card) / var(--nb-kafelek-wypelnienie, 0.348));
+  -webkit-backdrop-filter: saturate(130%) blur(8.8px);
+  backdrop-filter: saturate(130%) blur(8.8px);
+  box-shadow:
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.16),
+    inset 1px 0 0 0 hsl(0 0% 100% / 0.06),
+    inset -1px 0 0 0 hsl(0 0% 100% / 0.06),
+    inset 0 -1px 0 0 hsl(0 0% 0% / 0.22);
+  overflow: clip;
+}
+.nbb-tafla::before {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit; pointer-events: none;
+  background: linear-gradient(to bottom, hsl(var(--primary) / 0.05), transparent 50%, hsl(var(--primary) / 0.07));
+}
+
+/* Szklany kafelek wewnątrz tafli (znak, dok) — `nb-szklo nb-kafelek` */
+.nbb .nbb-kafelek {
+  border: 1px solid hsl(var(--foreground) / 0.14);
+  background-color: hsl(var(--card) / var(--nb-kafelek-wypelnienie, 0.348));
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.16), inset 0 -1px 0 0 hsl(0 0% 0% / 0.22);
+}
+
+.nbb .nb-ikona-kafel {
+  border: 1px solid hsl(var(--foreground) / 0.06);
+  background-color: hsl(var(--foreground) / 0.039);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.nbb .group:hover .nb-ikona-kafel,
+.nbb .nb-ikona-kafel.group:hover {
+  background-color: hsl(var(--foreground) / 0.081);
+  border-color: hsl(var(--foreground) / 0.10);
+}
+
+.nbb .nb-wiersz {
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--foreground) / 0.03);
+}
+
+.nbb .nb-nav-ikona {
+  border: 1px solid hsl(var(--foreground) / 0.07);
+  background-color: hsl(var(--foreground) / 0.035);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+.nbb .nb-nav-ikona-akt {
+  border: 1px solid hsl(var(--primary) / 0.34);
+  background-color: hsl(var(--primary) / 0.14);
+  box-shadow: 0 2px 10px hsl(var(--primary) / 0.16);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.nbb .nb-nav-pozycja {
+  border: 1px solid transparent;
+  background-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.nbb .nb-nav-pozycja:hover {
+  background-color: hsl(var(--foreground) / 0.0375);
+}
+.nbb .nb-nav-pozycja-akt {
+  position: relative;
+  border: 1px solid hsl(var(--primary) / 0.22);
+  background-color: hsl(var(--foreground) / 0.07);
+  background-image: linear-gradient(hsl(var(--primary) / 0.09), hsl(var(--primary) / 0.09));
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+.nbb .nb-nav-pozycja-akt::before {
+  content: '';
+  position: absolute; top: 0; left: 10px; right: 10px; height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.55), transparent);
+}
+.nbb .nb-nav-pozycja-akt:hover {
+  background-color: hsl(var(--foreground) / 0.085);
+  border-color: hsl(var(--primary) / 0.26);
+}
+
+.nbb-lista::-webkit-scrollbar { width: 4px; }
+.nbb-lista::-webkit-scrollbar-thumb { background: hsl(var(--foreground) / 0.12); border-radius: 4px; }
+.nbb-lista::-webkit-scrollbar-track { background: transparent; }

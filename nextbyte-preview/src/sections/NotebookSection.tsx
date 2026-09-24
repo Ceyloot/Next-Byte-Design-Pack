@@ -25,14 +25,22 @@ import ErrorBoundary from '@/sections/notebook/ErrorBoundary'
 // @ts-expect-error — j.w.
 import { ThemeProvider } from '@/sections/notebook/context/ThemeContext'
 
-export function NotebookSection() {
+interface NotebookSectionProps {
+  bezPaska?: boolean
+  strona?: 'lewo' | 'prawo'
+  pozycja?: 'gora' | 'dol' | 'lewo' | 'prawo'
+  onUchwyt?: (e: React.PointerEvent) => void
+  onMenu?: () => void
+}
+
+export function NotebookSection({ bezPaska, strona, pozycja, onUchwyt, onMenu }: NotebookSectionProps) {
   return (
     <ErrorBoundary scope="Your Notebook">
       <ThemeProvider>
         <ToastProvider>
           {/* Wstrzykuje klasy ruchu stylu „duch" (p2-wejscie, p2-scroll…). */}
           <Panel2Anim />
-          <NotebookPage />
+          <NotebookPage bezPaska={bezPaska} strona={strona} pozycja={pozycja} onUchwyt={onUchwyt} onMenu={onMenu} />
         </ToastProvider>
       </ThemeProvider>
     </ErrorBoundary>

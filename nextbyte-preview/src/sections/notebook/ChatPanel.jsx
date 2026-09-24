@@ -1,6 +1,7 @@
+import znakNextbyte from '@/assets/nextbyte-mark.png';
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
-import { Send, User, Sparkles, Trash2, Loader2, MessageSquare, Plus, BarChart, FileText, HelpCircle, Mic, Square, Paperclip, X, Image as ImageIcon, File as FileIcon, Headphones, Presentation, ClipboardList, Layers, CircleHelp, Table2, BookOpen, Download, Globe, ChevronDown, Phone, Wand2, Zap, Edit3, RefreshCw, ArrowDown, FileUp, Type, Video as Youtube } from 'lucide-react';
+import { Library, ArrowRight, Send, User, Sparkles, Trash2, Loader2, MessageSquare, Plus, BarChart, FileText, HelpCircle, Mic, Square, Paperclip, X, Image as ImageIcon, File as FileIcon, Headphones, Presentation, ClipboardList, Layers, CircleHelp, Table2, BookOpen, Download, Globe, ChevronDown, Phone, Wand2, Zap, Edit3, RefreshCw, ArrowDown, FileUp, Type, Video as Youtube } from 'lucide-react';
 import { isSlideDeck, parseSlideDeck, exportToPptx } from './utils/pptxExport';
 import MarkdownRenderer from './MarkdownRenderer';
 import { ToolContentRenderer } from './ToolRenderers';
@@ -26,7 +27,7 @@ function parseTimeStrToSeconds(timeStr) {
 }
 
 const AI_TOOLS = [
-  { id: 'audio', label: 'Audio Overview', icon: Headphones, color: 'text-purple-400',
+  { id: 'audio', label: 'Podcast audio', icon: Headphones, color: 'text-purple-400',
     prompt: `Na podstawie moich źródeł wygeneruj skrypt rozmowy audio z dwoma osobami (PREZENTER 1 i PREZENTER 2).
 
 ZASADY BRZMIENIA — tekst trafi do syntezatora mowy:
@@ -49,7 +50,7 @@ PREZENTER 1 zna temat głębiej i tłumaczy. PREZENTER 2 jest szczerze ciekawy, 
 Format: "PREZENTER 1: tekst" i "PREZENTER 2: tekst" (każda kwestia od nowej linii)
 DŁUGOŚĆ — BEZWZGLĘDNY LIMIT: 15-25 wymian. Każda kwestia MAKSYMALNIE 60 słów. Łączna liczba słów: około 1200. NIE MOŻESZ przekroczyć tych limitów.` },
 
-  { id: 'slides', label: 'Slide Deck', icon: Presentation, color: 'text-amber-400',
+  { id: 'slides', label: 'Prezentacja', icon: Presentation, color: 'text-amber-400',
     prompt: `Stwórz prezentację slajdową z moich źródeł.
 
 Format KAŻDEGO slajdu:
@@ -70,7 +71,7 @@ Wymagania:
 - Każdy punkt musi być krótki i konkretny
 - Notatki prelegenta pod KAŻDYM slajdem w kursywie` },
 
-  { id: 'report', label: 'Reports', icon: ClipboardList, color: 'text-cyan-400',
+  { id: 'report', label: 'Raport', icon: ClipboardList, color: 'text-cyan-400',
     prompt: `Wygeneruj profesjonalny raport na podstawie moich źródeł.
 
 Struktura raportu:
@@ -97,7 +98,7 @@ Konkretne wskazówki i zalecenia wynikające z analizy.
 
 Pisz formalnym, ale przystępnym językiem. Unikaj żargonu.` },
 
-  { id: 'flashcards', label: 'Flashcards', icon: Layers, color: 'text-orange-400',
+  { id: 'flashcards', label: 'Fiszki', icon: Layers, color: 'text-orange-400',
     prompt: `Wygeneruj 10-15 fiszek do nauki na podstawie moich źródeł.
 
 Format KAŻDEJ fiszki (WAŻNE — puste linie MIĘDZY każdą sekcją):
@@ -138,7 +139,7 @@ Wymagania:
 - Każde pytanie musi mieć dokładnie 4 opcje (A-D) jako listę
 - Na końcu quizu dodaj sekcję ## Wyniki z podsumowaniem progów punktowych` },
 
-  { id: 'infographic', label: 'Infographic', icon: BarChart, color: 'text-rose-400',
+  { id: 'infographic', label: 'Infografika', icon: BarChart, color: 'text-rose-400',
     prompt: `Stwórz tekstową infografikę podsumowującą moje źródła.
 
 Użyj tego formatu:
@@ -153,7 +154,7 @@ Format ma być:
 - Skanowany wzrokiem (nagłówki + krótkie punkty)
 - Atrakcyjny wizualnie (emoji jako separatory sekcji)` },
 
-  { id: 'table', label: 'Data Table', icon: Table2, color: 'text-teal-400',
+  { id: 'table', label: 'Tabela danych', icon: Table2, color: 'text-teal-400',
     prompt: `Wyodrębnij najważniejsze informacje z moich źródeł i przedstaw je w tabelach Markdown.
 
 Wymagania:
@@ -168,7 +169,7 @@ Wymagania:
 \`\`\`
 Użyj type "bar" dla porównań, "line" dla trendów w czasie, "pie" dla udziałów procentowych (max 6 kategorii).` },
 
-  { id: 'glossary', label: 'Glossary', icon: BookOpen, color: 'text-indigo-400',
+  { id: 'glossary', label: 'Słownik pojęć', icon: BookOpen, color: 'text-indigo-400',
     prompt: `Stwórz słownik pojęć (glossary) na podstawie moich źródeł.
 
 Format słownika:
@@ -221,7 +222,7 @@ const MODEL_OPTIONS = [
   { id: 'claude-3.5-sonnet', name: 'Głęboki (Claude 3.5)', badge: 'PRO' },
 ];
 
-function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sources = [], hasSources, presetData, isGeneratingPresets, isAiLoading, onSeekToVideo, apiKeys, prefillInput, onToggleObjectsOpen, isObjectsOpen, onStudioGenerate, onModelSelectChange }) {
+function ChatPanel({ projectName, projectDate, messages, onSendMessage, onClearChat, onOpenAddSource, sources = [], hasSources, presetData, isGeneratingPresets, isAiLoading, onSeekToVideo, apiKeys, prefillInput, onToggleObjectsOpen, isObjectsOpen, onStudioGenerate, onModelSelectChange }) {
   const toast = useToast();
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState([]);
@@ -607,7 +608,7 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
   const isEmpty = messages.length === 0;
 
   return (
-    <div ref={chatContainerRef} className="flex flex-col h-full relative overflow-hidden">
+    <div ref={chatContainerRef} className={`flex flex-col h-full relative overflow-hidden ${isEmpty ? 'justify-center' : ''}`}>
       {/* Citation Popup — constrained within chat panel */}
       {activePopup && (() => {
         const matchedSource = sources.find(s => s.id === activePopup.citation.sourceId || s.videoId === activePopup.citation.sourceId)
@@ -786,97 +787,100 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto custom-scrollbar relative pt-2"
-        style={{
+        /* Pusty czat: obszar nie rośnie, więc powitanie i pole wpisywania
+           stają razem pośrodku — układ Chat AI. Z wiadomościami wraca lista
+           na całą wysokość i pole przy dolnej krawędzi. */
+        className={isEmpty ? 'relative max-h-[60%] flex-none overflow-y-auto custom-scrollbar' : 'flex-1 overflow-y-auto custom-scrollbar relative pt-2'}
+        style={isEmpty ? undefined : {
           WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 56px), transparent 100%)',
           maskImage: 'linear-gradient(to bottom, black calc(100% - 56px), transparent 100%)',
         }}
       >
         {isEmpty ? (
-          <div className={`px-4 w-full max-w-4xl mx-auto ${hasSources ? 'py-10' : 'flex min-h-full items-center justify-center pb-24'}`}>
+          <div className="mx-auto w-full max-w-4xl px-6 pb-6 pt-2">
+            {/* NAGŁÓWEK JAK W GEMINI NOTEBOOK — ikona notatnika, duży lekki
+                tytuł, obok pigułka ze źródłami. Kolumna wyrównana do lewej,
+                wyśrodkowana na stronie; materiał i akcent z NextByte. */}
+            <span className="nbb">
+              <span className="nb-nav-ikona-akt inline-flex h-9 w-9 items-center justify-center rounded-xl text-primary">
+                <Library size={17} strokeWidth={1.75} />
+              </span>
+            </span>
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+              <h1 className="min-w-0 max-w-full text-[40px] font-normal leading-[1.15] tracking-tight text-foreground">
+                {projectName || 'Notatnik'}
+              </h1>
+              <button
+                type="button"
+                onClick={onOpenAddSource}
+                title={hasSources ? 'Dodaj kolejne źródło' : 'Dodaj pierwsze źródło'}
+                className="nbb nb-ikona-kafel group inline-flex h-11 shrink-0 items-center gap-2.5 rounded-full px-4 transition-all duration-300 hover:!border-primary/40"
+              >
+                <span className="flex -space-x-1.5">
+                  {(sources.length ? sources.slice(0, 3) : [0]).map((_, k) => (
+                    <span key={k} className="flex h-5 w-4 items-center justify-center rounded-[4px] border border-primary/40 bg-primary/25 text-primary">
+                      <FileText size={10} />
+                    </span>
+                  ))}
+                </span>
+                <span className="text-[14px] font-medium text-foreground">Źródła: {sources.length}</span>
+              </button>
+            </div>
             {!hasSources ? (
-              /* JEDEN CEL, NIE CZTERY.
-                 Notatnik bez źródeł ma dokładnie jedno zadanie: przyjąć
-                 pierwszy materiał. Cztery równorzędne kafelki kazały wybierać
-                 drogę, zanim cokolwiek się wydarzyło — a wybór i tak prowadził
-                 w to samo okno. Zostaje jedno duże pole i jedno zdanie. */
-              <div className="mx-auto flex w-full max-w-md flex-col items-center">
+              /* Jedno zadanie pustego notatnika: przyjąć pierwszy materiał.
+                 Wiersz w materiale paska zamiast wielkiego plusa na środku. */
+              <div className="nbb mt-6 max-w-md">
                 <button
                   type="button"
                   onClick={onOpenAddSource}
-                  className="group relative flex w-full flex-col items-center gap-4 rounded-3xl px-8 py-12 transition-all duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="nb-ikona-kafel group flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-all duration-300 hover:!border-primary/40"
                 >
-                  {/* Światło rozjaśnia się pod kursorem — całe pole reaguje,
-                      więc widać, że klikalne jest wszystko, nie sama ikona. */}
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.10),transparent_70%)] opacity-70 transition-opacity duration-300 group-hover:opacity-100"
-                  />
-
-                  <span className="relative flex h-20 w-20 items-center justify-center rounded-3xl border border-primary/25 bg-primary/10 text-primary transition-all duration-300 group-hover:scale-105 group-hover:border-primary/45 group-hover:bg-primary/15">
-                    <Plus size={34} strokeWidth={1.75} />
+                  <span className="nb-nav-ikona-akt flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary transition-transform duration-200 group-hover:scale-105">
+                    <Plus size={18} strokeWidth={1.75} />
                   </span>
-
-                  <span className="relative flex flex-col items-center gap-1.5">
-                    <span className="font-heading text-xl font-bold tracking-tight text-foreground">
-                      Wrzuć pierwsze źródło
-                    </span>
-                    <span className="text-[13px] text-foreground/65">
-                      film · PDF · strona · tekst
-                    </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-semibold text-foreground">Dodaj pierwsze źródło</span>
+                    <span className="block text-[12.5px] text-foreground/55">PDF, link, film z YouTube albo wklejony tekst</span>
                   </span>
+                  <span className="text-[12px] font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">Dodaj →</span>
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col space-y-5 animate-in fade-in duration-500">
                 <div className="space-y-4">
                   {isGeneratingPresets ? (
-                    <div className="flex items-center gap-3">
-                      <Loader2 size={24} className="animate-spin text-primary" />
-                      <h2 className="text-3xl font-heading font-bold text-foreground">
-                        Analizowanie źródeł...
-                      </h2>
+                    <div className="mt-3 flex items-center gap-3">
+                      <Loader2 size={18} className="animate-spin text-primary" />
+                      <span className="text-[15px] font-medium text-foreground/80">
+                        Czytam źródła…
+                      </span>
                     </div>
                   ) : (
                     <>
-                      <h2 className="text-3xl font-heading font-bold text-foreground leading-tight">
-                        {presetData?.title || 'Zacznij rozmowę'}
-                      </h2>
-                      <p className="text-base text-foreground/80 leading-relaxed max-w-2xl">
+                      <p className="mt-3 line-clamp-3 max-w-3xl text-[15px] leading-relaxed text-foreground/60">
                         {presetData?.summary || 'Wybierz jedno z pytań poniżej lub zadaj własne.'}
                       </p>
                     </>
                   )}
                 </div>
 
-                {!isGeneratingPresets && presetData?.questions?.length > 0 && (
-                  <div className="flex flex-col gap-3">
-                    {presetData.questions.map((q, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handlePreset(q)}
-                        className="w-full text-left px-5 py-4 rounded-xl bg-background/40 border border-foreground/5 hover:bg-primary/10 hover:border-primary/30 transition-all group flex items-start gap-4"
-                      >
-                        <Sparkles size={16} className="text-primary mt-0.5 opacity-60 group-hover:opacity-100 flex-shrink-0" />
-                        <span className="text-[15px] font-medium text-foreground/90 group-hover:text-foreground">
-                          {q}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           </div>
         ) : (
-          <div className="pt-5 pb-20 px-3 space-y-4 w-full max-w-4xl mx-auto">
+          <div className="pt-14 pb-24 px-4 space-y-6 w-full max-w-5xl mx-auto">
             {messages.map((msg, i) => {
               const isUser = msg.role === 'user';
               return (
-                <div key={i} className={`flex gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'} group/message items-end`}>
-                  <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mb-0.5 ${isUser ? 'bg-primary/80 text-primary-foreground' : 'bg-primary/15 text-primary border border-primary/25'}`}>
-                    {isUser ? <User size={12} /> : <Sparkles size={12} />}
-                  </div>
+                <div key={i} className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} group/message items-start`}>
+                  {/* Awatar jak w Chat AI: znak NEXTBYTE przy AI, kółko profilu przy użytkowniku. */}
+                  {isUser ? (
+                    <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/15 text-primary">
+                      <User size={14} />
+                    </div>
+                  ) : (
+                    <img src={znakNextbyte} alt="" aria-hidden className="mt-2 h-7 w-7 flex-shrink-0 object-contain [[data-theme=future-theme]_&]:opacity-85 [[data-theme=future-theme]_&]:brightness-0" />
+                  )}
                   <div className={`flex flex-col gap-1 ${isUser ? 'items-end max-w-[78%]' : 'items-start max-w-[88%]'}`}>
                     {isUser && Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
                       <div className={`flex flex-wrap gap-1.5 mb-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -914,8 +918,11 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
                       );
 
                       const bubbleClass = isUser
-                        ? 'px-5 py-3 text-sm rounded-2xl overflow-hidden bg-primary/20 border border-primary/40 text-foreground rounded-tr-xs shadow-md backdrop-blur-md'
-                        : 'px-5 py-4 md:px-6 md:py-5 text-sm rounded-2xl overflow-hidden bg-foreground/[0.04] border border-foreground/[0.08] text-foreground rounded-tl-xs backdrop-blur-md shadow-md';
+                        /* Dymki 1:1 z Chat AI: ciemne szkło, zaokrąglenie 16 px ze wszystkich
+                           stron, tekst 15 px. Użytkownik ma rant akcentu z miękką poświatą,
+                           AI — neutralny rant. Bez pełnego tła w kolorze akcentu. */
+                        ? 'px-5 py-3.5 text-[15px] leading-relaxed rounded-2xl overflow-hidden bg-card/60 border border-primary/25 text-foreground backdrop-blur-md shadow-[0_0_28px_-10px_hsl(var(--primary)/0.45)]'
+                        : 'px-5 py-4 text-[15px] leading-relaxed rounded-2xl overflow-hidden bg-card/40 border border-foreground/[0.10] text-foreground backdrop-blur-md';
 
                       const isNotFound = !isUser && msg.content?.includes('Nie znalazłem tych informacji w udostępnionych materiałach');
                       const showSearchPrompt = isNotFound && !respondedSearches[msg.id || i] && !autoWebSearch;
@@ -1034,7 +1041,7 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
                 <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center bg-primary/20 text-primary border border-primary/30">
                   <Sparkles size={13} />
                 </div>
-                <div className="px-4 py-3 nb-szklo rounded-2xl rounded-tl-sm flex items-center gap-2">
+                <div className="px-4 py-3 bg-card/40 border border-foreground/[0.10] rounded-2xl flex items-center gap-2 backdrop-blur-md">
                   <GlassSpinner size="sm" label="Myślę..." />
                 </div>
               </div>
@@ -1050,7 +1057,7 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
           <GlassTooltip content="Przewiń do dołu">
             <button
               onClick={scrollToBottom}
-              className="p-2.5 rounded-full nb-szklo bg-card/85 hover:bg-card/95 text-foreground shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="p-2.5 rounded-full bg-card/90 border border-foreground/15 hover:bg-card hover:border-primary/40 text-foreground shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
             >
               <ArrowDown size={15} className="text-primary" />
             </button>
@@ -1066,7 +1073,7 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
         onDrop={handleDrop}
       >
         {isDragOver && (
-          <div className="absolute inset-0 z-20 pointer-events-none border-2 border-dashed border-primary/60 bg-primary/10 backdrop-blur-md flex flex-col items-center justify-center rounded-3xl">
+          <div className="absolute inset-0 z-20 pointer-events-none border-2 border-dashed border-primary/60 bg-primary/10 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl">
             <Paperclip size={24} className="text-primary mb-1 animate-bounce" />
             <p className="text-primary font-bold tracking-wider text-xs">Upuść pliki, żeby dodać do wiadomości</p>
           </div>
@@ -1083,7 +1090,7 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
 
         <div className="w-full max-w-4xl mx-auto flex flex-col pointer-events-auto">
           {/* Floating Nexbyte Prompt Widget Box */}
-          <div className="nexbyte-chat-widget relative p-4 nb-szklo rounded-[26px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all flex flex-col gap-3">
+          <div className="nexbyte-chat-widget relative p-4 bg-card/75 border border-foreground/[0.13] rounded-2xl shadow-[0_4px_24px_-4px_hsl(var(--foreground)/0.08)] backdrop-blur-xl transition-all flex flex-col gap-3">
 
             {/* TOP BAR: Model Selector Dropdown & Filter Chips (Screenshots 1 & 2) */}
             <div className="flex items-center justify-between pb-2 border-b border-foreground/[0.08] select-none">
@@ -1158,9 +1165,9 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
                   return (
                     <div
                       key={att.id}
-                      className="group flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-nb-sm bg-card border border-primary/20 text-xs max-w-[220px]"
+                      className="group flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-xl bg-card border border-primary/20 text-xs max-w-[220px]"
                     >
-                      <div className="w-8 h-8 rounded-md overflow-hidden bg-background/40 flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg overflow-hidden bg-background/40 flex items-center justify-center flex-shrink-0">
                         {isImage && att.previewUrl
                           ? <img src={att.previewUrl} alt={att.name} className="w-full h-full object-cover" />
                           : att.mimeType === 'application/pdf'
@@ -1192,7 +1199,7 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
             <form onSubmit={handleSubmit}>
               <div className="py-1 min-h-[44px] flex items-center">
                 {isListening ? (
-                  <div className="w-full flex items-center gap-1 h-10 px-3 rounded-nb-sm bg-card/60 border border-primary/25">
+                  <div className="w-full flex items-center gap-1 h-10 px-3 rounded-xl bg-card/60 border border-primary/25">
                     {audioLevels.map((level, i) => (
                       <div
                         key={i}
@@ -1205,7 +1212,7 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
                     ))}
                   </div>
                 ) : isTranscribing ? (
-                  <div className="w-full flex items-center h-10 px-3 rounded-nb-sm bg-card/60 border border-primary/20">
+                  <div className="w-full flex items-center h-10 px-3 rounded-xl bg-card/60 border border-primary/20">
                     <GlassSpinner size="sm" label="Transkrybuję mowę..." />
                   </div>
                 ) : (
@@ -1295,9 +1302,32 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
             </form>
           </div>
 
-          {/* Footer AI Disclaimer & Telebyte Badge */}
-          <p className="text-[11px] text-muted-foreground/60 text-center mt-2 select-none">
-            AI może się mylić. <a href="https://google.com" target="_blank" rel="noopener noreferrer" className="hover:underline text-muted-foreground/80">Polityka prywatności</a>
+          {/* SUGEROWANE PYTANIA pod polem — miejsce „Wcześniejszych czatów" z Gemini.
+              Wiersze listy zamiast pigułek: pełne zdanie czyta się szybciej. */}
+          {isEmpty && hasSources && !isGeneratingPresets && presetData?.questions?.length > 0 && (
+            <div className="nbb mt-6 px-2">
+              <p className="mb-1 px-3 text-[13px] font-medium text-foreground/45">Sugerowane pytania</p>
+              <ul>
+                {presetData.questions.slice(0, 4).map((q, i) => (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => handlePreset(q)}
+                      className="nb-nav-pozycja group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left"
+                    >
+                      <Sparkles size={14} className="shrink-0 text-primary/60 group-hover:text-primary" />
+                      <span className="flex-1 text-[14.5px] text-foreground/85 group-hover:text-foreground">{q}</span>
+                      <ArrowRight size={14} className="shrink-0 text-foreground/30 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Footer AI Disclaimer */}
+          <p className={`mx-auto mt-2 w-fit ${isEmpty ? 'hidden' : ''} select-none rounded-full border border-foreground/[0.08] bg-card/40 px-3 py-1 text-center text-[11px] text-foreground/55 backdrop-blur-md`}>
+            Next Scribe odpowiada na podstawie Twoich źródeł — sprawdzaj ważne informacje. <a href="#" className="underline underline-offset-2 hover:text-foreground">Polityka prywatności</a>
           </p>
         </div>
       </div>
@@ -1305,31 +1335,23 @@ function ChatPanel({ messages, onSendMessage, onClearChat, onOpenAddSource, sour
       {/* Lightbox */}
       {lightboxSrc && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md"
           onClick={() => setLightboxSrc(null)}
         >
           <img
             src={lightboxSrc}
             alt="Podgląd"
-            className="max-w-[90vw] max-h-[90vh] rounded-xl shadow-2xl object-contain"
+            className="max-w-[90vw] max-h-[90vh] rounded-2xl shadow-2xl object-contain border border-foreground/[0.12]"
             onClick={e => e.stopPropagation()}
           />
           <button
             onClick={() => setLightboxSrc(null)}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-card/80 border border-foreground/15 text-foreground hover:bg-card transition-colors"
           >
             <X size={16} />
           </button>
         </div>
       )}
-
-      {/* Floating Bottom Right Telebyte Badge (Screenshots 1 & 2) */}
-      <div className="fixed bottom-3 right-4 z-40">
-        <div className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shadow-lg backdrop-blur-md flex items-center gap-1 select-none cursor-pointer hover:bg-amber-500/25 transition-all">
-          <Zap size={12} className="text-amber-400" />
-          <span>Telebyte</span>
-        </div>
-      </div>
     </div>
   );
 }

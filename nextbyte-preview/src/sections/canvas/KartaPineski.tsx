@@ -98,9 +98,9 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
         <div className="border-t border-border/8 px-3 py-2">
           <p className="mb-1.5 text-[10px] text-foreground/35">Rozpoznane:</p>
           <div className="flex flex-wrap gap-1">
-            {pineska.sugestie.map(s => (
+            {Array.from(new Set(pineska.sugestie)).map((s, sIdx) => (
               <button
-                key={s}
+                key={`${s}-${sIdx}`}
                 onClick={() => onNazwa(s)}
                 className={cn(
                   'flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] transition-colors',
@@ -143,7 +143,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
           {pineska.chroniona
             ? 'Ten fragment ma wyjść z edycji nietknięty.'
             : pineska.label.trim()
-              ? 'Powołaj się na ten obiekt w poleceniu — chip jest na dolnym pasku.'
+              ? 'Powołaj się na ten obiekt w poleceniu — kliknij chip w czacie po prawej stronie.'
               : 'Nazwa trafia do polecenia jako chip, więc warto ją nadać.'}
         </p>
         <button

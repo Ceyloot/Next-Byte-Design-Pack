@@ -9,6 +9,43 @@ import { NbTabs } from '@/components/ui/NbTabs'
 import { GlassCard, GlassPanel, GlassBadge, GlassTooltip, GlassButton, GlassDropdown } from '@/components/glass'
 import { cn } from '@/lib/utils'
 import { useGlass } from '@/lib/glass-context'
+import { NawigacjaBoczna, type SekcjaNawigacji } from '@/components/NawigacjaBoczna'
+import { Wand2, Brain, Skull, Bot, Camera, Video, CalendarDays, SquareCheck, File, PenTool, Cloud, ShieldCheck } from 'lucide-react'
+
+/* Menu platformy 1:1 (AppSidebar.tsx) — pozycje jak na żywym pasku. */
+const MENU_PLATFORMY: SekcjaNawigacji[] = [
+  { id: 'glowne', pozycje: [{ id: 'panel', etykieta: 'Panel Główny', ikona: LayoutGrid }] },
+  { id: 'ai', tytul: 'AI', pozycje: [
+    { id: 'asystent', etykieta: 'Personalny Asystent', ikona: Sparkles },
+    { id: 'czat', etykieta: 'Chat AI', ikona: MessageSquare },
+    { id: 'promptex', etykieta: 'PromptEx', ikona: Wand2 },
+    { id: 'pamiec', etykieta: 'Pamięć AI', ikona: Brain },
+    { id: 'redzone', etykieta: 'Red Zone', ikona: Skull, koniec: <ShieldCheck className="h-4 w-4 text-primary" /> },
+  ] },
+  { id: 'przypiete', tytul: 'Przypięte moduły', pozycje: [
+    { id: 'trend', etykieta: 'Trend', ikona: Bot, kolorIkony: 'text-emerald-400' },
+  ] },
+  { id: 'studio', tytul: ' ', pozycje: [
+    { id: 'zdjecia', etykieta: 'Studio Zdjęć', ikona: Camera },
+    { id: 'video', etykieta: 'Studio Video', ikona: Video },
+  ] },
+  { id: 'praca', tytul: 'Praca', pozycje: [
+    { id: 'kalendarz', etykieta: 'Kalendarz', ikona: CalendarDays },
+    { id: 'zadania', etykieta: 'Zadania', ikona: SquareCheck },
+    { id: 'notatki', etykieta: 'Notatki', ikona: File },
+    { id: 'tablice', etykieta: 'Tablice', ikona: PenTool },
+    { id: 'nextcloud', etykieta: 'NextCloud', ikona: Cloud },
+  ] },
+]
+
+function PokazNawigacjiBocznej() {
+  const [aktywna, setAktywna] = useState('panel')
+  return (
+    <div className="h-[860px] overflow-hidden rounded-2xl">
+      <NawigacjaBoczna sekcje={MENU_PLATFORMY} aktywna={aktywna} onWybor={setAktywna} />
+    </div>
+  )
+}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="nb-etykieta mb-3">{children}</p>
@@ -63,6 +100,13 @@ export function NawigacjaSection() {
 
   return (
     <div className="space-y-12">
+
+      {/* ── NAWIGACJA BOCZNA (platforma 1:1) ─────────────────────────── */}
+      <div className="space-y-4">
+        <h3 id="nav-boczna-platforma" className="text-sm font-semibold text-foreground/70">Nawigacja boczna — platforma 1:1</h3>
+        <SectionLabel>`NawigacjaBoczna` z `@/components/NawigacjaBoczna` — ten sam pasek niesie menu platformy i treść modułów (np. Next Scribe)</SectionLabel>
+        <PokazNawigacjiBocznej />
+      </div>
 
       {/* ── GÓRNA NAWIGACJA ──────────────────────────────────────────── */}
       <div className="space-y-4">

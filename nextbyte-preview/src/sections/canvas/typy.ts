@@ -35,6 +35,20 @@ export interface Warstwa {
   obiekty?: string[]
 }
 
+/** Dedykowana paleta 10 wyrazistych kolorów dla kolejnych pinesek */
+export const KOLORY_PINESEK = [
+  '#0284c7', // 1: Sky blue
+  '#c026d3', // 2: Fuchsia / Purple
+  '#16a34a', // 3: Emerald
+  '#ea580c', // 4: Orange
+  '#eab308', // 5: Yellow
+  '#dc2626', // 6: Red
+  '#06b6d4', // 7: Cyan
+  '#8b5cf6', // 8: Violet
+  '#ec4899', // 9: Pink
+  '#10b981', // 10: Teal
+]
+
 /**
  * Pineska = zaznaczony obiekt na zdjęciu.
  *
@@ -66,6 +80,19 @@ export interface Pineska {
    * i trafia do polecenia jako obszar chroniony.
    */
   chroniona?: boolean
+}
+
+/**
+ * Obszar roboczy zaznaczony ramką (prostokąt inpaintingu).
+ * Współrzędne znormalizowane 0–1 względem wymiarów warstwy.
+ */
+export interface RamkaObszaru {
+  layerId: string
+  x0: number
+  y0: number
+  x1: number
+  y1: number
+  etykieta?: string
 }
 
 let licznik = 0
@@ -107,10 +134,25 @@ export function etykietaPineski(p: Pineska, numer: number): string {
  * zapisu nie jest warta osobnego pola, a użytkownik nie powinien tracić
  * pracy przy każdej zmianie modelu.
  */
-export function wczytajProjekt(dane: unknown): { warstwy: Warstwa[]; pineski: Pineska[]; tekst: string } {
+export function wczytajProjekt(dane: unknown): { warstwy: Warstwa[]; pineski: Pineska[]; tekst: string; ramka?: RamkaObszaru | null } {
   const surowe = (dane ?? {}) as Record<string, unknown>
   const warstwy = Array.isArray(surowe.warstwy) ? (surowe.warstwy as Record<string, unknown>[]) : []
   const pineski = Array.isArray(surowe.pineski) ? (surowe.pineski as Record<string, unknown>[]) : []
+
+  let ramka: RamkaObszaru | null = null
+  if (surowe.ramka && typeof surowe.ramka === 'object') {
+    const r = surowe.ramka as Record<string, unknown>
+    if (typeof r.layerId === 'string' && Number.isFinite(r.x0) && Number.isFinite(r.y0) && Number.isFinite(r.x1) && Number.isFinite(r.y1)) {
+      ramka = {
+        layerId: String(r.layerId),
+        x0: Number(r.x0),
+        y0: Number(r.y0),
+        x1: Number(r.x1),
+        y1: Number(r.y1),
+        etykieta: typeof r.etykieta === 'string' ? r.etykieta : undefined,
+      }
+    }
+  }
 
   return {
     warstwy: warstwy
@@ -147,6 +189,7 @@ export function wczytajProjekt(dane: unknown): { warstwy: Warstwa[]; pineski: Pi
         chroniona: p.chroniona === true,
       })),
     tekst: typeof surowe.tekst === 'string' ? surowe.tekst : typeof surowe.opis === 'string' ? surowe.opis : '',
+    ramka,
   }
 }
 
@@ -200,6 +243,7 @@ export function kolejnoscObrazow(
   }
   dodaj(warstwaEdytowana ?? undefined)
   for (const p of pineski) dodaj(warstwy.find(w => w.id === p.layerId))
+  for (const w of warstwy) if (w.visible !== false) dodaj(w)
   return wynik
 }
 
@@ -280,3 +324,27 @@ export function zmniejszDoAnalizy(src: string, bok = 768): Promise<string> {
     obrazek.src = src
   })
 }
+
+/**
+ * Konwersja adresu (np. z assets Vite lub blob) na Data URI, aby Runware API w chmurze
+ * mogło bezbłędnie przetworzyć referencje obrazów.
+ */
+export function konwertujNaDataUrl(src: string): Promise<string> {
+  if (src.startsWith('data:')) return Promise.resolve(src)
+  return new Promise(resolve => {
+    const obrazek = new Image()
+    obrazek.crossOrigin = 'anonymous'
+    obrazek.onload = () => {
+      const plotno = document.createElement('canvas')
+      plotno.width = obrazek.width
+      plotno.height = obrazek.height
+      const g = plotno.getContext('2d')
+      if (!g) return resolve(src)
+      g.drawImage(obrazek, 0, 0)
+      resolve(plotno.toDataURL('image/jpeg', 0.95))
+    }
+    obrazek.onerror = () => resolve(src)
+    obrazek.src = src
+  })
+}
+

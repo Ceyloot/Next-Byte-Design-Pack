@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import SidebarRail from './SidebarRail';
+import { PasekPoziomyNotebook } from './PasekPoziomy';
 import ChatPanel from './ChatPanel';
 import NotesDropdown from './NotesDropdown';
 import StudioPanel from './StudioPanel';
@@ -28,12 +29,12 @@ import {
   getStudio, saveStudio,
 } from './utils/api';
 import {
-  FileText, Library, Plus, Settings,
+  FileText, Library, Plus, Settings, SlidersHorizontal,
   // Tylko dla atrapy navbara platformy (PLATFORM_NAV_MOCK) — nie dla funkcji appki.
   Zap, MonitorPlay, LayoutGrid, Sparkles, Layers, Navigation, PanelTop, BarChart2, Loader, Palette, Tag,
 } from 'lucide-react';
+import { NaglowekPanelu, PrzyciskPanelu } from './NaglowekPanelu';
 import CommandPalette from './CommandPalette';
-import { TechGrid } from '@/grafiki/siatka-techniczna'
 import { NbGlassFilters, GlassNav, GlassNavItem, GlassNavBrand, GlassNavSpacer, GlassButton, GlassDrawer } from '@/components/glass';
 import { cn } from '@/lib/utils';
 
@@ -160,8 +161,14 @@ function fixDuplicateIds(list) {
   });
 }
 
-function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = false }) {
-  const [leftWidth, onLeftDrag] = useDragResize(280, 220, 480);
+function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = false, strona = 'lewo', pozycja, onUchwyt, onMenu, bezPaska = false }) {
+  const aktualnaPozycja = pozycja || (strona === 'prawo' ? 'prawo' : 'lewo');
+  const jestPoziomo = aktualnaPozycja === 'gora' || aktualnaPozycja === 'dol';
+  const jestNaGorze = aktualnaPozycja === 'gora';
+  const jestNaDole = aktualnaPozycja === 'dol';
+  const jestPoPrawej = aktualnaPozycja === 'prawo';
+
+  const [leftWidth, onLeftDrag] = useDragResize(300, 240, 480);
   const [rightWidth, onRightDrag] = useDragResize(340, 260, 600, true);
 
   const [projects, setProjects] = useState([
@@ -307,7 +314,7 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
 
   const presetDebounceRef = useRef(null);
 
-  const [viewMode, setViewMode] = useState('dashboard');
+  const [viewMode, setViewMode] = useState('notebook');
   /* PODGLĄD: bez klucza Gemini aplikacja otwierała Ustawienia od razu, na pełny
      ekran, zasłaniając cały układ — a tu przyszliśmy oglądać układ, nie je.
      W docelowym repo to zachowanie ma sens, więc zostaje pod flagą. */
@@ -876,11 +883,8 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
   const viewerSource = sources.find(s => s.id === viewerSourceId);
 
   return (
-    <div className="flex h-screen text-foreground overflow-hidden font-sans bg-background relative">
+    <div className="flex h-full w-full text-foreground overflow-hidden font-sans relative">
       <NbGlassFilters />
-      <TechGrid />
-      {/* Background ambient mesh */}
-      <div className="fixed inset-0 z-0 pointer-events-none bg-grid opacity-60 [mask-image:radial-gradient(ellipse_at_center,white,transparent_80%)]" />
 
       {/* BEZ paska nawigacji — ta appka osadza się na platformie NextByte, która ma
           własny górny navbar; drugi pasek nad nim czytałby się jak podwójna nawigacja.
@@ -935,23 +939,53 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
           </div>
         )}
 
-        {/* TRZY KOLUMNY ROZDZIELONE ŚWIATŁEM, NIE KRESKĄ.
-            Wcześniej ekran był pokrojony dwiema twardymi liniami na trzy płyty
-            tej samej czerni — stąd wrażenie suchości: nic nie prowadzi oka.
-            Teraz środek jest o stopień jaśniejszy i uniesiony (scena), a boki
-            cofają się w tło. Podział czyta się jako głębia, nie jako ramka. */}
-        <div className="relative flex flex-1 min-h-0 w-full overflow-hidden">
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-64 z-0 bg-[radial-gradient(ellipse_70%_100%_at_50%_0%,hsl(var(--primary)/0.07),transparent_70%)]"
-          />
+        {/* POZIOMY PASEK NA GÓRZE — gdy przypięto na górze */}
+        {jestNaGorze && !bezPaska && !isMobile && (
+          <div className="flex-shrink-0 px-3 pt-3 pb-0">
+            <PasekPoziomyNotebook
+              onUchwyt={onUchwyt}
+              onMenu={onMenu}
+              projects={projects}
+              activeProjectId={activeProjectId}
+              onChangeProject={setActiveProjectId}
+              onCreateProject={handleCreateProject}
+              sources={sources}
+              pendingSources={pendingSources}
+              selectedSourceIds={selectedSourceIds}
+              activeSourceId={activeSourceId}
+              onSelectSource={(id) => setSelectedSourceIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+              onToggleAllSources={() => setSelectedSourceIds(selectedSourceIds.length === sources.length && sources.length > 0 ? [] : sources.map(s => s.id))}
+              onRemoveSelectedSources={handleRemoveSelectedSources}
+              onRemovePlaylist={handleRemovePlaylist}
+              onTogglePlaylistSelection={handleTogglePlaylistSelection}
+              onActiveSourceChange={handleOpenSourceViewer}
+              onRemoveSource={handleRemoveSource}
+              isLoading={isLoading}
+              onOpenAddModal={() => setIsAddModalOpen(true)}
+              projectName={projects.find(p => p.id === activeProjectId)?.name}
+              notesSlot={
+                <NotesDropdown
+                  notes={userNotes}
+                  onSaveNote={(note) => setUserNotes(prev => [note, ...prev])}
+                  onUpdateNote={(id, newText) => setUserNotes(prev => prev.map(n => n.id === id ? { ...n, text: newText, updatedAt: new Date().toISOString() } : n))}
+                  onTogglePinNote={(id) => setUserNotes(prev => prev.map(n => n.id === id ? { ...n, isPinned: !n.isPinned } : n))}
+                  onDeleteNote={handleRemoveNote}
+                  apiKeys={apiKeys}
+                />
+              }
+            />
+          </div>
+        )}
 
-          {/* LEFT — Sources: pełny panel gdy otwarty, wąski pasek z miniaturkami gdy
-              zwinięty (zamiast całkowitego znikania — wariant "kompaktowy" wybrany
-              przez użytkownika przy porównaniu wariantów paska bocznego). */}
-          {!isMobile && isLeftOpen && (
-            <div style={{ width: leftWidth }} className="theme-sidebar relative z-10 flex-shrink-0 flex flex-col overflow-hidden bg-transparent">
+        {/* TRZY KOLUMNY ROZDZIELONE ŚWIATŁEM, NIE KRESKĄ. */}
+        <div className={cn("relative flex flex-1 min-h-0 w-full overflow-hidden", jestPoPrawej && "flex-row-reverse")}>
+          {/* PIONOWY PASEK BOCZNY — renderowany tylko gdy pozycja to lewo lub prawo */}
+          {!jestPoziomo && !isMobile && isLeftOpen && !bezPaska && (
+            <div className="theme-sidebar relative z-30 flex-shrink-0 flex flex-col h-full bg-transparent">
               <Sidebar
+                strona={strona}
+                onUchwyt={onUchwyt}
+                onMenu={onMenu}
                 projects={projects}
                 activeProjectId={activeProjectId}
                 onChangeProject={setActiveProjectId}
@@ -987,7 +1021,7 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
               />
             </div>
           )}
-          {!isMobile && !isLeftOpen && (
+          {!jestPoziomo && !isMobile && !isLeftOpen && !bezPaska && (
             <SidebarRail
               sources={sources}
               activeSourceId={activeSourceId}
@@ -998,45 +1032,63 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
             />
           )}
 
-          {!isMobile && isLeftOpen && <ResizeHandle onPointerDown={onLeftDrag} />}
-
-          {/* CENTER — wyłącznie Czat AI. Notatki zjechały do rozwijanej sekcji nad
-              listą źródeł, transkrypcja do modala po kliknięciu w źródło, a Mapa
-              Myśli została usunięta — nie ma już czego przełączać. */}
-          <div className="relative z-10 flex-1 flex flex-col min-w-0 overflow-hidden bg-card/55 shadow-[0_0_70px_-24px_rgb(0_0_0/0.95)] transition-all duration-300">
-            <div className="flex-1 overflow-hidden">
-              <ChatPanel
-                messages={chatMessages}
-                onSendMessage={handleSendMessage}
-                onClearChat={() => setChatMessages([])}
-                sources={sources}
-                hasSources={sources.length > 0}
-                presetData={presetData}
-                isGeneratingPresets={isGeneratingPresets}
-                isAiLoading={isAiLoading}
-                apiKeys={apiKeys}
-                onSeekToVideo={handleSeekToVideo}
-                prefillInput={chatPrefill}
-                onToggleObjectsOpen={() => setIsObjectsOpen(v => !v)}
-                isObjectsOpen={isObjectsOpen}
-                onOpenAddSource={() => setIsAddModalOpen(true)}
-                onStudioGenerate={handleStudioGenerate}
-                onModelSelectChange={(newModelId) => setApiKeys(prev => ({ ...prev, model: newModelId }))}
+          {/* CENTER — Czat AI */}
+          <div className={cn(
+            "relative z-10 flex-1 flex flex-col min-w-0 h-full py-3 overflow-hidden",
+            jestPoziomo
+              ? (!isObjectsOpen ? "px-3" : "pl-3")
+              : jestPoPrawej
+                ? (!isObjectsOpen ? "pl-3" : "")
+                : (!isObjectsOpen ? "pr-3" : "")
+          )}>
+            <div className="h-full w-full rounded-2xl border border-foreground/[0.12] bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
+              <NaglowekPanelu
+                tytul="Czat"
+                akcje={
+                  <PrzyciskPanelu
+                    ikona={SlidersHorizontal}
+                    etykieta="Konfiguracja czatu"
+                    onClick={() => setIsConfigureChatOpen(true)}
+                  />
+                }
               />
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <ChatPanel
+                  messages={chatMessages}
+                  onSendMessage={handleSendMessage}
+                  onClearChat={() => setChatMessages([])}
+                  sources={sources}
+                  hasSources={sources.length > 0}
+                  presetData={presetData}
+                  isGeneratingPresets={isGeneratingPresets}
+                  isAiLoading={isAiLoading}
+                  apiKeys={apiKeys}
+                  onSeekToVideo={handleSeekToVideo}
+                  prefillInput={chatPrefill}
+                  onToggleObjectsOpen={() => setIsObjectsOpen(v => !v)}
+                  isObjectsOpen={isObjectsOpen}
+                  onOpenAddSource={() => setIsAddModalOpen(true)}
+                  onStudioGenerate={handleStudioGenerate}
+                  onModelSelectChange={(newModelId) => setApiKeys(prev => ({ ...prev, model: newModelId }))}
+                />
+              </div>
             </div>
           </div>
 
-          {/* RIGHT — Documents & Files / Canvas node details drawer (Flex Re-flow + Resizable) */}
+          {/* RIGHT / LEFT — Studio */}
           {!isMobile && isObjectsOpen && (
-            <ResizeHandle onPointerDown={onRightDrag} />
-          )}
-          {!isMobile && (
             <div
-              style={{ width: isObjectsOpen ? rightWidth : 0 }}
-              className={`relative z-10 h-full flex-shrink-0 bg-transparent theme-panel-right transition-[width,opacity] duration-300 ease-in-out overflow-hidden
-                ${isObjectsOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              style={{ width: rightWidth }}
+              className={cn(
+                "relative z-10 h-full py-3 flex-shrink-0 theme-panel-right transition-[width,opacity] duration-300 ease-in-out overflow-hidden",
+                jestPoziomo
+                  ? "pr-3 pl-3"
+                  : jestPoPrawej
+                    ? "pl-3 pr-3"
+                    : "pr-3 pl-3"
+              )}
             >
-              <div style={{ width: rightWidth }} className="h-full">
+              <div className="h-full w-full rounded-2xl border border-foreground/[0.12] bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
                 <StudioPanel
                   outputs={studioOutputs}
                   onGenerate={handleStudioGenerate}
@@ -1049,6 +1101,45 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
               </div>
             </div>
           )}
+        </div>
+
+        {/* POZIOMY PASEK NA DOLE — gdy przypięto na dole */}
+        {jestNaDole && !bezPaska && !isMobile && (
+          <div className="flex-shrink-0 px-3 pb-3 pt-0">
+            <PasekPoziomyNotebook
+              onUchwyt={onUchwyt}
+              onMenu={onMenu}
+              projects={projects}
+              activeProjectId={activeProjectId}
+              onChangeProject={setActiveProjectId}
+              onCreateProject={handleCreateProject}
+              sources={sources}
+              pendingSources={pendingSources}
+              selectedSourceIds={selectedSourceIds}
+              activeSourceId={activeSourceId}
+              onSelectSource={(id) => setSelectedSourceIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+              onToggleAllSources={() => setSelectedSourceIds(selectedSourceIds.length === sources.length && sources.length > 0 ? [] : sources.map(s => s.id))}
+              onRemoveSelectedSources={handleRemoveSelectedSources}
+              onRemovePlaylist={handleRemovePlaylist}
+              onTogglePlaylistSelection={handleTogglePlaylistSelection}
+              onActiveSourceChange={handleOpenSourceViewer}
+              onRemoveSource={handleRemoveSource}
+              isLoading={isLoading}
+              onOpenAddModal={() => setIsAddModalOpen(true)}
+              projectName={projects.find(p => p.id === activeProjectId)?.name}
+              notesSlot={
+                <NotesDropdown
+                  notes={userNotes}
+                  onSaveNote={(note) => setUserNotes(prev => [note, ...prev])}
+                  onUpdateNote={(id, newText) => setUserNotes(prev => prev.map(n => n.id === id ? { ...n, text: newText, updatedAt: new Date().toISOString() } : n))}
+                  onTogglePinNote={(id) => setUserNotes(prev => prev.map(n => n.id === id ? { ...n, isPinned: !n.isPinned } : n))}
+                  onDeleteNote={handleRemoveNote}
+                  apiKeys={apiKeys}
+                />
+              }
+            />
+          </div>
+        )}
 
           {/* MOBILE — na telefonie nie ma stałych kolumn bocznych, więc źródła
               (z notatkami i ustawieniami) wjeżdżają szufladą z lewej, a dokumenty
@@ -1131,7 +1222,6 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
             </>
           )}
 
-        </div>
         </div>
       )}
 

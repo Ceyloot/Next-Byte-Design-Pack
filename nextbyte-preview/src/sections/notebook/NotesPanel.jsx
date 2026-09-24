@@ -126,7 +126,7 @@ export default function NotesPanel({
               value={editingText}
               onChange={e => setEditingText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleSaveEdit(note.id); }}
-              className="w-full min-h-[90px] p-3 text-xs bg-background/80 border border-primary/40 rounded-nb text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+              className="w-full min-h-[90px] p-3 text-xs bg-background/80 border border-primary/40 rounded-xl text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-y"
               autoFocus
             />
             <div className="flex justify-end gap-2">
@@ -152,7 +152,7 @@ export default function NotesPanel({
                   <GlassTooltip content={note.isPinned ? 'Odepnij' : 'Przypnij do góry'}>
                     <button
                       onClick={() => onTogglePinNote(note.id)}
-                      className={`p-1 rounded-nb-xs transition-colors cursor-pointer ${note.isPinned ? 'text-primary bg-primary/10' : 'hover:text-foreground hover:bg-foreground/5'}`}
+                      className={`p-1 rounded-lg transition-colors cursor-pointer ${note.isPinned ? 'text-primary bg-primary/10' : 'hover:text-foreground hover:bg-foreground/5'}`}
                     >
                       <Pin size={12} className={note.isPinned ? 'fill-primary' : ''} />
                     </button>
@@ -161,7 +161,7 @@ export default function NotesPanel({
                 <GlassTooltip content="Kopiuj treść">
                   <button
                     onClick={() => handleCopyNote(note.id, note.text)}
-                    className="p-1 rounded-nb-xs hover:text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
+                    className="p-1 rounded-lg hover:text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
                   >
                     {copiedId === note.id ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                   </button>
@@ -169,7 +169,7 @@ export default function NotesPanel({
                 <GlassTooltip content="Edytuj">
                   <button
                     onClick={() => handleStartEdit(note)}
-                    className="p-1 rounded-nb-xs hover:text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
+                    className="p-1 rounded-lg hover:text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
                   >
                     <Edit2 size={12} />
                   </button>
@@ -178,7 +178,7 @@ export default function NotesPanel({
                   <GlassTooltip content="Usuń">
                     <button
                       onClick={() => onDeleteNote(note.id)}
-                      className="p-1 rounded-nb-xs hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                      className="p-1 rounded-lg hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -215,7 +215,7 @@ export default function NotesPanel({
       {/* Header bar */}
       <div className="px-4 py-3 border-b border-foreground/[0.08] flex items-center justify-between flex-shrink-0 bg-background/60 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-nb-sm bg-primary/10 text-primary">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
             <BookOpen size={15} />
           </div>
           <div>
@@ -241,7 +241,7 @@ export default function NotesPanel({
             onChange={e => setNewNote(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleAddNote(); }}
             placeholder="Dodaj notatkę... (wspiera Markdown, Ctrl+Enter zapisuje)"
-            className="w-full text-xs py-2 px-3 min-h-[64px] resize-none bg-background/40 border border-foreground/[0.06] rounded-nb text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 transition-colors custom-scrollbar"
+            className="w-full text-xs py-2 px-3 min-h-[64px] resize-none bg-background/40 border border-foreground/[0.06] rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 transition-colors custom-scrollbar"
           />
           <div className="flex items-center justify-between pt-1">
             <span className="text-[10px] text-muted-foreground/40 italic">Naciśnij Ctrl+Enter, aby zapisać</span>

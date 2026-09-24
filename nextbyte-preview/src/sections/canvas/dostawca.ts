@@ -86,19 +86,24 @@ export async function generuj(zadanie: ZadanieGeneracji): Promise<WynikGeneracji
   return tresc as WynikGeneracji
 }
 
+import { geminiRozpoznajWycinek } from './gemini-client'
+
 /**
- * Mikro-AI rozpoznające obiekt pod pineską.
+ * Mikro-AI rozpoznające obiekt pod pineską bezpośrednio przez Gemini 2.5 Flash Vision.
  *
- * Osobne, tanie zadanie `caption` u Runware — nie generator. Nazwa uchwytu
- * jest tym, na co powołujesz się w poleceniu, więc im szybciej pojawi się
- * sama, tym mniej pracy zostaje po stronie człowieka. Cisza przy błędzie
- * jest celowa: to udogodnienie, a nie warunek działania Canvasu.
+ * Działa błyskawicznie (200-300 ms), widzi wycinek wokół pineski i zwraca
+ * precyzyjne nazwy po polsku wprost do uchwytu.
  */
 export async function rozpoznajObiekt(
   wycinek: string,
   tryb: 'obiekt' | 'scena' = 'obiekt',
 ): Promise<string[]> {
   try {
+    // 1. Bezpośrednie, natychmiastowe zapytanie do Gemini Flash Vision
+    const nazwyGemini = await geminiRozpoznajWycinek(wycinek, tryb)
+    if (nazwyGemini.length > 0) return nazwyGemini
+
+    // 2. Fallback przez lokalne proxy serwera
     const odp = await fetch('/api/canvas/rozpoznaj', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -113,16 +118,9 @@ export async function rozpoznajObiekt(
 }
 
 /**
- * Inwentarz sceny — co w ogóle jest na zdjęciu.
- *
- * Leci raz, zaraz po wrzuceniu zdjęcia na płótno, jeszcze zanim użytkownik
- * cokolwiek kliknie. Dzięki temu pineska wbita w miejsce, którego wycinek
- * jest nieczytelny (kawałek trawy, fragment nieba), i tak ma z czego wziąć
- * nazwę — wcześniej zostawało bezużyteczne „obiekt 1”.
+ * Inwentarz sceny — co w ogóle jest na zdjęciu (Gemini Vision).
  */
 export async function rozpoznajScene(zdjecie: string): Promise<string[]> {
-  // Zmniejszamy przed wysyłką: pełne zdjęcie potrafi mieć 5 MB w base64,
-  // a model opisujący odrzucał takie żądania błędem 500.
   const male = await zmniejszDoAnalizy(zdjecie)
   return rozpoznajObiekt(male || zdjecie, 'scena')
 }
@@ -135,8 +133,60 @@ export async function rozpoznajScene(zdjecie: string): Promise<string[]> {
  * Zwraca `null` przy awarii — generacja ma iść dalej na samym rusztowaniu.
  * Agent jest wzmocnieniem, nie warunkiem działania Canvasu.
  */
+import { geminiKlasyfikujPineski, geminiPlanujZadanie } from './gemini-client'
+import { narysujMapeMiejsc } from './mapa-miejsc'
+import { szczegolyZPlanu } from './rezyser'
+import type { RodzajPunktu } from './uklad-pinesek'
+
+/**
+ * Rzecz czy miejsce pod każdą pineską — wejście dla `ustalUklad`.
+ * Zwraca `null` przy awarii; generacja idzie wtedy na domyśle z kolejności.
+ */
+export async function klasyfikujPineski(
+  pineski: Pineska[],
+  warstwy: Warstwa[],
+): Promise<Record<string, RodzajPunktu> | null> {
+  const uchwyty = pineski.filter(p => !p.chroniona)
+  if (uchwyty.length < 2) return null
+  try {
+    const obrazy = await Promise.all(
+      uchwyty.map(p => {
+        const w = warstwy.find(x => x.id === p.layerId)
+        return w ? narysujMapeMiejsc(w, [p]) : Promise.resolve('')
+      }),
+    )
+    if (obrazy.some(o => !o)) return null
+    const wynik = await geminiKlasyfikujPineski(obrazy)
+    if (!wynik) return null
+    return Object.fromEntries(uchwyty.map((p, i) => [p.id, wynik[i].rodzaj]))
+  } catch {
+    return null
+  }
+}
+
 export async function zaplanuj(zadanie: ZadaniePlanu): Promise<Plan | null> {
   try {
+    // 1. Próba bezpośredniego agenta Gemini 2.5 Flash
+    const bezposredniPlan = await geminiPlanujZadanie(
+      zadanie.zadanie,
+      zadanie.obrazy,
+      zadanie.uchwyty,
+    )
+    if (bezposredniPlan) {
+      return {
+        intencja: bezposredniPlan.intencja,
+        analiza: bezposredniPlan.analiza,
+        doprecyzowanie: bezposredniPlan.scena,
+        plan: bezposredniPlan.plan,
+        promptDlaModelu: szczegolyZPlanu(bezposredniPlan),
+        instrukcja: bezposredniPlan.instrukcja,
+        obszar: bezposredniPlan.obszar,
+        obszarZrodla: bezposredniPlan.obszarZrodla,
+        kosztTokenow: 150,
+      }
+    }
+
+    // 2. Próba przez serwer
     const odp = await fetch('/api/canvas/planuj', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

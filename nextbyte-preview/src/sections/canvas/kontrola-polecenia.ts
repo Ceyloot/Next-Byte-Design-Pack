@@ -106,6 +106,21 @@ export function sprawdzPolecenie(
     })
   }
 
+  // Zamiana postaci bierze twarz z innego zdjęcia — bez niego nie ma skąd.
+  if (intencja === 'postac' && warstwy.length < 2) {
+    uwagi.push({
+      id: 'postac-bez-dawcy',
+      waga: 'blokada',
+      tresc: 'Zamiana postaci potrzebuje drugiego zdjęcia z osobą-dawcą i pineski na jej twarzy.',
+    })
+  } else if (intencja === 'postac' && !uchwyty.some(p => p.layerId !== warstwy[0]?.id)) {
+    uwagi.push({
+      id: 'postac-bez-pineski-dawcy',
+      waga: 'ostrzezenie',
+      tresc: 'Wbij pineskę na twarz osoby na drugim zdjęciu — inaczej model zgaduje, czyją tożsamość przenieść.',
+    })
+  }
+
   // Materiał z drugiego zdjęcia bez pineski na nim: model nie wie, co stamtąd wziąć.
   const zdjeciaZPineskami = new Set(pineski.map(p => p.layerId))
   if (warstwy.length > 1 && zdjeciaZPineskami.size === 1 && /\b(taki|taką|takie|stamtąd|z drugiego)\b/.test(t)) {

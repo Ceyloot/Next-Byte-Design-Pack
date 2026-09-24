@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Next Scribe — lokalny magazyn notatników w podglądzie
+.notatnik-dane.json

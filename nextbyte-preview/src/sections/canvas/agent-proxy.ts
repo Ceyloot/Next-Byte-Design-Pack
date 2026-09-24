@@ -17,6 +17,16 @@
 import type { Plugin, ViteDevServer, PreviewServer } from 'vite'
 import { loadEnv } from 'vite'
 
+import {
+  KONFIG_REZYSERA,
+  MODEL_REZYSERA,
+  SYSTEM_REZYSERA,
+  odczytajPlanRezysera,
+  szczegolyZPlanu,
+  trescZadaniaRezysera,
+  type Prostokat,
+} from './rezyser'
+
 const ENDPOINT_CZAT = 'https://api.runware.ai/v1/chat/completions'
 
 /** Rola obrazu w zestawie wysyłanym agentowi — ta sama, co w prompcie. */
@@ -40,12 +50,21 @@ export interface ZadaniePlanu {
 }
 
 export interface Plan {
+  intencja?: string
   /** co agent widzi na zdjęciach i pod pineskami */
   analiza: string
   /** sekcja doklejana do promptu — wiedza, której kod nie miał */
   doprecyzowanie: string
   /** jedno zdanie po polsku dla użytkownika, przed generacją */
   plan: string
+  /** opis całych obiektów i światła, po angielsku — sekcja SCENE DETAILS w poleceniu */
+  promptDlaModelu?: string
+  /** precyzyjna instrukcja edycji od reżysera, po angielsku — sekcja OPERATION */
+  instrukcja?: string
+  /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
+  obszar?: Prostokat
+  /** przy przeniesieniu w kadrze: gdzie obiekt stoi teraz */
+  obszarZrodla?: Prostokat
   kosztTokenow: number
 }
 
@@ -66,28 +85,6 @@ export interface Sprawdzenie {
   ocena: string
   kosztTokenow: number
 }
-
-const SYSTEM_PLAN = `Jesteś asystentem reżyserskim w edytorze zdjęć. Oglądasz zdjęcia i pomagasz ułożyć polecenie dla modelu edycyjnego.
-
-Dostajesz:
-- zadanie napisane przez człowieka, często skrótowo i z literówkami,
-- zdjęcia z rolami: PŁÓTNO (scena, którą edytujemy), MATERIAŁ (źródło obiektów), MAPA (to samo płótno z różowymi celownikami wskazującymi miejsca),
-- listę uchwytów: nazw z ich położeniem.
-
-Twoje zadanie: obejrzeć zdjęcia i dopisać to, czego nie da się wywnioskować z samego tekstu.
-
-Odpowiadasz WYŁĄCZNIE obiektem JSON o polach:
-{
-  "analiza": "co konkretnie widzisz pod każdym celownikiem i czym są wymienione uchwyty; po polsku, zwięźle",
-  "doprecyzowanie": "3-6 zdań, które trafią do polecenia dla modelu obrazu jako wiedza o scenie: czym dokładnie jest obiekt (materiał, kolor, kształt), jak duży jest w metrach, co leży w miejscu docelowym, jakie jest światło i z której strony padają cienie, co sąsiaduje z miejscem docelowym; pisz zdaniami oznajmującymi po polsku",
-  "plan": "jedno zdanie po polsku dla człowieka, zaczynające się od czasownika w pierwszej osobie, np. Wstawię ... / Przeniosę ... / Usunę ..."
-}
-
-Zasady:
-- Opisujesz to, co widzisz. Nie zgadujesz i nie dopisujesz rzeczy typowych dla takich scen.
-- Wielkości podajesz w metrach, oparte na obiektach o znanych wymiarach w kadrze.
-- Nie powtarzasz reguł z rusztowania — dokładasz tylko wiedzę o tej konkretnej scenie.
-- Żadnego tekstu poza obiektem JSON.`
 
 const SYSTEM_SPRAWDZENIA = `Jesteś kontrolerem jakości w edytorze zdjęć. Porównujesz zdjęcie przed edycją z wynikiem i oceniasz, czy zadanie zostało wykonane.
 
@@ -118,49 +115,81 @@ function czytajCialo(req: { on: (z: string, f: (c?: unknown) => void) => void })
  * zamiast ufać, że odpowiedź jest czystym JSON-em.
  */
 function wyjmijJson(tekst: string): Record<string, unknown> | null {
-  const start = tekst.indexOf('{')
-  const koniec = tekst.lastIndexOf('}')
+  if (!tekst) return null
+  let czysty = tekst.trim()
+  if (czysty.startsWith('```')) {
+    czysty = czysty.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim()
+  }
+  const start = czysty.indexOf('{')
+  const koniec = czysty.lastIndexOf('}')
   if (start < 0 || koniec <= start) return null
   try {
-    return JSON.parse(tekst.slice(start, koniec + 1)) as Record<string, unknown>
+    return JSON.parse(czysty.slice(start, koniec + 1)) as Record<string, unknown>
   } catch {
     return null
   }
 }
 
+const ENDPOINT_GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models'
+const MODEL_SPRAWDZENIA = 'gemini-2.5-flash-lite'
+const FALLBACK_GEMINI_KEY = 'AQ.Ab8RN6I-cZ-88Z5zzJSLzTDQk6kHGwaySLx8KavpNXsEp7CZuQ'
+
 export function agentProxy(): Plugin {
-  let klucz = ''
-  let model = 'google:gemini@3.5-flash'
+  let kluczGemini = FALLBACK_GEMINI_KEY
 
   async function zapytajAgenta(
     system: string,
-    tresci: unknown[],
-    limitTokenow: number,
+    tresci: any[],
+    model: string,
+    generationConfig: Record<string, unknown>,
   ): Promise<{ json: Record<string, unknown> | null; tokeny: number; blad?: string }> {
-    const odp = await fetch(ENDPOINT_CZAT, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${klucz}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: tresci },
-        ],
-        // Ten model liczy „reasoning tokens” z tej samej puli co odpowiedź —
-        // przy 200 zjadł 189 na myślenie i uciął zdanie w połowie.
-        max_completion_tokens: limitTokenow,
-      }),
-    })
+    try {
+      const parts: any[] = []
+      parts.push({ text: `INSTRUKCJA SYSTEMOWA:\n${system}\n\nTREŚĆ ZADANIA:` })
 
-    const tresc = (await odp.json()) as {
-      choices?: { message?: { content?: string } }[]
-      usage?: { total_tokens?: number }
-      error?: { message?: string }
+      for (const item of tresci) {
+        if (typeof item === 'string') {
+          parts.push({ text: item })
+        } else if (item?.type === 'text') {
+          parts.push({ text: item.text })
+        } else if (item?.type === 'image_url') {
+          const urlStr = item.image_url?.url || ''
+          const dopasowanie = urlStr.match(/^data:([^;]+);base64,(.+)$/)
+          if (dopasowanie) {
+            parts.push({
+              inlineData: { mimeType: dopasowanie[1], data: dopasowanie[2] },
+            })
+          }
+        }
+      }
+
+      const url = `${ENDPOINT_GEMINI}/${model}:generateContent?key=${kluczGemini}`
+      const odp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts }],
+          generationConfig,
+        }),
+      })
+
+      if (!odp.ok) {
+        const errText = await odp.text()
+        return { json: null, tokeny: 0, blad: `Gemini API error (${odp.status}): ${errText}` }
+      }
+
+      const tresc = (await odp.json()) as any
+      // Model z myśleniem potrafi oddać odpowiedź w kilku częściach — skleja je.
+      const tekst = ((tresc?.candidates?.[0]?.content?.parts ?? []) as { text?: string; thought?: boolean }[])
+        .filter(p => !p.thought)
+        .map(p => p.text ?? '')
+        .join('')
+        .trim()
+      const tokeny = tresc?.usageMetadata?.totalTokenCount || 0
+      return { json: wyjmijJson(tekst), tokeny }
+    } catch (e) {
+      return { json: null, tokeny: 0, blad: e instanceof Error ? e.message : 'Błąd zapytania do Gemini' }
     }
-
-    if (tresc.error) return { json: null, tokeny: 0, blad: tresc.error.message }
-    const tekst = tresc.choices?.[0]?.message?.content ?? ''
-    return { json: wyjmijJson(tekst), tokeny: tresc.usage?.total_tokens ?? 0 }
   }
 
   const obsluz = (server: ViteDevServer | PreviewServer) => {
@@ -175,7 +204,7 @@ export function agentProxy(): Plugin {
           res.end(JSON.stringify(dane))
         }
         if (req.method !== 'POST') return wyslij(405, { blad: 'Tylko POST' })
-        if (!klucz) return wyslij(503, { blad: 'Brak RUNWARE_API_KEY w .env.local' })
+        if (!kluczGemini) return wyslij(503, { blad: 'Brak GEMINI_API_KEY w .env.local' })
         try {
           const { status, cialo } = await obsluga(await czytajCialo(req))
           wyslij(status, cialo)
@@ -189,28 +218,27 @@ export function agentProxy(): Plugin {
       const z = JSON.parse(dane) as ZadaniePlanu
       if (!z.zadanie?.trim()) return { status: 400, cialo: { blad: 'Puste zadanie' } }
 
-      const tresci: unknown[] = [
-        {
-          type: 'text',
-          text:
-            `ZADANIE OD CZŁOWIEKA: ${z.zadanie}\n\n` +
-            `UCHWYTY:\n${z.uchwyty || '(brak)'}\n\n` +
-            `RUSZTOWANIE POLECENIA (masz je uzupełnić, nie powtarzać):\n${z.rusztowanie}`,
-        },
-      ]
-      for (const o of z.obrazy) {
-        tresci.push({ type: 'text', text: `Zdjęcie w roli ${o.rola.toUpperCase()} („${o.nazwa}”):` })
+      const tresci: unknown[] = []
+      for (const [i, o] of z.obrazy.entries()) {
+        tresci.push({ type: 'text', text: `[Image ${i + 1}: "${o.nazwa}", pins drawn]` })
         tresci.push({ type: 'image_url', image_url: { url: o.dane } })
       }
+      tresci.push({ type: 'text', text: trescZadaniaRezysera(z.zadanie, z.uchwyty) })
 
-      const { json, tokeny, blad } = await zapytajAgenta(SYSTEM_PLAN, tresci, 2000)
+      const { json, tokeny, blad } = await zapytajAgenta(SYSTEM_REZYSERA, tresci, MODEL_REZYSERA, KONFIG_REZYSERA)
       if (blad) return { status: 502, cialo: { blad } }
-      if (!json) return { status: 502, cialo: { blad: 'Agent nie zwrócił czytelnego planu' } }
+      const odczytany = odczytajPlanRezysera(json)
+      if (!odczytany) return { status: 502, cialo: { blad: 'Agent nie zwrócił czytelnego planu' } }
 
       const plan: Plan = {
-        analiza: String(json.analiza ?? ''),
-        doprecyzowanie: String(json.doprecyzowanie ?? ''),
-        plan: String(json.plan ?? ''),
+        intencja: odczytany.intencja,
+        analiza: odczytany.analiza,
+        doprecyzowanie: odczytany.scena,
+        plan: odczytany.plan,
+        promptDlaModelu: szczegolyZPlanu(odczytany),
+        instrukcja: odczytany.instrukcja,
+        obszar: odczytany.obszar,
+        obszarZrodla: odczytany.obszarZrodla,
         kosztTokenow: tokeny,
       }
       return { status: 200, cialo: plan }
@@ -226,7 +254,11 @@ export function agentProxy(): Plugin {
         { type: 'image_url', image_url: { url: z.wynik } },
       ]
 
-      const { json, tokeny, blad } = await zapytajAgenta(SYSTEM_SPRAWDZENIA, tresci, 1200)
+      const { json, tokeny, blad } = await zapytajAgenta(SYSTEM_SPRAWDZENIA, tresci, MODEL_SPRAWDZENIA, {
+        temperature: 0.1,
+        maxOutputTokens: 1200,
+        responseMimeType: 'application/json',
+      })
       if (blad) return { status: 502, cialo: { blad } }
       if (!json) return { status: 502, cialo: { blad: 'Kontrola nie zwróciła czytelnej oceny' } }
 
@@ -244,8 +276,7 @@ export function agentProxy(): Plugin {
     name: 'nb-agent-proxy',
     configResolved(config) {
       const env = loadEnv(config.mode, config.root, '')
-      klucz = env.RUNWARE_API_KEY ?? ''
-      model = env.RUNWARE_MODEL_AGENTA || model
+      kluczGemini = env.GEMINI_API_KEY || FALLBACK_GEMINI_KEY
     },
     configureServer: obsluz,
     configurePreviewServer: obsluz,

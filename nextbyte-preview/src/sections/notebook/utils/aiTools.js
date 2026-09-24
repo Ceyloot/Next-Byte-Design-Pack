@@ -3,7 +3,7 @@ import { Headphones, Presentation, ClipboardList, Layers, CircleHelp, BarChart, 
 export const STUDIO_TOOLS = [
   {
     id: 'audio',
-    label: 'Audio Overview',
+    label: 'Podcast audio',
     icon: Headphones,
     color: 'text-foreground/55',
     bg: 'bg-foreground/[0.06]',
@@ -25,7 +25,7 @@ DŁUGOŚĆ: 15-25 wymian. Każda kwestia MAKSYMALNIE 60 słów. Łączna liczba 
   },
   {
     id: 'slides',
-    label: 'Slide Deck',
+    label: 'Prezentacja',
     icon: Presentation,
     color: 'text-foreground/55',
     bg: 'bg-foreground/[0.06]',
@@ -50,7 +50,7 @@ Wymagania:
   },
   {
     id: 'report',
-    label: 'Reports',
+    label: 'Raport',
     icon: ClipboardList,
     color: 'text-foreground/55',
     bg: 'bg-foreground/[0.06]',
@@ -76,7 +76,7 @@ Pisz formalnym, ale przystępnym językiem.`,
   },
   {
     id: 'flashcards',
-    label: 'Flashcards',
+    label: 'Fiszki',
     icon: Layers,
     color: 'text-foreground/55',
     bg: 'bg-foreground/[0.06]',
@@ -119,7 +119,7 @@ Wymagania: 4 opcje (A-D) jako lista, mix trudności: 4 łatwe, 4 średnie, 2 tru
   },
   {
     id: 'infographic',
-    label: 'Infographic',
+    label: 'Infografika',
     icon: BarChart,
     color: 'text-foreground/55',
     bg: 'bg-foreground/[0.06]',
@@ -153,7 +153,7 @@ Zasady: "bar" — porównania, "line" — trendy, "pie" — udziały % (max 6 ka
   },
   {
     id: 'table',
-    label: 'Data Table',
+    label: 'Tabela danych',
     icon: Table2,
     color: 'text-foreground/55',
     bg: 'bg-foreground/[0.06]',
@@ -172,7 +172,7 @@ Zasady: "bar" — porównania, "line" — trendy, "pie" — udziały % (max 6 ka
   },
   {
     id: 'glossary',
-    label: 'Glossary',
+    label: 'Słownik pojęć',
     icon: BookOpen,
     color: 'text-foreground/55',
     bg: 'bg-foreground/[0.06]',

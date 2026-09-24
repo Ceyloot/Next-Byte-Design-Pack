@@ -357,7 +357,12 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                         strokeDasharray="14 86"
                         filter="url(#nbWireGlowDirect)"
                         style={{
-                          animation: `nbElectricCurrent ${isHovered ? '0.8s' : node.duration} linear infinite`,
+                          // Rozpisane na osobne właściwości: skrót `animation` obok
+                          // `animationDelay` React zgłasza jako konflikt przy każdym hoverze.
+                          animationName: 'nbElectricCurrent',
+                          animationDuration: isHovered ? '0.8s' : node.duration,
+                          animationTimingFunction: 'linear',
+                          animationIterationCount: 'infinite',
                           animationDelay: node.delay,
                           opacity: pulseOpacity,
                         }}
@@ -393,7 +398,12 @@ function UnifiedAIPlatformConvergence({ onNavigate }: { onNavigate: (p: HomePage
                         strokeDasharray="14 86"
                         filter="url(#nbWireGlowDirect)"
                         style={{
-                          animation: `nbElectricCurrent ${isHovered ? '0.8s' : node.duration} linear infinite`,
+                          // Rozpisane na osobne właściwości: skrót `animation` obok
+                          // `animationDelay` React zgłasza jako konflikt przy każdym hoverze.
+                          animationName: 'nbElectricCurrent',
+                          animationDuration: isHovered ? '0.8s' : node.duration,
+                          animationTimingFunction: 'linear',
+                          animationIterationCount: 'infinite',
                           animationDelay: node.delay,
                           opacity: pulseOpacity,
                         }}

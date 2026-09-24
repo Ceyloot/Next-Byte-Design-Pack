@@ -37,6 +37,7 @@ import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
 import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
 import { PanelGlownyOsadzony } from '@/sections/panel2/PanelGlownyOsadzony'
 import { NotebookSection } from '@/sections/NotebookSection'
+import { NawigacjaBoczna, PigulkaModulu, type SekcjaNawigacji } from '@/components/NawigacjaBoczna'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
@@ -49,7 +50,7 @@ const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ cla
     { name: 'Logowanie',     icon: LogIn,      subView: 'logowanie' },
     { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
     { name: 'Dashboard 2.0', icon: Grid,       badge: 'NEW', subView: 'dashboard2' },
-    { name: 'Your Notebook', icon: BookOpen,  badge: 'WIP', subView: 'notebook' },
+    { name: 'Next Scribe', icon: BookOpen,  badge: 'WIP', subView: 'notebook' },
   ] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
     { name: 'Podstawowe',       icon: Square,        scrollId: 'karta' },
@@ -494,7 +495,9 @@ function renderSection(key: string): React.ReactNode {
 export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
-  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie'>('strona-glowna')
+  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'notebook'>('strona-glowna')
+  /** W module z własnym paskiem (Next Scribe) „‹ MENU” podmienia treść paska na menu podglądu. */
+  const [menuWModule, setMenuWModule] = useState(false)
   /** Aktywna podstrona publicznej witryny w podglądzie „Strona główna" */
   const [stronaPage, setStronaPage] = useState<HomePageId>('home')
   /** Aktywny ekran w podglądzie „Logowanie" */
@@ -609,6 +612,17 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       else if (x > w * 0.75) finalPos = 'right'
       else if (y > h * 0.75) finalPos = 'bottom'
       else if (y < h * 0.25) finalPos = 'top'
+      else {
+        const dLeft = x
+        const dRight = w - x
+        const dTop = y
+        const dBottom = h - y
+        const minDist = Math.min(dLeft, dRight, dTop, dBottom)
+        if (minDist === dLeft) finalPos = 'left'
+        else if (minDist === dRight) finalPos = 'right'
+        else if (minDist === dTop) finalPos = 'top'
+        else finalPos = 'bottom'
+      }
 
       onNavPositionChange?.(finalPos)
       setIsDraggingNav(false)
@@ -850,145 +864,68 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
     </div>
   )
 
-  // ── Vertical sidebar (left / right) — połączony navbar w jedną ciągłą linię z unormowanym spacingiem ──
+  // ── Boczny pasek = NawigacjaBoczna z biblioteki ──
+  // Jeden pasek na całą aplikację: przy docku z boku to ten sam komponent,
+  // co w platformie (rozwinięty i szyna 1:1). Moduł z własnym paskiem
+  // (Next Scribe) NIE dostaje drugiego — podmienia treść tego samego.
+  const sekcjePodgladu: SekcjaNawigacji[] = [
+    { id: 'podglad', tytul: 'Podgląd', pozycje: DESIGN_TABS[0].items.map((it) => ({
+      id: 'pv:' + it.subView, etykieta: it.name, ikona: it.icon,
+      koniec: it.badge ? <span className="rounded-full bg-primary/15 px-1.5 text-[9.5px] font-bold text-primary">{it.badge}</span> : undefined,
+    })) },
+    { id: 'biblioteka', tytul: 'Biblioteka', pozycje: DESIGN_TABS.slice(1).map((t) => ({ id: 'tab:' + t.key, etykieta: t.label, ikona: t.icon })) },
+    { id: 'system', tytul: 'System', pozycje: [{ id: 'ustawienia', etykieta: 'Ustawienia wyglądu', ikona: Settings }] },
+  ]
+  const aktywnaPozycja = activeTab === 'preview' ? 'pv:' + previewSubView : 'tab:' + activeTab
+  const wybierzPozycje = (id: string) => {
+    if (id === 'ustawienia') { onToggleSettings?.(); return }
+    if (id.startsWith('pv:')) {
+      const sv = id.slice(3) as typeof previewSubView
+      onSelectTab?.('preview'); setActiveSection('preview')
+      setPreviewSubView(sv)
+      if (sv === 'strona-glowna') setStronaPage('home')
+      if (sv === 'logowanie') setEkranAuth('logowanie')
+      setMenuWModule(false)
+      return
+    }
+    const k = id.slice(4)
+    setActiveSection(k); onSelectTab?.(k)
+    setMenuWModule(false)
+  }
+
   const SidebarNav = () => (
-    <div
-      ref={navRef}
-      onMouseLeave={scheduleClose}
-      // z-40 na całym kontenerze — patrz komentarz w HorizontalNav:
-      // bez tego <main> renderuje się nad flyoutem mimo jego z-50 w środku.
-      className={cn(
-        'shrink-0 flex flex-col py-4 relative z-40 h-full',
-        navPosition === 'right' ? 'pr-4 pl-2' : 'pl-4 pr-2',
-      )}
-    >
-      {/* Pojedyncza, spójna linia nawigacyjna od góry do dołu */}
-      <div className={cn(
-        isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-        'rounded-2xl border w-12 h-full flex flex-col items-center justify-between py-3 px-2 shadow-xl backdrop-blur-md',
-      )}>
-        {/* Górny sekcja: Logo i Zakładki */}
-        <div className="flex flex-col items-center gap-1.5 w-full">
-          <button
-            type="button"
-            onPointerDown={handleDragStart}
-            title="Złap i przeciągnij, aby przypiąć nawigację (góra / dół / lewo / prawo)"
-            className="flex items-center justify-center w-6 h-6 rounded-lg text-foreground/40 hover:text-primary hover:bg-primary/10 transition-colors cursor-grab active:cursor-grabbing shrink-0 mb-0.5"
-          >
-            <GripHorizontal className="w-3.5 h-3.5" />
-          </button>
-          <div className="w-7 h-7 rounded-[8px] bg-primary flex items-center justify-center shadow-md shadow-primary/30 shrink-0 mb-1">
-            <Zap className="w-3.5 h-3.5 text-background" />
-          </div>
-
-          <div className="w-full border-t border-foreground/[0.08] mb-1 shrink-0" />
-
-          <nav className="flex flex-col items-center gap-1.5 w-full">
-            {DESIGN_TABS.map((tab) => {
-              const isActive = activeTab === tab.key
-              return (
-                <button
-                  key={tab.key}
-                  ref={(el) => { sidebarTabRefs.current[tab.key] = el }}
-                  title={tab.label}
-                  onClick={() => { setActiveSection(tab.key); onSelectTab?.(tab.key) }}
-                  onMouseEnter={() => openSidebarMenu(tab.items.length > 0 ? tab.key : null)}
-                  className={cn(
-                    'w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150',
-                    isActive
-                      ? 'bg-primary/20 text-primary border border-primary/40 shadow-sm shadow-primary/10'
-                      : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent',
-                  )}
-                >
-                  <tab.icon className="w-3.5 h-3.5 shrink-0" />
-                </button>
-              )
-            })}
-          </nav>
-        </div>
-
-        {/* Dolna sekcja: Kontrolki systemowe i profil (taki sam spacing góra-dół) */}
-        <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-foreground/[0.08] shrink-0">
-          <button
-            title="Ustawienia"
-            onClick={onToggleSettings}
-            className="w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:border-foreground/10 hover:bg-foreground/[0.06] hover:text-foreground text-foreground/45 transition-all"
-          >
-            <Settings className="w-3.5 h-3.5" />
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:border-foreground/10 hover:bg-foreground/[0.06] transition-all text-foreground/45 hover:text-foreground">
-            <Search className="w-3.5 h-3.5" />
-          </button>
-          <button className="relative w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:border-foreground/10 hover:bg-foreground/[0.06] transition-all text-foreground/45 hover:text-foreground">
-            <Bell className="w-3.5 h-3.5" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
-          </button>
-          <div className="w-7 h-7 rounded-full bg-primary/25 flex items-center justify-center border border-primary/40 text-[11px] font-bold text-primary shrink-0 mt-0.5">
-            AB
-          </div>
-        </div>
-      </div>
-
-      {/* Sidebar flyout panel — wysuwa się od zaznaczonej ikony (sidebarMenuTop),
-          nie zawsze od góry paska. */}
-      {megaItems.length > 0 && (
-        <div
-          className={cn(
-            'absolute z-50',
-            navPosition === 'left' ? 'left-full ml-1' : 'right-full mr-1',
-          )}
-          style={{ top: sidebarMenuTop }}
-          onMouseEnter={cancelClose}
-          onMouseLeave={scheduleClose}
-        >
-          <div className={cn(
-            isGlass ? 'nb-szklo nb-szklo-plynne nb-powierzchnia' : 'border border-border bg-card',
-            'p-2 rounded-2xl border flex flex-col gap-0.5 min-w-[168px]',
-          )}>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/50 px-2.5 pb-1 pt-0.5">
-              {openSection?.label}
-            </div>
-            <div className="w-full border-t border-foreground/[0.06] mb-1" />
-            {megaItems.map((item, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  onSelectTab?.(openMenu!)
-                  if (openMenu === 'preview' && item.subView) {
-                    setPreviewSubView(item.subView)
-                    if (item.subView === 'strona-glowna') setStronaPage('home')
-                    if (item.subView === 'logowanie') setEkranAuth('logowanie')
-                  }
-                  openMenuDelayed(null)
-                }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 whitespace-nowrap w-full text-left text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] border border-transparent hover:border-foreground/[0.08]"
-              >
-                <item.icon className="w-3.5 h-3.5 shrink-0" />
-                {showContent ? <span>{item.name}</span> : <div className="h-2 w-14 bg-foreground/25 rounded-full" />}
-                {showContent && item.badge && (
-                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{item.badge}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+    <NawigacjaBoczna
+      strona={navPosition === 'right' ? 'prawo' : 'lewo'}
+      onUchwyt={handleDragStart}
+      sekcje={sekcjePodgladu}
+      aktywna={aktywnaPozycja}
+      onWybor={wybierzPozycje}
+      naGorze={wModule && menuWModule ? (
+        <PigulkaModulu nazwa="Wróć do Next Scribe" onClick={() => setMenuWModule(false)} />
+      ) : undefined}
+      className="relative z-40"
+    />
   )
+
+  /** Next Scribe ma własny pasek boczny — i to on jest JEDYNĄ nawigacją, niezależnie
+   *  od tego, gdzie przypięto pasek podglądu. Górny/dolny pasek w module znika,
+   *  a „‹ MENU” pokazuje menu podglądu w tym samym bocznym pasku. */
+  const wModule = activeTab === 'preview' && previewSubView === 'notebook'
+  const bokiem = isSidebar
 
   return (
     <div
       className={cn(
         'relative w-full h-screen font-sans antialiased overflow-hidden bg-transparent',
-        isSidebar ? 'flex flex-row' : 'flex flex-col',
-        navPosition === 'right' && 'flex-row-reverse',
+        (isSidebar || (wModule && menuWModule)) ? 'flex flex-row' : 'flex flex-col',
+        (isSidebar || (wModule && menuWModule)) && navPosition === 'right' && 'flex-row-reverse',
       )}
       style={{ zIndex: 1 }}
     >
       <NbGlassFilters />
 
-      {/* ── Navbar — pozycja zależna od navPosition ── */}
-      {pelnyEkran ? null : isSidebar ? <SidebarNav /> : navPosition === 'bottom'
+      {/* ── Navbar — w Next Scribe platformowa nawigacja znika (Next Scribe ma własną) ── */}
+      {pelnyEkran || (wModule && !menuWModule) ? null : (isSidebar || (wModule && menuWModule)) ? <SidebarNav /> : navPosition === 'bottom'
         ? null  /* bottom: renderowany po <main> */
         : <HorizontalNav />
       }
@@ -1046,9 +983,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
 
       {/* ── Main Workspace ── */}
       <main ref={mainRef} className={cn(
-        'flex-1 min-w-0 overflow-y-auto flex flex-col',
+        'flex-1 min-w-0 flex flex-col',
+        (activeTab === 'canvas' || (activeTab === 'preview' && previewSubView === 'notebook'))
+          ? 'relative p-0 w-full h-full min-h-0 max-h-full overflow-hidden'
+          : 'overflow-y-auto',
         activeTab === 'canvas'
-          ? 'p-0 w-full overflow-hidden min-h-0'
+          ? ''
           : activeTab !== 'preview'
           ? 'p-6 w-full'
           : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'dashboard2' || previewSubView === 'notebook')
@@ -1067,9 +1007,15 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
 
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
         {activeTab === 'preview' && (
-          <div className="space-y-4 w-full flex-1 flex flex-col min-h-0">
+          <div className={cn("w-full flex-1 flex flex-col min-h-0", previewSubView === 'notebook' ? "h-full overflow-hidden" : "space-y-4")}>
             {previewSubView === 'notebook' ? (
-              <NotebookSection />
+              <NotebookSection
+                bezPaska={menuWModule}
+                pozycja={navPosition === 'top' ? 'gora' : navPosition === 'bottom' ? 'dol' : navPosition === 'right' ? 'prawo' : 'lewo'}
+                strona={navPosition === 'right' ? 'prawo' : 'lewo'}
+                onUchwyt={handleDragStart}
+                onMenu={() => setMenuWModule(true)}
+              />
             ) : previewSubView === 'dashboard2' ? (
               <PanelGlownyOsadzony onWyjscie={() => setPreviewSubView('strona-glowna')} />
             ) : previewSubView === 'strona-glowna' ? (
@@ -1625,9 +1571,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       </main>
 
       {/* Bottom navbar — renderowany po <main> żeby był na dole */}
-      {!pelnyEkran && !isSidebar && navPosition === 'bottom' && <HorizontalNav />}
+      {!pelnyEkran && !bokiem && navPosition === 'bottom' && <HorizontalNav />}
 
-      {/* ── DRAG TO DOCK OVERLAY ZONES ── */}
+      {/* ── DRAG TO DOCK OVERLAY ZONES (Góra / Dół / Lewo / Prawo) ── */}
       {isDraggingNav && (
         <div className="fixed inset-0 z-[9999] pointer-events-none bg-background/60 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in-0">
           {/* Top Dock Zone */}
@@ -1654,7 +1600,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
 
           {/* Left Dock Zone */}
           <div className={cn(
-            'fixed left-3 inset-y-12 w-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all duration-200',
+            'fixed left-3 inset-y-12 w-36 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all duration-200',
             targetDock === 'left'
               ? 'bg-primary/25 border-primary text-primary shadow-[0_0_40px_hsl(var(--primary)/0.6)] scale-[1.01]'
               : 'bg-card/40 border-border/80 text-muted-foreground/60'
@@ -1665,7 +1611,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
 
           {/* Right Dock Zone */}
           <div className={cn(
-            'fixed right-3 inset-y-12 w-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all duration-200',
+            'fixed right-3 inset-y-12 w-36 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all duration-200',
             targetDock === 'right'
               ? 'bg-primary/25 border-primary text-primary shadow-[0_0_40px_hsl(var(--primary)/0.6)] scale-[1.01]'
               : 'bg-card/40 border-border/80 text-muted-foreground/60'
@@ -1681,8 +1627,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               style={{ left: dragCoords.x, top: dragCoords.y }}
             >
               <Zap className="w-4 h-4 text-primary" />
-              <span>Nawigacja NextByte</span>
-              <span className="text-[11px] opacity-75 uppercase">({targetDock ?? 'PRZECIĄGAJ'})</span>
+              <span>{wModule ? 'Pasek Next Scribe' : 'Nawigacja NextByte'}</span>
+              <span className="text-[11px] opacity-75 uppercase">
+                ({targetDock === 'left' ? 'LEWO' : targetDock === 'right' ? 'PRAWO' : targetDock === 'top' ? 'GÓRA' : targetDock === 'bottom' ? 'DÓŁ' : 'PRZECIĄGAJ'})
+              </span>
             </div>
           )}
         </div>

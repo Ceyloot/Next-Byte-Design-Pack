@@ -29,7 +29,7 @@ export default function TopicDialog({ tool, onConfirm, onCancel }) {
       title={
         tool && (
           <span className="flex items-center gap-2.5">
-            <span className={`w-8 h-8 rounded-nb-sm flex items-center justify-center flex-shrink-0 ${tool.bg || 'bg-primary/15'}`}>
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${tool.bg || 'bg-primary/15'}`}>
               {Icon && <Icon size={16} className={tool.color || 'text-primary'} />}
             </span>
             <span className="truncate">{tool.label}</span>

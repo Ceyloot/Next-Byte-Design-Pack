@@ -27,7 +27,7 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
   if (!source) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-card/30 backdrop-blur-xl">
-        <div className="w-16 h-16 rounded-nb-lg bg-foreground/5 border border-foreground/10 flex items-center justify-center mb-4 shadow-inner">
+        <div className="w-16 h-16 rounded-2xl bg-foreground/5 border border-foreground/10 flex items-center justify-center mb-4 shadow-inner">
           <LayoutDashboard size={28} className="text-primary/60" />
         </div>
         <h2 className="text-base font-heading font-bold text-foreground mb-1">Wybierz źródło</h2>
@@ -38,7 +38,7 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
               <button
                 key={s.id}
                 onClick={() => onSourceSelect?.(s.id)}
-                className="w-full text-left px-3 py-2.5 rounded-nb-sm bg-card/60 border border-foreground/10 hover:border-primary/40 hover:bg-card/90 transition-all text-xs text-foreground truncate cursor-pointer"
+                className="w-full text-left px-3 py-2.5 rounded-xl bg-card/60 border border-foreground/10 hover:border-primary/40 hover:bg-card/90 transition-colors text-xs text-foreground truncate cursor-pointer"
               >
                 {s.title}
               </button>
@@ -77,20 +77,20 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
                   href={`https://www.youtube.com/watch?v=${fullscreenVideo.videoId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 rounded-nb-xs text-foreground/60 hover:text-foreground hover:bg-foreground/10 transition-colors"
+                  className="p-1.5 rounded-lg text-foreground/60 hover:text-foreground hover:bg-foreground/[0.08] transition-colors"
                   title="Otwórz na YouTube"
                 >
                   <ExternalLink size={14} />
                 </a>
                 <button
                   onClick={() => setFullscreenVideo(null)}
-                  className="p-1.5 rounded-nb-xs text-foreground/60 hover:text-foreground hover:bg-foreground/10 transition-colors"
+                  className="p-1.5 rounded-lg text-foreground/60 hover:text-foreground hover:bg-foreground/[0.08] transition-colors"
                 >
                   <X size={15} />
                 </button>
               </div>
             </div>
-            <div className="aspect-video bg-black rounded-nb-sm overflow-hidden shadow-2xl">
+            <div className="aspect-video bg-background/95 rounded-xl overflow-hidden border border-foreground/[0.12] shadow-2xl">
               <iframe
                 key={fullscreenVideo.videoId}
                 src={`https://www.youtube-nocookie.com/embed/${fullscreenVideo.videoId}?autoplay=1&rel=0`}
@@ -120,10 +120,10 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer select-none',
+                    'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer select-none',
                     isActive
-                      ? 'bg-primary/20 text-primary border-primary/50 shadow-[0_0_12px_rgba(112,190,250,0.3)]'
-                      : 'border-foreground/10 text-foreground/60 hover:text-foreground hover:bg-foreground/5'
+                      ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_12px_hsl(var(--primary)/0.35)]'
+                      : 'bg-card/50 text-foreground/70 border-foreground/15 hover:text-foreground hover:bg-card/80 hover:border-foreground/25'
                   )}
                 >
                   <Icon size={13} />
@@ -143,7 +143,7 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
                 padding="p-0"
                 interactive
                 onClick={() => onSeekToVideo ? onSeekToVideo(source.videoId, 0) : window.open(watchUrl, '_blank')}
-                className="rounded-nb overflow-hidden relative group aspect-video bg-black/90 border border-foreground/15"
+                className="rounded-2xl overflow-hidden relative group aspect-video bg-card/80 border border-foreground/[0.12]"
               >
                 <img
                   src={source.thumbnailUrl || `https://img.youtube.com/vi/${source.videoId}/maxresdefault.jpg`}
@@ -151,14 +151,14 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
                   className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                   onError={e => { if (!e.target.src.includes('hqdefault')) e.target.src = `https://img.youtube.com/vi/${source.videoId}/hqdefault.jpg`; }}
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
-                  <div className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <Play size={24} className="text-white ml-0.5" fill="white" />
+                <div className="absolute inset-0 flex items-center justify-center bg-background/30 group-hover:bg-background/10 transition-colors">
+                  <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <Play size={24} className="text-primary-foreground ml-0.5" fill="currentColor" />
                   </div>
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); setFullscreenVideo({ videoId: source.videoId, title: source.title }); }}
-                  className="absolute top-3 right-3 p-1.5 rounded-nb-xs bg-black/70 text-foreground/80 hover:bg-black hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                  className="absolute top-3 right-3 p-1.5 rounded-lg bg-card/80 text-foreground/80 hover:bg-card hover:text-foreground border border-foreground/10 transition-colors opacity-0 group-hover:opacity-100"
                   title="Powiększ podgląd"
                 >
                   <Maximize2 size={13} />
@@ -183,7 +183,7 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
                     <div
                       key={i}
                       onClick={() => onSeekToVideo ? onSeekToVideo(source.videoId, entry.start) : window.open(`${watchUrl}&t=${Math.floor(entry.start)}`, '_blank')}
-                      className="flex items-start gap-3.5 group py-2.5 px-3 rounded-nb-sm hover:bg-foreground/5 transition-colors cursor-pointer border border-transparent hover:border-foreground/10"
+                      className="flex items-start gap-3.5 group py-2.5 px-3 rounded-xl hover:bg-card/60 transition-colors cursor-pointer border border-transparent hover:border-foreground/10"
                     >
                       <GlassBadge size="sm" intent="neutral" className="shrink-0 font-mono gap-1">
                         <Play className="h-3 w-3" />
@@ -202,7 +202,7 @@ function DocumentViewer({ source, sources = [], onSourceSelect, onSeekToVideo })
           {currentTab === 'raw' && (
             <div className="p-6 space-y-4">
               {source.fileKind === 'image' && mediaUrl && (
-                <img src={mediaUrl} alt={source.title} className="w-full rounded-nb border border-foreground/15" />
+                <img src={mediaUrl} alt={source.title} className="w-full rounded-2xl border border-foreground/15" />
               )}
               {source.fileKind === 'audio' && mediaUrl && (
                 <audio controls src={mediaUrl} className="w-full" />
