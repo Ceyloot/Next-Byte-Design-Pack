@@ -879,7 +879,7 @@ function ChatPanel({ projectName, projectDate, messages, onSendMessage, onClearC
                       <User size={14} />
                     </div>
                   ) : (
-                    <img src={znakNextbyte} alt="" aria-hidden className="mt-2 h-7 w-7 flex-shrink-0 object-contain [[data-theme=future-theme]_&]:opacity-85 [[data-theme=future-theme]_&]:brightness-0" />
+                    <img src={znakNextbyte} alt="" aria-hidden className="nb-znak-marki mt-2 h-7 w-7 flex-shrink-0 object-contain" />
                   )}
                   <div className={`flex flex-col gap-1 ${isUser ? 'items-end max-w-[78%]' : 'items-start max-w-[88%]'}`}>
                     {isUser && Array.isArray(msg.attachments) && msg.attachments.length > 0 && (

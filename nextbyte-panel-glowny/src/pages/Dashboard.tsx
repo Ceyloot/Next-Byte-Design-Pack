@@ -45,6 +45,8 @@ import { WelcomeWizard } from '@/components/onboarding/WelcomeWizard';
 import { ProductTour } from '@/components/onboarding/tour/ProductTour';
 import { SzkieletPulpitu } from '@/components/dashboard/SzkieletPulpitu';
 import { KalendarzMiesiaca } from '@/components/dashboard/KalendarzMiesiaca';
+import { useNavigationMode } from '@/contexts/NavigationModeContext';
+import { cn } from '@/lib/utils';
 
 class DashboardWidgetBoundary extends React.Component<
   { children: React.ReactNode; name: string },
@@ -101,6 +103,11 @@ const DashboardContent = () => {
 
   
   const { data: activeEvents, isLoading: eventsLoading } = useActiveEvents();
+  /* Przy pigułce (pasek na górze/dole) ekran jest szerszy o pasek boczny —
+     skrzynka spraw idzie do górnego rzędu obok aktywności, a kalendarz
+     dostaje całą prawą kolumnę. */
+  const { navMode } = useNavigationMode();
+  const ukladPigulki = navMode === 'pillnav';
   const { release: platformRelease, addedItems, plannedItems, media: releaseMedia } = useCurrentPlatformReleaseNotes();
   const platformVersion = platformRelease?.version || 'Beta 1.0.0';
 
@@ -189,7 +196,12 @@ const DashboardContent = () => {
           "offers": { "@type": "Offer", "price": "0", "priceCurrency": "PLN" }
         }}
       />
-      <div className="h-full min-h-full flex w-full overflow-x-hidden relative">
+      {/* Pod pigułką korzeń wjeżdża POD pasek (ujemny margines + wysokość
+          powiększona o pasek). Musi to robić KORZEŃ, nie `main` niżej:
+          `overflow-x-hidden` tutaj przycina też w pionie, więc wciągnięty
+          sam `main` był ucinany na dolnej krawędzi szyby i pod szkłem nie
+          było nic (zmierzone 26.09: elementsFromPoint pod paskiem = pusto). */}
+      <div className="flex w-full overflow-x-hidden relative -mt-[var(--nb-pasek-gora,0px)] -mb-[var(--nb-pasek-dol,0px)] h-[calc(100%+var(--nb-pasek-gora,0px)+var(--nb-pasek-dol,0px))] min-h-[calc(100%+var(--nb-pasek-gora,0px)+var(--nb-pasek-dol,0px))]">
         {/* Wzór użytkownika ma pierwszeństwo. TechGrid sam się wycofa, gdy
             ktoś ustawił własny wzór albo tło — patrz TechGrid.tsx. */}
         <PatternOverlay location="dashboard" />
@@ -213,7 +225,11 @@ const DashboardContent = () => {
             trzy czwarte panelu było nie do obejrzenia. Poza trybem jednego
             ekranu strona MUSI się przewijać, bo cała treść po prostu się
             nie mieści. */}
-        <main className="relative w-full flex-1 overflow-y-auto ekran1:overflow-hidden">
+        {/* Pod pigułką: korzeń wyżej sięga POD szybę paska, a tu treść
+            odsuwa się tą samą wyściółką — startuje pod paskiem, przy
+            przewijaniu wjeżdża pod szkło. W trybie paska bocznego zmienne są
+            niezdefiniowane, więc wszystko jest zerem. Patrz AppShell. */}
+        <main className="relative w-full flex-1 overflow-y-auto ekran1:overflow-hidden pt-[var(--nb-pasek-gora,0px)] pb-[var(--nb-pasek-dol,0px)]">
           {/*
             ════════════════════════════════════════════════════════════════
              JEDEN EKRAN, ZERO SCROLLOWANIA STRONY — przebudowa 03.08.2026
@@ -265,8 +281,9 @@ const DashboardContent = () => {
                   więc znika cały osobny rząd, a górę ekranu przejmuje informacja,
                   której dotąd na panelu w ogóle nie było: ile masz Byte i na ile
                   Ci starczy. */}
+              <div className={cn('shrink-0', ukladPigulki && 'grid grid-cols-1 gap-4 lg:grid-cols-3')}>
               <motion.div
-                className="shrink-0"
+                className={cn('shrink-0', ukladPigulki && 'lg:col-span-2 [&>*]:h-full')}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -279,6 +296,14 @@ const DashboardContent = () => {
                   onPokazWersje={() => setReleaseDialogOpen(true)}
                 />
               </motion.div>
+              {ukladPigulki && (
+                <div className="flex flex-col [&>*]:flex-1">
+                  <DashboardWidgetBoundary name="skrzynka-spraw">
+                    <SkrzynkaSpraw />
+                  </DashboardWidgetBoundary>
+                </div>
+              )}
+              </div>
 
               {/* ZAPROSZENIE DO INSTALACJI — tylko telefon, tylko gdy jest co
                   proponować, i tylko raz na 30 dni po odmowie. Miejsce nie jest
@@ -381,11 +406,13 @@ const DashboardContent = () => {
                       wysokość ekranu na jedno zdanie. Terminy stoją NAD
                       kalendarzem, bo termin, który minął, nie może być schowany
                       pod siatką dni. */}
-                  <div className="shrink-0">
-                    <DashboardWidgetBoundary name="skrzynka-spraw">
-                      <SkrzynkaSpraw />
-                    </DashboardWidgetBoundary>
-                  </div>
+                  {!ukladPigulki && (
+                    <div className="shrink-0">
+                      <DashboardWidgetBoundary name="skrzynka-spraw">
+                        <SkrzynkaSpraw />
+                      </DashboardWidgetBoundary>
+                    </div>
+                  )}
 
                   {/* Kalendarz miesiąca — nowy 02.09. Sam kalendarz, bez listy
                       wydarzeń pod spodem: listę robi skrzynka tuż wyżej. */}
@@ -403,7 +430,7 @@ const DashboardContent = () => {
                     dni. Równe dno kolumn było ozdobą, ucięty tydzień jest usterką
                     — przy sprzeczności wygrywa siatka.
                   */}
-                  <div className="mt-4 flex flex-1 flex-col">
+                  <div className={cn('flex flex-1 flex-col', !ukladPigulki && 'mt-4')}>
                     <DashboardWidgetBoundary name="kalendarz-miesiaca">
                       <KalendarzMiesiaca />
                     </DashboardWidgetBoundary>

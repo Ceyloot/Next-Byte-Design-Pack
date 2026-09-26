@@ -16,7 +16,7 @@ import { Wand2, Brain, Skull, Bot, Camera, Video, CalendarDays, SquareCheck, Fil
 const MENU_PLATFORMY: SekcjaNawigacji[] = [
   { id: 'glowne', pozycje: [{ id: 'panel', etykieta: 'Panel Główny', ikona: LayoutGrid }] },
   { id: 'ai', tytul: 'AI', pozycje: [
-    { id: 'asystent', etykieta: 'Personalny Asystent', ikona: Sparkles },
+    { id: 'asystent', etykieta: 'Personalny Asystent', ikona: Sparkles, wyrozniona: true },
     { id: 'czat', etykieta: 'Chat AI', ikona: MessageSquare },
     { id: 'promptex', etykieta: 'PromptEx', ikona: Wand2 },
     { id: 'pamiec', etykieta: 'Pamięć AI', ikona: Brain },

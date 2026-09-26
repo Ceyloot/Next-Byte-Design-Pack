@@ -104,14 +104,18 @@ export const ByteStatusBar: React.FC<ByteStatusBarProps> = ({
             jest, a szyba w szybie gasi refrakcję (strażnik zagnieżdżenia).
             Powitanie zniknęło świadomie: imię stoi w menu konta u dołu paska
             bocznego, a wersję przejął przycisk przy akcjach. */}
-        <div className="min-w-0 flex-1 md:max-w-[440px]">
+        <div className="min-w-0 flex-1 md:max-w-[500px]">
           <AktywnoscWykres wariant="pasek" />
         </div>
 
         <span className="hidden w-px self-stretch bg-border md:block" aria-hidden />
 
         {/* SALDO — jedyna liczba, która ma tu prawo być duża. */}
-        <div className="min-w-0 shrink-0">
+        {/* TELEFON ZWARTY (26.09.2026, Artur: „można pomniejszyć, nie ma sensu,
+            by to było aż tak duże"). Na telefonie liczba, wersja i przełącznik
+            okna stoją w JEDNYM wierszu — wcześniej trzy osobne wiersze plus
+            pusty pas wykresu. Od `sm` układ jak był. */}
+        <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:block">
           {/* Bez etykiety „Saldo Byte" (Michał 08.09: „zapychacze wywal") —
               duża liczba ze znakiem ⟠ mówi to sama. */}
           <p
@@ -129,10 +133,15 @@ export const ByteStatusBar: React.FC<ByteStatusBarProps> = ({
               type="button"
               onClick={onPokazWersje}
               aria-label={`Wersja platformy ${platformVersion} — pokaż informacje o wydaniu`}
-              className="mt-2 inline-flex rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring sm:mt-2"
             >
               <Plakietka intencja="akcent">{platformVersion}</Plakietka>
             </button>
+          )}
+          {daneWykresu && (
+            <span className="ml-auto sm:hidden">
+              <PrzelacznikOkna wartosc={okno} naZmiane={setOkno} />
+            </span>
           )}
         </div>
 
@@ -156,11 +165,8 @@ export const ByteStatusBar: React.FC<ByteStatusBarProps> = ({
                   przyciskiem Wydatki (zgłoszenie Michała: przełącznik latał nad
                   przyciskami). Od `sm` zostaje w rzędzie osi — pomiar z 30.07
                   pilnuje tam wysokości paska (114 px w trybie jednego ekranu). */}
-              <div className="mb-1 flex justify-end sm:hidden">
-                <PrzelacznikOkna wartosc={okno} naZmiane={setOkno} />
-              </div>
               <div
-                className="h-9 w-full cursor-crosshair sm:h-11"
+                className="h-7 w-full cursor-crosshair sm:h-11"
                 style={{ ...ZMIENNE_WYKRESU, '--chart-line-primary': kolorLinii } as React.CSSProperties}
               >
                 <AreaChart
@@ -210,7 +216,7 @@ export const ByteStatusBar: React.FC<ByteStatusBarProps> = ({
               </p>
             </>
           ) : (
-            <div className="flex h-9 items-center text-[13px] text-muted-foreground sm:h-11">
+            <div className="flex h-7 items-center text-[13px] text-muted-foreground sm:h-11">
               Za mało danych na wykres
             </div>
           )}
@@ -318,6 +324,8 @@ const PrzelacznikOkna: React.FC<{ wartosc: OknoDni; naZmiane: (v: OknoDni) => vo
         type="button"
         onClick={() => naZmiane(o)}
         aria-pressed={wartosc === o}
+        /* Bez reguły 44 px — trzy przyciski po 44 px rozpychały wiersz na telefonie. */
+        data-tap-target="off"
         className={`rounded-md px-2 py-1 text-[10px] tabular-nums transition-colors ${
           wartosc === o
             ? 'bg-primary/15 text-primary'

@@ -37,7 +37,7 @@ import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
 import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
 import { PanelGlownyOsadzony } from '@/sections/panel2/PanelGlownyOsadzony'
 import { NotebookSection } from '@/sections/NotebookSection'
-import { NawigacjaBoczna, PigulkaModulu, type SekcjaNawigacji } from '@/components/NawigacjaBoczna'
+import { NawigacjaBoczna, type SekcjaNawigacji } from '@/components/NawigacjaBoczna'
 
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
@@ -900,9 +900,6 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       sekcje={sekcjePodgladu}
       aktywna={aktywnaPozycja}
       onWybor={wybierzPozycje}
-      naGorze={wModule && menuWModule ? (
-        <PigulkaModulu nazwa="Wróć do Next Scribe" onClick={() => setMenuWModule(false)} />
-      ) : undefined}
       className="relative z-40"
     />
   )

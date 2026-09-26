@@ -32,6 +32,8 @@ export interface PozycjaNawigacji {
   ikona: Ikona
   /** Tekst stonowany jak pozycje `muted` w platformie. */
   cicha?: boolean
+  /** Pozycja `tier: 'primary'` z platformy: pełny kolor tekstu i `font-medium`. */
+  wyrozniona?: boolean
   /** Coś po prawej: licznik, znacznik, akcje wiersza. */
   koniec?: React.ReactNode
   /** Kolor ikony spoza akcentu (np. tożsamość modułu). */
@@ -62,10 +64,13 @@ export function WierszNawigacji({
   pozycja,
   aktywna,
   onClick,
+  wciecie,
 }: {
   pozycja: PozycjaNawigacji
   aktywna?: boolean
   onClick?: () => void
+  /** Wiersz zagnieżdżony (np. źródło w playliście). */
+  wciecie?: boolean
 }) {
   const I = pozycja.ikona
   const szyna = useContext(SzynaKontekst)
@@ -81,16 +86,20 @@ export function WierszNawigacji({
           /* Wysokość STAŁA 32 px: w platformie baza `h-9` przegrywa w twMerge
              z wariantem rozmiaru `h-8`, a `py-1.5` nie powiększa wiersza,
              bo `overflow-hidden` trzyma pole ikony 28 px w środku. */
-          'group flex h-8 w-full cursor-pointer items-center overflow-hidden rounded-xl text-[13px] outline-none transition-all duration-300',
+          'group flex h-8 w-full cursor-pointer items-center overflow-hidden rounded-[0.75rem] text-[13px] outline-none transition-all duration-300',
           'px-2 py-1.5 focus-visible:ring-2 focus-visible:ring-primary/45',
+          wciecie && !szyna && 'ml-5 w-[calc(100%-1.25rem)]',
           aktywna
             ? 'nb-nav-pozycja-akt font-medium text-foreground'
-            : cn('nb-nav-pozycja hover:text-foreground', pozycja.cicha ? 'text-foreground/70' : 'text-foreground/[0.88]'),
+            : cn(
+              'nb-nav-pozycja hover:text-foreground',
+              pozycja.wyrozniona ? 'font-medium text-foreground' : pozycja.cicha ? 'text-foreground/70' : 'text-foreground/[0.88]',
+            ),
         )}
       >
         <span
           className={cn(
-            'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+            'flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.75rem]',
             aktywna ? 'nb-nav-ikona-akt text-primary' : cn('nb-nav-ikona', pozycja.kolorIkony ?? 'text-foreground/60 group-hover:text-foreground/90'),
           )}
         >
@@ -122,7 +131,7 @@ export function NaglowekSekcjiNawigacji({ tytul, akcja }: { tytul: string; akcja
    rozmów w Chat AI) jest gęstszy i lżejszy: wiersze bez pól ikon, tekst
    15 px, grupy z chevronem i folderem, aktywny wiersz w obwódce. */
 
-/** Pigułka modułu pod szukajką: „‹ Chat AI · MENU". */
+/** Pigułka modułu pod szukajką: „‹ Chat AI · MENU" — 1:1 z panelem Chat AI (h-10, rounded-lg, 13 px). */
 export function PigulkaModulu({ nazwa, onClick }: { nazwa: string; onClick?: () => void }) {
   const szyna = useContext(SzynaKontekst)
   return (
@@ -131,32 +140,32 @@ export function PigulkaModulu({ nazwa, onClick }: { nazwa: string; onClick?: () 
       onClick={onClick}
       title={szyna ? nazwa : undefined}
       className={cn(
-        'flex h-10 items-center gap-2 overflow-hidden rounded-xl border border-primary/35 bg-primary/10 text-left transition-all duration-300 hover:bg-primary/[0.14]',
-        szyna ? 'w-10 justify-center px-0' : 'w-full px-3',
+        'group flex h-10 items-center gap-2 overflow-hidden rounded-lg border border-primary/25 bg-primary/[0.08] text-left text-[13px] font-semibold text-foreground transition-colors hover:border-primary/45 hover:bg-primary/[0.14]',
+        szyna ? 'w-10 justify-center px-0' : 'w-full px-2.5',
       )}
     >
-      <ChevronLeft className="h-4 w-4 shrink-0 text-primary" />
-      {!szyna && <span className='min-w-0 flex-1 truncate whitespace-nowrap text-[14px] font-semibold text-foreground'>{nazwa}</span>}
-      {!szyna && <span className='whitespace-nowrap text-[10.5px] font-medium tracking-[0.12em] text-foreground/45'>MENU</span>}
+      <ChevronLeft className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-x-0.5" />
+      {!szyna && <span className="min-w-0 truncate whitespace-nowrap">{nazwa}</span>}
+      {!szyna && <span className="ml-auto whitespace-nowrap text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">Menu</span>}
     </button>
   )
 }
 
-/** Licznik z lupą: „31 ROZMÓW  (⌕)". */
+/** Licznik z lupą: „31 ROZMÓW  (⌕)" — 10 px / 0.14em, lupa `h-8 w-8 rounded-lg`. */
 export function LicznikPanelu({ tekst, onSzukaj }: { tekst: string; onSzukaj?: () => void }) {
   const szyna = useContext(SzynaKontekst)
   if (szyna) return null
   return (
-    <div className="mt-4 flex h-8 items-center justify-between pl-1">
-      <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/50">{tekst}</span>
-      <button type="button" onClick={onSzukaj} aria-label="Szukaj" className="nb-ikona-kafel group flex h-8 w-8 items-center justify-center rounded-full text-foreground/70 transition-colors hover:text-primary">
+    <div className="mt-3 flex items-center justify-between">
+      <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">{tekst}</span>
+      <button type="button" onClick={onSzukaj} aria-label="Szukaj" className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 bg-muted/30 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
         <Search className="h-4 w-4" />
       </button>
     </div>
   )
 }
 
-/** „+ Nowa Rozmowa": pełna szerokość, pigułka 36 px z rantem akcentu. */
+/** „+ Nowa Rozmowa": pigułka h-9, `text-xs font-medium`, rant i poświata akcentu. */
 export function PigulkaNowy({ tekst, onClick }: { tekst: string; onClick?: () => void }) {
   const szyna = useContext(SzynaKontekst)
   return (
@@ -165,17 +174,17 @@ export function PigulkaNowy({ tekst, onClick }: { tekst: string; onClick?: () =>
       onClick={onClick}
       title={szyna ? tekst : undefined}
       className={cn(
-        'mt-2 flex h-9 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full border border-primary/30 bg-primary/[0.06] text-[13.5px] font-medium text-foreground transition-all duration-300 hover:bg-primary/[0.12]',
-        szyna ? 'w-9' : 'w-full',
+        'mt-3 flex h-9 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full border border-primary/25 bg-primary/[0.07] text-foreground/90 transition-colors hover:border-primary/40 hover:bg-primary/[0.12] hover:text-foreground shadow-[0_0_12px_-6px_hsl(var(--primary)/0.4)]',
+        szyna ? 'w-9' : 'w-full px-3',
       )}
     >
       <Plus className="h-4 w-4 shrink-0 text-primary" />
-      <span className={cn(GASNIE, szyna && 'hidden')}>{tekst}</span>
+      <span className={cn('text-xs font-medium', GASNIE, szyna && 'hidden')}>{tekst}</span>
     </button>
   )
 }
 
-/** Nagłówek grupy drzewa: „▾ 📂 PROJEKTY    (akcja)". */
+/** Nagłówek grupy panelu: ten sam nagłówek co sekcje menu (10 px / 0.14em / 0.38), z chevronem zwijania i akcją po prawej. */
 export function GrupaPanelu({
   tytul, ikona: I = FolderOpen, otwarta = true, onPrzelacz, akcja, children,
 }: {
@@ -188,25 +197,24 @@ export function GrupaPanelu({
 }) {
   const szyna = useContext(SzynaKontekst)
   return (
-    <div className="mt-4">
-      {/* W szynie nagłówek grupy to kreska 28 px na osi ikon — jak separatory w platformie. */}
-      {szyna && <div aria-hidden className="mb-2 ml-1.5 h-px w-7 bg-foreground/[0.12]" />}
-      <div className={cn('flex h-7 items-center gap-1.5 pl-1 pr-0.5', szyna && 'hidden')}>
-        <button type="button" onClick={onPrzelacz} aria-expanded={otwarta} className="flex min-w-0 flex-1 items-center gap-1.5 text-left">
-          {otwarta ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-foreground/45" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-foreground/45" />}
-          <I className="h-3.5 w-3.5 shrink-0 text-foreground/45" />
-          <span className="truncate whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/50">{tytul}</span>
+    <div className="mb-1.5">
+      <div className="relative mb-1 box-content flex h-4 items-center justify-between px-2 pt-4">
+        {szyna && <div aria-hidden className="absolute left-2 h-px w-7 bg-foreground/[0.12]" />}
+        <button type="button" onClick={onPrzelacz} aria-expanded={otwarta} className={cn('flex min-w-0 items-center gap-1.5 text-left', GASNIE, szyna && 'pointer-events-none opacity-0')}>
+          {otwarta ? <ChevronDown className="h-3 w-3 shrink-0 text-foreground/[0.38]" /> : <ChevronRight className="h-3 w-3 shrink-0 text-foreground/[0.38]" />}
+          <I className="h-3 w-3 shrink-0 text-foreground/[0.38]" />
+          <span className="h-4 truncate whitespace-nowrap text-[10px] font-medium uppercase leading-4 tracking-[0.14em] text-foreground/[0.38]">{tytul}</span>
         </button>
-        {akcja}
+        <span className={cn('flex items-center', GASNIE, szyna && 'pointer-events-none opacity-0')}>{akcja}</span>
       </div>
-      {otwarta && <ul className="mt-1 space-y-0.5">{children}</ul>}
+      {otwarta && <ul className={LISTA_WIERSZY}>{children}</ul>}
     </div>
   )
 }
 
-/** Wiersz listy panelu: tekst 15 px, opcjonalna mała ikona (jak folder projektu), aktywny w obwódce. */
+/** Wiersz listy panelu = wiersz menu platformy (`WierszNawigacji`): pole ikony 28 px, tekst 13 px, pigułka aktywna. */
 export function WierszPanelu({
-  etykieta, ikona: I, kolorIkony, aktywny, koniec, wciecie, onClick,
+  etykieta, ikona, kolorIkony, aktywny, koniec, wciecie, onClick,
 }: {
   etykieta: string
   ikona?: Ikona
@@ -216,31 +224,13 @@ export function WierszPanelu({
   wciecie?: boolean
   onClick?: () => void
 }) {
-  const szyna = useContext(SzynaKontekst)
   return (
-    <li title={szyna ? etykieta : undefined}>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onClick}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } }}
-        aria-current={aktywny ? 'page' : undefined}
-        className={cn(
-          'group flex h-10 w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl border px-3 text-[15px] outline-none transition-colors duration-300',
-          'focus-visible:ring-2 focus-visible:ring-primary/45',
-          wciecie && !szyna && 'pl-6',
-          szyna && 'w-10 justify-center px-0',
-          aktywny
-            ? 'border-foreground/[0.14] bg-foreground/[0.06] font-medium text-foreground shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.06)]'
-            : 'border-transparent text-foreground/[0.88] hover:bg-foreground/[0.04] hover:text-foreground',
-        )}
-      >
-        {I && <I className={cn('h-4 w-4 shrink-0', kolorIkony ?? 'text-foreground/50')} />}
-        {/* W szynie etykieta i akcje wypadają z układu — inaczej zjadałyby miejsce i ikona nie stałaby na środku. */}
-        <span className={cn('min-w-0 flex-1 truncate whitespace-nowrap', szyna && 'hidden')}>{etykieta}</span>
-        {koniec && <span className={cn('flex shrink-0 items-center gap-1.5', szyna && 'hidden')}>{koniec}</span>}
-      </div>
-    </li>
+    <WierszNawigacji
+      wciecie={wciecie}
+      aktywna={aktywny}
+      onClick={onClick}
+      pozycja={{ id: etykieta, etykieta, ikona: ikona ?? FolderOpen, koniec, kolorIkony }}
+    />
   )
 }
 
@@ -348,7 +338,7 @@ export function NawigacjaBoczna({
               <div className="relative h-10 w-10 flex-shrink-0">
                 <div className="absolute inset-0 scale-150 rounded-full bg-primary/20 blur-2xl" />
                 <div className="nbb-kafelek relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 p-1.5 !border-primary/30">
-                  <img src={znak} alt="NextByte" className="h-full w-full rounded-xl object-contain" />
+                  <img src={znak} alt="NextByte" className="nb-znak-marki h-full w-full rounded-xl object-contain" />
                 </div>
               </div>
               <h2 className={cn('whitespace-nowrap text-lg font-bold leading-tight tracking-tight text-foreground', GASNIE, szyna && 'opacity-0')}>NEXTBYTE</h2>
@@ -359,7 +349,7 @@ export function NawigacjaBoczna({
                 onClick={zmienMotyw}
                 title={motyw.jasny ? 'Ciemny motyw' : 'Jasny motyw'}
                 aria-label={motyw.jasny ? 'Przełącz na ciemny motyw' : 'Przełącz na jasny motyw'}
-                className="nb-ikona-kafel group flex h-7 w-7 items-center justify-center rounded-lg text-foreground/70 transition-all duration-300 hover:text-primary"
+                className="nb-ikona-kafel group flex h-7 w-7 items-center justify-center rounded-[0.75rem] border text-foreground/70 transition-all duration-300 hover:text-primary"
               >
                 {motyw.jasny ? <Moon className="h-3.5 w-3.5" strokeWidth={2} /> : <Sun className="h-3.5 w-3.5" strokeWidth={2} />}
               </button>
@@ -369,7 +359,7 @@ export function NawigacjaBoczna({
                   onClick={przelaczZwiniecie}
                   title="Rozwiń menu"
                   aria-label="Rozwiń pasek boczny"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary transition-all duration-300 hover:bg-primary/15 shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.06),0_0_12px_-2px_hsl(var(--primary)/0.45)]"
+                  className="flex h-7 w-7 items-center justify-center rounded-[0.75rem] border border-primary/30 bg-primary/10 text-primary transition-all duration-300 hover:bg-primary/15 shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.06),0_0_12px_-2px_hsl(var(--primary)/0.45)]"
                 >
                   <PanelLeft className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </button>
@@ -379,7 +369,7 @@ export function NawigacjaBoczna({
                   onClick={przelaczZwiniecie}
                   title="Zwiń menu"
                   aria-label="Zwiń pasek boczny"
-                  className="nb-ikona-kafel group flex h-7 w-7 items-center justify-center rounded-lg text-foreground/70 transition-all duration-300 hover:text-primary"
+                  className="nb-ikona-kafel group flex h-7 w-7 items-center justify-center rounded-[0.75rem] border text-foreground/70 transition-all duration-300 hover:text-primary"
                 >
                   <PanelLeftClose className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
@@ -394,7 +384,7 @@ export function NawigacjaBoczna({
             type="button"
             onClick={onSzukaj}
             aria-label="Wyszukaj"
-            className="nb-ikona-kafel group relative flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-[13px] text-foreground/65 transition-all duration-300 hover:text-foreground"
+            className="nb-ikona-kafel group relative flex w-full items-center gap-2 rounded-[0.75rem] border px-2 py-1.5 text-[13px] text-foreground/65 transition-all duration-300 hover:text-foreground"
           >
             <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center">
               <Search className="h-4 w-4 transition-colors group-hover:text-primary" />
@@ -416,7 +406,7 @@ export function NawigacjaBoczna({
           }}
         >
           {children ?? sekcje.map((s) => (
-            <div key={s.id} className={s.tytul ? 'mb-1.5' : 'mb-0.5'}>
+            <div key={s.id} className={cn('py-2', s.tytul ? 'mb-1.5' : 'mb-0.5')}>
               {s.tytul && <NaglowekSekcjiNawigacji tytul={s.tytul} akcja={s.akcja} />}
               <ul className={LISTA_WIERSZY}>
                 {s.pozycje.map((p) => (

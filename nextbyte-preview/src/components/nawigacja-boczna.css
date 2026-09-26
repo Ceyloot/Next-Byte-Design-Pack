@@ -6,6 +6,17 @@
    o innych wartościach — tu nie może ich przejąć.
    ═══════════════════════════════════════════════════════════════ */
 
+/* Krój paska = krój platformy (`data-font-preset="nextbyte"`): Inter w treści,
+   Geist w nagłówkach (preset inter-geist). Podgląd jedzie na Plus Jakarta Sans, więc bez
+   tego pasek wyglądał inaczej niż w panelu już na poziomie liter. */
+.nbb,
+.nb-font-platformy.nb-font-platformy { font-family: 'Inter', system-ui, sans-serif; }
+.nbb h2,
+.nb-font-platformy h1, .nb-font-platformy h2, .nb-font-platformy h3, .nb-font-platformy h4 {
+  font-family: 'Geist', 'Space Grotesk', system-ui, sans-serif !important;
+}
+/* `.nb-font-platformy` — moduły (Next Scribe) w kroju platformy, nie podglądu. */
+
 /* Tafla paska: `[data-sidebar="sidebar"].nb-szklo.nb-szklo-plynne` */
 .nbb-tafla {
   position: relative;
@@ -93,3 +104,22 @@
 .nbb-lista::-webkit-scrollbar { width: 4px; }
 .nbb-lista::-webkit-scrollbar-thumb { background: hsl(var(--foreground) / 0.12); border-radius: 4px; }
 .nbb-lista::-webkit-scrollbar-track { background: transparent; }
+
+/* Wiersze listy w panelu narzędzia (Chat AI / Next Scribe) — `nb-wiersz-int/-akt` z platformy. */
+.nbb .nb-wiersz-int {
+  border-color: transparent;
+  background-color: transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.nbb .nb-wiersz-int:hover {
+  background-color: hsl(var(--foreground) / calc(var(--nb-wrs-wypelnienie, 0.03) * 1.7));
+  border-color: hsl(var(--foreground) / 0.10);
+}
+.nbb .nb-wiersz-akt {
+  background-color: hsl(var(--foreground) / calc(var(--nb-wrs-wypelnienie, 0.03) * 2.7));
+  border-color: hsl(var(--foreground) / 0.15);
+  box-shadow: inset 0 1px hsl(var(--foreground) / var(--nb-kaf-refleks, 0.06));
+}
+.nbb .nb-wiersz-akt:hover {
+  background-color: hsl(var(--foreground) / calc(var(--nb-wrs-wypelnienie, 0.03) * 3.3));
+}

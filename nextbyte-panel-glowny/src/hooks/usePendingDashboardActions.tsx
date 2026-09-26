@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { hotCache } from '@/lib/hotMemoryCache';
+import { dolaczDoKanalu } from '@/lib/realtimeChannels';
 
 export type PendingDashboardActionType = 'company_invite' | 'calendar_share' | 'note_share' | 'folder_share';
 
@@ -136,7 +137,7 @@ export const usePendingDashboardActions = () => {
   });
 
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let odlacz: (() => void) | null = null;
     /* Kanał powstaje dopiero po `getUser()`. Bez tej flagi sprzątanie efektu
        trafia w `channel === null`, a dopiero potem rozwiązana obietnica zakłada
        kanał, który nikt już nie usunie — kolejny montaż dostaje ten sam temat
@@ -152,21 +153,25 @@ export const usePendingDashboardActions = () => {
         queryClient.invalidateQueries({ queryKey: pendingActionsKey });
       };
 
-      channel = supabase
-        .channel(`pending-dashboard-actions-${user.id}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'company_invitations' }, refresh)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'shared_calendar_members', filter: `user_id=eq.${user.id}` }, refresh)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'note_shares', filter: `shared_with_id=eq.${user.id}` }, refresh)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'folder_shares', filter: `shared_with_id=eq.${user.id}` }, refresh)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'company_members', filter: `user_id=eq.${user.id}` }, () => queryClient.invalidateQueries({ queryKey: pendingActionsKey }))
-        .subscribe();
+      /* Wspólny kanał — hak żyje naraz w pasku bocznym i na karcie Dashboardu. */
+      odlacz = dolaczDoKanalu(
+        `pending-dashboard-actions-${user.id}`,
+        [
+          { table: 'company_invitations' },
+          { table: 'shared_calendar_members', filter: `user_id=eq.${user.id}` },
+          { table: 'note_shares', filter: `shared_with_id=eq.${user.id}` },
+          { table: 'folder_shares', filter: `shared_with_id=eq.${user.id}` },
+          { table: 'company_members', filter: `user_id=eq.${user.id}` },
+        ],
+        refresh,
+      );
 
 
     });
 
     return () => {
       porzucony = true;
-      if (channel) supabase.removeChannel(channel);
+      odlacz?.();
     };
   }, [queryClient]);
 

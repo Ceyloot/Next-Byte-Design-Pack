@@ -113,7 +113,7 @@ function Sidebar({
             kolorIkony={p.id === activeProjectId ? 'text-primary' : 'text-foreground/50'}
             aktywny={p.id === activeProjectId}
             onClick={() => onChangeProject?.(p.id)}
-            koniec={<span className="text-[11px] tabular-nums text-foreground/40">{p.sourceCount ?? 0}</span>}
+            koniec={<span className="text-[10px] tabular-nums text-muted-foreground/60">{p.sourceCount ?? 0}</span>}
           />
         ))}
       </GrupaPanelu>
@@ -145,8 +145,8 @@ function Sidebar({
                 {allSelected ? <CheckSquare className="h-3.5 w-3.5 text-primary" /> : <Square className="h-3.5 w-3.5" />}
               </button>
             )}
-            <button type="button" onClick={onOpenAddModal} aria-label="Dodaj źródło" className="rounded-md p-0.5 text-foreground/50 hover:text-primary">
-              <Plus className="h-4 w-4" />
+            <button type="button" onClick={onOpenAddModal} aria-label="Dodaj źródło" className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border/50 bg-muted/30 text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground">
+              <Plus className="h-3 w-3" />
             </button>
           </span>
         }
@@ -171,7 +171,7 @@ function Sidebar({
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
-                  <span className="text-[11px] tabular-nums text-foreground/40">{pl.sources.length}</span>
+                  <span className="text-[10px] tabular-nums text-muted-foreground/60">{pl.sources.length}</span>
                 </>
               }
             />

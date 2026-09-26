@@ -883,7 +883,7 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
   const viewerSource = sources.find(s => s.id === viewerSourceId);
 
   return (
-    <div className="flex h-full w-full text-foreground overflow-hidden font-sans relative">
+    <div className="flex h-full w-full text-foreground overflow-hidden nb-font-platformy relative">
       <NbGlassFilters />
 
       {/* BEZ paska nawigacji — ta appka osadza się na platformie NextByte, która ma

@@ -298,7 +298,7 @@ export const SzybkiKreator: React.FC = () => {
           Niecka (Poziom 2): własne, stonowane tło i cienka krawędź od
           `--foreground`, żeby pole odróżniało się od szyby kafelka —
           bez pełnego szkła na szkle, które dawało „mleko" zamiast materiału. */}
-      <div className="mx-3 mt-1 rounded-xl border border-foreground/[0.07] bg-background/50">
+      <div className="mx-3 mt-1 rounded-xl border border-foreground/[0.07] bg-background/25">
         <Textarea
           value={tresc}
           onChange={(e) => setTresc(e.target.value)}
@@ -315,7 +315,7 @@ export const SzybkiKreator: React.FC = () => {
       {/* ── OPCJE ZALEŻNE OD TRYBU ───────────────────────────────────────
           Tylko to, co zmienia WYNIK. Pełna konfiguracja zostaje w module —
           stąd się zaczyna, a nie stroi. */}
-      <div className="flex min-h-9 items-center gap-1.5 overflow-x-auto px-3 pb-1 pasek-bez-suwaka">
+      <div className="flex min-h-9 items-center gap-1.5 overflow-x-auto px-3 pt-2 pb-1 pasek-bez-suwaka">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={tryb}
@@ -403,7 +403,7 @@ export const SzybkiKreator: React.FC = () => {
           Cena PRZED kliknięciem, razem z saldem po operacji. ElevenLabs
           pokazuje samo „pozostało 208" — a pytanie brzmi „ile mnie to
           kosztuje i czy mi starczy", więc odpowiadamy na jedno i drugie. */}
-      <div className="flex items-center justify-between gap-3 border-t border-border/40 px-3 py-2">
+      <div className="flex items-center justify-between gap-3 px-3 pt-1.5 pb-2.5">
         <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground">
           {kosztPelny === null ? (
             <span className="inline-flex items-center gap-1.5">

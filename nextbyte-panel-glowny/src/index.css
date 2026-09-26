@@ -6668,3 +6668,24 @@ border-radius: 8px;
 [data-theme="scandinavian"] .nb-szklo.nb-szklo-tafla {
   border-color: hsl(var(--foreground) / var(--nb-tafla-krawedz, 0.20)) !important;
 }
+
+/* ── SZKŁO LIST NAWIGACJI (26.09.2026) ─────────────────────────────────
+   Listy górnego paska (menu, kategorie, konto, dzwonek). Tafla okien ma na
+   jasnym motywie 0.85 wypełnienia — zmierzone: biała płyta, spod listy nic.
+   Tu 0.50 (jasne) / 0.55 (ciemne) i rozmycie 16 px: kształty pod listą
+   prześwitują, kolumna tekstu zostaje czytelna.
+
+   BEZ `box-shadow`. Pierwsza wersja nadpisywała go z `!important` i kasowała
+   ranty materiału (`--nb-cien-ranty`) — dokładnie to, po czym oko rozpoznaje
+   liquid glass. Sam pasek jedzie na materiale paska bocznego (`nb-kafelek`,
+   PillNavbar → `SZKLO_PASKA`), nie na tej klasie.
+   `!important` przy tle, bo `nextbyte-light` ma własne dla list Radiksa (~5090). */
+.nb-szklo.nb-szklo-tafla.nb-szklo-nawigacja {
+  --nb-szklo-rozmycie: 16px;
+  --nb-szklo-nasycenie: 180%;
+  background-color: hsl(var(--popover) / 0.55) !important;
+}
+:root:is([data-theme='nextbyte-light'], [data-theme='future-theme'], [data-theme='scandinavian'], [data-theme='snowy-white']) .nb-szklo.nb-szklo-tafla.nb-szklo-nawigacja {
+  background-color: hsl(var(--popover) / 0.50) !important;
+}
+

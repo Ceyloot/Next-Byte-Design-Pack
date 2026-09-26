@@ -1631,3 +1631,13 @@ html.nb-refrakcja-chrome .nb-szklo.nb-szklo-canvas:not(.nb-powierzchnia),
   -webkit-backdrop-filter: saturate(135%) blur(16px);
   backdrop-filter: saturate(135%) blur(16px);
 }
+
+/* ── ZNAK NEXTBYTE W JASNYCH MOTYWACH ─────────────────────────────────────
+   Plik znaku jest biały — na jasnej szybie znikał (biel na bieli). Ta sama
+   reguła co w platformie (SidebarHeader.tsx): `brightness(0)` gasi znak do
+   czerni, `invert(0.3)` podnosi go do ciemnej szarości rgb(77,77,77),
+   kontrast ~7,6:1, miękcej niż czarny. Jedna klasa dla każdego miejsca ze
+   znakiem, żeby żadne nie zostało białe po dodaniu nowego jasnego motywu. */
+:root:is([data-theme='future-theme'], [data-theme='nextbyte-light'], [data-theme='scandinavian'], [data-theme='snowy-white']) .nb-znak-marki {
+  filter: brightness(0) invert(0.3);
+}

@@ -79,7 +79,7 @@ export function PasekPoziomyNotebook({
 
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-primary/20 to-primary/5 p-1 shadow-sm">
-              <img src={znak} alt="NextByte" className="h-full w-full rounded-lg object-contain" />
+              <img src={znak} alt="NextByte" className="nb-znak-marki h-full w-full rounded-lg object-contain" />
             </div>
             <span className="hidden sm:inline text-xs font-extrabold uppercase tracking-wider text-foreground">
               NEXTBYTE
