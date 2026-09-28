@@ -271,7 +271,7 @@ const SidebarMenuSectionComponent = ({
       'px-2 py-1.5',
       isDisabled
         ? 'text-muted-foreground/50 cursor-not-allowed opacity-60'
-        : tierClasses(item.tier, itemIsActive),
+        : tierClasses(item.tier, itemIsActive && !isCollapsed),
       item.tier === 'primary' && !itemIsActive && 'font-medium'
     );
 
@@ -298,7 +298,7 @@ const SidebarMenuSectionComponent = ({
                 </span>
                 {/* ml-2.5 → ml-2: ostatnie 2 px, których brakowało najdłuższej
                     etykiecie („Personalny Asystent") po zwężeniu paska. */}
-                <span className={cn('truncate ml-2 transition-opacity duration-150', isCollapsed && 'opacity-0')}>{item.title}</span>
+                {!isCollapsed && <span className="truncate ml-2">{item.title}</span>}
               </Link>
               {!isCollapsed && (
                 <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
@@ -370,7 +370,7 @@ const SidebarMenuSectionComponent = ({
                 </span>
                 {/* ml-2.5 → ml-2: ostatnie 2 px, których brakowało najdłuższej
                     etykiecie („Personalny Asystent") po zwężeniu paska. */}
-                <span className={cn('truncate ml-2 transition-opacity duration-150', isCollapsed && 'opacity-0')}>{item.title}</span>
+                {!isCollapsed && <span className="truncate ml-2">{item.title}</span>}
               </div>
               {!isCollapsed && (
                 <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
@@ -455,7 +455,7 @@ const SidebarMenuSectionComponent = ({
       className={cn('px-0', title ? 'mb-1.5' : 'mb-0.5')}
       data-tour={tourSlug ? `sidebar-group-${tourSlug}` : undefined}
     >
-      {title && naglowekWarty ? (
+      {title && (naglowekWarty || isCollapsed) ? (
         /* WSPÓLNA OŚ LEWA (14.08.2026). Michał: „zależy mi, by wszystko tam było
            idealnie wyrównane i symetrycznie ułożone".
            Zmierzone przed: ikony pozycji zaczynały się na 29 px od krawędzi

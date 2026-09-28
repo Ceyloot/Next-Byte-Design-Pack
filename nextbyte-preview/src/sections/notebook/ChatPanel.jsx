@@ -1,7 +1,8 @@
 import znakNextbyte from '@/assets/nextbyte-mark.png';
+import { DodajZadanie } from './Zadania';
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
-import { Library, ArrowRight, Send, User, Sparkles, Trash2, Loader2, MessageSquare, Plus, BarChart, FileText, HelpCircle, Mic, Square, Paperclip, X, Image as ImageIcon, File as FileIcon, Headphones, Presentation, ClipboardList, Layers, CircleHelp, Table2, BookOpen, Download, Globe, ChevronDown, Phone, Wand2, Zap, Edit3, RefreshCw, ArrowDown, FileUp, Type, Video as Youtube } from 'lucide-react';
+import { ListChecks, Library, ArrowRight, Send, User, Sparkles, Trash2, Loader2, MessageSquare, Plus, BarChart, FileText, HelpCircle, Mic, Square, Paperclip, X, Image as ImageIcon, File as FileIcon, Headphones, Presentation, ClipboardList, Layers, CircleHelp, Table2, BookOpen, Download, Globe, ChevronDown, Phone, Wand2, Zap, Edit3, RefreshCw, ArrowDown, FileUp, Type, Video as Youtube } from 'lucide-react';
 import { isSlideDeck, parseSlideDeck, exportToPptx } from './utils/pptxExport';
 import MarkdownRenderer from './MarkdownRenderer';
 import { ToolContentRenderer } from './ToolRenderers';
@@ -222,7 +223,8 @@ const MODEL_OPTIONS = [
   { id: 'claude-3.5-sonnet', name: 'Głęboki (Claude 3.5)', badge: 'PRO' },
 ];
 
-function ChatPanel({ projectName, projectDate, messages, onSendMessage, onClearChat, onOpenAddSource, sources = [], hasSources, presetData, isGeneratingPresets, isAiLoading, onSeekToVideo, apiKeys, prefillInput, onToggleObjectsOpen, isObjectsOpen, onStudioGenerate, onModelSelectChange }) {
+function ChatPanel({ projectName, projectDate, messages, onSendMessage, onClearChat, onOpenAddSource, sources = [], hasSources, presetData, isGeneratingPresets, isAiLoading, onSeekToVideo, apiKeys, prefillInput, onToggleObjectsOpen, isObjectsOpen, onStudioGenerate, onModelSelectChange, onStartEditMessage, onRegenerateMessage, onDodajZadania }) {
+  const [zadanieDla, setZadanieDla] = useState(null);
   const toast = useToast();
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState([]);
@@ -872,7 +874,7 @@ function ChatPanel({ projectName, projectDate, messages, onSendMessage, onClearC
             {messages.map((msg, i) => {
               const isUser = msg.role === 'user';
               return (
-                <div key={i} className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} group/message items-start`}>
+                <div key={i} id={`wiad-${msg.id || i}`} className={`flex gap-3 rounded-2xl ${isUser ? 'flex-row-reverse' : 'flex-row'} group/message items-start`}>
                   {/* Awatar jak w Chat AI: znak NEXTBYTE przy AI, kółko profilu przy użytkowniku. */}
                   {isUser ? (
                     <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/15 text-primary">
@@ -1027,9 +1029,27 @@ function ChatPanel({ projectName, projectDate, messages, onSendMessage, onClearC
                           >
                             <RefreshCw size={11} className="group-hover:text-primary transition-colors" /> Odśwież
                           </button>
+                          {onDodajZadania && (
+                            <button
+                              onClick={() => setZadanieDla(zadanieDla === i ? null : i)}
+                              className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold transition-colors group px-2 py-0.5 rounded hover:bg-foreground/5 ${zadanieDla === i ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                              <ListChecks size={11} className="group-hover:text-primary transition-colors" /> Zadanie
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
+                    {!isUser && zadanieDla === i && onDodajZadania && (
+                      <DodajZadanie
+                        pytanie={[...messages.slice(0, i)].reverse().find(m => m.role === 'user')?.content}
+                        odpowiedz={msg.content}
+                        idWiadomosci={msg.id || String(i)}
+                        apiKeys={apiKeys}
+                        onDodaj={(lista) => { onDodajZadania(lista); toast.success(lista.length > 1 ? `Dodano ${lista.length} zadania.` : 'Dodano zadanie.'); }}
+                        onZamknij={() => setZadanieDla(null)}
+                      />
+                    )}
                   </div>
                 </div>
               );

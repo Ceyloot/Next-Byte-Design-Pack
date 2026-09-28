@@ -137,6 +137,9 @@ async function callGemini(apiKey, model, contents, systemInstruction = null, isJ
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error?.message || `API HTTP error! status: ${response.status}`;
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Klucz Gemini wygasł albo został unieważniony — wklej nowy w Ustawieniach notatnika.');
+      }
       if (response.status === 400 && (errorMessage.includes('API key') || errorMessage.includes('API_KEY'))) {
         throw new Error('Nieprawidłowy klucz Gemini API. Upewnij się, że wklejono właściwy klucz w Ustawieniach.');
       }
@@ -548,6 +551,8 @@ Pisz po polsku, używaj Markdown. Zrezygnuj z formatowania pogrubieniem (**). Zw
     }
   } catch (error) {
     console.error("API call failed", error);
+    // Błąd klucza nie minie po odświeżeniu — nie sugerujemy tego.
+    if (/^Klucz Gemini/.test(error.message)) return { answer: `⚠ ${error.message}`, citations: [] };
     return { answer: `Wystąpił błąd podczas łączenia z AI: ${error.message}. Spróbuj odświeżyć stronę lub zadać pytanie inaczej.`, citations: [] };
   }
 }

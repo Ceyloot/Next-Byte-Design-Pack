@@ -8,6 +8,7 @@ import { getKindLabel } from './utils/sourceKinds';
 import { GlassModal, GlassButton, GlassInput, GlassBadge } from '@/components/glass'
 import { NbTabs } from '@/components/ui/NbTabs';
 import { cn } from '@/lib/utils';
+import OdkryjZrodla from './OdkryjZrodla';
 
 const TABS = [
   { key: 'url', label: 'YouTube / URL', icon: <Link /> },
@@ -42,7 +43,7 @@ function Wskazowka({ ikona: Ikona, uwaga = false, children }) {
   );
 }
 
-function AddSourceModal({ isOpen, onClose, onAddSource }) {
+function AddSourceModal({ isOpen, onClose, onAddSource, apiKeys, juzSa = [] }) {
   const [activeTab, setActiveTab] = useState('url');
   const [tekstOtwarty, setTekstOtwarty] = useState(false);
   const [ytUrl, setYtUrl] = useState('');
@@ -223,6 +224,13 @@ function AddSourceModal({ isOpen, onClose, onAddSource }) {
               To playlista — każdy film wejdzie osobno. Wymaga klucza YouTube Data API.
             </Wskazowka>
           )}
+
+          {/* ODKRYJ — AI z wyszukiwarką proponuje źródła do tematu */}
+          <OdkryjZrodla
+            apiKeys={apiKeys}
+            juzSa={juzSa}
+            onDodajLinki={(linki) => { setYtUrl(prev => [prev.trim(), ...linki].filter(Boolean).join('\n')); setError(''); }}
+          />
 
           {/* TEKST — zwinięty, bo najrzadszy */}
           <div>

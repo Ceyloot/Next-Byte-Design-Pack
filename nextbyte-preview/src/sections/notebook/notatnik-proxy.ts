@@ -108,6 +108,77 @@ async function pobierzTranskrypcje(videoId: string) {
   }
 }
 
+/* ═══ PLAYLISTY — bez klucza YouTube Data API i bez proxy CORS ═══════════
+   1. GET strony playlisty (z ciasteczkami zgody, żeby nie trafić na ekran
+      „Zanim przejdziesz dalej") → `ytInitialData` z pierwszymi ~100 filmami
+      i tytułem playlisty.
+   2. Kolejne strony: POST youtubei/v1/browse z tokenem `continuationCommand`
+      (klient WEB, wersja odczytana ze strony). Strona może mieć kilka
+      tokenów (np. od sekcji „polecane") — idziemy tylko tymi, które
+      zwracają filmy z listy.
+   Format elementów: dziś `lockupViewModel` (contentId), dawniej
+   `playlistVideoRenderer` (videoId) — obsługujemy oba. */
+
+const UA_WEB = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36'
+
+function filmyZDanych(dane: unknown): string[] {
+  const ids: string[] = []
+  const odwiedz = (o: any) => {
+    if (!o || typeof o !== 'object') return
+    if (Array.isArray(o)) { o.forEach(odwiedz); return }
+    const lv = o.lockupViewModel
+    if (lv?.contentId && String(lv.contentType || '').includes('VIDEO')) ids.push(lv.contentId)
+    if (o.playlistVideoRenderer?.videoId) ids.push(o.playlistVideoRenderer.videoId)
+    for (const k in o) odwiedz(o[k])
+  }
+  odwiedz(dane)
+  return ids
+}
+
+function tokenyDalej(tekst: string): string[] {
+  return [...tekst.matchAll(/"continuationCommand":\{"token":"([^"]+)"/g)].map((m) => m[1])
+}
+
+async function pobierzPlayliste(playlistId: string, { limit = 500 } = {}) {
+  if (!/^[A-Za-z0-9_-]{10,64}$/.test(playlistId)) throw new Error('Nieprawidłowy identyfikator playlisty.')
+  const r = await fetch(`https://www.youtube.com/playlist?list=${playlistId}&hl=pl`, {
+    headers: { 'User-Agent': UA_WEB, 'Accept-Language': 'pl,en;q=0.8', Cookie: 'CONSENT=YES+1; SOCS=CAI' },
+    redirect: 'follow',
+  })
+  if (!r.ok) throw new Error(`YouTube odrzucił zapytanie o playlistę (${r.status}).`)
+  const html = await r.text()
+  const surowe = html.match(/var ytInitialData = (\{[\s\S]*?\});<\/script>/)?.[1]
+  if (!surowe) throw new Error('Nie udało się odczytać playlisty — może być prywatna albo usunięta.')
+  const dane = JSON.parse(surowe)
+  const tytul: string =
+    dane?.metadata?.playlistMetadataRenderer?.title ||
+    html.match(/<title>(.*?) - YouTube<\/title>/)?.[1] || 'Playlista'
+  const wersja = html.match(/"INNERTUBE_CONTEXT_CLIENT_VERSION":"([^"]+)"/)?.[1] || '2.20260925.01.00'
+
+  const ids = new Set(filmyZDanych(dane))
+  if (!ids.size) throw new Error('Playlista jest pusta albo niedostępna.')
+
+  let kolejka = tokenyDalej(surowe)
+  const uzyte = new Set<string>()
+  while (kolejka.length && ids.size < limit) {
+    const token = kolejka.shift()!
+    if (uzyte.has(token)) continue
+    uzyte.add(token)
+    const odp = await fetch('https://www.youtube.com/youtubei/v1/browse?prettyPrint=false', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'User-Agent': UA_WEB },
+      body: JSON.stringify({ context: { client: { clientName: 'WEB', clientVersion: wersja, hl: 'pl' } }, continuation: token }),
+    })
+    if (!odp.ok) continue
+    const tekst = await odp.text()
+    const nowe = filmyZDanych(JSON.parse(tekst)).filter((id) => !ids.has(id))
+    if (!nowe.length) continue // token od innej sekcji strony — pomijamy
+    nowe.forEach((id) => ids.add(id))
+    kolejka = [...tokenyDalej(tekst), ...kolejka] // dalej tą samą listą
+  }
+  return { playlistId, title: tytul, ids: [...ids].slice(0, limit) }
+}
+
 async function pobierzStrone(url: string) {
   const r = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128 Safari/537.36', 'Accept-Language': 'pl,en;q=0.8' },
@@ -245,6 +316,11 @@ const obsluga: Connect.NextHandleFunction = async (req, res, next) => {
       const id = idFilmu(url.searchParams.get('videoUrl') || '')
       if (!id) return json(res, 400, { error: 'Nieprawidłowy adres filmu YouTube.' })
       return json(res, 200, await pobierzTranskrypcje(id))
+    }
+    if (url.pathname === '/api/playlist') {
+      const lista = url.searchParams.get('list') || ''
+      if (!lista) return json(res, 400, { error: 'Brak identyfikatora playlisty.' })
+      return json(res, 200, await pobierzPlayliste(lista))
     }
     if (url.pathname === '/api/scrape') {
       const cel = url.searchParams.get('url') || ''

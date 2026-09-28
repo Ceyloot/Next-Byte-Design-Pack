@@ -96,7 +96,7 @@ function czytajCialo(req: { on: (z: string, f: (c?: unknown) => void) => void })
 
 export function runwareProxy(): Plugin {
   let klucz = ''
-  let kluczGemini = 'AQ.Ab8RN6I-cZ-88Z5zzJSLzTDQk6kHGwaySLx8KavpNXsEp7CZuQ'
+  let kluczGemini = ''
   let model = 'google:nano-banana@2-lite'
   let modelOpisu = 'runware:150@2'
 
@@ -157,8 +157,23 @@ export function runwareProxy(): Plugin {
         const wynik = tresc.data?.[0]
         if (!wynik?.imageURL) return odpowiedz(502, { blad: 'Runware nie zwrócił obrazu' })
 
+        // Zwracamy wynik jako data URI, nie surowy URL Runware. Bez tego klient
+        // rysujący wynik na canvas (twarda blokada formatu do Image 1) trafia na
+        // tainted canvas z powodu braku CORS i nie może przyciąć obrazu.
+        let obrazUrl = wynik.imageURL
+        try {
+          const obraz = await fetch(wynik.imageURL)
+          if (obraz.ok) {
+            const mime = obraz.headers.get('content-type') || 'image/jpeg'
+            const base64 = Buffer.from(await obraz.arrayBuffer()).toString('base64')
+            obrazUrl = `data:${mime};base64,${base64}`
+          }
+        } catch {
+          /* przy błędzie pobrania zostaje URL — lepszy niż nic */
+        }
+
         const gotowe: WynikGeneracji = {
-          obrazUrl: wynik.imageURL,
+          obrazUrl,
           kosztUSD: wynik.cost ?? 0,
           model,
           seed: wynik.seed,
@@ -184,7 +199,7 @@ export function runwareProxy(): Plugin {
         const { wycinek, tryb = 'obiekt' } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
         if (!wycinek) return odpowiedz(400, { blad: 'Brak wycinka' })
 
-        // Jeśli mamy GEMINI_API_KEY, używamy superszybkiego Gemini 2.5 Flash Vision
+        // Gemini 2.5 Flash-Lite — tani, a pełny Flash zużywał limit 250 tokenów na myślenie i oddawał pustą odpowiedź
         if (kluczGemini) {
           const dopasowanie = wycinek.match(/^data:([^;]+);base64,(.+)$/)
           const mimeType = dopasowanie ? dopasowanie[1] : 'image/jpeg'
@@ -196,7 +211,7 @@ export function runwareProxy(): Plugin {
               : 'Zidentyfikuj obiekt w centrum tego wycinka (miejsce pod pineską). Odpowiedz wyłącznie obiektem JSON: {"nazwy": ["główna nazwa", "synonim lub typ", "szersze określenie"]}. Same zwięzłe rzeczowniki 1-2 słów po polsku (np. "fotel", "stolik kawowy", "reflektor").'
 
           const gResp = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${kluczGemini}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${kluczGemini}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

@@ -104,7 +104,7 @@ export function PasekPoziomyNotebook({
         </div>
 
         {/* ── CENTER GROUP: Notatnik + Źródła + Dodaj ── */}
-        <div className="flex items-center gap-2 shrink-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Projects Dropdown */}
           <div className="relative">
             <button

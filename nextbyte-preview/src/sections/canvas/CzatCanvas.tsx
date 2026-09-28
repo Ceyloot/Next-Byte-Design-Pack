@@ -14,7 +14,7 @@ import {
   Wand2,
   Check,
   Eye,
-  Plus,
+  Pin,
   RefreshCw,
   Info,
   ExternalLink,
@@ -22,7 +22,8 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { etykietaPineski, wytnijOkolice, KOLORY_PINESEK, type Pineska, type Warstwa, type StanGeneracji } from './typy'
+import { etykietaPineski, wytnijOkolice, type Pineska, type Warstwa, type StanGeneracji } from './typy'
+import { LebekPinezki } from './ZnacznikPineski'
 import { BYTE_ZA_OBRAZ } from './dostawca'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
@@ -38,6 +39,8 @@ export interface WiadomoscCzatu {
   opisWyniku?: string
   czasGeneracjiMs?: number
   intencja?: Intencja
+  /** wynik kontroli po generacji — bez niego nie twierdzimy, że się udało */
+  ocena?: { wykonane: boolean; znaczniki: boolean; tekst: string }
 }
 
 interface Props {
@@ -82,18 +85,37 @@ export function CzatCanvas({
   const [zwiniety, setZwiniety] = useState(false)
   const [otwartyPodglad, setOtwartyPodglad] = useState(false)
   const [wycinki, setWycinki] = useState<Record<string, string>>({})
-  const [historiaWiadomosci, setHistoriaWiadomosci] = useState<WiadomoscCzatu[]>([
-    {
-      id: 'init-1',
-      rola: 'asystent',
-      tresc:
-        'Cześć! Jestem asystentem edycji Canvas (Gemini 2.5 Flash-Lite & Nano-Banana). Wbij pineskę na obiekcie (P lub Ctrl+Klik) i napisz prompt. Jeśli zaznaczysz 2 pineski, możesz wykonać natychmiastowy Object Transfer (przeniesienie) lub Object Switch (zamianę miejscami) z rekonstrukcją tła (Clean Plate). Obsługuję do 10 precyzyjnych pinesek.',
-      czas: 'Teraz',
-    },
-  ])
+  const [historiaWiadomosci, setHistoriaWiadomosci] = useState<WiadomoscCzatu[]>([])
 
   const refKoniecWiadomosci = useRef<HTMLDivElement>(null)
   const refTextarea = useRef<HTMLTextAreaElement>(null)
+  // Pozycja kursora w polu — do rozpoznania fragmentu słowa, który user pisze.
+  const [pozKursora, setPozKursora] = useState(0)
+
+  /**
+   * Fragment słowa tuż przed kursorem — podstawa smart-chipa.
+   *
+   * User pisze „podusz", a system ma zrozumieć, że chodzi o oznaczoną
+   * „poduszkę". Bierzemy ostatni wyraz przed kursorem (min. 2 znaki) i
+   * szukamy pinesek, których nazwa go zawiera. Reżyser i tak dopisuje resztę
+   * opisu — tu chodzi tylko o szybkie związanie słowa z konkretną pineską.
+   */
+  const fragment = (() => {
+    const przed = tekst.slice(0, pozKursora || tekst.length)
+    const m = przed.match(/([\p{L}]{2,})$/u)
+    return m ? m[1].toLowerCase() : ''
+  })()
+
+  const podpowiedzi =
+    fragment.length >= 2
+      ? pineski
+          .map((p, idx) => ({ p, idx, nazwa: etykietaPineski(p, idx + 1) }))
+          .filter(({ nazwa }) => {
+            const n = nazwa.toLowerCase()
+            return n !== fragment && (n.startsWith(fragment) || n.includes(fragment))
+          })
+          .slice(0, 4)
+      : []
 
   // Wycinanie podglądów okolic pinesek dla miniatur (smart crop)
   useEffect(() => {
@@ -124,12 +146,19 @@ export function CzatCanvas({
           {
             id: `gen-${Date.now()}`,
             rola: 'asystent',
-            tresc: stanGeneracji.wynik.opis || 'Obraz został pomyślnie wygenerowany z zachowaniem proporcji i struktury sceny.',
+            tresc: '',
             czas: 'Przed chwilą',
             obrazUrl: stanGeneracji.wynik.obrazUrl,
             nazwaWyniku: stanGeneracji.wynik.nazwa,
             opisWyniku: stanGeneracji.wynik.opis,
             intencja,
+            ocena: stanGeneracji.ocena
+              ? {
+                  wykonane: stanGeneracji.ocena.wykonane,
+                  znaczniki: stanGeneracji.ocena.znaczniki,
+                  tekst: stanGeneracji.ocena.ocena,
+                }
+              : undefined,
           },
         ])
       }
@@ -193,51 +222,22 @@ export function CzatCanvas({
     })
   }
 
-  // Szybkie akcje w zależności od liczby pinesek
-  const ustawSzablon = (
-    typ:
-      | 'transfer'
-      | 'switch'
-      | 'zamien'
-      | 'usun'
-      | 'styl'
-      | 'ubranie'
-      | 'tekstura'
-      | 'pora_dnia'
-      | 'pora_roku'
-      | 'efekt',
-  ) => {
-    if (typ === 'transfer' && pineski.length >= 2) {
-      const zrodlo = etykietaPineski(pineski[0], 1)
-      const cel = etykietaPineski(pineski[1], 2)
-      onTekst(`Przenieś obiekt ${zrodlo} w miejsce ${cel}, odtwórz tło pod ${zrodlo} i zachowaj perspektywę`)
-    } else if (typ === 'switch' && pineski.length >= 2) {
-      const a = etykietaPineski(pineski[0], 1)
-      const b = etykietaPineski(pineski[1], 2)
-      onTekst(`Zamień miejscami ${a} i ${b}, dopasowując skale i oświetlenie`)
-    } else if (typ === 'zamien' && pineski.length >= 1) {
-      const a = etykietaPineski(pineski[0], 1)
-      onTekst(`Zamień ${a} na `)
-    } else if (typ === 'usun' && pineski.length >= 1) {
-      const a = etykietaPineski(pineski[0], 1)
-      onTekst(`Usuń ${a} i precyzyjnie odtwórz tło pod spodem bez zmiany reszty kadru`)
-    } else if (typ === 'ubranie') {
-      const a = pineski.length >= 1 ? etykietaPineski(pineski[0], 1) : 'postaci'
-      onTekst(`Zmień ubranie ${a} na elegancki grafitowy garnitur, zachowując pozę, twarz i tożsamość`)
-    } else if (typ === 'tekstura') {
-      const a = pineski.length >= 1 ? etykietaPineski(pineski[0], 1) : 'obiektu'
-      onTekst(`Zmień materiał ${a} na szczotkowane ciemne drewno dębowe z matowym wykończeniem`)
-    } else if (typ === 'pora_dnia') {
-      onTekst(`Zmień porę dnia na złotą godzinę: ciepłe, miękkie światło zachodzącego słońca, długie cienie i złocista poświata`)
-    } else if (typ === 'pora_roku') {
-      onTekst(`Zmień porę roku na zimę: pokryj teren świeżym, puszystym śniegiem, zachowaj geometrię budynków i obiektów`)
-    } else if (typ === 'efekt') {
-      onTekst(`Dodaj nastrojową, gęstą mgłę w tle oraz mokry asfalt z odbiciami świateł po deszczu`)
-    } else if (typ === 'styl') {
-      const a = pineski.length >= 1 ? etykietaPineski(pineski[0], 1) : 'sceny'
-      onTekst(`Przekształć styl ${a} w malarstwo akwarelowe: miękkie przejścia tonalne i faktura papieru czerpanego`)
-    }
-    refTextarea.current?.focus()
+  // Smart-chip: zamień pisany fragment na pełną nazwę oznaczonej pineski.
+  const zastosujPodpowiedz = (p: Pineska, idx: number) => {
+    const nazwa = etykietaPineski(p, idx + 1)
+    const el = refTextarea.current
+    const kursor = el?.selectionStart ?? pozKursora ?? tekst.length
+    const przed = tekst.slice(0, kursor)
+    const po = tekst.slice(kursor)
+    const przedBezFragmentu = przed.replace(/[\p{L}]{2,}$/u, '')
+    const nowy = `${przedBezFragmentu}${nazwa} ${po}`
+    onTekst(nowy)
+    const pozycja = (przedBezFragmentu + nazwa + ' ').length
+    setPozKursora(pozycja)
+    requestAnimationFrame(() => {
+      el?.focus()
+      el?.setSelectionRange(pozycja, pozycja)
+    })
   }
 
   /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
@@ -303,13 +303,13 @@ export function CzatCanvas({
             <div className="flex items-center gap-2">
               <span className="text-[12.5px] font-bold text-foreground">Canvas Studio AI</span>
               <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-primary border border-primary/20">
-                Gemini 2.5 Flash-Lite
+                Gemini 2.5 Flash
               </span>
             </div>
             <div className="text-[9.5px] text-foreground/45 flex items-center gap-1.5">
               <span>Koszt: {BYTE_ZA_OBRAZ} Byte / generację</span>
               <span>•</span>
-              <span className="text-emerald-400 font-medium">Gotowy do pracy</span>
+              <span className="text-emerald-600 font-medium">Gotowy do pracy</span>
             </div>
           </div>
         </div>
@@ -336,7 +336,7 @@ export function CzatCanvas({
               onClick={onWlaczNarzędziePineska}
               className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/20 transition-colors"
             >
-              <Plus className="h-3 w-3" />
+              <Pin className="h-3 w-3" />
               Wbij pineskę (P)
             </button>
           )}
@@ -352,7 +352,6 @@ export function CzatCanvas({
         ) : (
           <div className="space-y-1.5 max-h-24 overflow-y-auto pr-1 scrollbar-none">
             {pineski.map((p, idx) => {
-              const kolor = KOLORY_PINESEK[idx % KOLORY_PINESEK.length]
               const wybrana = wybranaPineska === p.id
               const miniatura = wycinki[p.id]
               const warstwa = warstwy.find(w => w.id === p.layerId)
@@ -368,13 +367,8 @@ export function CzatCanvas({
                       : 'border-foreground/[0.06] bg-card/40 hover:bg-foreground/[0.05]',
                   )}
                 >
-                  {/* Pin badge number with dedicated color */}
-                  <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold text-white shadow-sm"
-                    style={{ backgroundColor: kolor }}
-                  >
-                    {idx + 1}
-                  </span>
+                  {/* Łebek pinezki — ten sam, co na płótnie */}
+                  <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={24} />
 
                   {/* Thumbnail / Smart Crop */}
                   <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-md bg-foreground/10 ring-1 ring-border/20">
@@ -419,7 +413,7 @@ export function CzatCanvas({
                       onUsunPineske(p.id)
                     }}
                     title="Usuń pineskę"
-                    className="shrink-0 text-foreground/25 opacity-40 hover:opacity-100 hover:text-red-400 transition-opacity p-0.5"
+                    className="shrink-0 text-foreground/25 opacity-40 hover:opacity-100 hover:[color:color-mix(in_srgb,hsl(var(--destructive))_62%,hsl(var(--foreground)))] transition-opacity p-0.5"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -429,84 +423,6 @@ export function CzatCanvas({
           </div>
         )}
 
-        {/* ── INTELIGENTNE AKCJE I TRYBY (Lovart Schema) ── */}
-        <div className="mt-2.5 pt-2 border-t border-foreground/[0.06]">
-          <span className="text-[9.5px] uppercase font-bold tracking-wider text-foreground/40 block mb-1">
-            Szybkie akcje i tryby:
-          </span>
-          <div className="flex flex-wrap gap-1">
-            {pineski.length >= 2 && (
-              <>
-                <button
-                  onClick={() => ustawSzablon('transfer')}
-                  className="flex items-center gap-1 rounded-lg border border-primary/40 bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary hover:bg-primary/20 transition-all shadow-sm"
-                >
-                  <ArrowRight className="h-3 w-3" />
-                  Transfer (1 ➔ 2)
-                </button>
-                <button
-                  onClick={() => ustawSzablon('switch')}
-                  className="flex items-center gap-1 rounded-lg border border-purple-400/40 bg-purple-500/10 px-2 py-1 text-[10px] font-semibold text-purple-300 hover:bg-purple-500/20 transition-all shadow-sm"
-                >
-                  <ArrowRightLeft className="h-3 w-3" />
-                  Switch (1 ⇄ 2)
-                </button>
-              </>
-            )}
-            {pineski.length >= 1 && (
-              <>
-                <button
-                  onClick={() => ustawSzablon('zamien')}
-                  className="rounded-lg border border-foreground/[0.08] bg-foreground/[0.03] px-2 py-1 text-[10px] font-medium text-foreground/75 hover:bg-foreground/[0.08] transition-all"
-                >
-                  Podmień
-                </button>
-                <button
-                  onClick={() => ustawSzablon('ubranie')}
-                  className="rounded-lg border border-sky-400/30 bg-sky-500/10 px-2 py-1 text-[10px] font-medium text-sky-300 hover:bg-sky-500/20 transition-all"
-                >
-                  Ubranie
-                </button>
-                <button
-                  onClick={() => ustawSzablon('tekstura')}
-                  className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-[10px] font-medium text-amber-300 hover:bg-amber-500/20 transition-all"
-                >
-                  Tekstura
-                </button>
-                <button
-                  onClick={() => ustawSzablon('usun')}
-                  className="rounded-lg border border-foreground/[0.08] bg-foreground/[0.03] px-2 py-1 text-[10px] font-medium text-red-300/80 hover:bg-red-500/10 hover:text-red-300 transition-all"
-                >
-                  Usuń obiekt
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => ustawSzablon('pora_dnia')}
-              className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-[10px] font-medium text-amber-300 hover:bg-amber-500/20 transition-all"
-            >
-              Pora dnia
-            </button>
-            <button
-              onClick={() => ustawSzablon('pora_roku')}
-              className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-300 hover:bg-emerald-500/20 transition-all"
-            >
-              Pora roku
-            </button>
-            <button
-              onClick={() => ustawSzablon('efekt')}
-              className="rounded-lg border border-purple-400/30 bg-purple-500/10 px-2 py-1 text-[10px] font-medium text-purple-300 hover:bg-purple-500/20 transition-all"
-            >
-              Efekt
-            </button>
-            <button
-              onClick={() => ustawSzablon('styl')}
-              className="rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/10 px-2 py-1 text-[10px] font-medium text-fuchsia-300 hover:bg-fuchsia-500/20 transition-all"
-            >
-              Styl
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
@@ -528,9 +444,9 @@ export function CzatCanvas({
                     {msg.pineskiSnap.map(snap => (
                       <span
                         key={snap.id}
-                        className="inline-flex items-center gap-1 rounded bg-primary/30 px-1.5 py-0.5 text-[9.5px] font-semibold text-primary-foreground"
+                        className="inline-flex items-center gap-1 rounded bg-card/70 px-1.5 py-0.5 text-[9.5px] font-semibold text-foreground"
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                        <LebekPinezki rozmiar={12} />
                         Pin {snap.numer}: {snap.label}
                       </span>
                     ))}
@@ -542,7 +458,7 @@ export function CzatCanvas({
             {/* Odpowiedź asystenta */}
             {msg.rola === 'asystent' && (
               <div className="max-w-[90%] space-y-2 rounded-2xl rounded-tl-sm bg-card/60 border border-foreground/[0.08] p-3 text-[12px] text-foreground/85 shadow-sm">
-                <p className="leading-relaxed text-[11.5px]">{msg.tresc}</p>
+                {msg.tresc && <p className="leading-relaxed text-[11.5px]">{msg.tresc}</p>}
 
                 {/* Wygenerowany obraz z opcjami */}
                 {msg.obrazUrl && (
@@ -559,10 +475,28 @@ export function CzatCanvas({
                       <span className="font-semibold text-foreground truncate max-w-[150px]">
                         {msg.nazwaWyniku || 'Wygenerowany obraz'}
                       </span>
-                      <span className="text-emerald-400 font-medium flex items-center gap-1">
-                        <Check className="h-3 w-3" /> Zachowano strukturę
-                      </span>
+                      {msg.ocena && (
+                        <span
+                          className={cn(
+                            'font-medium flex items-center gap-1',
+                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'text-emerald-600' : 'nb-tekst-bledu',
+                          )}
+                        >
+                          {msg.ocena.wykonane && !msg.ocena.znaczniki ? (
+                            <>
+                              <Check className="h-3 w-3" /> Zadanie wykonane
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="h-3 w-3" /> Do poprawy
+                            </>
+                          )}
+                        </span>
+                      )}
                     </div>
+                    {msg.ocena && msg.ocena.tekst && (
+                      <p className="text-[10.5px] leading-snug text-muted-foreground">{msg.ocena.tekst}</p>
+                    )}
 
                     <div className="flex items-center gap-1.5 pt-1">
                       <button
@@ -606,11 +540,11 @@ export function CzatCanvas({
 
         {/* Błąd generacji */}
         {stanGeneracji.faza === 'blad' && (
-          <div className="flex items-start gap-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-[11.5px] text-amber-300">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 rounded-2xl bg-destructive/10 border border-destructive/30 p-2.5 text-[11.5px] text-foreground">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 nb-tekst-bledu" />
             <div className="flex-1">
               <span className="font-semibold block">Błąd generacji:</span>
-              <span className="text-[10.5px] text-amber-200/80 leading-relaxed">
+              <span className="text-[10.5px] text-muted-foreground leading-relaxed">
                 {stanGeneracji.tresc}
               </span>
             </div>
@@ -639,13 +573,34 @@ export function CzatCanvas({
                 className={cn(
                   'rounded-lg px-2 py-1 text-[10px] leading-snug flex items-center gap-1.5',
                   u.waga === 'blokada'
-                    ? 'bg-red-500/10 text-red-300 border border-red-500/20'
-                    : 'bg-amber-500/10 text-amber-300 border border-amber-500/20',
+                    ? 'bg-destructive/10 nb-tekst-bledu border border-destructive/25'
+                    : 'bg-amber-500/10 text-foreground border border-amber-500/35',
                 )}
               >
                 <Info className="h-3 w-3 shrink-0" />
                 <span>{u.tresc}</span>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Smart-chip: podpowiedź pineski dla pisanego fragmentu */}
+        {podpowiedzi.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-primary/25 bg-primary/[0.06] px-2 py-1.5">
+            <span className="text-[9.5px] font-semibold text-primary/80 mr-0.5">
+              „{fragment}…" →
+            </span>
+            {podpowiedzi.map(({ p, idx }) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => zastosujPodpowiedz(p, idx)}
+                className="flex items-center gap-1 rounded-full border border-primary/40 bg-card/70 px-2 py-0.5 text-[10px] font-medium text-foreground hover:bg-primary/20 hover:text-primary transition-all"
+                title={`Wstaw jako oznaczony obiekt (pineska ${idx + 1})`}
+              >
+                <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={13} />
+                {etykietaPineski(p, idx + 1)}
+              </button>
             ))}
           </div>
         )}
@@ -661,10 +616,7 @@ export function CzatCanvas({
                 onClick={() => wstawChip(p, idx + 1)}
                 className="flex items-center gap-1 rounded-full border border-foreground/[0.08] bg-card/60 px-2 py-0.5 text-[10px] font-medium text-foreground/75 hover:border-primary/40 hover:text-primary transition-all"
               >
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: KOLORY_PINESEK[idx % KOLORY_PINESEK.length] }}
-                />
+                <LebekPinezki chroniona={p.chroniona} rozmiar={13} />
                 @{etykietaPineski(p, idx + 1)}
               </button>
             ))}
@@ -676,7 +628,12 @@ export function CzatCanvas({
           <textarea
             ref={refTextarea}
             value={tekst}
-            onChange={e => onTekst(e.target.value)}
+            onChange={e => {
+              onTekst(e.target.value)
+              setPozKursora(e.target.selectionStart ?? e.target.value.length)
+            }}
+            onKeyUp={e => setPozKursora(e.currentTarget.selectionStart ?? 0)}
+            onClick={e => setPozKursora(e.currentTarget.selectionStart ?? 0)}
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -742,7 +699,7 @@ export function CzatCanvas({
         </div>
 
         {powodBlokady && (
-          <p className="text-[10px] text-amber-400/90 text-center">{powodBlokady}</p>
+          <p className="text-[10px] text-muted-foreground text-center">{powodBlokady}</p>
         )}
       </div>
     </div>

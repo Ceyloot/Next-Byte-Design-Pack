@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Sparkles, Upload, Zap } from 'lucide-react'
+import { Lock, Sparkles, Upload, Zap } from 'lucide-react'
+import { PRZESUNIECIE_LEBKA, STYL_PINEZKI, ZnacznikPineski } from './ZnacznikPineski'
 import { cn } from '@/lib/utils'
-import { etykietaPineski, pozycjaPineski, KOLORY_PINESEK, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
+import { etykietaPineski, pozycjaPineski, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
 
 /**
  * Płótno: zdjęcia referencyjne i pineski.
@@ -46,6 +47,13 @@ interface Operacja {
   ruszony?: boolean
   startNormX?: number
   startNormY?: number
+  /**
+   * Odległość punktu chwytu od szpica pinezki (w układzie sceny). Chwyta się
+   * łebek, a punktem pineski jest szpic — bez tej poprawki pinezka
+   * odskakiwała na pierwszym ruchu, bo szpic lądował pod kursorem.
+   */
+  chwytX?: number
+  chwytY?: number
 }
 
 const MIN = 24
@@ -88,6 +96,8 @@ export function Plotno({
   const refOperacja = useRef<Operacja | null>(null)
   const [nadPlotnem, setNadPlotnem] = useState(false)
   const [podKursorem, setPodKursorem] = useState<string | null>(null)
+  /** pineska w ręce — łebek się unosi, cień odsuwa */
+  const [przeciagana, setPrzeciagana] = useState<string | null>(null)
 
   const doSceny = useCallback(
     (e: { clientX: number; clientY: number }) => {
@@ -223,7 +233,16 @@ export function Plotno({
     e.stopPropagation()
     przechwyc(e.currentTarget as Element, e.pointerId)
     const p = doSceny(e)
-    refOperacja.current = { rodzaj: 'pineska', startX: p.x, startY: p.y, idPineski: pineska.id }
+    const warstwa = warstwy.find(w => w.id === pineska.layerId)
+    const szpic = warstwa ? pozycjaPineski(pineska, warstwa) : p
+    refOperacja.current = {
+      rodzaj: 'pineska',
+      startX: p.x,
+      startY: p.y,
+      idPineski: pineska.id,
+      chwytX: p.x - szpic.x,
+      chwytY: p.y - szpic.y,
+    }
   }
 
   function naRuchu(e: React.PointerEvent) {
@@ -259,10 +278,13 @@ export function Plotno({
       const pineska = pineski.find(x => x.id === op.idPineski)
       const warstwa = warstwy.find(w => w.id === pineska?.layerId)
       if (!pineska || !warstwa) return
+      if (przeciagana !== pineska.id) setPrzeciagana(pineska.id)
+      const x = p.x - (op.chwytX ?? 0)
+      const y = p.y - (op.chwytY ?? 0)
       onPrzesunPineske(
         pineska.id,
-        Math.min(1, Math.max(0, (p.x - warstwa.x) / warstwa.width)),
-        Math.min(1, Math.max(0, (p.y - warstwa.y) / warstwa.height)),
+        Math.min(1, Math.max(0, (x - warstwa.x) / warstwa.width)),
+        Math.min(1, Math.max(0, (y - warstwa.y) / warstwa.height)),
       )
       return
     }
@@ -297,6 +319,7 @@ export function Plotno({
   function naGorze() {
     const op = refOperacja.current
     refOperacja.current = null
+    setPrzeciagana(null)
     // Kliknięcie pineski bez przeciągnięcia = otwarcie jej karty. Rozdzielamy
     // to dopiero tutaj, bo w chwili wciśnięcia nie wiadomo, co się stanie.
     if (op?.rodzaj === 'pineska' && !op.ruszony && op.idPineski) onWybierzPineske(op.idPineski)
@@ -493,63 +516,57 @@ export function Plotno({
 
 
 
-        {/* Pineski */}
+        {/* Pineski — pinezki wbite w zdjęcie; szpic igły to punkt pineski */}
         {pineski.map((p, i) => {
           const warstwa = warstwy.find(w => w.id === p.layerId)
           if (!warstwa || !warstwa.visible) return null
           const poz = pozycjaPineski(p, warstwa)
           const aktywna = wybranaPineska === p.id
           const najechana = podKursorem === p.id
-          const r = 13 * odwrotna
-          const kolorPineski = KOLORY_PINESEK[i % KOLORY_PINESEK.length]
+          const wReku = przeciagana === p.id
 
           return (
-            <div key={p.id}>
-              <div
+            <div
+              key={p.id}
+              style={{
+                position: 'absolute',
+                left: poz.x,
+                top: poz.y,
+                width: 0,
+                height: 0,
+                transform: `scale(${odwrotna})`,
+                transformOrigin: '0 0',
+                // Wybrana i trzymana w ręce idą nad pozostałe
+                zIndex: wReku ? 8 : aktywna ? 7 : 5,
+              }}
+            >
+              <ZnacznikPineski
+                numer={i + 1}
+                chroniona={p.chroniona}
+                aktywna={aktywna}
+                najechana={najechana}
+                przeciagana={wReku}
+                analizowana={p.analizowana}
                 onPointerDown={e => naPinesceWDol(e, p)}
                 onMouseEnter={() => setPodKursorem(p.id)}
                 onMouseLeave={() => setPodKursorem(s => (s === p.id ? null : s))}
-                style={{
-                  position: 'absolute',
-                  left: poz.x - r,
-                  top: poz.y - r,
-                  width: r * 2,
-                  height: r * 2,
-                  borderRadius: '50%',
-                  background: kolorPineski,
-                  border: `${2.5 * odwrotna}px solid #ffffff`,
-                  boxShadow: `0 ${3 * odwrotna}px ${10 * odwrotna}px rgba(0,0,0,0.5)${
-                    aktywna ? `, 0 0 0 ${5 * odwrotna}px rgba(37,99,235,0.28)` : ''
-                  }`,
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: 12 * odwrotna,
-                  fontWeight: 800,
-                  color: '#ffffff',
-                  cursor: 'grab',
-                  zIndex: 5,
-                  animation: p.analizowana ? 'pulse 1.2s ease-in-out infinite' : undefined,
-                }}
-              >
-                {i + 1}
-              </div>
+              />
 
-              {/* Dymek przy najechaniu — nazwa obiektu i podpowiedź edycji */}
-              {najechana && !aktywna && (
+              {/* Dymek przy najechaniu — nazwa obiektu obok łebka */}
+              {najechana && !aktywna && !wReku && (
                 <div
                   style={{
                     position: 'absolute',
-                    left: poz.x + r + 6 * odwrotna,
-                    top: poz.y - 13 * odwrotna,
-                    transform: `scale(${odwrotna})`,
-                    transformOrigin: '0 50%',
+                    left: PRZESUNIECIE_LEBKA.x + 20,
+                    top: PRZESUNIECIE_LEBKA.y,
+                    transform: 'translateY(-50%)',
                     pointerEvents: 'none',
-                    zIndex: 6,
                   }}
                 >
-                  <div className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-[#11151c] px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-xl ring-1 ring-border/10">
+                  <div className="nb-szklo nb-szklo-plynne nb-szklo-canvas flex items-center gap-2 whitespace-nowrap rounded-lg border border-foreground/[0.08] px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-xl">
+                    {p.chroniona && <Lock className="h-3 w-3 text-muted-foreground" />}
                     {etykietaPineski(p, i + 1)}
-                    <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-[9px] font-semibold text-foreground/60">
+                    <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
                       klik — edytuj
                     </span>
                   </div>
@@ -619,7 +636,7 @@ export function Plotno({
         <div className="pointer-events-none absolute inset-0 border-2 border-dashed border-primary/60 bg-primary/5" />
       )}
 
-      <style>{`@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.45 } }`}</style>
+      <style>{STYL_PINEZKI}</style>
     </div>
   )
 }

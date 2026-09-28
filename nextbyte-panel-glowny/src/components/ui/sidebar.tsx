@@ -804,7 +804,7 @@ const sidebarMenuButtonVariants = cva(
     szerokość. Ikona ma ten sam padding po lewej niezależnie od stanu, więc
     zostaje dokładnie tam, gdzie była — zmienia się tylko to, co obok niej.
   */
-  "peer/menu-button flex h-9 w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,padding,opacity] duration-200 ease-out focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium group-data-[collapsible=icon]:!w-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>span:last-child]:transition-[opacity] [&>span:last-child]:duration-200 group-data-[collapsible=icon]:[&>span:last-child]:opacity-0 [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex h-9 w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,padding,opacity] duration-200 ease-out focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!px-[7px] group-data-[collapsible=icon]:!py-2 [&>span:last-child]:truncate [&>span:last-child]:transition-[opacity] [&>span:last-child]:duration-200 group-data-[collapsible=icon]:[&>span:last-child]:opacity-0 [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {

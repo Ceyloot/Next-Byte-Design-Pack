@@ -1,12 +1,11 @@
 import React from 'react';
 
-/* Nagłówek panelu: tytuł 15 px po lewej, gołe ikony 28 px po prawej,
-   świetlna kreska pod spodem — ta sama, co pod nagłówkiem paska bocznego. */
+/* Nagłówek karty jak w NotebookLM: 56 px, tytuł 16 px, linia pod spodem —
+   ten sam co w kartach Źródła i Czat. */
 export function NaglowekPanelu({ tytul, akcje }) {
   return (
-    <div className="relative z-10 flex h-12 shrink-0 items-center justify-between px-4">
-      <div className="pointer-events-none absolute inset-x-3 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
-      <h2 className="text-[15px] font-semibold tracking-tight text-foreground">{tytul}</h2>
+    <div className="relative z-10 flex h-14 shrink-0 items-center justify-between border-b border-foreground/[0.08] px-5">
+      <h2 className="text-[16px] font-medium text-foreground">{tytul}</h2>
       <div className="flex items-center gap-1">{akcje}</div>
     </div>
   );

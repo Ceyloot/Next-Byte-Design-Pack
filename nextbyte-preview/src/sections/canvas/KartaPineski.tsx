@@ -1,8 +1,9 @@
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { Check, Loader2, Lock, MapPin, Trash2 } from 'lucide-react'
+import { Check, Loader2, Lock, Pin, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { opiszPolozenie, wytnijOkolice, type Pineska, type Warstwa } from './typy'
+import { LebekPinezki } from './ZnacznikPineski'
 
 /**
  * Karta „Zaznaczono obiekt”.
@@ -46,13 +47,17 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
   }, [pineska.id])
 
   return (
-    <div className="w-[268px] overflow-hidden rounded-2xl nb-szklo nb-szklo-canvas border border-border/60 bg-card/70 shadow-2xl">
+    <div className="w-[268px] overflow-hidden rounded-2xl nb-szklo nb-szklo-plynne nb-szklo-canvas border border-foreground/[0.08] shadow-2xl">
       <div className="flex items-center gap-2 px-3 pb-1.5 pt-2.5">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-foreground">
-          {numer}
+        <LebekPinezki numer={numer} chroniona={pineska.chroniona} rozmiar={24} />
+        <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          {pineska.chroniona ? 'Obszar chroniony' : 'Zaznaczono obiekt'}
         </span>
-        <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-foreground/45">Zaznaczono obiekt</span>
-        <button title="Usuń pineskę" onClick={onUsun} className="text-foreground/30 transition-colors hover:text-foreground">
+        <button
+          title="Usuń pineskę (Delete)"
+          onClick={onUsun}
+          className="rounded-md p-1 text-foreground/35 transition-colors hover:bg-destructive/10 hover:[color:color-mix(in_srgb,hsl(var(--destructive))_62%,hsl(var(--foreground)))]"
+        >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -93,6 +98,28 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
         </div>
       </div>
 
+      {/* Co system zrozumiał — obiekt, wymiary i skąd je wziął. Widać to przed
+          generacją, więc zły odczyt da się poprawić, zanim kosztuje. */}
+      {pineska.analiza && (
+        <div className="border-t border-border/8 px-3 py-2 space-y-1">
+          <p className="text-[11px] font-medium leading-snug text-foreground/85">{pineska.analiza.obiekt}</p>
+          {(pineska.analiza.wysokoscCm || pineska.analiza.dlugoscCm) && (
+            <p className="text-[11px] leading-snug text-foreground/70 tabular-nums">
+              {pineska.analiza.wysokoscCm ? `wys. ≈ ${pineska.analiza.wysokoscCm} cm` : ''}
+              {pineska.analiza.wysokoscCm && pineska.analiza.dlugoscCm ? ' · ' : ''}
+              {pineska.analiza.dlugoscCm ? `dł. ≈ ${pineska.analiza.dlugoscCm} cm` : ''}
+              {pineska.analiza.niepewnoscCm ? ` (± ${pineska.analiza.niepewnoscCm} cm)` : ''}
+            </p>
+          )}
+          {pineska.analiza.kalibracja && (
+            <p className="text-[10px] leading-snug text-muted-foreground">Skala: {pineska.analiza.kalibracja}</p>
+          )}
+          {pineska.analiza.dwuznacznosc && (
+            <p className="text-[10px] leading-snug nb-tekst-bledu">Uwaga: {pineska.analiza.dwuznacznosc} — doprecyzuj w poleceniu.</p>
+          )}
+        </div>
+      )}
+
       {/* Propozycje z rozpoznawania obrazu — puste, dopóki model nie działa */}
       {pineska.sugestie && pineska.sugestie.length > 0 && (
         <div className="border-t border-border/8 px-3 py-2">
@@ -124,7 +151,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
           <PrzyciskTrybu
             aktywny={!pineska.chroniona}
             onClick={() => pineska.chroniona && onChron()}
-            ikona={<MapPin className="h-3 w-3" />}
+            ikona={<Pin className="h-3 w-3" />}
             etykieta="Uchwyt"
             tytul="Nazwany obiekt, o którym mówisz w poleceniu"
           />

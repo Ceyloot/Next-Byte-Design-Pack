@@ -129,7 +129,7 @@ export function AppSidebar() {
                kończyły się na 17 px od krawędzi, podczas gdy nagłówek, wyszukiwarka
                i stopka trzymały 13. Prawy padding schodzi więc o te 4 px, żeby
                oś prawa zgadzała się mimo scrollbara. */
-            className="nb-pasek pl-3 pr-2 pt-2 pb-3 relative z-10 group-data-[collapsible=icon]:pr-3"
+            className="nb-pasek pl-3 pr-2 pt-2 pb-3 relative z-10 group-data-[collapsible=icon]:pr-3 group-data-[collapsible=icon]:[scrollbar-width:none] group-data-[collapsible=icon]:[&::-webkit-scrollbar]:hidden"
             style={{
               maskImage: 'linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)',
               WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)',

@@ -84,3 +84,37 @@ export async function wykryjNakladke(
   const nadmiar = Math.max(0, wynik - oryginal)
   return { wykryto: nadmiar > 0.03, udzial: nadmiar }
 }
+
+/**
+ * Czy model oddał praktycznie to samo zdjęcie.
+ *
+ * Nano Banana przy niezrozumiałym poleceniu potrafi zwrócić wejście bez
+ * zmian — a karta wyniku pokazywała wtedy sukces. Porównujemy miniatury
+ * 64 px w odcieniach szarości; średnia różnica poniżej 3/255 to „bez zmian”
+ * (sama rekompresja JPG daje ~1).
+ */
+export async function czyBezZmian(wynikSrc: string, oryginalSrc: string): Promise<boolean | null> {
+  const szare = async (src: string) => {
+    const obrazek = await wczytaj(src)
+    if (!obrazek) return null
+    const plotno = document.createElement('canvas')
+    plotno.width = 64
+    plotno.height = 64
+    const g = plotno.getContext('2d', { willReadFrequently: true })
+    if (!g) return null
+    g.drawImage(obrazek, 0, 0, 64, 64)
+    try {
+      const { data } = g.getImageData(0, 0, 64, 64)
+      const wynik = new Float32Array(64 * 64)
+      for (let i = 0; i < wynik.length; i++) wynik[i] = data[i * 4] * 0.3 + data[i * 4 + 1] * 0.59 + data[i * 4 + 2] * 0.11
+      return wynik
+    } catch {
+      return null
+    }
+  }
+  const [a, b] = await Promise.all([szare(wynikSrc), szare(oryginalSrc)])
+  if (!a || !b) return null
+  let suma = 0
+  for (let i = 0; i < a.length; i++) suma += Math.abs(a[i] - b[i])
+  return suma / a.length < 3
+}

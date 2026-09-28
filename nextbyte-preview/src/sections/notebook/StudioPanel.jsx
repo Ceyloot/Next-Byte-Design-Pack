@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, FileText, Search, X, Trash2, Download, Loader2, ChevronDown, ChevronUp, ChevronRight, PanelRightClose, Wand2 } from 'lucide-react';
+import { Plus, FileText, Search, X, Trash2, Download, Loader2, ChevronDown, ChevronUp, ChevronRight, PanelRightClose, Wand2, FilePen, ShieldCheck, GraduationCap, Table2 } from 'lucide-react';
 import { NaglowekPanelu, PrzyciskPanelu } from './NaglowekPanelu';
 import { STUDIO_TOOLS } from './utils/aiTools';
 
@@ -16,7 +16,7 @@ import MarkdownRenderer from './MarkdownRenderer';
 import { GlassCard, GlassButton, GlassInput, GlassEmpty, GlassSpinner, GlassTooltip, GlassBadge } from '@/components/glass';
 import { cn } from '@/lib/utils';
 
-function StudioOutput({ output, onDelete, apiKeys }) {
+export function StudioOutput({ output, onDelete, apiKeys }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const tool = STUDIO_TOOLS.find(t => t.id === output.toolId);
@@ -117,7 +117,7 @@ function StudioOutput({ output, onDelete, apiKeys }) {
   );
 }
 
-function StudioPanel({ outputs = [], onGenerate, onDelete, hasSources, isGenerating, apiKeys, onClose }) {
+function StudioPanel({ outputs = [], onGenerate, onDelete, hasSources, isGenerating, apiKeys, onClose, szkice = [], onOtworzSzkic, onNowySzkic, ilePowtorek = 0, liczbaKart = 0, onPowtorki, onTabela }) {
   const [pendingTool, setPendingTool] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -160,6 +160,59 @@ function StudioPanel({ outputs = [], onGenerate, onDelete, hasSources, isGenerat
             Dziesięć identycznych kafelków obok siebie niczego nie tłumaczyło —
             trzeba było przeczytać wszystkie, żeby wybrać jeden. Podział na
             „czytaj / ucz się / pokaż" mówi od razu, po co się tu sięga. */}
+        {/* ŻYWY SZKIC — wyróżniony, bo to jedyne narzędzie, w którym piszesz TY,
+            a AI pilnuje, żeby każdy akapit miał pokrycie w źródłach. */}
+        {onNowySzkic && (
+          <div className="px-3 pt-3">
+            <button
+              type="button"
+              onClick={onNowySzkic}
+              className="group flex w-full items-center gap-3 rounded-xl border border-primary/30 bg-primary/[0.08] p-3 text-left transition-all duration-300 hover:border-primary/50 hover:bg-primary/[0.12] active:scale-[0.99]"
+            >
+              <span className="nb-nav-ikona-akt flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary">
+                <FilePen size={16} strokeWidth={1.75} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-semibold text-foreground">Żywy szkic</span>
+                <span className="block text-[11.5px] leading-snug text-foreground/60">Piszesz Ty — każdy akapit sprawdzany ze źródłami</span>
+              </span>
+              <ChevronRight size={15} className="shrink-0 text-foreground/35 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+            </button>
+          </div>
+        )}
+
+        {/* POWTÓRKI i TABELA — dwa narzędzia pracy (nie generatory), obok siebie. */}
+        {(onPowtorki || onTabela) && (
+          <div className="grid grid-cols-2 gap-2 px-3 pt-2">
+            {onPowtorki && (
+              <button
+                type="button"
+                onClick={onPowtorki}
+                title={liczbaKart ? `${liczbaKart} fiszek w talii` : 'Wygeneruj „Fiszki", żeby zacząć'}
+                className="nb-ikona-kafel group relative flex h-[68px] flex-col justify-between rounded-xl p-2.5 text-left transition-all duration-300 hover:!border-primary/35"
+              >
+                <span className="flex items-center justify-between">
+                  <span className="nb-nav-ikona flex h-6 w-6 items-center justify-center rounded-md text-foreground/65 group-hover:text-primary"><GraduationCap size={13} /></span>
+                  {ilePowtorek > 0 && <span className="rounded-full bg-primary px-1.5 text-[10px] font-bold tabular-nums text-primary-foreground">{ilePowtorek}</span>}
+                </span>
+                <span className="truncate text-[12.5px] font-medium text-foreground/90">Powtórki</span>
+              </button>
+            )}
+            {onTabela && (
+              <button
+                type="button"
+                onClick={onTabela}
+                disabled={!hasSources}
+                title="Te same kolumny wyciągnięte z każdego źródła"
+                className="nb-ikona-kafel group relative flex h-[68px] flex-col justify-between rounded-xl p-2.5 text-left transition-all duration-300 hover:!border-primary/35 disabled:opacity-45"
+              >
+                <span className="nb-nav-ikona flex h-6 w-6 items-center justify-center rounded-md text-foreground/65 group-hover:text-primary"><Table2 size={13} /></span>
+                <span className="truncate text-[12.5px] font-medium text-foreground/90">Tabela ekstrakcji</span>
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-2 p-3">
           {STUDIO_TOOLS.map(tool => {
             const Icon = tool.icon;
@@ -182,6 +235,44 @@ function StudioPanel({ outputs = [], onGenerate, onDelete, hasSources, isGenerat
         </div>
         <div className="mx-3 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
 
+        {/* SZKICE — lista z paskiem pokrycia, żeby było widać, który tekst jest „gotowy" */}
+        {szkice.length > 0 && (
+          <div className="space-y-1 p-3 pb-0">
+            <div className="mb-1 flex items-center gap-2.5">
+              <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-foreground/[0.38]">Szkice</span>
+              <span aria-hidden className="h-px flex-1 bg-foreground/[0.07]" />
+              <span className="shrink-0 text-[11px] font-semibold text-foreground/45">{szkice.length}</span>
+            </div>
+            {szkice.map(sz => {
+              const niepuste = sz.akapity.filter(a => a.tekst.trim());
+              const ok = niepuste.filter(a => a.wynik?.status === 'potwierdzone').length;
+              const zle = niepuste.filter(a => a.wynik?.status === 'sprzeczne' || a.wynik?.status === 'brak').length;
+              const proc = niepuste.length ? Math.round((ok / niepuste.length) * 100) : 0;
+              return (
+                <button
+                  key={sz.id}
+                  type="button"
+                  onClick={() => onOtworzSzkic?.(sz.id)}
+                  className="group flex w-full items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2 text-left transition-colors hover:border-foreground/10 hover:bg-foreground/[0.04]"
+                >
+                  <FilePen size={15} className="shrink-0 text-primary/70" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-medium text-foreground/90">{sz.tytul || 'Bez tytułu'}</span>
+                    <span className="mt-1 flex items-center gap-2">
+                      <span className="h-1 w-16 overflow-hidden rounded-full bg-foreground/10">
+                        <span className="block h-full rounded-full bg-emerald-400" style={{ width: `${proc}%` }} />
+                      </span>
+                      <span className="text-[10.5px] tabular-nums text-foreground/45">{niepuste.length} akap. · {proc}%</span>
+                      {zle > 0 && <span className="text-[10.5px] font-semibold text-destructive">{zle} do poprawy</span>}
+                    </span>
+                  </span>
+                  {proc === 100 && <ShieldCheck size={14} className="shrink-0 text-emerald-400" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Generated Documents List or Empty State */}
         {filteredOutputs.length > 0 ? (
           <div className="p-3 space-y-2">
@@ -196,7 +287,7 @@ function StudioPanel({ outputs = [], onGenerate, onDelete, hasSources, isGenerat
               <StudioOutput key={output.id} output={output} onDelete={onDelete} apiKeys={apiKeys} />
             ))}
           </div>
-        ) : (
+        ) : szkice.length > 0 ? null : (
           /* Empty state matching Screenshot 3 */
           /* Zwarty wiersz zamiast pustego stanu na pół panelu: dokumenty
              pojawiają się tu same, więc to tylko przypis, nie wydarzenie. */

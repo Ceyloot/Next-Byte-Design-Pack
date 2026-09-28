@@ -80,6 +80,40 @@ export interface Pineska {
    * i trafia do polecenia jako obszar chroniony.
    */
   chroniona?: boolean
+  /**
+   * Analiza zaraz po wbiciu: cały obiekt pod pineską, otoczenie i rzeczywiste
+   * wymiary z kalibracji na punktach odniesienia w kadrze (koło, drzwi,
+   * człowiek) — nigdy z przeliczania pikseli. Reżyser dostaje to jako fakty,
+   * więc skala zamiany wynika z liczb, a nie z obrysu starego obiektu.
+   */
+  analiza?: AnalizaPineski
+}
+
+export interface AnalizaPineski {
+  /** cały obiekt po polsku, np. „Ford GT40 Mk II, ciemnoniebieski, w kurzu” */
+  obiekt: string
+  /** to samo po angielsku — do promptu */
+  obiektEn: string
+  /** co jest wokół, po angielsku */
+  otoczenie: string
+  wysokoscCm?: number
+  dlugoscCm?: number
+  /** ± w cm */
+  niepewnoscCm?: number
+  /** jak skalibrowano, po polsku, np. „koło 15″ ≈ 66 cm, dach na 1,55 koła” */
+  kalibracja: string
+  /** gdy pineska stoi na styku dwóch rzeczy, np. „auto i osoba przy drzwiach” */
+  dwuznacznosc?: string
+  /** Kto lub co wchodzi w interakcję (np. osoba oparta o drzwi, dłonie na laptopie, dłoń trzymająca obiekt) */
+  interakcja?: string
+  /** Kąt i orientacja 3D (np. widok 3/4 z lewej, drzwi otwarte pod kątem 40°) */
+  pozycja3d?: string
+  /** Stan powierzchni i patyna (np. gruba warstwa kurzu ze stodoły, matowy lakier, zabrudzenia) */
+  stanPowierzchni?: string
+  /** Plan głębi i optyka (pierwszy plan, średni plan, tło; ostry vs rozmyty bokeh soczewki) */
+  glebiaOptyka?: string
+  /** Źródła i wektory światła (kąt słońca, kolor, cienie, neonowe rim-lights) */
+  swiatloWektory?: string
 }
 
 /**
@@ -321,6 +355,49 @@ export function zmniejszDoAnalizy(src: string, bok = 768): Promise<string> {
       resolve(plotno.toDataURL('image/jpeg', 0.85))
     }
     obrazek.onerror = () => resolve('')
+    obrazek.src = src
+  })
+}
+
+/**
+ * Twarda blokada formatu wyniku do zdjęcia docelowego (Image 1).
+ *
+ * Nano-Banana ignoruje żądane width/height i potrafi oddać wynik w formacie
+ * zdjęcia referencyjnego (np. pionowa kaczka zamiast poziomego kadru z gęsiami).
+ * Sam prompt tego nie wymusza, więc wymuszamy deterministycznie po stronie
+ * klienta: skalujemy wynik metodą „cover" i przycinamy centralnie do dokładnych
+ * wymiarów Image 1. Gwarantuje 100% zgodność proporcji i rozdzielczości.
+ *
+ * Przy błędzie (np. tainted canvas z powodu CORS) zwraca oryginał — lepiej
+ * oddać zły format niż nic.
+ */
+export function dopasujFormatDoObrazu(src: string, docelowaSzer: number, docelowaWys: number): Promise<string> {
+  if (!Number.isFinite(docelowaSzer) || !Number.isFinite(docelowaWys) || docelowaSzer < 1 || docelowaWys < 1) {
+    return Promise.resolve(src)
+  }
+  return new Promise(resolve => {
+    const obrazek = new Image()
+    obrazek.crossOrigin = 'anonymous'
+    obrazek.onload = () => {
+      try {
+        const plotno = document.createElement('canvas')
+        plotno.width = Math.round(docelowaSzer)
+        plotno.height = Math.round(docelowaWys)
+        const g = plotno.getContext('2d')
+        if (!g) return resolve(src)
+        // cover: skala tak, by wypełnić cały kadr, nadmiar przycięty centralnie
+        const skala = Math.max(plotno.width / obrazek.width, plotno.height / obrazek.height)
+        const w = obrazek.width * skala
+        const h = obrazek.height * skala
+        const dx = (plotno.width - w) / 2
+        const dy = (plotno.height - h) / 2
+        g.drawImage(obrazek, dx, dy, w, h)
+        resolve(plotno.toDataURL('image/jpeg', 0.95))
+      } catch {
+        resolve(src)
+      }
+    }
+    obrazek.onerror = () => resolve(src)
     obrazek.src = src
   })
 }

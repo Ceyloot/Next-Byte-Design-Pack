@@ -29,12 +29,23 @@ import {
   getStudio, saveStudio,
 } from './utils/api';
 import {
-  FileText, Library, Plus, Settings, SlidersHorizontal,
+  FileText, Library, Plus, Settings, SlidersHorizontal, Search as IkonaSzukaj, FilePen, Download as IkonaPobierz, ListChecks, PanelRightOpen, GraduationCap, Table2,
   // Tylko dla atrapy navbara platformy (PLATFORM_NAV_MOCK) — nie dla funkcji appki.
   Zap, MonitorPlay, LayoutGrid, Sparkles, Layers, Navigation, PanelTop, BarChart2, Loader, Palette, Tag,
 } from 'lucide-react';
 import { NaglowekPanelu, PrzyciskPanelu } from './NaglowekPanelu';
 import CommandPalette from './CommandPalette';
+import ZywySzkic, { nowySzkic } from './ZywySzkic';
+import SzukajWszedzie from './SzukajWszedzie';
+import { PanelZadan } from './Zadania';
+import Powtorki, { kartyZeStudio, wczytajPostep, ileDoPowtorki } from './Powtorki';
+import TabelaEkstrakcji from './TabelaEkstrakcji';
+import MenuEksportu from './MenuEksportu';
+import UkladKafelkowy from './UkladKafelkowy';
+import WidokZrodel from './WidokZrodel';
+import WidokStudio from './WidokStudio';
+import { porownaj, odswiezalne } from './utils/zywe';
+import { notatnikDoMarkdown, pobierzPlik } from './utils/eksport';
 import { NbGlassFilters, GlassNav, GlassNavItem, GlassNavBrand, GlassNavSpacer, GlassButton, GlassDrawer } from '@/components/glass';
 import { cn } from '@/lib/utils';
 
@@ -185,12 +196,118 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
   const [chatMessages, setChatMessages] = useState([]);
   const [userNotes, setUserNotes] = useState([]);
   const [studioOutputs, setStudioOutputs] = useState([]);
+
+  /* ŻYWE SZKICE — per notatnik, w localStorage (baza nietykalna; eksport .md
+     i tak zabiera je ze sobą). `otwartySzkic` to id szkicu w edytorze. */
+  const [szkice, setSzkice] = useState([]);
+  const [otwartySzkic, setOtwartySzkic] = useState(null);
+  const [szukajOtwarte, setSzukajOtwarte] = useState(false);
+  /** Zakładka układu kafelkowego: czat | zrodla | studio. */
+  const [zakladka, setZakladka] = useState('czat');
+
+  /* ZADANIA Z ROZMOWY, POWTÓRKI, TABELA, ŻYWE ŹRÓDŁA — stan okien i list. */
+  const [zadania, setZadania] = useState([]);
+  const [panelZadan, setPanelZadan] = useState(false);
+  const [powtorkiOtwarte, setPowtorkiOtwarte] = useState(false);
+  const [tabelaOtwarta, setTabelaOtwarta] = useState(false);
+  const [odswiezamId, setOdswiezamId] = useState(null);
   const [isStudioGenerating, setIsStudioGenerating] = useState(false);
   const [isConfigureChatOpen, setIsConfigureChatOpen] = useState(false);
   const [chatConfig, setChatConfig] = useState({ goal: 'default', length: 'default', customPrompt: '' });
 
   // Blokada auto-save podczas przełączania projektu
   const lastLoadedProjectIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!activeProjectId) { setSzkice([]); return; }
+    try { setSzkice(JSON.parse(localStorage.getItem(`nextscribe_szkice_${activeProjectId}`)) || []); } catch { setSzkice([]); }
+    setOtwartySzkic(null);
+  }, [activeProjectId]);
+
+  const zapiszSzkic = useCallback((sz) => {
+    setSzkice(prev => {
+      const next = prev.some(x => x.id === sz.id) ? prev.map(x => x.id === sz.id ? sz : x) : [sz, ...prev];
+      try { localStorage.setItem(`nextscribe_szkice_${activeProjectId}`, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [activeProjectId]);
+
+  const usunSzkic = useCallback((id) => {
+    setSzkice(prev => {
+      const next = prev.filter(x => x.id !== id);
+      try { localStorage.setItem(`nextscribe_szkice_${activeProjectId}`, JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setOtwartySzkic(null);
+  }, [activeProjectId]);
+
+  // Zadania per notatnik — localStorage, jak szkice.
+  useEffect(() => {
+    if (!activeProjectId) { setZadania([]); return; }
+    try { setZadania(JSON.parse(localStorage.getItem(`nextscribe_zadania_${activeProjectId}`)) || []); } catch { setZadania([]); }
+    setPanelZadan(false);
+  }, [activeProjectId]);
+
+  const ustawZadania = useCallback((fn) => {
+    setZadania(prev => {
+      const next = fn(prev);
+      try { localStorage.setItem(`nextscribe_zadania_${activeProjectId}`, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [activeProjectId]);
+  const dodajZadania = useCallback((nowe) => ustawZadania(prev => [...nowe, ...prev]), [ustawZadania]);
+  const zmienZadanie = useCallback((z) => ustawZadania(prev => prev.map(x => x.id === z.id ? z : x)), [ustawZadania]);
+  const usunZadanie = useCallback((id) => ustawZadania(prev => prev.filter(x => x.id !== id)), [ustawZadania]);
+
+  /** Skok do odpowiedzi, z której powstało zadanie — z krótkim podświetleniem. */
+  const przejdzDoWiadomosci = useCallback((id) => {
+    setPanelZadan(false);
+    const el = document.getElementById(`wiad-${id}`);
+    if (!el) { toast.error('Tej odpowiedzi nie ma już w rozmowie.'); return; }
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.animate([{ backgroundColor: 'hsl(var(--primary) / 0.14)' }, { backgroundColor: 'transparent' }], { duration: 1600 });
+  }, []);
+
+  /* ŻYWE ŹRÓDŁA — pobierz ponownie i porównaj z poprzednią wersją. */
+  const odswiezZrodlo = async (id) => {
+    const z = sources.find(s => s.id === id);
+    if (!odswiezalne(z) || odswiezamId) return;
+    setOdswiezamId(id);
+    try {
+      let nowe;
+      if (z.type === 'youtube') {
+        const d = await fetchYoutubeTranscript(`https://www.youtube.com/watch?v=${z.videoId}`, apiKeys.youtube);
+        nowe = { transcript: d.transcript, rawText: d.rawText, title: d.title || z.title };
+      } else {
+        const d = await scrapeWebUrl(z.url);
+        nowe = { rawText: d.rawText, title: d.title || z.title };
+      }
+      const r = porownaj(z.rawText, nowe.rawText);
+      const zmiany = { ...r, dodane: r.dodane.slice(0, 200), usuniete: r.usuniete.slice(0, 200) };
+      const zaktualizowane = { ...z, ...nowe, sprawdzono: new Date().toISOString(), zmiany };
+      setSources(prev => prev.map(s => s.id === id ? zaktualizowane : s));
+      updateSource(activeProjectId, id, { rawText: zaktualizowane.rawText, transcript: zaktualizowane.transcript, title: zaktualizowane.title, sprawdzono: zaktualizowane.sprawdzono, zmiany }).catch(() => {});
+      if (!r.bezZmian) indexSourceInBackground(zaktualizowane);
+      toast.success(r.bezZmian ? `„${zaktualizowane.title}" — bez zmian.` : `„${zaktualizowane.title}" — +${r.dodane.length} nowych, −${r.usuniete.length} usuniętych fragmentów.`);
+    } catch (e) {
+      toast.error(`Nie udało się odświeżyć: ${e.message}`);
+    } finally {
+      setOdswiezamId(null);
+    }
+  };
+
+  const kartyPowtorek = React.useMemo(() => kartyZeStudio(studioOutputs), [studioOutputs]);
+  const ilePowtorek = React.useMemo(
+    () => (activeProjectId ? ileDoPowtorki(kartyPowtorek, wczytajPostep(activeProjectId)) : 0),
+    // powtorkiOtwarte w zależnościach: po zamknięciu sesji licznik ma się przeliczyć
+    [kartyPowtorek, activeProjectId, powtorkiOtwarte],
+  );
+
+  const otworzNowySzkic = useCallback((tytul, tekst) => {
+    const sz = nowySzkic(tytul, tekst);
+    zapiszSzkic(sz);
+    setOtwartySzkic(sz.id);
+  }, [zapiszSzkic]);
 
   // Ładuj projekty z API przy starcie
   useEffect(() => {
@@ -285,7 +402,9 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
       const saved = JSON.parse(localStorage.getItem('notebook_api_keys'));
       if (saved && typeof saved === 'object') {
         return {
-          gemini: saved.gemini || envKeys.gemini,
+          // Zapisany klucz typu „AQ.” to stary, unieważniony klucz — bez tego
+          // przesłaniał nowy klucz z .env.local i notatnik dalej zgłaszał błąd.
+          gemini: (saved.gemini && !saved.gemini.startsWith('AQ.') ? saved.gemini : '') || envKeys.gemini,
           youtube: saved.youtube || envKeys.youtube,
           pexels: saved.pexels || envKeys.pexels,
           elevenlabs: saved.elevenlabs || envKeys.elevenlabs,
@@ -356,12 +475,42 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
+        setSzukajOtwarte((prev) => !prev);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const eksportujNotatnik = (stylBibliografii = 'apa') => {
+    const nazwa = projects.find(p => p.id === activeProjectId)?.name || 'Notatnik';
+    const md = notatnikDoMarkdown({ nazwa, zrodla: sources, notatki: userNotes, szkice, studio: studioOutputs, czat: chatMessages, zadania, stylBibliografii });
+    pobierzPlik(nazwa, md);
+    toast.success('Pobrano notatnik jako Markdown — z przypisami do źródeł.');
+  };
+
+  /* „Edytuj" pod odpowiedzią AI → Żywy szkic z tą odpowiedzią.
+     Wcześniej przycisk był martwy (brak akcji w propsach). */
+  const edytujOdpowiedz = (i) => {
+    const odp = chatMessages[i];
+    if (!odp) return;
+    const pytanie = [...chatMessages.slice(0, i)].reverse().find(m => m.role === 'user');
+    const tytul = (pytanie?.content || 'Szkic z odpowiedzi').replace(/\s+/g, ' ').slice(0, 80);
+    otworzNowySzkic(tytul, odp.content);
+  };
+
+  /* „Odśwież" → ta sama wiadomość użytkownika jeszcze raz, bez dublowania jej w historii. */
+  const odswiezOdpowiedz = (i) => {
+    const idxPytania = chatMessages.slice(0, i).map(m => m.role).lastIndexOf('user');
+    if (idxPytania < 0 || isAiLoading) return;
+    const pytanie = chatMessages[idxPytania];
+    setChatMessages(chatMessages.slice(0, idxPytania));
+    setTimeout(() => handleSendMessage(pytanie.content, pytanie.hiddenPrompt, pytanie.attachments), 0);
+  };
 
   const handleExportDocx = async () => {
     if (!activeProjectId || isExporting) return;
@@ -779,8 +928,8 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
     const outputId = Date.now().toString();
     setStudioOutputs(prev => [...prev, { id: outputId, toolId: tool.id, title: label, content: null, createdAt: new Date().toISOString(), isLoading: true }]);
     setIsStudioGenerating(true);
-    setSelectedCanvasNode(null); // dokument generowany właśnie teraz ma priorytet nad szczegółami węzła w prawym doku
     setIsObjectsOpen(true);
+    setZakladka('studio');
 
     try {
       const msgs = [{ role: 'user', content: label, hiddenPrompt: prompt }];
@@ -882,6 +1031,68 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
 
   const viewerSource = sources.find(s => s.id === viewerSourceId);
 
+  /* Elementy wspólne dla układu komputerowego (NotebookLM) i mobilnego —
+     jedna definicja, żeby oba widoki nie rozjechały się w propsach. */
+  const elementCzatu = (
+<ChatPanel
+  messages={chatMessages}
+  onSendMessage={handleSendMessage}
+  onClearChat={() => setChatMessages([])}
+  sources={sources}
+  hasSources={sources.length > 0}
+  presetData={presetData}
+  isGeneratingPresets={isGeneratingPresets}
+  isAiLoading={isAiLoading}
+  apiKeys={apiKeys}
+  onSeekToVideo={handleSeekToVideo}
+  prefillInput={chatPrefill}
+  onToggleObjectsOpen={() => setIsObjectsOpen(v => !v)}
+  isObjectsOpen={isObjectsOpen}
+  onOpenAddSource={() => setIsAddModalOpen(true)}
+  onStudioGenerate={handleStudioGenerate}
+  onModelSelectChange={(newModelId) => setApiKeys(prev => ({ ...prev, model: newModelId }))}
+  onStartEditMessage={edytujOdpowiedz}
+  onRegenerateMessage={odswiezOdpowiedz}
+  onDodajZadania={dodajZadania}
+/>
+  );
+  const elementZadan = panelZadan && (
+  <PanelZadan
+    zadania={zadania}
+    onZmien={zmienZadanie}
+    onUsun={usunZadanie}
+    onDodaj={dodajZadania}
+    onPrzejdz={przejdzDoWiadomosci}
+    onZamknij={() => setPanelZadan(false)}
+  />
+  );
+  const elementStudio = (
+<StudioPanel
+  szkice={szkice}
+  onOtworzSzkic={setOtwartySzkic}
+  onNowySzkic={() => otworzNowySzkic('Nowy szkic', '')}
+  ilePowtorek={ilePowtorek}
+  liczbaKart={kartyPowtorek.length}
+  onPowtorki={() => setPowtorkiOtwarte(true)}
+  onTabela={() => setTabelaOtwarta(true)}
+  outputs={studioOutputs}
+  onGenerate={handleStudioGenerate}
+  onDelete={handleDeleteStudioOutput}
+  hasSources={sources.length > 0}
+  isGenerating={isStudioGenerating}
+  apiKeys={apiKeys}
+  onClose={() => setIsObjectsOpen(false)}
+/>
+  );
+
+  /** Odśwież wszystkie źródła z adresem — po kolei, żeby nie zalać serwera. */
+  const odswiezWszystkie = async () => {
+    for (const z of sources.filter(odswiezalne)) {
+      // eslint-disable-next-line no-await-in-loop
+      await odswiezZrodlo(z.id);
+    }
+  };
+
   return (
     <div className="flex h-full w-full text-foreground overflow-hidden nb-font-platformy relative">
       <NbGlassFilters />
@@ -904,6 +1115,110 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
         />
       ) : (
         <div className="flex flex-col w-full h-full relative z-10 overflow-hidden">
+        {!isMobile ? (
+          <UkladKafelkowy
+            zakladka={zakladka}
+            onZakladka={setZakladka}
+            liczbaZrodel={sources.length}
+            liczbaDokumentow={studioOutputs.length + szkice.length}
+            nazwa={projects.find(p => p.id === activeProjectId)?.name || 'Notatnik'}
+            podpis={`${sources.length} ${sources.length === 1 ? 'źródło' : (sources.length % 10 >= 2 && sources.length % 10 <= 4 && !(sources.length % 100 >= 12 && sources.length % 100 <= 14)) ? 'źródła' : 'źródeł'}${selectedSourceIds.length && selectedSourceIds.length !== sources.length ? ` · ${selectedSourceIds.length} zaznaczonych` : ''}`}
+            pasek={
+              <Sidebar
+                onSzukajWszedzie={() => setSzukajOtwarte(true)}
+                onOdswiezZrodlo={odswiezZrodlo}
+                odswiezamId={odswiezamId}
+                strona="lewo"
+                onUchwyt={onUchwyt}
+                onMenu={onMenu}
+                projects={projects}
+                activeProjectId={activeProjectId}
+                onChangeProject={setActiveProjectId}
+                onCreateProject={handleCreateProject}
+                onDeleteProject={handleDeleteProject}
+                sources={sources}
+                pendingSources={pendingSources}
+                selectedSourceIds={selectedSourceIds}
+                activeSourceId={activeSourceId}
+                onSelectSource={(id) => setSelectedSourceIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                onToggleAllSources={() => setSelectedSourceIds(selectedSourceIds.length === sources.length && sources.length > 0 ? [] : sources.map(s => s.id))}
+                onRemoveSelectedSources={handleRemoveSelectedSources}
+                onRemovePlaylist={handleRemovePlaylist}
+                onTogglePlaylistSelection={handleTogglePlaylistSelection}
+                onActiveSourceChange={handleOpenSourceViewer}
+                onRemoveSource={handleRemoveSource}
+                isLoading={isLoading}
+                onOpenAddModal={() => setIsAddModalOpen(true)}
+                notesSlot={
+                  <NotesDropdown
+                    notes={userNotes}
+                    onSaveNote={(note) => setUserNotes(prev => [note, ...prev])}
+                    onUpdateNote={(id, newText) => setUserNotes(prev => prev.map(n => n.id === id ? { ...n, text: newText, updatedAt: new Date().toISOString() } : n))}
+                    onTogglePinNote={(id) => setUserNotes(prev => prev.map(n => n.id === id ? { ...n, isPinned: !n.isPinned } : n))}
+                    onDeleteNote={handleRemoveNote}
+                    apiKeys={apiKeys}
+                  />
+                }
+              />
+            }
+            akcje={
+              <>
+                <PrzyciskPanelu ikona={IkonaSzukaj} etykieta="Szukaj i pytaj we wszystkich notatnikach (Ctrl+K)" onClick={() => setSzukajOtwarte(true)} />
+                <PrzyciskPanelu ikona={FilePen} etykieta="Nowy żywy szkic" onClick={() => otworzNowySzkic('Nowy szkic', '')} />
+                <button
+                  type="button"
+                  onClick={() => setPanelZadan(v => !v)}
+                  title="Zadania z rozmowy"
+                  aria-label="Zadania z rozmowy"
+                  aria-expanded={panelZadan}
+                  className={cn('nb-ikona-kafel group relative flex h-7 items-center gap-1 rounded-lg px-1.5 transition-all duration-300 hover:text-primary', panelZadan ? 'text-primary' : 'text-foreground/70')}
+                >
+                  <ListChecks className="h-3.5 w-3.5" strokeWidth={2} />
+                  {zadania.some(z => !z.zrobione) && (
+                    <span className="text-[10.5px] font-semibold tabular-nums">{zadania.filter(z => !z.zrobione).length}</span>
+                  )}
+                </button>
+                <MenuEksportu zrodla={sources} onEksportNotatnika={eksportujNotatnik} onPobierzPlik={pobierzPlik} onKomunikat={(t) => toast.success(t)} />
+                <PrzyciskPanelu ikona={SlidersHorizontal} etykieta="Konfiguracja czatu" onClick={() => setIsConfigureChatOpen(true)} />
+              </>
+            }
+            nakladka={elementZadan}
+            czat={<div className="nbb h-full min-h-0">{elementCzatu}</div>}
+            zrodla={
+              <WidokZrodel
+                sources={sources}
+                pendingSources={pendingSources}
+                selectedSourceIds={selectedSourceIds}
+                onSelectSource={(id) => setSelectedSourceIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                onToggleAllSources={() => setSelectedSourceIds(selectedSourceIds.length === sources.length && sources.length > 0 ? [] : sources.map(s => s.id))}
+                onRemoveSource={handleRemoveSource}
+                onOpenSource={handleOpenSourceViewer}
+                onOpenAddModal={() => setIsAddModalOpen(true)}
+                onOdswiezZrodlo={odswiezZrodlo}
+                odswiezamId={odswiezamId}
+                apiKeys={apiKeys}
+                onDodajLink={(url) => handleAddSource({ type: extractPlaylistId(url) ? 'playlist' : extractVideoId(url) ? 'youtube' : 'web', url, playlistId: extractPlaylistId(url) || undefined })}
+              />
+            }
+            studio={
+              <WidokStudio
+                outputs={studioOutputs}
+                onGenerate={handleStudioGenerate}
+                onDelete={handleDeleteStudioOutput}
+                hasSources={sources.length > 0}
+                isGenerating={isStudioGenerating}
+                apiKeys={apiKeys}
+                szkice={szkice}
+                onOtworzSzkic={setOtwartySzkic}
+                onNowySzkic={() => otworzNowySzkic('Nowy szkic', '')}
+                ilePowtorek={ilePowtorek}
+                liczbaKart={kartyPowtorek.length}
+                onPowtorki={() => setPowtorkiOtwarte(true)}
+                onTabela={() => setTabelaOtwarta(true)}
+              />
+            }
+          />
+        ) : (<>
 
         {/* GÓRNY PASEK — ATRAPA navbara platformy, NIE część tej aplikacji.
             Stoi tu wyłącznie po to, żeby było widać, jak notatnik siada pod paskiem
@@ -983,6 +1298,9 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
           {!jestPoziomo && !isMobile && isLeftOpen && !bezPaska && (
             <div className="theme-sidebar relative z-30 flex-shrink-0 flex flex-col h-full bg-transparent">
               <Sidebar
+                onSzukajWszedzie={() => setSzukajOtwarte(true)}
+                onOdswiezZrodlo={odswiezZrodlo}
+                odswiezamId={odswiezamId}
                 strona={strona}
                 onUchwyt={onUchwyt}
                 onMenu={onMenu}
@@ -1041,36 +1359,55 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
                 ? (!isObjectsOpen ? "pl-3" : "")
                 : (!isObjectsOpen ? "pr-3" : "")
           )}>
-            <div className="h-full w-full rounded-2xl border border-foreground/[0.12] bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
+            <div className="relative h-full w-full rounded-2xl border border-foreground/[0.12] bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
+              {elementZadan}
               <NaglowekPanelu
                 tytul="Czat"
                 akcje={
-                  <PrzyciskPanelu
-                    ikona={SlidersHorizontal}
-                    etykieta="Konfiguracja czatu"
-                    onClick={() => setIsConfigureChatOpen(true)}
-                  />
+                  <>
+                    <PrzyciskPanelu ikona={IkonaSzukaj} etykieta="Szukaj i pytaj we wszystkich notatnikach (Ctrl+K)" onClick={() => setSzukajOtwarte(true)} />
+                    <PrzyciskPanelu ikona={FilePen} etykieta="Nowy żywy szkic" onClick={() => otworzNowySzkic('Nowy szkic', '')} />
+                    <button
+                      type="button"
+                      onClick={() => setPanelZadan(v => !v)}
+                      title="Zadania z rozmowy"
+                      aria-label="Zadania z rozmowy"
+                      aria-expanded={panelZadan}
+                      className={cn('nb-ikona-kafel group relative flex h-7 items-center gap-1 rounded-lg px-1.5 transition-all duration-300 hover:text-primary', panelZadan ? 'text-primary' : 'text-foreground/70')}
+                    >
+                      <ListChecks className="h-3.5 w-3.5" strokeWidth={2} />
+                      {zadania.some(z => !z.zrobione) && (
+                        <span className="text-[10.5px] font-semibold tabular-nums">{zadania.filter(z => !z.zrobione).length}</span>
+                      )}
+                    </button>
+                    <MenuEksportu
+                      zrodla={sources}
+                      onEksportNotatnika={eksportujNotatnik}
+                      onPobierzPlik={pobierzPlik}
+                      onKomunikat={(t) => toast.success(t)}
+                    />
+                    <PrzyciskPanelu
+                      ikona={SlidersHorizontal}
+                      etykieta="Konfiguracja czatu"
+                      onClick={() => setIsConfigureChatOpen(true)}
+                    />
+                    {/* Po zwinięciu Studio nie było jak go przywrócić na komputerze —
+                        przycisk istniał tylko w wersji mobilnej. */}
+                    {!isObjectsOpen && !isMobile && (
+                      <button
+                        type="button"
+                        onClick={() => setIsObjectsOpen(true)}
+                        className="nb-ikona-kafel ml-1 flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-foreground/80 transition-colors hover:text-primary"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+                        Studio
+                      </button>
+                    )}
+                  </>
                 }
               />
               <div className="flex-1 min-h-0 overflow-hidden">
-                <ChatPanel
-                  messages={chatMessages}
-                  onSendMessage={handleSendMessage}
-                  onClearChat={() => setChatMessages([])}
-                  sources={sources}
-                  hasSources={sources.length > 0}
-                  presetData={presetData}
-                  isGeneratingPresets={isGeneratingPresets}
-                  isAiLoading={isAiLoading}
-                  apiKeys={apiKeys}
-                  onSeekToVideo={handleSeekToVideo}
-                  prefillInput={chatPrefill}
-                  onToggleObjectsOpen={() => setIsObjectsOpen(v => !v)}
-                  isObjectsOpen={isObjectsOpen}
-                  onOpenAddSource={() => setIsAddModalOpen(true)}
-                  onStudioGenerate={handleStudioGenerate}
-                  onModelSelectChange={(newModelId) => setApiKeys(prev => ({ ...prev, model: newModelId }))}
-                />
+                {elementCzatu}
               </div>
             </div>
           </div>
@@ -1089,15 +1426,7 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
               )}
             >
               <div className="h-full w-full rounded-2xl border border-foreground/[0.12] bg-card/40 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
-                <StudioPanel
-                  outputs={studioOutputs}
-                  onGenerate={handleStudioGenerate}
-                  onDelete={handleDeleteStudioOutput}
-                  hasSources={sources.length > 0}
-                  isGenerating={isStudioGenerating}
-                  apiKeys={apiKeys}
-                  onClose={() => setIsObjectsOpen(false)}
-                />
+                {elementStudio}
               </div>
             </div>
           )}
@@ -1222,6 +1551,7 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
             </>
           )}
 
+        </>)}
         </div>
       )}
 
@@ -1235,7 +1565,7 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
         onExportDocx={handleExportDocx}
         isExporting={isExporting}
       />
-      <AddSourceModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAddSource={handleAddSource} />
+      <AddSourceModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAddSource={handleAddSource} apiKeys={apiKeys} juzSa={sources.map(s => s.url || (s.videoId ? `https://www.youtube.com/watch?v=${s.videoId}` : s.title)).filter(Boolean)} />
       {previewTarget && (
         <SourcePreviewModal
           source={previewTarget.source}
@@ -1252,6 +1582,8 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
           onClose={() => setViewerSourceId(null)}
           onSourceSelect={(id) => { setActiveSourceId(id); setViewerSourceId(id); }}
           onSeekToVideo={handleSeekToVideo}
+          odswiezam={odswiezamId === viewerSource.id}
+          onOdswiez={odswiezZrodlo}
         />
       )}
 
@@ -1330,6 +1662,53 @@ function NotebookPage({ otworzUstawieniaBezKlucza = false, pokazAtrapePaska = fa
             <span>Dodaj do notatki</span>
           </button>
         </div>
+      )}
+
+      {otwartySzkic && szkice.find(x => x.id === otwartySzkic) && (
+        <ZywySzkic
+          key={otwartySzkic}
+          szkic={szkice.find(x => x.id === otwartySzkic)}
+          zrodla={selectedSourceIds.length ? sources.filter(x => selectedSourceIds.includes(x.id)) : sources}
+          apiKeys={apiKeys}
+          onZapisz={zapiszSzkic}
+          onUsun={usunSzkic}
+          onZamknij={() => setOtwartySzkic(null)}
+          onOtworzZrodlo={(id) => { setOtwartySzkic(null); handleOpenSourceViewer(id); }}
+        />
+      )}
+
+      {powtorkiOtwarte && (
+        <Powtorki
+          projektId={activeProjectId}
+          karty={kartyPowtorek}
+          onZapytaj={(tekst) => { setPowtorkiOtwarte(false); handleSendMessage(tekst); }}
+          onZamknij={() => setPowtorkiOtwarte(false)}
+        />
+      )}
+
+      {tabelaOtwarta && (
+        <TabelaEkstrakcji
+          projektId={activeProjectId}
+          zrodla={selectedSourceIds.length ? sources.filter(x => selectedSourceIds.includes(x.id)) : sources}
+          apiKeys={apiKeys}
+          onZapiszDoStudio={(title, content) => setStudioOutputs(prev => [...prev, { id: crypto.randomUUID(), toolId: 'table', title, content, createdAt: new Date().toISOString() }])}
+          onZamknij={() => setTabelaOtwarta(false)}
+        />
+      )}
+
+      {szukajOtwarte && (
+        <SzukajWszedzie
+          aktywnyProjektId={activeProjectId}
+          aktywneZrodla={sources}
+          aktywneNotatki={userNotes}
+          apiKeys={apiKeys}
+          onZamknij={() => setSzukajOtwarte(false)}
+          onPrzejdz={(pid, sid) => {
+            setSzukajOtwarte(false);
+            if (pid && pid !== activeProjectId) setActiveProjectId(pid);
+            else if (sid) handleOpenSourceViewer(sid);
+          }}
+        />
       )}
 
       <CommandPalette

@@ -101,7 +101,15 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
   )
     return 'tlo'
 
-  // 9. Przeniesienie obiektu (Object Transfer)
+  // 9. Zamiana miejscami lub podmiana obiektu (Object Replace: "w miejsce tej poduszki", "zamiast auta", "zamień X na Y")
+  if (
+    /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p|zamiast|zamiana\s+miejscami|switch|swap|odwr[óo][ćc]|przer[óo]b\s+\w+\s+na|zr[óo]b\s+z\s+\w+)/.test(t) ||
+    /\b(w|na)\s+miejsc[eu]\s+(te[gj]|t[eą]|teg[oó]|tamte[gj]|tamtego|[a-ząćęłńóśźż]+)/.test(t)
+  ) {
+    return 'zamien'
+  }
+
+  // 10. Przeniesienie obiektu (Object Transfer)
   if (
     /\b(przenie[śs]|przesu[ńn]|przestaw|przeni[eo]s|prze[łl][óo][żz]|daj\s+(to|go|j[ąa]|obiekt)?\s*(tu|tutaj|tutuaj|tam|w|na)|ma\s+by[ćc]\s+(tu|tutaj|tutuaj|tam|w|na)|niech[^.!?]{0,45}\b(b[ęe]dzie|stanie|znajdzie\s+si[ęe]|wyl[ąa]duje|stoi)\s+(tu|tutaj|tutuaj|tam|w|na)|w\s+miejsce\s*(\d+|drugie|celu)|na\s+miejsce\s*(\d+|drugie|celu))/.test(
       t,
@@ -174,21 +182,21 @@ export function polozenie(x: number, y: number): string {
  */
 function sekcjaSkali(): string {
   return [
-    'SCALE AND PERSPECTIVE:',
-    '1. First read the scale of the scene from things of known size near the target point: a door is about 2 m tall, an adult about 1.7 m, a car about 1.5 m tall and 4.5 m long, a chair seat about 45 cm high, a dog or seal about 1–2 m long. Things already standing next to the target point are the best ruler.',
-    '2. Then size the object against those references at the depth where it stands — further from the camera means smaller.',
-    '3. Its vertical lines stay parallel to the verticals of the scene; its horizontal lines converge to the same vanishing points and horizon as Image 1.',
-    '4. Keep the focal length, depth of field and grain of Image 1.',
+    '③ SCALE — REAL SIZE FROM THE SCENE\'S OWN ANCHORS (ZERO GIANT ARTIFACTS):',
+    '1. The object appears at its TRUE real-world size. Take the measured dimensions from the pin analysis as ground truth.',
+    '2. Judge that size against whatever reference is ACTUALLY visible in the canvas near the spot — any object of familiar size (a hand, a person, a doorway, a chair, a plate, a tile, a bottle, a vehicle lane). Compare explicitly, with a number: the object is about X, the nearby visible anchor is about Y, so it reaches about Z of it.',
+    '3. The marked area is a BOUNDARY, not a quota — never enlarge, stretch or inflate the object to fill the area or the frame. Filling the whole frame or the whole surface is almost always wrong.',
+    '4. If nothing of known size is near, place the object at a plausible everyday distance and err on the SMALLER side, set deeper into the scene, rather than large.',
+    '5. PERSPECTIVE & VANISHING LINES: the object\'s edges converge to the same horizon and vanishing points as the surrounding surfaces; verticals stay parallel to the scene\'s verticals.',
   ].join('\n')
 }
 
 /**
  * Zaznaczone obszary na płótnie (patrz `narysujObszary` w mapa-miejsc.ts).
  *
- * Prostokąt mówi modelowi i GDZIE, i JAK DUŻE — stąd zdanie o skali tuż przy
- * opisie magenty. Nakładka potrafi przejść do wyniku (celownik na oparciu
- * ławki, sprawdzone generacją), więc opisujemy stan docelowy tego miejsca
- * i odsyłamy do czystego płótna, zamiast wyliczać, czego ma nie być.
+ * Prostokąt mówi modelowi GDZIE leży strefa pracy. Nigdy nie zmuszamy modelu
+ * do sztucznego rozpychania obiektu na 70% pola — obiekt ma zachować swoje
+ * realne wymiary względem architektury (domu, garażu, drogi).
  */
 function sekcjaObszarow(obszary: Obszary | undefined, intencja: Intencja, nrCzystego: number): string {
   if (!obszary?.cel && !obszary?.zrodlo) return ''
@@ -197,11 +205,11 @@ function sekcjaObszarow(obszary: Obszary | undefined, intencja: Intencja, nrCzys
   if (obszary.cel) {
     const tresc: Record<string, string> = {
       wstaw:
-        'the finished object is placed inside this rectangle, occupying 50–70% of the area with 30–50% safety breathing room from boundaries. Standing naturally on the ground plane, 100% complete.',
+        'the operational boundary container. The object is rendered at its TRUE ARCHITECTURAL REAL-WORLD SCALE within this region (e.g. car narrower than driveway lane, lower than garage door). Do NOT enlarge to fill the box.',
       przenies:
-        'the moved object is placed inside this rectangle, occupying 50–70% of the area with 30–50% safety breathing room. 100% complete without clipped edges.',
+        'the destination operational region. The moved object is rendered at its true real-world scale, matching scene perspective and horizon. Do NOT blow up or enlarge to fill the boundary.',
       zamien:
-        'the object inside this rectangle is replaced; the new object occupies 50–70% of the space with 30–50% safety margin, matching ground contact and camera angle.',
+        'the target operational region. The replacement object takes over this space at its OWN natural real-world dimensions, matching ground contact and camera angle without distortion.',
       postac:
         'the head and hair inside this rectangle take the identity from the reference photo; pose, body and clothing stay.',
       ubranie:
@@ -239,9 +247,13 @@ function sekcjaObszarow(obszary: Obszary | undefined, intencja: Intencja, nrCzys
  */
 function sekcjaCzystegoWyniku(): string {
   return [
-    'CLEAN OUTPUT:',
+    'CLEAN OUTPUT — ONE SEAMLESS PHOTOGRAPH (ANTI-AI LOOK):',
     'Pin numbers, names and coordinates in this prompt are instructions for you only.',
     'The result is a single clean, unannotated photograph: the scene itself with natural surfaces and colours from edge to edge.',
+    'Re-render the whole scene as one brand-new photograph. Never paste, mask, composite or overlay: no hard cut edges, no seams, no leftover rectangles, no donor background travelling with a moved object.',
+    'GENERATE FROM SCRATCH — NEVER COPY-PASTE (absolute rule): the object is DRAWN ANEW, pixel by pixel, as a native part of this photograph. It is FORBIDDEN to copy, cut, lift, warp or paste the object\'s pixels from the reference image and merely recolour them. Re-create the object from understanding — same identity, but freshly rendered in the destination scene so it shares the scene\'s exact grain, lighting and texture. A recoloured cut-out is always wrong.',
+    'This is NOT an enhancer or upscaler: do not merely sharpen, brighten, beautify or drop the object in wearing its own colour and resolution. The object is re-photographed into the scene\'s own medium (see APPEARANCE MATCH) — if the scene is black-and-white and grainy, the object comes out black-and-white and grainy too.',
+    'Any object brought in or moved is redrawn into this scene — its medium and colour treatment, light direction and colour temperature, perspective, depth-of-field / lens blur, grain and colour cast all match the canvas scene, so the edit is impossible to spot.',
   ].join('\n')
 }
 
@@ -469,10 +481,101 @@ function sekcjaUchwytow(
   return czesci.join('\n\n')
 }
 
-/** Integracja fotometryczna: reguły trybu plus to, co wspólne dla każdej operacji na zdjęciu. */
-function sekcjaSwiatla(obrazy: Warstwa[], intencja: Intencja): string {
+/**
+ * KONTRAKT WYNIKU — hardkodowana konwencja obrazów i formatu.
+ *
+ * Z konkretnej porażki: przy „wstaw kaczkę tutaj" model oddał kadr w innym
+ * formacie niż zdjęcie docelowe, podbił jakość, zdublował łapkę kaczki i
+ * skasował dwie gęsi. Ten blok stawia to na sztywno na samej górze: Image 1
+ * to zawsze zdjęcie DOCELOWE, reszta to referencje, a wynik dziedziczy
+ * format/rozdzielczość/ziarno Image 1 i nie zmienia liczby obiektów.
+ */
+function sekcjaKontraktu(ileObrazow: number): string {
+  const linie = [
+    'OUTPUT CONTRACT (FIXED — non-negotiable):',
+    '- Image 1 is the TARGET photo (the destination). The result IS Image 1 with ONLY the change the task asks for.',
+    '- The result MUST keep Image 1\'s exact aspect ratio, resolution, framing, camera position and its film grain / quality level. A grainy, low-res or old photo stays grainy, low-res and old, at the same size and shape. NEVER take the aspect ratio, resolution, quality, framing or crop from any reference image or output a different format.',
+  ]
+  if (ileObrazow > 1) {
+    linie.push(
+      '- Images 2, 3, … are REFERENCES. They contribute ONLY the identity/appearance of their pinned object — nothing about the frame, format, resolution, quality, background or lighting of the result.',
+    )
+  }
+  linie.push(
+    '- Add nothing the task did not ask for, and remove nothing it did not ask for: every existing subject that the task does not explicitly change stays, with the same count and positions.',
+    '- Bring each object in EXACTLY ONCE with the exact number of its own parts — never duplicate, mirror or add extra copies of an object or any of its features (hands, limbs, faces, logos, wheels).',
+  )
+  return linie.join('\n')
+}
+
+/**
+ * ① MODUŁ: TOŻSAMOŚĆ OBIEKTU.
+ *
+ * Osobna, doklejana zasada: co pozostaje prawdą o obiekcie (identyczność,
+ * kształt, cechy), a co NIE przechodzi z jego własnego zdjęcia (kadr, tło,
+ * światło dawcy). Bez tego model albo gubił tożsamość, albo przynosił kadr
+ * i światło dawcy razem z obiektem.
+ */
+function sekcjaTozsamosci(_intencja: Intencja): string {
+  return [
+    '① OBJECT IDENTITY:',
+    '- The incoming object keeps its own identity, shape, proportions and surface condition (see IMAGES for what each photo controls). It is unmistakably the SAME object — only re-photographed inside this scene, never a generic stand-in and never the donor\'s framing, background or lighting.',
+  ].join('\n')
+}
+
+/**
+ * ② MODUŁ: POZYCJA.
+ *
+ * Osobna, doklejana zasada: gdzie obiekt stoi, styk z podłożem, kolejność
+ * głębi, odstęp do sąsiadów, perspektywa. Zbiera w jednym miejscu to, co
+ * wcześniej było rozsypane po krokach trybu.
+ */
+function sekcjaPozycji(): string {
+  return [
+    '② POSITION — LANDS EXACTLY AT THE MARKED SPOT:',
+    '- The object lands EXACTLY at the marked point — that pin is where its base / point of contact meets the ground or surface. Its footprint is centred on that spot, not drifted to the side, not floating, not pushed to another part of the frame. Getting the object at the marked location is a top priority.',
+    '- It stands with a stable, natural footprint and a soft contact shadow tying it to the ground there.',
+    '- Respect depth order: whatever is closer to the camera overlaps it; it overlaps whatever is behind it. Foreground subjects stay sharp and seal it out.',
+    '- Keep the spacing to its neighbours — it stands beside what is already there, each object on its own footprint, with no clipping into or overlap onto other objects.',
+    '- Its perspective follows the scene: horizontal edges converge to the same vanishing points as the surrounding ground, walls and objects; verticals stay parallel to the scene\'s verticals.',
+  ].join('\n')
+}
+
+/**
+ * ⑤ MODUŁ: WIERNOŚĆ — ZERO ENHANCERA.
+ *
+ * Osobna, doklejana zasada z konkretnej porażki: model przerysował CAŁY kadr
+ * „lepiej" — podbił rozdzielczość, zmienił perspektywę kamery, wyczyścił szum
+ * starego zdjęcia i prześwietlił scenę. To jest edytor, nie upscaler: poza
+ * miejscem zmiany wszystko ma zostać pikselowo wierne oryginałowi.
+ */
+function sekcjaWiernosci(): string {
+  return [
+    '⑤ FIDELITY LOCK — THIS IS AN EDITOR, NOT AN ENHANCER/UPSCALER/RESTORER:',
+    '- RESOLUTION & DIMENSIONS: output the SAME resolution and aspect ratio as the canvas. Do NOT upscale, stretch, add detail or increase sharpness anywhere.',
+    '- KEEP THE ORIGINAL QUALITY EVERYWHERE THE TASK DOES NOT TOUCH: preserve the canvas\'s exact grain, film noise, softness, compression, low resolution, colour degradation, scratches and any old-photo artifacts. NEVER denoise, sharpen, clean, brighten, colour-correct, restore or "improve" the untouched scene — a degraded old photo must stay a degraded old photo.',
+    '- CAMERA PERSPECTIVE LOCK: identical camera position, focal length, field of view and angle. No zoom, no re-crop, no re-framing, no perspective or lens change. Every untouched pixel stays where it was.',
+    '- LIGHTING LOCK: keep the scene\'s existing lighting, exposure, contrast and colour balance exactly as in the canvas; do not relight or re-grade the untouched areas.',
+    '- ONLY the marked/pinned change area may differ from the canvas; everything else is the original photograph, unaltered and at its original quality.',
+  ].join('\n')
+}
+
+/**
+ * ④ MODUŁ: DOPASOWANIE WYGLĄDU (medium, ziarno, ostrość, światło).
+ *
+ * Osobna, doklejana zasada. Największa porażka: kolorowy obiekt wchodził do
+ * czarno-białej, ziarnistej sceny i wyglądał jak wklejka/enhancer. Dlatego
+ * pierwsze idą reguły o MEDIUM i KOLORZE (mono/B&W/sepia) oraz o ziarnie
+ * filmu — obiekt ma być PRZEFOTOGRAFOWANY w tym samym medium, nie doklejony.
+ */
+function sekcjaDopasowania(obrazy: Warstwa[], intencja: Intencja): string {
   const tryb = TRYBY[intencja]
-  const reguly = [...tryb.swiatlo]
+  const reguly: string[] = [
+    'MEDIUM & COLOUR TREATMENT (highest priority here): adopt the canvas photo\'s exact photographic medium. If the canvas is black-and-white, monochrome, sepia, cross-processed or heavily desaturated, render the incoming/edited object in that SAME treatment — leave NO full modern colour on it. Match the canvas\'s tonal curve, contrast, dynamic range, black point and overall colour cast so the object reads as part of the same photograph.',
+    'FILM GRAIN & ANALOG TEXTURE: cover the incoming object with the SAME heavy, authentic film grain, film noise and imperfect analog texture as the destination photo — the same grain size, density and contrast. If the destination is a grainy vintage photo, the object is equally grainy; the grain runs continuously across the object and the background with no clean patch around it.',
+    'NO DIGITAL SMOOTHNESS, NO CGI / AI LOOK: the object must NOT be smooth, glossy, sharp, denoised or over-rendered. No digital smoothness, no CGI sheen, no 3D-render or AI-generated look — it must read as part of the same analog photograph, seamlessly matching its grain, contrast and blur. Consistent analog camera artifacts across the whole frame.',
+    ...tryb.swiatlo,
+  ]
 
   if (tryb.swiatloZPlotna) {
     reguly.push(
@@ -481,14 +584,16 @@ function sekcjaSwiatla(obrazy: Warstwa[], intencja: Intencja): string {
   }
   reguly.push('Grain, sharpness and depth of field match Image 1, including along the edges of the changed area.')
   if (intencja !== 'styl') {
-    reguly.push('The result looks like one photograph from one camera, one exposure — a single seamless shot.')
+    reguly.push('The result looks like one photograph from one camera, one exposure, one film stock — a single seamless shot.')
   }
   if (obrazy.length > 1 && tryb.swiatloZPlotna) {
     reguly.push(
-      'Whatever comes from a reference image is redrawn in the light and quality of Image 1 — it belongs to that scene, it is not a pasted cut-out.',
+      'Whatever comes from a reference image is re-photographed in the medium, light and quality of Image 1 — it belongs to that scene, it is not a pasted or enhanced cut-out.',
     )
   }
-  return `PHOTOMETRIC INTEGRATION:\n${reguly.map(r => `- ${r}`).join('\n')}`
+  return `④ APPEARANCE MATCH — GRAIN, STYLE, SHARPNESS, LIGHT (the object is re-photographed as part of the scene):\n${reguly
+    .map(r => `- ${r}`)
+    .join('\n')}`
 }
 
 export interface Obszary {
@@ -540,7 +645,9 @@ export function zbudujPolecenie(
   const wykrytyStyl = intencja === 'styl' ? wykryjStyl(zadanie) : undefined
 
   const sekcje = [
-    `TASK (user's words): ${zadanie}`,
+    // Blok komendy — to, co użytkownik złożył z chipów: co zrobić i jak.
+    `COMMAND (user's words, assembled from the pinned objects / chips — WHAT to do and HOW): ${zadanie}`,
+    sekcjaKontraktu(obrazy.length),
     sekcjaKadru(),
     sekcjaZdjec(obrazy, obszary, intencja),
     sekcjaUchwytow(pineski, obrazy, intencja, role),
@@ -550,8 +657,13 @@ export function zbudujPolecenie(
       ? `SPECIFIC STYLE DIRECTIVES (${wykrytyStyl.nazwa}):\n${wykrytyStyl.reguly.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
       : '',
     `STEPS:\n${tryb.reguly.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
+    // ── Doklejane moduły-zasady: każdy to osobne, nienegocjowalne ograniczenie ──
+    'APPENDED RULE MODULES — each block below is a separate, non-negotiable constraint the result must satisfy at once:',
+    sekcjaTozsamosci(intencja),
+    intencja !== 'styl' ? sekcjaPozycji() : '',
     tryb.zeSkala ? sekcjaSkali() : '',
-    sekcjaSwiatla(obrazy, intencja),
+    sekcjaDopasowania(obrazy, intencja),
+    sekcjaWiernosci(),
     sekcjaObszarow(obszary, intencja, obrazy.length + 1),
     sekcjaCzystegoWyniku(),
     `UNCHANGED:\n${[...tryb.zostaje, ...zostajeWspolne].map(z => `- ${z}`).join('\n')}`,

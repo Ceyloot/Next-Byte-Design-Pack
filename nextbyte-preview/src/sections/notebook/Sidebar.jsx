@@ -6,7 +6,8 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import React, { useState } from 'react';
-import { Plus, Video as Youtube, CheckSquare, Square, Trash2, Library, Loader2, Folder, FileStack, BookOpen } from 'lucide-react';
+import { Plus, Video as Youtube, CheckSquare, Square, Trash2, Library, Loader2, Folder, FileStack, BookOpen, RefreshCw } from 'lucide-react';
+import { odswiezalne } from './utils/zywe';
 import { getKindIcon } from './utils/sourceKinds';
 import { NawigacjaBoczna, useSzyna, PigulkaModulu, LicznikPanelu, PigulkaNowy, GrupaPanelu, WierszPanelu } from '@/components/NawigacjaBoczna';
 
@@ -17,6 +18,9 @@ function odmianaNotatnik(n) {
 }
 
 function Sidebar({
+  onOdswiezZrodlo,
+  odswiezamId,
+  onSzukajWszedzie,
   onMenu,
   strona = 'lewo',
   onUchwyt,
@@ -55,6 +59,21 @@ function Sidebar({
 
   const akcjeZrodla = (src, zaznaczone) => (
     <>
+      {/* Kropka: źródło zmieniło się przy ostatnim odświeżeniu. */}
+      {src.zmiany && !src.zmiany.bezZmian && (
+        <span title="Zmieniło się przy ostatnim odświeżeniu" className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+      )}
+      {onOdswiezZrodlo && odswiezalne(src) && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onOdswiezZrodlo(src.id); }}
+          aria-label={`Odśwież źródło ${src.title}`}
+          title="Pobierz ponownie i pokaż zmiany"
+          className={`rounded-md p-0.5 transition-all hover:text-primary ${odswiezamId === src.id ? 'text-primary opacity-100' : 'text-foreground/40 opacity-0 group-hover:opacity-100'}`}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${odswiezamId === src.id ? 'animate-spin' : ''}`} />
+        </button>
+      )}
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onRemoveSource(src.id); }}
@@ -96,12 +115,13 @@ function Sidebar({
     /* Szerokość panelu narzędzia jak Chat AI (~300 px tafli), nie menu (264). */
     <NawigacjaBoczna
       szerokosc={300}
+      onSzukaj={onSzukajWszedzie}
       strona={strona}
       onUchwyt={onUchwyt}
       naGorze={<PigulkaModulu nazwa="Next Scribe" onClick={onMenu} />}
       stopka={notesSlot}
     >
-      <LicznikPanelu tekst={`${projects.length} ${odmianaNotatnik(projects.length)}`} />
+      <LicznikPanelu tekst={`${projects.length} ${odmianaNotatnik(projects.length)}`} onSzukaj={onSzukajWszedzie} />
       {onCreateProject && <PigulkaNowy tekst="Nowy notatnik" onClick={onCreateProject} />}
 
       <GrupaPanelu tytul="Notatniki" ikona={BookOpen} otwarta={notatnikiOtwarte} onPrzelacz={() => setNotatnikiOtwarte(v => !v)}>

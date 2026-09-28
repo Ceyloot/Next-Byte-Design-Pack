@@ -7,7 +7,7 @@ import {
   Layers,
   Link2,
   Lock,
-  MapPin,
+  Pin,
   Maximize,
   MousePointer2,
   Sparkles,
@@ -15,16 +15,18 @@ import {
   Trash2,
   Unlock,
   Upload,
-  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
+import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas } from '@/sections/canvas/CzatCanvas'
 import {
   generuj,
   nazwijWynik,
   opiszZmiane,
   rozpoznajObiekt,
+  analizujPineske,
+  opisAnalizy,
   rozpoznajScene,
   sprawdzWynik,
   klasyfikujPineski,
@@ -33,7 +35,7 @@ import {
 import { Plotno } from '@/sections/canvas/Plotno'
 import { INTENCJE, polozenie, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
-import { wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
+import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad } from '@/sections/canvas/uklad-pinesek'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
@@ -42,6 +44,7 @@ import {
   etykietaPineski,
   kolejnoscObrazow,
   konwertujNaDataUrl,
+  dopasujFormatDoObrazu,
   nowyId,
   pozycjaPineski,
   wczytajProjekt,
@@ -56,9 +59,6 @@ import {
   type RamkaObszaru,
 } from '@/sections/canvas/typy'
 
-import interiorImg from '@/assets/studio/interior.jpg'
-import carImg from '@/assets/studio/car.jpg'
-import landscapeImg from '@/assets/studio/landscape.jpg'
 
 /**
  * Canvas — profesjonalna kanwa generatywna (Nano-Banana & Lovart Engine).
@@ -77,81 +77,90 @@ interface Projekt {
   ramka?: RamkaObszaru | null
 }
 
-function stworzDemoLovart(): {
-  projekt: Projekt
-  widok: Widok
-  wybranaWarstwa: string
-  wybranaPineska: string
-} {
-  const w1Id = 'w_demo_salon'
-  const w2Id = 'w_demo_krajobraz'
-  const p1Id = 'p_demo_1'
-  const p2Id = 'p_demo_2'
+/**
+ * Kotwiczy i kalibruje obszar inpaintingu do punktu wbicia pineski.
+ * Eliminuje problem halucynacji współrzędnych przez model językowy
+ * (np. lądowanie auta na tarasie zamiast przed garażem) oraz gigantyzmu
+ * w szerokich kadrach krajobrazowych.
+ */
+function skalibrujObszarPineski(
+  sugerowany: Prostokat | undefined,
+  pinDocelowy: Pineska | undefined,
+  pinZrodlowy: Pineska | undefined,
+  tekstZadania: string,
+): Prostokat | undefined {
+  if (!pinDocelowy) return sugerowany
 
-  return {
-    projekt: {
-      warstwy: [
-        {
-          id: w1Id,
-          type: 'image',
-          src: interiorImg,
-          x: 60,
-          y: 70,
-          width: 480,
-          height: 340,
-          naturalWidth: 1024,
-          naturalHeight: 768,
-          rotation: 0,
-          name: 'Salon (Interior)',
-          visible: true,
-          locked: false,
-          zrodlo: 'dysk',
-          obiekty: ['fotel wypoczynkowy', 'stolik kawowy', 'okno panoramiczne', 'lampa'],
-        },
-        {
-          id: w2Id,
-          type: 'image',
-          src: landscapeImg,
-          x: 580,
-          y: 70,
-          width: 480,
-          height: 340,
-          naturalWidth: 1024,
-          naturalHeight: 768,
-          rotation: 0,
-          name: 'Krajobraz (Landscape)',
-          visible: true,
-          locked: false,
-          zrodlo: 'dysk',
-          obiekty: ['skały', 'taras widokowy', 'zbocze góry', 'niebo'],
-        },
-      ],
-      pineski: [
-        {
-          id: p1Id,
-          layerId: w1Id,
-          normalizedX: 0.38,
-          normalizedY: 0.62,
-          label: 'fotel wypoczynkowy',
-          sugestie: ['fotel', 'siedzisko', 'mebel'],
-          analizowana: false,
-        },
-        {
-          id: p2Id,
-          layerId: w2Id,
-          normalizedX: 0.48,
-          normalizedY: 0.64,
-          label: 'taras widokowy',
-          sugestie: ['taras', 'punkt widokowy', 'skały'],
-          analizowana: false,
-        },
-      ],
-      tekst: 'Przenieś fotel wypoczynkowy w miejsce taras widokowy, zachowaj kadr i zrekonstruuj tło pod fotelem (Clean Plate)',
-    },
-    widok: { x: 50, y: 60, zoom: 0.72 },
-    wybranaWarstwa: w1Id,
-    wybranaPineska: p1Id,
+  const px = pinDocelowy.normalizedX
+  const py = pinDocelowy.normalizedY
+
+  // Wymiary sugerowane przez reżysera (lub domyślne):
+  let w = sugerowany ? sugerowany.x1 - sugerowany.x0 : 0.12
+  let h = sugerowany ? sugerowany.y1 - sugerowany.y0 : 0.06
+
+  // Zbieramy kontekst ze wszystkich dostępnych źródeł (zadanie, etykiety pinesek, analiza wizualna obiektów):
+  const teksty = [
+    tekstZadania,
+    pinDocelowy.label,
+    pinDocelowy.analiza?.obiekt,
+    pinDocelowy.analiza?.obiektEn,
+    ...(pinDocelowy.sugestie || []),
+    pinZrodlowy?.label,
+    pinZrodlowy?.analiza?.obiekt,
+    pinZrodlowy?.analiza?.obiektEn,
+    ...(pinZrodlowy?.sugestie || []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  const hCm = pinZrodlowy?.analiza?.wysokoscCm ?? pinDocelowy?.analiza?.wysokoscCm
+  const lCm = pinZrodlowy?.analiza?.dlugoscCm ?? pinDocelowy?.analiza?.dlugoscCm
+
+  const czyPojazd =
+    /\b(samoch[oó]d|auto|pojazd|ford|gt40|lambo\w*|car|vehicle|suv|truck|wy[sś]cig\w*|racecar)\b/i.test(teksty) ||
+    (Boolean(hCm && hCm >= 80 && hCm <= 220) && Boolean(lCm && lCm >= 250))
+  const czyMaly =
+    /\b(figurk\w*|[żz]ab\w*|kubek|telefon|ptak|frog|toy|maskotk\w*|zegar|miniatur\w*)\b/i.test(teksty) ||
+    Boolean(hCm && hCm <= 35)
+  const czyCzlowiek =
+    /\b(osoba|cz[łl]owiek|posta[ćc]|m[ęe][żz]czyzn\w*|kobiet\w*|person|ludzie|ch[łl]opak|dziewczyn\w*)\b/i.test(teksty) ||
+    Boolean(hCm && hCm >= 140 && hCm <= 210 && (!lCm || lCm < 120))
+
+  // Współczynnik perspektywiczny (im wyżej w kadrze, tym mniejszy obiekt w dali):
+  const wspGlebi = Math.max(0.4, Math.min(1.15, py * 1.25))
+
+  if (czyPojazd) {
+    // Samochód na podjeździe/drodze:
+    // W perspektywie wzdłużnej drogi (auto przodem do kamery lub w stronę garażu)
+    // naturalne proporcje to ok. 1.1:1 do 1.35:1. Zbyt szeroka ramka zmuszała model
+    // do obracania auta w poprzek jezdni i blokowania drogi jak po kolizji.
+    // Przykręcone względem wcześniejszego — auto na gołym asfalcie wychodziło
+    // gigantyczne na całą szerokość drogi. Górny limit niżej, dolny bez zmian,
+    // żeby nie wpaść w drugą skrajność (miniatura).
+    w = Math.min(w, 0.10 * wspGlebi)
+    h = Math.min(h, 0.075 * wspGlebi)
+    w = Math.max(w, 0.06 * wspGlebi)
+    h = Math.max(h, 0.045 * wspGlebi)
+  } else if (czyMaly) {
+    w = Math.min(w, 0.045 * wspGlebi)
+    h = Math.min(h, 0.035 * wspGlebi)
+  } else if (czyCzlowiek) {
+    w = Math.min(w, 0.08 * wspGlebi)
+    h = Math.min(h, 0.14 * wspGlebi)
+  } else {
+    w = Math.min(w, 0.18 * wspGlebi)
+    h = Math.min(h, 0.12 * wspGlebi)
   }
+
+  // ZAWSZE kotwiczymy horyzontalnie na px (środek obiektu)
+  // i wertykalnie na py (styk z gruntem / koła):
+  const x0 = Math.max(0.005, Math.min(0.995 - w, px - w / 2))
+  const y1 = Math.min(0.995, Math.max(0.005 + h, py + h * 0.08)) // lekki margines na cień pod spodem
+  const y0 = Math.max(0.005, y1 - h)
+  const x1 = Math.min(0.995, x0 + w)
+
+  return { x0, y0, x1, y1 }
 }
 
 export function CanvasSection() {
@@ -163,9 +172,9 @@ export function CanvasSection() {
         if (wczytany.warstwy.length > 0) return wczytany
       }
     } catch {
-      /* uszkodzony zapis — startujemy od sceny demo */
+      /* uszkodzony zapis — startujemy od pustego płótna */
     }
-    return stworzDemoLovart().projekt
+    return { warstwy: [], pineski: [], tekst: '', ramka: null }
   })
 
   const [narzedzie, setNarzedzie] = useState<Narzedzie>('wybor')
@@ -177,7 +186,7 @@ export function CanvasSection() {
         if (wczytany.warstwy.length > 0) return wczytany.warstwy[0].id
       }
     } catch {}
-    return 'w_demo_salon'
+    return null
   })
   const [wybranaPineska, setWybranaPineska] = useState<string | null>(() => {
     try {
@@ -187,7 +196,7 @@ export function CanvasSection() {
         if (wczytany.pineski.length > 0) return wczytany.pineski[0].id
       }
     } catch {}
-    return 'p_demo_1'
+    return null
   })
   const [widok, setWidok] = useState<Widok>({ x: 50, y: 60, zoom: 0.72 })
   const [menuDodawania, setMenuDodawania] = useState(false)
@@ -309,90 +318,6 @@ export function CanvasSection() {
     }
   }, [wstawPliki])
 
-  /* Załaduj gotowe sceny demonstracyjne Lovart z obsługą Object Transfer / Switch */
-  const zaladujDemoLovart = useCallback(() => {
-    const d = stworzDemoLovart()
-    setProjekt(d.projekt)
-    setWybranaWarstwa(d.wybranaWarstwa)
-    setWybranaPineska(d.wybranaPineska)
-    setWidok(d.widok)
-    setMenuDodawania(false)
-  }, [])
-
-  const zaladujDemoPoraDnia = useCallback(() => {
-    const wId = 'w_demo_car'
-    setProjekt({
-      warstwy: [
-        {
-          id: wId,
-          type: 'image',
-          src: carImg,
-          x: 70,
-          y: 60,
-          width: 520,
-          height: 350,
-          naturalWidth: 1024,
-          naturalHeight: 680,
-          rotation: 0,
-          name: 'Sport Car (Pora dnia / noc)',
-          visible: true,
-          locked: false,
-          zrodlo: 'dysk',
-          obiekty: ['samochód sportowy', 'droga asfaltowa', 'drzewa', 'niebo'],
-        },
-      ],
-      pineski: [
-        {
-          id: 'p_car_1',
-          layerId: wId,
-          normalizedX: 0.5,
-          normalizedY: 0.55,
-          label: 'samochód sportowy',
-          sugestie: ['auto', 'samochód', 'pojazd'],
-          analizowana: false,
-        },
-      ],
-      tekst: 'Zmień porę dnia na głęboką noc: włącz przednie reflektory rzucające snop światła na mokry asfalt, dodaj neonowe refleksy i gwiazdy na niebie',
-      ramka: null,
-    })
-    setWybranaWarstwa(wId)
-    setWybranaPineska('p_car_1')
-    setWidok({ x: 60, y: 60, zoom: 0.85 })
-    setMenuDodawania(false)
-  }, [])
-
-  const zaladujDemoStyl = useCallback(() => {
-    const wId = 'w_demo_salon_styl'
-    setProjekt({
-      warstwy: [
-        {
-          id: wId,
-          type: 'image',
-          src: interiorImg,
-          x: 70,
-          y: 60,
-          width: 520,
-          height: 360,
-          naturalWidth: 1024,
-          naturalHeight: 768,
-          rotation: 0,
-          name: 'Salon (Styl Akwarela)',
-          visible: true,
-          locked: false,
-          zrodlo: 'dysk',
-          obiekty: ['salon', 'fotel wypoczynkowy', 'okno', 'stolik'],
-        },
-      ],
-      pineski: [],
-      tekst: 'Przekształć scenę w styl akwarela: miękkie przejścia kolorystyczne, delikatne zacieki pigmentu na fakturowanym papierze czerpanym',
-      ramka: null,
-    })
-    setWybranaWarstwa(wId)
-    setWybranaPineska(null)
-    setWidok({ x: 60, y: 60, zoom: 0.85 })
-    setMenuDodawania(false)
-  }, [])
-
   useEffect(() => {
     const naWklejenie = (e: ClipboardEvent) => {
       const pliki = [...(e.clipboardData?.items ?? [])]
@@ -454,8 +379,14 @@ export function CanvasSection() {
       const warstwa = projekt.warstwy.find(w => w.id === layerId)
       if (!warstwa) return
       void (async () => {
-        const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
-        const zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
+        // Najpierw pełna analiza (obiekt, otoczenie, wymiary z kalibracji);
+        // samo rozpoznanie nazwy z wycinka zostaje jako zapas.
+        const analiza = await analizujPineske(pineska, warstwa)
+        let zWycinka = analiza?.nazwy ?? []
+        if (zWycinka.length === 0) {
+          const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
+          zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
+        }
         const zeSceny = projekt.warstwy.find(w => w.id === layerId)?.obiekty ?? []
         const nazwy = zWycinka.length > 0 ? [...zWycinka, ...zeSceny].slice(0, 6) : zeSceny.slice(0, 6)
         setProjekt(p => ({
@@ -466,6 +397,7 @@ export function CanvasSection() {
                   ...x,
                   analizowana: false,
                   sugestie: nazwy,
+                  analiza: analiza?.analiza,
                   label: (x.label ?? '').trim() || nazwy[0] || `obiekt ${p.pineski.indexOf(x) + 1}`,
                 }
               : x,
@@ -574,10 +506,10 @@ export function CanvasSection() {
           ? await klasyfikujPineski(projekt.pineski, projekt.warstwy)
           : null
       const uklad = ustalUklad(projekt.pineski, projekt.warstwy, intencja, rodzaje)
-      const obrazy = uklad.plotno
+      let obrazy = uklad.plotno
         ? kolejnoscObrazow(uklad.plotno, projekt.pineski, projekt.warstwy)
         : obrazyWejsciowe
-      const zrodlo = obrazy[0]
+      let zrodlo = obrazy[0]
 
       // Agent dostaje zdjęcia z narysowanymi pineskami — ma zobaczyć, na
       // czym leży każdy punkt. Model obrazu dostaje później czyste zdjęcia.
@@ -594,7 +526,8 @@ export function CanvasSection() {
           const nrObrazu = obrazy.findIndex(w => w.id === p.layerId) + 1 || 1
           const rola = uklad.role[i + 1] ? ` — role: ${uklad.role[i + 1]}` : ''
           const ochrona = p.chroniona ? ' — PROTECTED, must stay unchanged' : ''
-          return `Pin ${i + 1} "${etykietaPineski(p, i + 1)}" on Image ${nrObrazu}, ${polozenie(p.normalizedX, p.normalizedY)}${rola}${ochrona}`
+          const analiza = p.analiza ? `\n   ANALYSIS (measured at pin placement): ${opisAnalizy(p.analiza)}` : ''
+          return `Pin ${i + 1} "${etykietaPineski(p, i + 1)}" on Image ${nrObrazu}, ${polozenie(p.normalizedX, p.normalizedY)}${rola}${ochrona}${analiza}`
         })
         .join('\n')
 
@@ -612,6 +545,21 @@ export function CanvasSection() {
       // ochrony i czystego wyniku idą do modelu zawsze.
       const trybAgenta = INTENCJE.find(i => i.id === plan?.intencja)?.id ?? intencja
 
+      // Reżyser (widzi wszystkie zdjęcia) wskazuje, które jest DOCELOWE — tam
+      // ląduje obiekt. Promujemy je na Image 1: z niego idą wymiary do Runware
+      // i do twardej blokady formatu, nigdy format zdjęcia-dawcy. Gdy trzeba
+      // było przestawić, pomijamy box reżysera (jego współrzędne dotyczyły
+      // wcześniejszego Image 1) i zdajemy się na kotwiczenie do pineski.
+      let przestawiono = false
+      if (plan?.zdjecieDocelowe && plan.zdjecieDocelowe >= 1 && plan.zdjecieDocelowe <= obrazy.length) {
+        const wybrane = obrazy[plan.zdjecieDocelowe - 1]
+        if (wybrane && wybrane.id !== zrodlo.id) {
+          obrazy = [wybrane, ...obrazy.filter(w => w.id !== wybrane.id)]
+          zrodlo = obrazy[0]
+          przestawiono = true
+        }
+      }
+
       // Obszary od reżysera i użytkownika:
       // Jeśli użytkownik narysował ramkę na warstwie płótna, ma ona pierwszeństwo (Lovart inpainting mask).
       // W przeciwnym razie bierzemy obszar wyznaczony przez reżysera/agenta.
@@ -625,18 +573,46 @@ export function CanvasSection() {
             }
           : undefined
 
-      const obszarCelu =
+      // Znajdź pineskę docelową na płótnie:
+      const pinDocelowy =
+        projekt.pineski.find(
+          p =>
+            p.layerId === zrodlo.id &&
+            !p.chroniona &&
+            uklad.role[projekt.pineski.indexOf(p) + 1] === 'DESTINATION',
+        ) ??
+        projekt.pineski.find(p => p.layerId === zrodlo.id && !p.chroniona)
+
+      // Znajdź pineskę źródłową (dawcę obiektu):
+      const pinZrodlowy =
+        projekt.pineski.find(
+          p =>
+            !p.chroniona &&
+            uklad.role[projekt.pineski.indexOf(p) + 1] === 'SOURCE',
+        ) ??
+        projekt.pineski.find(p => p !== pinDocelowy && !p.chroniona)
+
+      const surowyObszar =
         trybAgenta === 'tlo' || trybAgenta === 'styl'
           ? undefined
-          : ramkaCelu ?? plan?.obszar
-      const obszarZrodla = trybAgenta === 'przenies' ? plan?.obszarZrodla : undefined
-      const plotnoZObszarami = await narysujObszary(zrodlo, obszarCelu, obszarZrodla)
+          : ramkaCelu ?? (przestawiono ? undefined : plan?.obszar)
+
+      // Jeśli użytkownik nie narysował ręcznie ramki, deterministycznie kotwiczymy i kalibrujemy obszar do pineski:
+      const obszarCelu = ramkaCelu
+        ? ramkaCelu
+        : skalibrujObszarPineski(surowyObszar, pinDocelowy, pinZrodlowy, projekt.tekst)
+
+      const obszarZrodla = trybAgenta === 'przenies' && !przestawiono ? plan?.obszarZrodla : undefined
+      // Magentowe boxy WYŁĄCZONE: dawały 3. obraz (clean canvas), blok „MARKED
+      // AREAS" i sygnał „wypełnij prostokąt" → efekt wklejki. Kotwiczymy zmianę
+      // wyłącznie opisem + współrzędnymi pineski (prompt-first).
+      const plotnoZObszarami: string | null = null
 
       const pelnePolecenie = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
         szczegoly: plan?.promptDlaModelu,
         instrukcja: plan?.instrukcja,
         role: uklad.role,
-        obszary: plotnoZObszarami ? { cel: Boolean(obszarCelu), zrodlo: Boolean(obszarZrodla) } : undefined,
+        obszary: undefined,
       })
 
       setOstatniPrompt(pelnePolecenie)
@@ -651,6 +627,11 @@ export function CanvasSection() {
         wysokosc: zrodlo.naturalHeight,
       })
 
+      // TWARDA BLOKADA FORMATU: Nano-Banana ignoruje żądane wymiary i potrafi
+      // oddać wynik w proporcjach zdjęcia referencyjnego. Deterministycznie
+      // dopasowujemy wynik do dokładnego formatu Image 1 (zdjęcie docelowe).
+      wynik.obrazUrl = await dopasujFormatDoObrazu(wynik.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
+
       const nazwa = nazwijWynik(projekt.tekst, projekt.pineski)
       dodajZeZrodla(wynik.obrazUrl, nazwa, 'wynik', zrodlo)
 
@@ -662,18 +643,30 @@ export function CanvasSection() {
       setStanGeneracji({ faza: 'sprawdza', wynik: gotowy })
 
       const obszaryKontroli = [obszarCelu, obszarZrodla].filter((o): o is Prostokat => Boolean(o))
-      const [ocena, nakladka] = await Promise.all([
+      const [ocena, nakladka, bezZmian] = await Promise.all([
         sprawdzWynik({
           zadanie: projekt.tekst,
           przed: (await zmniejszDoAnalizy(zrodlo.src)) || zrodlo.src,
           wynik: wynik.obrazUrl,
+          intencja: trybAgenta,
+          plan: plan?.plan,
+          uchwyty: uchwytyTekst,
         }),
         plotnoZObszarami ? wykryjNakladke(wynik.obrazUrl, zrodlo.src, obszaryKontroli) : Promise.resolve(null),
+        czyBezZmian(wynik.obrazUrl, zrodlo.src),
       ])
 
       // Piksele rozstrzygają pewniej niż ocena modelu: różowa plama w obszarze
       // to ślad nakładki, niezależnie od tego, co zobaczył kontroler.
-      const ocenaKoncowa = nakladka?.wykryto
+      const ocenaKoncowa = bezZmian
+        ? {
+            wykonane: false,
+            znaczniki: false,
+            kosztTokenow: ocena?.kosztTokenow ?? 0,
+            ocena:
+              'Model oddał zdjęcie praktycznie bez zmian. Nazwij obiekty w pineskach i opisz zmianę konkretniej, np. „przenieś domek spod pineski 1 na ścieżkę pod pineską 2”.',
+          }
+        : nakladka?.wykryto
         ? {
             wykonane: ocena?.wykonane ?? true,
             znaczniki: true,
@@ -702,20 +695,101 @@ export function CanvasSection() {
     dodajZeZrodla,
   ])
 
-  /** Karta pineski przy kliknięciu na płótnie */
+  /**
+   * Wybór pineski z listy w czacie — z dojazdem widoku.
+   *
+   * Pineska wybrana z listy potrafi leżeć pod panelem czatu albo poza
+   * ekranem; karta wskazywała wtedy coś, czego nie widać. Jeśli pinezka
+   * nie mieści się w wolnym polu między dockiem a czatem, widok płynnie
+   * dojeżdża tak, żeby stanęła na środku tego pola.
+   */
+  const refDojazd = useRef<number | null>(null)
+
+  // I w drugą stronę: otwarta karta pineski zamyka menu i panel warstw
+  useEffect(() => {
+    if (!wybranaPineska) return
+    setMenuDodawania(false)
+    setPanelWarstw(false)
+  }, [wybranaPineska])
+  const pokazPineske = useCallback(
+    (id: string | null) => {
+      setWybranaPineska(id)
+      const p = projekt.pineski.find(x => x.id === id)
+      const w = projekt.warstwy.find(x => x.id === p?.layerId)
+      if (!p || !w || !rozmiar.szer) return
+
+      const poz = pozycjaPineski(p, w)
+      const ekranX = widok.x + poz.x * widok.zoom
+      const ekranY = widok.y + poz.y * widok.zoom
+      const lewo = 72
+      const prawo = rozmiar.szer - 412
+      // Pinezka ma być widoczna ORAZ mieć obok miejsce na kartę (268 px + odstęp)
+      const KARTA = 268 + 24
+      const lebekX = ekranX + PRZESUNIECIE_LEBKA.x
+      const widoczna = ekranX > lewo + 40 && ekranX < prawo - 40 && ekranY > 70 && ekranY < rozmiar.wys - 40
+      const kartaSieMiesci = prawo - lebekX >= KARTA || lebekX - KARTA >= lewo
+      if ((widoczna && kartaSieMiesci) || prawo - lewo < 200) return
+
+      // Cel: pinezka z kartą po prawej wyśrodkowane razem w wolnym polu;
+      // przy wąskim polu — sama pinezka na środku.
+      const celX = prawo - lewo > KARTA + 80 ? lewo + (prawo - lewo - KARTA) / 2 : (lewo + prawo) / 2
+      const start = { ...widok }
+      const dx = celX - ekranX
+      const dy = rozmiar.wys / 2 - ekranY
+      const t0 = performance.now()
+      const CZAS = 260
+      if (refDojazd.current) cancelAnimationFrame(refDojazd.current)
+      const krok = (t: number) => {
+        const u = Math.min(1, (t - t0) / CZAS)
+        const e = 1 - Math.pow(1 - u, 3)
+        setWidok({ ...start, x: start.x + dx * e, y: start.y + dy * e })
+        refDojazd.current = u < 1 ? requestAnimationFrame(krok) : null
+      }
+      refDojazd.current = requestAnimationFrame(krok)
+    },
+    [projekt.pineski, projekt.warstwy, rozmiar, widok],
+  )
+
+  /**
+   * Karta pineski — pływa obok łebka pinezki, nie obok szpica.
+   *
+   * Domyślnie po prawej; gdy z prawej nie ma miejsca (krawędź albo czat),
+   * przeskakuje na lewo. W pionie trzyma się ekranu, a ogonek zawsze
+   * celuje w łebek — nawet gdy karta musiała się przesunąć.
+   */
   const kartaPozycja = useMemo(() => {
     const p = projekt.pineski.find(x => x.id === wybranaPineska)
     const w = projekt.warstwy.find(x => x.id === p?.layerId)
     if (!p || !w) return null
     const poz = pozycjaPineski(p, w)
+    const numer = projekt.pineski.indexOf(p) + 1
+
+    const lebekX = widok.x + poz.x * widok.zoom + PRZESUNIECIE_LEBKA.x
+    const lebekY = widok.y + poz.y * widok.zoom + PRZESUNIECIE_LEBKA.y
+    const SZER_KARTY = 268
+    const WYS_KARTY = 280
+    const ODSTEP = 24
+    // Pas zajęty przez rozwinięty czat po prawej (380 px + margines) i dock po lewej
+    const PRAWY_PAS = 412
+    const LEWY_PAS = 72
+
+    const miejsceZPrawej = rozmiar.szer - PRAWY_PAS - (lebekX + ODSTEP)
+    const naLewo = miejsceZPrawej < SZER_KARTY && lebekX - ODSTEP - SZER_KARTY > LEWY_PAS
+    const left = naLewo ? lebekX - ODSTEP - SZER_KARTY : lebekX + ODSTEP
+    const maksTop = Math.max(12, (rozmiar.wys || 800) - WYS_KARTY - 12)
+    const top = Math.min(maksTop, Math.max(12, lebekY - 34))
+    const ogonY = Math.min(WYS_KARTY - 20, Math.max(18, lebekY - top))
+
     return {
       pineska: p,
       warstwa: w,
-      numer: projekt.pineski.indexOf(p) + 1,
-      left: widok.x + poz.x * widok.zoom + 22,
-      top: widok.y + poz.y * widok.zoom - 20,
+      numer,
+      left,
+      top,
+      naLewo,
+      ogonY,
     }
-  }, [wybranaPineska, projekt, widok])
+  }, [wybranaPineska, projekt, widok, rozmiar])
 
   return (
     <div ref={refRoot} className="absolute inset-0 w-full h-full min-h-0 max-h-full overflow-hidden select-none">
@@ -750,17 +824,32 @@ export function CanvasSection() {
         ramka={projekt.ramka}
         onZmienRamke={ramka => setProjekt(p => ({ ...p, ramka }))}
         intencja={intencja}
-        onZaladujDemo={zaladujDemoLovart}
         onOtworzDodawanie={() => refPlik.current?.click()}
       />
 
       {/* ══ Karta zaznaczonego obiektu na płótnie ══ */}
       {kartaPozycja && (
         <div
-          className="absolute z-30 -translate-y-full"
-          style={{ left: kartaPozycja.left, top: kartaPozycja.top }}
+          key={kartaPozycja.pineska.id}
+          className="absolute z-30 animate-in fade-in zoom-in-95 duration-150"
+          style={{
+            left: kartaPozycja.left,
+            top: kartaPozycja.top,
+            transformOrigin: kartaPozycja.naLewo ? 'right top' : 'left top',
+          }}
           onPointerDown={e => e.stopPropagation()}
         >
+          {/* Ogonek wskazujący łebek pinezki — poza szkłem, bo szkło przycina
+              wszystko, co wystaje poza jego obrys (contain: paint). */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute h-3 w-3 rotate-45 rounded-[2px] border border-foreground/[0.08]"
+            style={{
+              top: kartaPozycja.ogonY - 6,
+              [kartaPozycja.naLewo ? 'right' : 'left']: -6,
+              background: 'hsl(var(--card) / 0.92)',
+            }}
+          />
           <KartaPineski
             pineska={kartaPozycja.pineska}
             numer={kartaPozycja.numer}
@@ -804,7 +893,7 @@ export function CanvasSection() {
             onClick={() => setNarzedzie('pineska')}
             odznaka={projekt.pineski.length || undefined}
           >
-            <MapPin className="h-4 w-4" />
+            <Pin className="h-4 w-4" />
           </Narzedzie>
 
           {/* Przesuwanie widoku (H) */}
@@ -822,7 +911,11 @@ export function CanvasSection() {
           <Narzedzie
             tytul="Dodaj zdjęcie lub załaduj demo"
             aktywne={menuDodawania}
-            onClick={() => setMenuDodawania(v => !v)}
+            onClick={() => {
+              // Jedno pływające okno naraz — karta pineski ustępuje menu
+              setWybranaPineska(null)
+              setMenuDodawania(v => !v)
+            }}
           >
             <IkonaObrazu className="h-4 w-4" />
           </Narzedzie>
@@ -831,7 +924,10 @@ export function CanvasSection() {
           <Narzedzie
             tytul="Lista zdjęć na płótnie"
             aktywne={panelWarstw}
-            onClick={() => setPanelWarstw(v => !v)}
+            onClick={() => {
+              setWybranaPineska(null)
+              setPanelWarstw(v => !v)
+            }}
             odznaka={projekt.warstwy.length || undefined}
           >
             <Layers className="h-4 w-4" />
@@ -844,56 +940,39 @@ export function CanvasSection() {
           >
             <Maximize className="h-4 w-4" />
           </Narzedzie>
-
-          {/* Menu dodawania źródeł (wysuwane w prawo od paska po lewym boku) */}
-          {menuDodawania && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2.5 w-64 overflow-hidden rounded-2xl border border-foreground/[0.08] bg-[#11151c]/95 p-1.5 shadow-2xl backdrop-blur-2xl z-40">
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3" /> Gotowe szablony Lovart
-              </div>
-              <PozycjaMenu
-                ikona={<Zap className="h-3.5 w-3.5 text-cyan-400" />}
-                tytul="Demo Object Transfer"
-                opis="Salon + krajobraz z 2 pineskami"
-                onClick={zaladujDemoLovart}
-              />
-              <PozycjaMenu
-                ikona={<Sparkles className="h-3.5 w-3.5 text-amber-400" />}
-                tytul="Demo Pora dnia (Auto nocą)"
-                opis="Zmiana pory dnia z reflektorami"
-                onClick={zaladujDemoPoraDnia}
-              />
-              <PozycjaMenu
-                ikona={<Sparkles className="h-3.5 w-3.5 text-purple-400" />}
-                tytul="Demo Styl Akwarela"
-                opis="Salon w malarstwie akwarelowym"
-                onClick={zaladujDemoStyl}
-              />
-              <div className="my-1 h-px bg-foreground/10" />
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground/40">
-                Własne zdjęcia
-              </div>
-              <PozycjaMenu
-                ikona={<Upload className="h-3.5 w-3.5" />}
-                tytul="Z komputera"
-                opis="wybierz pliki graficzne"
-                onClick={() => refPlik.current?.click()}
-              />
-              <PozycjaMenu
-                ikona={<IkonaObrazu className="h-3.5 w-3.5" />}
-                tytul="Ze schowka (Ctrl+V)"
-                opis="wklej bezpośrednio"
-                onClick={wstawZeSchowka}
-              />
-              <PozycjaMenu
-                ikona={<Link2 className="h-3.5 w-3.5" />}
-                tytul="Z adresu URL"
-                opis="wklej link do grafiki"
-                onClick={wstawZAdresu}
-              />
-            </div>
-          )}
         </div>
+
+        {/* Menu dodawania źródeł — obok docka, nie w nim: szkło docka przycina
+            wszystko, co wystaje poza jego obrys (contain: paint). Pozycję
+            trzyma zewnętrzny div, bo `.is-glass .nb-szklo` wymusza
+            position: relative i zdjęłoby `absolute` ze szklanego elementu. */}
+        {menuDodawania && (
+          <div className="pointer-events-auto absolute left-full top-1/2 z-40 ml-2.5 w-64 -translate-y-1/2">
+          <div className="overflow-hidden rounded-2xl border border-foreground/[0.08] p-1.5 shadow-2xl nb-szklo nb-szklo-plynne nb-szklo-canvas animate-in fade-in slide-in-from-left-2 duration-150">
+            <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground/40">
+              Własne zdjęcia
+            </div>
+            <PozycjaMenu
+              ikona={<Upload className="h-3.5 w-3.5" />}
+              tytul="Z komputera"
+              opis="wybierz pliki graficzne"
+              onClick={() => refPlik.current?.click()}
+            />
+            <PozycjaMenu
+              ikona={<IkonaObrazu className="h-3.5 w-3.5" />}
+              tytul="Ze schowka (Ctrl+V)"
+              opis="wklej bezpośrednio"
+              onClick={wstawZeSchowka}
+            />
+            <PozycjaMenu
+              ikona={<Link2 className="h-3.5 w-3.5" />}
+              tytul="Z adresu URL"
+              opis="wklej link do grafiki"
+              onClick={wstawZAdresu}
+            />
+          </div>
+          </div>
+        )}
       </div>
 
       {/* ══ PŁYWAJĄCY CHAT W STYLU LIQUID GLASS (PO PRAWEJ STRONIE) ══ */}
@@ -902,7 +981,7 @@ export function CanvasSection() {
         warstwy={projekt.warstwy}
         tekst={projekt.tekst}
         onTekst={tekst => setProjekt(p => ({ ...p, tekst }))}
-        onWybierzPineske={setWybranaPineska}
+        onWybierzPineske={pokazPineske}
         wybranaPineska={wybranaPineska}
         onUsunPineske={usunPineske}
         onZmienNazwePineski={(id, label) => zmienPineske(id, { label })}
@@ -920,7 +999,7 @@ export function CanvasSection() {
       {/* ══ Panel warstw (wysuwany) ══ */}
       {panelWarstw && (
         <div className="absolute left-20 top-4 z-20 w-64">
-          <div className="nb-szklo nb-szklo-canvas overflow-hidden rounded-2xl border border-foreground/[0.08] bg-card/75 shadow-2xl backdrop-blur-2xl">
+          <div className="nb-szklo nb-szklo-plynne nb-szklo-canvas overflow-hidden rounded-2xl border border-foreground/[0.08] shadow-2xl animate-in fade-in slide-in-from-left-2 duration-150">
             <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-foreground/45 flex items-center justify-between">
               <span>Zdjęcia na płótnie ({projekt.warstwy.length})</span>
               <button
@@ -1012,7 +1091,7 @@ function Narzedzie({
     >
       {children}
       {odznaka !== undefined && (
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-cyan-400 px-1 text-[9px] font-extrabold text-black shadow-sm">
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-extrabold text-background shadow-sm ring-2 ring-[hsl(var(--card))]">
           {odznaka}
         </span>
       )}
