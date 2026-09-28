@@ -1,17 +1,16 @@
 /**
- * NEXTBYTE CANVAS — PRZESTRZEŃ PROMPTÓW (punkt wejścia)
- * ======================================================
- * Publiczne API zakładki Prompts. Reszta Canvasu (Json Prompts Engine,
- * Canvas AI, Canvas.tsx) importuje wyłącznie stąd.
+ * CANVAS — PRZESTRZEŃ PROMPTÓW (punkt wejścia)
+ * =============================================
+ *   gemini/    sekcja 1: prompty analizy (zdjęcie docelowe, opis sceny)
+ *   operacje/  sekcja 2: jeden prompt na sytuację (object_swap, …)
+ *   bricks/    sekcja 3: cegiełki-zasady (light-rule, position-rule, …)
+ *   skladaj.ts składarka: bricks + operacja + opis Gemini + polecenie → prompt
  *
- * Struktura:
- *   prompts/
- *     types.ts              — typy bazowe, tokeny referencyjne, słownik operacji
- *     composer.ts           — silnik sklejania (stałe → operacja → opis → pozytyw)
- *     registry.ts           — centralny rejestr modułów (Gemini + Runware)
- *     gemini/{constants,operations,positive}.ts
- *     runware/{constants,operations,positive}.ts
+ * Przepływ krok po kroku: `canvas/README.md`.
  */
-export * from './types';
-export * from './registry';
-export * from './composer';
+export * from './types'
+export * from './gemini'
+export * from './operacje'
+export * from './bricks'
+export * from './pozytyw'
+export * from './skladaj'

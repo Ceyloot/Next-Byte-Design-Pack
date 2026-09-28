@@ -1,109 +1,162 @@
 /**
- * NEXTBYTE CANVAS — SYSTEM PROMPTÓW (typy bazowe)
- * =================================================
+ * CANVAS — TYPY SYSTEMU PROMPTÓW
+ * ===============================
+ * Trzy sekcje systemu:
+ *   1. gemini/   — prompty analizy (zdjęcie docelowe + opis sceny)
+ *   2. operacje/ — jeden prompt na sytuację (object_swap, character_transfer…)
+ *   3. bricks/   — cegiełki-zasady, bez których generacja nie może przejść
  *
- * Cały Canvas nie trzyma już promptów "na sztywno" w kodzie logiki. Prompty żyją
- * w tej przestrzeni (`canvas/prompts/`) jako oddzielne, zidentyfikowane moduły.
- * Silnik (`composer.ts`) skleja z nich finalny prompt według stałej struktury:
- *
- *   [ STAŁE MODYFIKATORY ]   ← zawsze na górze (światło, ziarno, środowisko, tożsamość, pozycja…)
- *   [ PROMPT SYTUACYJNY   ]   ← wybierany DYNAMICZNIE (Gemini decyduje: swap? transfer? removal?)
- *   [ OPIS GENERACJI      ]   ← co Gemini ma wygenerować ({{SUBJECT}})
- *   [ PROMPT POZYTYWNY    ]   ← ogólne wytyczne jakości, zawsze na dole
- *
- * W treści promptów używamy "specyficznych nawiasów" — tokenów referencyjnych
- * w formacie {{TOKEN}} — które silnik podmienia na konkretne wartości
- * (np. {{IMAGE_1}}, {{LIGHT_REF}}, {{IDENTITY_REF}}, {{POSITION_REF}}).
+ * Składarka (`skladaj.ts`) łączy je w jeden prompt dla modelu obrazu.
+ * Przepływ krok po kroku: patrz `canvas/README.md`.
  */
 
-/** Dostawca modelu, do którego przeznaczony jest prompt. */
-export type PromptProvider = 'gemini' | 'runware';
-
-/**
- * Kategoria (tier) modułu promptu — decyduje, GDZIE w sklejce ląduje.
- * - `constant`   → blok stały, zawsze doklejany na górze (przed promptem sytuacyjnym).
- * - `operation`  → prompt sytuacyjny, wybierany dynamicznie na podstawie klasyfikacji.
- * - `positive`   → blok ogólny/jakościowy, zawsze doklejany na dole.
- */
-export type PromptTier = 'constant' | 'operation' | 'positive';
-
-/**
- * Identyfikatory operacji sytuacyjnych. To jest zamknięty słownik, na którym
- * operuje zarówno klasyfikator Gemini, jak i rejestr promptów — dzięki temu
- * model nie może "wyciągnąć" promptu z object_swap, gdy sytuacja nim nie jest.
- */
+/** Zamknięty słownik operacji — Gemini wybiera dokładnie jedną. */
 export type OperationId =
-  | 'object_transfer'   // przeniesienie obiektu (2 pineski, clean-plate źródła)
-  | 'object_swap'       // podmiana obiektu z foto 1 na obiekt z foto 2
-  | 'character_transfer'// przeniesienie postaci (tożsamość + strój) w scenerię
-  | 'character_swap'    // podmiana postaci z zachowaniem pozy sceny docelowej
-  | 'addition'          // dodanie nowego obiektu w punkcie
-  | 'removal'           // usunięcie obiektu + rekonstrukcja tła
-  | 'background_edit'   // zmiana/wymiana tła
-  | 'style_change'      // zmiana stylu / gradingu całego kadru
-  | 'general_edit';     // lokalna modyfikacja ogólna
+  | 'object_swap'
+  | 'object_transfer'
+  | 'character_swap'
+  | 'character_transfer'
+  | 'removal'
+  | 'addition'
+  | 'background_change'
+  | 'face_swap'
+  | 'clothing_change'
+  | 'texture_change'
+  | 'season_change'
+  | 'time_of_day_change'
+  | 'effect_add'
+  | 'style_change'
+  | 'general_fix';
 
-/** Tokeny referencyjne podmieniane przez silnik w treści promptów. */
-export type ReferenceToken =
-  // Sloty obrazów — Gemini dynamicznie określa, który jest który.
-  | 'IMAGE_1'
-  | 'IMAGE_2'
-  // Opis generacji od Gemini (co konkretnie ma powstać).
-  | 'SUBJECT'
-  // Nazwy i współrzędne obiektów z pinezek.
-  | 'SOURCE_OBJECT'
-  | 'TARGET_OBJECT'
-  | 'SOURCE_COORD'
-  | 'TARGET_COORD'
-  // Surowa instrukcja użytkownika (fallback / modyfikator).
-  | 'USER_INSTRUCTION'
-  // Referencje bloków stałych — pozwalają wpleść stałą w konkretnym miejscu operacji.
-  | 'LIGHT_REF'
-  | 'GRAIN_REF'
-  | 'ENVIRONMENT_REF'
-  | 'IDENTITY_REF'
-  | 'POSITION_REF'
-  | 'SCALE_REF';
+/** Identyfikatory cegiełek (numer + nazwa reguły). */
+export type BrickId =
+  | 'light-rule'
+  | 'position-rule'
+  | 'scale-rule'
+  | 'perspective-rule'
+  | 'depth-occlusion-rule'
+  | 'contact-rule'
+  | 'reflection-rule'
+  | 'grain-medium-rule'
+  | 'fidelity-rule'
+  | 'framing-rule'
+  | 'output-contract-rule'
+  | 'clean-plate-rule'
+  | 'singularity-rule'
+  | 'object-identity-rule'
+  | 'donor-isolation-rule'
+  | 'no-copy-paste-rule'
+  | 'edge-blend-rule'
+  | 'character-identity-rule'
+  | 'hair-rule'
+  | 'skin-body-rule'
+  | 'clothing-rule'
+  | 'pose-expression-rule'
+  | 'hands-limbs-rule'
+  | 'background-rule'
+  | 'time-of-day-rule'
+  | 'season-rule'
+  | 'style-rule'
+  | 'texture-rule'
+  | 'effect-rule'
+  | 'minimal-change-rule';
 
 /**
- * Pojedynczy moduł promptu. Każdy blok stały, każda operacja i każdy blok
- * pozytywny jest jednym takim modułem — zidentyfikowanym i ponumerowanym.
+ * Cegiełka: pojedyncza, nienegocjowalna zasada. Numer wyznacza kolejność
+ * w złożonym prompcie (rosnąco), niezależnie od kolejności na liście operacji.
+ *
+ * Tokeny w `tekst`: {{IMAGE_TARGET}}, {{IMAGE_DONOR}}, {{PIN_TARGET}}, {{PIN_SOURCE}}.
  */
-export interface PromptModule {
-  /** Stabilne ID, np. `gemini.op.object_swap` albo `gemini.const.light`. */
-  id: string;
-  /** Numer porządkowy w obrębie swojego dostawcy i tieru (identyfikacja "po kolei"). */
-  ordinal: number;
-  provider: PromptProvider;
-  tier: PromptTier;
-  /** Dla `operation` — którą operację obsługuje ten moduł. */
-  operation?: OperationId;
-  /** Krótka, czytelna nazwa (PL) do UI / logów. */
-  label: string;
-  /** Treść promptu z tokenami {{...}}. */
-  body: string;
-  /**
-   * Tokeny stałych, które MUSZĄ zostać doklejone gdy ten moduł jest aktywny.
-   * Silnik dopisze odpowiadające im bloki stałe na górze sklejki.
-   */
-  requiresConstants?: Array<'LIGHT' | 'GRAIN' | 'ENVIRONMENT' | 'IDENTITY' | 'POSITION' | 'SCALE'>;
-  /** Czy operacja potrzebuje dwóch wejściowych obrazów. */
-  requiresDualImage?: boolean;
-  /** Czy operacja potrzebuje maski clean-plate (rekonstrukcja źródła/tła). */
-  requiresCleanPlate?: boolean;
+export interface Brick {
+  id: BrickId;
+  numer: number;
+  /** nazwa PL do UI / logów */
+  nazwa: string;
+  /** pełna treść zasady (EN — język modelu obrazu) */
+  tekst: string;
 }
 
-/** Klucze bloków stałych — jednocześnie ich tokeny referencyjne. */
-export type ConstantKey = 'LIGHT' | 'GRAIN' | 'ENVIRONMENT' | 'IDENTITY' | 'POSITION' | 'SCALE';
+/** Czy operacja potrzebuje zdjęcia-dawcy (obiekt/osoba/styl z drugiego zdjęcia). */
+export type WymaganieDawcy = 'brak' | 'opcjonalny' | 'wymagany';
 
-/** Wartości podstawiane pod tokeny referencyjne w trakcie sklejania. */
-export interface ReferenceValues {
-  IMAGE_1?: string;
-  IMAGE_2?: string;
-  SUBJECT?: string;
-  SOURCE_OBJECT?: string;
-  TARGET_OBJECT?: string;
-  SOURCE_COORD?: string;
-  TARGET_COORD?: string;
-  USER_INSTRUCTION?: string;
+/**
+ * Operacja: jeden uniwersalny prompt pod konkretną sytuację. Nie zawiera
+ * reguł ogólnych — te są w bricks; operacja tylko wskazuje, które bricki włączyć.
+ */
+export interface Operation {
+  id: OperationId;
+  /** nazwa PL */
+  nazwa: string;
+  /** hasła/sytuacje, po których Gemini rozpoznaje tę operację (trafiają do promptu Gemini) */
+  kiedyUzyc: string;
+  /** bricki włączane przez tę operację */
+  bricks: BrickId[];
+  dawca: WymaganieDawcy;
+  /** czy stare miejsce obiektu/osoby trzeba odbudować (clean plate) */
+  czystaPlyta: boolean;
+  /** misja — 1–3 zdania, EN */
+  misja: string;
+  /** kroki wykonania, EN */
+  kroki: string[];
+}
+
+/** Rola pineski w operacji. */
+export type RolaPineski = 'source' | 'target';
+
+/** Pineska przekazywana do systemu (współrzędne znormalizowane 0–1). */
+export interface PineskaWejscie {
+  /** numer pokazany użytkownikowi i na magentowej kropce (od 1) */
+  numer: number;
+  /** indeks zdjęcia w kolejności wysyłki do Gemini (od 1) */
+  zdjecie: number;
+  x: number;
+  y: number;
+  /** nazwa obiektu pod pineską, jeśli już znana */
+  nazwa?: string;
+}
+
+// ── Wyniki analizy Gemini ────────────────────────────────────────────────
+
+/** Wynik promptu 1: które zdjęcie jest docelowe + jaka operacja. */
+export interface AnalizaDocelowego {
+  /** indeks (od 1) zdjęcia docelowego — w kolejności wysłanej do Gemini */
+  zdjecieDocelowe: number;
+  /** indeksy zdjęć-dawców */
+  zdjeciaDawcow: number[];
+  operacja: OperationId;
+  /** rola każdej pineski w tej operacji */
+  role: { pineska: number; rola: RolaPineski }[];
+  /** krótkie uzasadnienie (log/UI) */
+  powod: string;
+}
+
+/** Opis jednej pineski z promptu 2. */
+export interface OpisPineski {
+  pineska: number;
+  /** krótka nazwa całego obiektu/osoby pod pineską */
+  nazwa: string;
+  /** miejsce w kadrze (np. "on the wooden table, left of the window") */
+  miejsce: string;
+  /** wygląd: kolor, materiał, stan, cechy */
+  wyglad: string;
+  /** szacowane wymiary rzeczywiste z kotwicą skali */
+  wymiary: string;
+}
+
+/** Wynik promptu 2: miejsce, wygląd i wymiary. */
+export interface OpisSceny {
+  /** miejsce/lokalizacja sceny w jednym zdaniu */
+  miejsce: string;
+  /** wygląd zdjęcia: medium, światło, ziarno, nastrój */
+  wyglad: string;
+  /** kotwice skali widoczne w kadrze (znane rozmiary) */
+  kotwice: string;
+  pineski: OpisPineski[];
+}
+
+/** Obraz w kolejności wysyłki do generatora. */
+export interface ObrazWejscia {
+  /** 1 = docelowy (zawsze), 2.. = dawcy w kolejności pinesek */
+  numer: number;
+  rola: 'target' | 'donor';
 }

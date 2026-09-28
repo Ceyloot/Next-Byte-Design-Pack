@@ -176,3 +176,76 @@ export function createDualTransferMask(
 
   return { combinedMask, sourceMask, targetMask };
 }
+
+export interface PinMarkerSpec {
+  /** współrzędne znormalizowane 0–1 */
+  x: number;
+  y: number;
+  /** numer pokazany w kropce */
+  numer: number;
+}
+
+/**
+ * Rysuje ponumerowane magentowe kropki (#FF00FF) z celownikiem na KOPII zdjęcia.
+ * Kopia służy wyłącznie Gemini do analizy — model obrazu dostaje czyste zdjęcia,
+ * więc kropki nie mogą trafić do wyniku. Duże zdjęcia są zmniejszane do `maxSide`
+ * (mniejszy ładunek), a wynik to JPEG.
+ */
+export async function drawPinMarkers(
+  imageSrc: string,
+  markers: PinMarkerSpec[],
+  maxSide = 1280
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas 2D context unavailable'));
+
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const r = Math.max(11, Math.round(Math.min(w, h) * 0.022));
+      for (const m of markers) {
+        const cx = m.x * w;
+        const cy = m.y * h;
+
+        // celownik
+        ctx.strokeStyle = '#FF00FF';
+        ctx.lineWidth = Math.max(2, r * 0.18);
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 1.9, cy);
+        ctx.lineTo(cx + r * 1.9, cy);
+        ctx.moveTo(cx, cy - r * 1.9);
+        ctx.lineTo(cx, cy + r * 1.9);
+        ctx.stroke();
+
+        // kropka z białą obwódką
+        ctx.fillStyle = '#FF00FF';
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = Math.max(2, r * 0.16);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // numer
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = `bold ${Math.round(r * 1.25)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(m.numer), cx, cy + r * 0.05);
+      }
+
+      resolve(canvas.toDataURL('image/jpeg', 0.9));
+    };
+    img.onerror = reject;
+    img.src = imageSrc;
+  });
+}

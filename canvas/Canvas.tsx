@@ -39,10 +39,9 @@ import {
   Crosshair
 } from 'lucide-react';
 import { useCanvasStore, CanvasLayer, PinMarker, ToolType } from './store/canvasStore';
-import { geminiAnalyzeTargetObject, geminiAnalyzeCanvasIntent } from './lib/canvasAI';
 import { generateGoogleImage, NANO_BANANA_MODELS } from './lib/googleGenAI';
-import { JsonPromptEngine } from './lib/jsonPromptEngine';
-import { cropImageAtPoint, createDualTransferMask, createBlobMaskAtPoint } from './lib/maskUtils';
+import { przygotujGeneracje, nazwijPineske } from './lib/pipeline';
+import { cropImageAtPoint } from './lib/maskUtils';
 import { Button } from '../button';
 import { TechGrid } from '../TechGrid';
 import { toast } from 'sonner';
@@ -137,6 +136,7 @@ export function Canvas() {
     setPinRole,
     setPinCropThumb,
     updatePinDescription,
+    updatePinAnalysisState,
     getNextPlacement,
   } = useCanvasStore();
 
@@ -274,15 +274,14 @@ export function Canvas() {
     img.src = sampleUrl;
   };
 
-  // Handle Pin click for Surgical Object Selection (Loomic Protocol)
+  // Postawienie pineski: miniatura + szybkie nazwanie obiektu (prompt Gemini nr 2 dla jednej pineski)
   const handlePinPlacement = async (normX: number, normY: number, layerId: string) => {
     const targetLayer = layers.find((l) => l.id === layerId);
     if (!targetLayer || !targetLayer.src) return;
 
-    // Pin 1 is source, Pin 2 is target
+    // Pierwsza pineska = źródło, kolejne = cel (podpowiedź dla UI; rolę ostatecznie wyznacza Gemini)
     const role: 'source' | 'target' = pins.length === 0 ? 'source' : 'target';
 
-    const pinId = crypto.randomUUID();
     addPin(
       {
         layerId,
@@ -296,10 +295,14 @@ export function Canvas() {
       normY
     );
 
+    // id nadaje store przy addPin — bierzemy je z dopisanej pineski
+    const pinId = useCanvasStore.getState().pins.slice(-1)[0]?.id;
+    if (!pinId) return;
+
     setActiveTab('ai');
     toast.info(`Pinezka (${role === 'source' ? 'Źródło' : 'Cel'}) ustawiona`);
 
-    // 1. Generate zoom thumbnail
+    // 1. Miniatura powiększenia
     try {
       const thumb = await cropImageAtPoint(targetLayer.src, normX, normY, 256);
       setPinCropThumb(pinId, thumb);
@@ -307,20 +310,22 @@ export function Canvas() {
       console.warn('Crop thumb generation failed:', e);
     }
 
-    // 2. Identify object with Gemini Vision
+    // 2. Nazwa obiektu pod pineską (Gemini)
     try {
       const apiKey = localStorage.getItem('gemini_api_key') || '';
       if (apiKey) {
-        const desc = await geminiAnalyzeTargetObject(apiKey, targetLayer.src, { x: normX, y: normY });
+        const desc = await nazwijPineske(apiKey, targetLayer.src, normX, normY);
         updatePinDescription(pinId, desc);
         toast.success(`Rozpoznano obiekt: ${desc}`);
       }
     } catch (err) {
       console.warn('Object analysis failed:', err);
+    } finally {
+      updatePinAnalysisState(pinId, false);
     }
   };
 
-  // Real Loomic Execution Engine
+  // Generacja: pipeline (Gemini nr 1 → Gemini nr 2 → bricks → prompt) i model obrazu
   const handleExecuteAI = async () => {
     const selectedLayer = layers.find((l) => selectedLayerIds.includes(l.id)) || layers[0];
     if (!selectedLayer || !selectedLayer.src) {
@@ -339,109 +344,65 @@ export function Canvas() {
       localStorage.setItem('gemini_api_key', apiKey);
     }
 
-    setIsGenerating(true, 'Analizuję układ i kompiluję prompt Loomic...');
+    setIsGenerating(true, 'Przygotowuję analizę zdjęć...');
 
     try {
-      const sourcePin = pins.find((p) => p.role === 'source') || (pins.length > 1 ? pins[0] : undefined);
-      const targetPin = pins.find((p) => p.role === 'target') || (pins.length === 1 ? pins[0] : pins[1]);
-
-      let action: 'transfer' | 'addition' | 'removal' | 'swap' | 'general_edit' = 'general_edit';
-      if (sourcePin && targetPin) {
-        action = 'transfer';
-      } else if (targetPin) {
-        action = 'addition';
-      }
-
-      // 1a. Niech Gemini SAM zdecyduje, która operacja/sytuacja obowiązuje.
-      //     Zwrócony `operation` steruje wyborem promptu sytuacyjnego z rejestru,
-      //     a `generationBrief` opisuje, co ma powstać.
-      const secondLayer = layers.find((l) => l.id !== selectedLayer.id && !!l.src);
-      let classifiedOperation: import('./prompts').OperationId | undefined;
-      let generationBrief = aiPrompt.trim();
-      try {
-        const classification = await geminiAnalyzeCanvasIntent(
-          apiKey,
-          aiPrompt.trim() || 'Przenieś wskazany obiekt w nowe miejsce, zachowując spójność tła',
-          pins.length,
-          pins.map((p) => ({ description: p.description || '', normalizedX: p.normalizedX, normalizedY: p.normalizedY })),
-          selectedLayer.src,
-          secondLayer?.src,
-        );
-        classifiedOperation = classification.operation;
-        generationBrief = classification.generationBrief || generationBrief;
-      } catch (e) {
-        console.warn('Klasyfikacja intencji nie powiodła się, używam akcji z UI:', e);
-      }
-
-      // 1b. Compile structured prompt via przestrzeń promptów (rejestr + composer).
-      const plan = JsonPromptEngine.compile({
-        action,
-        operation: classifiedOperation,
-        generationBrief,
-        userInstruction: aiPrompt.trim() || 'Przenieś wskazany obiekt w nowe miejsce, zachowując spójność tła',
-        sourcePin,
-        targetPin,
-        sourceObjectName: sourcePin?.description,
-        targetObjectName: targetPin?.description,
+      const plan = await przygotujGeneracje({
+        apiKey,
+        warstwy: layers
+          .filter((l) => l.type === 'image' && !!l.src)
+          .map((l) => ({
+            id: l.id,
+            src: l.src as string,
+            naturalWidth: l.naturalWidth || l.width,
+            naturalHeight: l.naturalHeight || l.height,
+          })),
+        pineski: pins.map((p) => ({
+          id: p.id,
+          layerId: p.layerId,
+          normalizedX: p.normalizedX,
+          normalizedY: p.normalizedY,
+          description: p.description,
+        })),
+        polecenie: aiPrompt.trim(),
+        warstwaWybranaId: selectedLayer.id,
+        naStatus: (tekst) => setIsGenerating(true, tekst),
       });
 
-      setIsGenerating(true, `Generuję w Nano-Banana (${plan.actionSummary})...`);
-      toast.info(`Rozpoczynam: ${plan.actionSummary}`);
+      const nazwaOperacji = plan.skladanie.nazwaOperacji;
+      setIsGenerating(true, `Generuję w Nano-Banana (${nazwaOperacji})...`);
+      toast.info(`Rozpoczynam: ${nazwaOperacji}`);
 
-      // 2. Prepare Inpainting Mask
-      let maskImage: string | undefined = undefined;
-      const naturalW = selectedLayer.naturalWidth || selectedLayer.width;
-      const naturalH = selectedLayer.naturalHeight || selectedLayer.height;
+      // Wynik zawsze na bazie zdjęcia docelowego wybranego przez Gemini
+      const targetLayer = layers.find((l) => l.id === plan.idWarstwyDocelowej) || selectedLayer;
 
-      if (plan.requiresDualMask && sourcePin && targetPin) {
-        const dual = createDualTransferMask(
-          naturalW,
-          naturalH,
-          { x: sourcePin.normalizedX, y: sourcePin.normalizedY },
-          { x: targetPin.normalizedX, y: targetPin.normalizedY },
-          0.2
-        );
-        maskImage = dual.combinedMask;
-      } else if (targetPin) {
-        maskImage = createBlobMaskAtPoint(
-          naturalW,
-          naturalH,
-          targetPin.normalizedX * naturalW,
-          targetPin.normalizedY * naturalH,
-          naturalW * 0.18,
-          naturalH * 0.18
-        );
-      }
-
-      // 3. Execute Google GenAI (Nano-Banana)
       const result = await generateGoogleImage({
         apiKey,
         model: selectedModel,
-        prompt: plan.compiledPrompt,
-        inputImages: [selectedLayer.src],
-        maskImage,
-        aspectRatio: plan.recommendedAspectRatio,
+        prompt: plan.prompt,
+        inputImages: plan.obrazy,
+        maskImage: plan.maska,
+        aspectRatio: plan.proporcje,
         quality,
       });
 
       setIsGenerating(true, 'Umieszczam wygenerowany kadr na płótnie...');
 
-      // 4. Place result on Canvas
       const img = new Image();
       img.onload = () => {
-        const placement = getNextPlacement(selectedLayer.width, selectedLayer.height);
+        const placement = getNextPlacement(targetLayer.width, targetLayer.height);
 
         const newId = addLayer({
           type: 'image',
           src: result.imageUrl,
           x: placement.x,
           y: placement.y,
-          width: selectedLayer.width,
-          height: selectedLayer.height,
+          width: targetLayer.width,
+          height: targetLayer.height,
           naturalWidth: img.width,
           naturalHeight: img.height,
           rotation: 0,
-          name: `${action === 'transfer' ? 'Relokacja' : 'Synteza'} (${selectedModel.includes('3.1') ? 'NB-2' : 'NB'})`,
+          name: `${nazwaOperacji} (${selectedModel.includes('3.1') ? 'NB-2' : 'NB'})`,
           visible: true,
           locked: false,
         });

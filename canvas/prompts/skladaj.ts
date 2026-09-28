@@ -1,0 +1,238 @@
+/**
+ * SKŁADARKA — łączy bricki, operację, opis Gemini i polecenie w jeden prompt.
+ * =========================================================================
+ * Kolejność sekcji w złożonym prompcie (stała):
+ *
+ *   1. IMAGES        — który obraz jest czym, w jakiej kolejności wysłany, format wyniku
+ *   2. RULE BRICKS   — bricki włączone przez operację, rosnąco po numerze
+ *   3. OPERATION     — misja + kroki wybranej operacji
+ *   4. PIN MAP       — pineski: rola, obraz, współrzędne X/Y, opis miejsca
+ *   5. SCENE DETAILS — miejsce, wygląd i kotwice skali (prompt Gemini 2)
+ *   6. COMMAND       — słowa użytkownika
+ *   7. FINAL QUALITY — blok pozytywny
+ *
+ * Tokeny podmieniane w brickach i operacjach:
+ *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
+ */
+import type { BrickId, ObrazWejscia, OperationId, OpisSceny, RolaPineski, WymaganieDawcy } from './types'
+import { getOperation } from './operacje'
+import { BRICKS } from './bricks'
+import { POZYTYW } from './pozytyw'
+
+/** Pineska w układzie wysyłki do generatora (numer obrazu: 1 = docelowy). */
+export interface PineskaSklejka {
+  numer: number
+  rola: RolaPineski
+  obraz: number
+  /** współrzędne znormalizowane 0–1 względem obrazu, na którym leży pineska */
+  x: number
+  y: number
+  nazwa?: string
+}
+
+export interface SkladajWejscie {
+  polecenie: string
+  operacja: OperationId
+  pineski: PineskaSklejka[]
+  /** obrazy w kolejności wysyłki do generatora (pierwszy = docelowy) */
+  obrazy: ObrazWejscia[]
+  opis?: OpisSceny
+  /** rozmiar obrazu docelowego w pikselach — do zapisu formatu wyniku */
+  format?: { szerokosc: number; wysokosc: number }
+  /** czy jako ostatni obraz wysyłamy maskę obszaru pracy */
+  maska?: boolean
+}
+
+export interface SekcjaPromptu {
+  klucz: 'images' | 'bricks' | 'operation' | 'pins' | 'scene' | 'command' | 'quality'
+  tekst: string
+}
+
+export interface SkladajWynik {
+  prompt: string
+  sekcje: SekcjaPromptu[]
+  operacja: OperationId
+  nazwaOperacji: string
+  uzyteBricki: BrickId[]
+  /** bricki operacji pominięte, bo nie mają zastosowania w tej sytuacji */
+  pominieteBricki: BrickId[]
+  dawca: WymaganieDawcy
+  czystaPlyta: boolean
+  /** tokeny, których nie udało się podmienić (powinno być puste) */
+  nierozwiazaneTokeny: string[]
+}
+
+const proc = (v: number) => `${Math.round(Math.min(1, Math.max(0, v)) * 100)}%`
+
+function opisPineski(p: PineskaSklejka): string {
+  const nazwa = p.nazwa ? ` · "${p.nazwa}"` : ''
+  return `Pin ${p.numer} [Image ${p.obraz}${nazwa} · X ${proc(p.x)}, Y ${proc(p.y)}]`
+}
+
+/** Pineska docelowa: rola target, najlepiej na obrazie docelowym. */
+function pineskaCelu(pineski: PineskaSklejka[]): PineskaSklejka | undefined {
+  return pineski.find((p) => p.rola === 'target' && p.obraz === 1) ?? pineski.find((p) => p.rola === 'target')
+}
+
+function pineskaZrodla(pineski: PineskaSklejka[]): PineskaSklejka | undefined {
+  return pineski.find((p) => p.rola === 'source')
+}
+
+/**
+ * Miejsce do wyczyszczenia (clean plate) zależy od operacji:
+ * - zamiana i usunięcie czyszczą miejsce pod pineską docelową,
+ * - przeniesienie czyści stare miejsce (pineska źródłowa) — o ile leży na obrazie docelowym,
+ * - null = nie ma czego czyścić na obrazie docelowym (brick clean-plate odpada).
+ */
+function miejsceCzyszczenia(operacja: OperationId, pineski: PineskaSklejka[]): string | null {
+  switch (operacja) {
+    case 'object_swap':
+    case 'character_swap':
+    case 'removal': {
+      const cel = pineski.find((p) => p.rola === 'target' && p.obraz === 1)
+      return cel ? opisPineski(cel) : 'the object named in the COMMAND'
+    }
+    case 'object_transfer':
+    case 'character_transfer': {
+      const zrodlo = pineskaZrodla(pineski)
+      if (!zrodlo) return 'the old position of the object named in the COMMAND'
+      return zrodlo.obraz === 1 ? opisPineski(zrodlo) : null
+    }
+    default:
+      return null
+  }
+}
+
+/** Nazwa obrazu-dawcy dla tokenu {{IMAGE_DONOR}}. */
+function nazwaDawcy(w: SkladajWejscie): string {
+  const zrodlo = pineskaZrodla(w.pineski)
+  if (zrodlo && zrodlo.obraz !== 1) return `Image ${zrodlo.obraz}`
+  const dawca = w.obrazy.find((o) => o.rola === 'donor')
+  return dawca ? `Image ${dawca.numer}` : 'the reference described in the COMMAND'
+}
+
+const TOKEN = /\{\{\s*([A-Z_]+)\s*\}\}/g
+
+function nazwaBricka(id: BrickId): string {
+  return id.replace(/-/g, ' ').toUpperCase()
+}
+
+/** Składa finalny prompt dla modelu obrazu. */
+export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
+  const op = getOperation(w.operacja)
+  const nierozwiazane = new Set<string>()
+
+  const cel = pineskaCelu(w.pineski)
+  const zrodlo = pineskaZrodla(w.pineski)
+  const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski)
+
+  const wartosci: Record<string, string> = {
+    IMAGE_TARGET: 'Image 1',
+    IMAGE_DONOR: nazwaDawcy(w),
+    PIN_TARGET: cel ? opisPineski(cel) : 'the marked spot',
+    PIN_SOURCE: zrodlo ? opisPineski(zrodlo) : 'the source spot',
+    PIN_CLEAR: czyszczenie ?? 'the cleared spot',
+  }
+
+  const podmien = (tekst: string): string =>
+    tekst.replace(TOKEN, (_m, klucz: string) => {
+      if (klucz in wartosci) return wartosci[klucz]
+      nierozwiazane.add(klucz)
+      return ''
+    })
+
+  // 1. IMAGES
+  const linieObrazow = w.obrazy.map((o) =>
+    o.rola === 'target'
+      ? `Image ${o.numer} = TARGET (destination). The result is this photograph with only the requested change.` +
+        (w.format
+          ? ` Output format: exactly the aspect ratio and framing of this image (${w.format.szerokosc}×${w.format.wysokosc} px).`
+          : ` Output format: exactly the aspect ratio and framing of this image.`)
+      : `Image ${o.numer} = DONOR (reference). It supplies only the identity or appearance of its pinned subject.`,
+  )
+  if (w.maska) {
+    linieObrazow.push(
+      `Last image = MASK of the work area (white = where the change happens, black = untouched). It is a guide only — not a reference and not part of the result.`,
+    )
+  }
+  const sekcjaObrazow = `[IMAGES — sent in this order]\n${linieObrazow.join('\n')}`
+
+  // 2. RULE BRICKS
+  const pominiete: BrickId[] = []
+  const wlaczone = op.bricks.filter((id) => {
+    if (id === 'clean-plate-rule' && czyszczenie === null) {
+      pominiete.push(id)
+      return false
+    }
+    return true
+  })
+  const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
+  const sekcjaBrickow =
+    `[RULE BRICKS — ${bricki.length} non-negotiable rules; the result must satisfy all of them at once]\n\n` +
+    bricki
+      .map((b) => `[BRICK ${String(b.numer).padStart(2, '0')} · ${nazwaBricka(b.id)}]\n${podmien(b.tekst)}`)
+      .join('\n\n')
+
+  // 3. OPERATION
+  const nazwaOp = op.id.replace(/_/g, ' ').toUpperCase()
+  const sekcjaOperacji =
+    `[OPERATION — ${nazwaOp}]\n${podmien(op.misja)}\nSTEPS:\n` +
+    op.kroki.map((k, i) => `${i + 1}. ${podmien(k)}`).join('\n')
+
+  // 4. PIN MAP
+  const opisyPinesek = new Map((w.opis?.pineski ?? []).map((o) => [o.pineska, o]))
+  const liniePinesek = [...w.pineski]
+    .sort((a, b) => a.numer - b.numer)
+    .map((p) => {
+      const o = opisyPinesek.get(p.numer)
+      const nazwa = o?.nazwa || p.nazwa
+      const szczegoly = [
+        o?.miejsce && `place: ${o.miejsce}`,
+        o?.wyglad && `appearance: ${o.wyglad}`,
+        o?.wymiary && `size: ${o.wymiary}`,
+      ]
+        .filter(Boolean)
+        .join('; ')
+      return `- Pin ${p.numer} · ${p.rola.toUpperCase()} · Image ${p.obraz} · X ${proc(p.x)}, Y ${proc(p.y)}${
+        nazwa ? ` — "${nazwa}"` : ''
+      }${szczegoly ? ` — ${szczegoly}` : ''}`
+    })
+  const sekcjaPinesek = liniePinesek.length
+    ? `[PIN MAP]\nCoordinates: 0% = left / top edge, 100% = right / bottom edge of that image.\n${liniePinesek.join('\n')}`
+    : ''
+
+  // 5. SCENE DETAILS
+  const liniaSceny = [
+    w.opis?.miejsce && `Place: ${w.opis.miejsce}`,
+    w.opis?.wyglad && `Look: ${w.opis.wyglad}`,
+    w.opis?.kotwice && `Scale anchors: ${w.opis.kotwice}`,
+  ].filter(Boolean)
+  const sekcjaSceny = liniaSceny.length
+    ? `[SCENE DETAILS — from visual analysis of Image 1]\n${liniaSceny.join('\n')}`
+    : ''
+
+  // 6. COMMAND (tekst użytkownika wstawiany bez podmiany tokenów)
+  const sekcjaPolecenia = `[COMMAND — the user's words]\n${w.polecenie.trim() || op.nazwa}`
+
+  const sekcje: SekcjaPromptu[] = [
+    { klucz: 'images', tekst: sekcjaObrazow },
+    { klucz: 'bricks', tekst: sekcjaBrickow },
+    { klucz: 'operation', tekst: sekcjaOperacji },
+    { klucz: 'pins', tekst: sekcjaPinesek },
+    { klucz: 'scene', tekst: sekcjaSceny },
+    { klucz: 'command', tekst: sekcjaPolecenia },
+    { klucz: 'quality', tekst: POZYTYW },
+  ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
+
+  return {
+    prompt: sekcje.map((s) => s.tekst).join('\n\n'),
+    sekcje,
+    operacja: w.operacja,
+    nazwaOperacji: op.nazwa,
+    uzyteBricki: bricki.map((b) => b.id),
+    pominieteBricki: pominiete,
+    dawca: op.dawca,
+    czystaPlyta: op.czystaPlyta && czyszczenie !== null,
+    nierozwiazaneTokeny: [...nierozwiazane],
+  }
+}
