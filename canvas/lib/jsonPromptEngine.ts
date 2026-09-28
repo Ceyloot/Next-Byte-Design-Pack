@@ -21,21 +21,6 @@ export interface PinCoordinate {
   description?: string;
 }
 
-export type CanvasEngineAction =
-  | 'transfer'
-  | 'addition'
-  | 'removal'
-  | 'swap'
-  | 'character'
-  | 'clothing'
-  | 'texture'
-  | 'season'
-  | 'time_of_day'
-  | 'effects'
-  | 'background'
-  | 'style'
-  | 'general_edit';
-
 export interface PromptEngineInput {
   /** Zgrubna akcja z UI (na podstawie liczby pinezek). */
   action: 'transfer' | 'addition' | 'removal' | 'swap' | 'general_edit';
@@ -49,7 +34,6 @@ export interface PromptEngineInput {
   targetPin?: PinCoordinate;
   sourceObjectName?: string;
   targetObjectName?: string;
-  extraDetails?: string;
 }
 
 export interface PromptEngineOutput {
