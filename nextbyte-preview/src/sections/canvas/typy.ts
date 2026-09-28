@@ -35,6 +35,20 @@ export interface Warstwa {
   obiekty?: string[]
 }
 
+/** Dedykowana paleta 10 wyrazistych kolorów dla kolejnych pinesek */
+export const KOLORY_PINESEK = [
+  '#0284c7', // 1: Sky blue
+  '#c026d3', // 2: Fuchsia / Purple
+  '#16a34a', // 3: Emerald
+  '#ea580c', // 4: Orange
+  '#eab308', // 5: Yellow
+  '#dc2626', // 6: Red
+  '#06b6d4', // 7: Cyan
+  '#8b5cf6', // 8: Violet
+  '#ec4899', // 9: Pink
+  '#10b981', // 10: Teal
+]
+
 /**
  * Pineska = zaznaczony obiekt na zdjęciu.
  *
@@ -66,6 +80,53 @@ export interface Pineska {
    * i trafia do polecenia jako obszar chroniony.
    */
   chroniona?: boolean
+  /**
+   * Analiza zaraz po wbiciu: cały obiekt pod pineską, otoczenie i rzeczywiste
+   * wymiary z kalibracji na punktach odniesienia w kadrze (koło, drzwi,
+   * człowiek) — nigdy z przeliczania pikseli. Reżyser dostaje to jako fakty,
+   * więc skala zamiany wynika z liczb, a nie z obrysu starego obiektu.
+   */
+  analiza?: AnalizaPineski
+}
+
+export interface AnalizaPineski {
+  /** cały obiekt po polsku, np. „Ford GT40 Mk II, ciemnoniebieski, w kurzu” */
+  obiekt: string
+  /** to samo po angielsku — do promptu */
+  obiektEn: string
+  /** co jest wokół, po angielsku */
+  otoczenie: string
+  wysokoscCm?: number
+  dlugoscCm?: number
+  /** ± w cm */
+  niepewnoscCm?: number
+  /** jak skalibrowano, po polsku, np. „koło 15″ ≈ 66 cm, dach na 1,55 koła” */
+  kalibracja: string
+  /** gdy pineska stoi na styku dwóch rzeczy, np. „auto i osoba przy drzwiach” */
+  dwuznacznosc?: string
+  /** Kto lub co wchodzi w interakcję (np. osoba oparta o drzwi, dłonie na laptopie, dłoń trzymająca obiekt) */
+  interakcja?: string
+  /** Kąt i orientacja 3D (np. widok 3/4 z lewej, drzwi otwarte pod kątem 40°) */
+  pozycja3d?: string
+  /** Stan powierzchni i patyna (np. gruba warstwa kurzu ze stodoły, matowy lakier, zabrudzenia) */
+  stanPowierzchni?: string
+  /** Plan głębi i optyka (pierwszy plan, średni plan, tło; ostry vs rozmyty bokeh soczewki) */
+  glebiaOptyka?: string
+  /** Źródła i wektory światła (kąt słońca, kolor, cienie, neonowe rim-lights) */
+  swiatloWektory?: string
+}
+
+/**
+ * Obszar roboczy zaznaczony ramką (prostokąt inpaintingu).
+ * Współrzędne znormalizowane 0–1 względem wymiarów warstwy.
+ */
+export interface RamkaObszaru {
+  layerId: string
+  x0: number
+  y0: number
+  x1: number
+  y1: number
+  etykieta?: string
 }
 
 let licznik = 0
@@ -107,10 +168,25 @@ export function etykietaPineski(p: Pineska, numer: number): string {
  * zapisu nie jest warta osobnego pola, a użytkownik nie powinien tracić
  * pracy przy każdej zmianie modelu.
  */
-export function wczytajProjekt(dane: unknown): { warstwy: Warstwa[]; pineski: Pineska[]; tekst: string } {
+export function wczytajProjekt(dane: unknown): { warstwy: Warstwa[]; pineski: Pineska[]; tekst: string; ramka?: RamkaObszaru | null } {
   const surowe = (dane ?? {}) as Record<string, unknown>
   const warstwy = Array.isArray(surowe.warstwy) ? (surowe.warstwy as Record<string, unknown>[]) : []
   const pineski = Array.isArray(surowe.pineski) ? (surowe.pineski as Record<string, unknown>[]) : []
+
+  let ramka: RamkaObszaru | null = null
+  if (surowe.ramka && typeof surowe.ramka === 'object') {
+    const r = surowe.ramka as Record<string, unknown>
+    if (typeof r.layerId === 'string' && Number.isFinite(r.x0) && Number.isFinite(r.y0) && Number.isFinite(r.x1) && Number.isFinite(r.y1)) {
+      ramka = {
+        layerId: String(r.layerId),
+        x0: Number(r.x0),
+        y0: Number(r.y0),
+        x1: Number(r.x1),
+        y1: Number(r.y1),
+        etykieta: typeof r.etykieta === 'string' ? r.etykieta : undefined,
+      }
+    }
+  }
 
   return {
     warstwy: warstwy
@@ -147,6 +223,7 @@ export function wczytajProjekt(dane: unknown): { warstwy: Warstwa[]; pineski: Pi
         chroniona: p.chroniona === true,
       })),
     tekst: typeof surowe.tekst === 'string' ? surowe.tekst : typeof surowe.opis === 'string' ? surowe.opis : '',
+    ramka,
   }
 }
 
@@ -200,6 +277,7 @@ export function kolejnoscObrazow(
   }
   dodaj(warstwaEdytowana ?? undefined)
   for (const p of pineski) dodaj(warstwy.find(w => w.id === p.layerId))
+  for (const w of warstwy) if (w.visible !== false) dodaj(w)
   return wynik
 }
 
@@ -280,3 +358,70 @@ export function zmniejszDoAnalizy(src: string, bok = 768): Promise<string> {
     obrazek.src = src
   })
 }
+
+/**
+ * Twarda blokada formatu wyniku do zdjęcia docelowego (Image 1).
+ *
+ * Nano-Banana ignoruje żądane width/height i potrafi oddać wynik w formacie
+ * zdjęcia referencyjnego (np. pionowa kaczka zamiast poziomego kadru z gęsiami).
+ * Sam prompt tego nie wymusza, więc wymuszamy deterministycznie po stronie
+ * klienta: skalujemy wynik metodą „cover" i przycinamy centralnie do dokładnych
+ * wymiarów Image 1. Gwarantuje 100% zgodność proporcji i rozdzielczości.
+ *
+ * Przy błędzie (np. tainted canvas z powodu CORS) zwraca oryginał — lepiej
+ * oddać zły format niż nic.
+ */
+export function dopasujFormatDoObrazu(src: string, docelowaSzer: number, docelowaWys: number): Promise<string> {
+  if (!Number.isFinite(docelowaSzer) || !Number.isFinite(docelowaWys) || docelowaSzer < 1 || docelowaWys < 1) {
+    return Promise.resolve(src)
+  }
+  return new Promise(resolve => {
+    const obrazek = new Image()
+    obrazek.crossOrigin = 'anonymous'
+    obrazek.onload = () => {
+      try {
+        const plotno = document.createElement('canvas')
+        plotno.width = Math.round(docelowaSzer)
+        plotno.height = Math.round(docelowaWys)
+        const g = plotno.getContext('2d')
+        if (!g) return resolve(src)
+        // cover: skala tak, by wypełnić cały kadr, nadmiar przycięty centralnie
+        const skala = Math.max(plotno.width / obrazek.width, plotno.height / obrazek.height)
+        const w = obrazek.width * skala
+        const h = obrazek.height * skala
+        const dx = (plotno.width - w) / 2
+        const dy = (plotno.height - h) / 2
+        g.drawImage(obrazek, dx, dy, w, h)
+        resolve(plotno.toDataURL('image/jpeg', 0.95))
+      } catch {
+        resolve(src)
+      }
+    }
+    obrazek.onerror = () => resolve(src)
+    obrazek.src = src
+  })
+}
+
+/**
+ * Konwersja adresu (np. z assets Vite lub blob) na Data URI, aby Runware API w chmurze
+ * mogło bezbłędnie przetworzyć referencje obrazów.
+ */
+export function konwertujNaDataUrl(src: string): Promise<string> {
+  if (src.startsWith('data:')) return Promise.resolve(src)
+  return new Promise(resolve => {
+    const obrazek = new Image()
+    obrazek.crossOrigin = 'anonymous'
+    obrazek.onload = () => {
+      const plotno = document.createElement('canvas')
+      plotno.width = obrazek.width
+      plotno.height = obrazek.height
+      const g = plotno.getContext('2d')
+      if (!g) return resolve(src)
+      g.drawImage(obrazek, 0, 0)
+      resolve(plotno.toDataURL('image/jpeg', 0.95))
+    }
+    obrazek.onerror = () => resolve(src)
+    obrazek.src = src
+  })
+}
+

@@ -23,11 +23,11 @@ export default function VideoPlayerModal({ videoId, start = 0, title, onClose })
   const watchUrl = `https://www.youtube.com/watch?v=${videoId}&t=${startSec}s`;
 
   return ReactDOM.createPortal(
-    <div className="fixed z-[95] bottom-4 right-4 w-[420px] max-md:inset-x-2 max-md:bottom-2 max-md:w-auto nb-szklo bg-card/95 backdrop-blur-2xl border-foreground/15 rounded-nb shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
+    <div className="fixed z-[95] bottom-4 right-4 w-[420px] max-md:inset-x-2 max-md:bottom-2 max-md:w-auto bg-card/90 backdrop-blur-2xl border border-foreground/[0.13] rounded-2xl shadow-[0_12px_32px_-8px_hsl(0_0%_0%/0.28)] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 h-10 border-b border-foreground/10">
-        <PlayCircle size={13} className="text-primary flex-shrink-0" />
-        <span className="text-xs font-medium text-foreground truncate flex-1" title={title}>
+      <div className="flex items-center gap-2 px-3 h-10 border-b border-foreground/10 bg-card/40">
+        <PlayCircle size={14} className="text-primary flex-shrink-0" />
+        <span className="text-xs font-semibold text-foreground truncate flex-1" title={title}>
           {title || 'Odtwarzacz'}
         </span>
         <a
@@ -36,8 +36,8 @@ export default function VideoPlayerModal({ videoId, start = 0, title, onClose })
           rel="noopener noreferrer"
           title="Otwórz na YouTube"
           className={cn(
-            'inline-flex items-center justify-center h-7 w-7 rounded-nb-xs flex-shrink-0 transition-all duration-200',
-            'bg-transparent text-foreground/70 hover:bg-foreground/10 hover:text-foreground'
+            'inline-flex items-center justify-center h-7 w-7 rounded-lg flex-shrink-0 transition-colors duration-200',
+            'bg-transparent text-foreground/70 hover:bg-foreground/[0.08] hover:text-foreground'
           )}
         >
           <ExternalLink className="h-3.5 w-3.5" />
@@ -46,14 +46,14 @@ export default function VideoPlayerModal({ videoId, start = 0, title, onClose })
           onClick={onClose}
           variant="ghost"
           size="icon"
-          className="h-7 w-7 flex-shrink-0"
+          className="h-7 w-7 flex-shrink-0 rounded-lg hover:bg-foreground/[0.08]"
         >
           <X size={14} />
         </GlassButton>
       </div>
 
       {/* Player 16:9 — key wymusza przeładowanie przy seeku do innego momentu/filmu */}
-      <div className="aspect-video bg-black">
+      <div className="aspect-video bg-background/95">
         <iframe
           key={`${videoId}:${startSec}`}
           src={embedUrl}

@@ -105,7 +105,10 @@ export const MenuWsuwane: React.FC<Props> = ({ children, className, style }) => 
     <div className={cn('relative min-h-0 flex-1 overflow-hidden', className)} style={style}>
       {/* WARSTWA 1 — korzeń: sekcje paska */}
       <motion.div initial={false} {...warstwa(!wNarzedziu, '-22%')}>
-        <div className="min-h-0 flex-1 overflow-y-auto" onClickCapture={naKlikWMenu}>
+        <div
+          className="min-h-0 flex-1 overflow-y-auto group-data-[collapsible=icon]:[scrollbar-width:none] group-data-[collapsible=icon]:[&::-webkit-scrollbar]:hidden"
+          onClickCapture={naKlikWMenu}
+        >
           {children}
         </div>
       </motion.div>

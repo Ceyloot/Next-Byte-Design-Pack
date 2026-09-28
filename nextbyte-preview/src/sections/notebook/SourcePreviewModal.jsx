@@ -81,12 +81,12 @@ export default function SourcePreviewModal({ source, locator, onClose }) {
         {source.fileKind === 'image' ? (
           <div className="space-y-4">
             {mediaUrl && (
-              <img src={mediaUrl} alt={source.title} className="w-full rounded-nb border border-foreground/10" />
+              <img src={mediaUrl} alt={source.title} className="w-full rounded-xl border border-foreground/10" />
             )}
             {source.rawText && (
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wider mb-2 text-foreground/50">Odczytany tekst i opis</div>
-                <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap nb-szklo bg-card/30 p-5 rounded-nb border-foreground/10">
+                <div className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap bg-card/50 p-4 rounded-xl border border-foreground/[0.10] backdrop-blur-md">
                   {source.rawText}
                 </div>
               </div>
@@ -99,7 +99,7 @@ export default function SourcePreviewModal({ source, locator, onClose }) {
             )}
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wider mb-2 text-foreground/50">Transkrypcja</div>
-              <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap nb-szklo bg-card/30 p-5 rounded-nb border-foreground/10">
+              <div className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap bg-card/50 p-4 rounded-xl border border-foreground/[0.10] backdrop-blur-md">
                 {source.rawText || 'Brak transkrypcji.'}
               </div>
             </div>
@@ -115,20 +115,20 @@ export default function SourcePreviewModal({ source, locator, onClose }) {
                   key={page}
                   ref={isTarget ? pageRef : null}
                   className={cn(
-                    'rounded-nb border p-4 transition-colors',
-                    isTarget ? 'border-primary/50 bg-primary/5' : 'border-foreground/10 bg-card/30'
+                    'rounded-xl border p-4 transition-colors',
+                    isTarget ? 'border-primary/50 bg-primary/10' : 'border-foreground/[0.10] bg-card/40'
                   )}
                 >
                   <div className={cn('text-[10px] font-bold uppercase tracking-wider mb-2', isTarget ? 'text-primary' : 'text-foreground/50')}>
                     {sectionLabel} {page}
                   </div>
-                  <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">{text}</p>
+                  <p className="text-[13px] text-foreground/85 leading-relaxed whitespace-pre-wrap">{text}</p>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap nb-szklo bg-card/30 p-5 rounded-nb border-foreground/10">
+          <div className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap bg-card/50 p-4 rounded-xl border border-foreground/[0.10] backdrop-blur-md">
             {source.rawText || 'Brak podglądu treści.'}
           </div>
         )}

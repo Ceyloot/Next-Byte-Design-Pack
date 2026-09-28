@@ -1623,6 +1623,14 @@ html:not(.is-glass) .nb-cta-drugi {
   --nb-p1-refleks: 0.14;
 }
 
+/* Tekst błędu na szkle Canvasu. `--destructive` w motywie ciemnym to
+   ciemna czerwień pod biały napis (tło przycisku) — jako kolor tekstu na
+   czarnym szkle daje ~2:1. Mieszanka z `--foreground` rozjaśnia ją w
+   ciemnym motywie i przyciemnia w jasnym, nie ruszając globalnego tokenu. */
+.nb-tekst-bledu {
+  color: color-mix(in srgb, hsl(var(--destructive)) 62%, hsl(var(--foreground)));
+}
+
 /* Tryb „soczewka: chrome” przykrywa blur stałą wartością 4px dla płynności.
    Panele Canvasu potrzebują mocniejszego rozmycia, bo pod nimi leżą zdjęcia,
    a nie spokojne tło strony — stąd wyjątek z tą samą wagą selektora. */
@@ -1630,4 +1638,14 @@ html.nb-refrakcja-chrome .nb-szklo.nb-szklo-canvas:not(.nb-powierzchnia),
 .is-glass .nb-szklo.nb-szklo-canvas:not(.nb-nakladka) {
   -webkit-backdrop-filter: saturate(135%) blur(16px);
   backdrop-filter: saturate(135%) blur(16px);
+}
+
+/* ── ZNAK NEXTBYTE W JASNYCH MOTYWACH ─────────────────────────────────────
+   Plik znaku jest biały — na jasnej szybie znikał (biel na bieli). Ta sama
+   reguła co w platformie (SidebarHeader.tsx): `brightness(0)` gasi znak do
+   czerni, `invert(0.3)` podnosi go do ciemnej szarości rgb(77,77,77),
+   kontrast ~7,6:1, miękcej niż czarny. Jedna klasa dla każdego miejsca ze
+   znakiem, żeby żadne nie zostało białe po dodaniu nowego jasnego motywu. */
+:root:is([data-theme='future-theme'], [data-theme='nextbyte-light'], [data-theme='scandinavian'], [data-theme='snowy-white']) .nb-znak-marki {
+  filter: brightness(0) invert(0.3);
 }

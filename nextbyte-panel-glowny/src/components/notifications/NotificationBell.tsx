@@ -135,7 +135,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ variant = 'h
       <PopoverContent
         align="end"
         sideOffset={8}
-        className={cn('w-[380px] p-0 overflow-hidden rounded-2xl', glassClass)}
+        className={cn('w-[380px] p-0 overflow-hidden rounded-2xl nb-szklo-nawigacja nb-szklo-lista', glassClass)}
       >
         {listContent}
       </PopoverContent>

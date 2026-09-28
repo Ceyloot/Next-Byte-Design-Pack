@@ -120,7 +120,7 @@ export const realtimeManager = new RealtimeChannelManager();
  * Tutaj pierwszy konsument zakłada kanał, ostatni go zamyka, a każde zdarzenie
  * budzi wszystkich zapisanych.
  */
-type Sluchacz = () => void;
+type Sluchacz = (payload?: any) => void;
 
 interface NasluchTabeli {
   table: string;
@@ -142,7 +142,7 @@ export function dolaczDoKanalu(
 
   if (!wpis) {
     const sluchacze = new Set<Sluchacz>();
-    const obudz = () => sluchacze.forEach((s) => s());
+    const obudz = (payload?: any) => sluchacze.forEach((s) => s(payload));
 
     let kanal = supabase.channel(nazwa);
     for (const n of nasluchy) {

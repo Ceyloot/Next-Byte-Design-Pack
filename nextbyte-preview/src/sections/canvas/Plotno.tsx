@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { etykietaPineski, pozycjaPineski, type Narzedzie, type Pineska, type Warstwa, type Widok } from './typy'
+import { Lock, Sparkles, Upload, Zap } from 'lucide-react'
+import { PRZESUNIECIE_LEBKA, STYL_PINEZKI, ZnacznikPineski } from './ZnacznikPineski'
+import { cn } from '@/lib/utils'
+import { etykietaPineski, pozycjaPineski, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
 
 /**
  * Płótno: zdjęcia referencyjne i pineski.
@@ -23,12 +26,17 @@ interface Props {
   onPrzesunPineske: (id: string, normalizedX: number, normalizedY: number) => void
   onWbijPineske: (layerId: string, normalizedX: number, normalizedY: number) => void
   onUpuscPliki: (pliki: File[]) => void
+  ramka?: RamkaObszaru | null
+  onZmienRamke?: (r: RamkaObszaru | null) => void
+  intencja?: string | null
+  onZaladujDemo?: () => void
+  onOtworzDodawanie?: () => void
 }
 
 type Uchwyt = 'nw' | 'ne' | 'se' | 'sw'
 
 interface Operacja {
-  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska'
+  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka'
   startX: number
   startY: number
   uchwyt?: Uchwyt
@@ -37,6 +45,15 @@ interface Operacja {
   startWidok?: Widok
   /** czy wskaźnik w ogóle drgnął — odróżnia klik od przeciągnięcia */
   ruszony?: boolean
+  startNormX?: number
+  startNormY?: number
+  /**
+   * Odległość punktu chwytu od szpica pinezki (w układzie sceny). Chwyta się
+   * łebek, a punktem pineski jest szpic — bez tej poprawki pinezka
+   * odskakiwała na pierwszym ruchu, bo szpic lądował pod kursorem.
+   */
+  chwytX?: number
+  chwytY?: number
 }
 
 const MIN = 24
@@ -69,11 +86,18 @@ export function Plotno({
   onPrzesunPineske,
   onWbijPineske,
   onUpuscPliki,
+  ramka,
+  onZmienRamke,
+  intencja,
+  onZaladujDemo,
+  onOtworzDodawanie,
 }: Props) {
   const refKontener = useRef<HTMLDivElement>(null)
   const refOperacja = useRef<Operacja | null>(null)
   const [nadPlotnem, setNadPlotnem] = useState(false)
   const [podKursorem, setPodKursorem] = useState<string | null>(null)
+  /** pineska w ręce — łebek się unosi, cień odsuwa */
+  const [przeciagana, setPrzeciagana] = useState<string | null>(null)
 
   const doSceny = useCallback(
     (e: { clientX: number; clientY: number }) => {
@@ -142,6 +166,9 @@ export function Plotno({
       refOperacja.current = { rodzaj: 'panorama', startX: e.clientX, startY: e.clientY, startWidok: { ...widok } }
       return
     }
+    if (narzedzie === 'ramka') {
+      onZmienRamke?.(null)
+    }
     onWybierzWarstwe(null)
     onWybierzPineske(null)
   }
@@ -151,6 +178,31 @@ export function Plotno({
     e.stopPropagation()
     przechwyc(e.currentTarget as Element, e.pointerId)
     const p = doSceny(e)
+
+    if (narzedzie === 'ramka') {
+      const normX = Math.min(1, Math.max(0, (p.x - warstwa.x) / warstwa.width))
+      const normY = Math.min(1, Math.max(0, (p.y - warstwa.y) / warstwa.height))
+      refOperacja.current = {
+        rodzaj: 'ramka',
+        startX: p.x,
+        startY: p.y,
+        startNormX: normX,
+        startNormY: normY,
+        migawka: warstwa,
+        ruszony: false,
+      }
+      onWybierzWarstwe(warstwa.id)
+      onWybierzPineske(null)
+      onZmienRamke?.({
+        layerId: warstwa.id,
+        x0: normX,
+        y0: normY,
+        x1: normX,
+        y1: normY,
+        etykieta: 'Obszar roboczy',
+      })
+      return
+    }
 
     // Ctrl (Cmd) + klik wbija pineskę bez przełączania narzędzia. To jest
     // główna droga: sięganie do paska narzędzi za każdym razem, gdy chce się
@@ -181,7 +233,16 @@ export function Plotno({
     e.stopPropagation()
     przechwyc(e.currentTarget as Element, e.pointerId)
     const p = doSceny(e)
-    refOperacja.current = { rodzaj: 'pineska', startX: p.x, startY: p.y, idPineski: pineska.id }
+    const warstwa = warstwy.find(w => w.id === pineska.layerId)
+    const szpic = warstwa ? pozycjaPineski(pineska, warstwa) : p
+    refOperacja.current = {
+      rodzaj: 'pineska',
+      startX: p.x,
+      startY: p.y,
+      idPineski: pineska.id,
+      chwytX: p.x - szpic.x,
+      chwytY: p.y - szpic.y,
+    }
   }
 
   function naRuchu(e: React.PointerEvent) {
@@ -199,14 +260,31 @@ export function Plotno({
       return
     }
 
+    if (op.rodzaj === 'ramka' && op.migawka && op.startNormX !== undefined && op.startNormY !== undefined) {
+      const currNormX = Math.min(1, Math.max(0, (p.x - op.migawka.x) / op.migawka.width))
+      const currNormY = Math.min(1, Math.max(0, (p.y - op.migawka.y) / op.migawka.height))
+      onZmienRamke?.({
+        layerId: op.migawka.id,
+        x0: Math.min(op.startNormX, currNormX),
+        y0: Math.min(op.startNormY, currNormY),
+        x1: Math.max(op.startNormX, currNormX),
+        y1: Math.max(op.startNormY, currNormY),
+        etykieta: 'Obszar roboczy',
+      })
+      return
+    }
+
     if (op.rodzaj === 'pineska' && op.idPineski) {
       const pineska = pineski.find(x => x.id === op.idPineski)
       const warstwa = warstwy.find(w => w.id === pineska?.layerId)
       if (!pineska || !warstwa) return
+      if (przeciagana !== pineska.id) setPrzeciagana(pineska.id)
+      const x = p.x - (op.chwytX ?? 0)
+      const y = p.y - (op.chwytY ?? 0)
       onPrzesunPineske(
         pineska.id,
-        Math.min(1, Math.max(0, (p.x - warstwa.x) / warstwa.width)),
-        Math.min(1, Math.max(0, (p.y - warstwa.y) / warstwa.height)),
+        Math.min(1, Math.max(0, (x - warstwa.x) / warstwa.width)),
+        Math.min(1, Math.max(0, (y - warstwa.y) / warstwa.height)),
       )
       return
     }
@@ -241,9 +319,27 @@ export function Plotno({
   function naGorze() {
     const op = refOperacja.current
     refOperacja.current = null
+    setPrzeciagana(null)
     // Kliknięcie pineski bez przeciągnięcia = otwarcie jej karty. Rozdzielamy
     // to dopiero tutaj, bo w chwili wciśnięcia nie wiadomo, co się stanie.
     if (op?.rodzaj === 'pineska' && !op.ruszony && op.idPineski) onWybierzPineske(op.idPineski)
+
+    // Kliknięcie narzędziem ramka bez przeciągnięcia = domyślny obszar roboczy 40% wokół wskazanego punktu
+    if (op?.rodzaj === 'ramka' && op.migawka && op.startNormX !== undefined && op.startNormY !== undefined) {
+      const sx = op.startNormX
+      const sy = op.startNormY
+      if (!op.ruszony || (ramka && Math.abs(ramka.x1 - ramka.x0) < 0.03 && Math.abs(ramka.y1 - ramka.y0) < 0.03)) {
+        const pol = 0.2
+        onZmienRamke?.({
+          layerId: op.migawka.id,
+          x0: Math.max(0, sx - pol),
+          y0: Math.max(0, sy - pol),
+          x1: Math.min(1, sx + pol),
+          y1: Math.min(1, sy + pol),
+          etykieta: 'Obszar roboczy',
+        })
+      }
+    }
   }
 
   const odwrotna = 1 / widok.zoom
@@ -264,10 +360,14 @@ export function Plotno({
         setNadPlotnem(false)
         onUpuscPliki([...e.dataTransfer.files])
       }}
-      className="relative h-full w-full overflow-hidden"
+      className="absolute inset-0 h-full w-full overflow-hidden"
       style={{
         cursor:
-          narzedzie === 'reka' ? 'grab' : narzedzie === 'pineska' || ctrlWcisniety ? 'crosshair' : 'default',
+          narzedzie === 'reka'
+            ? 'grab'
+            : narzedzie === 'pineska' || ctrlWcisniety || narzedzie === 'ramka'
+            ? 'crosshair'
+            : 'default',
         background: 'hsl(var(--background))',
         touchAction: 'none',
       }}
@@ -309,7 +409,7 @@ export function Plotno({
                 transform: `rotate(${warstwa.rotation}deg)`,
                 outline: zaznaczona ? `${2 * odwrotna}px solid #38bdf8` : undefined,
                 boxShadow: '0 24px 60px -30px rgba(0,0,0,0.9)',
-                cursor: narzedzie === 'pineska' ? 'crosshair' : 'move',
+                cursor: narzedzie === 'pineska' || narzedzie === 'ramka' ? 'crosshair' : 'move',
               }}
             >
               <img
@@ -357,62 +457,116 @@ export function Plotno({
             )
           })()}
 
-        {/* Pineski */}
+        {/* Obszar roboczy ramki (Lovart Semi-transparent Magenta Inpainting Area) */}
+        {ramka && (() => {
+          const w = warstwy.find(x => x.id === ramka.layerId)
+          if (!w || !w.visible) return null
+          const x0 = Math.min(ramka.x0, ramka.x1)
+          const x1 = Math.max(ramka.x0, ramka.x1)
+          const y0 = Math.min(ramka.y0, ramka.y1)
+          const y1 = Math.max(ramka.y0, ramka.y1)
+          const rx = w.x + x0 * w.width
+          const ry = w.y + y0 * w.height
+          const rw = Math.max(4, (x1 - x0) * w.width)
+          const rh = Math.max(4, (y1 - y0) * w.height)
+
+          return (
+            <div
+              key="obszar-roboczy-ramka"
+              style={{
+                position: 'absolute',
+                left: rx,
+                top: ry,
+                width: rw,
+                height: rh,
+                backgroundColor: 'rgba(255, 0, 255, 0.28)',
+                border: `${2.5 * odwrotna}px solid #ff00ff`,
+                boxShadow: `0 0 ${12 * odwrotna}px rgba(255, 0, 255, 0.45)`,
+                pointerEvents: 'none',
+                zIndex: 4,
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: -24 * odwrotna,
+                  transform: `scale(${odwrotna})`,
+                  transformOrigin: '0 100%',
+                  pointerEvents: 'auto',
+                }}
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-t-md bg-[#ff00ff] px-2 py-0.5 text-[10.5px] font-bold text-white shadow-lg"
+              >
+                <span>{ramka.etykieta || 'Obszar roboczy (Magenta Mask)'}</span>
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation()
+                    onZmienRamke?.(null)
+                  }}
+                  className="ml-1 rounded px-1 text-[11px] font-black hover:bg-black/25 transition-colors cursor-pointer"
+                  title="Usuń zaznaczony obszar"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )
+        })()}
+
+
+
+        {/* Pineski — pinezki wbite w zdjęcie; szpic igły to punkt pineski */}
         {pineski.map((p, i) => {
           const warstwa = warstwy.find(w => w.id === p.layerId)
           if (!warstwa || !warstwa.visible) return null
           const poz = pozycjaPineski(p, warstwa)
           const aktywna = wybranaPineska === p.id
           const najechana = podKursorem === p.id
-          const r = 13 * odwrotna
+          const wReku = przeciagana === p.id
 
           return (
-            <div key={p.id}>
-              <div
+            <div
+              key={p.id}
+              style={{
+                position: 'absolute',
+                left: poz.x,
+                top: poz.y,
+                width: 0,
+                height: 0,
+                transform: `scale(${odwrotna})`,
+                transformOrigin: '0 0',
+                // Wybrana i trzymana w ręce idą nad pozostałe
+                zIndex: wReku ? 8 : aktywna ? 7 : 5,
+              }}
+            >
+              <ZnacznikPineski
+                numer={i + 1}
+                chroniona={p.chroniona}
+                aktywna={aktywna}
+                najechana={najechana}
+                przeciagana={wReku}
+                analizowana={p.analizowana}
                 onPointerDown={e => naPinesceWDol(e, p)}
                 onMouseEnter={() => setPodKursorem(p.id)}
                 onMouseLeave={() => setPodKursorem(s => (s === p.id ? null : s))}
-                style={{
-                  position: 'absolute',
-                  left: poz.x - r,
-                  top: poz.y - r,
-                  width: r * 2,
-                  height: r * 2,
-                  borderRadius: '50%',
-                  background: 'hsl(var(--primary))',
-                  border: `${2.5 * odwrotna}px solid #ffffff`,
-                  boxShadow: `0 ${3 * odwrotna}px ${10 * odwrotna}px rgba(0,0,0,0.5)${
-                    aktywna ? `, 0 0 0 ${5 * odwrotna}px rgba(37,99,235,0.28)` : ''
-                  }`,
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: 12 * odwrotna,
-                  fontWeight: 800,
-                  color: '#ffffff',
-                  cursor: 'grab',
-                  zIndex: 5,
-                  animation: p.analizowana ? 'pulse 1.2s ease-in-out infinite' : undefined,
-                }}
-              >
-                {i + 1}
-              </div>
+              />
 
-              {/* Dymek przy najechaniu — nazwa obiektu i podpowiedź edycji */}
-              {najechana && !aktywna && (
+              {/* Dymek przy najechaniu — nazwa obiektu obok łebka */}
+              {najechana && !aktywna && !wReku && (
                 <div
                   style={{
                     position: 'absolute',
-                    left: poz.x + r + 6 * odwrotna,
-                    top: poz.y - 13 * odwrotna,
-                    transform: `scale(${odwrotna})`,
-                    transformOrigin: '0 50%',
+                    left: PRZESUNIECIE_LEBKA.x + 20,
+                    top: PRZESUNIECIE_LEBKA.y,
+                    transform: 'translateY(-50%)',
                     pointerEvents: 'none',
-                    zIndex: 6,
                   }}
                 >
-                  <div className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-[#11151c] px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-xl ring-1 ring-border/10">
+                  <div className="nb-szklo nb-szklo-plynne nb-szklo-canvas flex items-center gap-2 whitespace-nowrap rounded-lg border border-foreground/[0.08] px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-xl">
+                    {p.chroniona && <Lock className="h-3 w-3 text-muted-foreground" />}
                     {etykietaPineski(p, i + 1)}
-                    <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-[9px] font-semibold text-foreground/60">
+                    <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
                       klik — edytuj
                     </span>
                   </div>
@@ -425,15 +579,54 @@ export function Plotno({
 
       {/* Podpowiedź na pustym płótnie */}
       {warstwy.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+        <div className="pointer-events-auto absolute inset-0 flex items-center justify-center p-4 z-10">
           <div
-            className={`rounded-2xl border-2 border-dashed px-10 py-8 text-center transition-colors ${
-              nadPlotnem ? 'border-primary/70 bg-primary/5' : 'border-border/40'
-            }`}
+            className={cn(
+              'relative flex flex-col items-center max-w-md w-full p-8 rounded-3xl text-center',
+              'nb-szklo nb-szklo-plynne nb-szklo-canvas border border-foreground/[0.08] shadow-2xl backdrop-blur-2xl',
+              nadPlotnem ? 'border-primary/70 bg-primary/10' : 'bg-card/60',
+            )}
+            style={{
+              boxShadow: '0 24px 60px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.16)',
+            }}
           >
-            <p className="text-sm font-semibold text-foreground/70">Przeciągnij tu zdjęcia</p>
-            <p className="mt-1.5 text-xs text-foreground/40">
-              albo wklej ze schowka (Ctrl+V) lub dodaj przyciskiem na dolnym pasku
+            {/* Accent hairline */}
+            <div className="pointer-events-none absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary mb-4 border border-primary/25 shadow-[0_0_24px_hsl(var(--primary)/0.25)]">
+              <Sparkles className="h-7 w-7" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Canvas Studio AI</h2>
+            <p className="mt-2 text-xs leading-relaxed text-foreground/60 max-w-sm">
+              Generatywne studio Lovart oparte na modelu <strong className="text-foreground">Nano-Banana</strong> i analizie wizualnej <strong className="text-foreground">Gemini 2.5 Flash</strong>.
+              Przenieś obiekt, zamień miejscami lub modyfikuj kadry pineskami.
+            </p>
+
+            <div className="mt-6 flex flex-col sm:flex-row items-center gap-2.5 w-full">
+              {onZaladujDemo && (
+                <button
+                  type="button"
+                  onClick={onZaladujDemo}
+                  className="flex-1 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <Zap className="h-4 w-4" />
+                  Załaduj demo (Transfer)
+                </button>
+              )}
+              {onOtworzDodawanie && (
+                <button
+                  type="button"
+                  onClick={onOtworzDodawanie}
+                  className="flex-1 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/5 hover:bg-foreground/10 text-foreground font-semibold text-xs transition-all cursor-pointer"
+                >
+                  <Upload className="h-4 w-4" />
+                  Wgraj z dysku
+                </button>
+              )}
+            </div>
+
+            <p className="mt-4 text-[10px] text-foreground/40">
+              Możesz też upuścić zdjęcia na ten ekran lub wkleić bezpośrednio ze schowka (<kbd className="font-mono bg-foreground/10 px-1 py-0.5 rounded text-[9px]">Ctrl+V</kbd>)
             </p>
           </div>
         </div>
@@ -443,7 +636,7 @@ export function Plotno({
         <div className="pointer-events-none absolute inset-0 border-2 border-dashed border-primary/60 bg-primary/5" />
       )}
 
-      <style>{`@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.45 } }`}</style>
+      <style>{STYL_PINEZKI}</style>
     </div>
   )
 }

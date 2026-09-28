@@ -1,17 +1,17 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bot, MoreHorizontal, LogOut, Crown, User, Settings, Sparkles, BriefcaseBusiness, UsersRound } from 'lucide-react';
-import { useSiteAsset } from '@/hooks/useSiteAsset';
-import { getAssetUrl } from '@/lib/assetUtils';
+import { ChevronRight, MoreHorizontal, LogOut, Crown, User, Settings, Sparkles, BriefcaseBusiness, UsersRound, PanelLeft, LayoutGrid, Search } from 'lucide-react';
 import { useIsAdmin, useHasManagementRole } from '@/hooks/useUserRoles';
+import { useFeaturePermissions, useUserPermissions } from '@/hooks/useFeaturePermissions';
 import { useWallet } from '@/hooks/useWallet';
 import { useOptionalGlobalDialogs } from '@/contexts/GlobalDialogsContext';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { UchwytPaska } from '@/components/DokowaniePaska';
+import { useNavigationMode } from '@/contexts/NavigationModeContext';
 import {
   dashboardItem,
   aiMenuItems,
@@ -24,19 +24,102 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { NextByteSpotlightInline } from '@/components/ui/nextbyte-spotlight';
 
 // Primary nav items shown directly in pill
+/** Podpisy pod ikonami w kapsule na telefonie — pełne nazwy się nie mieszczą. */
+const KROTKIE_NAZWY: Record<string, string> = {
+  '/panel-glowny': 'Panel',
+  '/chat-ai': 'Chat AI',
+  '/asystent-nextbyte': 'Asystent',
+  '/kalendarz': 'Kalendarz',
+  '/zadania': 'Zadania',
+  '/notatki': 'Notatki',
+};
+
+/**
+ * Połysk tafli — ten sam zestaw, co wysuwany pasek boczny na telefonie
+ * (`SheetContent` w ui/sheet.tsx + nakładka w ui/sidebar.tsx). Artur: „efekt
+ * daj mu ten sam, co ma navbar boczny", a obramówkę zdjąć.
+ *   1. ukośny odblask od lewego górnego rogu (foreground 7% → 0 na 42%),
+ *   2. mgiełka akcentu góra/dół (primary 2% → 3%),
+ *   3. świetlna nitka akcentu na górnej krawędzi zamiast rantu.
+ */
+function PolyskPaska() {
+  /* Tintę akcentu (5 % → 7 %) daje sam materiał (`::before` kafelka), więc tu
+     zostaje tylko nitka na górnej krawędzi — dokładnie jak w pasku bocznym. */
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+  );
+}
+
+/**
+ * MATERIAŁ PASKA = MATERIAŁ JEGO MENU (26.09.2026, Artur: „taki sam ma być
+ * motyw co w dropdownie" → wybór: pasek jak menu). Dokładnie te same klasy
+ * co `DropdownMenuContent` + `nb-szklo-nawigacja`: tafla z refrakcją,
+ * wypełnienie z `--popover` (0.55 ciemne / 0.50 jasne), rozmycie 16 px,
+ * nasycenie 180%, ranty materiału i ten sam cień. Bez tinty kafelka.
+ */
+/** Zakładki paska — 1:1 z górnym paskiem podglądu (PreviewSection.tsx, `HorizontalNav`). */
+const ZAKLADKA = 'flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-2.5 py-2 xl:px-3 xl:py-1.5 text-[12px] font-medium transition-all duration-150';
+const ZAKLADKA_AKT = 'border-primary/40 bg-primary/20 text-primary shadow-sm shadow-primary/10';
+const ZAKLADKA_NIEAKT = 'border-transparent text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground';
+
+/** Materiał paska bocznego (ui/sidebar: `nb-szklo nb-szklo-plynne` + wypełnienie i tinta kafelka). */
+const SZKLO_PASKA_BOCZNEGO = 'border nb-szklo nb-szklo-plynne nb-kafelek';
+
+const SZKLO_PASKA = 'border-0 nb-szklo nb-szklo-plynne nb-szklo-tafla nb-szklo-nawigacja shadow-2xl shadow-primary/10';
+
+/*
+ * WIERSZE LIST = WIERSZE PASKA BOCZNEGO (26.09.2026, Artur: „dropdowny nie
+ * mają tych fajnych funkcji"). Te same klasy co `SidebarMenuSection`:
+ * `nb-nav-pozycja(-akt)` na wierszu, `nb-nav-ikona(-akt)` na kafelku ikony
+ * 28 px, etykiety sekcji jak w pasku (10 px, wersaliki, 0.14em). Aktywna
+ * pozycja świeci tak samo jak „Panel Główny" w pasku bocznym.
+ */
+const KLASA_ETYKIETY_LISTY = 'px-2 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-foreground/[0.38]';
+
+function WierszListy({
+  ikona: Ikona, tytul, aktywna = false, grozna = false, onSelect, dodatek, className,
+}: {
+  ikona: React.ElementType; tytul: string; aktywna?: boolean; grozna?: boolean;
+  onSelect: () => void; dodatek?: React.ReactNode; className?: string;
+}) {
+  return (
+    <DropdownMenuItem
+      onClick={onSelect}
+      className={cn(
+        'gap-0 rounded-xl px-2 py-1.5 text-[13px]',
+        aktywna ? 'nb-nav-pozycja-akt !text-foreground font-medium' : 'nb-nav-pozycja !text-foreground/[0.88] hover:!text-foreground',
+        grozna && '!text-destructive',
+        className,
+      )}
+    >
+      <span className={cn(
+        'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+        aktywna ? 'nb-nav-ikona-akt text-primary' : 'nb-nav-ikona text-foreground/60',
+        grozna && '!text-destructive',
+      )}>
+        <Ikona strokeWidth={1.75} className="h-[17px] w-[17px]" />
+      </span>
+      <span className="ml-2 min-w-0 flex-1 truncate">{tytul}</span>
+      {dodatek}
+    </DropdownMenuItem>
+  );
+}
+
+/** Znak Byte jako ikona wiersza — ten sam kafelek co reszta. */
+const IkonaByteWiersza: React.FC<{ strokeWidth?: number; className?: string }> = ({ className }) => (
+  <span className={cn('text-[15px] leading-none text-primary', className)}>⟠</span>
+);
+
 const PRIMARY_URLS = [
   '/panel-glowny',
   '/chat-ai',
@@ -48,61 +131,53 @@ const PRIMARY_URLS = [
 
 export function PillNavbar() {
   const location = useLocation();
+  const { pozycja, setNavMode } = useNavigationMode();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { data: logoAsset } = useSiteAsset('sidebar_logo');
-  const [isLime, setIsLime] = useState(() => document.documentElement.getAttribute('data-theme') === 'lime-green');
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsLime(document.documentElement.getAttribute('data-theme') === 'lime-green');
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
-  }, []);
   const { value: isAdmin } = useIsAdmin();
   const { value: hasManagementRole } = useHasManagementRole();
   const { balance, loading: balanceLoading } = useWallet();
-  const { signOut } = useAuthContext();
+  const { signOut, user } = useAuthContext();
+  const [szukajOtwarte, setSzukajOtwarte] = useState(false);
+  /* Ctrl/Cmd+K — w trybie paska bocznego obsługuje go AppSidebar, którego
+     w trybie pigułki nie ma. */
+  useEffect(() => {
+    const naKlawisz = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSzukajOtwarte((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', naKlawisz);
+    return () => window.removeEventListener('keydown', naKlawisz);
+  }, []);
   const { isSubscribed } = useSubscriptionContext();
   const dialogs = useOptionalGlobalDialogs();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileCategory, setMobileCategory] = useState<'ai' | 'work' | 'community' | null>(null);
   const [openCategory, setOpenCategory] = useState<'ai' | 'work' | 'community' | null>(null);
   // Prostokąt przycisku jest jedynym źródłem pozycji menu — panel leży
   // w portalu przy `<body>`, więc nie ma rodzica, względem którego mógłby
   // się ustawić sam.
   const kotwiceKategorii = useRef<Record<string, HTMLDivElement | null>>({});
-  const navRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number } | null>(null);
-  const navContainerRef = useRef<HTMLDivElement>(null);
 
-  const updateIndicator = useCallback(() => {
-    const activeUrl = PRIMARY_URLS.find(url => location.pathname === url || location.pathname.startsWith(url + '/'));
-    if (activeUrl && navRefs.current[activeUrl] && navContainerRef.current) {
-      const el = navRefs.current[activeUrl]!;
-      const container = navContainerRef.current;
-      const elRect = el.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      setIndicatorStyle({
-        left: elRect.left - containerRect.left,
-        width: elRect.width,
-      });
-    } else {
-      setIndicatorStyle(null);
-    }
-  }, [location.pathname]);
 
-  useEffect(() => {
-    updateIndicator();
-    window.addEventListener('resize', updateIndicator);
-    return () => window.removeEventListener('resize', updateIndicator);
-  }, [updateIndicator]);
 
+  /* Ta sama widoczność co pasek boczny (SidebarMenuSection): oprócz flag
+     z menuData liczą się `feature_permissions` z panelu admina — tylko ODCZYT,
+     te same hooki co w pasku bocznym. Bez tego pigułka pokazywała pozycje
+     ukryte przez admina (np. Talerz, Automatyzacje). */
+  const { data: features } = useFeaturePermissions();
+  const { data: userPermissions } = useUserPermissions();
   const canShowItem = (item: MenuItem) => {
     if (item.adminOnly && !isAdmin) return false;
     if (item.managementOnly && !hasManagementRole) return false;
-    return item.available;
+    if (!item.available) return false;
+    if (!features || !userPermissions) return false;
+    const fp = features.find((f) => f.feature_path === item.url);
+    if (fp && !fp.is_visible) return false;
+    if (fp?.access_level === 'management_admin' && !userPermissions.isManagement) return false;
+    if (fp?.access_level === 'admin_only' && !userPermissions.isAdmin) return false;
+    return true;
   };
 
   const allItems: MenuItem[] = [
@@ -120,6 +195,7 @@ export function PillNavbar() {
   ];
 
   const primaryItems = allItems.filter((i) => PRIMARY_URLS.includes(i.url));
+
   const moreItems = toolsItems.filter(canShowItem);
 
   const isActive = (url: string) => location.pathname === url || location.pathname.startsWith(url + '/');
@@ -144,16 +220,15 @@ export function PillNavbar() {
     <Tooltip key={item.url}>
       <TooltipTrigger asChild>
         <Link
-          ref={(el) => { navRefs.current[item.url] = el; }}
           to={item.url}
-          className={cn(
-            'relative z-10 flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200',
-            isActive(item.url)
-              ? 'text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
+          className={cn(ZAKLADKA, isActive(item.url) ? ZAKLADKA_AKT : ZAKLADKA_NIEAKT)}
         >
-          <item.icon className="w-4 h-4 flex-shrink-0" />
+          <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+          {/* Podpisy od xl (1280 px), jak wcześniej. Poniżej 2xl krótkie nazwy
+              („Asystent", „Panel") — pełne nie mieściły się obok prawej grupy
+              (zmierzone 26.09 przy 1333 px: nachodziły o ~100 px). */}
+          <span className="hidden xl:inline 2xl:hidden">{KROTKIE_NAZWY[item.url] ?? item.title}</span>
+          <span className="hidden 2xl:inline">{item.title}</span>
         </Link>
       </TooltipTrigger>
       <TooltipContent side="bottom" className="font-medium text-xs">
@@ -162,135 +237,125 @@ export function PillNavbar() {
     </Tooltip>
   );
 
-  // ── Mobile: hamburger sheet ──
+  // ── Telefon: pasek zakładek + rozwijane menu ──
+  /*
+    ROZRÓŻNIENIE OD PASKA BOCZNEGO (26.09.2026, Artur: „musisz rozróżnić
+    nawigację navbar i sidebar na telefonie").
+
+    Wcześniej pigułka na telefonie była paskiem z trzema kategoriami, które
+    otwierały TEN SAM wysuwany panel z lewej co tryb paska bocznego — dwa
+    tryby, jedna nawigacja. Teraz:
+      • pasek boczny = treść na cały ekran, zakładka przy boku, panel z boku;
+      • pigułka      = pasek (ten sam kształt 16 px co pigułka na desktopie)
+                       z pięcioma najczęstszymi miejscami (ikona + krótki
+                       podpis) i „Menu" — zwykła rozwijana lista z resztą
+                       modułów pogrupowaną jak na desktopie i kontem.
+  */
   if (isMobile) {
+    const naDole = pozycja === 'dol';
+    const zakladki = primaryItems.slice(0, 5);
+    const grupy = [
+      ...navCategories,
+      { id: 'narzedzia', label: 'NARZĘDZIA', icon: MoreHorizontal, items: moreItems },
+    ].filter((g) => g.items.length > 0);
+    const menuAktywne = !zakladki.some((z) => isActive(z.url)) && allItems.some((i) => isActive(i.url));
+
     return (
       <>
+        {/* WYRÓWNANE DO KAFELKÓW (26.09.2026, Artur: „wyrównaj do kafelków,
+            odstęp od góry i KONIECZNIE liquid glass"). Boki 16 px = `px-4`
+            treści Dashboardu, od góry 12 px + notch. Materiał 1:1 z paska
+            bocznego — patrz `SZKLO_PASKA`. */}
         <div
-          className="sticky top-0 z-50 px-3 pb-2 bg-gradient-to-b from-background via-background/80 to-transparent"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.5rem)' }}
+          className={cn('sticky z-50 px-4', naDole ? 'bottom-0 pt-3' : 'top-0 pb-0')}
+          style={
+            naDole
+              ? { paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }
+              : { paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }
+          }
         >
-          <nav className="flex items-center justify-between rounded-2xl border border-border/40 nb-szklo nb-szklo-plynne nb-szklo-tafla shadow-[0_18px_44px_-12px_hsl(var(--background)/0.9)] px-3 py-2">
-            {/* `no-scrollbar` NIE ISTNIAŁO — zmierzone: zero reguł CSS pod tą
-                nazwą, więc poziomy pasek przewijania był widoczny i zjadał
-                18 z 68 px wysokości nawigacji. Platforma ma na to
-                `scrollbar-hide` (index.css). */}
-            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scrollbar-hide">
-              {navCategories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => { setMobileCategory(category.id); setMobileOpen(true); }}
+          <nav
+            aria-label="Nawigacja"
+            className={cn('relative flex items-stretch gap-0.5 rounded-2xl p-1', SZKLO_PASKA)}
+          >
+            <PolyskPaska />
+            {zakladki.map((item) => {
+              const aktywna = isActive(item.url);
+              return (
+                <Link
+                  key={item.url}
+                  to={item.url}
+                  aria-current={aktywna ? 'page' : undefined}
+                  data-tap-target="off"
                   className={cn(
-                    /* `px-2` zamiast `px-3` — zmierzone przy 375 px: trzy
-                       kategorie zajmowały 297 px w pasie o szerokości 281,
-                       więc „SPOŁECZNOŚĆ" wychodziła 16 px za krawędź i dało
-                       się do niej dojechać tylko przewinięciem, o którym nic
-                       nie mówiło (pas jest `scrollbar-hide`). Węższe wcięcie
-                       oddaje 24 px, czyli mieści się z zapasem, a 8 px
-                       poziomego wcięcia przy wysokości 36 px to dalej
-                       wygodny cel dla palca. Przewijanie zostaje jako
-                       zabezpieczenie na dłuższe nazwy. */
-                    'flex shrink-0 items-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-bold tracking-wide transition-all',
-                    isCategoryActive(category.items)
-                      ? 'border-primary/35 bg-primary/10 text-primary shadow-[0_0_18px_-8px_hsl(var(--primary)/0.65)]'
-                      : 'border-border/40 bg-muted/20 text-muted-foreground hover:border-primary/25 hover:text-foreground'
+                    'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition-colors',
+                    aktywna ? 'bg-primary/15 text-primary' : 'text-foreground/60 active:bg-foreground/[0.08]',
                   )}
                 >
-                  <category.icon className="h-3.5 w-3.5" />
-                  {category.label}
-                </button>
-              ))}
-            </div>
-
-            {/*
-              BEZ TEGO NA TELEFONIE NIE DA SIĘ WYJŚĆ Z KONTA.
-
-              Prawa strona paska była pusta — na desktopie stoją tu dzwonek,
-              saldo Byte i menu konta, na telefonie nie było NICZEGO. W trybie
-              pigułki (a to pełnoprawny tryb do wyboru w Ustawieniach) telefon
-              nie miał więc dojścia do konta, Premium, ustawień ani wylogowania,
-              bo pigułka zastępuje pasek boczny, który normalnie je niesie.
-
-              Dzwonek i saldo zostają na desktopie: na 375 px zabrałyby miejsce
-              trzem kategoriom. Saldo jest jedną pozycją niżej, w menu konta.
-            */}
-            <DropdownMenu>
+                  <item.icon className="h-[18px] w-[18px]" />
+                  <span className="max-w-full truncate px-1 text-[10px] font-medium leading-none">
+                    {KROTKIE_NAZWY[item.url] ?? item.title}
+                  </span>
+                </Link>
+              );
+            })}
+            {/* „Menu" = zwykła rozwijana lista (Artur: „menu ma rozwijać dropdown
+                zwykły"), ten sam komponent co menu konta na desktopie. */}
+            <DropdownMenu open={mobileOpen} onOpenChange={setMobileOpen}>
               <DropdownMenuTrigger asChild>
                 <button
-                  aria-label="Konto"
-                  className="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 transition-colors hover:border-primary/40"
+                  type="button"
+                  aria-label="Otwórz menu"
+                  data-tap-target="off"
+                  className={cn(
+                    'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition-colors',
+                    menuAktywne || mobileOpen ? 'bg-primary/15 text-primary' : 'text-foreground/60 active:bg-foreground/[0.08]',
+                  )}
                 >
-                  <User className="h-4 w-4 text-primary" />
+                  <LayoutGrid className="h-[18px] w-[18px]" />
+                  <span className="text-[10px] font-medium leading-none">Menu</span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[200px] nb-szklo nb-szklo-plynne border-border/50">
-                <DropdownMenuItem onClick={handleByteClick} className="cursor-pointer">
-                  <span className="mr-2 text-sm text-primary">⟠</span>
-                  Byte
-                  <span className="ml-auto font-bold text-primary">
-                    {balanceLoading ? '—' : balance.toFixed(0)}
-                  </span>
-                </DropdownMenuItem>
+              <DropdownMenuContent
+                align="end"
+                side={naDole ? 'top' : 'bottom'}
+                sideOffset={8}
+                collisionPadding={12}
+                className="isolate w-64 max-h-[70dvh] overflow-y-auto rounded-2xl border-0 p-1.5 nb-szklo-nawigacja nb-szklo-lista"
+              >
+                <PolyskPaska />
+                <WierszListy
+                  ikona={IkonaByteWiersza}
+                  tytul="Byte"
+                  onSelect={handleByteClick}
+                  dodatek={<span className="ml-2 font-bold text-primary">{balanceLoading ? '—' : balance.toFixed(0)}</span>}
+                />
+                {grupy.map((grupa) => (
+                  <React.Fragment key={grupa.id}>
+                    <DropdownMenuLabel className={KLASA_ETYKIETY_LISTY}>{grupa.label}</DropdownMenuLabel>
+                    {grupa.items.map((item) => (
+                      <WierszListy
+                        key={item.url}
+                        ikona={item.icon}
+                        tytul={item.title}
+                        aktywna={isActive(item.url)}
+                        onSelect={() => navigate(item.url)}
+                      />
+                    ))}
+                  </React.Fragment>
+                ))}
+                <DropdownMenuLabel className={KLASA_ETYKIETY_LISTY}>Konto</DropdownMenuLabel>
+                <WierszListy ikona={User} tytul="Konto" aktywna={isActive('/konto')} onSelect={() => navigate('/konto')} />
+                <WierszListy ikona={Crown} tytul="Premium" aktywna={isActive('/premium')} onSelect={() => navigate('/premium')} />
+                <WierszListy ikona={Settings} tytul="Ustawienia" aktywna={isActive('/ustawienia')} onSelect={handleSettingsClick} />
+                {/* Powrót do paska bocznego — na telefonie nie ma uchwytu do przeciągania */}
+                <WierszListy ikona={PanelLeft} tytul="Pasek boczny" onSelect={() => setNavMode('sidebar')} />
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/konto')} className="cursor-pointer">
-                  <User className="w-4 h-4 mr-2" /> Konto
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/premium')} className="cursor-pointer">
-                  <Crown className={cn('w-4 h-4 mr-2', isSubscribed ? 'text-success' : 'text-warning')} /> Premium
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
-                  <Settings className="w-4 h-4 mr-2" /> Ustawienia
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="w-4 h-4 mr-2" /> Wyloguj się
-                </DropdownMenuItem>
+                <WierszListy ikona={LogOut} tytul="Wyloguj się" grozna onSelect={handleLogout} />
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
         </div>
-
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[280px] p-0">
-            <SheetHeader className="p-4 border-b border-border/50">
-              <SheetTitle className="text-left gradient-text text-lg">
-                {navCategories.find((category) => category.id === mobileCategory)?.label || 'Nawigacja'}
-              </SheetTitle>
-            </SheetHeader>
-            <div className="flex flex-col gap-1 p-3 overflow-y-auto max-h-[calc(100vh-180px)]">
-              {(navCategories.find((category) => category.id === mobileCategory)?.items || allItems).map((item) => (
-                <Link
-                  key={item.url}
-                  to={item.url}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                    isActive(item.url)
-                      ? 'bg-primary/10 border border-primary/25 text-primary'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  )}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.title}</span>
-                </Link>
-              ))}
-            </div>
-            <div className="border-t border-border/50 p-3 flex flex-col gap-1">
-              <button onClick={() => { setMobileOpen(false); navigate('/konto'); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 w-full">
-                <User className="w-4 h-4" /> Konto
-              </button>
-              <button onClick={() => { setMobileOpen(false); navigate('/premium'); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 w-full">
-                <Crown className="w-4 h-4" /> Premium
-              </button>
-              <button onClick={() => { setMobileOpen(false); handleSettingsClick(); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 w-full">
-                <Settings className="w-4 h-4" /> Ustawienia
-              </button>
-              <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 w-full">
-                <LogOut className="w-4 h-4" /> Wyloguj się
-              </button>
-            </div>
-          </SheetContent>
-        </Sheet>
       </>
     );
   }
@@ -336,46 +401,61 @@ export function PillNavbar() {
         onMouseLeave={() => setOpenCategory(null)}
       >
         <button
-          className={cn(
-            'relative z-10 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold tracking-wide transition-all duration-200',
-            active || otwarte
-              ? 'border-primary/35 bg-primary/10 text-primary shadow-[0_0_22px_-10px_hsl(var(--primary)/0.75)]'
-              : 'border-transparent text-muted-foreground hover:border-border/50 hover:bg-muted/30 hover:text-foreground'
-          )}
+          aria-label={category.label}
+          /* Tablet nie ma hovera — stuknięcie palcem/rysikiem przełącza menu.
+             Myszy nie dotyczy: tam otwiera najechanie i klik niczego nie psuje. */
+          onPointerUp={(e) => {
+            if (e.pointerType !== 'mouse') setOpenCategory((o) => (o === category.id ? null : category.id));
+          }}
+          className={cn(ZAKLADKA, active || otwarte ? ZAKLADKA_AKT : ZAKLADKA_NIEAKT)}
         >
-          <category.icon className="h-4 w-4" />
-          {category.label}
+          <category.icon className="h-3.5 w-3.5 shrink-0" />
+          {/* Poniżej xl sama ikona — z podpisami pasek nie mieści się w szerokości */}
+          <span className="hidden xl:inline">{category.label.length <= 2 ? category.label : category.label.charAt(0) + category.label.slice(1).toLowerCase()}</span>
+          <ChevronRight className={cn('hidden h-2.5 w-2.5 shrink-0 transition-transform duration-200 xl:block', otwarte ? 'rotate-90 text-primary' : 'opacity-40')} />
         </button>
 
         {otwarte && kotwica && createPortal(
           <div
-            className="fixed z-[60] w-72 pt-3 animate-in fade-in duration-200"
+            className={cn('fixed z-[60] w-72 animate-in fade-in duration-200', pozycja === 'dol' ? 'pb-4' : 'pt-4')}
             style={{
-              left: kotwica.getBoundingClientRect().left + kotwica.offsetWidth / 2 - 144,
-              top: kotwica.getBoundingClientRect().bottom,
+              left: Math.min(
+                Math.max(8, kotwica.getBoundingClientRect().left + kotwica.offsetWidth / 2 - 144),
+                window.innerWidth - 288 - 8,
+              ),
+              /* Pasek na dole — menu wychodzi W GÓRĘ, inaczej ucieka za ekran. */
+              ...(pozycja === 'dol'
+                ? { bottom: window.innerHeight - kotwica.getBoundingClientRect().top }
+                : { top: kotwica.getBoundingClientRect().bottom }),
             }}
             onMouseEnter={() => setOpenCategory(category.id)}
             onMouseLeave={() => setOpenCategory(null)}
           >
-            <div className="overflow-hidden rounded-2xl border border-primary/15 p-2 shadow-[0_18px_44px_-12px_hsl(var(--background)/0.9)] nb-szklo nb-szklo-plynne nb-szklo-tafla">
-              {category.items.map((item) => (
-                <button
-                  key={item.url}
-                  onClick={() => { navigate(item.url); setOpenCategory(null); }}
-                  className={cn(
-                    'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200',
-                    isActive(item.url) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-primary/10 hover:text-foreground'
-                  )}
-                >
-                  <span className="nb-ikona-kafel flex h-8 w-8 items-center justify-center rounded-lg border group-hover:border-primary/30 group-hover:bg-primary/10">
-                    <item.icon className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold">{item.title}</span>
-                    {item.badge && <span className="text-[10px] font-medium text-primary/75">{item.badge}</span>}
-                  </span>
-                </button>
-              ))}
+            <div className="relative isolate overflow-hidden rounded-2xl p-1.5 nb-szklo nb-szklo-plynne nb-szklo-tafla nb-szklo-nawigacja nb-szklo-lista">
+              <PolyskPaska />
+              <div className={KLASA_ETYKIETY_LISTY}>{category.label}</div>
+              {category.items.map((item) => {
+                const akt = isActive(item.url);
+                return (
+                  <button
+                    key={item.url}
+                    onClick={() => { navigate(item.url); setOpenCategory(null); }}
+                    className={cn(
+                      'group flex w-full items-center rounded-xl px-2 py-1.5 text-left text-[13px] transition-all duration-300',
+                      akt ? 'nb-nav-pozycja-akt !text-foreground font-medium' : 'nb-nav-pozycja !text-foreground/[0.88] hover:!text-foreground',
+                    )}
+                  >
+                    <span className={cn(
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+                      akt ? 'nb-nav-ikona-akt text-primary' : 'nb-nav-ikona text-foreground/60 group-hover:text-foreground/90',
+                    )}>
+                      <item.icon strokeWidth={1.75} className="h-[17px] w-[17px]" />
+                    </span>
+                    <span className="ml-2 min-w-0 flex-1 truncate">{item.title}</span>
+                    {item.badge && <span className="ml-2 text-[10px] font-medium text-primary/75">{item.badge}</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>,
           document.body
@@ -384,119 +464,128 @@ export function PillNavbar() {
     );
   };
 
-  // ── Desktop: pill navbar ──
+  // ── Desktop: pasek 1:1 z górnym paskiem podglądu (nextbyte-preview) ──
+  /*
+    Artur, 26.09.2026: „wygląd górnego navbara 1:1 taki jak ten główny ogólny,
+    ale z efektem jak sidebar". Wzór: `HorizontalNav` w
+    nextbyte-preview/src/sections/PreviewSection.tsx —
+      • po lewej sam uchwyt (sześć kropek), bez logo,
+      • zakładki wyśrodkowane: ikona + podpis (+ strzałka przy kategoriach),
+        aktywna = obwódka primary/40 na tle primary/20,
+      • po prawej ciche, obrysowane kontrolki h-7 i awatar z inicjałami.
+    Materiał — ten sam co pasek boczny (`SZKLO_PASKA_BOCZNEGO`).
+  */
+  const inicjaly = (() => {
+    const m = (user?.user_metadata ?? {}) as Record<string, string | undefined>;
+    const z = `${m.first_name?.[0] ?? ''}${m.last_name?.[0] ?? ''}`.trim();
+    return (z || (user?.email ?? '?').slice(0, 2)).toUpperCase();
+  })();
+  const KONTROLKA = 'flex items-center gap-1 px-2 h-7 rounded-lg border text-[12px] font-semibold transition-all duration-200 border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20';
+  const OKRAGLA = 'relative flex h-7 w-7 items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] transition-all duration-200 hover:border-foreground/20 hover:bg-foreground/[0.08]';
+
   return (
-    <div className="sticky top-0 z-50 px-4 pt-4 pb-3">
-      <nav className="max-w-5xl mx-auto flex items-center justify-between rounded-2xl border border-border/40 nb-szklo nb-szklo-plynne nb-szklo-tafla shadow-[0_18px_44px_-12px_hsl(var(--background)/0.9)] px-5 py-2.5">
-        {/* Left: Logo */}
-        <Link to="/panel-glowny" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-muted/50 border border-primary/10 overflow-hidden p-1 flex-shrink-0">
-            {getAssetUrl(logoAsset) ? (
-              <img src={getAssetUrl(logoAsset)!} alt="Logo" className="w-full h-full object-cover rounded-lg" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/60 rounded-lg">
-                <Bot className="w-4 h-4 text-primary-foreground" />
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-primary text-base leading-tight">NextByte</span>
-            {isLime && (
-              <span className="text-[8px] font-semibold uppercase tracking-widest text-primary/50 leading-none">Motyw Beta</span>
-            )}
-          </div>
-        </Link>
+    /* Ten sam kontener co treść Panelu Głównego (Dashboard.tsx: max-w-[1600px] px-4 md:px-6),
+        więc krawędzie paska stoją w jednej linii z kafelkami pod nim. */
+    <div className={cn('sticky z-50 mx-auto w-full max-w-[1600px] px-4 md:px-6', pozycja === 'dol' ? 'bottom-0 pb-4 md:pb-5' : 'top-0 pt-4 md:pt-5')}>
+      <nav className={cn('relative flex h-12 w-full items-center justify-between gap-3 rounded-2xl px-4 shadow-2xl', SZKLO_PASKA_BOCZNEGO)}>
+        <PolyskPaska />
 
-        {/* Center: quick actions + grouped categories */}
-        <div ref={navContainerRef} className="relative flex items-center gap-1">
-          {/* Animated active indicator */}
-          {indicatorStyle && (
-            <motion.div
-              className="absolute top-0 bottom-0 rounded-xl bg-primary/10 border border-primary/25 shadow-sm shadow-primary/10"
-              layoutId="pill-nav-indicator"
-              animate={{ left: indicatorStyle.left, width: indicatorStyle.width }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              style={{ height: '100%' }}
-            />
-          )}
+        {/* Lewo: uchwyt dokowania */}
+        <div className="flex shrink-0 items-center pr-2">
+          <UchwytPaska kropki />
+        </div>
+
+        {/* Środek: zakładki */}
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 h-full">
           {primaryItems.map((item) => navLink(item))}
-
-          <div className="mx-1 h-6 w-px bg-border/50" />
           {navCategories.map((category) => categoryMenu(category))}
-
-          {/* More dropdown */}
           {moreItems.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
-                  <MoreHorizontal className="w-4 h-4" />
+                <button
+                  aria-label="Narzędzia"
+                  className="flex items-center rounded-xl border border-transparent px-2.5 py-2 text-foreground/55 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="min-w-[200px] nb-szklo nb-szklo-plynne border-border/50">
+              <DropdownMenuContent align="center" side={pozycja === 'dol' ? 'top' : 'bottom'} sideOffset={10} className="isolate min-w-[220px] rounded-2xl border-0 p-1.5 nb-szklo-nawigacja nb-szklo-lista">
+                <PolyskPaska />
+                <DropdownMenuLabel className={KLASA_ETYKIETY_LISTY}>Narzędzia</DropdownMenuLabel>
                 {moreItems.map((item) => (
-                  <DropdownMenuItem
+                  <WierszListy
                     key={item.url}
-                    onClick={() => navigate(item.url)}
-                    className={cn(
-                      'flex items-center gap-2.5 cursor-pointer',
-                      isActive(item.url) && 'text-primary bg-primary/5'
+                    ikona={item.icon}
+                    tytul={item.title}
+                    aktywna={isActive(item.url)}
+                    onSelect={() => navigate(item.url)}
+                    dodatek={item.badge && (
+                      <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">{item.badge}</span>
                     )}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.title}</span>
-                    {item.badge && (
-                      <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                        {item.badge}
-                      </span>
-                    )}
-                  </DropdownMenuItem>
+                  />
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </div>
 
-        {/* Right: Byte balance + avatar dropdown */}
-        <div className="flex items-center gap-2">
-          <NotificationBell />
-          <button
-            onClick={handleByteClick}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border border-primary/10 bg-primary/5 hover:bg-primary/10 transition-colors"
-          >
-            <span className="text-sm text-primary">⟠</span>
-            {balanceLoading ? (
-              <div className="w-10 h-3.5 bg-primary/20 rounded animate-pulse" />
-            ) : (
-              <span className="font-medium text-foreground">
-                Byte <span className="font-bold text-primary">{balance.toFixed(0)}</span>
-              </span>
-            )}
+        {/* Prawo: ustawienia, Byte, szukaj, dzwonek, awatar */}
+        <div className="flex shrink-0 items-center gap-1.5 pl-2">
+          <button type="button" onClick={handleSettingsClick} title="Ustawienia" className={KONTROLKA}>
+            <Settings className="h-3 w-3 shrink-0" />
+            <span className="hidden 2xl:inline">Ustawienia</span>
           </button>
-
+          <button type="button" onClick={handleByteClick} title="Doładuj Byte" className={KONTROLKA}>
+            <span className="text-[12px] leading-none text-primary">⟠</span>
+            {balanceLoading
+              ? <span className="h-1.5 w-6 rounded-full bg-foreground/25" />
+              : <span className="text-foreground/80"><span className="hidden xl:inline">Byte </span><span className="font-bold text-primary">{balance.toFixed(0)}</span></span>}
+          </button>
+          <button type="button" onClick={() => setSzukajOtwarte(true)} title="Szukaj (Ctrl+K)" aria-label="Szukaj" className={OKRAGLA}>
+            <Search className="h-3.5 w-3.5 text-primary" />
+          </button>
+          <NotificationBell className="!h-7 !w-7 !rounded-full !border-foreground/10 !bg-foreground/[0.04] !p-0 !shadow-none [&_svg]:!h-3.5 [&_svg]:!w-3.5 [&_svg]:!text-primary" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/20 flex items-center justify-center hover:border-primary/40 transition-all">
-                <User className="w-4 h-4 text-primary" />
+              <button
+                type="button"
+                aria-label="Konto"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/25 text-[11px] font-bold text-primary transition-colors hover:border-primary/60"
+              >
+                {inicjaly}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[180px] nb-szklo nb-szklo-plynne border-border/50">
-              <DropdownMenuItem onClick={() => navigate('/konto')} className="cursor-pointer">
-                <User className="w-4 h-4 mr-2" /> Konto
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/premium')} className="cursor-pointer">
-                <Crown className={cn('w-4 h-4 mr-2', isSubscribed ? 'text-success' : 'text-warning')} /> Premium
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
-                <Settings className="w-4 h-4 mr-2" /> Ustawienia
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" side={pozycja === 'dol' ? 'top' : 'bottom'} sideOffset={10} className="isolate min-w-[200px] rounded-2xl border-0 p-1.5 nb-szklo-nawigacja nb-szklo-lista">
+              <PolyskPaska />
+              <DropdownMenuLabel className={KLASA_ETYKIETY_LISTY}>Konto</DropdownMenuLabel>
+              <WierszListy ikona={User} tytul="Konto" aktywna={isActive('/konto')} onSelect={() => navigate('/konto')} />
+              <WierszListy ikona={Crown} tytul="Premium" aktywna={isActive('/premium')} onSelect={() => navigate('/premium')} />
+              <WierszListy ikona={Settings} tytul="Ustawienia" aktywna={isActive('/ustawienia')} onSelect={handleSettingsClick} />
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
-                <LogOut className="w-4 h-4 mr-2" /> Wyloguj się
-              </DropdownMenuItem>
+              <WierszListy ikona={LogOut} tytul="Wyloguj się" grozna onSelect={handleLogout} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </nav>
+
+      {/* Szukajka — ta sama co w pasku bocznym (AppSidebar), z tym samym welonem. */}
+      <Dialog open={szukajOtwarte} onOpenChange={setSzukajOtwarte}>
+        <DialogContent
+          hideCloseButton
+          variant="czyste"
+          className="left-0 top-0 h-full w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-none [&>button]:hidden"
+        >
+          <div
+            className="flex h-full w-full justify-center overflow-y-auto px-4 pt-[14vh] pb-8"
+            style={{ background: 'rgba(0, 0, 0, 0.22)', backdropFilter: 'saturate(130%) blur(7.2px)', WebkitBackdropFilter: 'saturate(130%) blur(7.2px)' }}
+            onClick={() => setSzukajOtwarte(false)}
+          >
+            <div className="h-fit w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+              <NextByteSpotlightInline pelnyEkran />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

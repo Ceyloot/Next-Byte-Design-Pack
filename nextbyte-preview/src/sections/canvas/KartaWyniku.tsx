@@ -68,7 +68,7 @@ export function KartaWyniku({ stan, onZamknij }: { stan: StanGeneracji; onZamkni
                   <TriangleAlert className="mt-px h-3 w-3 shrink-0" />
                 )}
                 <span>
-                  {stan.ocena.znaczniki && <b>Uwaga: w wyniku widać znaczniki z mapy. </b>}
+                  {stan.ocena.znaczniki && <b>Uwaga: w wyniku widać ślady zaznaczenia. </b>}
                   {stan.ocena.ocena}
                 </span>
               </div>

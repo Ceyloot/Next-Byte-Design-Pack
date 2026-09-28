@@ -56,7 +56,7 @@ export const PinnedAgentsSection: React.FC = () => {
           onClick={() => navigate(`/agent/${agent.slug}`)}
           title={isCollapsed ? agent.name : undefined}
           className={`
-            w-full flex items-center rounded-xl px-2 py-1.5 text-[13px]
+            w-full h-9 overflow-hidden flex items-center rounded-xl py-1.5 text-[13px] ${isCollapsed ? 'px-[7px]' : 'px-2'}
             transition-all duration-300 group/menu-item
             ${isActive
               ? 'bg-primary/15 text-primary'
@@ -71,7 +71,7 @@ export const PinnedAgentsSection: React.FC = () => {
               <Bot className={`w-4 h-4 ${isActive ? 'text-primary' : colorClass}`} />
             )}
           </span>
-          <span className={`truncate ml-2 font-medium transition-opacity duration-150 ${isCollapsed ? 'opacity-0' : ''}`}>{agent.name}</span>
+          {!isCollapsed && <span className="truncate ml-2 font-medium">{agent.name}</span>}
         </button>
       </SidebarMenuItem>
     );

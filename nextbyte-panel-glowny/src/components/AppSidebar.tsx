@@ -25,8 +25,10 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { NextByteSpotlightInline } from '@/components/ui/nextbyte-spotlight';
 import { usePendingDashboardActions } from '@/hooks/usePendingDashboardActions';
 import { usePanelPaska } from '@/contexts/PanelPaskaContext';
+import { useNavigationMode } from '@/contexts/NavigationModeContext';
 
 export function AppSidebar() {
+  const { pozycja } = useNavigationMode();
   /* Stan zwiniecia potrzebny do wysciolki szukajki — w szynie 48 px inna niz
      w rozwinietym pasku. */
   const { state: stanPaska, isMobile: mobilny } = useSidebar();
@@ -74,7 +76,7 @@ export function AppSidebar() {
           renderuje `Sheet` i wariantu nie czyta. Linie „prawej krawędzi" niżej
           miały sens przy pasku przyklejonym do ekranu — na zaokrąglonej tafli
           stałyby w powietrzu, więc w pastylce są schowane. */}
-      <Sidebar variant="floating" collapsible="icon" className="border-r-0 transition-[width] duration-300 ease-out">
+      <Sidebar side={pozycja === 'prawo' ? 'right' : 'left'} variant="floating" collapsible="icon" className="border-r-0 transition-[width] duration-300 ease-out">
         {/* Apple-glass right edge — primary glow rim + crisp hairline (tylko pasek przyklejony) */}
         <div className="pointer-events-none absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/30 to-transparent z-10 group-data-[variant=floating]:hidden" />
         <div className="pointer-events-none absolute top-0 right-0 bottom-0 w-px bg-foreground/[0.06] z-10 group-data-[variant=floating]:hidden" />
@@ -127,7 +129,7 @@ export function AppSidebar() {
                kończyły się na 17 px od krawędzi, podczas gdy nagłówek, wyszukiwarka
                i stopka trzymały 13. Prawy padding schodzi więc o te 4 px, żeby
                oś prawa zgadzała się mimo scrollbara. */
-            className="nb-pasek pl-3 pr-2 pt-2 pb-3 relative z-10 group-data-[collapsible=icon]:pr-3"
+            className="nb-pasek pl-3 pr-2 pt-2 pb-3 relative z-10 group-data-[collapsible=icon]:pr-3 group-data-[collapsible=icon]:[scrollbar-width:none] group-data-[collapsible=icon]:[&::-webkit-scrollbar]:hidden"
             style={{
               maskImage: 'linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)',
               WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)',

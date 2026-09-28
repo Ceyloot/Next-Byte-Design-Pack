@@ -330,7 +330,12 @@ export const KalendarzMiesiaca: React.FC = () => {
             /* Ciaśniej niż w pełnym Kalendarzu: kolumna o szerokości jednej
                trzeciej, siatka 7×6 musi się zmieścić bez suwaka. */
             row: 'grid grid-cols-7 gap-1 w-full mb-0.5',
-            day: 'w-full aspect-square p-0 inline-flex items-center justify-center rounded-md text-[11px] font-medium text-foreground transition-colors hover:bg-primary/15 hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
+            /* Komórka NIE kwadratowa (baza `ui/calendar` ma `aspect-square`): to ona
+               trzymała wysokość wiersza równą szerokości kolumny. */
+            cell: 'h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex items-center justify-center',
+            /* `max-h-9`: w szerokiej kolumnie (tryb pigułki) kwadrat rósł do ~90 px
+               i ostatni tydzień wypadał pod kafelek. Szerokość zostaje pełna. */
+            day: 'h-9 w-full min-h-0 min-w-0 p-0 inline-flex items-center justify-center rounded-md text-[11px] font-medium text-foreground transition-colors hover:bg-primary/15 hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
             head_cell: 'text-muted-foreground text-[10px] font-medium uppercase tracking-wider text-center py-1',
             caption_label: 'text-sm font-semibold text-foreground capitalize',
             day_today: 'bg-primary/20 text-primary font-bold border border-primary/50',

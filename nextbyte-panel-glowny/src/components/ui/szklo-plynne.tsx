@@ -313,9 +313,22 @@ const WYBOR_TAFLI = '.nb-szklo-plynne, .nb-szklo-plynne-wyrazne';
 const POWIERZCHNIA_BEZ_REFRAKCJI_MIN = 20_000;
 const POWIERZCHNIA_BEZ_REFRAKCJI_MAX = 1_000_000;
 
+/*
+  WYJĄTEK DLA PASKÓW (26.09.2026). Dolny próg liczy POWIERZCHNIĘ, a chodziło
+  o małe, KWADRATOWE kafelki (130 × 106), na których faluje cała tafla.
+  Górny pasek nawigacji na telefonie ma 343 × 50 = 17 150 px² i łapał się na
+  ten sam próg, więc tracił refrakcję — Artur: „dalej nie ma liquid glass".
+  Szeroki, płaski pasek ma od tego osobny, łagodny poziom `w1` („paski,
+  pigułki" w `POZIOMY`), przesunięcie ~5% wysokości. Próg szerokości 240 px
+  trzyma drobne pigułki i przyciski dalej bez filtra — budżet warstw jak był.
+*/
+const PASEK_MIN_SZEROKOSC = 240;
+const PASEK_MIN_PROPORCJA = 3;
+
 function poziomDlaPowierzchni(szerokosc: number, wysokosc: number): string | null {
   const powierzchnia = szerokosc * wysokosc;
-  if (powierzchnia > 0 && (powierzchnia < POWIERZCHNIA_BEZ_REFRAKCJI_MIN
+  const pasek = szerokosc >= PASEK_MIN_SZEROKOSC && szerokosc / wysokosc >= PASEK_MIN_PROPORCJA;
+  if (powierzchnia > 0 && ((powierzchnia < POWIERZCHNIA_BEZ_REFRAKCJI_MIN && !pasek)
     || powierzchnia > POWIERZCHNIA_BEZ_REFRAKCJI_MAX)) return 'bez';
   for (const p of POZIOMY) if (wysokosc < p.doWysokosci) return p.nazwa;
   return null;   // powierzchnia dość wysoka — pełna siła, bez atrybutu

@@ -12,6 +12,7 @@
  * że nie wchodzi do wyniku.
  */
 import { etykietaPineski, type Pineska, type Warstwa } from './typy'
+import type { Prostokat } from './rezyser'
 
 /** Ile pikseli ma dłuższy bok mapy. Mniejsza niż oryginał — to tylko wskazówka. */
 const BOK = 1024
@@ -109,9 +110,64 @@ export function narysujMapeMiejsc(warstwa: Warstwa, pineski: Pineska[]): Promise
 }
 
 /** Opis mapy dla promptu — numery uchwytów, które są na niej zaznaczone. */
-export function opiszMape(warstwa: Warstwa, pineski: Pineska[]): string {
-  const moje = pineski.filter(p => p.layerId === warstwa.id)
+export function opiszMape(warstwa: Warstwa | null | undefined, pineski: Pineska[] = []): string {
+  if (!warstwa || !Array.isArray(pineski) || pineski.length === 0) return ''
+  const moje = pineski.filter(p => p && p.layerId === warstwa.id)
   return moje
     .map(p => `${pineski.indexOf(p) + 1} = „${etykietaPineski(p, pineski.indexOf(p) + 1)}”`)
     .join(', ')
+}
+
+/** Dłuższy bok kopii z obszarami — model obrazu i tak skaluje wejście. */
+const BOK_OBSZAROW = 1536
+
+/**
+ * Kopia płótna z zaznaczonymi obszarami — wejście dla modelu obrazu
+ * (wzorzec Lovart: płótno z półprzezroczystą nakładką + czyste płótno obok).
+ *
+ * Obszar mówi modelowi nie tylko GDZIE, ale też JAK DUŻE — pineska tego nie
+ * umiała i stąd auto wielkości foki. Magenta = miejsce zmiany, czerwień =
+ * miejsce, z którego obiekt odchodzi (przeniesienie w kadrze).
+ *
+ * Wypełnienie 55%, nie 80% jak u Lovarta: przy usuwaniu i podmianie model
+ * musi widzieć przez nakładkę, co jest pod spodem. Pełna ramka na brzegu
+ * trzyma granicę obszaru czytelną mimo słabszego wypełnienia.
+ */
+export function narysujObszary(warstwa: Warstwa, cel?: Prostokat, zrodlo?: Prostokat): Promise<string> {
+  if (!cel && !zrodlo) return Promise.resolve('')
+
+  return new Promise(resolve => {
+    const obrazek = new Image()
+    obrazek.crossOrigin = 'anonymous'
+    obrazek.onload = () => {
+      const skala = Math.min(1, BOK_OBSZAROW / Math.max(obrazek.width, obrazek.height))
+      const szer = Math.round(obrazek.width * skala)
+      const wys = Math.round(obrazek.height * skala)
+
+      const plotno = document.createElement('canvas')
+      plotno.width = szer
+      plotno.height = wys
+      const g = plotno.getContext('2d')
+      if (!g) return resolve('')
+      g.drawImage(obrazek, 0, 0, szer, wys)
+
+      const obszar = (r: Prostokat, rgb: string) => {
+        const x = r.x0 * szer
+        const y = r.y0 * wys
+        const w = (r.x1 - r.x0) * szer
+        const h = (r.y1 - r.y0) * wys
+        g.fillStyle = `rgba(${rgb}, 0.55)`
+        g.fillRect(x, y, w, h)
+        g.lineWidth = Math.max(3, Math.round(Math.min(szer, wys) * 0.004))
+        g.strokeStyle = `rgb(${rgb})`
+        g.strokeRect(x, y, w, h)
+      }
+      if (zrodlo) obszar(zrodlo, '255, 0, 0')
+      if (cel) obszar(cel, '255, 0, 255')
+
+      resolve(plotno.toDataURL('image/jpeg', 0.92))
+    }
+    obrazek.onerror = () => resolve('')
+    obrazek.src = warstwa.src
+  })
 }

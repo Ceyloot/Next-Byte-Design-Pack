@@ -71,7 +71,7 @@ export default function ConfigureChatModal({ isOpen, onClose, chatConfig, onSave
       onClose={onClose}
       title={
         <span className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-nb-sm bg-primary/20 border border-primary/40 flex items-center justify-center text-primary">
+          <span className="w-8 h-8 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
             <Sliders size={16} />
           </span>
           <span>Dostosuj czat (Configure Chat)</span>
@@ -101,10 +101,10 @@ export default function ConfigureChatModal({ isOpen, onClose, chatConfig, onSave
                   type="button"
                   onClick={() => setGoal(opt.id)}
                   className={cn(
-                    'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer',
+                    'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer select-none',
                     isSelected
-                      ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_12px_rgba(112,190,250,0.3)]'
-                      : 'nb-szklo bg-card/40 text-foreground/60 border-foreground/15 hover:text-foreground hover:bg-card/70'
+                      ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_14px_hsl(var(--primary)/0.35)]'
+                      : 'bg-card/50 text-foreground/70 border-foreground/15 hover:text-foreground hover:bg-card/80 hover:border-foreground/25'
                   )}
                 >
                   {isSelected && <Check size={13} strokeWidth={3} />}
@@ -126,7 +126,7 @@ export default function ConfigureChatModal({ isOpen, onClose, chatConfig, onSave
                 value={customPrompt}
                 onChange={e => setCustomPrompt(e.target.value)}
                 placeholder="Wpisz swoje szczegółowe instrukcje dla AI (np. Odpowiadaj po angielsku, używaj terminologii medycznej...)"
-                className="w-full p-3 rounded-nb-sm nb-szklo bg-card/40 border-foreground/15 text-xs text-foreground placeholder:text-foreground/35 outline-none focus:border-primary/50 resize-none font-sans"
+                className="w-full p-3 rounded-xl bg-background/50 border border-foreground/[0.12] text-xs text-foreground placeholder:text-foreground/35 outline-none focus:border-primary/50 focus:bg-background/80 transition-colors resize-none font-sans"
               />
             </div>
           )}
@@ -147,10 +147,10 @@ export default function ConfigureChatModal({ isOpen, onClose, chatConfig, onSave
                   type="button"
                   onClick={() => setLength(opt.id)}
                   className={cn(
-                    'flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer',
+                    'flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer select-none',
                     isSelected
-                      ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_12px_rgba(112,190,250,0.3)]'
-                      : 'nb-szklo bg-card/40 text-foreground/60 border-foreground/15 hover:text-foreground hover:bg-card/70'
+                      ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_14px_hsl(var(--primary)/0.35)]'
+                      : 'bg-card/50 text-foreground/70 border-foreground/15 hover:text-foreground hover:bg-card/80 hover:border-foreground/25'
                   )}
                 >
                   {isSelected && <Check size={13} strokeWidth={3} />}

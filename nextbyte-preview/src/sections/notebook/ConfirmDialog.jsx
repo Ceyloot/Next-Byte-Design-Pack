@@ -24,7 +24,7 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = 'Us
       width="max-w-sm"
       title={
         <span className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-nb-sm bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive flex-shrink-0">
+          <span className="w-8 h-8 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive flex-shrink-0">
             <AlertTriangle size={16} />
           </span>
           <span>{title}</span>

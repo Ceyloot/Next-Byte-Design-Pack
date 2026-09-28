@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import DocumentViewer from './DocumentViewer';
+import PasekZywegoZrodla from './PasekZywegoZrodla';
 import { GlassModal, GlassButton, GlassTooltip } from '@/components/glass';
 
 /**
@@ -14,7 +15,7 @@ import { GlassModal, GlassButton, GlassTooltip } from '@/components/glass';
  * zamknięcia tylko razem z tytułem, więc dokładamy własny X w rogu — inaczej
  * zostałby sam Esc, bez widocznej możliwości zamknięcia.
  */
-export default function SourceViewerModal({ source, sources, onClose, onSourceSelect, onSeekToVideo }) {
+export default function SourceViewerModal({ source, sources, onClose, onSourceSelect, onSeekToVideo, odswiezam, onOdswiez }) {
   if (!source) return null;
 
   return (
@@ -35,6 +36,7 @@ export default function SourceViewerModal({ source, sources, onClose, onSourceSe
         {/* DocumentViewer jest zbudowany jako panel `h-full` — stała, duża wysokość
             wyżej sprawia, że jego wewnętrzne scrollowanie działa tak jak wtedy,
             gdy był osobną zakładką. */}
+        {onOdswiez && <PasekZywegoZrodla zrodlo={source} odswiezam={odswiezam} onOdswiez={onOdswiez} />}
         <DocumentViewer
           source={source}
           sources={sources}

@@ -54,7 +54,7 @@ export default function PromptDialog({
       width="max-w-sm"
       title={
         <span className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-nb-sm bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+          <span className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0">
             <Edit2 size={15} />
           </span>
           <span>{title}</span>

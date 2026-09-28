@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthId } from '@/hooks/useAuth';
+import { dolaczDoKanalu } from '@/lib/realtimeChannels';
 
 export type NotificationSource =
   | 'system'
@@ -266,7 +267,6 @@ async function fetchAll(userId: string, userEmail: string | null): Promise<RawAg
 export function useUnifiedNotifications() {
   const userId = useAuthId();
   const queryClient = useQueryClient();
-  const channelRef = useRef<any>(null);
   const emailRef = useRef<string | null>(null);
 
   const query = useQuery({
@@ -285,36 +285,22 @@ export function useUnifiedNotifications() {
     },
   });
 
-  // Realtime subscription
+  // Realtime — kanał wspólny dla wszystkich konsumentów haka (PasekKart montuje
+  // go kilka razy naraz; osobne `.on()` po `subscribe()` wywalało render).
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase
-      .channel(`unified-notifications-${userId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_notifications', filter: `user_id=eq.${userId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEY(userId) });
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'event_invitations', filter: `invitee_id=eq.${userId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEY(userId) });
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'note_shares', filter: `shared_with_id=eq.${userId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEY(userId) });
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'folder_shares', filter: `shared_with_id=eq.${userId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEY(userId) });
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'whiteboard_shares', filter: `shared_with_id=eq.${userId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEY(userId) });
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shared_calendar_members', filter: `user_id=eq.${userId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEY(userId) });
-      })
-      .subscribe();
-
-    channelRef.current = channel;
-    return () => {
-      supabase.removeChannel(channel);
-      channelRef.current = null;
-    };
+    return dolaczDoKanalu(
+      `unified-notifications-${userId}`,
+      [
+        { event: 'INSERT', table: 'user_notifications', filter: `user_id=eq.${userId}` },
+        { event: 'INSERT', table: 'event_invitations', filter: `invitee_id=eq.${userId}` },
+        { event: 'INSERT', table: 'note_shares', filter: `shared_with_id=eq.${userId}` },
+        { event: 'INSERT', table: 'folder_shares', filter: `shared_with_id=eq.${userId}` },
+        { event: 'INSERT', table: 'whiteboard_shares', filter: `shared_with_id=eq.${userId}` },
+        { event: 'INSERT', table: 'shared_calendar_members', filter: `user_id=eq.${userId}` },
+      ],
+      () => queryClient.invalidateQueries({ queryKey: QUERY_KEY(userId) }),
+    );
   }, [userId, queryClient]);
 
   const notifications: UnifiedNotification[] = useMemo(() => {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
-import { trackElevenLabs } from './telebyte'; // TELEBYTE — usunąć z importem folderu
 import { Headphones, Presentation, Brain, ClipboardList, Layers, CircleHelp, BarChart, Table2, ChevronRight, Check, X, RotateCcw, ChevronDown, Play, Pause, Loader2, Volume2, SkipBack, SkipForward, Download, Trophy, RefreshCw, Maximize2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { BarChart as ReBarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { GlassCard, GlassButton, GlassBadge, GlassAlert, GlassSpinner } from '@/components/glass';
@@ -210,7 +209,6 @@ function AudioRenderer({ content, elevenlabsKey, voiceV1 = 'iP95p4xoKVk53GoZ742B
 
       // Persist to IndexedDB
       saveCachedAudio(cacheKey, { wav: wavBlob });
-      trackElevenLabs('audio', exchanges.reduce((s, ex) => s + (ex.text?.length || 0), 0)); // TELEBYTE
 
 
       applyWav(wavBlob);

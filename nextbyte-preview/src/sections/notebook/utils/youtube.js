@@ -11,95 +11,50 @@ export function extractPlaylistId(url) {
   } catch { return null; }
 }
 
+/**
+ * Lista filmów z playlisty.
+ *   1. Własny serwer: GET /api/playlist?list=… — bez klucza i bez proxy osób
+ *      trzecich (strona playlisty + youtubei/v1/browse po stronie serwera).
+ *   2. Rezerwa: oficjalne YouTube Data API v3, jeśli jest klucz (`apiKey`).
+ * Wcześniejsza droga przez publiczne proxy CORS została usunięta — szukała
+ * `playlistVideoRenderer`, którego YouTube już nie wysyła, więc i tak nie działała.
+ */
 export async function fetchPlaylistVideoIds(playlistId, apiKey) {
-  const ids = [];
-  let playlistTitle = 'Playlista';
+  let bladSerwera = '';
+  try {
+    const res = await fetch(`/api/playlist?list=${encodeURIComponent(playlistId)}`);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && Array.isArray(data.ids) && data.ids.length) return { ids: data.ids, title: data.title || 'Playlista' };
+    bladSerwera = data.error || `Błąd serwera ${res.status}`;
+  } catch (e) {
+    bladSerwera = e.message;
+  }
 
   if (apiKey) {
-    try {
-      const metaRes = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${apiKey}`);
-      if (metaRes.ok) {
-        const metaData = await metaRes.json();
-        if (metaData.items && metaData.items[0]) {
-          playlistTitle = metaData.items[0].snippet.title;
-        }
-      }
-
-      let pageToken = '';
-      do {
-        const params = new URLSearchParams({ part: 'contentDetails', playlistId, maxResults: '50', key: apiKey });
-        if (pageToken) params.set('pageToken', pageToken);
-        const res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params}`);
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error?.message || `YouTube API error: ${res.status}`);
-        }
-        const data = await res.json();
-        for (const item of data.items || []) {
-          const vid = item.contentDetails?.videoId;
-          if (vid) ids.push(vid);
-        }
-        pageToken = data.nextPageToken || '';
-      } while (pageToken);
-      return { ids, title: playlistTitle };
-    } catch (err) {
-      console.warn('YouTube API fetch failed, falling back to scraping', err);
+    const ids = [];
+    let playlistTitle = 'Playlista';
+    const metaRes = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${apiKey}`);
+    if (metaRes.ok) {
+      const metaData = await metaRes.json();
+      if (metaData.items?.[0]) playlistTitle = metaData.items[0].snippet.title;
     }
+    let pageToken = '';
+    do {
+      const params = new URLSearchParams({ part: 'contentDetails', playlistId, maxResults: '50', key: apiKey });
+      if (pageToken) params.set('pageToken', pageToken);
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `YouTube API: ${res.status}`);
+      }
+      const data = await res.json();
+      for (const item of data.items || []) if (item.contentDetails?.videoId) ids.push(item.contentDetails.videoId);
+      pageToken = data.nextPageToken || '';
+    } while (pageToken);
+    if (ids.length) return { ids, title: playlistTitle };
   }
 
-  // Fallback: Scrape the playlist page via CORS proxies
-  try {
-    const targetUrl = `https://www.youtube.com/playlist?list=${playlistId}`;
-    const html = await fetchWithProxy(targetUrl);
-    
-    const titleMatch = html.match(/<title>(.*?) - YouTube<\/title>/) || html.match(/<title>(.*?)<\/title>/);
-    if (titleMatch && titleMatch[1]) {
-      const extractedTitle = titleMatch[1].trim();
-      if (extractedTitle !== 'YouTube') {
-        playlistTitle = extractedTitle;
-      }
-    }
-
-    // Find ytInitialData
-    const regex = /var\s+ytInitialData\s*=\s*({.+?});/s;
-    let match = html.match(regex);
-    if (!match) {
-      // Try alternative regex
-      const altRegex = /ytInitialData\s*=\s*({.+?});/s;
-      match = html.match(altRegex);
-    }
-
-    if (match && match[1]) {
-      const data = JSON.parse(match[1]);
-      const videoIds = new Set();
-      
-      // Recursive extraction
-      function findVideoIds(obj) {
-        if (!obj) return;
-        if (Array.isArray(obj)) {
-          obj.forEach(findVideoIds);
-        } else if (typeof obj === 'object') {
-          if (obj.playlistVideoRenderer && obj.playlistVideoRenderer.videoId) {
-            videoIds.add(obj.playlistVideoRenderer.videoId);
-          } else {
-            for (let key in obj) {
-              findVideoIds(obj[key]);
-            }
-          }
-        }
-      }
-      
-      findVideoIds(data);
-      if (videoIds.size > 0) {
-        return { ids: Array.from(videoIds), title: playlistTitle };
-      }
-    }
-  } catch (scrapeErr) {
-    console.error('Playlist scraping failed:', scrapeErr);
-  }
-
-  if (ids.length > 0) return { ids, title: playlistTitle };
-  throw new Error('Nie udało się pobrać filmów z playlisty. Wprowadź klucz API YouTube w ustawieniach lub upewnij się, że playlista jest publiczna.');
+  throw new Error(`Nie udało się pobrać filmów z playlisty: ${(bladSerwera || 'playlista jest pusta albo prywatna').replace(/\.$/, '')}.`);
 }
 
 export function extractVideoId(url) {

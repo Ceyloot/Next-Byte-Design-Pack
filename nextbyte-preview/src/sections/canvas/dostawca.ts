@@ -5,7 +5,7 @@
  */
 import type { WynikGeneracji, ZadanieGeneracji } from './runware-proxy'
 import type { Plan, Sprawdzenie, ZadaniePlanu, ZadanieSprawdzenia } from './agent-proxy'
-import { etykietaPineski, zmniejszDoAnalizy, type Pineska, type Warstwa } from './typy'
+import { etykietaPineski, zmniejszDoAnalizy, type AnalizaPineski, type Pineska, type Warstwa } from './typy'
 
 /** Koszt pokazywany przed generacją — z cennika NextByte („4 ⟠ za obraz”). */
 export const BYTE_ZA_OBRAZ = 4
@@ -87,12 +87,9 @@ export async function generuj(zadanie: ZadanieGeneracji): Promise<WynikGeneracji
 }
 
 /**
- * Mikro-AI rozpoznające obiekt pod pineską.
- *
- * Osobne, tanie zadanie `caption` u Runware — nie generator. Nazwa uchwytu
- * jest tym, na co powołujesz się w poleceniu, więc im szybciej pojawi się
- * sama, tym mniej pracy zostaje po stronie człowieka. Cisza przy błędzie
- * jest celowa: to udogodnienie, a nie warunek działania Canvasu.
+ * Rozpoznanie obiektu pod pineską — przez serwer (Gemini, klucz tylko
+ * w .env.local). Bezpośrednie wywołania z przeglądarki zostały usunięte:
+ * klucz w bundlu wyciekł i Google go unieważnił (28.09).
  */
 export async function rozpoznajObiekt(
   wycinek: string,
@@ -112,41 +109,126 @@ export async function rozpoznajObiekt(
   }
 }
 
-/**
- * Inwentarz sceny — co w ogóle jest na zdjęciu.
- *
- * Leci raz, zaraz po wrzuceniu zdjęcia na płótno, jeszcze zanim użytkownik
- * cokolwiek kliknie. Dzięki temu pineska wbita w miejsce, którego wycinek
- * jest nieczytelny (kawałek trawy, fragment nieba), i tak ma z czego wziąć
- * nazwę — wcześniej zostawało bezużyteczne „obiekt 1”.
- */
+/** Inwentarz sceny — co w ogóle jest na zdjęciu. */
 export async function rozpoznajScene(zdjecie: string): Promise<string[]> {
-  // Zmniejszamy przed wysyłką: pełne zdjęcie potrafi mieć 5 MB w base64,
-  // a model opisujący odrzucał takie żądania błędem 500.
   const male = await zmniejszDoAnalizy(zdjecie)
   return rozpoznajObiekt(male || zdjecie, 'scena')
 }
 
 /* ── Agent reżyserski ────────────────────────────────────────────── */
 
+import { narysujMapeMiejsc } from './mapa-miejsc'
+import type { RodzajPunktu } from './uklad-pinesek'
+
 /**
- * Plan przed generacją: agent ogląda zdjęcia i dokłada wiedzę o scenie.
- *
- * Zwraca `null` przy awarii — generacja ma iść dalej na samym rusztowaniu.
- * Agent jest wzmocnieniem, nie warunkiem działania Canvasu.
+ * Analiza pineski zaraz po wbiciu: całe zdjęcie z jednym celownikiem, żeby
+ * model widział punkty odniesienia do skali (koła, drzwi, ludzi). Zwraca
+ * `null` przy awarii — pineska dostaje wtedy nazwy z samego rozpoznania.
  */
-export async function zaplanuj(zadanie: ZadaniePlanu): Promise<Plan | null> {
+export async function analizujPineske(
+  pineska: Pineska,
+  warstwa: Warstwa,
+): Promise<{ nazwy: string[]; analiza: AnalizaPineski } | null> {
   try {
-    const odp = await fetch('/api/canvas/planuj', {
+    const obraz = await narysujMapeMiejsc(warstwa, [pineska])
+    if (!obraz) return null
+    const odp = await fetch('/api/canvas/analizuj-pineske', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ obraz }),
+    })
+    if (!odp.ok) return null
+    const wynik = (await odp.json()) as { nazwy?: string[]; analiza?: AnalizaPineski }
+    return wynik.analiza?.obiekt ? { nazwy: wynik.nazwy ?? [], analiza: wynik.analiza } : null
+  } catch {
+    return null
+  }
+}
+
+/** Analiza pineski jako tekst dla reżysera — liczby, interakcja, orientacja 3D i światło. */
+export function opisAnalizy(a: AnalizaPineski | undefined): string {
+  if (!a) return ''
+  const wymiary = [
+    a.wysokoscCm ? `height ≈ ${a.wysokoscCm} cm` : '',
+    a.dlugoscCm ? `length ≈ ${a.dlugoscCm} cm` : '',
+  ]
+    .filter(Boolean)
+    .join(', ')
+  return [
+    a.obiektEn || a.obiekt,
+    wymiary && `${wymiary}${a.niepewnoscCm ? ` (± ${a.niepewnoscCm} cm)` : ''}`,
+    a.kalibracja && `calibration: ${a.kalibracja}`,
+    a.pozycja3d && `3D POSE & ORIENTATION: ${a.pozycja3d}`,
+    a.interakcja && `PHYSICAL CONTACT & INTERACTION (DO NOT CUT/ERASE INTERACTING PEOPLE): ${a.interakcja}`,
+    a.stanPowierzchni && `SURFACE CONDITION & PATINA: ${a.stanPowierzchni}`,
+    a.glebiaOptyka && `DEPTH PLANE & OPTICS: ${a.glebiaOptyka}`,
+    a.swiatloWektory && `LIGHT VECTORS: ${a.swiatloWektory}`,
+    a.otoczenie && `surroundings: ${a.otoczenie}`,
+    a.dwuznacznosc && `AMBIGUOUS: ${a.dwuznacznosc}`,
+  ]
+    .filter(Boolean)
+    .join('; ')
+}
+
+/**
+ * Rzecz czy miejsce pod każdą pineską — wejście dla `ustalUklad`.
+ * Zwraca `null` przy awarii; generacja idzie wtedy na domyśle z kolejności.
+ */
+export async function klasyfikujPineski(
+  pineski: Pineska[],
+  warstwy: Warstwa[],
+): Promise<Record<string, RodzajPunktu> | null> {
+  const uchwyty = pineski.filter(p => !p.chroniona)
+  if (uchwyty.length < 2) return null
+  try {
+    const obrazy = await Promise.all(
+      uchwyty.map(p => {
+        const w = warstwy.find(x => x.id === p.layerId)
+        return w ? narysujMapeMiejsc(w, [p]) : Promise.resolve('')
+      }),
+    )
+    if (obrazy.some(o => !o)) return null
+    const odp = await fetch('/api/canvas/klasyfikuj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ obrazy }),
+    })
+    if (!odp.ok) return null
+    const wynik = (await odp.json()) as { pineski?: { rodzaj: RodzajPunktu }[] }
+    if (!wynik.pineski || wynik.pineski.length !== uchwyty.length) return null
+    return Object.fromEntries(uchwyty.map((p, i) => [p.id, wynik.pineski![i].rodzaj]))
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Plan przed generacją. Rzuca błąd po polsku, gdy agent zawiedzie —
+ * generacja bez planu dawała zdjęcie bez zmian za pełną cenę, więc lepiej
+ * zatrzymać się i powiedzieć dlaczego.
+ */
+export async function zaplanuj(zadanie: ZadaniePlanu): Promise<Plan> {
+  let odp: Response
+  try {
+    odp = await fetch('/api/canvas/planuj', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(zadanie),
     })
-    if (!odp.ok) return null
-    return (await odp.json()) as Plan
   } catch {
-    return null
+    throw new Error('Asystent nie odpowiada — sprawdź, czy serwer podglądu działa.')
   }
+  const tresc = (await odp.json().catch(() => ({}))) as Partial<Plan> & { blad?: string }
+  if (!odp.ok) {
+    const powod = tresc.blad ?? `błąd ${odp.status}`
+    const klucz = /401|403|API key|UNAUTHENTICATED|klucz/i.test(powod)
+    throw new Error(
+      klucz
+        ? 'Asystent nie przeanalizował zdjęć: klucz Gemini w .env.local jest nieprawidłowy. Nic nie wygenerowano, nie pobrano opłaty.'
+        : `Asystent nie przeanalizował zdjęć (${powod}). Nic nie wygenerowano, nie pobrano opłaty.`,
+    )
+  }
+  return tresc as Plan
 }
 
 /**

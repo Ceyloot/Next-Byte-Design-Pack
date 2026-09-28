@@ -3,7 +3,6 @@
  */
 
 import { trackUsage, calcCost } from './usageTracker';
-import { trackGemini } from '../telebyte'; // TELEBYTE — usunąć z importem folderu
 
 const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -138,6 +137,9 @@ async function callGemini(apiKey, model, contents, systemInstruction = null, isJ
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error?.message || `API HTTP error! status: ${response.status}`;
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Klucz Gemini wygasł albo został unieważniony — wklej nowy w Ustawieniach notatnika.');
+      }
       if (response.status === 400 && (errorMessage.includes('API key') || errorMessage.includes('API_KEY'))) {
         throw new Error('Nieprawidłowy klucz Gemini API. Upewnij się, że wklejono właściwy klucz w Ustawieniach.');
       }
@@ -154,7 +156,6 @@ async function callGemini(apiKey, model, contents, systemInstruction = null, isJ
       const output = data.usageMetadata.candidatesTokenCount || 0;
       const total  = data.usageMetadata.totalTokenCount || (input + output);
       trackUsage(effectiveModel, toolType, input, output, ctx);
-      trackGemini(effectiveModel, toolType, input, output, ctx, enableSearch); // TELEBYTE
       const prev = parseInt(localStorage.getItem('notebook_total_tokens') || '0', 10);
       localStorage.setItem('notebook_total_tokens', (prev + total).toString());
       localStorage.setItem('notebook_last_tokens', total.toString());
@@ -303,7 +304,7 @@ export async function sendChatMessage(apiKey, model, chatMessages, selectedSourc
 
     const ragSystemInstruction = isToolCall
       ? `Jesteś zaawansowanym asystentem badawczym AI. Wykonaj zadanie zlecone przez użytkownika dokładnie według podanych instrukcji, opierając się wyłącznie na dostarczonych fragmentach materiałów źródłowych. Pisz po polsku. Zwróć czysty tekst Markdown bez owijania go w format JSON.`
-      : `Jesteś zaawansowanym asystentem badawczym AI o nazwie "NotebookLM". Odpowiadaj WYŁĄCZNIE na podstawie podanych fragmentów materiałów (RAG). Cytuj źródła w formacie [Nazwa, mm:ss] dla YouTube lub [Nazwa] dla innych. Pisz po polsku, używaj Markdown. Zrezygnuj z pogrubień (**). Zwróć poprawny JSON: {"answer":"...","citations":[...]}`;
+      : `Jesteś zaawansowanym asystentem badawczym AI o nazwie "Next Scribe". Odpowiadaj WYŁĄCZNIE na podstawie podanych fragmentów materiałów (RAG). Cytuj źródła w formacie [Nazwa, mm:ss] dla YouTube lub [Nazwa] dla innych. Pisz po polsku, używaj Markdown. Zrezygnuj z pogrubień (**). Zwróć poprawny JSON: {"answer":"...","citations":[...]}`;
 
     try {
       const rawText = await callGemini(apiKey, model, contents, ragSystemInstruction, !isToolCall, false, toolType, estimatedCtx);
@@ -374,7 +375,7 @@ export async function sendChatMessage(apiKey, model, chatMessages, selectedSourc
     contextText += `====================================\n\n`;
   });
 
-  const systemInstruction = `Jesteś zaawansowanym asystentem badawczym AI o nazwie "NotebookLM".
+  const systemInstruction = `Jesteś zaawansowanym asystentem badawczym AI o nazwie "Next Scribe".
 Odpowiadaj na pytania użytkownika WYŁĄCZNIE na podstawie podanych materiałów źródłowych. Masz dostęp do ${selectedSources.length} źródła/źródeł: ${selectedSources.map(s => `"${s.title}"`).join(', ')}.
 
 INSTRUKCJE:
@@ -461,7 +462,7 @@ Zwróć WYŁĄCZNIE czysty JSON bez żadnych code fences ani dodatkowego tekstu:
     isJsonMode = false;
   } else if (enableSearch) {
     isJsonMode = false;
-    finalSystemInstruction = `Jesteś zaawansowanym asystentem badawczym AI o nazwie "NotebookLM" z dostępem do wyszukiwarki Google.
+    finalSystemInstruction = `Jesteś zaawansowanym asystentem badawczym AI o nazwie "Next Scribe" z dostępem do wyszukiwarki Google.
 Użytkownik wyraził zgodę na przeszukanie internetu, ponieważ potrzebne informacje nie znalazły się w jego materiałach źródłowych.
 Odpowiedz na pytanie użytkownika, korzystając z wyszukiwarki Google oraz (jeśli to pomocne) z materiałów źródłowych.
 Pisz po polsku, używaj Markdown. Zrezygnuj z formatowania pogrubieniem (**). Zwróć poprawny JSON z polami "answer" i "citations". Jeśli informacje pochodzą z wyszukiwarki internetowej, jako sourceTitle w cytatach podaj nazwę strony/źródła z sieci, a sourceId ustaw na "web".`;
@@ -550,6 +551,8 @@ Pisz po polsku, używaj Markdown. Zrezygnuj z formatowania pogrubieniem (**). Zw
     }
   } catch (error) {
     console.error("API call failed", error);
+    // Błąd klucza nie minie po odświeżeniu — nie sugerujemy tego.
+    if (/^Klucz Gemini/.test(error.message)) return { answer: `⚠ ${error.message}`, citations: [] };
     return { answer: `Wystąpił błąd podczas łączenia z AI: ${error.message}. Spróbuj odświeżyć stronę lub zadać pytanie inaczej.`, citations: [] };
   }
 }

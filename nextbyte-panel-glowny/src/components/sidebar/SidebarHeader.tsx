@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, PanelLeftClose, PanelLeft, Sun, Moon } from 'lucide-react';
+import { Bot, PanelLeftClose, PanelLeft, PanelTop, Sun, Moon } from 'lucide-react';
+import { useNavigationMode } from '@/contexts/NavigationModeContext';
+import { usePillNavbarAccess } from '@/hooks/usePillNavbarAccess';
 import { SidebarHeader, useSidebar } from '@/components/ui/sidebar';
 import { useSiteAsset } from '@/hooks/useSiteAsset';
 import { getAssetUrl } from '@/lib/assetUtils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { UchwytPaska } from '@/components/DokowaniePaska';
+import { useJasnyMotyw } from '@/hooks/useJasnyMotyw';
 
 const useIsLimeTheme = () => {
   const [isLime, setIsLime] = useState(() => document.documentElement.getAttribute('data-theme') === 'lime-green');
@@ -20,34 +24,13 @@ const useIsLimeTheme = () => {
   return isLime;
 };
 
-/**
- * Detects if the current theme is "light" by checking background lightness.
- */
-const useIsLightTheme = () => {
-  const [isLight, setIsLight] = useState(false);
-
-  useEffect(() => {
-    const check = () => {
-      const bg = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
-      // Parse HSL: "H S% L%" — if lightness > 50% it's light
-      const match = bg.match(/(\d+(?:\.\d+)?)%\s*$/);
-      setIsLight(match ? Number(match[1]) > 50 : false);
-    };
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
-    window.addEventListener('themeChanged', check);
-    return () => { observer.disconnect(); window.removeEventListener('themeChanged', check); };
-  }, []);
-
-  return isLight;
-};
-
 export function AppSidebarHeader() {
   const { data: logoAsset } = useSiteAsset('sidebar_logo');
-  const { state, toggleSidebar, isMobile, hoverExpanded, open, setOpen, setHoverExpanded } = useSidebar();
+  const { state, toggleSidebar, isMobile, hoverExpanded, open, setOpen, setHoverExpanded, setOpenMobile } = useSidebar();
+  const { setNavMode } = useNavigationMode();
+  const { canUsePillNavbar } = usePillNavbarAccess();
   const isLime = useIsLimeTheme();
-  const isLight = useIsLightTheme();
+  const isLight = useJasnyMotyw();
   const { user } = useAuth();
   const [isToggling, setIsToggling] = useState(false);
 
@@ -267,7 +250,10 @@ export function AppSidebarHeader() {
           )}
         </Link>
 
-        <div className={`flex items-center gap-1 transition-opacity duration-150 ${isCollapsed ? 'opacity-0 pointer-events-none' : ''}`}>
+        <div className={`flex shrink-0 items-center gap-0.5 transition-opacity duration-150 ${isCollapsed ? 'opacity-0 pointer-events-none' : ''}`}>
+          {/* Uchwyt dokowania — w rzędzie kontrolek, nie na rancie tafli.
+              Na telefonie pasek jest wysuwanym panelem, więc ciągnąć nie ma czego. */}
+          {!isMobile && <UchwytPaska />}
           {/* Theme toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -288,6 +274,18 @@ export function AppSidebarHeader() {
               {isLight ? 'Ciemny motyw' : 'Jasny motyw'}
             </TooltipContent>
           </Tooltip>
+
+          {/* Telefon: przejście na pasek u góry. Uchwytu dokowania tu nie ma
+              (panel jest wysuwany), więc bez tego tryb pigułki był nieosiągalny. */}
+          {isMobile && canUsePillNavbar && (
+            <button
+              onClick={() => { setOpenMobile(false); setNavMode('pillnav'); }}
+              className="nb-ikona-kafel group flex items-center justify-center w-7 h-7 rounded-lg border text-foreground/70 hover:text-primary transition-all duration-300"
+              aria-label="Przełącz na pasek u góry"
+            >
+              <PanelTop className="w-3.5 h-3.5" strokeWidth={2} />
+            </button>
+          )}
 
           {/* Collapse/expand sidebar */}
           {!isMobile && open && (

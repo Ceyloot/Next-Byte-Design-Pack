@@ -86,7 +86,7 @@ function UsageMonitor() {
   };
 
   return (
-    <div className="rounded-nb nb-szklo bg-card/30 border-foreground/10 text-xs mt-4 select-none overflow-hidden">
+    <div className="rounded-xl bg-card/40 border border-foreground/[0.10] text-xs mt-4 select-none overflow-hidden backdrop-blur-md">
       {/* header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <span className="font-semibold text-foreground/50 text-[10px] uppercase tracking-wider">Raport kosztów API</span>
@@ -239,7 +239,7 @@ function ThemePreviewCard({ themeId, label, preview }) {
   ];
   return (
     <div
-      className="relative rounded-nb-sm overflow-hidden flex-shrink-0"
+      className="relative rounded-xl overflow-hidden flex-shrink-0"
       style={{
         background: preview.bg,
         width: 90,
@@ -302,14 +302,14 @@ function ThemeSwitcher() {
               type="button"
               onClick={() => setTheme(t.id)}
               className={cn(
-                'relative flex items-center gap-3 p-2.5 rounded-nb-sm border text-left transition-all cursor-pointer',
+                'relative flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all cursor-pointer select-none',
                 theme === t.id
-                  ? 'border-primary/60 bg-primary/10 shadow-[0_0_15px_rgba(112,190,250,0.15)]'
-                  : 'nb-szklo bg-card/30 border-foreground/[0.09] hover:bg-card/60 hover:border-foreground/15'
+                  ? 'border-primary/60 bg-primary/10 shadow-[0_0_15px_hsl(var(--primary)/0.2)]'
+                  : 'bg-card/40 border-foreground/[0.10] hover:bg-card/70 hover:border-foreground/20'
               )}
             >
               <div
-                className="w-10 h-10 rounded-nb-xs flex-shrink-0 border flex items-center justify-center relative overflow-hidden"
+                className="w-10 h-10 rounded-lg flex-shrink-0 border flex items-center justify-center relative overflow-hidden"
                 style={{ backgroundColor: t.preview.bg, borderColor: t.preview.border }}
               >
                 <div
@@ -353,10 +353,10 @@ function ThemeSwitcher() {
               type="button"
               onClick={() => setPattern(p.id)}
               className={cn(
-                'px-3 py-2 rounded-nb-sm border text-left transition-all cursor-pointer',
+                'px-3 py-2 rounded-xl border text-left transition-all cursor-pointer select-none',
                 bgPattern === p.id
                   ? 'border-primary/60 bg-primary/10 text-primary font-bold'
-                  : 'nb-szklo bg-card/30 border-foreground/[0.09] text-foreground/70 hover:bg-card/60'
+                  : 'bg-card/40 border-foreground/[0.10] text-foreground/70 hover:bg-card/70'
               )}
             >
               <div className="text-xs">{p.label}</div>
@@ -451,7 +451,7 @@ function SettingsModal({
       onClose={onClose}
       title={
         <span className="flex items-center gap-3">
-          <span className="p-2 bg-primary/20 rounded-nb-sm text-primary border border-primary/30">
+          <span className="p-2 bg-primary/20 rounded-xl text-primary border border-primary/30">
             <Shield size={20} />
           </span>
           <span>
@@ -546,14 +546,14 @@ function SettingsModal({
                       type="button"
                       onClick={() => setModelSelect(m.value)}
                       className={cn(
-                        'flex items-center justify-between px-3.5 py-2 rounded-nb-sm border text-left transition-all cursor-pointer',
+                        'flex items-center justify-between px-3.5 py-2 rounded-xl border text-left transition-all cursor-pointer select-none',
                         modelSelect === m.value
                           ? 'border-primary/50 bg-primary/10 text-foreground'
-                          : 'nb-szklo bg-card/30 border-foreground/[0.09] text-foreground/60 hover:text-foreground hover:bg-card/60'
+                          : 'bg-card/40 border-foreground/[0.10] text-foreground/70 hover:text-foreground hover:bg-card/70'
                       )}
                     >
                       <span className="text-xs font-semibold">{m.label}</span>
-                      <span className={cn('text-[10px]', modelSelect === m.value ? 'text-primary/80' : 'text-foreground/50')}>{m.desc}</span>
+                      <span className={cn('text-[10px]', modelSelect === m.value ? 'text-primary' : 'text-foreground/50')}>{m.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -596,7 +596,7 @@ function SettingsModal({
           {/* TAB 2: DOSTOSUJ CZAT */}
           {activeTab === 'customization' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="p-3.5 rounded-nb-sm bg-primary/10 border border-primary/25 flex items-start gap-3">
+              <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/25 flex items-start gap-3">
                 <Sliders size={18} className="text-primary mt-0.5 flex-shrink-0" />
                 <div className="text-xs">
                   <h4 className="font-bold text-foreground">Personalizacja Asystenta AI</h4>
@@ -622,10 +622,10 @@ function SettingsModal({
                         type="button"
                         onClick={() => setGoal(opt.id)}
                         className={cn(
-                          'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer',
+                          'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer select-none',
                           isSelected
-                            ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_12px_rgba(112,190,250,0.3)]'
-                            : 'nb-szklo bg-card/40 text-foreground/60 border-foreground/15 hover:text-foreground hover:bg-card/70'
+                            ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_12px_hsl(var(--primary)/0.35)]'
+                            : 'bg-card/50 text-foreground/70 border-foreground/15 hover:text-foreground hover:bg-card/80 hover:border-foreground/25'
                         )}
                       >
                         {isSelected && <Check size={13} strokeWidth={3} />}
@@ -647,7 +647,7 @@ function SettingsModal({
                       value={customPrompt}
                       onChange={e => setCustomPrompt(e.target.value)}
                       placeholder="Wpisz swoje szczegółowe instrukcje dla AI (np. Odpowiadaj po angielsku, używaj terminologii medycznej...)"
-                      className="w-full p-3 rounded-nb-sm nb-szklo bg-card/40 border-foreground/15 text-xs text-foreground placeholder:text-foreground/35 outline-none focus:border-primary/50 resize-none font-sans"
+                      className="w-full p-3 rounded-xl bg-background/50 border border-foreground/[0.12] text-xs text-foreground placeholder:text-foreground/35 outline-none focus:border-primary/50 focus:bg-background/80 transition-colors resize-none font-sans"
                     />
                   </div>
                 )}
@@ -668,10 +668,10 @@ function SettingsModal({
                         type="button"
                         onClick={() => setLength(opt.id)}
                         className={cn(
-                          'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer',
+                          'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer select-none',
                           isSelected
-                            ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_12px_rgba(112,190,250,0.3)]'
-                            : 'nb-szklo bg-card/40 text-foreground/60 border-foreground/15 hover:text-foreground hover:bg-card/70'
+                            ? 'bg-primary text-primary-foreground border-primary/60 shadow-[0_0_12px_hsl(var(--primary)/0.35)]'
+                            : 'bg-card/50 text-foreground/70 border-foreground/15 hover:text-foreground hover:bg-card/80 hover:border-foreground/25'
                         )}
                       >
                         {isSelected && <Check size={13} strokeWidth={3} />}
@@ -687,9 +687,9 @@ function SettingsModal({
           {/* TAB 3: EKSPORT */}
           {activeTab === 'export' && (
             <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="p-4 rounded-nb-sm nb-szklo bg-card/30 border-foreground/10 space-y-3">
+              <div className="p-4 rounded-xl bg-card/40 border border-foreground/[0.10] space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-nb-sm bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
+                  <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
                     <FileText size={18} />
                   </div>
                   <div>

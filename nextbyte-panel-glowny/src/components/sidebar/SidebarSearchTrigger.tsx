@@ -24,16 +24,20 @@ export const SidebarSearchTrigger: React.FC<Props> = ({ onOpen }) => {
       onClick={onOpen}
       data-tour="spotlight-search"
       aria-label="Wyszukaj"
-      className="nb-ikona-kafel relative w-full group flex items-center gap-2 px-2 py-1.5 rounded-xl border text-[13px] text-foreground/65 hover:text-foreground transition-all duration-300"
+      className={cn('nb-ikona-kafel relative w-full group flex items-center py-1.5 rounded-xl border text-[13px] text-foreground/65 hover:text-foreground transition-all duration-300', isCollapsed ? 'justify-center px-0' : 'gap-2 px-2')}
       title={isCollapsed ? 'Wyszukaj • Ctrl+K' : undefined}
     >
       <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center">
         <Search className="w-4 h-4 group-hover:text-primary transition-colors" />
       </span>
-      <span className={cn('flex-1 text-left truncate tracking-tight transition-opacity duration-150', isCollapsed && 'opacity-0')}>Wyszukaj...</span>
-      <kbd className={cn('nb-wiersz hidden sm:flex items-center gap-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded-md border text-foreground/55 transition-opacity duration-150', isCollapsed && 'opacity-0')}>
-        <Command className="w-3 h-3" />K
-      </kbd>
+      {!isCollapsed && (
+        <>
+          <span className="flex-1 text-left truncate tracking-tight">Wyszukaj...</span>
+          <kbd className="nb-wiersz hidden sm:flex items-center gap-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded-md border text-foreground/55">
+            <Command className="w-3 h-3" />K
+          </kbd>
+        </>
+      )}
     </button>
   );
 };
