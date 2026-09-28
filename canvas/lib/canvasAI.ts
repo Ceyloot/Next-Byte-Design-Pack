@@ -1,4 +1,6 @@
 import { stripDataUrl } from './maskUtils';
+import { OPERATION_IDS } from '../prompts';
+import type { OperationId } from '../prompts';
 
 export type CanvasIntent =
   | 'character_transfer'
@@ -174,7 +176,11 @@ export async function geminiAnalyzeCanvasIntent(
   sourceCrop?: string,
   targetCrop?: string
 ): Promise<{
+  /** Operacja z zamkniętego słownika rejestru — steruje wyborem promptu sytuacyjnego. */
+  operation: OperationId;
   intent: CanvasIntent;
+  /** Opis od Gemini: co konkretnie ma powstać (trafia do [GENERATION BRIEF]). */
+  generationBrief: string;
   enhancedPrompt: string;
   sourcePinIdx?: number;
   targetPinIdx?: number;
@@ -183,7 +189,7 @@ export async function geminiAnalyzeCanvasIntent(
   suggestedScale?: number;
   bBox?: [number, number, number, number];
 }> {
-  if (!apiKey) return { intent: 'edit', enhancedPrompt: userPrompt };
+  if (!apiKey) return { operation: 'general_edit', intent: 'edit', generationBrief: userPrompt, enhancedPrompt: userPrompt };
 
   const pinInfo = pins
     .map(
@@ -231,32 +237,41 @@ LICZBA PINEZEK: ${pinCount}
 PINEZKI: ${pinInfo}
 
 TWOJE ZADANIE:
-1. Zidentyfikuj operację (transfer, swap, addition, removal, style_change).
-2. Jeśli użytkownik wskazał 2 pinezki, jest to chirurgiczna relokacja obiektu: Pin 1 = Źródło, Pin 2 = Cel.
-3. Obiekt źródłowy z Pin 1 musi zostać usunięty ze starego miejsca (czysta płyta), a wstawiony w Pin 2.
+1. Wybierz DOKŁADNIE JEDNĄ operację z dozwolonej listy (nie wymyślaj innych):
+   ${OPERATION_IDS.join(' | ')}
+2. Nie sięgaj po object_swap/character_swap, jeśli sytuacja nim nie jest — dobierz operację najlepiej pasującą do polecenia i pinezek.
+3. Jeśli użytkownik wskazał 2 pinezki, jest to zwykle relokacja obiektu (object_transfer): Pin 1 = Źródło, Pin 2 = Cel; źródło ma zostać wyczyszczone (clean plate).
+4. W polu BRIEF opisz krótko po angielsku CO ma powstać (sam przedmiot/scena), bez zasad technicznych — te doda silnik.
 
-FORMAT ODPOWIEDZI:
-INTENT: <object_transfer | object_swap | character_transfer | add_text | remove_object | edit>
-OBJECT_NAME: <nazwa obiektu>
-PROMPT: <szczegółowy prompt w języku angielskim>`,
+FORMAT ODPOWIEDZI (dokładnie te klucze):
+OPERATION: <jedna z: ${OPERATION_IDS.join(' | ')}>
+OBJECT_NAME: <nazwa obiektu po polsku>
+BRIEF: <krótki angielski opis tego, co ma zostać wygenerowane>`,
     });
 
     const result = await callGeminiContent(apiKey, GEMINI_VISION_MODEL, parts);
 
-    const intentMatch = result.match(/INTENT:\s*(\w+)/i);
+    const opMatch = result.match(/OPERATION:\s*([a-z_]+)/i);
     const objectNameMatch = result.match(/OBJECT_NAME:\s*(.+)/i);
-    const promptMatch = result.match(/PROMPT:\s*(.+)/is);
+    const briefMatch = result.match(/BRIEF:\s*(.+)/is);
+
+    const rawOp = opMatch?.[1]?.toLowerCase() as OperationId | undefined;
+    const operation: OperationId =
+      rawOp && (OPERATION_IDS as string[]).includes(rawOp) ? rawOp : 'general_edit';
+    const brief = briefMatch?.[1]?.trim() || userPrompt;
 
     return {
-      intent: (intentMatch?.[1]?.toLowerCase() || 'edit') as CanvasIntent,
+      operation,
+      intent: operation as unknown as CanvasIntent,
+      generationBrief: brief,
       objectName: objectNameMatch?.[1]?.trim(),
-      enhancedPrompt: promptMatch?.[1]?.trim() || userPrompt,
+      enhancedPrompt: brief,
       sourcePinIdx: 0,
       targetPinIdx: 1,
       suggestedScale: 0.35,
     };
   } catch (error) {
     console.warn('geminiAnalyzeCanvasIntent failed:', error);
-    return { intent: 'edit', enhancedPrompt: userPrompt };
+    return { operation: 'general_edit', intent: 'edit', generationBrief: userPrompt, enhancedPrompt: userPrompt };
   }
 }

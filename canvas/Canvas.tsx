@@ -39,7 +39,7 @@ import {
   Crosshair
 } from 'lucide-react';
 import { useCanvasStore, CanvasLayer, PinMarker, ToolType } from './store/canvasStore';
-import { geminiAnalyzeTargetObject } from './lib/canvasAI';
+import { geminiAnalyzeTargetObject, geminiAnalyzeCanvasIntent } from './lib/canvasAI';
 import { generateGoogleImage, NANO_BANANA_MODELS } from './lib/googleGenAI';
 import { JsonPromptEngine } from './lib/jsonPromptEngine';
 import { cropImageAtPoint, createDualTransferMask, createBlobMaskAtPoint } from './lib/maskUtils';
@@ -352,9 +352,32 @@ export function Canvas() {
         action = 'addition';
       }
 
-      // 1. Compile structured prompt (Solves duplication / double house bug!)
+      // 1a. Niech Gemini SAM zdecyduje, która operacja/sytuacja obowiązuje.
+      //     Zwrócony `operation` steruje wyborem promptu sytuacyjnego z rejestru,
+      //     a `generationBrief` opisuje, co ma powstać.
+      const secondLayer = layers.find((l) => l.id !== selectedLayer.id && !!l.src);
+      let classifiedOperation: import('./prompts').OperationId | undefined;
+      let generationBrief = aiPrompt.trim();
+      try {
+        const classification = await geminiAnalyzeCanvasIntent(
+          apiKey,
+          aiPrompt.trim() || 'Przenieś wskazany obiekt w nowe miejsce, zachowując spójność tła',
+          pins.length,
+          pins.map((p) => ({ description: p.description || '', normalizedX: p.normalizedX, normalizedY: p.normalizedY })),
+          selectedLayer.src,
+          secondLayer?.src,
+        );
+        classifiedOperation = classification.operation;
+        generationBrief = classification.generationBrief || generationBrief;
+      } catch (e) {
+        console.warn('Klasyfikacja intencji nie powiodła się, używam akcji z UI:', e);
+      }
+
+      // 1b. Compile structured prompt via przestrzeń promptów (rejestr + composer).
       const plan = JsonPromptEngine.compile({
         action,
+        operation: classifiedOperation,
+        generationBrief,
         userInstruction: aiPrompt.trim() || 'Przenieś wskazany obiekt w nowe miejsce, zachowując spójność tła',
         sourcePin,
         targetPin,
