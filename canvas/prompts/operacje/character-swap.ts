@@ -30,6 +30,7 @@ export const CHARACTER_SWAP: Operation = {
     'no-copy-paste-rule',
     'edge-blend-rule',
   ],
+  gotowy: 'studio-character-swap',
   dawca: 'wymagany',
   czystaPlyta: true,
   misja: `Replace the whole person at {{PIN_TARGET}} with the person from {{IMAGE_DONOR}} — their identity, body and clothing — fitted into the position, pose, scale and light of the scene. Every other person stays untouched.`,

@@ -20,6 +20,14 @@ import type { BrickId, ObrazWejscia, OperationId, OpisSceny, RolaPineski, Wymaga
 import { getOperation } from './operacje'
 import { BRICKS } from './bricks'
 import { POZYTYW } from './pozytyw'
+import {
+  STUDIO_ANATOMIA,
+  STUDIO_SWAP_KONTROLA,
+  STUDIO_SWAP_SYSTEM,
+  STUDIO_TOZSAMOSC,
+  studioSwapBaza,
+  studioSwapBazaUbranieSceny,
+} from './operacje/character-swap-studio'
 
 /** Pineska w układzie wysyłki do generatora (numer obrazu: 1 = docelowy). */
 export interface PineskaSklejka {
@@ -61,6 +69,8 @@ export interface SkladajWejscie {
   dyrektywyStylu?: { nazwa: string; reguly: string[] }
   /** rozmiar obrazu docelowego w pikselach — do zapisu formatu wyniku */
   format?: { szerokosc: number; wysokosc: number }
+  /** zamiana postaci: ubranie zostaje ze sceny docelowej (wariant z poz. 21 Studia) */
+  ubranieZeSceny?: boolean
   /** czy jako ostatni obraz wysyłamy maskę obszaru pracy */
   maska?: boolean
 }
@@ -189,6 +199,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   }
   const sekcjaObrazow = `[IMAGES — sent in this order]\n${linieObrazow.join('\n')}`
 
+  if (op.gotowy === 'studio-character-swap') return skladajGotowySwap(w, sekcjaObrazow, zasadaZawsze0(), cel, zrodlo)
+
   // 2. RULE BRICKS
   const pominiete: BrickId[] = []
   const stale: BrickId[] = op.id === 'style_change' ? [] : BRICKI_ZAWSZE
@@ -302,5 +314,62 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     dawca: op.dawca,
     czystaPlyta: op.czystaPlyta && czyszczenie !== null,
     nierozwiazaneTokeny: [...nierozwiazane],
+  }
+}
+
+function zasadaZawsze0(): string {
+  return `[ALWAYS — NON-NEGOTIABLE]\n${ZASADA_ZAWSZE}`
+}
+
+/**
+ * Zamiana postaci: prompt Studia Zdjęć 1:1 (rola, baza, kotwica, anatomia, tożsamość)
+ * + mapa „który element skąd, gdzie i jak” (obrazy i kropki pinesek) + polecenie.
+ */
+function skladajGotowySwap(
+  w: SkladajWejscie,
+  sekcjaObrazow: string,
+  zawsze: string,
+  cel: PineskaSklejka | undefined,
+  zrodlo: PineskaSklejka | undefined,
+): SkladajWynik {
+  const op = getOperation(w.operacja)
+  const dawcy = w.obrazy.filter((o) => o.rola === 'donor')
+  const refs =
+    dawcy.length > 1
+      ? `the first ${dawcy.length} character reference images (Images ${dawcy[0].numer}–${dawcy[dawcy.length - 1].numer}, all showing the SAME person from different angles)`
+      : `the character reference image (Image ${dawcy[0]?.numer ?? 2})`
+  const baza = (w.ubranieZeSceny ? studioSwapBazaUbranieSceny : studioSwapBaza)(refs, 'Image 1')
+
+  const wsp = (p: PineskaSklejka) => `dot at x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
+  const mapa = [
+    `[MAP — which element is where]`,
+    `Image 1 = the SCENE (the plate that stays).`,
+    ...dawcy.map((d) => `Image ${d.numer} = CHARACTER REFERENCE (identity source only).`),
+    cel ? `The person to REPLACE is at the magenta dot of Pin ${cel.numer} in Image 1 (${wsp(cel)})${cel.miejsce ? ` — ${cel.miejsce}` : ''}. The new person takes exactly that position, pose, scale and light.` : '',
+    zrodlo ? `The person to take IDENTITY from is at the magenta dot of Pin ${zrodlo.numer} in Image ${zrodlo.obraz} (${wsp(zrodlo)}). Every other person in the scene stays untouched.` : '',
+    `The small magenta dots are guides only and must not appear in the result.`,
+  ].filter(Boolean)
+
+  const sekcje: SekcjaPromptu[] = [
+    { klucz: 'always', tekst: zawsze },
+    { klucz: 'operation', tekst: STUDIO_SWAP_SYSTEM },
+    { klucz: 'images', tekst: sekcjaObrazow },
+    { klucz: 'pins', tekst: mapa.join('\n') },
+    { klucz: 'operation', tekst: baza },
+    { klucz: 'command', tekst: `Additional instruction: ${w.polecenie.trim() || op.nazwa}.` },
+    { klucz: 'check', tekst: STUDIO_SWAP_KONTROLA },
+    { klucz: 'quality', tekst: `${STUDIO_ANATOMIA}\n${STUDIO_TOZSAMOSC}\nThe frame holds no magenta dot, numeral, letter or marker anywhere.` },
+    { klucz: 'always', tekst: zawsze },
+  ]
+  return {
+    prompt: sekcje.map((s) => s.tekst).join('\n\n'),
+    sekcje,
+    operacja: w.operacja,
+    nazwaOperacji: op.nazwa,
+    uzyteBricki: [],
+    pominieteBricki: [],
+    dawca: op.dawca,
+    czystaPlyta: true,
+    nierozwiazaneTokeny: [],
   }
 }
