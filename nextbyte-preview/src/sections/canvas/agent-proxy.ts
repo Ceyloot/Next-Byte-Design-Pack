@@ -24,6 +24,7 @@ import {
   miejscaZPlanu,
   odczytajPlanRezysera,
   trescZadaniaRezysera,
+  type PomiarSkali,
   type Prostokat,
 } from './rezyser'
 
@@ -61,8 +62,8 @@ export interface Plan {
   plan: string
   /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze, po angielsku — sekcja SCALE */
   skala?: string
-  /** obwiednia gotowego obiektu w % szerokości/wysokości zdjęcia docelowego */
-  rozmiar?: { szer: number; wys: number }
+  /** pomiar skali od reżysera (kotwica + wymiary obiektu w metrach) */
+  pomiar?: PomiarSkali
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
@@ -303,7 +304,7 @@ export function agentProxy(): Plugin {
         analiza: odczytany.analiza,
         plan: odczytany.plan,
         skala: odczytany.skala,
-        rozmiar: odczytany.rozmiar,
+        pomiar: odczytany.pomiar,
         miejsca: miejscaZPlanu(odczytany),
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,

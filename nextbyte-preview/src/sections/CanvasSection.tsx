@@ -35,6 +35,7 @@ import { INTENCJE, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/pol
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
+import { rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
@@ -688,8 +689,12 @@ export function CanvasSection() {
             )
           : projekt.pineski
 
+      // Skala liczona z kotwicy o znanym rozmiarze (nie z oka): % kadru docelowego.
+      const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight) : undefined
+      if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
+
       const pelnePolecenie = zbudujPolecenie(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
-        skala: skalaDlaModelu(plan?.skala, plan?.rozmiar, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null),
+        skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null),
         instrukcja: warstwaWycinka
           ? 'Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.'
           : undefined,
@@ -724,10 +729,10 @@ export function CanvasSection() {
       if (warstwaWycinka && wycinek) {
         // rozmiar od reżysera (ułamek zdjęcia docelowego) → ułamek wycinka
         // Przy zamianie zmieniony obszar obejmuje też stary obiekt — pomiar byłby zawyżony.
-        const cel = plan?.rozmiar && trybAgenta !== 'zamien'
+        const cel = rozmiarPlanu && trybAgenta !== 'zamien'
           ? {
-              szer: Math.min(0.95, plan.rozmiar.szer / 100 / (wycinek.w / zrodlo.naturalWidth)),
-              wys: Math.min(0.95, plan.rozmiar.wys / 100 / (wycinek.h / zrodlo.naturalHeight)),
+              szer: Math.min(0.95, rozmiarPlanu.szer / 100 / (wycinek.w / zrodlo.naturalWidth)),
+              wys: Math.min(0.95, rozmiarPlanu.wys / 100 / (wycinek.h / zrodlo.naturalHeight)),
             }
           : undefined
         const zlozony = await zlozWycinek(await konwertujNaDataUrl(zrodlo.src), wynik.obrazUrl, wycinek, cel)
@@ -736,7 +741,7 @@ export function CanvasSection() {
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
-            skala: skalaDlaModelu(plan?.skala, plan?.rozmiar, null),
+            skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, null),
             role: uklad.role,
             miejsca: plan?.miejsca,
             osoba: plan?.osoba,

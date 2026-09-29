@@ -90,7 +90,7 @@ OUTPUT — return ONLY this JSON:
 }
 ```
 
-## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1810 tokenów)
+## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1818 tokenów)
 
 ```text
 [ALWAYS — NON-NEGOTIABLE]
@@ -113,7 +113,7 @@ POSITION — the element lands exactly at Pin 1 ("lamp", Image 1): on the magent
 SCALE — true real-world size, judged against something of known size that is visible near the spot (a person, door, window, tile, car).
 - Use the size given in SCALE; distance changes how much of the frame it covers, never how big it is. The marked area is a boundary, not a quota: never inflate to fill it or shrink to fit.
 - A replacement has its OWN size, never the outline of what it replaces.
-- With no anchor nearby choose the smaller plausible size and set it deeper. Show it complete, clear of the frame edge.
+- With no anchor nearby, use the typical real-world size of that kind of object — neither inflated nor shrunk. Show it complete, clear of the frame edge.
 PERSPECTIVE — ALWAYS maximally realistic relative to the camera of Image 1: one camera, one viewpoint, one horizon.
 - Re-draw the element as that camera sees it: the same camera height, tilt (a high or aerial camera looks DOWN at it and shows its top surfaces; a low camera looks up), focal length and lens distortion. Never keep the viewing angle of its source photo — a front-on or eye-level donor is fully rotated to the target view.
 - The element sits on the ground plane at the right distance: its base follows the ground's perspective, its horizontal lines converge to the same vanishing points as the road, walls and ground around it, and its verticals lean exactly like the verticals of the scene.
@@ -202,7 +202,7 @@ POSITION — the element lands exactly at Pin 2 ("path", Image 1): on the magent
 SCALE — true real-world size, judged against something of known size that is visible near the spot (a person, door, window, tile, car).
 - Use the size given in SCALE; distance changes how much of the frame it covers, never how big it is. The marked area is a boundary, not a quota: never inflate to fill it or shrink to fit.
 - A replacement has its OWN size, never the outline of what it replaces.
-- With no anchor nearby choose the smaller plausible size and set it deeper. Show it complete, clear of the frame edge.
+- With no anchor nearby, use the typical real-world size of that kind of object — neither inflated nor shrunk. Show it complete, clear of the frame edge.
 PERSPECTIVE — ALWAYS maximally realistic relative to the camera of Image 1: one camera, one viewpoint, one horizon.
 - Re-draw the element as that camera sees it: the same camera height, tilt (a high or aerial camera looks DOWN at it and shows its top surfaces; a low camera looks up), focal length and lens distortion. Never keep the viewing angle of its source photo — a front-on or eye-level donor is fully rotated to the target view.
 - The element sits on the ground plane at the right distance: its base follows the ground's perspective, its horizontal lines converge to the same vanishing points as the road, walls and ground around it, and its verticals lean exactly like the verticals of the scene.

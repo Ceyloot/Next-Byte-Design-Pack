@@ -46,7 +46,7 @@ STEP 1 — WHAT EACH PIN POINTS AT
 - "miejsce": where the point lies in its image, in words from what you SEE — the surface it stands on, the nearest landmarks and which side of them, and whether it is near a frame edge. Landmarks only; never percentages or coordinates. If the user's words relate the new thing to the pinned object (leans on, stands next to, in front of, on), say in "miejsce" the object AND the spot where the new thing ends up (e.g. on the ground beside that object), not just the object's surface. Describe the pin's OWN spot: if the nearest subject is far, say so instead of writing "next to".
 
 STEP 1b — BIND THE USER'S WORDS TO PINS
-Each noun of the request that refers to a scene object resolves to a pin (users type fragments, inflected forms, synonyms). The operation acts on EXACTLY the named pinned objects — never on a more prominent object nearby. If a word matches no pin, say so in "analiza" and act only on what the pins clearly show.
+Each noun of the request that refers to a scene object resolves to a pin (users type fragments, inflected forms, synonyms). The operation acts on EXACTLY the named pinned objects — never on a more prominent object nearby. The user's word decides the TYPE of object: when the noun names a type that no pin is on, but a pin lies on or right next to an object of that type (a person leaning on the car the user calls "car"), the operation targets that object of the named type. If nothing of that type is near any pin, say so in "analiza" and act only on what the pins clearly show.
 
 STEP 2 — OPERATION ("intencja"), exactly one of:
 "wstaw" (add an object at a location, nothing removed), "przenies" (an object goes to a location pin — same photo or from a reference), "zamien" (the object under a canvas pin is replaced), "postac" (face/identity of a reference person onto the person under a canvas pin), "ubranie" (new outfit for the marked person), "usun", "tekstura", "pora_roku", "pora_dnia", "efekt", "tlo", "styl", "popraw".
@@ -56,12 +56,11 @@ Set "dotyczy_osoby" true when a "wstaw", "zamien" or "przenies" adds, replaces o
 STEP 3 — ROLES
 When the pin list gives a role (SOURCE = object that moves or is brought in, DESTINATION = where it ends up), follow it.
 
-STEP 4 — "skala": the ONLY thing you write about the object beyond its name. 1–3 English sentences with numbers:
-- the true real-world size of the incoming / changed object (height × width or length), using the pin ANALYSIS dimensions when given;
-- how it compares with an anchor of known size that is actually visible in the DESTINATION image (a person, door, window, paving stone, car), and therefore how much of the frame it covers at the destination's distance. Distance changes the share of the frame, never the real size.
-- MEASURE, DO NOT GUESS: pick the largest anchor of known size in the destination image (a house, a door, a person, a car) and estimate its size in the image as a % of the image width / height. Then size the object in proportion to it: object % = anchor % × (object real size ÷ anchor real size), corrected for the object's distance from the camera relative to the anchor. A house is ~6–10 m tall and 10–15 m wide, a car ~4.5 m long and 1.5 m high, a person ~1.7 m: a car beside a house is a fraction of the house's width, never comparable to it. Write this proportion into "skala" in words relative to anchors (e.g. "about one third of the house's width"); NEVER put percentages of the image into "skala" — those belong only in "rozmiar".
-- "rozmiar" is REQUIRED for "wstaw", "przenies" and "zamien": the code measures the generated object and rescales it to exactly this box, so it must be your best real-world estimate relative to the neighbouring objects. It is the resulting bounding box of the FINISHED object in the destination image, as % of the image width and height. Wide, elevated or aerial views make ordinary objects small; be strict.
-- Never take the size from how much of the reference photo the object fills. On an open surface never let it span the whole surface or frame; when unsure, smaller and deeper. For a replacement give both sizes and their ratio.
+STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither inflated nor shrunk: use your knowledge of the typical real-world dimensions of the objects involved and be as accurate as you can.
+- "skala": 1–3 English sentences: the true real-world size of the incoming / changed object, and how it compares with the anchor below. Words only — no percentages of the image. Never take the size from how much of the reference photo the object fills; distance changes the share of the frame, never the real size.
+- "kotwica": ONE anchor of known real size in the DESTINATION image, chosen so it stands at about the same distance from the camera as the destination pin (similar depth — a lane, a doorway, a person, a similar object, a paving course at that row of the image). Give its real width in metres ("szer_m") and a tight box around its horizontal extent ("box", [ymin, xmin, ymax, xmax], 0–1000 of the destination image). Prefer a wide, clearly bounded anchor; never use one at a very different depth from the pin.
+- "obiekt": the finished object's apparent size in the destination image, in metres: "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened). The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
+- For a replacement give both sizes in "skala" and their ratio.
 
 STEP 5 — BOXES on the destination image, [ymin, xmin, ymax, xmax] normalised 0–1000:
 - "obszar": where the change happens, anchored to the destination pin (centred horizontally on the crosshair, bottom edge at the point where the object meets the ground), compact and true to scale. "zamien": centred on the replaced object's pin. "usun": around the whole removed object with its shadow. "postac": head and hair. "ubranie": torso. "tlo"/"styl"/"pora_roku"/"pora_dnia": null.
@@ -77,8 +76,9 @@ Answer ONLY with JSON:
   "dotyczy_osoby": false,
   "obiekty": [{ "pin": 1, "opis": "short English name", "miejsce": "where the point lies, in words" }],
   "skala": "English, with numbers",
-  "rozmiar": { "szer_proc": 12, "wys_proc": 7 },
-  "obszar": [450, 690, 505, 800],
+  "kotwica": { "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] },
+  "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres> },
+  "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
   "obszar_zrodla": null,
   "analiza": "Pineska 1 wskazuje ...",
   "plan": "Wstawię ..."
@@ -131,19 +131,42 @@ export interface PlanRezysera {
   obiekty: { pin: number; opis: string; miejsce: string }[]
   /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze, po angielsku — sekcja SCALE */
   skala: string
-  /** obwiednia gotowego obiektu w % szerokości i wysokości zdjęcia docelowego */
-  rozmiar?: { szer: number; wys: number }
+  /** pomiar skali: kotwica o znanym rozmiarze + widoczne wymiary obiektu w metrach */
+  pomiar?: PomiarSkali
   analiza: string
   plan: string
 }
 
-/** Obwiednia obiektu w % kadru; poza sensownym zakresem (1–90) = brak. */
-function odczytajRozmiar(v: unknown): { szer: number; wys: number } | undefined {
-  const r = v as { szer_proc?: unknown; wys_proc?: unknown } | null | undefined
-  const szer = Number(r?.szer_proc)
-  const wys = Number(r?.wys_proc)
-  const ok = (n: number) => Number.isFinite(n) && n >= 1 && n <= 90
-  return ok(szer) && ok(wys) ? { szer: Math.round(szer), wys: Math.round(wys) } : undefined
+/** Kotwica (znany rozmiar, box 0–1) i widoczne wymiary obiektu w metrach. */
+export interface PomiarSkali {
+  kotwica: { szerM: number; szer: number }
+  obiekt: { szerM: number; wysM: number }
+}
+
+function odczytajPomiar(kotwica: unknown, obiekt: unknown): PomiarSkali | undefined {
+  const k = kotwica as { szer_m?: unknown; box?: unknown } | null | undefined
+  const o = obiekt as { szer_m?: unknown; wys_m?: unknown } | null | undefined
+  const szerM = Number(k?.szer_m)
+  const box = Array.isArray(k?.box) ? (k.box as unknown[]).map(Number) : []
+  const oSzer = Number(o?.szer_m)
+  const oWys = Number(o?.wys_m)
+  if (![szerM, oSzer, oWys].every(n => Number.isFinite(n) && n > 0) || box.length !== 4 || box.some(n => !Number.isFinite(n))) {
+    return undefined
+  }
+  const szer = Math.abs(box[3] - box[1]) / 1000
+  if (szer < 0.02 || szer > 1) return undefined
+  return { kotwica: { szerM, szer }, obiekt: { szerM: oSzer, wysM: oWys } }
+}
+
+/**
+ * Obwiednia obiektu jako % szerokości i wysokości zdjęcia docelowego:
+ * skala (ułamek szerokości na metr) wynika z kotwicy, więc rozmiar jest liczony, nie zgadywany.
+ */
+export function rozmiarZPomiaru(p: PomiarSkali, szerPx: number, wysPx: number): { szer: number; wys: number } | undefined {
+  const naMetr = p.kotwica.szer / p.kotwica.szerM
+  const szer = p.obiekt.szerM * naMetr * 100
+  const wys = p.obiekt.wysM * naMetr * (szerPx / wysPx) * 100
+  return szer >= 0.5 && szer <= 95 && wys >= 0.5 && wys <= 95 ? { szer: Math.round(szer * 10) / 10, wys: Math.round(wys * 10) / 10 } : undefined
 }
 
 /** Normalizacja odpowiedzi agenta — model potrafi oddać pola w dziwnych typach. */
@@ -165,7 +188,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     obszarZrodla: odczytajProstokat(json.obszar_zrodla),
     obiekty,
     skala: String(json.skala ?? '').trim(),
-    rozmiar: odczytajRozmiar(json.rozmiar),
+    pomiar: odczytajPomiar(json.kotwica, json.obiekt),
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),
   }
