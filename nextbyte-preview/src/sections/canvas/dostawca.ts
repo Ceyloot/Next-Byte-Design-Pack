@@ -251,3 +251,23 @@ export async function sprawdzWynik(zadanie: ZadanieSprawdzenia): Promise<Sprawdz
     return null
   }
 }
+
+/**
+ * Zamek tożsamości osoby spod pineski (analiza biometryczna jak w Studiu Zdjęć,
+ * poz. 47–50). Obraz to zdjęcie z jednym celownikiem na tej osobie.
+ * Zwraca `null` przy awarii — generacja idzie wtedy bez zamka.
+ */
+export async function analizujTozsamosc(obrazZCelownikiem: string): Promise<string | null> {
+  try {
+    const odp = await fetch('/api/canvas/tozsamosc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ obraz: obrazZCelownikiem }),
+    })
+    if (!odp.ok) return null
+    const tresc = (await odp.json()) as { zamek?: string }
+    return tresc.zamek?.trim() || null
+  } catch {
+    return null
+  }
+}

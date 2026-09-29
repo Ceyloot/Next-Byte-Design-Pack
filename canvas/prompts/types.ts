@@ -102,7 +102,7 @@ export interface Operation {
    * Gotowy prompt (np. ze Studia Zdjęć) przejęty 1:1: składarka bierze go zamiast
    * bricków i kroków, dokładając tylko mapę obrazów i pinesek oraz polecenie.
    */
-  gotowy?: 'studio-character-swap';
+  gotowy?: 'studio-character-swap' | 'studio-face-swap';
 }
 
 /** Rola pineski w operacji. */

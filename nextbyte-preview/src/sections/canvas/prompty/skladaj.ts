@@ -21,9 +21,14 @@ import { getOperation } from './operacje'
 import { BRICKS } from './bricks'
 import {
   STUDIO_ANATOMIA,
+  STUDIO_FACE_KONTROLA,
+  STUDIO_FACE_SYSTEM,
+  STUDIO_REALIZM_TWARZY,
   STUDIO_SWAP_KONTROLA,
   STUDIO_SWAP_SYSTEM,
   STUDIO_TOZSAMOSC,
+  SYSTEM_KOMPOZYTORA,
+  studioFaceBaza,
   studioSwapBaza,
   studioSwapBazaUbranieSceny,
 } from './operacje/character-swap-studio'
@@ -70,6 +75,14 @@ export interface SkladajWejscie {
   dyrektywyStylu?: { nazwa: string; reguly: string[] }
   /** rozmiar obrazu docelowego w pikselach — do zapisu formatu wyniku */
   format?: { szerokosc: number; wysokosc: number }
+  /**
+   * światło i kamera Image 1 opisane konkretnie przez reżysera (kierunek, kelwiny,
+   * twardość, cienie, odblaski, ogniskowa, głębia ostrości, ziarno) — zamiast
+   * ogólnika „jak Image 1”, którego Studio (poz. 52) wprost zakazuje
+   */
+  swiatlo?: string
+  /** zamek tożsamości osoby z referencji (analiza biometryczna, poz. 47–50) */
+  tozsamosc?: string
   /** zamiana postaci: ubranie zostaje ze sceny docelowej (wariant z poz. 21 Studia) */
   ubranieZeSceny?: boolean
   /** czy jako ostatni obraz wysyłamy maskę obszaru pracy */
@@ -77,12 +90,16 @@ export interface SkladajWejscie {
 }
 
 export interface SekcjaPromptu {
-  klucz: 'always' | 'images' | 'bricks' | 'operation' | 'direction' | 'style' | 'pins' | 'protected' | 'scene' | 'command' | 'check' | 'quality'
+  klucz: 'always' | 'images' | 'bricks' | 'operation' | 'direction' | 'light' | 'identity' | 'style' | 'pins' | 'protected' | 'scene' | 'command' | 'check' | 'quality'
   tekst: string
 }
 
 export interface SkladajWynik {
   prompt: string
+  /** rola modelu — idzie jako settings.systemPrompt, nie w treść promptu */
+  system?: string
+  /** temperatura modelu obrazu (Studio: swap 0.45, twarz 0.42, poprawka 0.2) */
+  temperatura?: number
   sekcje: SekcjaPromptu[]
   operacja: OperationId
   nazwaOperacji: string
@@ -160,6 +177,21 @@ const BEZ_KROKOW = new Set<OperationId>(['addition', 'object_swap', 'object_tran
 
 const TOKEN = /\{\{\s*([A-Z_]+)\s*\}\}/g
 
+/** Temperatura operacji z obiektem — niżej niż swap postaci (0.45), bo geometrię zadaje pineska. */
+const TEMPERATURA_OBIEKTU = 0.35
+
+/** Sekcja światła i kamery Image 1 — konkretne wartości od reżysera. */
+function sekcjaSwiatla(swiatlo?: string): string {
+  const t = swiatlo?.trim()
+  return t ? `[LIGHT AND CAMERA OF IMAGE 1 — the changed area is shot under exactly this]\n${t}` : ''
+}
+
+/** Sekcja zamka tożsamości (poz. 49–50 Studia). */
+function sekcjaTozsamosci(tozsamosc?: string): string {
+  const t = tozsamosc?.trim()
+  return t ? `[IDENTITY LOCK]\n${t}` : ''
+}
+
 /** Składa finalny prompt dla modelu obrazu. */
 export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const op = getOperation(w.operacja)
@@ -196,6 +228,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const sekcjaObrazow = `[IMAGES]\n${linieObrazow.join('\n')}`
 
   if (op.gotowy === 'studio-character-swap') return skladajGotowySwap(w, sekcjaObrazow, zasadaZawsze0(), cel, zrodlo)
+  if (op.gotowy === 'studio-face-swap') return skladajGotowaTwarz(w, sekcjaObrazow, cel, zrodlo)
 
   // 2. RULE BRICKS
   const pominiete: BrickId[] = []
@@ -286,6 +319,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     { klucz: 'images', tekst: sekcjaObrazow },
     { klucz: 'pins', tekst: sekcjaPinesek },
     { klucz: 'direction', tekst: sekcjaKierunku },
+    { klucz: 'light', tekst: op.id === 'style_change' ? '' : sekcjaSwiatla(w.swiatlo) },
+    { klucz: 'identity', tekst: sekcjaTozsamosci(w.tozsamosc) },
     { klucz: 'scene', tekst: sekcjaSceny },
     { klucz: 'style', tekst: sekcjaStylu },
     { klucz: 'protected', tekst: sekcjaChronionych },
@@ -294,8 +329,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     { klucz: 'check', tekst: sekcjaKontroli },
   ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
 
+  const zObiektem = OPERACJE_Z_OBIEKTEM.has(op.id)
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
+    system: zObiektem ? SYSTEM_KOMPOZYTORA : undefined,
+    temperatura: zObiektem ? TEMPERATURA_OBIEKTU : undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,
@@ -340,19 +378,24 @@ function skladajGotowySwap(
     `The small magenta dots are guides only and must not appear in the result.`,
   ].filter(Boolean)
 
+  // Kolejność jak w Studiu (poz. 24): baza → instrukcja → kotwica → zamek → realizm.
+  // Rola kompozytora (poz. 19) idzie jako systemPrompt, tak jak w runware-character-swap.
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'always', tekst: zawsze },
-    { klucz: 'operation', tekst: STUDIO_SWAP_SYSTEM },
     { klucz: 'images', tekst: sekcjaObrazow },
     { klucz: 'pins', tekst: mapa.join('\n') },
     { klucz: 'operation', tekst: baza },
     { klucz: 'command', tekst: `Additional instruction: ${w.polecenie.trim() || op.nazwa}.` },
+    { klucz: 'light', tekst: sekcjaSwiatla(w.swiatlo) },
     { klucz: 'check', tekst: STUDIO_SWAP_KONTROLA },
-    { klucz: 'quality', tekst: `${STUDIO_ANATOMIA}\n${STUDIO_TOZSAMOSC}\nThe frame holds no magenta dot, numeral, letter or marker anywhere.` },
+    { klucz: 'identity', tekst: sekcjaTozsamosci(w.tozsamosc) },
+    { klucz: 'quality', tekst: `${STUDIO_REALIZM_TWARZY}\n${STUDIO_ANATOMIA}\n${STUDIO_TOZSAMOSC}\nThe frame holds no magenta dot, numeral, letter or marker anywhere.` },
     { klucz: 'always', tekst: zawsze },
-  ]
+  ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
+    system: STUDIO_SWAP_SYSTEM,
+    temperatura: 0.45,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,
@@ -360,6 +403,56 @@ function skladajGotowySwap(
     pominieteBricki: [],
     dawca: op.dawca,
     czystaPlyta: true,
+    nierozwiazaneTokeny: [],
+  }
+}
+
+/**
+ * Zamiana twarzy: prompt Studia Zdjęć (poz. 28–31, 35) + mapa pinesek + polecenie.
+ * W Studiu Face Swap nie przyjmuje instrukcji użytkownika — tu wchodzi jako
+ * „Additional instruction”, bo pineska i zdanie mówią, KTÓRA osoba.
+ */
+function skladajGotowaTwarz(
+  w: SkladajWejscie,
+  sekcjaObrazow: string,
+  cel: PineskaSklejka | undefined,
+  zrodlo: PineskaSklejka | undefined,
+): SkladajWynik {
+  const op = getOperation(w.operacja)
+  const dawcy = w.obrazy.filter((o) => o.rola === 'donor')
+  const zrodla =
+    dawcy.length > 1
+      ? `Images ${dawcy[0].numer}–${dawcy[dawcy.length - 1].numer}`
+      : `Image ${dawcy[0]?.numer ?? 2}`
+  const wsp = (p: PineskaSklejka) => `dot at x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
+  const mapa = [
+    `[MAP — which face is where]`,
+    cel ? `The face to REPLACE belongs to the person at the magenta dot of Pin ${cel.numer} in Image 1 (${wsp(cel)})${cel.miejsce ? ` — ${cel.miejsce}` : ''}.` : '',
+    zrodlo ? `The identity comes from the person at the magenta dot of Pin ${zrodlo.numer} in Image ${zrodlo.obraz} (${wsp(zrodlo)}).` : '',
+    `Every other person keeps their own face. The small magenta dots are guides only and must not appear in the result.`,
+  ].filter(Boolean)
+
+  const sekcje: SekcjaPromptu[] = [
+    { klucz: 'images', tekst: sekcjaObrazow },
+    { klucz: 'pins', tekst: mapa.join('\n') },
+    { klucz: 'operation', tekst: studioFaceBaza('Image 1', zrodla, Math.max(1, dawcy.length)) },
+    { klucz: 'command', tekst: `Additional instruction: ${w.polecenie.trim() || op.nazwa}.` },
+    { klucz: 'light', tekst: sekcjaSwiatla(w.swiatlo) },
+    { klucz: 'check', tekst: STUDIO_FACE_KONTROLA },
+    { klucz: 'identity', tekst: sekcjaTozsamosci(w.tozsamosc) },
+    { klucz: 'quality', tekst: `${STUDIO_REALIZM_TWARZY}\n${STUDIO_TOZSAMOSC}` },
+  ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
+  return {
+    prompt: sekcje.map((s) => s.tekst).join('\n\n'),
+    system: STUDIO_FACE_SYSTEM,
+    temperatura: 0.42,
+    sekcje,
+    operacja: w.operacja,
+    nazwaOperacji: op.nazwa,
+    uzyteBricki: [],
+    pominieteBricki: [],
+    dawca: op.dawca,
+    czystaPlyta: false,
     nierozwiazaneTokeny: [],
   }
 }

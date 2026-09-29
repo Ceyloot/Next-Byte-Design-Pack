@@ -23,6 +23,8 @@ export function KartaWyniku({ stan, onZamknij }: { stan: StanGeneracji; onZamkni
 
       {stan.faza === 'sprawdza' && <Praca tresc="Sprawdzam, czy wyszło zgodnie z zadaniem…" />}
 
+      {stan.faza === 'poprawia' && <Praca tresc="Wyglądało na wklejone — wygładzam światło, cień i ziarno…" />}
+
       {stan.faza === 'blad' && (
         <div className="flex items-start gap-2.5">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />

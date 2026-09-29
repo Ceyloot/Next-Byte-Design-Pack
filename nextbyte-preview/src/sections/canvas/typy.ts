@@ -323,8 +323,13 @@ export function wytnijOkolice(
 export type StanGeneracji =
   | { faza: 'bezczynny' }
   | { faza: 'planuje' }
-  | { faza: 'trwa'; plan?: string }
+  /** `role` — skąd wiadomo, co jest obiektem, a co miejscem (po polsku) */
+  | { faza: 'trwa'; plan?: string; role?: string }
+  /** poziom 4: ani zdanie, ani wzrok nie rozstrzygnęły ról — pytamy jednym kliknięciem */
+  | { faza: 'pyta'; pytanie: import('./role-z-polecenia').PytanieORole }
   | { faza: 'sprawdza'; wynik: import('./dostawca').Generacja }
+  /** drugi przebieg: kontrola uznała, że zmieniony element wygląda na wklejony */
+  | { faza: 'poprawia'; wynik: import('./dostawca').Generacja }
   | { faza: 'blad'; tresc: string }
   | {
       faza: 'gotowe'

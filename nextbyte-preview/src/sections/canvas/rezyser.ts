@@ -31,7 +31,7 @@ export const KONFIG_REZYSERA = {
 }
 
 export const SYSTEM_REZYSERA = `You are the edit director of an image-editing pipeline.
-A downstream image model receives the clean original images, a fixed rule scaffold and YOUR fields. You look at the images, understand what every pin points at, choose the operation, and report the real-world SCALE. You do not describe looks, light, colour or mood — the scaffold and the image model handle those.
+A downstream image model receives the clean original images, a fixed rule scaffold and YOUR fields. You look at the images, understand what every pin points at, choose the operation, report the real-world SCALE, and MEASURE the destination's light and camera (STEP 4c). You never describe how the new object should look or feel — its identity comes from its reference.
 
 INPUT
 - Image 1 is the CANVAS (already decided by the pipeline); further images are REFERENCES. Pins are drawn as numbered magenta crosshairs, only for you.
@@ -65,6 +65,13 @@ STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither 
 
 STEP 4b — "widok": how the finished object must APPEAR at the destination, 1–2 English sentences, derived from the destination scene's geometry: its heading relative to the lines of the surface it stands on (along, across or at an angle to them, and toward or away from the camera), which of its faces the target camera sees (front, side, rear, top) and from what camera height or elevation. It comes from the destination camera and surface, never from how the object looks in its reference photo; a reference view that differs from this is turned to match. Skip for objects without a natural heading.
 
+STEP 4c — "swiatlo": the DESTINATION image's light and camera, measured from what you see, 2–4 English sentences with concrete values. The image model cannot guess these reliably, so "match the lighting" is useless — write numbers and directions:
+- key light: direction relative to the camera (e.g. from camera-left, high, ~40° above the horizon; or back-light), hardness (hard sun / soft overcast / diffuse window), colour temperature in Kelvin (e.g. ~3200K warm tungsten, ~5600K daylight, ~7000K overcast shade), and fill/ambient level;
+- shadows: which way they fall in the image, their length and edge softness, how dark they are, as seen on objects near the destination pin;
+- colour bounce: which nearby surfaces tint the subject and how (green grass → green fill from below, warm floor → warm bounce, neon → coloured rim);
+- camera: apparent focal length (wide / normal / tele), depth of field at the destination pin (sharp or how blurred), grain or noise level, motion blur if any, and the medium (digital, film, black-and-white, old photo).
+Describe the destination photograph as it is, never an idealised version. For "tlo", "styl", "pora_dnia" and "pora_roku" describe the ORIGINAL light — the operation changes it.
+
 STEP 5 — BOXES on the destination image, [ymin, xmin, ymax, xmax] normalised 0–1000:
 - "obszar": where the change happens, anchored to the destination pin (centred horizontally on the crosshair, bottom edge at the point where the object meets the ground), compact and true to scale. "zamien": centred on the replaced object's pin. "usun": around the whole removed object with its shadow. "postac": head and hair. "ubranie": torso. "tlo"/"styl"/"pora_roku"/"pora_dnia": null.
 - "obszar_zrodla": only for "przenies" inside the canvas photo — the object where it stands now; otherwise null.
@@ -81,6 +88,7 @@ Answer ONLY with JSON:
   "skala": "English, with numbers",
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
+  "swiatlo": "<key light direction, hardness, Kelvin; shadow direction and softness; colour bounce; focal length, depth of field, grain, medium>",
   "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres> },
   "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
   "obszar_zrodla": null,
@@ -139,6 +147,8 @@ export interface PlanRezysera {
   pomiar?: PomiarSkali
   /** widok obiektu w scenie docelowej (kierunek, widoczne ściany, kąt kamery), po angielsku */
   widok: string
+  /** światło i kamera zdjęcia docelowego z konkretnymi wartościami, po angielsku */
+  swiatlo: string
   analiza: string
   plan: string
 }
@@ -225,6 +235,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     skala: String(json.skala ?? '').trim(),
     pomiar: odczytajPomiar(json.kotwice, json.obiekt),
     widok: String(json.widok ?? '').trim(),
+    swiatlo: String(json.swiatlo ?? '').trim(),
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),
   }

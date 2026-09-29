@@ -19,7 +19,8 @@ import {
   Info,
   ExternalLink,
   Download,
-  AlertCircle
+  AlertCircle,
+  HelpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { etykietaPineski, wytnijOkolice, type Pineska, type Warstwa, type StanGeneracji } from './typy'
@@ -27,6 +28,7 @@ import { LebekPinezki } from './ZnacznikPineski'
 import { BYTE_ZA_OBRAZ } from './dostawca'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
+import type { OpcjaRol } from './role-z-polecenia'
 
 const godzina = (d: Date) => d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 /** Wersja i czasy: po pullu zmienia się hash, po restarcie serwera — godzina serwera, po odświeżeniu — godzina strony. */
@@ -67,6 +69,8 @@ interface Props {
   uwagi: Uwaga[]
   podgladPolecenia: string
   onWstawNaPlotno: (url: string, nazwa: string) => void
+  /** odpowiedź na pytanie o role pinesek (poziom 4) — od razu uruchamia generację */
+  onOdpowiedzRol: (opcja: OpcjaRol) => void
 }
 
 export function CzatCanvas({
@@ -87,6 +91,7 @@ export function CzatCanvas({
   uwagi,
   podgladPolecenia,
   onWstawNaPlotno,
+  onOdpowiedzRol,
 }: Props) {
   const [zwiniety, setZwiniety] = useState(false)
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
@@ -553,10 +558,35 @@ export function CzatCanvas({
                 {stanGeneracji.faza === 'planuje' && 'Asystent analizuje scenę i mapę miejsc...'}
                 {stanGeneracji.faza === 'trwa' && 'Runware generuje obraz z zachowaniem skali...'}
                 {stanGeneracji.faza === 'sprawdza' && 'Weryfikacja spójności kadru i oświetlenia...'}
+                {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
               </p>
               <p className="text-[10px] text-primary/75 mt-0.5">
-                Nie ruszam nieoznaczonych elementów sceny.
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.role
+                  ? stanGeneracji.role
+                  : 'Nie ruszam nieoznaczonych elementów sceny.'}
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Pytanie o role pinesek — zamiast zgadywać, jedno kliknięcie */}
+        {stanGeneracji.faza === 'pyta' && (
+          <div className="rounded-2xl border border-primary/25 bg-primary/10 p-2.5 text-[11.5px] text-foreground">
+            <div className="mb-2 flex items-start gap-2">
+              <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="font-semibold leading-snug">{stanGeneracji.pytanie.tresc}</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {stanGeneracji.pytanie.opcje.map(opcja => (
+                <button
+                  key={opcja.etykieta}
+                  type="button"
+                  onClick={() => onOdpowiedzRol(opcja)}
+                  className="rounded-xl border border-foreground/10 bg-background/40 px-2.5 py-1.5 text-left text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary active:scale-[0.98]"
+                >
+                  {opcja.etykieta}
+                </button>
+              ))}
             </div>
           </div>
         )}

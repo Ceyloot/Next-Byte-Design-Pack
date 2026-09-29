@@ -16,7 +16,7 @@
  */
 import { etykietaPineski, type Pineska, type Warstwa } from './typy'
 import { wykryjStyl, type Intencja } from './tryby-edycji'
-import { skladajPrompt, type ObrazWejscia, type OperationId, type PineskaSklejka } from './prompty'
+import { skladajPrompt, type ObrazWejscia, type OperationId, type PineskaSklejka, type SkladajWynik } from './prompty'
 
 export { INTENCJE, TABELA_STYLOW, wykryjStyl, type Intencja } from './tryby-edycji'
 
@@ -103,7 +103,15 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
   )
     return 'tlo'
 
-  // 9. Zamiana miejscami lub podmiana obiektu (Object Replace: "w miejsce tej poduszki", "zamiast auta", "zamień X na Y")
+  // 9. Zamiana twarzy / postaci — PRZED ogólną zamianą: „zamień twarz” i „zamień tę
+  // osobę” zawierają „zamień”, więc sprawdzane później nigdy nie wygrywały.
+  if (
+    /\b(twarz|face|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t) ||
+    /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p)\w*[^.!?]{0,30}\b(posta[ćc]|osob|cz[łl]owiek|kobiet|m[ęe][żz]czyzn|dziewczyn|ch[łl]opa|dziecko)/.test(t)
+  )
+    return 'postac'
+
+  // 10. Zamiana miejscami lub podmiana obiektu (Object Replace: "w miejsce tej poduszki", "zamiast auta", "zamień X na Y")
   if (
     /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p|zamiast|zamiana\s+miejscami|switch|swap|odwr[óo][ćc]|przer[óo]b\s+\w+\s+na|zr[óo]b\s+z\s+\w+)/.test(t) ||
     /\b(w|na)\s+miejsc[eu]\s+(te[gj]|t[eą]|teg[oó]|tamte[gj]|tamtego|[a-ząćęłńóśźż]+)/.test(t)
@@ -111,28 +119,13 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
     return 'zamien'
   }
 
-  // 10. Przeniesienie obiektu (Object Transfer)
+  // 11. Przeniesienie obiektu (Object Transfer)
   if (
     /\b(przenie[śs]|przesu[ńn]|przestaw|przeni[eo]s|prze[łl][óo][żz]|daj\s+(to|go|j[ąa]|obiekt)?\s*(tu|tutaj|tutuaj|tam|w|na)|ma\s+by[ćc]\s+(tu|tutaj|tutuaj|tam|w|na)|niech[^.!?]{0,45}\b(b[ęe]dzie|stanie|znajdzie\s+si[ęe]|wyl[ąa]duje|stoi)\s+(tu|tutaj|tutuaj|tam|w|na)|w\s+miejsce\s*(\d+|drugie|celu)|na\s+miejsce\s*(\d+|drugie|celu))/.test(
       t,
     )
   )
     return 'przenies'
-
-  // 10. Zamiana postaci / twarzy
-  if (
-    /\b(twarz|face|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t) ||
-    /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p)\w*[^.!?]{0,30}\b(posta[ćc]|osob|cz[łl]owiek|kobiet|m[ęe][żz]czyzn|dziewczyn|ch[łl]opa|dziecko)/.test(t)
-  )
-    return 'postac'
-
-  // 11. Zamiana miejscami lub podmiana (Object Switch / Replace)
-  if (
-    /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p|zamiast|zamiana\s+miejscami|switch|swap|odwr[óo][ćc]|przer[óo]b\s+\w+\s+na|zr[óo]b\s+z\s+\w+)/.test(
-      t,
-    )
-  )
-    return 'zamien'
 
   if (pineski.length >= 2 && /\b(tu|tutaj|tutuaj|tam|w|na|miejsce|miejscu|pozycj)\b/.test(t)) {
     return 'przenies'
@@ -311,7 +304,14 @@ export interface OpcjePolecenia {
   miejsca?: Record<number, string>
   /** reżyser: zamiana lub przeniesienie dotyczy całej osoby */
   osoba?: boolean
+  /** reżyser: światło i kamera zdjęcia docelowego z konkretnymi wartościami */
+  swiatlo?: string
+  /** zamek tożsamości osoby z referencji (analiza biometryczna) */
+  tozsamosc?: string
 }
+
+/** Operacje na człowieku — idą modelem postaci i dostają zamek tożsamości. */
+export const OPERACJE_POSTACI = new Set<OperationId>(['character_swap', 'character_transfer', 'face_swap'])
 
 /**
  * Pineski-źródła, które leżą na obrazie docelowym (obiekt do zamiany/przeniesienia
@@ -348,9 +348,23 @@ export function zbudujPolecenie(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): string {
-  const { skala = '', widok = '', instrukcja = '', role = {}, miejsca = {}, osoba = false } = opcje
+  return zbudujZadanieModelu(tekst, pineski, obrazy, intencja, opcje)?.prompt ?? ''
+}
+
+/**
+ * To samo co `zbudujPolecenie`, ale z rolą modelu (systemPrompt) i temperaturą —
+ * tak jak edge functions Studia Zdjęć wysyłają je w `settings`.
+ */
+export function zbudujZadanieModelu(
+  tekst: string,
+  pineski: Pineska[],
+  obrazy: Warstwa[],
+  intencja: Intencja = wykryjIntencje(tekst),
+  opcje: OpcjePolecenia = {},
+): SkladajWynik | null {
+  const { skala = '', widok = '', instrukcja = '', role = {}, miejsca = {}, osoba = false, swiatlo = '', tozsamosc = '' } = opcje
   const zadanie = tekst.trim()
-  if (!zadanie) return ''
+  if (!zadanie) return null
 
   const nazwy = rozroznialneNazwy(pineski, obrazy)
   const numerObrazu = (p: Pineska) => Math.max(1, obrazy.findIndex(w => w.id === p.layerId) + 1)
@@ -392,6 +406,8 @@ export function zbudujPolecenie(
     skala: skala.trim() || undefined,
     widok: widok.trim() || undefined,
     instrukcja: instrukcja.trim() || undefined,
+    swiatlo: swiatlo.trim() || undefined,
+    tozsamosc: tozsamosc.trim() || undefined,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,
       obraz: numerObrazu(p),
@@ -400,5 +416,5 @@ export function zbudujPolecenie(
     })),
     dyrektywyStylu: styl ? { nazwa: styl.nazwa, reguly: styl.reguly } : undefined,
     format: obrazy[0] ? { szerokosc: obrazy[0].naturalWidth, wysokosc: obrazy[0].naturalHeight } : undefined,
-  }).prompt
+  })
 }

@@ -21,6 +21,7 @@ export const FACE_SWAP: Operation = {
     'no-copy-paste-rule',
     'edge-blend-rule',
   ],
+  gotowy: 'studio-face-swap',
   dawca: 'wymagany',
   czystaPlyta: false,
   misja: `Give the person at {{PIN_TARGET}} the face and identity of the person from {{IMAGE_DONOR}}. Everything else about the person in {{IMAGE_TARGET}} stays.`,

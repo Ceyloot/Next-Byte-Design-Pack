@@ -21,6 +21,7 @@ import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas } from '@/sections/canvas/CzatCanvas'
 import {
+  analizujTozsamosc,
   generuj,
   nazwijWynik,
   opiszZmiane,
@@ -31,7 +32,16 @@ import {
   zaplanuj,
 } from '@/sections/canvas/dostawca'
 import { Plotno } from '@/sections/canvas/Plotno'
-import { INTENCJE, idZrodelNaPlotnie, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
+import {
+  INTENCJE,
+  OPERACJE_POSTACI,
+  idZrodelNaPlotnie,
+  operacjaZIntencji,
+  wykryjIntencje,
+  zbudujPolecenie,
+  zbudujZadanieModelu,
+} from '@/sections/canvas/polecenia'
+import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/operacje/character-swap-studio'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
@@ -40,7 +50,8 @@ import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
-import { ustalUklad } from '@/sections/canvas/uklad-pinesek'
+import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
+import { odciskPinesek, pytanieORole, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
 import type { ObrazDlaAgenta } from '@/sections/canvas/agent-proxy'
 import {
@@ -548,19 +559,62 @@ export function CanvasSection() {
     return null
   }, [warstwaZrodlowa, uwagi, projekt.tekst])
 
+  /**
+   * Zamki tożsamości policzone dla pinesek (klucz: id + położenie) — analiza
+   * biometryczna kosztuje wywołanie, a ta sama osoba wraca w kolejnych próbach.
+   */
+  const zamkiTozsamosci = useRef(new Map<string, string>())
+
+  /** Odpowiedź użytkownika na pytanie o role (poziom 4) — ważna, dopóki pineski się nie zmienią. */
+  const odpowiedzRol = useRef<{ odcisk: string; opcja: OpcjaRol } | null>(null)
+
   /* Uruchomienie generacji z Nano-Banana */
   const uruchomGeneracje = useCallback(async () => {
     if (!warstwaZrodlowa) return
     setStanGeneracji({ faza: 'planuje' })
 
     try {
-      // Kto jest obiektem, a kto miejscem — pytamy oko, nie kolejność pinesek.
-      // Z tego kod wylicza płótno i role (patrz `uklad-pinesek.ts`).
-      const rodzaje =
-        intencja === 'wstaw' || intencja === 'przenies'
-          ? await klasyfikujPineski(projekt.pineski, projekt.warstwy)
-          : null
-      const uklad = ustalUklad(projekt.pineski, projekt.warstwy, intencja, rodzaje)
+      // Kto jest obiektem, a kto miejscem — cztery poziomy od najpewniejszego
+      // (patrz `role-z-polecenia.ts`): odpowiedź użytkownika > jawne słowa i
+      // gramatyka zdania > wzrok (rzecz czy miejsce) > pytanie zamiast zgadywania.
+      const odcisk = odciskPinesek(projekt.pineski)
+      const odpowiedz = odpowiedzRol.current?.odcisk === odcisk ? odpowiedzRol.current.opcja : null
+      const zeZdania = odpowiedz ? null : roleZPolecenia(projekt.tekst, projekt.pineski, projekt.warstwy, intencja)
+      let uklad: Uklad
+      let rolePewne = false
+      let powodRol = ''
+      if (odpowiedz) {
+        uklad = { plotno: projekt.warstwy.find(w => w.id === odpowiedz.bazaId) ?? null, role: odpowiedz.role }
+        rolePewne = true
+        powodRol = 'Role ustalone przez Ciebie.'
+      } else if (zeZdania && Object.keys(zeZdania.role).length) {
+        uklad = { plotno: zeZdania.baza, role: zeZdania.role }
+        rolePewne = true
+        powodRol = zeZdania.powod
+      } else {
+        const rodzaje =
+          intencja === 'wstaw' || intencja === 'przenies'
+            ? await klasyfikujPineski(projekt.pineski, projekt.warstwy)
+            : null
+        uklad = ustalUklad(projekt.pineski, projekt.warstwy, intencja, rodzaje)
+        const uchwyty = projekt.pineski.filter(p => !p.chroniona)
+        const niejasne =
+          Object.keys(uklad.role).length === 0 &&
+          (intencja !== 'zamien' || (uchwyty.length === 2 && uchwyty[0].layerId === uchwyty[1].layerId))
+        const pytanie = niejasne ? pytanieORole(projekt.pineski, intencja) : null
+        if (pytanie) {
+          setStanGeneracji({ faza: 'pyta', pytanie })
+          return
+        }
+        if (Object.keys(uklad.role).length) powodRol = 'Po wyglądzie pinesek: jedna leży na rzeczy, druga na miejscu.'
+      }
+      // Zdjęcie-baza wskazane słowami („edytuj zdjęcie 1”) wygrywa z każdym domysłem.
+      const bazaPewna = rolePewne || Boolean(zeZdania?.baza)
+      if (zeZdania?.baza) {
+        uklad = { ...uklad, plotno: zeZdania.baza }
+        powodRol ||= zeZdania.powod
+      }
+      if (powodRol) console.info('[canvas] role pinesek:', powodRol, uklad.role)
       let obrazy = uklad.plotno
         ? kolejnoscObrazow(uklad.plotno, projekt.pineski, projekt.warstwy)
         : obrazyWejsciowe
@@ -579,7 +633,7 @@ export function CanvasSection() {
       const uchwytyTekst = projekt.pineski
         .map((p, i) => {
           const nrObrazu = obrazy.findIndex(w => w.id === p.layerId) + 1 || 1
-          const rola = uklad.role[i + 1] ? ` — role: ${uklad.role[i + 1]}` : ''
+          const rola = uklad.role[i + 1] ? ` — role: ${uklad.role[i + 1]}${rolePewne ? ' (FIXED by the user — do not change)' : ''}` : ''
           const ochrona = p.chroniona ? ' — PROTECTED, must stay unchanged' : ''
           // Miejsce wskazuje numerowany celownik na zdjęciu — bez współrzędnych i pasm w tekście.
           return `Pin ${i + 1} "${etykietaPineski(p, i + 1)}" on Image ${nrObrazu}, marked by the numbered magenta crosshair ${i + 1}${rola}${ochrona}`
@@ -593,7 +647,7 @@ export function CanvasSection() {
         uchwyty: uchwytyTekst,
       })
 
-      setStanGeneracji({ faza: 'trwa', plan: plan?.plan })
+      setStanGeneracji({ faza: 'trwa', plan: plan?.plan, role: powodRol || undefined })
 
       // Agent widział zdjęcia, więc jego tryb wygrywa z rozpoznaniem ze słów.
       // Jego opis obiektów i instrukcja wchodzą W rusztowanie — reguły kadru,
@@ -606,7 +660,7 @@ export function CanvasSection() {
       // było przestawić, pomijamy box reżysera (jego współrzędne dotyczyły
       // wcześniejszego Image 1) i zdajemy się na kotwiczenie do pineski.
       let przestawiono = false
-      if (plan?.zdjecieDocelowe && plan.zdjecieDocelowe >= 1 && plan.zdjecieDocelowe <= obrazy.length) {
+      if (!bazaPewna && plan?.zdjecieDocelowe && plan.zdjecieDocelowe >= 1 && plan.zdjecieDocelowe <= obrazy.length) {
         const wybrane = obrazy[plan.zdjecieDocelowe - 1]
         if (wybrane && wybrane.id !== zrodlo.id) {
           obrazy = [wybrane, ...obrazy.filter(w => w.id !== wybrane.id)]
@@ -698,7 +752,27 @@ export function CanvasSection() {
       const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
-      const pelnePolecenie = zbudujPolecenie(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
+      // Operacja na człowieku: zamek tożsamości osoby z referencji (jak w Studiu Zdjęć).
+      const operacjaAgenta = operacjaZIntencji(trybAgenta, plan?.osoba)
+      const postac = OPERACJE_POSTACI.has(operacjaAgenta)
+      let tozsamosc: string | undefined
+      const pinOsoby = postac
+        ? projekt.pineski.find(p => !p.chroniona && p.layerId !== zrodlo.id && obrazy.some(w => w.id === p.layerId))
+        : undefined
+      if (pinOsoby) {
+        const klucz = `${pinOsoby.id}:${pinOsoby.normalizedX.toFixed(3)}:${pinOsoby.normalizedY.toFixed(3)}`
+        tozsamosc = zamkiTozsamosci.current.get(klucz)
+        if (!tozsamosc) {
+          const warstwaOsoby = obrazy.find(w => w.id === pinOsoby.layerId)
+          const zCelownikiem = warstwaOsoby ? await narysujMapeMiejsc(warstwaOsoby, [pinOsoby]) : ''
+          tozsamosc = (zCelownikiem && (await analizujTozsamosc(zCelownikiem))) || undefined
+          if (tozsamosc) zamkiTozsamosci.current.set(klucz, tozsamosc)
+        }
+      }
+
+      const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
+        swiatlo: plan?.swiatlo,
+        tozsamosc,
         widok: plan?.widok,
         skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null),
         instrukcja: warstwaWycinka
@@ -708,8 +782,16 @@ export function CanvasSection() {
         miejsca: plan?.miejsca,
         osoba: plan?.osoba,
       })
+      const pelnePolecenie = zadanieModelu?.prompt ?? ''
+      const ustawieniaModelu = {
+        system: zadanieModelu?.system,
+        temperatura: zadanieModelu?.temperatura,
+        klasa: postac ? ('postac' as const) : undefined,
+      }
 
-      setOstatniPrompt(pelnePolecenie)
+      setOstatniPrompt(
+        ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${pelnePolecenie}` : pelnePolecenie,
+      )
 
       // Mała magentowa kropka w miejscu każdej wskazującej pineski (współrzędne
       // kropki idą też do PIN MAP). Chronione pineski zostają bez kropki.
@@ -729,6 +811,7 @@ export function CanvasSection() {
       const obrazyDoModelu = plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste
 
       let wynik = await generuj({
+        ...ustawieniaModelu,
         polecenie: pelnePolecenie,
         obrazy: obrazyDoModelu,
         szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
@@ -750,6 +833,8 @@ export function CanvasSection() {
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
+            swiatlo: plan?.swiatlo,
+            tozsamosc,
             skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, null),
             widok: plan?.widok,
             role: uklad.role,
@@ -758,6 +843,7 @@ export function CanvasSection() {
           })
           setOstatniPrompt(pelnyPrompt)
           const pelne = await generuj({
+            ...ustawieniaModelu,
             polecenie: pelnyPrompt,
             obrazy: [await zKropkami(zrodlo, projekt.pineski), ...czyste.slice(1)],
             szerokosc: zrodlo.naturalWidth,
@@ -782,7 +868,7 @@ export function CanvasSection() {
       const nazwa = nazwijWynik(projekt.tekst, projekt.pineski)
       dodajZeZrodla(wynik.obrazUrl, nazwa, 'wynik', zrodlo)
 
-      const gotowy = {
+      let gotowy = {
         ...wynik,
         nazwa,
         opis: plan?.plan || opiszZmiane(projekt.tekst, projekt.pineski, zrodlo),
@@ -831,6 +917,7 @@ export function CanvasSection() {
         ? {
             wykonane: false,
             znaczniki: false,
+            wklejone: false,
             kosztTokenow: ocena?.kosztTokenow ?? 0,
             ocena:
               'Model oddał zdjęcie praktycznie bez zmian. Nazwij obiekty w pineskach i opisz zmianę konkretniej, np. „przenieś domek spod pineski 1 na ścieżkę pod pineską 2”.',
@@ -839,6 +926,7 @@ export function CanvasSection() {
         ? {
             wykonane: ocena?.wykonane ?? true,
             znaczniki: true,
+            wklejone: ocena?.wklejone ?? false,
             kosztTokenow: ocena?.kosztTokenow ?? 0,
             ocena:
               `W zaznaczonym obszarze zostało ok. ${Math.round(nakladka.udzial * 100)}% różowej nakładki — ` +
@@ -846,7 +934,49 @@ export function CanvasSection() {
           }
         : ocena
 
-      setStanGeneracji({ faza: 'gotowe', wynik: gotowy, ocena: ocenaKoncowa ?? undefined })
+      // Drugi przebieg (polish pass Studia Zdjęć, poz. 26) — tylko gdy kontrola
+      // widzi wklejkę: szew, obwódkę, inne światło albo ziarno, brak cienia.
+      // Model dostaje wynik i czysty oryginał jako wzorzec; generuje cały kadr, bez masek.
+      let ocenaPoPoprawce = ocenaKoncowa
+      const warto = ['wstaw', 'przenies', 'zamien', 'postac', 'ubranie'].includes(trybAgenta)
+      if (ocenaKoncowa?.wklejone && !bezZmian && warto) {
+        setStanGeneracji({ faza: 'poprawia', wynik: gotowy })
+        try {
+          const pinElementu = pinZrodlowy ?? pinDocelowy
+          const element =
+            operacjaAgenta === 'face_swap'
+              ? 'the replaced face'
+              : pinElementu
+                ? `the edited element ("${etykietaPineski(pinElementu, projekt.pineski.indexOf(pinElementu) + 1)}")`
+                : 'the edited element'
+          const poprawka = await generuj({
+            polecenie: promptPoprawki(element),
+            system: SYSTEM_POPRAWKI,
+            temperatura: 0.2,
+            klasa: ustawieniaModelu.klasa,
+            obrazy: [wynik.obrazUrl, await konwertujNaDataUrl(zrodlo.src)],
+            szerokosc: zrodlo.naturalWidth,
+            wysokosc: zrodlo.naturalHeight,
+          })
+          const src = await dopasujFormatDoObrazu(poprawka.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
+          dodajZeZrodla(src, `${nazwa}_poprawka`, 'wynik', zrodlo)
+          gotowy = {
+            ...gotowy,
+            obrazUrl: src,
+            nazwa: `${nazwa}_poprawka`,
+            kosztUSD: (gotowy.kosztUSD ?? 0) + (poprawka.kosztUSD ?? 0),
+          }
+          ocenaPoPoprawce = {
+            ...ocenaKoncowa,
+            wklejone: false,
+            ocena: `${ocenaKoncowa.ocena} Wyglądało na wklejone, więc drugi przebieg dopasował światło, cień i ziarno — obie wersje leżą na płótnie.`.trim(),
+          }
+        } catch (e) {
+          console.warn('[canvas] drugi przebieg nieudany', e)
+        }
+      }
+
+      setStanGeneracji({ faza: 'gotowe', wynik: gotowy, ocena: ocenaPoPoprawce ?? undefined })
     } catch (e) {
       setStanGeneracji({
         faza: 'blad',
@@ -1156,9 +1286,13 @@ export function CanvasSection() {
         onZmienNazwePineski={(id, label) => zmienPineske(id, { label })}
         onWlaczNarzędziePineska={() => setNarzedzie('pineska')}
         onGeneruj={uruchomGeneracje}
+        onOdpowiedzRol={opcja => {
+          odpowiedzRol.current = { odcisk: odciskPinesek(projekt.pineski), opcja }
+          uruchomGeneracje()
+        }}
         stanGeneracji={stanGeneracji}
         powodBlokady={powodBlokady}
-        trwa={['planuje', 'trwa', 'sprawdza'].includes(stanGeneracji.faza)}
+        trwa={['planuje', 'trwa', 'sprawdza', 'poprawia'].includes(stanGeneracji.faza)}
         intencja={intencja}
         uwagi={uwagi}
         podgladPolecenia={ostatniPrompt || polecenie}

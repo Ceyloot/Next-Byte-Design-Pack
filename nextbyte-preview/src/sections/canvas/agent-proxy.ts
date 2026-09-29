@@ -66,6 +66,8 @@ export interface Plan {
   pomiar?: PomiarSkali
   /** widok obiektu w scenie docelowej (reżyser) */
   widok?: string
+  /** światło i kamera zdjęcia docelowego z konkretnymi wartościami (reżyser) */
+  swiatlo?: string
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
@@ -94,6 +96,8 @@ export interface Sprawdzenie {
   wykonane: boolean
   /** czy w wyniku widać znaczniki z mapy */
   znaczniki: boolean
+  /** czy zmieniony element wygląda na wklejony (szew, obwódka, inne światło/ziarno, brak cienia) */
+  wklejone: boolean
   /** ocena po polsku, jedno–dwa zdania */
   ocena: string
   kosztTokenow: number
@@ -105,6 +109,7 @@ Odpowiadasz WYŁĄCZNIE obiektem JSON:
 {
   "wykonane": true/false,
   "znaczniki": true/false,
+  "wklejone": true/false,
   "ocena": "jedno-dwa zdania po polsku: co się zmieniło i czy zgadza się z zadaniem; jeśli coś poszło nie tak, napisz co konkretnie"
 }
 
@@ -115,6 +120,7 @@ ZASADA NADRZĘDNA — SĄDŹ DOSŁOWNIE WG ZADANIA:
 - POZYCJA: współrzędna pineski dotyczy tylko zdjęcia, na którym pineska leży (procenty od lewego górnego rogu TEGO zdjęcia). Pineska na zdjęciu referencyjnym, którego tu nie widzisz, NIE mówi, gdzie ma być obiekt w wyniku. Odchyłkę do ok. 10% szerokości lub wysokości kadru od pineski docelowej uznaj za poprawną pozycję; błędem jest dopiero wyraźne przesunięcie w inne miejsce.
 - Rozróżniaj rodzaj operacji: „wstaw/dodaj" NIE usuwa niczego — jeśli reszta sceny została, to dobrze; „zamień" usuwa stary obiekt; „przenieś" zostawia jeden obiekt w nowym miejscu.
 
+"wklejone" = true, gdy zmieniony albo wstawiony element wygląda na doklejony do zdjęcia: widoczny szew lub jasna/ciemna obwódka, inne światło (kierunek, barwa) niż reszta kadru, brak cienia kontaktowego, ostrzejszy lub gładszy niż otoczenie, inne ziarno. Oceniasz tylko wygląd, nie pozycję ani wielkość.
 "znaczniki" = true, gdy w wyniku widać różowe celowniki, kółka, numery albo inne naniesione oznaczenia, których nie powinno tam być.
 Oceniasz surowo i konkretnie, ALE tylko względem tego, czego zadanie faktycznie wymaga. Jeśli obiekt stoi w złym miejscu albo ma złą wielkość, mówisz to wprost; jeśli wszystko się zgadza z zadaniem, ustaw "wykonane": true.`
 
@@ -176,6 +182,67 @@ const SYSTEM_ANALIZY_PINESKI = [
   '"stan_powierzchni":"English: dust, dirt, grime, clean, glossy, matte","glebia_optyka":"English: foreground/midground/background, sharp vs bokeh blur",',
   '"swiatlo_wektory":"English: light direction, color, rim lights, shadows","dwuznacznosc":null}',
 ].join(NL)
+/**
+ * Analiza tożsamości osoby spod pineski — prompt analityka biometrycznego
+ * ze Studia Zdjęć (poz. 47), zawężony do osoby wskazanej celownikiem.
+ * Wynik trafia do zamka tożsamości (poz. 49–50) w prompcie obrazu.
+ */
+const SYSTEM_TOZSAMOSCI = [
+  'You are a biometric character analyst for an image-generation pipeline. The image shows ONE magenta crosshair on a person. Extract a precise, structured identity profile of THAT person so a downstream image model can re-render this exact person in any scene with full fidelity.',
+  'Output STRICT JSON only. No markdown, no commentary. Schema:',
+  '{"summary":"1-2 sentence portrait in English","face":{"shape":"","jawline":"","chin":"","cheekbones":"","forehead":"","hairline":""},"eyes":{"color":"","shape":"","spacing":"","tilt":"","eyelids":"","brows":""},"nose":{"bridge":"","tip":"","nostrils":"","asymmetry":""},"mouth":{"lips":"","width":"","philtrum":"","smile":""},"skin":{"tone":"","undertone":"","texture":"","marks":""},"hair":{"color":"","texture":"","length":"","style":"","parting":"","facial_hair":""},"body":{"build":"","proportions":"","posture":"","approx_age":""},"distinctive_marks":[""],"typical_clothing":"","negative_dont_change":"Short list of things the model must NEVER change about this person."}',
+  'Rules:',
+  '- Use English values.',
+  '- Be specific and observational, like a forensic sketch artist briefing.',
+  '- If a feature is not visible, write "not clearly visible".',
+  '- Never invent features that contradict the photo.',
+  '- "negative_dont_change" must list at least face shape, eye color, hair color, skin tone.',
+].join(NL)
+
+/** Pola, których wartość nic nie mówi — nie wchodzą do zamka. */
+const NIEWIDOCZNE = /^(not clearly visible|n\/a|none|unknown|-)?$/i
+
+/** Zamek tożsamości z profilu (rdzeń poz. 49 + uzupełnienie poz. 50 Studia). */
+export function zamekTozsamosci(profil: Record<string, unknown>): string {
+  const grupa = (v: unknown) =>
+    v && typeof v === 'object'
+      ? Object.entries(v as Record<string, unknown>)
+          .map(([k, x]) => [k, String(x ?? '').trim()] as const)
+          .filter(([, x]) => !NIEWIDOCZNE.test(x))
+          .map(([k, x]) => `${k}: ${x}`)
+          .join(', ')
+      : ''
+  const tekst = (v: unknown) => {
+    const t = String(v ?? '').trim()
+    return NIEWIDOCZNE.test(t) ? '' : t
+  }
+  const znaki = Array.isArray(profil.distinctive_marks)
+    ? (profil.distinctive_marks as unknown[]).map(tekst).filter(Boolean).join('; ')
+    : ''
+  const rdzen = [
+    znaki && `Distinctive marks (MUST preserve): ${znaki}`,
+    tekst(profil.negative_dont_change) && `DO NOT CHANGE: ${tekst(profil.negative_dont_change)}`,
+    grupa(profil.face) && `Face: ${grupa(profil.face)}`,
+    grupa(profil.eyes) && `Eyes: ${grupa(profil.eyes)}`,
+    grupa(profil.hair) && `Hair: ${grupa(profil.hair)}`,
+  ].filter(Boolean)
+  const reszta = [
+    tekst(profil.summary) && `Summary: ${tekst(profil.summary)}`,
+    grupa(profil.skin) && `Skin: ${grupa(profil.skin)}`,
+    grupa(profil.nose) && `Nose: ${grupa(profil.nose)}`,
+    grupa(profil.mouth) && `Mouth: ${grupa(profil.mouth)}`,
+    grupa(profil.body) && `Body: ${grupa(profil.body)}`,
+    tekst(profil.typical_clothing) && `Typical clothing: ${tekst(profil.typical_clothing)}`,
+  ].filter(Boolean)
+  if (!rdzen.length && !reszta.length) return ''
+  return [
+    rdzen.length ? `IDENTITY LOCK — preserve EXACTLY the same person as in the identity reference. Key identity markers: ${rdzen.join(' | ')}.` : '',
+    reszta.length ? `Further identity markers of the same person: ${reszta.join(' | ')}.` : '',
+  ]
+    .filter(Boolean)
+    .join(NL)
+}
+
 const SYSTEM_KLASYFIKACJI =
   'Each image shows ONE magenta crosshair. For each image, decide what lies exactly under the centre of the crosshair:' + NL +
   '- "object": a distinct thing (vehicle, house, person, animal, furniture, plant, item) or any part of one (a wheel, a roof).' + NL +
@@ -308,6 +375,7 @@ export function agentProxy(): Plugin {
         skala: odczytany.skala,
         pomiar: odczytany.pomiar,
         widok: odczytany.widok || undefined,
+        swiatlo: odczytany.swiatlo || undefined,
         miejsca: miejscaZPlanu(odczytany),
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,
@@ -343,6 +411,7 @@ export function agentProxy(): Plugin {
       const wynik: Sprawdzenie = {
         wykonane: json.wykonane === true,
         znaczniki: json.znaczniki === true,
+        wklejone: json.wklejone === true,
         ocena: String(json.ocena ?? ''),
         kosztTokenow: tokeny,
       }
@@ -387,6 +456,21 @@ export function agentProxy(): Plugin {
           },
         },
       }
+    })
+
+    // Profil tożsamości osoby spod pineski → gotowy zamek tożsamości.
+    odpowiedzNa('/api/canvas/tozsamosc', async dane => {
+      const z = JSON.parse(dane) as { obraz?: string }
+      if (!z.obraz) return { status: 400, cialo: { blad: 'Brak obrazu' } }
+      const { json, blad } = await zapytajAgenta(
+        SYSTEM_TOZSAMOSCI,
+        [{ type: 'image_url', image_url: { url: z.obraz } }],
+        MODEL_REZYSERA,
+        { temperature: 0.15, maxOutputTokens: 4096, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } },
+      )
+      if (!json) return { status: 502, cialo: { blad: blad ?? 'Analiza tożsamości nieczytelna' } }
+      const zamek = zamekTozsamosci(json)
+      return zamek ? { status: 200, cialo: { zamek } } : { status: 502, cialo: { blad: 'Pusty profil tożsamości' } }
     })
 
     odpowiedzNa('/api/canvas/klasyfikuj', async dane => {

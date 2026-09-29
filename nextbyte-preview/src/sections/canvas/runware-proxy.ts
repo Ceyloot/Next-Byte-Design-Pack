@@ -25,6 +25,15 @@ export interface ZadanieGeneracji {
   obrazy: string[]
   szerokosc: number
   wysokosc: number
+  /** rola modelu — `settings.systemPrompt` (jak w Studiu Zdjęć), nie treść promptu */
+  system?: string
+  /** `settings.temperature` — Studio: swap 0.45, twarz 0.42, poprawka 0.2 */
+  temperatura?: number
+  /**
+   * `postac` wybiera model z RUNWARE_MODEL_POSTAC (np. google:4@2, Nano Banana Pro —
+   * na nim Studio robi swapy); bez tej zmiennej zostaje RUNWARE_MODEL.
+   */
+  klasa?: 'postac'
 }
 
 /** Żądanie rozpoznania obiektu pod pineską */
@@ -98,6 +107,7 @@ export function runwareProxy(): Plugin {
   let klucz = ''
   let kluczGemini = ''
   let model = 'google:nano-banana@2-lite'
+  let modelPostaci = ''
 
   const obsluz = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use(SCIEZKA, async (req, res) => {
@@ -120,34 +130,52 @@ export function runwareProxy(): Plugin {
         if (!zadanie.obrazy?.length) return odpowiedz(400, { blad: 'Brak obrazu wejściowego' })
 
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
+        const modelZadania = zadanie.klasa === 'postac' && modelPostaci ? modelPostaci : model
 
-        const runware = await fetch(ENDPOINT, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${klucz}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify([
-            {
-              taskType: 'imageInference',
-              taskUUID: crypto.randomUUID(),
-              model,
-              positivePrompt: zadanie.polecenie,
-              // Edycja, nie generacja od zera: zdjęcie z płótna idzie jako
-              // referencja. API przyjmuje data URI, więc nie ma uploadu.
-              inputs: { referenceImages: zadanie.obrazy },
-              width,
-              height,
-              numberResults: 1,
-              outputType: 'URL',
-              outputFormat: 'JPG',
-              outputQuality: 95,
-              deliveryMethod: 'sync',
-              includeCost: true,
-            },
-          ]),
-        })
+        // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.
+        const settings: Record<string, unknown> = {}
+        if (zadanie.system?.trim()) settings.systemPrompt = zadanie.system.trim()
+        if (typeof zadanie.temperatura === 'number') {
+          settings.temperature = zadanie.temperatura
+          settings.topP = 0.9
+        }
+        const zUstawieniach = (tak: boolean) => tak && Object.keys(settings).length > 0
 
-        const tresc = (await runware.json()) as {
-          data?: { imageURL?: string; cost?: number; seed?: number }[]
-          errors?: { message?: string }[]
+        const wyslij = (zUstawieniami: boolean) =>
+          fetch(ENDPOINT, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${klucz}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify([
+              {
+                taskType: 'imageInference',
+                taskUUID: crypto.randomUUID(),
+                model: modelZadania,
+                positivePrompt: zadanie.polecenie,
+                // Edycja, nie generacja od zera: zdjęcie z płótna idzie jako
+                // referencja. API przyjmuje data URI, więc nie ma uploadu.
+                inputs: { referenceImages: zadanie.obrazy },
+                width,
+                height,
+                numberResults: 1,
+                outputType: 'URL',
+                outputFormat: 'JPG',
+                outputQuality: 95,
+                deliveryMethod: 'sync',
+                includeCost: true,
+                ...(zUstawieniach(zUstawieniami) ? { settings } : {}),
+              },
+            ]),
+          }).then(r => r.json() as Promise<{
+            data?: { imageURL?: string; cost?: number; seed?: number }[]
+            errors?: { message?: string }[]
+          }>)
+
+        let tresc = await wyslij(true)
+        // Nie każdy model przyjmuje `settings` — wtedy jedna powtórka bez nich,
+        // a rola kompozytora i tak zostaje opisana w prompcie przez reguły.
+        if (tresc.errors?.length && zUstawieniach(true)) {
+          console.warn(`[canvas] ${modelZadania} odrzucił settings: ${tresc.errors[0]?.message ?? ''} — ponawiam bez nich`)
+          tresc = await wyslij(false)
         }
 
         const blad = tresc.errors?.[0]?.message
@@ -174,7 +202,7 @@ export function runwareProxy(): Plugin {
         const gotowe: WynikGeneracji = {
           obrazUrl,
           kosztUSD: wynik.cost ?? 0,
-          model,
+          model: modelZadania,
           seed: wynik.seed,
         }
         odpowiedz(200, gotowe)
@@ -262,6 +290,7 @@ export function runwareProxy(): Plugin {
       klucz = env.RUNWARE_API_KEY ?? ''
       kluczGemini = env.GEMINI_API_KEY || kluczGemini
       model = env.RUNWARE_MODEL || model
+      modelPostaci = env.RUNWARE_MODEL_POSTAC || ''
     },
     configureServer: server => {
       obsluz(server)
