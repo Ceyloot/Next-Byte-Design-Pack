@@ -6,6 +6,6 @@ export const POSE_EXPRESSION_RULE: Brick = {
   numer: 22,
   nazwa: 'Poza i mimika',
   tekst: [
-    `POSE & EXPRESSION — the scene decides the pose: same posture, gesture, head tilt and gaze as at the destination; the donor's pose is never used. The face is redrawn to that head angle at the same size, with a natural expression, and interacts with the surroundings as before.`,
+    `POSE & EXPRESSION — the pose, gesture, head tilt and gaze of the destination stay; the face is redrawn to that angle at the same size with a natural expression.`,
   ].join('\n'),
 }

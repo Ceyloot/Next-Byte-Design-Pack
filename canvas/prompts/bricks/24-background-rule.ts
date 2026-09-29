@@ -6,6 +6,6 @@ export const BACKGROUND_RULE: Brick = {
   numer: 24,
   nazwa: 'Tło',
   tekst: [
-    `BACKGROUND — only the surroundings change: foreground subjects keep position, scale, pose, crop, camera angle and perspective. The new horizon sits at the old height; the ground continues under the subjects with contact shadows. Relight the subjects to the new environment, keep the lens's depth of field, and keep edges clean.`,
+    `BACKGROUND — only the surroundings change: subjects keep position, scale, pose and camera angle; the horizon stays at its height; the ground continues under the subjects with contact shadows; relight them to the new environment and keep clean edges.`,
   ].join('\n'),
 }

@@ -6,6 +6,6 @@ export const SKIN_BODY_RULE: Brick = {
   numer: 20,
   nazwa: 'Skóra i ciało',
   tekst: [
-    `SKIN & BODY — one consistent person: skin tone matches across face, neck, hands and limbs with no colour step at the jaw or neck; proportions follow the body kept; skin texture and grain match the photograph, never waxy or airbrushed; tattoos and scars stay.`,
+    `SKIN & BODY — one consistent person: matching skin tone from face to hands, no colour step at the neck, proportions of the kept body, photographic skin texture and grain; tattoos and scars stay.`,
   ].join('\n'),
 }

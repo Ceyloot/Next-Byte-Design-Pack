@@ -6,6 +6,6 @@ export const FRAMING_RULE: Brick = {
   numer: 10,
   nazwa: 'Kadr',
   tekst: [
-    `FRAMING — the result is {{IMAGE_TARGET}} with only the requested change: same shot, field of view, angle and frame edges; everything else stays at the same size and position. No re-composition, rotation, crop or canvas extension.`,
+    `FRAMING — the result is {{IMAGE_TARGET}} with only the requested change: same shot, angle and frame edges; everything else keeps its size and position.`,
   ].join('\n'),
 }

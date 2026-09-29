@@ -6,9 +6,6 @@ export const LIGHT_RULE: Brick = {
   numer: 1,
   nazwa: 'Światło',
   tekst: [
-    `LIGHT — the element is lit exactly like {{IMAGE_TARGET}}: same direction, hardness, colour temperature and intensity as its neighbours.`,
-    `- Its cast shadow falls the same way, with the same length and softness as the other shadows, and bends over the surface beneath; a soft contact shadow sits where it touches a surface.`,
-    `- Nearby coloured surfaces tint it and it tints them; highlights sit where the scene light puts them.`,
-    `- Light from a donor photo is never carried over.`,
+    `LIGHT — lit exactly like {{IMAGE_TARGET}}: same direction, hardness, colour temperature and intensity as its neighbours; its cast and contact shadows fall the way the scene's shadows do (direction, length, softness); colour bounces both ways. Reference-photo light never carries over.`,
   ].join('\n'),
 }

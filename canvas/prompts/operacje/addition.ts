@@ -26,7 +26,7 @@ export const ADDITION: Operation = {
   ],
   dawca: 'opcjonalny',
   czystaPlyta: false,
-  misja: `Add the new object (from {{IMAGE_DONOR}}, or as described in the COMMAND) at {{PIN_TARGET}}. Insert only — remove nothing.`,
+  misja: `Add the new object (from {{IMAGE_DONOR}}, or as described in the COMMAND) so that it stands exactly on the magenta dot of {{PIN_TARGET}}, at its true size and as naturally as possible. Insert only — nothing else changes.`,
   kroki: [
     `INSERT ONLY — every object, animal and person already in the scene stays: the same count, the same positions, the same sizes.`,
     `Place the new object at the marked point: where it touches the ground or the surface it rests on, or — for an airborne or floating object — where its centre sits in the air. "Next to" means immediately beside the named neighbours, sharing their ground line.`,

@@ -6,8 +6,6 @@ export const OUTPUT_CONTRACT_RULE: Brick = {
   numer: 11,
   nazwa: 'Kontrakt wyniku',
   tekst: [
-    `OUTPUT — the result IS {{IMAGE_TARGET}} with only the requested change, keeping its aspect ratio, resolution, framing and grain. Other images are references for identity or appearance only — never for frame, format, background or light.`,
-    `- Add nothing and remove nothing the task did not ask for; every other subject keeps its count and position.`,
-    `- The small magenta pin dots, masks and boxes are guides only: the result shows NO magenta dot, marker, numeral, letter or outline anywhere — the pixels under each dot are rebuilt as the natural surface.`,
+    `OUTPUT — the result IS {{IMAGE_TARGET}} with only the requested change; other images give identity only. Add and remove nothing else. Magenta dots, masks and boxes are guides: none appears in the result, and the pixels under a dot are natural surface.`,
   ].join('\n'),
 }

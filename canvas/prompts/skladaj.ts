@@ -19,7 +19,6 @@
 import type { BrickId, ObrazWejscia, OperationId, OpisSceny, RolaPineski, WymaganieDawcy } from './types'
 import { getOperation } from './operacje'
 import { BRICKS } from './bricks'
-import { POZYTYW } from './pozytyw'
 import {
   STUDIO_ANATOMIA,
   STUDIO_SWAP_KONTROLA,
@@ -152,8 +151,12 @@ const BRICKI_ZAWSZE: BrickId[] = ['grain-medium-rule', 'framing-rule', 'output-c
 
 /** Zasada naczelna: na samej górze i na samym końcu promptu. */
 const ZASADA_ZAWSZE =
-  'ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. ' +
-  'NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.'
+  'ALWAYS: the generated object has the SAME GRAIN as the photograph (size, density, contrast, sharpness, colour) — no sticker look, never two kinds of grain or style in one image.'
+
+/** Operacje, w których jest generowany obiekt (pin docelowy = tu ma stanąć obiekt). */
+const OPERACJE_Z_OBIEKTEM = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'character_swap', 'character_transfer'])
+/** Operacje, których kroki dublowałyby bricki — wystarczy jedno zdanie zadania. */
+const BEZ_KROKOW = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'removal', 'character_transfer'])
 
 const TOKEN = /\{\{\s*([A-Z_]+)\s*\}\}/g
 
@@ -184,18 +187,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // 1. IMAGES
   const linieObrazow = w.obrazy.map((o) =>
     o.rola === 'target'
-      ? `Image ${o.numer} = TARGET (destination). The result is this photograph with only the requested change.` +
-        (w.format
-          ? ` Output format: exactly the aspect ratio and framing of this image (${w.format.szerokosc}×${w.format.wysokosc} px).`
-          : ` Output format: exactly the aspect ratio and framing of this image.`)
-      : `Image ${o.numer} = DONOR (reference). It supplies only the identity or appearance of its pinned subject.`,
+      ? `Image ${o.numer} = the SCENE: the result is this photograph${w.format ? ` (${w.format.szerokosc}×${w.format.wysokosc} px, same framing)` : ' with the same framing'} with only the requested change.`
+      : `Image ${o.numer} = REFERENCE: supplies only the identity of its pinned subject.`,
   )
   if (w.maska) {
-    linieObrazow.push(
-      `Last image = MASK of the work area (white = where the change happens, black = untouched). It is a guide only — not a reference and not part of the result.`,
-    )
+    linieObrazow.push(`Last image = MASK of the work area (white = change, black = untouched); a guide only.`)
   }
-  const sekcjaObrazow = `[IMAGES — sent in this order]\n${linieObrazow.join('\n')}`
+  const sekcjaObrazow = `[IMAGES]\n${linieObrazow.join('\n')}`
 
   if (op.gotowy === 'studio-character-swap') return skladajGotowySwap(w, sekcjaObrazow, zasadaZawsze0(), cel, zrodlo)
 
@@ -211,13 +209,12 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
   const sekcjaBrickow =
-    `[RULES — ${bricki.length} rules; all hold at once]\n` + bricki.map((b) => podmien(b.tekst)).join('\n')
+    `[RULES — all hold at once]\n` + bricki.map((b) => podmien(b.tekst)).join('\n')
 
-  // 3. OPERATION
-  const nazwaOp = op.id.replace(/_/g, ' ').toUpperCase()
+  // 3. TASK — jedno zdanie; kroki tylko tam, gdzie bricki ich nie pokrywają
   const sekcjaOperacji =
-    `[OPERATION — ${nazwaOp}]\n${podmien(op.misja)}\nSTEPS:\n` +
-    op.kroki.map((k, i) => `${i + 1}. ${podmien(k)}`).join('\n')
+    `[TASK]\n${podmien(op.misja)}` +
+    (BEZ_KROKOW.has(op.id) ? '' : `\n${op.kroki.map((k, i) => `${i + 1}. ${podmien(k)}`).join('\n')}`)
 
   // 4. PIN MAP
   const opisyPinesek = new Map((w.opis?.pineski ?? []).map((o) => [o.pineska, o]))
@@ -235,21 +232,20 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         .join('; ')
       const xy = `x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
       // Źródło leżące na obrazie docelowym nie ma kropki (zostałaby w wyniku) — wskazują je współrzędne i nazwa.
-      const wsp = p.rola === 'source' && p.obraz === 1 ? `NOT marked with a dot — the object is at ${xy}` : `dot at ${xy}`
-      return `- Pin ${p.numer} · ${p.rola.toUpperCase()} · Image ${p.obraz}${nazwa ? ` — "${nazwa}"` : ''} — ${wsp}${
-        szczegoly ? ` — ${szczegoly}` : ''
-      }`
+      const wsp = p.rola === 'source' && p.obraz === 1 ? `no dot — the object is at ${xy}` : `magenta dot at ${xy}`
+      const cel = p.rola === 'target' ? (OPERACJE_Z_OBIEKTEM.has(op.id) ? ' ← THE GENERATED OBJECT MUST STAND EXACTLY HERE' : ' ← the change happens exactly here') : ''
+      return `- Pin ${p.numer} (${p.rola}) · Image ${p.obraz}${nazwa ? ` "${nazwa}"` : ''} — ${wsp}${cel}${szczegoly ? ` — ${szczegoly}` : ''}`
     })
   const sekcjaPinesek = liniePinesek.length
-    ? `[PIN MAP — pins are small magenta dots drawn on their images (a source object inside Image 1 is not marked: find it by its x / y and name); x / y = position in % from the left / top edge of that image]\n${liniePinesek.join('\n')}`
+    ? `[PINS — small magenta dots on the images; x / y in % from the left / top edge]\n${liniePinesek.join('\n')}`
     : ''
 
   // 5. SCENE DETAILS
   const liniaSceny = [w.skala?.trim(), w.opis?.kotwice && `Scale anchors in Image 1: ${w.opis.kotwice}`].filter(Boolean)
-  const sekcjaSceny = liniaSceny.length ? `[SCALE — real-world size]\n${liniaSceny.join('\n')}` : ''
+  const sekcjaSceny = liniaSceny.length ? `[SCALE]\n${liniaSceny.join('\n')}` : ''
 
   // 3b. DIRECTION i STYLE DIRECTIVES — dopisane do operacji
-  const liniaKierunku = [w.instrukcja?.trim(), w.widok?.trim() && `View of the object at the destination (from the target camera, not from the donor photo): ${w.widok.trim()}`].filter(Boolean)
+  const liniaKierunku = [w.instrukcja?.trim(), w.widok?.trim() && `View at the destination (from Image 1's camera, not the reference's): ${w.widok.trim()}`].filter(Boolean)
   const sekcjaKierunku = liniaKierunku.length ? `[DIRECTION]\n${liniaKierunku.join('\n')}` : ''
   const sekcjaStylu = w.dyrektywyStylu
     ? `[STYLE DIRECTIVES — ${w.dyrektywyStylu.nazwa}]\n${w.dyrektywyStylu.reguly.map((x, i) => `${i + 1}. ${x}`).join('\n')}`
@@ -257,60 +253,45 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
 
   // 4b. PROTECTED AREAS — najwyższy priorytet
   const sekcjaChronionych = w.pineskiChronione?.length
-    ? `[PROTECTED AREAS — HIGHEST PRIORITY]\n${w.pineskiChronione
+    ? `[PROTECTED — highest priority]\n${w.pineskiChronione
         .map((p) => `- ${p.nazwa ? `"${p.nazwa}" — ` : ''}Pin ${p.numer} · Image ${p.obraz}${p.miejsce ? ` — ${p.miejsce}` : ''}`)
-        .join('\n')}\nThese areas come out of the edit indistinguishable from the original: the same shape, colour, sharpness and position. On conflict with the task, protection wins — shrink the change, move it, or route it around these areas.`
+        .join('\n')}\nThese stay indistinguishable from the original; on conflict, protection wins.`
     : ''
 
-  // 6b. FINAL CHECK — to, co najczęściej zawodzi, powtórzone krótko tuż przed końcem
-  //     (model najmocniej trzyma początek i koniec promptu). Z generacji, w której
-  //     obiekt wyszedł bez ziarna sceny, obok pineski i z cyfrą znacznika.
+  // 6b. FINAL CHECK — najczęstsze porażki, krótko tuż przed końcem promptu
   const uzyte = new Set(bricki.map((b) => b.id))
+  const celNaObrazie1 = w.pineski.find((p) => p.rola === 'target' && p.obraz === 1)
   const liniaKontroli: string[] = []
-  if (uzyte.has('position-rule')) {
+  if (uzyte.has('position-rule') && celNaObrazie1) {
     liniaKontroli.push(
-      `- POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.`,
+      `- POSITION: the generated object stands exactly on the magenta dot at x=${Math.round(celNaObrazie1.x * 100)}%, y=${Math.round(celNaObrazie1.y * 100)}% of Image 1 (base of a resting object, centre of an airborne one).`,
     )
   }
   if (op.id !== 'style_change') {
     liniaKontroli.push(
-      `- GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.`,
+      `- ONE PHOTOGRAPH: grain, sharpness, light, shadow and viewing angle of the changed area belong to Image 1's camera — it does not look pasted or like a sticker.`,
     )
   }
-  if (uzyte.has('donor-isolation-rule')) {
-    liniaKontroli.push(
-      `- NOT A PASTE: the element is re-photographed for this scene — its viewing angle, outline, light and shadow belong to Image 1's camera and light, not to the donor photo; if it looks like the donor picture placed on the scene, redo it.`,
-    )
-  }
-  if (uzyte.has('perspective-rule')) {
-    liniaKontroli.push(
-      `- PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.`,
-    )
-  }
-  liniaKontroli.push(
-    `- CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.`,
-  )
-  const sekcjaKontroli = `[FINAL CHECK — verify before returning the image]\n${liniaKontroli.join('\n')}`
+  liniaKontroli.push(`- CLEAN: no magenta dots, marks or text anywhere in the frame.`)
+  const sekcjaKontroli = `[FINAL CHECK]\n${liniaKontroli.join('\n')}`
 
   // 6. COMMAND (tekst użytkownika wstawiany bez podmiany tokenów)
-  const sekcjaPolecenia = `[COMMAND — the user's words]\n${w.polecenie.trim() || op.nazwa}`
+  const sekcjaPolecenia = `[COMMAND]\n${w.polecenie.trim() || op.nazwa}`
 
-  const zasadaZawsze = op.id === 'style_change' ? '' : `[ALWAYS — NON-NEGOTIABLE]\n${ZASADA_ZAWSZE}`
+  const zasadaZawsze = op.id === 'style_change' ? '' : ZASADA_ZAWSZE
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'always', tekst: zasadaZawsze },
-    { klucz: 'images', tekst: sekcjaObrazow },
-    { klucz: 'bricks', tekst: sekcjaBrickow },
     { klucz: 'operation', tekst: sekcjaOperacji },
-    { klucz: 'direction', tekst: sekcjaKierunku },
-    { klucz: 'style', tekst: sekcjaStylu },
+    { klucz: 'images', tekst: sekcjaObrazow },
     { klucz: 'pins', tekst: sekcjaPinesek },
-    { klucz: 'protected', tekst: sekcjaChronionych },
+    { klucz: 'direction', tekst: sekcjaKierunku },
     { klucz: 'scene', tekst: sekcjaSceny },
+    { klucz: 'style', tekst: sekcjaStylu },
+    { klucz: 'protected', tekst: sekcjaChronionych },
     { klucz: 'command', tekst: sekcjaPolecenia },
+    { klucz: 'bricks', tekst: sekcjaBrickow },
     { klucz: 'check', tekst: sekcjaKontroli },
-    { klucz: 'quality', tekst: POZYTYW },
-    { klucz: 'always', tekst: zasadaZawsze },
   ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
 
   return {
@@ -327,7 +308,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
 }
 
 function zasadaZawsze0(): string {
-  return `[ALWAYS — NON-NEGOTIABLE]\n${ZASADA_ZAWSZE}`
+  return ZASADA_ZAWSZE
 }
 
 /**

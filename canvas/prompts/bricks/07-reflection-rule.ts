@@ -6,7 +6,6 @@ export const REFLECTION_RULE: Brick = {
   numer: 7,
   nazwa: 'Odbicia',
   tekst: [
-    `REFLECTION — glossy, wet, metal or glass surfaces of the element reflect the environment of {{IMAGE_TARGET}}, never the donor's.`,
-    `- Mirrors, windows, water and polished surfaces nearby show the element with correct angle and blur; reflections of anything removed disappear with it.`,
+    `REFLECTION — glossy, wet or glass surfaces reflect the environment of {{IMAGE_TARGET}}; mirrors and water nearby show the element; reflections of removed things disappear with them.`,
   ].join('\n'),
 }

@@ -6,8 +6,6 @@ export const FIDELITY_RULE: Brick = {
   numer: 9,
   nazwa: 'Wierność (zero enhancera)',
   tekst: [
-    `FIDELITY — this is an editor, not an enhancer.`,
-    `- Same resolution and aspect ratio as {{IMAGE_TARGET}}; no upscaling, denoising, sharpening, brightening or colour correction anywhere. A degraded old photo stays degraded.`,
-    `- Same camera, focal length and angle. Untouched areas keep their exact exposure, contrast and colour; only the change area may differ.`,
+    `FIDELITY — an editor, not an enhancer: same resolution and aspect as {{IMAGE_TARGET}}; nothing is denoised, sharpened, brightened or colour-corrected; untouched areas keep their exact exposure, contrast and colour.`,
   ].join('\n'),
 }

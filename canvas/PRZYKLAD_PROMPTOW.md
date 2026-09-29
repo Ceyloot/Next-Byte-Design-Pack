@@ -90,185 +90,96 @@ OUTPUT — return ONLY this JSON:
 }
 ```
 
-## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1886 tokenów)
+## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 942 tokenów)
 
 ```text
-[ALWAYS — NON-NEGOTIABLE]
-ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
+ALWAYS: the generated object has the SAME GRAIN as the photograph (size, density, contrast, sharpness, colour) — no sticker look, never two kinds of grain or style in one image.
 
-[IMAGES — sent in this order]
-Image 1 = TARGET (destination). The result is this photograph with only the requested change. Output format: exactly the aspect ratio and framing of this image (1200×800 px).
-Image 2 = DONOR (reference). It supplies only the identity or appearance of its pinned subject.
-Last image = MASK of the work area (white = where the change happens, black = untouched). It is a guide only — not a reference and not part of the result.
+[TASK]
+Replace the whole object at the magenta dot of Pin 1 ("lamp", Image 1) with the whole new object (from Image 2, or as described in the COMMAND), at its true size and as naturally as possible. The old object leaves completely; the new one stands exactly where it stood.
 
-[RULES — 17 rules; all hold at once]
-LIGHT — the element is lit exactly like Image 1: same direction, hardness, colour temperature and intensity as its neighbours.
-- Its cast shadow falls the same way, with the same length and softness as the other shadows, and bends over the surface beneath; a soft contact shadow sits where it touches a surface.
-- Nearby coloured surfaces tint it and it tints them; highlights sit where the scene light puts them.
-- Light from a donor photo is never carried over.
-POSITION — the element lands exactly at Pin 1 ("lamp", Image 1): on the magenta dot drawn there, at the x / y given in the PIN MAP.
-- A resting element meets its supporting surface exactly there, footprint centred on the spot. An airborne or floating one has its CENTRE there and no invented ground contact.
-- Nearby subjects never pull it aside: they stay put and the element stands on the free surface at the spot itself. Near a frame edge shift it inward only as far as needed to keep it whole.
-- A replacement inherits the position, footprint, orientation and facing of what stood there. A moved element appears only at the destination; Pin 1 ("lamp", Image 1) is left empty.
-SCALE — true real-world size, judged against something of known size that is visible near the spot (a person, door, window, tile, car).
-- Use the size given in SCALE; distance changes how much of the frame it covers, never how big it is. The marked area is a boundary, not a quota: never inflate to fill it or shrink to fit.
-- A replacement has its OWN size, never the outline of what it replaces.
-- With no anchor nearby, use the typical real-world size of that kind of object — neither inflated nor shrunk. Show it complete, clear of the frame edge.
-PERSPECTIVE — ALWAYS maximally realistic relative to the camera of Image 1: one camera, one viewpoint, one horizon.
-- Re-draw the element as that camera sees it: the same camera height, tilt (a high or aerial camera looks DOWN at it and shows its top surfaces; a low camera looks up), focal length and lens distortion. Never keep the viewing angle of its source photo — a front-on or eye-level donor is fully rotated to the target view.
-- The element sits on the ground plane at the right distance: its base follows the ground's perspective, its horizontal lines converge to the same vanishing points as the road, walls and ground around it, and its verticals lean exactly like the verticals of the scene.
-- Its heading follows the lines of the surface it stands on (along the road, parallel to the wall or shelf), foreshortened correctly for that heading; parts nearer the camera are larger than parts farther away.
-- Farther from the camera means smaller and slightly softer, along the same vanishing lines; the horizon line stays where it is.
-DEPTH & OCCLUSION — whatever is closer to the camera overlaps the element; it overlaps what is behind it.
-- It takes the sharpness, blur and haze of its own depth plane. Partial occlusion by grass, people, railings or leaves is natural; nothing clips through another object or is cut by a straight line.
-CONTACT — physical contact stays correct.
-- People or animals touching the old element stay 100% intact in their exact pose; the new element supplies its own matching contact part.
-- A resting element carries weight: stable footprint, slight sinking or pressed grass, a dark contact line. Nothing floats above its surface or clips into others.
-- An airborne or hanging element has no ground contact and stays clear of every other object.
-REFLECTION — glossy, wet, metal or glass surfaces of the element reflect the environment of Image 1, never the donor's.
-- Mirrors, windows, water and polished surfaces nearby show the element with correct angle and blur; reflections of anything removed disappear with it.
-GRAIN & MEDIUM — ALWAYS: the generated object has the SAME GRAIN as the photograph. No sticker look. Never two types of grain or style in one image.
-- Match the medium of Image 1 (colour, black-and-white, sepia, faded): the same tonal curve, black point and colour cast.
-- ONE grain across the whole frame: the same grain size, density, contrast and softness on the element as on the ground and sky beside it, running continuously across the outline with no seam.
-- Match the camera: focus state, lens softness, depth of field, blur, halation and compression. The element is never sharper, smoother, glossier or more contrasty than its surroundings.
-- No crisp cut-out edge, halo or CGI sheen. It reads as one photograph, one camera, one exposure.
-FIDELITY — this is an editor, not an enhancer.
-- Same resolution and aspect ratio as Image 1; no upscaling, denoising, sharpening, brightening or colour correction anywhere. A degraded old photo stays degraded.
-- Same camera, focal length and angle. Untouched areas keep their exact exposure, contrast and colour; only the change area may differ.
-FRAMING — the result is Image 1 with only the requested change: same shot, field of view, angle and frame edges; everything else stays at the same size and position. No re-composition, rotation, crop or canvas extension.
-OUTPUT — the result IS Image 1 with only the requested change, keeping its aspect ratio, resolution, framing and grain. Other images are references for identity or appearance only — never for frame, format, background or light.
-- Add nothing and remove nothing the task did not ask for; every other subject keeps its count and position.
-- The small magenta pin dots, masks and boxes are guides only: the result shows NO magenta dot, marker, numeral, letter or outline anywhere — the pixels under each dot are rebuilt as the natural surface.
-CLEAN PLATE — what leaves the frame leaves without a trace.
-- Remove the old element fully at Pin 1 ("lamp", Image 1): the object, its shadow, reflection and contact marks.
-- Rebuild what lies behind it (ground, grass, paving, wall, sky) from the neighbourhood, continuing patterns and perspective, matching its brightness, colour and grain so the edge is invisible.
-SINGULARITY — the moved, replaced or added element appears EXACTLY ONCE, at the destination. No clone, ghost or leftover anywhere else. Each element has the right number of parts (two eyes, four wheels, five fingers).
-OBJECT IDENTITY — it is unmistakably the SAME object: its type, shape, proportions, material, colour, markings and wear are kept, including dust, patina and scratches.
-- It is only re-photographed inside this scene: no look-alike substitute, no hybrid. A moved object keeps its form and details.
-DONOR ISOLATION — from Image 2 only the identity and appearance of the pinned subject crosses over; its framing, viewing angle, background, light, shadows, reflections, grading and resolution stay there. The subject is redrawn from the camera angle and in the light of Image 1.
-NO COPY-PASTE — re-shoot, do not paste: render the frame as if one camera photographed the scene with the element standing in it from the start.
-- Never lift, warp or recolour reference pixels. A result whose outline and viewing angle match the donor photo although the target camera or heading differs is a paste — redo it from the target camera. Its shadows are cast anew by the target light, never carried over or painted on. No seams, hard edges, halo or mismatched sharpness; the edit is impossible to spot.
-EDGE & BLEND — fine edges (hair, fur, foliage, glass) stay clean with the scene lens's softness; no halo, fringe or outline. Colour, brightness, grain and sharpness cross the border of the changed area with no visible step.
+[IMAGES]
+Image 1 = the SCENE: the result is this photograph (1200×800 px, same framing) with only the requested change.
+Image 2 = REFERENCE: supplies only the identity of its pinned subject.
+Last image = MASK of the work area (white = change, black = untouched); a guide only.
 
-[OPERATION — OBJECT SWAP]
-Replace the object at Pin 1 ("lamp", Image 1) with the new object (taken from Image 2, or as described in the COMMAND), so that the swap looks as natural as possible. The old object leaves the photograph completely; the new object takes its place.
-STEPS:
-1. Both objects are taken WHOLE: the old one at Pin 1 ("lamp", Image 1) (not only the part under the pin) and the new one from its reference or description (the whole object, not only the part under its pin). The pins' names decide which object is meant.
-2. Remove the old object entirely together with its shadow and reflection and rebuild what was behind it; the new object may be larger or smaller, so nothing of the old one may peek out around it.
-3. Draw the new object at its OWN real size (see SCALE), seen from the camera angle of Image 1, standing on the spot of the old one: footprint centred there, on the same surface plane, heading along the lines of that surface.
-4. Everything else in the photograph stays exactly as it is.
+[PINS — small magenta dots on the images; x / y in % from the left / top edge]
+- Pin 1 (target) · Image 1 "lamp" — magenta dot at x=40%, y=60% ← THE GENERATED OBJECT MUST STAND EXACTLY HERE — place: on the wooden side table next to the sofa
+- Pin 2 (source) · Image 2 "vase" — magenta dot at x=50%, y=50% — size: height ≈ 35 cm
 
-[PIN MAP — pins are small magenta dots drawn on their images (a source object inside Image 1 is not marked: find it by its x / y and name); x / y = position in % from the left / top edge of that image]
-- Pin 1 · TARGET · Image 1 — "lamp" — dot at x=40%, y=60% — place: on the wooden side table next to the sofa
-- Pin 2 · SOURCE · Image 2 — "vase" — dot at x=50%, y=50% — size: height ≈ 35 cm
-
-[SCALE — real-world size]
+[SCALE]
 The vase is about 35 cm tall, roughly a third of the visible door height, so at this distance it is a small element on the table.
 
-[COMMAND — the user's words]
+[COMMAND]
 zamień lampę na wazon z drugiego zdjęcia
 
-[FINAL CHECK — verify before returning the image]
-- POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
-- GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
-- NOT A PASTE: the element is re-photographed for this scene — its viewing angle, outline, light and shadow belong to Image 1's camera and light, not to the donor photo; if it looks like the donor picture placed on the scene, redo it.
-- PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.
-- CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
+[RULES — all hold at once]
+LIGHT — lit exactly like Image 1: same direction, hardness, colour temperature and intensity as its neighbours; its cast and contact shadows fall the way the scene's shadows do (direction, length, softness); colour bounces both ways. Reference-photo light never carries over.
+POSITION — the element stands EXACTLY ON THE MAGENTA DOT of Pin 1 ("lamp", Image 1) (x / y in PINS): a resting element with its base and footprint centred on the dot, an airborne one with its centre there. Neighbours never pull it aside. A replacement inherits the position, footprint and heading of what stood there; a moved element appears only there and its old spot is left empty.
+SCALE — true real-world size, judged against known-size things near the spot (see SCALE). Distance changes the share of the frame, never the real size; never inflate to fill an area or shrink to fit. Show it complete, inside the frame.
+PERSPECTIVE — drawn from the camera of Image 1: same height, tilt and focal length (a high camera looks down and shows top surfaces). Its base follows the ground perspective, its lines meet the scene's vanishing points, its heading follows the surface it stands on; farther means smaller and softer. Never the viewing angle of its source photo.
+DEPTH — closer things overlap it and it overlaps what is behind; it takes the sharpness and haze of its depth plane; occlusion is natural and nothing clips through it.
+CONTACT — it carries weight: footprint, slight sinking or pressed grass, a dark contact line. People or animals touching the old element stay intact and keep their pose. An airborne element has no ground contact.
+REFLECTION — glossy, wet or glass surfaces reflect the environment of Image 1; mirrors and water nearby show the element; reflections of removed things disappear with them.
+GRAIN & MEDIUM — ONE grain across the frame: the element has the same grain size, density, contrast, softness, tonal curve, colour cast, focus and blur as the photograph — never sharper, smoother or glossier than its surroundings, no halo or cut-out edge, no sticker look.
+FIDELITY — an editor, not an enhancer: same resolution and aspect as Image 1; nothing is denoised, sharpened, brightened or colour-corrected; untouched areas keep their exact exposure, contrast and colour.
+FRAMING — the result is Image 1 with only the requested change: same shot, angle and frame edges; everything else keeps its size and position.
+OUTPUT — the result IS Image 1 with only the requested change; other images give identity only. Add and remove nothing else. Magenta dots, masks and boxes are guides: none appears in the result, and the pixels under a dot are natural surface.
+CLEAN PLATE — the old element leaves at Pin 1 ("lamp", Image 1) with its shadow and reflection; rebuild what was behind it from the surroundings (patterns, perspective, brightness, grain).
+SINGULARITY — the element appears exactly once, at the destination; no clone, ghost or leftover; every part in its right number.
+OBJECT IDENTITY — the SAME object: type, shape, real 3D proportions, material, colour, markings and wear are kept; it is re-photographed for this scene (new view, light and shadow), never a look-alike or hybrid.
+REFERENCE ISOLATION — from Image 2 only the identity of the pinned subject crosses over; its framing, viewing angle, background, light, shadows and grading stay there.
+NO COPY-PASTE — re-shoot, never paste: render one photograph, one camera, one exposure. A silhouette that matches the reference although the camera or heading differs is a paste; shadows are cast anew by the scene light.
+EDGES — fine edges stay clean at the scene lens's softness, with no halo or fringe; colour, brightness and grain cross the border of the change without a step.
 
-[FINAL QUALITY]
-- One seamless photograph, indistinguishable from an unedited capture; the edit is impossible to spot. Return only the image.
-
-[ALWAYS — NON-NEGOTIABLE]
-ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
+[FINAL CHECK]
+- POSITION: the generated object stands exactly on the magenta dot at x=40%, y=60% of Image 1 (base of a resting object, centre of an airborne one).
+- ONE PHOTOGRAPH: grain, sharpness, light, shadow and viewing angle of the changed area belong to Image 1's camera — it does not look pasted or like a sticker.
+- CLEAN: no magenta dots, marks or text anywhere in the frame.
 ```
 
 ## 4. Złożony prompt — `object_transfer` w obrębie jednego zdjęcia (17 bricków)
 
 ```text
-[ALWAYS — NON-NEGOTIABLE]
-ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
+ALWAYS: the generated object has the SAME GRAIN as the photograph (size, density, contrast, sharpness, colour) — no sticker look, never two kinds of grain or style in one image.
 
-[IMAGES — sent in this order]
-Image 1 = TARGET (destination). The result is this photograph with only the requested change. Output format: exactly the aspect ratio and framing of this image (1600×1067 px).
+[TASK]
+Move the whole object from Pin 1 ("cottage", Image 1) so that it stands exactly on the magenta dot of Pin 2 ("path", Image 1), keeping its real proportions and looking as natural as possible. It is the same object, re-photographed in this scene, and it appears exactly once.
 
-[RULES — 17 rules; all hold at once]
-LIGHT — the element is lit exactly like Image 1: same direction, hardness, colour temperature and intensity as its neighbours.
-- Its cast shadow falls the same way, with the same length and softness as the other shadows, and bends over the surface beneath; a soft contact shadow sits where it touches a surface.
-- Nearby coloured surfaces tint it and it tints them; highlights sit where the scene light puts them.
-- Light from a donor photo is never carried over.
-POSITION — the element lands exactly at Pin 2 ("path", Image 1): on the magenta dot drawn there, at the x / y given in the PIN MAP.
-- A resting element meets its supporting surface exactly there, footprint centred on the spot. An airborne or floating one has its CENTRE there and no invented ground contact.
-- Nearby subjects never pull it aside: they stay put and the element stands on the free surface at the spot itself. Near a frame edge shift it inward only as far as needed to keep it whole.
-- A replacement inherits the position, footprint, orientation and facing of what stood there. A moved element appears only at the destination; Pin 1 ("cottage", Image 1) is left empty.
-SCALE — true real-world size, judged against something of known size that is visible near the spot (a person, door, window, tile, car).
-- Use the size given in SCALE; distance changes how much of the frame it covers, never how big it is. The marked area is a boundary, not a quota: never inflate to fill it or shrink to fit.
-- A replacement has its OWN size, never the outline of what it replaces.
-- With no anchor nearby, use the typical real-world size of that kind of object — neither inflated nor shrunk. Show it complete, clear of the frame edge.
-PERSPECTIVE — ALWAYS maximally realistic relative to the camera of Image 1: one camera, one viewpoint, one horizon.
-- Re-draw the element as that camera sees it: the same camera height, tilt (a high or aerial camera looks DOWN at it and shows its top surfaces; a low camera looks up), focal length and lens distortion. Never keep the viewing angle of its source photo — a front-on or eye-level donor is fully rotated to the target view.
-- The element sits on the ground plane at the right distance: its base follows the ground's perspective, its horizontal lines converge to the same vanishing points as the road, walls and ground around it, and its verticals lean exactly like the verticals of the scene.
-- Its heading follows the lines of the surface it stands on (along the road, parallel to the wall or shelf), foreshortened correctly for that heading; parts nearer the camera are larger than parts farther away.
-- Farther from the camera means smaller and slightly softer, along the same vanishing lines; the horizon line stays where it is.
-DEPTH & OCCLUSION — whatever is closer to the camera overlaps the element; it overlaps what is behind it.
-- It takes the sharpness, blur and haze of its own depth plane. Partial occlusion by grass, people, railings or leaves is natural; nothing clips through another object or is cut by a straight line.
-CONTACT — physical contact stays correct.
-- People or animals touching the old element stay 100% intact in their exact pose; the new element supplies its own matching contact part.
-- A resting element carries weight: stable footprint, slight sinking or pressed grass, a dark contact line. Nothing floats above its surface or clips into others.
-- An airborne or hanging element has no ground contact and stays clear of every other object.
-REFLECTION — glossy, wet, metal or glass surfaces of the element reflect the environment of Image 1, never the donor's.
-- Mirrors, windows, water and polished surfaces nearby show the element with correct angle and blur; reflections of anything removed disappear with it.
-GRAIN & MEDIUM — ALWAYS: the generated object has the SAME GRAIN as the photograph. No sticker look. Never two types of grain or style in one image.
-- Match the medium of Image 1 (colour, black-and-white, sepia, faded): the same tonal curve, black point and colour cast.
-- ONE grain across the whole frame: the same grain size, density, contrast and softness on the element as on the ground and sky beside it, running continuously across the outline with no seam.
-- Match the camera: focus state, lens softness, depth of field, blur, halation and compression. The element is never sharper, smoother, glossier or more contrasty than its surroundings.
-- No crisp cut-out edge, halo or CGI sheen. It reads as one photograph, one camera, one exposure.
-FIDELITY — this is an editor, not an enhancer.
-- Same resolution and aspect ratio as Image 1; no upscaling, denoising, sharpening, brightening or colour correction anywhere. A degraded old photo stays degraded.
-- Same camera, focal length and angle. Untouched areas keep their exact exposure, contrast and colour; only the change area may differ.
-FRAMING — the result is Image 1 with only the requested change: same shot, field of view, angle and frame edges; everything else stays at the same size and position. No re-composition, rotation, crop or canvas extension.
-OUTPUT — the result IS Image 1 with only the requested change, keeping its aspect ratio, resolution, framing and grain. Other images are references for identity or appearance only — never for frame, format, background or light.
-- Add nothing and remove nothing the task did not ask for; every other subject keeps its count and position.
-- The small magenta pin dots, masks and boxes are guides only: the result shows NO magenta dot, marker, numeral, letter or outline anywhere — the pixels under each dot are rebuilt as the natural surface.
-CLEAN PLATE — what leaves the frame leaves without a trace.
-- Remove the old element fully at Pin 1 ("cottage", Image 1): the object, its shadow, reflection and contact marks.
-- Rebuild what lies behind it (ground, grass, paving, wall, sky) from the neighbourhood, continuing patterns and perspective, matching its brightness, colour and grain so the edge is invisible.
-SINGULARITY — the moved, replaced or added element appears EXACTLY ONCE, at the destination. No clone, ghost or leftover anywhere else. Each element has the right number of parts (two eyes, four wheels, five fingers).
-OBJECT IDENTITY — it is unmistakably the SAME object: its type, shape, proportions, material, colour, markings and wear are kept, including dust, patina and scratches.
-- It is only re-photographed inside this scene: no look-alike substitute, no hybrid. A moved object keeps its form and details.
-DONOR ISOLATION — from the reference described in the COMMAND only the identity and appearance of the pinned subject crosses over; its framing, viewing angle, background, light, shadows, reflections, grading and resolution stay there. The subject is redrawn from the camera angle and in the light of Image 1.
-NO COPY-PASTE — re-shoot, do not paste: render the frame as if one camera photographed the scene with the element standing in it from the start.
-- Never lift, warp or recolour reference pixels. A result whose outline and viewing angle match the donor photo although the target camera or heading differs is a paste — redo it from the target camera. Its shadows are cast anew by the target light, never carried over or painted on. No seams, hard edges, halo or mismatched sharpness; the edit is impossible to spot.
-EDGE & BLEND — fine edges (hair, fur, foliage, glass) stay clean with the scene lens's softness; no halo, fringe or outline. Colour, brightness, grain and sharpness cross the border of the changed area with no visible step.
+[IMAGES]
+Image 1 = the SCENE: the result is this photograph (1600×1067 px, same framing) with only the requested change.
 
-[OPERATION — OBJECT TRANSFER]
-Move the object from Pin 1 ("cottage", Image 1) to Pin 2 ("path", Image 1), keeping perfect proportions and making it look as natural as possible. It is the same object — the whole object, with its own real proportions, appearing exactly once at the destination — but it is RE-PHOTOGRAPHED in the destination scene, never copied: the donor's pixels, viewing angle, lighting and shadow do not come across.
-STEPS:
-1. Take the object WHOLE (not only the part under its pin) and keep its identity: shape, real 3D proportions (length, width and height relate exactly as in reality), material, colour, markings and surface condition. Its 2D silhouette is NOT kept: it is re-rendered as the target camera sees it at its new heading, so the visible faces and outline differ from the donor photo whenever the camera or heading differs.
-2. Set its size by the real world, not by the donor photo: judge it against neighbours of known size at the destination (see SCALE) — a framing that fills the donor photo says nothing about how large it is here. Farther from the camera means smaller along the same vanishing lines, closer means larger.
-3. Turn it to the camera of Image 1 and stand it on the destination spot: footprint centred there, on the same surface plane, heading along the lines of that surface — or, for an airborne object, with its centre there.
-4. If the source pin lies in Image 1, restore a clean plate there, as if the object had never stood at the old spot; if it lies in another image, only the object comes across and that photo is left out of the result.
-5. Everything else in Image 1 stays exactly as it is.
+[PINS — small magenta dots on the images; x / y in % from the left / top edge]
+- Pin 1 (source) · Image 1 "cottage" — no dot — the object is at x=50%, y=30% — place: on the far meadow below the tree line
+- Pin 2 (target) · Image 1 "path" — magenta dot at x=50%, y=80% ← THE GENERATED OBJECT MUST STAND EXACTLY HERE — place: on the dirt path in the foreground
 
-[PIN MAP — pins are small magenta dots drawn on their images (a source object inside Image 1 is not marked: find it by its x / y and name); x / y = position in % from the left / top edge of that image]
-- Pin 1 · SOURCE · Image 1 — "cottage" — NOT marked with a dot — the object is at x=50%, y=30% — place: on the far meadow below the tree line
-- Pin 2 · TARGET · Image 1 — "path" — dot at x=50%, y=80% — place: on the dirt path in the foreground
-
-[SCALE — real-world size]
+[SCALE]
 The cottage is about 6 m wide; moved into the foreground it covers a larger share of the frame but keeps its real size.
 
-[COMMAND — the user's words]
+[COMMAND]
 przenieś chatkę bliżej
 
-[FINAL CHECK — verify before returning the image]
-- POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
-- GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
-- NOT A PASTE: the element is re-photographed for this scene — its viewing angle, outline, light and shadow belong to Image 1's camera and light, not to the donor photo; if it looks like the donor picture placed on the scene, redo it.
-- PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.
-- CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
+[RULES — all hold at once]
+LIGHT — lit exactly like Image 1: same direction, hardness, colour temperature and intensity as its neighbours; its cast and contact shadows fall the way the scene's shadows do (direction, length, softness); colour bounces both ways. Reference-photo light never carries over.
+POSITION — the element stands EXACTLY ON THE MAGENTA DOT of Pin 2 ("path", Image 1) (x / y in PINS): a resting element with its base and footprint centred on the dot, an airborne one with its centre there. Neighbours never pull it aside. A replacement inherits the position, footprint and heading of what stood there; a moved element appears only there and its old spot is left empty.
+SCALE — true real-world size, judged against known-size things near the spot (see SCALE). Distance changes the share of the frame, never the real size; never inflate to fill an area or shrink to fit. Show it complete, inside the frame.
+PERSPECTIVE — drawn from the camera of Image 1: same height, tilt and focal length (a high camera looks down and shows top surfaces). Its base follows the ground perspective, its lines meet the scene's vanishing points, its heading follows the surface it stands on; farther means smaller and softer. Never the viewing angle of its source photo.
+DEPTH — closer things overlap it and it overlaps what is behind; it takes the sharpness and haze of its depth plane; occlusion is natural and nothing clips through it.
+CONTACT — it carries weight: footprint, slight sinking or pressed grass, a dark contact line. People or animals touching the old element stay intact and keep their pose. An airborne element has no ground contact.
+REFLECTION — glossy, wet or glass surfaces reflect the environment of Image 1; mirrors and water nearby show the element; reflections of removed things disappear with them.
+GRAIN & MEDIUM — ONE grain across the frame: the element has the same grain size, density, contrast, softness, tonal curve, colour cast, focus and blur as the photograph — never sharper, smoother or glossier than its surroundings, no halo or cut-out edge, no sticker look.
+FIDELITY — an editor, not an enhancer: same resolution and aspect as Image 1; nothing is denoised, sharpened, brightened or colour-corrected; untouched areas keep their exact exposure, contrast and colour.
+FRAMING — the result is Image 1 with only the requested change: same shot, angle and frame edges; everything else keeps its size and position.
+OUTPUT — the result IS Image 1 with only the requested change; other images give identity only. Add and remove nothing else. Magenta dots, masks and boxes are guides: none appears in the result, and the pixels under a dot are natural surface.
+CLEAN PLATE — the old element leaves at Pin 1 ("cottage", Image 1) with its shadow and reflection; rebuild what was behind it from the surroundings (patterns, perspective, brightness, grain).
+SINGULARITY — the element appears exactly once, at the destination; no clone, ghost or leftover; every part in its right number.
+OBJECT IDENTITY — the SAME object: type, shape, real 3D proportions, material, colour, markings and wear are kept; it is re-photographed for this scene (new view, light and shadow), never a look-alike or hybrid.
+REFERENCE ISOLATION — from the reference described in the COMMAND only the identity of the pinned subject crosses over; its framing, viewing angle, background, light, shadows and grading stay there.
+NO COPY-PASTE — re-shoot, never paste: render one photograph, one camera, one exposure. A silhouette that matches the reference although the camera or heading differs is a paste; shadows are cast anew by the scene light.
+EDGES — fine edges stay clean at the scene lens's softness, with no halo or fringe; colour, brightness and grain cross the border of the change without a step.
 
-[FINAL QUALITY]
-- One seamless photograph, indistinguishable from an unedited capture; the edit is impossible to spot. Return only the image.
-
-[ALWAYS — NON-NEGOTIABLE]
-ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
+[FINAL CHECK]
+- POSITION: the generated object stands exactly on the magenta dot at x=50%, y=80% of Image 1 (base of a resting object, centre of an airborne one).
+- ONE PHOTOGRAPH: grain, sharpness, light, shadow and viewing angle of the changed area belong to Image 1's camera — it does not look pasted or like a sticker.
+- CLEAN: no magenta dots, marks or text anywhere in the frame.
 ```

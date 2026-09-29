@@ -6,6 +6,6 @@ export const STYLE_RULE: Brick = {
   numer: 27,
   nazwa: 'Styl',
   tekst: [
-    `STYLE — change only the look (rendering, texture, palette, atmosphere) as the COMMAND says. Geometry, objects, positions, perspective and edges stay recognisable; apply the style evenly across the frame.`,
+    `STYLE — change only the look (rendering, texture, palette, atmosphere) as the COMMAND says; geometry, objects, positions and perspective stay recognisable; apply it evenly.`,
   ].join('\n'),
 }

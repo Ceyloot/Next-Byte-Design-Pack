@@ -6,7 +6,6 @@ export const OBJECT_IDENTITY_RULE: Brick = {
   numer: 14,
   nazwa: 'Tożsamość obiektu',
   tekst: [
-    `OBJECT IDENTITY — it is unmistakably the SAME object: its type, shape, proportions, material, colour, markings and wear are kept, including dust, patina and scratches.`,
-    `- It is only re-photographed inside this scene: no look-alike substitute, no hybrid. A moved object keeps its form and details.`,
+    `OBJECT IDENTITY — the SAME object: type, shape, real 3D proportions, material, colour, markings and wear are kept; it is re-photographed for this scene (new view, light and shadow), never a look-alike or hybrid.`,
   ].join('\n'),
 }

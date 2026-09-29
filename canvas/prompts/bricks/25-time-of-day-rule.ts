@@ -6,6 +6,6 @@ export const TIME_OF_DAY_RULE: Brick = {
   numer: 25,
   nazwa: 'Pora dnia',
   tekst: [
-    `TIME OF DAY — rebuild the light physically: sun angle and shadow length, sky colour, one colour temperature across the frame, and glowing lamps and windows at dusk and night. Buildings, objects, terrain and perspective stay 100% as they were.`,
+    `TIME OF DAY — rebuild the light physically (sun angle, shadow length, sky colour, one colour temperature, lit lamps at dusk and night); geometry and perspective stay.`,
   ].join('\n'),
 }

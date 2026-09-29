@@ -6,7 +6,6 @@ export const CHARACTER_IDENTITY_RULE: Brick = {
   numer: 18,
   nazwa: 'Tożsamość postaci',
   tekst: [
-    `CHARACTER IDENTITY — the person is instantly recognisable as the person from {{IMAGE_DONOR}}: face shape, eyes, brows, nose, mouth, ears, skin tone, freckles, moles, scars, facial hair, apparent age and build.`,
-    `- The face is redrawn to the head angle of the destination, never beautified, aged, smoothed or averaged into a generic face.`,
+    `CHARACTER IDENTITY — instantly the person from {{IMAGE_DONOR}}: face shape, eyes, brows, nose, mouth, ears, skin marks, facial hair, age and build; the face is turned to the destination head angle, never beautified or averaged.`,
   ].join('\n'),
 }

@@ -6,6 +6,6 @@ export const CLOTHING_RULE: Brick = {
   numer: 21,
   nazwa: 'Ubranie',
   tekst: [
-    `CLOTHING — every garment keeps its cut, colour, fabric, pattern, logo and trim; accessories and footwear stay. When the outfit changes, nothing of the old one remains. Fabric drapes and creases with the pose and reacts to the scene light.`,
+    `CLOTHING — each garment keeps its cut, colour, fabric, pattern and logo; accessories stay; when the outfit changes, nothing of the old one remains; fabric drapes with the pose and the scene light.`,
   ].join('\n'),
 }
