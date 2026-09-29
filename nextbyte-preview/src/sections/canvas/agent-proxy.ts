@@ -221,17 +221,29 @@ export function agentProxy(): Plugin {
       }
 
       const url = `${ENDPOINT_GEMINI}/${model}:generateContent?key=${kluczGemini}`
-      const odp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts }],
-          generationConfig,
-        }),
-      })
+      const cialo = JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig })
+
+      // Chwilowe błędy Gemini (przeciążenie, limit, 5xx) ponawiamy: pojedyncza
+      // porażka kończyła się 502 dla całej analizy pineski.
+      let odp: Response | null = null
+      let ostatniBlad = ''
+      for (let podejscie = 0; podejscie < 3; podejscie++) {
+        try {
+          odp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: cialo })
+          if (odp.ok || ![429, 500, 502, 503, 504].includes(odp.status)) break
+          ostatniBlad = `Gemini API error (${odp.status}): ${(await odp.text()).slice(0, 300)}`
+        } catch (e) {
+          odp = null
+          ostatniBlad = e instanceof Error ? e.message : 'Błąd sieci'
+        }
+        console.warn(`[canvas] ${model}: podejście ${podejscie + 1}/3 nieudane — ${ostatniBlad}`)
+        if (podejscie < 2) await new Promise(r => setTimeout(r, 700 * (podejscie + 1)))
+      }
+      if (!odp) return { json: null, tokeny: 0, blad: ostatniBlad || 'Brak odpowiedzi Gemini' }
 
       if (!odp.ok) {
         const errText = await odp.text()
+        console.warn(`[canvas] ${model}: ${odp.status} ${errText.slice(0, 300)}`)
         return { json: null, tokeny: 0, blad: `Gemini API error (${odp.status}): ${errText}` }
       }
 
@@ -388,12 +400,18 @@ export function agentProxy(): Plugin {
       })
       const { json, blad } = await zapytajAgenta(SYSTEM_KLASYFIKACJI, tresci, MODEL_SPRAWDZENIA, {
         temperature: 0,
-        maxOutputTokens: 400,
+        maxOutputTokens: 1000,
         responseMimeType: 'application/json',
       })
-      if (!json) return { status: 502, cialo: { blad: blad ?? 'Klasyfikacja nieczytelna' } }
+      if (!json) {
+        console.warn(`[canvas] klasyfikacja pinesek: ${blad ?? 'odpowiedź nieczytelna'}`)
+        return { status: 502, cialo: { blad: blad ?? 'Klasyfikacja nieczytelna' } }
+      }
       const lista = Array.isArray(json.pineski) ? (json.pineski as { nr?: number; rodzaj?: string; co?: string }[]) : []
-      if (lista.length !== obrazy.length) return { status: 502, cialo: { blad: 'Klasyfikacja niepełna' } }
+      if (lista.length !== obrazy.length) {
+        console.warn(`[canvas] klasyfikacja pinesek niepełna: ${lista.length} z ${obrazy.length}`)
+        return { status: 502, cialo: { blad: 'Klasyfikacja niepełna' } }
+      }
       return {
         status: 200,
         cialo: {
