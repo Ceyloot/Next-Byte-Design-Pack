@@ -94,11 +94,27 @@ function AppInner() {
   const { isGlass, toggle: toggleGlass, showContent, toggleContent } = useGlass()
   // Motyw ciemny jako domyślny — podgląd startuje w trybie, w którym pracujemy.
   const [activeTheme, setActiveTheme] = useState<ThemeKey>('dark-theme')
-  const [activeTab,   setActiveTab]   = useState<TabKey>('preview')
+  const [activeTab,   setActiveTab]   = useState<TabKey>(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get('tab') as TabKey | null
+    const hashParam = window.location.hash.replace('#', '') as TabKey | null
+    if (tabParam && TABS.some(t => t.key === tabParam)) return tabParam
+    if (hashParam && TABS.some(t => t.key === hashParam)) return hashParam
+    return 'canvas'
+  })
   const [bgKey,       setBgKey]       = useState<BgKey>('nextbyte')
   const [lensWszedzie, setLensWszedzie] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [navPosition, setNavPosition] = useState<NavPosition>('top')
+
+  useEffect(() => {
+    const currentParams = new URLSearchParams(window.location.search)
+    if (currentParams.get('tab') !== activeTab) {
+      currentParams.set('tab', activeTab)
+      const newUrl = `${window.location.pathname}?${currentParams.toString()}${window.location.hash}`
+      window.history.replaceState(null, '', newUrl)
+    }
+  }, [activeTab])
 
   /* Klasa na <html> steruje trybem Liquid Glass oraz zasięgiem soczewki */
   useEffect(() => {
