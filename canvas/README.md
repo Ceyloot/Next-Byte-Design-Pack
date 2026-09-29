@@ -210,3 +210,10 @@ tsc --noEmit --skipLibCheck --strict --moduleResolution bundler --module esnext 
 ## Czego brakuje do uruchomienia
 
 Zależności, których `nextbyte-preview` nie ma: `konva react-konva use-image zustand sonner` (oraz `react` i `lucide-react`). Klucz Gemini jest trzymany w `localStorage` (`gemini_api_key`).
+
+
+---
+
+## Proste prompty i „bezwzględne zasady” (Studio Zdjęć)
+
+Dla operacji `addition`, `object_swap`, `object_transfer`, `removal`, `character_transfer` i `face_swap` (oraz `character_swap` 1:1) prompt to **jedno zdanie zadania + blok `[ABSOLUTE RULES — FOLLOW ALWAYS]`** zamiast bricków. Blok składa się z fragmentów doklejanych w Studiu Zdjęć (`operacje/proste.ts`: booster kompozytu, „re-light and re-shoot”, jakość fotograficzna, dla osób także anatomia, tożsamość i realizm skóry) oraz krótkiej ramki wyniku. Po nim idą `FINAL CHECK` i zasada ALWAYS (jedno ziarno). Pozostałe operacje (tło, pora dnia/roku, styl, tekstura, efekt, ubranie, poprawka) nadal używają bricków.
