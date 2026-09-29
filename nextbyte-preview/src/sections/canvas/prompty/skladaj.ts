@@ -3,6 +3,7 @@
  * =========================================================================
  * Kolejność sekcji w złożonym prompcie (stała):
  *
+ *   0. ALWAYS        — zasada naczelna o jednym ziarnie (też jako ostatnia linia promptu)
  *   1. IMAGES        — który obraz jest czym, w jakiej kolejności wysłany, format wyniku
  *   2. RULE BRICKS   — bricki włączone przez operację, rosnąco po numerze
  *   3. OPERATION     — misja + kroki wybranej operacji (+ DIRECTION od reżysera, + STYLE DIRECTIVES)
@@ -63,7 +64,7 @@ export interface SkladajWejscie {
 }
 
 export interface SekcjaPromptu {
-  klucz: 'images' | 'bricks' | 'operation' | 'direction' | 'style' | 'pins' | 'protected' | 'scene' | 'command' | 'check' | 'quality'
+  klucz: 'always' | 'images' | 'bricks' | 'operation' | 'direction' | 'style' | 'pins' | 'protected' | 'scene' | 'command' | 'check' | 'quality'
   tekst: string
 }
 
@@ -130,6 +131,17 @@ function nazwaDawcy(w: SkladajWejscie): string {
   return dawca ? `Image ${dawca.numer}` : 'the reference described in the COMMAND'
 }
 
+/**
+ * Zasady, które obowiązują w KAŻDEJ operacji (poza zmianą stylu, gdzie wygląd
+ * zmienia się celowo): jedno ziarno, ten sam kadr, kontrakt wyniku.
+ */
+const BRICKI_ZAWSZE: BrickId[] = ['grain-medium-rule', 'framing-rule', 'output-contract-rule']
+
+/** Zasada naczelna: na samej górze i na samym końcu promptu. */
+const ZASADA_ZAWSZE =
+  'ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. ' +
+  'NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.'
+
 const TOKEN = /\{\{\s*([A-Z_]+)\s*\}\}/g
 
 function nazwaBricka(id: BrickId): string {
@@ -178,7 +190,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
 
   // 2. RULE BRICKS
   const pominiete: BrickId[] = []
-  const wlaczone = op.bricks.filter((id) => {
+  const stale: BrickId[] = op.id === 'style_change' ? [] : BRICKI_ZAWSZE
+  const wlaczone = [...op.bricks, ...stale].filter((id) => {
     if (id === 'clean-plate-rule' && czyszczenie === null) {
       pominiete.push(id)
       return false
@@ -257,9 +270,9 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       `- POSITION: the base of the element sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.`,
     )
   }
-  if (uzyte.has('object-identity-rule') || uzyte.has('character-identity-rule') || uzyte.has('clothing-rule')) {
+  if (op.id !== 'style_change') {
     liniaKontroli.push(
-      `- GRAIN: look closely at the element — its grain, noise, contrast and sharpness are the same as the ground and sky right beside it; it is not smoother or cleaner than its surroundings.`,
+      `- GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.`,
     )
   }
   liniaKontroli.push(
@@ -270,7 +283,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // 6. COMMAND (tekst użytkownika wstawiany bez podmiany tokenów)
   const sekcjaPolecenia = `[COMMAND — the user's words]\n${w.polecenie.trim() || op.nazwa}`
 
+  const zasadaZawsze = op.id === 'style_change' ? '' : `[ALWAYS — NON-NEGOTIABLE]\n${ZASADA_ZAWSZE}`
+
   const sekcje: SekcjaPromptu[] = [
+    { klucz: 'always', tekst: zasadaZawsze },
     { klucz: 'images', tekst: sekcjaObrazow },
     { klucz: 'bricks', tekst: sekcjaBrickow },
     { klucz: 'operation', tekst: sekcjaOperacji },
@@ -282,6 +298,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     { klucz: 'command', tekst: sekcjaPolecenia },
     { klucz: 'check', tekst: sekcjaKontroli },
     { klucz: 'quality', tekst: POZYTYW },
+    { klucz: 'always', tekst: zasadaZawsze },
   ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
 
   return {
