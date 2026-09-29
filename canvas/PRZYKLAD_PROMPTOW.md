@@ -90,7 +90,7 @@ OUTPUT — return ONLY this JSON:
 }
 ```
 
-## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1818 tokenów)
+## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1886 tokenów)
 
 ```text
 [ALWAYS — NON-NEGOTIABLE]
@@ -145,9 +145,9 @@ CLEAN PLATE — what leaves the frame leaves without a trace.
 SINGULARITY — the moved, replaced or added element appears EXACTLY ONCE, at the destination. No clone, ghost or leftover anywhere else. Each element has the right number of parts (two eyes, four wheels, five fingers).
 OBJECT IDENTITY — it is unmistakably the SAME object: its type, shape, proportions, material, colour, markings and wear are kept, including dust, patina and scratches.
 - It is only re-photographed inside this scene: no look-alike substitute, no hybrid. A moved object keeps its form and details.
-DONOR ISOLATION — from Image 2 only the identity and appearance of the pinned subject crosses over; its framing, background, light, grading and resolution stay there. The subject is redrawn from the camera angle and in the light of Image 1.
+DONOR ISOLATION — from Image 2 only the identity and appearance of the pinned subject crosses over; its framing, viewing angle, background, light, shadows, reflections, grading and resolution stay there. The subject is redrawn from the camera angle and in the light of Image 1.
 NO COPY-PASTE — re-shoot, do not paste: render the frame as if one camera photographed the scene with the element standing in it from the start.
-- Never lift, warp or recolour reference pixels. No seams, hard edges, halo or mismatched sharpness; the edit is impossible to spot.
+- Never lift, warp or recolour reference pixels. A result whose outline and viewing angle match the donor photo although the target camera or heading differs is a paste — redo it from the target camera. Its shadows are cast anew by the target light, never carried over or painted on. No seams, hard edges, halo or mismatched sharpness; the edit is impossible to spot.
 EDGE & BLEND — fine edges (hair, fur, foliage, glass) stay clean with the scene lens's softness; no halo, fringe or outline. Colour, brightness, grain and sharpness cross the border of the changed area with no visible step.
 
 [OPERATION — OBJECT SWAP]
@@ -171,6 +171,7 @@ zamień lampę na wazon z drugiego zdjęcia
 [FINAL CHECK — verify before returning the image]
 - POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
 - GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
+- NOT A PASTE: the element is re-photographed for this scene — its viewing angle, outline, light and shadow belong to Image 1's camera and light, not to the donor photo; if it looks like the donor picture placed on the scene, redo it.
 - PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.
 - CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
@@ -234,15 +235,15 @@ CLEAN PLATE — what leaves the frame leaves without a trace.
 SINGULARITY — the moved, replaced or added element appears EXACTLY ONCE, at the destination. No clone, ghost or leftover anywhere else. Each element has the right number of parts (two eyes, four wheels, five fingers).
 OBJECT IDENTITY — it is unmistakably the SAME object: its type, shape, proportions, material, colour, markings and wear are kept, including dust, patina and scratches.
 - It is only re-photographed inside this scene: no look-alike substitute, no hybrid. A moved object keeps its form and details.
-DONOR ISOLATION — from the reference described in the COMMAND only the identity and appearance of the pinned subject crosses over; its framing, background, light, grading and resolution stay there. The subject is redrawn from the camera angle and in the light of Image 1.
+DONOR ISOLATION — from the reference described in the COMMAND only the identity and appearance of the pinned subject crosses over; its framing, viewing angle, background, light, shadows, reflections, grading and resolution stay there. The subject is redrawn from the camera angle and in the light of Image 1.
 NO COPY-PASTE — re-shoot, do not paste: render the frame as if one camera photographed the scene with the element standing in it from the start.
-- Never lift, warp or recolour reference pixels. No seams, hard edges, halo or mismatched sharpness; the edit is impossible to spot.
+- Never lift, warp or recolour reference pixels. A result whose outline and viewing angle match the donor photo although the target camera or heading differs is a paste — redo it from the target camera. Its shadows are cast anew by the target light, never carried over or painted on. No seams, hard edges, halo or mismatched sharpness; the edit is impossible to spot.
 EDGE & BLEND — fine edges (hair, fur, foliage, glass) stay clean with the scene lens's softness; no halo, fringe or outline. Colour, brightness, grain and sharpness cross the border of the changed area with no visible step.
 
 [OPERATION — OBJECT TRANSFER]
-Move the object from Pin 1 ("cottage", Image 1) to Pin 2 ("path", Image 1), keeping perfect proportions and making it look as natural as possible. It is the same object: the whole object, with its own real proportions, appears exactly once at the destination.
+Move the object from Pin 1 ("cottage", Image 1) to Pin 2 ("path", Image 1), keeping perfect proportions and making it look as natural as possible. It is the same object — the whole object, with its own real proportions, appearing exactly once at the destination — but it is RE-PHOTOGRAPHED in the destination scene, never copied: the donor's pixels, viewing angle, lighting and shadow do not come across.
 STEPS:
-1. Take the object WHOLE (not only the part under its pin) and keep its identity: shape, proportions, material, colour, markings and surface condition. Its width-to-height ratio never changes; only its size in the frame does.
+1. Take the object WHOLE (not only the part under its pin) and keep its identity: shape, real 3D proportions (length, width and height relate exactly as in reality), material, colour, markings and surface condition. Its 2D silhouette is NOT kept: it is re-rendered as the target camera sees it at its new heading, so the visible faces and outline differ from the donor photo whenever the camera or heading differs.
 2. Set its size by the real world, not by the donor photo: judge it against neighbours of known size at the destination (see SCALE) — a framing that fills the donor photo says nothing about how large it is here. Farther from the camera means smaller along the same vanishing lines, closer means larger.
 3. Turn it to the camera of Image 1 and stand it on the destination spot: footprint centred there, on the same surface plane, heading along the lines of that surface — or, for an airborne object, with its centre there.
 4. If the source pin lies in Image 1, restore a clean plate there, as if the object had never stood at the old spot; if it lies in another image, only the object comes across and that photo is left out of the result.
@@ -261,6 +262,7 @@ przenieś chatkę bliżej
 [FINAL CHECK — verify before returning the image]
 - POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
 - GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
+- NOT A PASTE: the element is re-photographed for this scene — its viewing angle, outline, light and shadow belong to Image 1's camera and light, not to the donor photo; if it looks like the donor picture placed on the scene, redo it.
 - PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.
 - CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 

@@ -27,9 +27,9 @@ export const OBJECT_TRANSFER: Operation = {
   ],
   dawca: 'opcjonalny',
   czystaPlyta: true,
-  misja: `Move the object from {{PIN_SOURCE}} to {{PIN_TARGET}}, keeping perfect proportions and making it look as natural as possible. It is the same object: the whole object, with its own real proportions, appears exactly once at the destination.`,
+  misja: `Move the object from {{PIN_SOURCE}} to {{PIN_TARGET}}, keeping perfect proportions and making it look as natural as possible. It is the same object — the whole object, with its own real proportions, appearing exactly once at the destination — but it is RE-PHOTOGRAPHED in the destination scene, never copied: the donor's pixels, viewing angle, lighting and shadow do not come across.`,
   kroki: [
-    `Take the object WHOLE (not only the part under its pin) and keep its identity: shape, proportions, material, colour, markings and surface condition. Its width-to-height ratio never changes; only its size in the frame does.`,
+    `Take the object WHOLE (not only the part under its pin) and keep its identity: shape, real 3D proportions (length, width and height relate exactly as in reality), material, colour, markings and surface condition. Its 2D silhouette is NOT kept: it is re-rendered as the target camera sees it at its new heading, so the visible faces and outline differ from the donor photo whenever the camera or heading differs.`,
     `Set its size by the real world, not by the donor photo: judge it against neighbours of known size at the destination (see SCALE) — a framing that fills the donor photo says nothing about how large it is here. Farther from the camera means smaller along the same vanishing lines, closer means larger.`,
     `Turn it to the camera of {{IMAGE_TARGET}} and stand it on the destination spot: footprint centred there, on the same surface plane, heading along the lines of that surface — or, for an airborne object, with its centre there.`,
     `If the source pin lies in {{IMAGE_TARGET}}, restore a clean plate there, as if the object had never stood at the old spot; if it lies in another image, only the object comes across and that photo is left out of the result.`,
