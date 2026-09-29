@@ -45,7 +45,7 @@ import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/opera
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
-import { rozmiarZPomiaru } from './canvas/rezyser'
+import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
@@ -98,8 +98,9 @@ function skalaDlaModelu(
   skala: string | undefined,
   rozmiar: { szer: number; wys: number } | undefined,
   wycinek: { u: number; v: number } | null,
+  porownanie?: string,
 ): string {
-  const linie = [skala?.trim()]
+  const linie = [skala?.trim(), porownanie?.trim()]
   if (rozmiar) {
     const szer = Math.min(95, Math.round(rozmiar.szer / (wycinek?.u ?? 1)))
     const wys = Math.min(95, Math.round(rozmiar.wys / (wycinek?.v ?? 1)))
@@ -750,6 +751,7 @@ export function CanvasSection() {
 
       // Skala liczona z kotwicy o znanym rozmiarze (nie z oka): % kadru docelowego.
       const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
+      const porownanie = plan?.pomiar ? porownanieZKotwica(plan.pomiar, pinDocelowy?.normalizedY) : ''
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
       // Operacja na człowieku: zamek tożsamości osoby z referencji (jak w Studiu Zdjęć).
@@ -774,7 +776,7 @@ export function CanvasSection() {
         swiatlo: plan?.swiatlo,
         tozsamosc,
         widok: plan?.widok,
-        skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null),
+        skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null, porownanie),
         instrukcja: warstwaWycinka
           ? 'Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.'
           : undefined,
@@ -835,7 +837,7 @@ export function CanvasSection() {
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
             swiatlo: plan?.swiatlo,
             tozsamosc,
-            skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, null),
+            skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, null, porownanie),
             widok: plan?.widok,
             role: uklad.role,
             miejsca: plan?.miejsca,

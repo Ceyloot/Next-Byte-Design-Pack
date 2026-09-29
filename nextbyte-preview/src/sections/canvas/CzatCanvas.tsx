@@ -21,6 +21,7 @@ import {
   Download,
   AlertCircle,
   HelpCircle,
+  Copy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { etykietaPineski, wytnijOkolice, type Pineska, type Warstwa, type StanGeneracji } from './typy'
@@ -103,6 +104,24 @@ export function CzatCanvas({
       .catch(() => setWersjaDysk(null))
   }, [])
   const [otwartyPodglad, setOtwartyPodglad] = useState(false)
+  // Kopiowanie promptu wysłanego do modelu — do diagnozy (sekcje SCALE, LIGHT…)
+  const [skopiowano, setSkopiowano] = useState(false)
+  const kopiujPolecenie = async () => {
+    if (!podgladPolecenia) return
+    try {
+      await navigator.clipboard.writeText(podgladPolecenia)
+    } catch {
+      // Schowek bywa zablokowany (brak uprawnień) — zapasowo przez zaznaczenie
+      const pole = document.createElement('textarea')
+      pole.value = podgladPolecenia
+      document.body.appendChild(pole)
+      pole.select()
+      document.execCommand('copy')
+      pole.remove()
+    }
+    setSkopiowano(true)
+    window.setTimeout(() => setSkopiowano(false), 1600)
+  }
   const [wycinki, setWycinki] = useState<Record<string, string>>({})
   const [historiaWiadomosci, setHistoriaWiadomosci] = useState<WiadomoscCzatu[]>([])
 
@@ -612,7 +631,18 @@ export function CzatCanvas({
         {/* Podgląd skompilowanego prompta dla ciekawych */}
         {otwartyPodglad && podgladPolecenia && (
           <div className="max-h-28 overflow-y-auto rounded-xl border border-foreground/15 bg-background/90 p-2 text-[10px] text-foreground/70 font-mono scrollbar-none">
-            <p className="font-bold uppercase text-foreground/40 mb-1">Kontrakt z modelem:</p>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="font-bold uppercase text-foreground/40">Kontrakt z modelem:</p>
+              <button
+                type="button"
+                onClick={kopiujPolecenie}
+                title="Kopiuj cały prompt"
+                className="flex items-center gap-1 rounded-md px-1.5 py-0.5 font-sans text-[10px] font-semibold text-foreground/55 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+              >
+                {skopiowano ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                {skopiowano ? 'Skopiowano' : 'Kopiuj'}
+              </button>
+            </div>
             <pre className="whitespace-pre-wrap">{podgladPolecenia}</pre>
           </div>
         )}
@@ -722,6 +752,19 @@ export function CzatCanvas({
               >
                 {otwartyPodglad ? 'Ukryj kontrakt' : 'Podgląd'}
               </button>
+
+              {podgladPolecenia && (
+                <button
+                  type="button"
+                  onClick={kopiujPolecenie}
+                  className="flex items-center gap-1 text-[10px] text-foreground/40 transition-colors hover:text-foreground"
+                  title="Kopiuj prompt wysłany do modelu"
+                  aria-label="Kopiuj prompt"
+                >
+                  {skopiowano ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                  {skopiowano ? 'Skopiowano' : 'Kopiuj'}
+                </button>
+              )}
             </div>
 
             {/* Przycisk Generuj */}

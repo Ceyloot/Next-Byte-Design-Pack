@@ -60,8 +60,9 @@ STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither 
 - "skala": 1–3 English sentences: the true real-world size of the incoming / changed object, and how it compares with the anchor below. Words only — no percentages of the image. Never take the size from how much of the reference photo the object fills; distance changes the share of the frame, never the real size.
 - PERSPECTIVE decides apparent size: things shrink with distance from the camera, so a distant house can look smaller than a car standing near the camera, and the same car ten metres farther looks far smaller than right beside the camera. Real size and apparent size are different things — judge apparent size at the DESTINATION's distance, never the object's size in its own photo and never a fixed ratio between object types.
 - "kotwice": 2 or 3 anchors of known real size in the DESTINATION image, standing at DIFFERENT distances from the camera (one nearer, one farther; the destination pin lies between or near them). Each gives its real width in metres ("szer_m") and a tight box around its horizontal extent ("box", [ymin, xmin, ymax, xmax], 0–1000 of the destination image) whose BOTTOM edge sits where the anchor touches the ground. The code uses their sizes at their image rows to derive how scale changes with distance and reads the scale exactly at the destination pin's row. One anchor is acceptable only when nothing else of known size is visible.
-- "obiekt": the finished object's size as it appears AT THE DESTINATION (in metres of real length across the image plane at that spot): "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened). The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
+- "obiekt": the finished object's size as it appears AT THE DESTINATION (in metres of real length across the image plane at that spot): "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened), "prawdziwe" = its TRUE dimensions {"dl_m" length, "szer_m" width, "wys_m" height}, "kat_deg" = its heading relative to the camera in degrees (0 = its long side faces the camera, full length visible; 90 = its front or back faces the camera, only its width visible; 45 = diagonal three-quarter view), and "kamera_deg" = how steeply the destination camera looks down at the spot (0 = eye level, 90 = straight down). The code computes the apparent size from these; give them even when unsure. An object turned at an angle to the camera shows part of its length: its apparent width then lies between its width and the diagonal of its footprint — a car parked diagonally, seen from above, spans nearly its full length, not its 1.9 m width. The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
 - For a replacement give both sizes in "skala" and their ratio.
+- Compare in NUMBERS, never with a bare "smaller / larger than": give the ratio of the object's real length and width to the nearest anchor (e.g. "length 4.5 m ≈ 1.5× the 3 m door; width 1.9 m ≈ 0.6× it"). Check the arithmetic — a 4.5 m car is longer than a 3 m door, not smaller.
 
 STEP 4b — "widok": how the finished object must APPEAR at the destination, 1–2 English sentences, derived from the destination scene's geometry: its heading relative to the lines of the surface it stands on (along, across or at an angle to them, and toward or away from the camera), which of its faces the target camera sees (front, side, rear, top) and from what camera height or elevation. It comes from the destination camera and surface, never from how the object looks in its reference photo; a reference view that differs from this is turned to match. Skip for objects without a natural heading.
 
@@ -89,7 +90,7 @@ Answer ONLY with JSON:
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
   "swiatlo": "<key light direction, hardness, Kelvin; shadow direction and softness; colour bounce; focal length, depth of field, grain, medium>",
-  "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres> },
+  "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres>, "prawdziwe": { "dl_m": <true length>, "szer_m": <true width>, "wys_m": <true height> }, "kat_deg": <0–90>, "kamera_deg": <0–90> },
   "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
   "obszar_zrodla": null,
   "analiza": "Pineska 1 wskazuje ...",
@@ -155,25 +156,59 @@ export interface PlanRezysera {
 
 /** Kotwice (znany rozmiar, szerokość i dolna krawędź w kadrze 0–1) i widoczne wymiary obiektu w metrach. */
 export interface PomiarSkali {
-  kotwice: { szerM: number; szer: number; rzad: number }[]
+  kotwice: { opis: string; szerM: number; szer: number; rzad: number }[]
   obiekt: { szerM: number; wysM: number }
 }
 
 function odczytajPomiar(kotwice: unknown, obiekt: unknown): PomiarSkali | undefined {
-  const lista = Array.isArray(kotwice) ? (kotwice as { szer_m?: unknown; box?: unknown }[]) : []
+  const lista = Array.isArray(kotwice) ? (kotwice as { opis?: unknown; szer_m?: unknown; box?: unknown }[]) : []
   const k = lista.flatMap(x => {
     const szerM = Number(x?.szer_m)
     const box = Array.isArray(x?.box) ? (x.box as unknown[]).map(Number) : []
     if (!Number.isFinite(szerM) || szerM <= 0 || box.length !== 4 || box.some(n => !Number.isFinite(n))) return []
     const szer = Math.abs(box[3] - box[1]) / 1000
     const rzad = Math.max(box[0], box[2]) / 1000
-    return szer >= 0.02 && szer <= 1 ? [{ szerM, szer, rzad }] : []
+    return szer >= 0.02 && szer <= 1 ? [{ opis: String(x?.opis ?? '').trim(), szerM, szer, rzad }] : []
   })
-  const o = obiekt as { szer_m?: unknown; wys_m?: unknown } | null | undefined
-  const oSzer = Number(o?.szer_m)
-  const oWys = Number(o?.wys_m)
+  const o = obiekt as
+    | {
+        szer_m?: unknown
+        wys_m?: unknown
+        kat_deg?: unknown
+        kamera_deg?: unknown
+        prawdziwe?: { dl_m?: unknown; szer_m?: unknown; wys_m?: unknown }
+      }
+    | null
+    | undefined
+  let oSzer = Number(o?.szer_m)
+  let oWys = Number(o?.wys_m)
   if (!k.length || ![oSzer, oWys].every(n => Number.isFinite(n) && n > 0)) return undefined
-  return { kotwice: k, obiekt: { szerM: oSzer, wysM: oWys } }
+
+  // Widoczny rozmiar nie może wyjść poza to, co pozwalają prawdziwe wymiary.
+  // Auto stojące ukośnie, widziane z góry, reżyser opisał jako ~1 m „widocznej
+  // szerokości” (3% kadru) — model to zignorował i narysował auto dwa razy za duże.
+  const dl = Number(o?.prawdziwe?.dl_m)
+  const sz = Number(o?.prawdziwe?.szer_m)
+  const wy = Number(o?.prawdziwe?.wys_m)
+  if ([dl, sz].every(n => Number.isFinite(n) && n > 0)) {
+    const bok = Math.min(dl, sz)
+    const przekatna = Math.hypot(dl, sz)
+    const wysokosc = Number.isFinite(wy) && wy > 0 ? wy : bok
+    const kat = Number(o?.kat_deg)
+    const kamera = Number(o?.kamera_deg)
+    if (Number.isFinite(kat) && Number.isFinite(kamera)) {
+      // Rzut prostopadłościanu: kąty ocenia się na oko pewniej niż „widoczne metry”.
+      const t = (Math.min(90, Math.max(0, kat)) * Math.PI) / 180
+      const e = (Math.min(90, Math.max(0, kamera)) * Math.PI) / 180
+      oSzer = dl * Math.abs(Math.cos(t)) + sz * Math.abs(Math.sin(t))
+      const glebia = dl * Math.abs(Math.sin(t)) + sz * Math.abs(Math.cos(t))
+      oWys = glebia * Math.sin(e) + wysokosc * Math.cos(e)
+    } else {
+      oSzer = Math.min(przekatna, Math.max(bok, oSzer))
+      oWys = Math.min(Math.hypot(przekatna, wysokosc), Math.max(0.5 * Math.min(wysokosc, bok), oWys))
+    }
+  }
+  return { kotwice: k, obiekt: { szerM: Math.round(oSzer * 100) / 100, wysM: Math.round(oWys * 100) / 100 } }
 }
 
 /**
@@ -194,7 +229,33 @@ export function skalaWRzedzie(p: PomiarSkali, rzad: number): number {
   if (sxx < 0.0025) return najblizsza.s // kotwice na prawie tym samym rzędzie — brak informacji o perspektywie
   const k = a.reduce((t, x) => t + (x.y - my) * (x.s - ms), 0) / sxx
   const przewidziana = ms + k * (rzad - my)
-  return k > 0 && przewidziana > 0 ? przewidziana : najblizsza.s
+  if (!(k > 0 && przewidziana > 0)) return najblizsza.s
+  // Prosta z 2–3 pudełek od modelu potrafi przestrzelić kilkukrotnie (auto na
+  // podjeździe wyszło na 3% kadru). Skala nie zmienia się skokowo między bliskimi
+  // rzędami, więc wynik trzymamy w paśmie wokół najbliższej kotwicy.
+  const blisko = Math.abs(najblizsza.y - rzad) < 0.15
+  const [dol, gora] = blisko ? [0.7, 1.45] : [0.4, 2.5]
+  return Math.min(najblizsza.s * gora, Math.max(najblizsza.s * dol, przewidziana))
+}
+
+/** Kotwica leżąca najbliżej rzędu pinu — do porównania „obiekt vs znana rzecz obok”. */
+function najblizszaKotwica(p: PomiarSkali, rzad: number) {
+  return p.kotwice.reduce((b, x) => (Math.abs(x.rzad - rzad) < Math.abs(b.rzad - rzad) ? x : b), p.kotwice[0])
+}
+
+/**
+ * Porównanie z kotwicą widoczną w kadrze — modelowi łatwiej trafić „1,5× szerokości
+ * bramy garażu” niż procent kadru. Po angielsku, do sekcji SCALE.
+ */
+export function porownanieZKotwica(p: PomiarSkali, rzadPinu?: number): string {
+  const rzad = rzadPinu ?? p.kotwice.reduce((t, k) => t + k.rzad, 0) / p.kotwice.length
+  const kotwica = najblizszaKotwica(p, rzad)
+  if (!kotwica?.opis) return ''
+  const naMetr = skalaWRzedzie(p, rzad)
+  const razy = (p.obiekt.szerM * naMetr) / kotwica.szer
+  if (!Number.isFinite(razy) || razy <= 0) return ''
+  const r = razy >= 10 ? Math.round(razy) : Math.round(razy * 10) / 10
+  return `Size anchor: the ${kotwica.opis} in Image 1 is ${kotwica.szerM} m wide; at the destination the object spans about ${r}× the width at which that ${kotwica.opis} appears in the frame (${p.obiekt.szerM} m across as seen from the camera).`
 }
 
 /**
