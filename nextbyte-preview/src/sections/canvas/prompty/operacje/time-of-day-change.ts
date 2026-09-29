@@ -6,10 +6,12 @@ export const TIME_OF_DAY_CHANGE: Operation = {
   nazwa: 'Zmień porę dnia',
   kiedyUzyc:
     'The whole scene changes time of day (dawn, day, sunset, dusk, night). Polish triggers: zrób noc / zachód słońca / świt / dzień / niech będzie wieczór.',
-  bricks: [],
+  bricks: [
+    'studio-scena',
+  ],
   dawca: 'brak',
   czystaPlyta: false,
-  misja: `Transform the time of day of the scene as the COMMAND requests.`,
+  misja: `Transform the time of day of the scene as the USER request requests.`,
   kroki: [
     `Rebuild the sky, sun or moon position, shadows and colour temperature for the target time.`,
     `Switch on artificial light sources where the time of day calls for it.`,

@@ -22,6 +22,7 @@ import {
   MODEL_REZYSERA,
   SYSTEM_REZYSERA,
   miejscaZPlanu,
+  odznakiZPlanu,
   odczytajPlanRezysera,
   trescZadaniaRezysera,
   type PomiarSkali,
@@ -70,6 +71,8 @@ export interface Plan {
   swiatlo?: string
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
+  /** krótki opis każdej pineski odróżniający ją od podobnych obiektów (po polsku) */
+  odznaki?: Record<number, string>
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
   obszar?: Prostokat
   /** przy przeniesieniu w kadrze: gdzie obiekt stoi teraz */
@@ -377,6 +380,7 @@ export function agentProxy(): Plugin {
         widok: odczytany.widok || undefined,
         swiatlo: odczytany.swiatlo || undefined,
         miejsca: miejscaZPlanu(odczytany),
+        odznaki: odznakiZPlanu(odczytany),
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,
         kosztTokenow: tokeny,
@@ -456,6 +460,27 @@ export function agentProxy(): Plugin {
           },
         },
       }
+    })
+
+    // Pomiar wstawionego obiektu na wyniku: prostokąt 0–1000, bez cienia.
+    // Model obrazu ignoruje „13% kadru” w prompcie, więc sprawdzamy to liczbą, nie okiem.
+    odpowiedzNa('/api/canvas/zmierz', async dane => {
+      const z = JSON.parse(dane) as { obraz?: string; obiekt?: string }
+      if (!z.obraz || !z.obiekt) return { status: 400, cialo: { blad: 'Brak obrazu albo nazwy obiektu' } }
+      const system =
+        'Find the object named below in the image. Answer ONLY with JSON {"box":[ymin,xmin,ymax,xmax]} normalised 0-1000, ' +
+        'tight around the WHOLE object (every part of it), excluding its shadow and reflection. If it is not in the image, answer {"box":null}.'
+      const { json, blad } = await zapytajAgenta(
+        system,
+        [{ type: 'image_url', image_url: { url: z.obraz } }, { type: 'text', text: `OBJECT: ${z.obiekt}` }],
+        MODEL_REZYSERA,
+        { temperature: 0, maxOutputTokens: 1000, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } },
+      )
+      if (!json) return { status: 502, cialo: { blad: blad ?? 'Pomiar nieczytelny' } }
+      const box = Array.isArray(json.box) ? (json.box as unknown[]).map(Number) : null
+      if (!box || box.length !== 4 || box.some(n => !Number.isFinite(n))) return { status: 200, cialo: { box: null } }
+      const [y0, x0, y1, x1] = box.map(n => Math.min(1000, Math.max(0, n)) / 1000)
+      return { status: 200, cialo: { box: { x0: Math.min(x0, x1), y0: Math.min(y0, y1), x1: Math.max(x0, x1), y1: Math.max(y0, y1) } } }
     })
 
     // Profil tożsamości osoby spod pineski → gotowy zamek tożsamości.

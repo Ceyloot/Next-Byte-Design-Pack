@@ -81,6 +81,8 @@ const PUSTE_NAZWY = new Set(['obiekt', 'ten', 'ta', 'to', 'na', 'w', 'z', 'do', 
 interface Wzmianka {
   pin: number
   poz: number
+  /** ile słów zajmuje wzmianka („pineska 2” = 2, „stolik kawowy” = 2, „samochód” = 1) */
+  dl: number
 }
 
 /**
@@ -96,7 +98,7 @@ function znajdzWzmianki(t: Slowo[], pineski: Pineska[]): Wzmianka[] {
     for (let k = 0; k < t.length; k++) {
       const w = t[k].tekst
       if ((/^(pinesk|pinezk|pin)/.test(w) && t[k + 1]?.tekst === String(numer)) || w === `p${numer}`) {
-        wynik.push({ pin: numer, poz: k })
+        wynik.push({ pin: numer, poz: k, dl: w === `p${numer}` ? 1 : 2 })
       }
     }
     // nazwa pineski — wszystkie znaczące słowa nazwy muszą paść obok siebie
@@ -105,8 +107,23 @@ function znajdzWzmianki(t: Slowo[], pineski: Pineska[]): Wzmianka[] {
       .filter(s => !PUSTE_NAZWY.has(s) && !/^\d+$/.test(s))
     if (!nazwa.length) return
     const rdzenie = nazwa.map(rdzen)
+    let znaleziona = false
     for (let k = 0; k + rdzenie.length <= t.length; k++) {
-      if (rdzenie.every((r, j) => t[k + j].tekst.startsWith(r))) wynik.push({ pin: numer, poz: k })
+      if (rdzenie.every((r, j) => t[k + j].tekst.startsWith(r))) {
+        wynik.push({ pin: numer, poz: k, dl: rdzenie.length })
+        znaleziona = true
+      }
+    }
+    // Cała nazwa nie pada („samochód wyścigowy”, a w zdaniu sam „samochód”) —
+    // wystarczy jedno jej słowo, pierwsze trafione.
+    if (!znaleziona && rdzenie.length > 1) {
+      for (const r of rdzenie) {
+        const k = t.findIndex(s => r.length >= 3 && s.tekst.startsWith(r))
+        if (k >= 0) {
+          wynik.push({ pin: numer, poz: k, dl: 1 })
+          break
+        }
+      }
     }
   })
   return wynik.sort((a, b) => a.poz - b.poz)
@@ -305,4 +322,62 @@ export function pytanieORole(pineski: Pineska[], intencja: Intencja): PytanieORo
     opcje: [opcja(a, b), opcja(b, a)],
     odcisk: odciskPinesek(pineski),
   }
+}
+
+/* ── Wplatanie pinesek w zdanie użytkownika ──────────────────────── */
+
+/** Słowa wskazujące obiekt i miejsce — dla pinesek, których nazwa nie pada w zdaniu. */
+const WSKAZANIE_OBIEKTU = /^(go|to|ja|ten|te|tego|tej|tym|ta|nia|jego)$/
+const WSKAZANIE_MIEJSCA = /^(tu|tutaj|tutuaj|tam|tamtam|stad|tedy)$/
+
+/**
+ * Zdanie użytkownika bez żadnej zmiany słów, z pineską dopisaną w nawiasie przy
+ * słowie, które ją wskazuje: „Wstaw ten samochód (Pin 1 · Image 2 · "czarny
+ * Hyundai…" · x=0.58 y=0.40) na podjazd (Pin 2 · …)”. Deterministycznie — model
+ * językowy potrafił tu zamienić numery pinesek i współrzędne.
+ *
+ * `opis(numer)` zwraca tekst do nawiasu; `rola(numer)` mówi, czy pineska to obiekt
+ * („go”, „to”), czy miejsce („tu”, „tutaj”) — dla zdań bez nazw. Pineska, której
+ * nic w zdaniu nie wskazuje, zostaje tylko w liście pinesek w [TASK].
+ */
+export function wplecPineski(
+  tekst: string,
+  pineski: Pineska[],
+  opis: (numer: number) => string,
+  rola: (numer: number) => 'obiekt' | 'miejsce' | null,
+): string {
+  const tokeny: { norm: string; koniec: number }[] = []
+  const re = /[\p{L}\d#]+/gu
+  let m: RegExpExecArray | null
+  while ((m = re.exec(tekst))) tokeny.push({ norm: bezOgonkow(m[0]), koniec: m.index + m[0].length })
+
+  const wstawki = new Map<number, number>() // indeks znaku końca słowa → numer pineski
+  const uzyte = new Set<number>()
+  const t: Slowo[] = tokeny.map((x, i) => ({ tekst: x.norm, poz: i }))
+  for (const w of znajdzWzmianki(t, pineski)) {
+    if (uzyte.has(w.pin)) continue
+    // koniec całej nazwy (nazwa może mieć kilka słów, „stolik kawowy”)
+    const ostatni = Math.min(tokeny.length - 1, w.poz + w.dl - 1)
+    if (wstawki.has(tokeny[ostatni].koniec)) continue
+    wstawki.set(tokeny[ostatni].koniec, w.pin)
+    uzyte.add(w.pin)
+  }
+  // Pineski bez nazwy w zdaniu: „wstaw go tutaj” — obiekt do „go”, miejsce do „tutaj”
+  pineski.forEach((p, i) => {
+    const numer = i + 1
+    if (p.chroniona || uzyte.has(numer)) return
+    const r = rola(numer)
+    if (!r) return
+    const wzor = r === 'obiekt' ? WSKAZANIE_OBIEKTU : WSKAZANIE_MIEJSCA
+    const k = tokeny.findIndex(x => wzor.test(x.norm) && !wstawki.has(x.koniec))
+    if (k < 0) return
+    wstawki.set(tokeny[k].koniec, numer)
+    uzyte.add(numer)
+  })
+
+  let wynik = tekst
+  for (const koniec of [...wstawki.keys()].sort((a, b) => b - a)) {
+    wynik = `${wynik.slice(0, koniec)} (${opis(wstawki.get(koniec)!)})${wynik.slice(koniec)}`
+  }
+  return wynik
 }

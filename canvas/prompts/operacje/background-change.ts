@@ -7,17 +7,12 @@ export const BACKGROUND_CHANGE: Operation = {
   kiedyUzyc:
     'The surroundings are replaced with a new environment while the foreground subjects stay exactly as they are. Polish triggers: zmień tło / inne tło / przenieś mnie na plażę / w tle ma być.',
   bricks: [
-    'studio-tlo',
-    'studio-tozsamosc-osoby',
+    'studio-referencja',
     'studio-jedno-zdjecie',
-    'studio-przeoswietlenie',
-    'studio-kamera',
-    'studio-film',
-    'studio-montaz',
   ],
   dawca: 'opcjonalny',
   czystaPlyta: false,
-  misja: `Replace the surroundings with the new environment from {{IMAGE_DONOR}} or from the COMMAND, keeping the foreground subjects exactly as they are.`,
+  misja: `Replace the surroundings with the new environment from {{IMAGE_DONOR}} or from the USER request, keeping the foreground subjects exactly as they are.`,
   kroki: [
     `Separate the foreground subjects from the environment; keep their position, scale, pose and crop.`,
     `Build the new environment with the same camera height and horizon as {{IMAGE_TARGET}}.`,

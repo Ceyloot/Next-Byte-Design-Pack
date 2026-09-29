@@ -8,8 +8,7 @@ export const REMOVAL: Operation = {
     'Something is deleted from the target photo and nothing takes its place; the background is rebuilt. Polish triggers: usuń / skasuj / wytnij / wymaż / pozbądź się / zrób bez.',
   bricks: [
     'studio-usuniecie',
-    'studio-scena-zostaje',
-    'studio-film',
+    'studio-scena',
   ],
   dawca: 'brak',
   czystaPlyta: true,

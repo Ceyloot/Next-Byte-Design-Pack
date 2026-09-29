@@ -277,7 +277,9 @@ export function kolejnoscObrazow(
   }
   dodaj(warstwaEdytowana ?? undefined)
   for (const p of pineski) dodaj(warstwy.find(w => w.id === p.layerId))
-  for (const w of warstwy) if (w.visible !== false) dodaj(w)
+  // Tylko zdjęcie edytowane i zdjęcia z pineskami. Wcześniej szła każda widoczna
+  // warstwa — także poprzednie wyniki bez pinesek, a model kopiował z nich za duże
+  // auto i przybliżony kadr jako „Image 3” i „Image 4”.
   return wynik
 }
 
@@ -328,6 +330,8 @@ export type StanGeneracji =
   /** poziom 4: ani zdanie, ani wzrok nie rozstrzygnęły ról — pytamy jednym kliknięciem */
   | { faza: 'pyta'; pytanie: import('./role-z-polecenia').PytanieORole }
   | { faza: 'sprawdza'; wynik: import('./dostawca').Generacja }
+  /** pomiar pokazał za duży / za mały obiekt albo przesunięty od pineski — generujemy jeszcze raz */
+  | { faza: 'koryguje'; wynik: import('./dostawca').Generacja; powod: string }
   /** drugi przebieg: kontrola uznała, że zmieniony element wygląda na wklejony */
   | { faza: 'poprawia'; wynik: import('./dostawca').Generacja }
   | { faza: 'blad'; tresc: string }

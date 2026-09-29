@@ -16,6 +16,7 @@
  */
 import { etykietaPineski, type Pineska, type Warstwa } from './typy'
 import { wykryjStyl, type Intencja } from './tryby-edycji'
+import { wplecPineski } from './role-z-polecenia'
 import { skladajPrompt, type ObrazWejscia, type OperationId, type PineskaSklejka, type SkladajWynik } from './prompty'
 
 export { INTENCJE, TABELA_STYLOW, wykryjStyl, type Intencja } from './tryby-edycji'
@@ -282,35 +283,16 @@ export function operacjaZIntencji(intencja: Intencja, osoba = false): OperationI
 /** Role „biorę stąd” (dawca, źródło, styl) kontra „działam tutaj” (cel, miejsce, obszar). */
 const ROLA_ZRODLA = /^(SOURCE|DONOR|IDENTITY DONOR|STYLE|NEW ENVIRONMENT|additional reference|reference)/
 
-/** Tylko rozmiar z analizy pineski — bez opisu wyglądu, światła i stanu powierzchni. */
-function rozmiarPineski(a: Pineska['analiza']): string {
-  if (!a) return ''
-  const wymiary = [a.wysokoscCm ? `height ≈ ${a.wysokoscCm} cm` : '', a.dlugoscCm ? `length ≈ ${a.dlugoscCm} cm` : '']
-    .filter(Boolean)
-    .join(', ')
-  return wymiary ? `size: ${wymiary}` : ''
-}
-
 export interface OpcjePolecenia {
-  /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze (agent-reżyser) — sekcja SCALE */
-  skala?: string
-  /** jak obiekt ma być widoczny w scenie docelowej (reżyser) */
-  widok?: string
-  /** dodatkowa uwaga techniczna dla modelu (np. że Image 1 jest wycinkiem) */
-  instrukcja?: string
-  /** numer pineski → rola od agenta (SOURCE, DESTINATION, …) */
+  /** numer pineski → rola od agenta albo z `role-z-polecenia.ts` (SOURCE, DESTINATION, …) */
   role?: Record<number, string>
-  /** numer pineski → miejsce opisane słowami przez agenta (na czym stoi, co jest obok) */
-  miejsca?: Record<number, string>
   /** reżyser: zamiana lub przeniesienie dotyczy całej osoby */
   osoba?: boolean
-  /** reżyser: światło i kamera zdjęcia docelowego z konkretnymi wartościami */
-  swiatlo?: string
-  /** zamek tożsamości osoby z referencji (analiza biometryczna) */
-  tozsamosc?: string
+  /** numer pineski → krótki opis od Gemini, odróżniający obiekt od podobnych („zielony hatchback, lewy z dwóch”) */
+  odznaki?: Record<number, string>
 }
 
-/** Operacje na człowieku — idą modelem postaci i dostają zamek tożsamości. */
+/** Operacje na człowieku — idą modelem postaci (RUNWARE_MODEL_POSTAC). */
 export const OPERACJE_POSTACI = new Set<OperationId>(['character_swap', 'character_transfer', 'face_swap'])
 
 /**
@@ -336,10 +318,8 @@ export function idZrodelNaPlotnie(
 /* ── Złożenie ────────────────────────────────────────────────────── */
 
 /**
- * Pełne polecenie dla modelu.
- *
- * `skala` pochodzi od agenta-reżysera (`rezyser.ts`), który oglądał zdjęcia:
- * to jedyny opis sceny, jaki idzie do modelu (rzeczywisty rozmiar obiektu). Wchodzą W szkielet z bricków, nigdy zamiast niego.
+ * Pełne polecenie dla modelu: [TASK] operacji + obrazy i pineski, [USER] ze
+ * słowami użytkownika i wplecionymi pineskami, [RULES] z bricków Studia.
  */
 export function zbudujPolecenie(
   tekst: string,
@@ -362,7 +342,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { skala = '', widok = '', instrukcja = '', role = {}, miejsca = {}, osoba = false, swiatlo = '', tozsamosc = '' } = opcje
+  const { role = {}, osoba = false, odznaki = {} } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -370,6 +350,7 @@ export function zbudujZadanieModelu(
   const numerObrazu = (p: Pineska) => Math.max(1, obrazy.findIndex(w => w.id === p.layerId) + 1)
   const wskazane = pineski.filter(p => !p.chroniona)
   const chronione = pineski.filter(p => p.chroniona)
+  const odznaka = (p: Pineska) => odznaki[pineski.indexOf(p) + 1] || nazwy.get(p.id)
 
   const pineskiSklejka: PineskaSklejka[] = wskazane.map(p => {
     const numer = pineski.indexOf(p) + 1
@@ -380,11 +361,25 @@ export function zbudujZadanieModelu(
       obraz: numerObrazu(p),
       x: p.normalizedX,
       y: p.normalizedY,
-      nazwa: nazwy.get(p.id),
-      miejsce: miejsca[numer],
-      opis: [rolaOpis, rozmiarPineski(p.analiza)].filter(Boolean).join('; '),
+      nazwa: odznaka(p),
     }
   })
+
+  // [USER]: słowa użytkownika bez zmian, pineska w nawiasie przy słowie, które ją wskazuje
+  const wsp = (v: number) => v.toFixed(2)
+  const zPineskami = wplecPineski(
+    zadanie,
+    pineski,
+    numer => {
+      const p = pineski[numer - 1]
+      const nazwa = odznaka(p)
+      return `Pin ${numer} · Image ${numerObrazu(p)}${nazwa ? ` · "${nazwa}"` : ''} · x=${wsp(p.normalizedX)} y=${wsp(p.normalizedY)}`
+    },
+    numer => {
+      const s = pineskiSklejka.find(x => x.numer === numer)
+      return !s ? null : s.rola === 'source' ? 'obiekt' : 'miejsce'
+    },
+  )
 
   // Pierwszy obraz to zawsze płótno (docelowe), pozostałe to dawcy.
   const obrazyWejscia: ObrazWejscia[] = Array.from({ length: Math.max(1, obrazy.length) }, (_, i) => ({
@@ -399,20 +394,16 @@ export function zbudujZadanieModelu(
   if (operacja === 'addition' && pineskiSklejka.some(p => p.rola === 'source' && p.obraz > 1)) operacja = 'object_transfer'
 
   return skladajPrompt({
-    polecenie: zadanie,
+    polecenie: zPineskami,
     operacja,
     pineski: pineskiSklejka,
     obrazy: obrazyWejscia,
-    skala: skala.trim() || undefined,
-    widok: widok.trim() || undefined,
-    instrukcja: instrukcja.trim() || undefined,
-    swiatlo: swiatlo.trim() || undefined,
-    tozsamosc: tozsamosc.trim() || undefined,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,
       obraz: numerObrazu(p),
-      nazwa: nazwy.get(p.id),
-      miejsce: miejsca[pineski.indexOf(p) + 1],
+      x: p.normalizedX,
+      y: p.normalizedY,
+      nazwa: odznaka(p),
     })),
     dyrektywyStylu: styl ? { nazwa: styl.nazwa, reguly: styl.reguly } : undefined,
     format: obrazy[0] ? { szerokosc: obrazy[0].naturalWidth, wysokosc: obrazy[0].naturalHeight } : undefined,

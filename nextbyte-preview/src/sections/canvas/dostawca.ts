@@ -271,3 +271,25 @@ export async function analizujTozsamosc(obrazZCelownikiem: string): Promise<stri
     return null
   }
 }
+
+/**
+ * Gdzie na obrazie stoi wstawiony obiekt — prostokąt 0–1 (od lewego górnego rogu).
+ * `null`, gdy go nie znaleziono albo pomiar zawiódł.
+ */
+export async function zmierzObiekt(
+  obraz: string,
+  obiekt: string,
+): Promise<{ x0: number; y0: number; x1: number; y1: number } | null> {
+  try {
+    const odp = await fetch('/api/canvas/zmierz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ obraz, obiekt }),
+    })
+    if (!odp.ok) return null
+    const tresc = (await odp.json()) as { box?: { x0: number; y0: number; x1: number; y1: number } | null }
+    return tresc.box ?? null
+  } catch {
+    return null
+  }
+}

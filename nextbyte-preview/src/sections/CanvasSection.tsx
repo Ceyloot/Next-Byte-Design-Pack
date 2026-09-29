@@ -21,13 +21,13 @@ import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas } from '@/sections/canvas/CzatCanvas'
 import {
-  analizujTozsamosc,
   generuj,
   nazwijWynik,
   opiszZmiane,
   rozpoznajObiekt,
   rozpoznajScene,
   sprawdzWynik,
+  zmierzObiekt,
   klasyfikujPineski,
   zaplanuj,
 } from '@/sections/canvas/dostawca'
@@ -89,27 +89,6 @@ import {
 const GENERUJ_NA_WYCINKU = false
 /** WYŁĄCZONE: żadnej obróbki pikseli po generacji poza dopasowaniem formatu. */
 const POSTPROCES_ZIARNA = false
-
-/**
- * Sekcja SCALE: opis od reżysera + zmierzona obwiednia obiektu w % kadru,
- * który widzi model. W trybie wycinka % są przeliczone na wycinek.
- */
-function skalaDlaModelu(
-  skala: string | undefined,
-  rozmiar: { szer: number; wys: number } | undefined,
-  wycinek: { u: number; v: number } | null,
-  porownanie?: string,
-): string {
-  const linie = [skala?.trim(), porownanie?.trim()]
-  if (rozmiar) {
-    const szer = Math.min(95, Math.round(rozmiar.szer / (wycinek?.u ?? 1)))
-    const wys = Math.min(95, Math.round(rozmiar.wys / (wycinek?.v ?? 1)))
-    linie.push(
-      `Measured size: the finished object's bounding box is about ${szer}% of the width and ${wys}% of the height of Image 1 — not larger; free surface stays visible around it.`,
-    )
-  }
-  return linie.filter(Boolean).join('\n')
-}
 
 const KLUCZ_ZAPISU = 'nb-canvas-projekt-v2'
 
@@ -560,12 +539,6 @@ export function CanvasSection() {
     return null
   }, [warstwaZrodlowa, uwagi, projekt.tekst])
 
-  /**
-   * Zamki tożsamości policzone dla pinesek (klucz: id + położenie) — analiza
-   * biometryczna kosztuje wywołanie, a ta sama osoba wraca w kolejnych próbach.
-   */
-  const zamkiTozsamosci = useRef(new Map<string, string>())
-
   /** Odpowiedź użytkownika na pytanie o role (poziom 4) — ważna, dopóki pineski się nie zmienią. */
   const odpowiedzRol = useRef<{ odcisk: string; opcja: OpcjaRol } | null>(null)
 
@@ -754,35 +727,16 @@ export function CanvasSection() {
       const porownanie = plan?.pomiar ? porownanieZKotwica(plan.pomiar, pinDocelowy?.normalizedY) : ''
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
-      // Operacja na człowieku: zamek tożsamości osoby z referencji (jak w Studiu Zdjęć).
+      // Operacja na człowieku idzie modelem postaci (RUNWARE_MODEL_POSTAC, jeśli ustawiony).
       const operacjaAgenta = operacjaZIntencji(trybAgenta, plan?.osoba)
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
-      let tozsamosc: string | undefined
-      const pinOsoby = postac
-        ? projekt.pineski.find(p => !p.chroniona && p.layerId !== zrodlo.id && obrazy.some(w => w.id === p.layerId))
-        : undefined
-      if (pinOsoby) {
-        const klucz = `${pinOsoby.id}:${pinOsoby.normalizedX.toFixed(3)}:${pinOsoby.normalizedY.toFixed(3)}`
-        tozsamosc = zamkiTozsamosci.current.get(klucz)
-        if (!tozsamosc) {
-          const warstwaOsoby = obrazy.find(w => w.id === pinOsoby.layerId)
-          const zCelownikiem = warstwaOsoby ? await narysujMapeMiejsc(warstwaOsoby, [pinOsoby]) : ''
-          tozsamosc = (zCelownikiem && (await analizujTozsamosc(zCelownikiem))) || undefined
-          if (tozsamosc) zamkiTozsamosci.current.set(klucz, tozsamosc)
-        }
-      }
 
+      // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
+      // Rozmiar, światło i kierunek nie idą do promptu — służą tylko do pomiaru po generacji.
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
-        swiatlo: plan?.swiatlo,
-        tozsamosc,
-        widok: plan?.widok,
-        skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null, porownanie),
-        instrukcja: warstwaWycinka
-          ? 'Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.'
-          : undefined,
         role: uklad.role,
-        miejsca: plan?.miejsca,
         osoba: plan?.osoba,
+        odznaki: plan?.odznaki,
       })
       const pelnePolecenie = zadanieModelu?.prompt ?? ''
       const ustawieniaModelu = {
@@ -835,13 +789,9 @@ export function CanvasSection() {
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
-            swiatlo: plan?.swiatlo,
-            tozsamosc,
-            skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, null, porownanie),
-            widok: plan?.widok,
             role: uklad.role,
-            miejsca: plan?.miejsca,
             osoba: plan?.osoba,
+            odznaki: plan?.odznaki,
           })
           setOstatniPrompt(pelnyPrompt)
           const pelne = await generuj({
@@ -868,6 +818,63 @@ export function CanvasSection() {
       }
 
       const nazwa = nazwijWynik(projekt.tekst, projekt.pineski)
+
+      // POMIAR: model obrazu potrafi zignorować rozmiar i miejsce z promptu (auto 2× za
+      // duże, pół metra obok pineski). Mierzymy obiekt na wyniku i przy wyraźnym błędzie
+      // generujemy JEDEN raz ponownie z liczbową korektą na początku promptu.
+      const pinObiektu = pinZrodlowy ?? pinDocelowy
+      const nazwaObiektu = pinObiektu ? pinObiektu.analiza?.obiektEn || etykietaPineski(pinObiektu, projekt.pineski.indexOf(pinObiektu) + 1) : ''
+      const mierzalne =
+        ['wstaw', 'przenies', 'zamien'].includes(trybAgenta) &&
+        Boolean(pinDocelowy && pinDocelowy.layerId === zrodlo.id && nazwaObiektu)
+      const ocenPomiar = async (src: string) => {
+        if (!mierzalne || !pinDocelowy) return null
+        const box = await zmierzObiekt((await zmniejszDoAnalizy(src)) || src, nazwaObiektu)
+        if (!box) return null
+        const szer = (box.x1 - box.x0) * 100
+        const cx = (box.x0 + box.x1) / 2
+        const cy = (box.y0 + box.y1) / 2
+        const odX = cx - pinDocelowy.normalizedX
+        const odY = cy - pinDocelowy.normalizedY
+        const cel = rozmiarPlanu?.szer
+        const skala = cel ? szer / cel : 1
+        const bledy: string[] = []
+        const korekta: string[] = []
+        if (cel && (skala > 1.35 || skala < 0.65)) {
+          bledy.push(`${skala > 1 ? 'za duży' : 'za mały'} (${Math.round(szer)}% szerokości zamiast ok. ${Math.round(cel)}%)`)
+          korekta.push(
+            `SIZE: the object came out ${Math.round(szer)}% of the image width — ${skala > 1 ? 'far too large' : 'far too small'}. It must span about ${Math.round(cel)}% of the width of Image 1${porownanie ? ` (${porownanie})` : ''}. Draw it ${skala > 1 ? `${(skala).toFixed(1)}× smaller` : `${(1 / skala).toFixed(1)}× larger`} than before.`,
+          )
+        }
+        if (Math.abs(odX) > 0.08 || Math.abs(odY) > 0.09) {
+          bledy.push(`obok pineski (środek na ${Math.round(cx * 100)}%, ${Math.round(cy * 100)}% zamiast ${Math.round(pinDocelowy.normalizedX * 100)}%, ${Math.round(pinDocelowy.normalizedY * 100)}%)`)
+          korekta.push(
+            `POSITION: its centre came out at x=${Math.round(cx * 100)}%, y=${Math.round(cy * 100)}% — it must be at the magenta dot, x=${Math.round(pinDocelowy.normalizedX * 100)}%, y=${Math.round(pinDocelowy.normalizedY * 100)}% (move it ${odY > 0 ? 'up' : 'down'}${Math.abs(odX) > 0.08 ? ` and ${odX > 0 ? 'left' : 'right'}` : ''}).`,
+          )
+        }
+        return { szer, cel, bledy, korekta }
+      }
+
+      let pomiar = await ocenPomiar(wynik.obrazUrl)
+      if (pomiar?.bledy.length) {
+        console.info('[canvas] pomiar wyniku:', pomiar)
+        dodajZeZrodla(wynik.obrazUrl, `${nazwa}_proba1`, 'wynik', zrodlo)
+        setStanGeneracji({ faza: 'koryguje', wynik: { ...wynik, nazwa, opis: '' }, powod: pomiar.bledy.join('; ') })
+        try {
+          const korekta = await generuj({
+            ...ustawieniaModelu,
+            polecenie: `[CORRECTION — the previous attempt failed this, fix it first]\n${pomiar.korekta.join('\n')}\n\n${pelnePolecenie}`,
+            obrazy: obrazyDoModelu,
+            szerokosc: zrodlo.naturalWidth,
+            wysokosc: zrodlo.naturalHeight,
+          })
+          const src = await dopasujFormatDoObrazu(korekta.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
+          wynik = { ...korekta, obrazUrl: src, kosztUSD: (wynik.kosztUSD ?? 0) + (korekta.kosztUSD ?? 0) }
+          pomiar = await ocenPomiar(src)
+        } catch (e) {
+          console.warn('[canvas] korekta rozmiaru nieudana', e)
+        }
+      }
       dodajZeZrodla(wynik.obrazUrl, nazwa, 'wynik', zrodlo)
 
       let gotowy = {
@@ -975,6 +982,15 @@ export function CanvasSection() {
           }
         } catch (e) {
           console.warn('[canvas] drugi przebieg nieudany', e)
+        }
+      }
+
+      if (ocenaPoPoprawce && pomiar?.cel) {
+        const zmierzone = `Pomiar: obiekt ma ${Math.round(pomiar.szer)}% szerokości kadru (cel ok. ${Math.round(pomiar.cel)}%)${pomiar.bledy.length ? ` — nadal ${pomiar.bledy.join('; ')}` : ''}.`
+        ocenaPoPoprawce = {
+          ...ocenaPoPoprawce,
+          wykonane: ocenaPoPoprawce.wykonane && !pomiar.bledy.length,
+          ocena: `${ocenaPoPoprawce.ocena} ${zmierzone}`.trim(),
         }
       }
 
@@ -1294,7 +1310,7 @@ export function CanvasSection() {
         }}
         stanGeneracji={stanGeneracji}
         powodBlokady={powodBlokady}
-        trwa={['planuje', 'trwa', 'sprawdza', 'poprawia'].includes(stanGeneracji.faza)}
+        trwa={['planuje', 'trwa', 'sprawdza', 'poprawia', 'koryguje'].includes(stanGeneracji.faza)}
         intencja={intencja}
         uwagi={uwagi}
         podgladPolecenia={ostatniPrompt || polecenie}

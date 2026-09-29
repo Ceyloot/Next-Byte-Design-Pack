@@ -1,30 +1,29 @@
 /**
- * SKŁADARKA — łączy bricki, operację, opis Gemini i polecenie w jeden prompt.
- * =========================================================================
- * Kolejność sekcji w złożonym prompcie (stała):
+ * SKŁADARKA — cztery części, nic więcej:
+ * =====================================
  *
- *   1. IMAGES        — który obraz jest czym, w jakiej kolejności wysłany, format wyniku
- *   2. RULE BRICKS   — bricki włączone przez operację, rosnąco po numerze
- *   3. OPERATION     — misja + kroki wybranej operacji (+ DIRECTION od reżysera, + STYLE DIRECTIVES)
- *   4. PIN MAP       — pineski: rola, obraz, współrzędne X/Y, opis miejsca (+ PROTECTED AREAS)
- *   5. SCALE          — rzeczywisty rozmiar obiektu i kotwice skali
- *   6. COMMAND       — słowa użytkownika
- *   Bricki (RULES) to wyłącznie teksty ze Studia Zdjęć (PDF) — patrz bricks/index.ts.
+ *   [TASK]   gotowy prompt operacji wybranej przez Gemini (1–2 zdania)
+ *            + jedna linia „Image 1 = scene. Image 2 = reference.”
+ *            + po linii na pineskę: „Pin 1 · Image 2 · x=0.58 y=0.40 — "czarny Hyundai…"”
+ *   [USER]   słowa użytkownika bez zmian, z pineskami wplecionymi przy słowach,
+ *            które je wskazują (robi to `polecenia.ts` przed wywołaniem)
+ *   [RULES]  bricki z PDF Studia Zdjęć wybrane przez operację (bricks/index.ts)
  *
- * Tokeny podmieniane w brickach i operacjach:
- *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
+ * Opis pineski („badge”) daje Gemini: krótko i tak, żeby odróżnić obiekt od
+ * podobnych w kadrze. Rozmiar, światło, kierunek i kontrola wyniku NIE idą do
+ * promptu — model je ignorował, a każde zdanie więcej rozmywa polecenie.
+ *
+ * Tokeny w brickach i operacjach:
+ *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{DONOR_ROLE}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
  */
 import type { BrickId, ObrazWejscia, OperationId, OpisSceny, RolaPineski, WymaganieDawcy } from './types'
 import { getOperation } from './operacje'
 import { BRICKS } from './bricks'
 import {
-  STUDIO_ANATOMIA,
   STUDIO_FACE_KONTROLA,
   STUDIO_FACE_SYSTEM,
-  STUDIO_REALIZM_TWARZY,
   STUDIO_SWAP_KONTROLA,
   STUDIO_SWAP_SYSTEM,
-  STUDIO_TOZSAMOSC,
   SYSTEM_KOMPOZYTORA,
   studioFaceBaza,
   studioSwapBaza,
@@ -36,51 +35,36 @@ export interface PineskaSklejka {
   numer: number
   rola: RolaPineski
   obraz: number
-  /** współrzędne znormalizowane 0–1 (od lewej / od góry) — w PIN MAP jako położenie magentowej kropki */
+  /** współrzędne znormalizowane 0–1 (od lewej / od góry) — położenie magentowej kropki */
   x: number
   y: number
+  /** opis pineski („badge”) — krótko i odróżniająco, np. „zielony hatchback, lewy z dwóch” */
   nazwa?: string
-  /** miejsce pineski opisane słowami z analizy obrazu (na czym stoi, co jest obok) */
-  miejsce?: string
-  /** dodatkowe fakty o obiekcie pod pineską (wymiary, stan, kontakt) — z analizy pineski */
-  opis?: string
 }
 
 /** Obszar, który ma wyjść z edycji nieodróżnialny od oryginału. */
 export interface ObszarChroniony {
   numer: number
   obraz: number
+  x?: number
+  y?: number
   nazwa?: string
-  /** miejsce opisane słowami */
-  miejsce?: string
 }
 
 export interface SkladajWejscie {
+  /** słowa użytkownika — już z wplecionymi pineskami */
   polecenie: string
   operacja: OperationId
   pineski: PineskaSklejka[]
   /** obrazy w kolejności wysyłki do generatora (pierwszy = docelowy) */
   obrazy: ObrazWejscia[]
+  /** opis sceny z analizy Gemini (pipeline w canvas/lib) — nazwy pinesek */
   opis?: OpisSceny
-  /** rzeczywisty rozmiar obiektu względem kotwicy widocznej w Image 1 (od reżysera) */
-  skala?: string
-  /** jak obiekt ma wyglądać w scenie docelowej: kierunek, widoczne ściany, kąt kamery (od reżysera) */
-  widok?: string
-  /** precyzyjna instrukcja od reżysera dla tej sceny (fakty o typie obiektu, rozmiary) */
-  instrukcja?: string
   pineskiChronione?: ObszarChroniony[]
   /** dyrektywy konkretnego stylu artystycznego (dla operacji style_change) */
   dyrektywyStylu?: { nazwa: string; reguly: string[] }
-  /** rozmiar obrazu docelowego w pikselach — do zapisu formatu wyniku */
+  /** rozmiar obrazu docelowego w pikselach (zachowane dla zgodności wywołań) */
   format?: { szerokosc: number; wysokosc: number }
-  /**
-   * światło i kamera Image 1 opisane konkretnie przez reżysera (kierunek, kelwiny,
-   * twardość, cienie, odblaski, ogniskowa, głębia ostrości, ziarno) — zamiast
-   * ogólnika „jak Image 1”, którego Studio (poz. 52) wprost zakazuje
-   */
-  swiatlo?: string
-  /** zamek tożsamości osoby z referencji (analiza biometryczna, poz. 47–50) */
-  tozsamosc?: string
   /** zamiana postaci: ubranie zostaje ze sceny docelowej (wariant z poz. 21 Studia) */
   ubranieZeSceny?: boolean
   /** czy jako ostatni obraz wysyłamy maskę obszaru pracy */
@@ -88,7 +72,7 @@ export interface SkladajWejscie {
 }
 
 export interface SekcjaPromptu {
-  klucz: 'always' | 'images' | 'bricks' | 'operation' | 'direction' | 'light' | 'identity' | 'style' | 'pins' | 'protected' | 'scene' | 'command' | 'check' | 'quality'
+  klucz: 'task' | 'user' | 'rules'
   tekst: string
 }
 
@@ -110,10 +94,11 @@ export interface SkladajWynik {
   nierozwiazaneTokeny: string[]
 }
 
-/** Odwołanie do pineski w treści bricków. Miejsce jest opisane słowami w sekcji PIN MAP. */
+const wsp = (v: number) => v.toFixed(2)
+
+/** Odwołanie do pineski w treści bricków i operacji. */
 function opisPineski(p: PineskaSklejka): string {
-  const nazwa = p.nazwa ? `"${p.nazwa}", ` : ''
-  return `Pin ${p.numer} (${nazwa}Image ${p.obraz})`
+  return `Pin ${p.numer} (Image ${p.obraz}, x=${wsp(p.x)} y=${wsp(p.y)})`
 }
 
 /** Pineska docelowa: rola target, najlepiej na obrazie docelowym. */
@@ -126,10 +111,10 @@ function pineskaZrodla(pineski: PineskaSklejka[]): PineskaSklejka | undefined {
 }
 
 /**
- * Miejsce do wyczyszczenia (clean plate) zależy od operacji:
+ * Miejsce do wyczyszczenia zależy od operacji:
  * - zamiana i usunięcie czyszczą miejsce pod pineską docelową,
- * - przeniesienie czyści stare miejsce (pineska źródłowa) — o ile leży na obrazie docelowym,
- * - null = nie ma czego czyścić na obrazie docelowym (brick clean-plate odpada).
+ * - przeniesienie czyści stare miejsce — o ile leży na obrazie docelowym,
+ * - null = nie ma czego czyścić (brick „usunięcie” odpada).
  */
 function miejsceCzyszczenia(operacja: OperationId, pineski: PineskaSklejka[]): string | null {
   switch (operacja) {
@@ -137,12 +122,12 @@ function miejsceCzyszczenia(operacja: OperationId, pineski: PineskaSklejka[]): s
     case 'character_swap':
     case 'removal': {
       const cel = pineski.find((p) => p.rola === 'target' && p.obraz === 1)
-      return cel ? opisPineski(cel) : 'the object named in the COMMAND'
+      return cel ? opisPineski(cel) : 'the object named in the USER request'
     }
     case 'object_transfer':
     case 'character_transfer': {
       const zrodlo = pineskaZrodla(pineski)
-      if (!zrodlo) return 'the old position of the object named in the COMMAND'
+      if (!zrodlo) return 'the old position of the object named in the USER request'
       return zrodlo.obraz === 1 ? opisPineski(zrodlo) : null
     }
     default:
@@ -150,59 +135,76 @@ function miejsceCzyszczenia(operacja: OperationId, pineski: PineskaSklejka[]): s
   }
 }
 
-/** Nazwa obrazu-dawcy dla tokenu {{IMAGE_DONOR}}. */
-function nazwaDawcy(w: SkladajWejscie): string {
+/** Numer obrazu-dawcy — `null`, gdy operacja idzie bez zdjęcia-dawcy. */
+function numerDawcy(w: SkladajWejscie): number | null {
   const zrodlo = pineskaZrodla(w.pineski)
-  if (zrodlo && zrodlo.obraz !== 1) return `Image ${zrodlo.obraz}`
-  const dawca = w.obrazy.find((o) => o.rola === 'donor')
-  return dawca ? `Image ${dawca.numer}` : 'the reference described in the COMMAND'
+  if (zrodlo && zrodlo.obraz !== 1) return zrodlo.obraz
+  return w.obrazy.find((o) => o.rola === 'donor')?.numer ?? null
 }
 
-/**
- * Zasada, która obowiązuje w KAŻDEJ operacji poza zmianą stylu: układ sceny
- * i kadr bez zmian (Studio Zdjęć, poz. 43). Wszystkie reguły pochodzą z PDF.
- */
-const BRICKI_ZAWSZE: BrickId[] = ['studio-uklad-sceny']
+/** Rola zdjęcia-dawcy w brzmieniu Studia Zdjęć (poz. 7). */
+const ROLA_DAWCY: Partial<Record<OperationId, string>> = {
+  addition: 'the product to depict faithfully',
+  object_swap: 'the product to depict faithfully',
+  object_transfer: 'the product to depict faithfully',
+  character_transfer: 'the person who must appear in the image — preserve their exact face, hair, skin tone, body and clothing',
+  clothing_change: 'the outfit and clothing to wear in the image',
+  background_change: 'the location and background of the scene — keep its architecture, lighting and mood',
+  style_change: 'a STYLE reference only — borrow its palette, lighting and mood, never its literal content, faces or text',
+}
+const ROLA_INNA = 'a reference described in the prompt — use it exactly as the prompt says'
 
-/** Operacje, w których jest generowany obiekt (pin docelowy = tu ma stanąć obiekt). */
+/** Operacje z obiektem — rola kompozytora i niższa temperatura. */
 const OPERACJE_Z_OBIEKTEM = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'character_swap', 'character_transfer'])
 /** Operacje, których kroki dublowałyby bricki — wystarczy jedno zdanie zadania. */
 const BEZ_KROKOW = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'removal', 'character_transfer'])
+/** Temperatura operacji z obiektem — niżej niż swap postaci (0.45), bo miejsce zadaje pineska. */
+const TEMPERATURA_OBIEKTU = 0.35
 
 const TOKEN = /\{\{\s*([A-Z_]+)\s*\}\}/g
 
-/** Temperatura operacji z obiektem — niżej niż swap postaci (0.45), bo geometrię zadaje pineska. */
-const TEMPERATURA_OBIEKTU = 0.35
-
-/** Sekcja światła i kamery Image 1 — konkretne wartości od reżysera. */
-function sekcjaSwiatla(swiatlo?: string): string {
-  const t = swiatlo?.trim()
-  return t ? `[LIGHT AND CAMERA OF IMAGE 1 — the changed area is shot under exactly this]\n${t}` : ''
-}
-
-/** Sekcja zamka tożsamości (poz. 49–50 Studia). */
-function sekcjaTozsamosci(tozsamosc?: string): string {
-  const t = tozsamosc?.trim()
-  return t ? `[IDENTITY LOCK]\n${t}` : ''
+/** Linia obrazów + linie pinesek (część TASK). */
+function mapaObrazowIPinesek(w: SkladajWejscie): string {
+  const refs = w.obrazy.filter((o) => o.rola === 'donor').map((o) => o.numer)
+  const obrazy = [
+    'Image 1 = scene.',
+    refs.length === 1 ? `Image ${refs[0]} = reference.` : refs.length > 1 ? `Images ${refs.join(', ')} = references.` : '',
+    w.maska ? 'Last image = mask of the work area (a guide only).' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const opisy = new Map((w.opis?.pineski ?? []).map((o) => [o.pineska, o.nazwa]))
+  const pineski = [...w.pineski]
+    .sort((a, b) => a.numer - b.numer)
+    .map((p) => {
+      const nazwa = p.nazwa || opisy.get(p.numer)
+      const bezKropki = p.rola === 'source' && p.obraz === 1 ? ' (no dot)' : ''
+      return `Pin ${p.numer} · Image ${p.obraz} · x=${wsp(p.x)} y=${wsp(p.y)}${bezKropki}${nazwa ? ` — "${nazwa}"` : ''}`
+    })
+  const chronione = (w.pineskiChronione ?? []).map(
+    (p) =>
+      `Pin ${p.numer} · Image ${p.obraz}${p.x !== undefined && p.y !== undefined ? ` · x=${wsp(p.x)} y=${wsp(p.y)}` : ''}${p.nazwa ? ` — "${p.nazwa}"` : ''} — keep exactly as it is`,
+  )
+  return [obrazy, ...pineski, ...chronione].join('\n')
 }
 
 /** Składa finalny prompt dla modelu obrazu. */
 export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const op = getOperation(w.operacja)
   const nierozwiazane = new Set<string>()
-
   const cel = pineskaCelu(w.pineski)
   const zrodlo = pineskaZrodla(w.pineski)
   const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski)
+  const dawca = numerDawcy(w)
 
   const wartosci: Record<string, string> = {
     IMAGE_TARGET: 'Image 1',
-    IMAGE_DONOR: nazwaDawcy(w),
+    IMAGE_DONOR: dawca ? `Image ${dawca}` : 'the reference described in the USER request',
+    DONOR_ROLE: ROLA_DAWCY[op.id] ?? ROLA_INNA,
     PIN_TARGET: cel ? opisPineski(cel) : 'the marked spot',
     PIN_SOURCE: zrodlo ? opisPineski(zrodlo) : 'the source spot',
     PIN_CLEAR: czyszczenie ?? 'the cleared spot',
   }
-
   const podmien = (tekst: string): string =>
     tekst.replace(TOKEN, (_m, klucz: string) => {
       if (klucz in wartosci) return wartosci[klucz]
@@ -210,107 +212,57 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       return ''
     })
 
-  // 1. IMAGES
-  const linieObrazow = w.obrazy.map((o) =>
-    o.rola === 'target'
-      ? `Image ${o.numer} = the SCENE: the result is this photograph${w.format ? ` (${w.format.szerokosc}×${w.format.wysokosc} px, same framing)` : ' with the same framing'} with only the requested change.`
-      : `Image ${o.numer} = REFERENCE: supplies only the identity of its pinned subject.`,
-  )
-  if (w.maska) {
-    linieObrazow.push(`Last image = MASK of the work area (white = change, black = untouched); a guide only.`)
-  }
-  const sekcjaObrazow = `[IMAGES]\n${linieObrazow.join('\n')}`
-
-  if (op.gotowy === 'studio-character-swap') return skladajGotowySwap(w, sekcjaObrazow, cel, zrodlo)
-  if (op.gotowy === 'studio-face-swap') return skladajGotowaTwarz(w, sekcjaObrazow, cel, zrodlo)
-
-  // 2. RULE BRICKS
-  const pominiete: BrickId[] = []
-  const stale: BrickId[] = op.id === 'style_change' ? [] : BRICKI_ZAWSZE
-  const wlaczone = [...op.bricks, ...stale].filter((id) => {
-    if (id === 'studio-usuniecie' && czyszczenie === null) {
-      pominiete.push(id)
-      return false
+  // [TASK] — prompt operacji (zamiany postaci i twarzy: baza Studia 1:1, poz. 20/21/29)
+  let zadanie: string
+  let system: string | undefined
+  let temperatura: number | undefined
+  if (op.gotowy === 'studio-character-swap') {
+    const refs = w.obrazy.filter((o) => o.rola === 'donor')
+    const opisRefs =
+      refs.length > 1
+        ? `the character reference images (Images ${refs.map((r) => r.numer).join(', ')}, all showing the SAME person from different angles)`
+        : `the character reference image (Image ${refs[0]?.numer ?? 2})`
+    zadanie = `${(w.ubranieZeSceny ? studioSwapBazaUbranieSceny : studioSwapBaza)(opisRefs, 'Image 1')}\n${STUDIO_SWAP_KONTROLA}`
+    system = STUDIO_SWAP_SYSTEM
+    temperatura = 0.45
+  } else if (op.gotowy === 'studio-face-swap') {
+    const refs = w.obrazy.filter((o) => o.rola === 'donor').map((o) => o.numer)
+    zadanie = `${studioFaceBaza('Image 1', refs.length > 1 ? `Images ${refs.join(', ')}` : `Image ${refs[0] ?? 2}`, Math.max(1, refs.length))}\n${STUDIO_FACE_KONTROLA}`
+    system = STUDIO_FACE_SYSTEM
+    temperatura = 0.42
+  } else {
+    zadanie = podmien(op.misja) + (BEZ_KROKOW.has(op.id) ? '' : `\n${op.kroki.map((k, i) => `${i + 1}. ${podmien(k)}`).join('\n')}`)
+    if (OPERACJE_Z_OBIEKTEM.has(op.id)) {
+      system = SYSTEM_KOMPOZYTORA
+      temperatura = TEMPERATURA_OBIEKTU
     }
-    return true
+  }
+  const styl = w.dyrektywyStylu ? `\nStyle — ${w.dyrektywyStylu.nazwa}: ${w.dyrektywyStylu.reguly.join(' ')}` : ''
+  const sekcjaZadania = `[TASK]\n${zadanie}${styl}\n${mapaObrazowIPinesek(w)}`
+
+  // [USER]
+  const sekcjaUzytkownika = `[USER]\n${w.polecenie.trim() || op.nazwa}`
+
+  // [RULES] — bricki operacji; bez dawcy odpada referencja, bez starego miejsca odpada usunięcie
+  const pominiete: BrickId[] = []
+  const wlaczone = op.bricks.filter((id) => {
+    const zbedny = (id === 'studio-usuniecie' && czyszczenie === null) || (id === 'studio-referencja' && dawca === null)
+    if (zbedny) pominiete.push(id)
+    return !zbedny
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
-  const sekcjaBrickow =
-    `[RULES — Studio Zdjęć]\n` + bricki.map((b) => podmien(b.tekst)).join('\n')
-
-  // 3. TASK — jedno zdanie; kroki tylko tam, gdzie bricki ich nie pokrywają
-  const sekcjaOperacji =
-    `[TASK]\n${podmien(op.misja)}` +
-    (BEZ_KROKOW.has(op.id) ? '' : `\n${op.kroki.map((k, i) => `${i + 1}. ${podmien(k)}`).join('\n')}`)
-
-  // 4. PIN MAP
-  const opisyPinesek = new Map((w.opis?.pineski ?? []).map((o) => [o.pineska, o]))
-  const liniePinesek = [...w.pineski]
-    .sort((a, b) => a.numer - b.numer)
-    .map((p) => {
-      const o = opisyPinesek.get(p.numer)
-      const nazwa = o?.nazwa || p.nazwa
-      const szczegoly = [
-        (o?.miejsce || p.miejsce) && `place: ${o?.miejsce || p.miejsce}`,
-        o?.wymiary && `size: ${o.wymiary}`,
-        p.opis,
-      ]
-        .filter(Boolean)
-        .join('; ')
-      const xy = `x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
-      // Źródło leżące na obrazie docelowym nie ma kropki (zostałaby w wyniku) — wskazują je współrzędne i nazwa.
-      const wsp = p.rola === 'source' && p.obraz === 1 ? `no dot — the object is at ${xy}` : `magenta dot at ${xy}`
-      const cel = p.rola === 'target' ? (OPERACJE_Z_OBIEKTEM.has(op.id) ? ' ← THE GENERATED OBJECT MUST STAND EXACTLY HERE' : ' ← the change happens exactly here') : ''
-      return `- Pin ${p.numer} (${p.rola}) · Image ${p.obraz}${nazwa ? ` "${nazwa}"` : ''} — ${wsp}${cel}${szczegoly ? ` — ${szczegoly}` : ''}`
-    })
-  const sekcjaPinesek = liniePinesek.length
-    ? `[PINS — small magenta dots on the images; x / y in % from the left / top edge]\n${liniePinesek.join('\n')}`
-    : ''
-
-  // 5. SCENE DETAILS
-  const liniaSceny = [w.skala?.trim(), w.opis?.kotwice && `Scale anchors in Image 1: ${w.opis.kotwice}`].filter(Boolean)
-  const sekcjaSceny = liniaSceny.length ? `[SCALE]\n${liniaSceny.join('\n')}` : ''
-
-  // 3b. DIRECTION i STYLE DIRECTIVES — dopisane do operacji
-  const liniaKierunku = [w.instrukcja?.trim(), w.widok?.trim() && `View at the destination (from Image 1's camera, not the reference's): ${w.widok.trim()}`].filter(Boolean)
-  const sekcjaKierunku = liniaKierunku.length ? `[DIRECTION]\n${liniaKierunku.join('\n')}` : ''
-  const sekcjaStylu = w.dyrektywyStylu
-    ? `[STYLE DIRECTIVES — ${w.dyrektywyStylu.nazwa}]\n${w.dyrektywyStylu.reguly.map((x, i) => `${i + 1}. ${x}`).join('\n')}`
-    : ''
-
-  // 4b. PROTECTED AREAS — najwyższy priorytet
-  const sekcjaChronionych = w.pineskiChronione?.length
-    ? `[PROTECTED — highest priority]\n${w.pineskiChronione
-        .map((p) => `- ${p.nazwa ? `"${p.nazwa}" — ` : ''}Pin ${p.numer} · Image ${p.obraz}${p.miejsce ? ` — ${p.miejsce}` : ''}`)
-        .join('\n')}\nThese stay indistinguishable from the original; on conflict, protection wins.`
-    : ''
-
-  // Jedyna reguła spoza PDF: kropki pinesek to nakładka Canvasu, nie treść zdjęcia.
-  const sekcjaKontroli = w.pineski.length ? `The small magenta dots are guides only and must not appear in the result.` : ''
-
-  // 6. COMMAND (tekst użytkownika wstawiany bez podmiany tokenów)
-  const sekcjaPolecenia = `[COMMAND]\n${w.polecenie.trim() || op.nazwa}`
+  const kropki = w.pineski.length ? 'The small magenta dots are guides only and must not appear in the result.' : ''
+  const sekcjaRegul = ['[RULES]', ...bricki.map((b) => podmien(b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
-    { klucz: 'operation', tekst: sekcjaOperacji },
-    { klucz: 'images', tekst: sekcjaObrazow },
-    { klucz: 'pins', tekst: sekcjaPinesek },
-    { klucz: 'direction', tekst: sekcjaKierunku },
-    { klucz: 'light', tekst: op.id === 'style_change' ? '' : sekcjaSwiatla(w.swiatlo) },
-    { klucz: 'identity', tekst: sekcjaTozsamosci(w.tozsamosc) },
-    { klucz: 'scene', tekst: sekcjaSceny },
-    { klucz: 'style', tekst: sekcjaStylu },
-    { klucz: 'protected', tekst: sekcjaChronionych },
-    { klucz: 'command', tekst: sekcjaPolecenia },
-    { klucz: 'bricks', tekst: sekcjaBrickow },
-    { klucz: 'check', tekst: sekcjaKontroli },
-  ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
-
-  const zObiektem = OPERACJE_Z_OBIEKTEM.has(op.id)
+    { klucz: 'task', tekst: sekcjaZadania },
+    { klucz: 'user', tekst: sekcjaUzytkownika },
+    { klucz: 'rules', tekst: sekcjaRegul },
+  ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: zObiektem ? SYSTEM_KOMPOZYTORA : undefined,
-    temperatura: zObiektem ? TEMPERATURA_OBIEKTU : undefined,
+    system,
+    temperatura,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,
@@ -319,110 +271,5 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     dawca: op.dawca,
     czystaPlyta: op.czystaPlyta && czyszczenie !== null,
     nierozwiazaneTokeny: [...nierozwiazane],
-  }
-}
-
-/**
- * Zamiana postaci: prompt Studia Zdjęć 1:1 (rola, baza, kotwica, anatomia, tożsamość)
- * + mapa „który element skąd, gdzie i jak” (obrazy i kropki pinesek) + polecenie.
- */
-function skladajGotowySwap(
-  w: SkladajWejscie,
-  sekcjaObrazow: string,
-  cel: PineskaSklejka | undefined,
-  zrodlo: PineskaSklejka | undefined,
-): SkladajWynik {
-  const op = getOperation(w.operacja)
-  const dawcy = w.obrazy.filter((o) => o.rola === 'donor')
-  const refs =
-    dawcy.length > 1
-      ? `the first ${dawcy.length} character reference images (Images ${dawcy[0].numer}–${dawcy[dawcy.length - 1].numer}, all showing the SAME person from different angles)`
-      : `the character reference image (Image ${dawcy[0]?.numer ?? 2})`
-  const baza = (w.ubranieZeSceny ? studioSwapBazaUbranieSceny : studioSwapBaza)(refs, 'Image 1')
-
-  const wsp = (p: PineskaSklejka) => `dot at x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
-  const mapa = [
-    `[MAP — which element is where]`,
-    `Image 1 = the SCENE (the plate that stays).`,
-    ...dawcy.map((d) => `Image ${d.numer} = CHARACTER REFERENCE (identity source only).`),
-    cel ? `The person to REPLACE is at the magenta dot of Pin ${cel.numer} in Image 1 (${wsp(cel)})${cel.miejsce ? ` — ${cel.miejsce}` : ''}. The new person takes exactly that position, pose, scale and light.` : '',
-    zrodlo ? `The person to take IDENTITY from is at the magenta dot of Pin ${zrodlo.numer} in Image ${zrodlo.obraz} (${wsp(zrodlo)}). Every other person in the scene stays untouched.` : '',
-    `The small magenta dots are guides only and must not appear in the result.`,
-  ].filter(Boolean)
-
-  // Kolejność jak w Studiu (poz. 24): baza → instrukcja → kotwica → zamek → realizm.
-  // Rola kompozytora (poz. 19) idzie jako systemPrompt, tak jak w runware-character-swap.
-  const sekcje: SekcjaPromptu[] = [
-    { klucz: 'images', tekst: sekcjaObrazow },
-    { klucz: 'pins', tekst: mapa.join('\n') },
-    { klucz: 'operation', tekst: baza },
-    { klucz: 'command', tekst: `Additional instruction: ${w.polecenie.trim() || op.nazwa}.` },
-    { klucz: 'light', tekst: sekcjaSwiatla(w.swiatlo) },
-    { klucz: 'check', tekst: STUDIO_SWAP_KONTROLA },
-    { klucz: 'identity', tekst: sekcjaTozsamosci(w.tozsamosc) },
-    { klucz: 'quality', tekst: `${STUDIO_REALIZM_TWARZY}\n${STUDIO_ANATOMIA}\n${STUDIO_TOZSAMOSC}\nThe frame holds no magenta dot, numeral, letter or marker anywhere.` },
-  ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
-  return {
-    prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: STUDIO_SWAP_SYSTEM,
-    temperatura: 0.45,
-    sekcje,
-    operacja: w.operacja,
-    nazwaOperacji: op.nazwa,
-    uzyteBricki: [],
-    pominieteBricki: [],
-    dawca: op.dawca,
-    czystaPlyta: true,
-    nierozwiazaneTokeny: [],
-  }
-}
-
-/**
- * Zamiana twarzy: prompt Studia Zdjęć (poz. 28–31, 35) + mapa pinesek + polecenie.
- * W Studiu Face Swap nie przyjmuje instrukcji użytkownika — tu wchodzi jako
- * „Additional instruction”, bo pineska i zdanie mówią, KTÓRA osoba.
- */
-function skladajGotowaTwarz(
-  w: SkladajWejscie,
-  sekcjaObrazow: string,
-  cel: PineskaSklejka | undefined,
-  zrodlo: PineskaSklejka | undefined,
-): SkladajWynik {
-  const op = getOperation(w.operacja)
-  const dawcy = w.obrazy.filter((o) => o.rola === 'donor')
-  const zrodla =
-    dawcy.length > 1
-      ? `Images ${dawcy[0].numer}–${dawcy[dawcy.length - 1].numer}`
-      : `Image ${dawcy[0]?.numer ?? 2}`
-  const wsp = (p: PineskaSklejka) => `dot at x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
-  const mapa = [
-    `[MAP — which face is where]`,
-    cel ? `The face to REPLACE belongs to the person at the magenta dot of Pin ${cel.numer} in Image 1 (${wsp(cel)})${cel.miejsce ? ` — ${cel.miejsce}` : ''}.` : '',
-    zrodlo ? `The identity comes from the person at the magenta dot of Pin ${zrodlo.numer} in Image ${zrodlo.obraz} (${wsp(zrodlo)}).` : '',
-    `Every other person keeps their own face. The small magenta dots are guides only and must not appear in the result.`,
-  ].filter(Boolean)
-
-  const sekcje: SekcjaPromptu[] = [
-    { klucz: 'images', tekst: sekcjaObrazow },
-    { klucz: 'pins', tekst: mapa.join('\n') },
-    { klucz: 'operation', tekst: studioFaceBaza('Image 1', zrodla, Math.max(1, dawcy.length)) },
-    { klucz: 'command', tekst: `Additional instruction: ${w.polecenie.trim() || op.nazwa}.` },
-    { klucz: 'light', tekst: sekcjaSwiatla(w.swiatlo) },
-    { klucz: 'check', tekst: STUDIO_FACE_KONTROLA },
-    { klucz: 'identity', tekst: sekcjaTozsamosci(w.tozsamosc) },
-    { klucz: 'quality', tekst: `${STUDIO_REALIZM_TWARZY}\n${STUDIO_TOZSAMOSC}` },
-  ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
-  return {
-    prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: STUDIO_FACE_SYSTEM,
-    temperatura: 0.42,
-    sekcje,
-    operacja: w.operacja,
-    nazwaOperacji: op.nazwa,
-    uzyteBricki: [],
-    pominieteBricki: [],
-    dawca: op.dawca,
-    czystaPlyta: false,
-    nierozwiazaneTokeny: [],
   }
 }

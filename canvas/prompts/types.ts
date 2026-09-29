@@ -30,25 +30,12 @@ export type OperationId =
 
 /** Identyfikatory cegiełek (numer + nazwa reguły). */
 export type BrickId =
-  | 'studio-produkt'
-  | 'studio-osoba'
-  | 'studio-ubranie'
-  | 'studio-tlo'
-  | 'studio-styl'
-  | 'studio-inne'
-  | 'studio-tozsamosc-referencji'
-  | 'studio-tozsamosc-osoby'
+  | 'studio-referencja'
   | 'studio-usuniecie'
   | 'studio-miejsce'
-  | 'studio-scena-zostaje'
-  | 'studio-uklad-sceny'
+  | 'studio-scena'
   | 'studio-jedno-zdjecie'
-  | 'studio-przeoswietlenie'
-  | 'studio-kamera'
-  | 'studio-film'
-  | 'studio-montaz'
-  | 'studio-anatomia'
-  | 'studio-realizm-skory'
+  | 'studio-czlowiek'
   | 'studio-kontrola';
 
 /**

@@ -7,16 +7,14 @@ export const CLOTHING_CHANGE: Operation = {
   kiedyUzyc:
     'The outfit of a person changes (from a second photo or described); face, body, pose and scene stay. Polish triggers: zmień ubranie / ubierz w / załóż mu / inny strój / przymierz.',
   bricks: [
-    'studio-ubranie',
-    'studio-tozsamosc-osoby',
-    'studio-scena-zostaje',
-    'studio-przeoswietlenie',
-    'studio-film',
-    'studio-anatomia',
+    'studio-referencja',
+    'studio-scena',
+    'studio-jedno-zdjecie',
+    'studio-czlowiek',
   ],
   dawca: 'opcjonalny',
   czystaPlyta: false,
-  misja: `Change the clothing of the person at {{PIN_TARGET}} to the outfit from {{IMAGE_DONOR}} or as described in the COMMAND.`,
+  misja: `Change the clothing of the person at {{PIN_TARGET}} to the outfit from {{IMAGE_DONOR}} or as described in the USER request.`,
   kroki: [
     `Replace the clothing while keeping the exact body pose, stance, limb positions and gestures.`,
     `Tailor the new garments to the body shape with organic draping and folds that respond to posture.`,

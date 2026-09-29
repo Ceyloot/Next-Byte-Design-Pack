@@ -42,7 +42,7 @@ The image that STAYS and receives the change (where the object lands / the locat
 
 STEP 1 — WHAT EACH PIN POINTS AT
 - A pin on an object means the WHOLE object (not a part, unless the user names a part). A pin on open ground, water, floor or sky is a LOCATION.
-- "opis": the whole pinned object in English, 2–8 words (type and model if recognisable). Nothing about light or mood.
+- "opis": a short BADGE in Polish, 3–8 words, that names exactly this pinned thing and tells it apart from similar ones in the same image — colour, type, make or model if recognisable, a visible marking (sticker, number, logo). If look-alikes are near, add which one ("lewy z dwóch", "najbliżej domu"). A location pin: the surface and its nearest landmark ("brukowany podjazd przed bramą garażu"). It goes into the image model's prompt next to the pin's x/y, so keep it short and exact; nothing about light or mood.
 - "miejsce": where the point lies in its image, in words from what you SEE — the surface it stands on, the nearest landmarks and which side of them, and whether it is near a frame edge. Landmarks only; never percentages or coordinates. If the user's words relate the new thing to the pinned object (leans on, stands next to, in front of, on), say in "miejsce" the object AND the spot where the new thing ends up (e.g. on the ground beside that object), not just the object's surface. Describe the pin's OWN spot: if the nearest subject is far, say so instead of writing "next to".
 
 STEP 1b — BIND THE USER'S WORDS TO PINS
@@ -85,7 +85,7 @@ Answer ONLY with JSON:
   "zdjecie_docelowe": 1,
   "intencja": "wstaw",
   "dotyczy_osoby": false,
-  "obiekty": [{ "pin": 1, "opis": "short English name", "miejsce": "where the point lies, in words" }],
+  "obiekty": [{ "pin": 1, "opis": "krótka odznaka po polsku", "miejsce": "where the point lies, in words" }],
   "skala": "English, with numbers",
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
@@ -303,7 +303,14 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
   return plan.skala || plan.obiekty.length > 0 ? plan : null
 }
 
-/** Opis miejsca każdej pineski słowami (numer pineski → miejsce) — do sekcji PIN MAP w poleceniu. */
+/** Odznaka każdej pineski (numer → krótki opis odróżniający obiekt) — idzie do promptu obok x/y. */
+export function odznakiZPlanu(plan: Pick<PlanRezysera, 'obiekty'>): Record<number, string> {
+  const wynik: Record<number, string> = {}
+  for (const o of plan.obiekty) if (o.pin > 0 && o.opis.trim()) wynik[o.pin] = o.opis.trim()
+  return wynik
+}
+
+/** Opis miejsca każdej pineski słowami (numer pineski → miejsce) — do kontroli wyniku. */
 export function miejscaZPlanu(plan: Pick<PlanRezysera, 'obiekty'>): Record<number, string> {
   const wynik: Record<number, string> = {}
   for (const o of plan.obiekty) if (o.pin > 0 && o.miejsce) wynik[o.pin] = o.miejsce

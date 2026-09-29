@@ -7,12 +7,7 @@ export const FACE_SWAP: Operation = {
   kiedyUzyc:
     'Only the face and identity of a person change (face, hair, apparent age); their body, clothing, pose and the scene stay. Polish triggers: zamień twarz / daj mu twarz z drugiego zdjęcia / twarz tej osoby.',
   bricks: [
-    'studio-osoba',
-    'studio-tozsamosc-osoby',
-    'studio-scena-zostaje',
-    'studio-film',
-    'studio-realizm-skory',
-    'studio-kontrola',
+    'studio-czlowiek',
   ],
   gotowy: 'studio-face-swap',
   dawca: 'wymagany',

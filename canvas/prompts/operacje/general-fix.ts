@@ -7,13 +7,12 @@ export const GENERAL_FIX: Operation = {
   kiedyUzyc:
     'Any other small local change that fits none of the operations above (recolour something, open a door, change a sign, adjust a detail). Choose this ONLY when no other operation fits.',
   bricks: [
-    'studio-inne',
-    'studio-scena-zostaje',
-    'studio-film',
+    'studio-referencja',
+    'studio-scena',
   ],
   dawca: 'opcjonalny',
   czystaPlyta: false,
-  misja: `Make exactly the change from the COMMAND at {{PIN_TARGET}}, with the smallest possible intervention.`,
+  misja: `Make exactly the change from the USER request at {{PIN_TARGET}}, with the smallest possible intervention.`,
   kroki: [
     `Treat the marked area as the only place of work.`,
     `The changed area follows the existing light: the same direction, colour and shadow softness.`,

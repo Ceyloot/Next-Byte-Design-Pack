@@ -578,6 +578,7 @@ export function CzatCanvas({
                 {stanGeneracji.faza === 'trwa' && 'Runware generuje obraz z zachowaniem skali...'}
                 {stanGeneracji.faza === 'sprawdza' && 'Weryfikacja spójności kadru i oświetlenia...'}
                 {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
+                {stanGeneracji.faza === 'koryguje' && `Poprawiam rozmiar i miejsce: ${stanGeneracji.powod}`}
               </p>
               <p className="text-[10px] text-primary/75 mt-0.5">
                 {stanGeneracji.faza === 'trwa' && stanGeneracji.role
