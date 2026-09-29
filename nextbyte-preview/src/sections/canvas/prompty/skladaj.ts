@@ -20,7 +20,6 @@ import type { BrickId, ObrazWejscia, OperationId, OpisSceny, RolaPineski, Wymaga
 import { getOperation } from './operacje'
 import { BRICKS } from './bricks'
 import { POZYTYW } from './pozytyw'
-import { FINAL_CHECK_KOMPOZYTU, PROSTE, zasadyZawsze } from './operacje/proste'
 import {
   STUDIO_ANATOMIA,
   STUDIO_SWAP_KONTROLA,
@@ -284,36 +283,6 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const sekcjaPolecenia = `[COMMAND — the user's words]\n${w.polecenie.trim() || op.nazwa}`
 
   const zasadaZawsze = op.id === 'style_change' ? '' : `[ALWAYS — NON-NEGOTIABLE]\n${ZASADA_ZAWSZE}`
-
-  const prosta = PROSTE[op.id]
-  if (prosta) {
-    const kontrolaProsta = `[FINAL CHECK]\n${prosta.kontrola ?? FINAL_CHECK_KOMPOZYTU}\n${liniaKontroli.filter((l) => l.startsWith('- CLEAN')).join('\n')}`
-    const sekcjeProste: SekcjaPromptu[] = [
-      { klucz: 'always', tekst: zasadaZawsze },
-      { klucz: 'operation', tekst: prosta.system ?? '' },
-      { klucz: 'operation', tekst: `[TASK]\n${podmien(prosta.misja)}` },
-      { klucz: 'images', tekst: sekcjaObrazow },
-      { klucz: 'direction', tekst: sekcjaKierunku },
-      { klucz: 'pins', tekst: sekcjaPinesek },
-      { klucz: 'protected', tekst: sekcjaChronionych },
-      { klucz: 'scene', tekst: sekcjaSceny },
-      { klucz: 'command', tekst: sekcjaPolecenia },
-      { klucz: 'bricks', tekst: `[ABSOLUTE RULES — FOLLOW ALWAYS]\n${podmien(zasadyZawsze(Boolean(prosta.ludzie)))}` },
-      { klucz: 'check', tekst: kontrolaProsta },
-      { klucz: 'always', tekst: zasadaZawsze },
-    ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
-    return {
-      prompt: sekcjeProste.map((s) => s.tekst).join('\n\n'),
-      sekcje: sekcjeProste,
-      operacja: w.operacja,
-      nazwaOperacji: op.nazwa,
-      uzyteBricki: [],
-      pominieteBricki: [],
-      dawca: op.dawca,
-      czystaPlyta: op.czystaPlyta && czyszczenie !== null,
-      nierozwiazaneTokeny: [...nierozwiazane],
-    }
-  }
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'always', tekst: zasadaZawsze },
