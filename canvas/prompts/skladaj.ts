@@ -274,6 +274,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       `- GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.`,
     )
   }
+  if (uzyte.has('perspective-rule')) {
+    liniaKontroli.push(
+      `- PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.`,
+    )
+  }
   liniaKontroli.push(
     `- CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.`,
   )

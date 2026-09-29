@@ -90,7 +90,7 @@ OUTPUT — return ONLY this JSON:
 }
 ```
 
-## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1628 tokenów)
+## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1810 tokenów)
 
 ```text
 [ALWAYS — NON-NEGOTIABLE]
@@ -114,8 +114,11 @@ SCALE — true real-world size, judged against something of known size that is v
 - Use the size given in SCALE; distance changes how much of the frame it covers, never how big it is. The marked area is a boundary, not a quota: never inflate to fill it or shrink to fit.
 - A replacement has its OWN size, never the outline of what it replaces.
 - With no anchor nearby choose the smaller plausible size and set it deeper. Show it complete, clear of the frame edge.
-PERSPECTIVE — one camera: the element is drawn from the camera position, height, focal length and angle of Image 1, never from its source photo's angle.
-- Its lines converge to the same vanishing points as the ground and walls around it; farther from the camera means smaller and slightly softer along the same lines.
+PERSPECTIVE — ALWAYS maximally realistic relative to the camera of Image 1: one camera, one viewpoint, one horizon.
+- Re-draw the element as that camera sees it: the same camera height, tilt (a high or aerial camera looks DOWN at it and shows its top surfaces; a low camera looks up), focal length and lens distortion. Never keep the viewing angle of its source photo — a front-on or eye-level donor is fully rotated to the target view.
+- The element sits on the ground plane at the right distance: its base follows the ground's perspective, its horizontal lines converge to the same vanishing points as the road, walls and ground around it, and its verticals lean exactly like the verticals of the scene.
+- Its heading follows the lines of the surface it stands on (along the road, parallel to the wall or shelf), foreshortened correctly for that heading; parts nearer the camera are larger than parts farther away.
+- Farther from the camera means smaller and slightly softer, along the same vanishing lines; the horizon line stays where it is.
 DEPTH & OCCLUSION — whatever is closer to the camera overlaps the element; it overlaps what is behind it.
 - It takes the sharpness, blur and haze of its own depth plane. Partial occlusion by grass, people, railings or leaves is natural; nothing clips through another object or is cut by a straight line.
 CONTACT — physical contact stays correct.
@@ -170,6 +173,7 @@ zamień lampę na wazon z drugiego zdjęcia
 [FINAL CHECK — verify before returning the image]
 - POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
 - GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
+- PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.
 - CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
 [FINAL QUALITY]
@@ -201,8 +205,11 @@ SCALE — true real-world size, judged against something of known size that is v
 - Use the size given in SCALE; distance changes how much of the frame it covers, never how big it is. The marked area is a boundary, not a quota: never inflate to fill it or shrink to fit.
 - A replacement has its OWN size, never the outline of what it replaces.
 - With no anchor nearby choose the smaller plausible size and set it deeper. Show it complete, clear of the frame edge.
-PERSPECTIVE — one camera: the element is drawn from the camera position, height, focal length and angle of Image 1, never from its source photo's angle.
-- Its lines converge to the same vanishing points as the ground and walls around it; farther from the camera means smaller and slightly softer along the same lines.
+PERSPECTIVE — ALWAYS maximally realistic relative to the camera of Image 1: one camera, one viewpoint, one horizon.
+- Re-draw the element as that camera sees it: the same camera height, tilt (a high or aerial camera looks DOWN at it and shows its top surfaces; a low camera looks up), focal length and lens distortion. Never keep the viewing angle of its source photo — a front-on or eye-level donor is fully rotated to the target view.
+- The element sits on the ground plane at the right distance: its base follows the ground's perspective, its horizontal lines converge to the same vanishing points as the road, walls and ground around it, and its verticals lean exactly like the verticals of the scene.
+- Its heading follows the lines of the surface it stands on (along the road, parallel to the wall or shelf), foreshortened correctly for that heading; parts nearer the camera are larger than parts farther away.
+- Farther from the camera means smaller and slightly softer, along the same vanishing lines; the horizon line stays where it is.
 DEPTH & OCCLUSION — whatever is closer to the camera overlaps the element; it overlaps what is behind it.
 - It takes the sharpness, blur and haze of its own depth plane. Partial occlusion by grass, people, railings or leaves is natural; nothing clips through another object or is cut by a straight line.
 CONTACT — physical contact stays correct.
@@ -257,6 +264,7 @@ przenieś chatkę bliżej
 [FINAL CHECK — verify before returning the image]
 - POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
 - GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
+- PERSPECTIVE: the element is seen from exactly the camera height and angle of Image 1, its base follows the ground perspective and its heading follows the surface it stands on — no front-on donor view left over.
 - CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
 [FINAL QUALITY]
