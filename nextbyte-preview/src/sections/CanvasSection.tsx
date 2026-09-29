@@ -35,6 +35,7 @@ import {
 import { Plotno } from '@/sections/canvas/Plotno'
 import { INTENCJE, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
+import { narysujKropki } from './canvas/kropki'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
@@ -657,7 +658,18 @@ export function CanvasSection() {
 
       setOstatniPrompt(pelnePolecenie)
 
-      const czyste = await Promise.all(obrazyPolecenia.map(w => konwertujNaDataUrl(w.src)))
+      // Mała magentowa kropka w miejscu każdej wskazującej pineski (współrzędne
+      // kropki idą też do PIN MAP). Chronione pineski zostają bez kropki.
+      const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
+        konwertujNaDataUrl(w.src).then(src =>
+          narysujKropki(
+            src,
+            pineski
+              .filter(p => p.layerId === w.id && !p.chroniona)
+              .map(p => ({ x: p.normalizedX, y: p.normalizedY })),
+          ),
+        )
+      const czyste = await Promise.all(obrazyPolecenia.map(w => zKropkami(w, pineskiPolecenia)))
       const obrazyDoModelu = plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste
 
       let wynik = await generuj({
@@ -682,7 +694,7 @@ export function CanvasSection() {
           setOstatniPrompt(pelnyPrompt)
           const pelne = await generuj({
             polecenie: pelnyPrompt,
-            obrazy: czyste.length ? [await konwertujNaDataUrl(zrodlo.src), ...czyste.slice(1)] : czyste,
+            obrazy: [await zKropkami(zrodlo, projekt.pineski), ...czyste.slice(1)],
             szerokosc: zrodlo.naturalWidth,
             wysokosc: zrodlo.naturalHeight,
           })

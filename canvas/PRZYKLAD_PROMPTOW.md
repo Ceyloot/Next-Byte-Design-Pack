@@ -90,7 +90,7 @@ OUTPUT — return ONLY this JSON:
 }
 ```
 
-## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1601 tokenów)
+## 3. Złożony prompt — `object_swap` (17 bricków, bricki ≈ 1628 tokenów)
 
 ```text
 [ALWAYS — NON-NEGOTIABLE]
@@ -106,7 +106,7 @@ LIGHT — the element is lit exactly like Image 1: same direction, hardness, col
 - Its cast shadow falls the same way, with the same length and softness as the other shadows, and bends over the surface beneath; a soft contact shadow sits where it touches a surface.
 - Nearby coloured surfaces tint it and it tints them; highlights sit where the scene light puts them.
 - Light from a donor photo is never carried over.
-POSITION — the element lands exactly at Pin 1 ("lamp", Image 1), the spot the PIN MAP describes.
+POSITION — the element lands exactly at Pin 1 ("lamp", Image 1): on the magenta dot drawn there, at the x / y given in the PIN MAP.
 - A resting element meets its supporting surface exactly there, footprint centred on the spot. An airborne or floating one has its CENTRE there and no invented ground contact.
 - Nearby subjects never pull it aside: they stay put and the element stands on the free surface at the spot itself. Near a frame edge shift it inward only as far as needed to keep it whole.
 - A replacement inherits the position, footprint, orientation and facing of what stood there. A moved element appears only at the destination; Pin 1 ("lamp", Image 1) is left empty.
@@ -135,7 +135,7 @@ FIDELITY — this is an editor, not an enhancer.
 FRAMING — the result is Image 1 with only the requested change: same shot, field of view, angle and frame edges; everything else stays at the same size and position. No re-composition, rotation, crop or canvas extension.
 OUTPUT — the result IS Image 1 with only the requested change, keeping its aspect ratio, resolution, framing and grain. Other images are references for identity or appearance only — never for frame, format, background or light.
 - Add nothing and remove nothing the task did not ask for; every other subject keeps its count and position.
-- Pins, dots, crosshairs, masks and boxes are guides only: no markers, numerals, letters or outlines appear anywhere in the result.
+- The small magenta pin dots, masks and boxes are guides only: the result shows NO magenta dot, marker, numeral, letter or outline anywhere — the pixels under each dot are rebuilt as the natural surface.
 CLEAN PLATE — what leaves the frame leaves without a trace.
 - Remove the old element fully at Pin 1 ("lamp", Image 1): the object, its shadow, reflection and contact marks.
 - Rebuild what lies behind it (ground, grass, paving, wall, sky) from the neighbourhood, continuing patterns and perspective, matching its brightness, colour and grain so the edge is invisible.
@@ -157,9 +157,9 @@ STEPS:
 5. If a person or animal touched the old object, they stay intact and the new object gets its own equivalent contacting part.
 6. Recompute light, shadows and reflections for the shape and material of the new object.
 
-[PIN MAP — find exactly that spot in its image]
-- Pin 1 · TARGET · Image 1 — "lamp" — place: on the wooden side table next to the sofa
-- Pin 2 · SOURCE · Image 2 — "vase" — size: height ≈ 35 cm
+[PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]
+- Pin 1 · TARGET · Image 1 — "lamp" — dot at x=40%, y=60% — place: on the wooden side table next to the sofa
+- Pin 2 · SOURCE · Image 2 — "vase" — dot at x=50%, y=50% — size: height ≈ 35 cm
 
 [SCALE — real-world size]
 The vase is about 35 cm tall, roughly a third of the visible door height, so at this distance it is a small element on the table.
@@ -168,9 +168,9 @@ The vase is about 35 cm tall, roughly a third of the visible door height, so at 
 zamień lampę na wazon z drugiego zdjęcia
 
 [FINAL CHECK — verify before returning the image]
-- POSITION: the base of the element stands exactly at the described spot of the destination pin; no nearby subject has pulled it aside.
+- POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
 - GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
-- CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
+- CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
 [FINAL QUALITY]
 - One seamless photograph, indistinguishable from an unedited capture; the edit is impossible to spot. Return only the image.
@@ -193,7 +193,7 @@ LIGHT — the element is lit exactly like Image 1: same direction, hardness, col
 - Its cast shadow falls the same way, with the same length and softness as the other shadows, and bends over the surface beneath; a soft contact shadow sits where it touches a surface.
 - Nearby coloured surfaces tint it and it tints them; highlights sit where the scene light puts them.
 - Light from a donor photo is never carried over.
-POSITION — the element lands exactly at Pin 2 ("path", Image 1), the spot the PIN MAP describes.
+POSITION — the element lands exactly at Pin 2 ("path", Image 1): on the magenta dot drawn there, at the x / y given in the PIN MAP.
 - A resting element meets its supporting surface exactly there, footprint centred on the spot. An airborne or floating one has its CENTRE there and no invented ground contact.
 - Nearby subjects never pull it aside: they stay put and the element stands on the free surface at the spot itself. Near a frame edge shift it inward only as far as needed to keep it whole.
 - A replacement inherits the position, footprint, orientation and facing of what stood there. A moved element appears only at the destination; Pin 1 ("cottage", Image 1) is left empty.
@@ -222,7 +222,7 @@ FIDELITY — this is an editor, not an enhancer.
 FRAMING — the result is Image 1 with only the requested change: same shot, field of view, angle and frame edges; everything else stays at the same size and position. No re-composition, rotation, crop or canvas extension.
 OUTPUT — the result IS Image 1 with only the requested change, keeping its aspect ratio, resolution, framing and grain. Other images are references for identity or appearance only — never for frame, format, background or light.
 - Add nothing and remove nothing the task did not ask for; every other subject keeps its count and position.
-- Pins, dots, crosshairs, masks and boxes are guides only: no markers, numerals, letters or outlines appear anywhere in the result.
+- The small magenta pin dots, masks and boxes are guides only: the result shows NO magenta dot, marker, numeral, letter or outline anywhere — the pixels under each dot are rebuilt as the natural surface.
 CLEAN PLATE — what leaves the frame leaves without a trace.
 - Remove the old element fully at Pin 1 ("cottage", Image 1): the object, its shadow, reflection and contact marks.
 - Rebuild what lies behind it (ground, grass, paving, wall, sky) from the neighbourhood, continuing patterns and perspective, matching its brightness, colour and grain so the edge is invisible.
@@ -244,9 +244,9 @@ STEPS:
 5. Its old cast shadow and reflection leave together with it.
 6. People in contact with the object are never cut or erased: their contact adapts naturally.
 
-[PIN MAP — find exactly that spot in its image]
-- Pin 1 · SOURCE · Image 1 — "cottage" — place: on the far meadow below the tree line
-- Pin 2 · TARGET · Image 1 — "path" — place: on the dirt path in the foreground
+[PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]
+- Pin 1 · SOURCE · Image 1 — "cottage" — dot at x=50%, y=30% — place: on the far meadow below the tree line
+- Pin 2 · TARGET · Image 1 — "path" — dot at x=50%, y=80% — place: on the dirt path in the foreground
 
 [SCALE — real-world size]
 The cottage is about 6 m wide; moved into the foreground it covers a larger share of the frame but keeps its real size.
@@ -255,9 +255,9 @@ The cottage is about 6 m wide; moved into the foreground it covers a larger shar
 przenieś chatkę bliżej
 
 [FINAL CHECK — verify before returning the image]
-- POSITION: the base of the element stands exactly at the described spot of the destination pin; no nearby subject has pulled it aside.
+- POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.
 - GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
-- CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
+- CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
 [FINAL QUALITY]
 - One seamless photograph, indistinguishable from an unedited capture; the edit is impossible to spot. Return only the image.

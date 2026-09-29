@@ -13,7 +13,7 @@
  *
  * Wynik jest gotowy do `generateGoogleImage`.
  */
-import { createBlobMaskAtPoint, createDualTransferMask, drawPinMarkers, toBase64 } from './maskUtils';
+import { createBlobMaskAtPoint, createDualTransferMask, drawGenerationDots, drawPinMarkers } from './maskUtils';
 import { analizujZdjecieDocelowe, opiszScene } from './geminiClient';
 import { skladajPrompt } from '../prompts';
 import type {
@@ -55,7 +55,7 @@ export interface WejscieGeneracji {
 
 export interface WynikPrzygotowania {
   prompt: string;
-  /** czyste zdjęcia w kolejności wysyłki do generatora: docelowe, potem dawcy */
+  /** zdjęcia (z małymi kropkami pinesek) w kolejności wysyłki do generatora: docelowe, potem dawcy */
   obrazy: string[];
   maska?: string;
   proporcje: Proporcje;
@@ -197,7 +197,15 @@ export async function przygotujGeneracje(w: WejscieGeneracji): Promise<WynikPrzy
     maska: !!maska,
   });
 
-  const obrazy = await Promise.all(warstwyWysylki.map((l) => toBase64(l.src)));
+  // Model obrazu: zdjęcia z małą magentową kropką w miejscu każdej pineski (bez numerów).
+  const obrazy = await Promise.all(
+    warstwyWysylki.map((l, i) =>
+      drawGenerationDots(
+        l.src,
+        pineskiSklejka.filter((p) => p.obraz === i + 1).map((p) => ({ x: p.x, y: p.y }))
+      )
+    )
+  );
 
   return {
     prompt: skladanie.prompt,

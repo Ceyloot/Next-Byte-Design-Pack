@@ -26,7 +26,7 @@ export interface PineskaSklejka {
   numer: number
   rola: RolaPineski
   obraz: number
-  /** współrzędne znormalizowane 0–1 — służą kodowi (maski), NIE trafiają do promptu */
+  /** współrzędne znormalizowane 0–1 (od lewej / od góry) — w PIN MAP jako położenie magentowej kropki */
   x: number
   y: number
   nazwa?: string
@@ -223,12 +223,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
         .filter(Boolean)
         .join('; ')
-      return `- Pin ${p.numer} · ${p.rola.toUpperCase()} · Image ${p.obraz}${nazwa ? ` — "${nazwa}"` : ''}${
+      const wsp = `dot at x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
+      return `- Pin ${p.numer} · ${p.rola.toUpperCase()} · Image ${p.obraz}${nazwa ? ` — "${nazwa}"` : ''} — ${wsp}${
         szczegoly ? ` — ${szczegoly}` : ''
       }`
     })
   const sekcjaPinesek = liniePinesek.length
-    ? `[PIN MAP — find exactly that spot in its image]\n${liniePinesek.join('\n')}`
+    ? `[PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]\n${liniePinesek.join('\n')}`
     : ''
 
   // 5. SCENE DETAILS
@@ -257,7 +258,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const liniaKontroli: string[] = []
   if (uzyte.has('position-rule')) {
     liniaKontroli.push(
-      `- POSITION: the base of the element stands exactly at the described spot of the destination pin; no nearby subject has pulled it aside.`,
+      `- POSITION: the element stands exactly on the destination pin's magenta dot (base of a resting element, centre of an airborne one); no nearby subject has pulled it aside.`,
     )
   }
   if (op.id !== 'style_change') {
@@ -266,7 +267,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     )
   }
   liniaKontroli.push(
-    `- CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.`,
+    `- CLEAN: the frame holds only the photographed scene from edge to edge — no magenta dots, numerals, letters, marks or outlines anywhere, including the ground next to the changed area.`,
   )
   const sekcjaKontroli = `[FINAL CHECK — verify before returning the image]\n${liniaKontroli.join('\n')}`
 

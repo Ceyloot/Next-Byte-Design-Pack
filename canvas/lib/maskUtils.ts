@@ -186,9 +186,40 @@ export interface PinMarkerSpec {
 }
 
 /**
+ * Mała magentowa kropka (bez numeru i celownika) w miejscu każdej pineski —
+ * kopia zdjęcia dla modelu obrazu. Współrzędne kropki idą też do PIN MAP.
+ */
+export async function drawGenerationDots(imageSrc: string, dots: { x: number; y: number }[]): Promise<string> {
+  const src = await toBase64(imageSrc);
+  if (!dots.length) return src;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(src);
+      ctx.drawImage(img, 0, 0);
+      const r = Math.max(4, Math.round(Math.min(canvas.width, canvas.height) * 0.007));
+      ctx.fillStyle = '#FF00FF';
+      for (const d of dots) {
+        ctx.beginPath();
+        ctx.arc(d.x * canvas.width, d.y * canvas.height, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      resolve(canvas.toDataURL('image/jpeg', 0.95));
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+}
+
+/**
  * Rysuje ponumerowane magentowe kropki (#FF00FF) z celownikiem na KOPII zdjęcia.
- * Kopia służy wyłącznie Gemini do analizy — model obrazu dostaje czyste zdjęcia,
- * więc kropki nie mogą trafić do wyniku. Duże zdjęcia są zmniejszane do `maxSide`
+ * Kopia służy wyłącznie Gemini do analizy; model obrazu dostaje osobną kopię
+ * z małymi kropkami (`drawGenerationDots`). Duże zdjęcia są zmniejszane do `maxSide`
  * (mniejszy ładunek), a wynik to JPEG.
  */
 export async function drawPinMarkers(

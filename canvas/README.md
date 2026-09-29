@@ -55,7 +55,7 @@ Za całość odpowiada `lib/pipeline.ts` → `przygotujGeneracje()`. Po nim `Can
 ### Krok 1 — kolejność zdjęć i kopie z markerami
 - Zdjęcia są wysyłane do Gemini **w kolejności pierwszej pineski**, którą na nich postawiono. Zaznaczone zdjęcie bez pinesek dołącza na końcu.
 - Dla każdego zdjęcia powstaje **kopia z ponumerowanymi magentowymi kropkami** (`#FF00FF` + celownik + numer).
-- **Dlaczego kopia:** kropka jest po to, żeby Gemini widział dokładnie, o który punkt chodzi. Do generatora trafiają **czyste** zdjęcia, żeby kropki nie znalazły się w wyniku.
+- **Dlaczego kopia:** kropka jest po to, żeby Gemini widział dokładnie, o który punkt chodzi. Do generatora trafia osobna kopia z małą kropką bez numeru (`drawGenerationDots`).
 
 ### Krok 2 — Gemini nr 1: zdjęcie docelowe, operacja, role
 Prompt: `prompts/gemini/01-zdjecie-docelowe.ts`. Gemini widzi wszystkie zdjęcia z kropkami, listę pinesek i polecenie użytkownika, po czym zwraca JSON:
@@ -85,7 +85,7 @@ Prompt: `prompts/gemini/02-opis-sceny.ts`. Dostaje zdjęcia **już w nowej kolej
 | 1 | `IMAGES` | który obraz jest czym, kolejność wysyłki, format wyniku (rozmiar Image 1), maska |
 | 2 | `RULES` | bricki operacji, rosnąco po numerze (zwięzłe, ≤ ~2000 tokenów) |
 | 3 | `OPERATION` | misja + kroki wybranej operacji |
-| 4 | `PIN MAP` | pineski: rola, obraz, nazwa, miejsce opisane słowami, wymiary (bez współrzędnych) |
+| 4 | `PIN MAP` | pineski: rola, obraz, nazwa, współrzędne kropki (x/y w %), miejsce opisane słowami, wymiary |
 | 5 | `SCALE` | rzeczywisty rozmiar obiektu i kotwice skali |
 | 6 | `COMMAND` | słowa użytkownika, bez zmian |
 | 7 | `FINAL CHECK` | trzy sprawdzenia tuż przed końcem: pozycja (dokładnie w opisanym miejscu pineski), ziarno (to samo co otoczenie), czysty wynik (bez cyfr i znaczników); pozycja tylko gdy operacja włączyła brick pozycji |
@@ -99,21 +99,21 @@ Prompt: `prompts/gemini/02-opis-sceny.ts`. Dostaje zdjęcia **już w nowej kolej
 - Gdy maska jest, składarka dopisuje do `IMAGES`, że ostatni obraz to maska (przewodnik, nie referencja).
 
 ### Krok 7 — generacja
-- `generateGoogleImage()` dostaje: prompt, **czyste** zdjęcia (docelowe pierwsze, potem dawcy), maskę i proporcje najbliższe Image 1.
+- `generateGoogleImage()` dostaje: prompt, zdjęcia z małymi kropkami pinesek (docelowe pierwsze, potem dawcy), maskę i proporcje najbliższe Image 1.
 - Wynik ląduje na płótnie jako nowa warstwa o wymiarach zdjęcia docelowego.
 
 ---
 
-## Jak wskazywane jest miejsce (bez współrzędnych w prompcie)
+## Jak wskazywane jest miejsce (kropka + współrzędne)
 
-Do promptu **nie trafiają** żadne współrzędne ani pasma położenia liczone przez kod (procenty, „near the bottom edge”). Miejsce opisuje Gemini słowami z tego, co widzi:
+Miejsce wskazują dwie rzeczy naraz:
 
 | Gdzie | Jak jest wskazany punkt |
 |---|---|
-| Do Gemini (kroki 2 i 4) | numerowana magentowa kropka na kopii zdjęcia; lista pinesek zawiera tylko numer i zdjęcie |
-| Do generatora (krok 7) | opis słowny z analizy Gemini w `PIN MAP`: na czym stoi punkt, co jest obok i z której strony, czy jest blisko krawędzi kadru |
+| Do Gemini (kroki 2 i 4) | numerowana magentowa kropka z celownikiem na kopii zdjęcia |
+| Do generatora (krok 7) | **mała magentowa kropka** (bez numeru) na kopii zdjęcia w miejscu pineski + w `PIN MAP` jej współrzędne: `dot at x=48%, y=62%` (procent od lewej / od góry tego obrazu) oraz krótki opis słowny miejsca |
 
-Współrzędne zostają wyłącznie w kodzie (rysowanie kropek, maski). Dzięki temu prompt nie zawiera „zaszytych” wartości, które nie mówią nic o scenie, a model dostaje opis oparty na tym, co jest na zdjęciu.
+Kropka jest tylko wskazówką: brick `output-contract-rule` i `FINAL CHECK` każą ją usunąć z wyniku (piksele pod nią mają wyglądać jak naturalna powierzchnia). Pineski chronione nie dostają kropki. Przy generacji na wycinku (podgląd) współrzędne dotyczą wycinka, który model widzi jako Image 1.
 
 Tokeny w treści bricków i operacji (podmienia je składarka):
 
