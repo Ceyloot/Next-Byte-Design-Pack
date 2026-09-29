@@ -25,8 +25,6 @@ import {
   nazwijWynik,
   opiszZmiane,
   rozpoznajObiekt,
-  analizujPineske,
-  opisAnalizy,
   rozpoznajScene,
   sprawdzWynik,
   klasyfikujPineski,
@@ -405,14 +403,10 @@ export function CanvasSection() {
       const warstwa = projekt.warstwy.find(w => w.id === layerId)
       if (!warstwa) return
       void (async () => {
-        // Najpierw pełna analiza (obiekt, otoczenie, wymiary z kalibracji);
-        // samo rozpoznanie nazwy z wycinka zostaje jako zapas.
-        const analiza = await analizujPineske(pineska, warstwa)
-        let zWycinka = analiza?.nazwy ?? []
-        if (zWycinka.length === 0) {
-          const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
-          zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
-        }
+        // Jak w Lovart: pineska to tylko punkt + nazwa. Bez „analizy” wymiarów
+        // (zgadywała rozmiar widocznego kawałka); skalę mierzy reżyser przy generacji.
+        const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
+        const zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
         const zeSceny = projekt.warstwy.find(w => w.id === layerId)?.obiekty ?? []
         const nazwy = zWycinka.length > 0 ? [...zWycinka, ...zeSceny].slice(0, 6) : zeSceny.slice(0, 6)
         setProjekt(p => ({
@@ -423,7 +417,6 @@ export function CanvasSection() {
                   ...x,
                   analizowana: false,
                   sugestie: nazwy,
-                  analiza: analiza?.analiza,
                   label: (x.label ?? '').trim() || nazwy[0] || `obiekt ${p.pineski.indexOf(x) + 1}`,
                 }
               : x,
@@ -552,9 +545,8 @@ export function CanvasSection() {
           const nrObrazu = obrazy.findIndex(w => w.id === p.layerId) + 1 || 1
           const rola = uklad.role[i + 1] ? ` — role: ${uklad.role[i + 1]}` : ''
           const ochrona = p.chroniona ? ' — PROTECTED, must stay unchanged' : ''
-          const analiza = p.analiza ? `\n   ANALYSIS (measured at pin placement): ${opisAnalizy(p.analiza)}` : ''
           // Miejsce wskazuje numerowany celownik na zdjęciu — bez współrzędnych i pasm w tekście.
-          return `Pin ${i + 1} "${etykietaPineski(p, i + 1)}" on Image ${nrObrazu}, marked by the numbered magenta crosshair ${i + 1}${rola}${ochrona}${analiza}`
+          return `Pin ${i + 1} "${etykietaPineski(p, i + 1)}" on Image ${nrObrazu}, marked by the numbered magenta crosshair ${i + 1}${rola}${ochrona}`
         })
         .join('\n')
 

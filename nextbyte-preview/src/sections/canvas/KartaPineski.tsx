@@ -98,28 +98,6 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
         </div>
       </div>
 
-      {/* Co system zrozumiał — obiekt, wymiary i skąd je wziął. Widać to przed
-          generacją, więc zły odczyt da się poprawić, zanim kosztuje. */}
-      {pineska.analiza && (
-        <div className="border-t border-border/8 px-3 py-2 space-y-1">
-          <p className="text-[11px] font-medium leading-snug text-foreground/85">{pineska.analiza.obiekt}</p>
-          {(pineska.analiza.wysokoscCm || pineska.analiza.dlugoscCm) && (
-            <p className="text-[11px] leading-snug text-foreground/70 tabular-nums">
-              {pineska.analiza.wysokoscCm ? `wys. ≈ ${pineska.analiza.wysokoscCm} cm` : ''}
-              {pineska.analiza.wysokoscCm && pineska.analiza.dlugoscCm ? ' · ' : ''}
-              {pineska.analiza.dlugoscCm ? `dł. ≈ ${pineska.analiza.dlugoscCm} cm` : ''}
-              {pineska.analiza.niepewnoscCm ? ` (± ${pineska.analiza.niepewnoscCm} cm)` : ''}
-            </p>
-          )}
-          {pineska.analiza.kalibracja && (
-            <p className="text-[10px] leading-snug text-muted-foreground">Skala: {pineska.analiza.kalibracja}</p>
-          )}
-          {pineska.analiza.dwuznacznosc && (
-            <p className="text-[10px] leading-snug nb-tekst-bledu">Uwaga: {pineska.analiza.dwuznacznosc} — doprecyzuj w poleceniu.</p>
-          )}
-        </div>
-      )}
-
       {/* Propozycje z rozpoznawania obrazu — puste, dopóki model nie działa */}
       {pineska.sugestie && pineska.sugestie.length > 0 && (
         <div className="border-t border-border/8 px-3 py-2">
