@@ -59,6 +59,8 @@ When the pin list gives a role (SOURCE = object that moves or is brought in, DES
 STEP 4 — "skala": the ONLY thing you write about the object beyond its name. 1–3 English sentences with numbers:
 - the true real-world size of the incoming / changed object (height × width or length), using the pin ANALYSIS dimensions when given;
 - how it compares with an anchor of known size that is actually visible in the DESTINATION image (a person, door, window, paving stone, car), and therefore how much of the frame it covers at the destination's distance. Distance changes the share of the frame, never the real size.
+- MEASURE, DO NOT GUESS: pick the largest anchor of known size in the destination image (a house, a door, a person, a car) and estimate its size in the image as a % of the image width / height. Then size the object in proportion to it: object % = anchor % × (object real size ÷ anchor real size), corrected for the object's distance from the camera relative to the anchor. A house is ~6–10 m tall and 10–15 m wide, a car ~4.5 m long and 1.5 m high, a person ~1.7 m: a car beside a house is a fraction of the house's width, never comparable to it. Write this proportion into "skala" (e.g. "about one third of the house's width").
+- "rozmiar": the resulting bounding box of the FINISHED object in the destination image, as % of the image width and height. Wide, elevated or aerial views make ordinary objects small; be strict.
 - Never take the size from how much of the reference photo the object fills. On an open surface never let it span the whole surface or frame; when unsure, smaller and deeper. For a replacement give both sizes and their ratio.
 
 STEP 5 — BOXES on the destination image, [ymin, xmin, ymax, xmax] normalised 0–1000:
@@ -75,6 +77,7 @@ Answer ONLY with JSON:
   "dotyczy_osoby": false,
   "obiekty": [{ "pin": 1, "opis": "short English name", "miejsce": "where the point lies, in words" }],
   "skala": "English, with numbers",
+  "rozmiar": { "szer_proc": 12, "wys_proc": 7 },
   "obszar": [450, 690, 505, 800],
   "obszar_zrodla": null,
   "analiza": "Pineska 1 wskazuje ...",
@@ -128,8 +131,19 @@ export interface PlanRezysera {
   obiekty: { pin: number; opis: string; miejsce: string }[]
   /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze, po angielsku — sekcja SCALE */
   skala: string
+  /** obwiednia gotowego obiektu w % szerokości i wysokości zdjęcia docelowego */
+  rozmiar?: { szer: number; wys: number }
   analiza: string
   plan: string
+}
+
+/** Obwiednia obiektu w % kadru; poza sensownym zakresem (1–90) = brak. */
+function odczytajRozmiar(v: unknown): { szer: number; wys: number } | undefined {
+  const r = v as { szer_proc?: unknown; wys_proc?: unknown } | null | undefined
+  const szer = Number(r?.szer_proc)
+  const wys = Number(r?.wys_proc)
+  const ok = (n: number) => Number.isFinite(n) && n >= 1 && n <= 90
+  return ok(szer) && ok(wys) ? { szer: Math.round(szer), wys: Math.round(wys) } : undefined
 }
 
 /** Normalizacja odpowiedzi agenta — model potrafi oddać pola w dziwnych typach. */
@@ -151,6 +165,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     obszarZrodla: odczytajProstokat(json.obszar_zrodla),
     obiekty,
     skala: String(json.skala ?? '').trim(),
+    rozmiar: odczytajRozmiar(json.rozmiar),
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),
   }

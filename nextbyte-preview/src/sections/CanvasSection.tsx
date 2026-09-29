@@ -74,6 +74,26 @@ import {
 /** Generacja na wycinku wokół pinu + złożenie po masce zmiany (pewna pozycja). */
 const GENERUJ_NA_WYCINKU = true
 
+/**
+ * Sekcja SCALE: opis od reżysera + zmierzona obwiednia obiektu w % kadru,
+ * który widzi model. W trybie wycinka % są przeliczone na wycinek.
+ */
+function skalaDlaModelu(
+  skala: string | undefined,
+  rozmiar: { szer: number; wys: number } | undefined,
+  wycinek: { u: number; v: number } | null,
+): string {
+  const linie = [skala?.trim()]
+  if (rozmiar) {
+    const szer = Math.min(95, Math.round(rozmiar.szer / (wycinek?.u ?? 1)))
+    const wys = Math.min(95, Math.round(rozmiar.wys / (wycinek?.v ?? 1)))
+    linie.push(
+      `Measured size: the finished object's bounding box is about ${szer}% of the width and ${wys}% of the height of Image 1 — not larger; free surface stays visible around it.`,
+    )
+  }
+  return linie.filter(Boolean).join('\n')
+}
+
 const KLUCZ_ZAPISU = 'nb-canvas-projekt-v2'
 
 interface Projekt {
@@ -647,7 +667,7 @@ export function CanvasSection() {
           : projekt.pineski
 
       const pelnePolecenie = zbudujPolecenie(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
-        skala: plan?.skala,
+        skala: skalaDlaModelu(plan?.skala, plan?.rozmiar, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null),
         instrukcja: warstwaWycinka
           ? 'Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.'
           : undefined,
@@ -686,7 +706,7 @@ export function CanvasSection() {
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
-            skala: plan?.skala,
+            skala: skalaDlaModelu(plan?.skala, plan?.rozmiar, null),
             role: uklad.role,
             miejsca: plan?.miejsca,
             osoba: plan?.osoba,
