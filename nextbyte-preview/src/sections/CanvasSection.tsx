@@ -71,8 +71,13 @@ import {
  * obsługa natychmiastowego Object Transfer oraz Object Switch z Clean Plate.
  */
 
-/** Generacja na wycinku wokół pinu + złożenie po masce zmiany (pewna pozycja). */
-const GENERUJ_NA_WYCINKU = true
+/**
+ * WYŁĄCZONE: wynik ma być w całości wygenerowanym przez model zdjęciem (od zera),
+ * a nie wycinkiem sklejonym z oryginałem maską. Kod wycinka zostaje uśpiony.
+ */
+const GENERUJ_NA_WYCINKU = false
+/** WYŁĄCZONE: żadnej obróbki pikseli po generacji poza dopasowaniem formatu. */
+const POSTPROCES_ZIARNA = false
 
 /**
  * Sekcja SCALE: opis od reżysera + zmierzona obwiednia obiektu w % kadru,
@@ -767,7 +772,7 @@ export function CanvasSection() {
       // Ziarno obiektu dosypujemy deterministycznie: prompt prosi o nie kilka razy,
       // a model i tak potrafi oddać wstawiony obiekt gładszy od reszty zdjęcia.
       // Zmienia tylko obszar zmiany i tylko wtedy, gdy obiekt jest mierzalnie gładszy.
-      if (['wstaw', 'przenies', 'zamien', 'postac', 'ubranie'].includes(trybAgenta)) {
+      if (POSTPROCES_ZIARNA && ['wstaw', 'przenies', 'zamien', 'postac', 'ubranie'].includes(trybAgenta)) {
         wynik.obrazUrl = await dopasujZiarno(wynik.obrazUrl, zrodlo.src)
       }
 
