@@ -102,9 +102,9 @@ export interface WynikZlozenia {
   skala: number
 }
 
-/** Tolerancja: w tych granicach rozmiar od modelu zostaje bez korekty. */
-const TOLERANCJA_MIN = 0.85
-const TOLERANCJA_MAKS = 1.18
+/** Tolerancja: szacunek Gemini bywa zawodny, więc rozmiar od modelu zostaje bez korekty, dopóki nie odbiega o ~1,7×. */
+const TOLERANCJA_MIN = 0.6
+const TOLERANCJA_MAKS = 1.7
 /** Największa dopuszczalna korekta — poza nią obiekt i tak byłby nienaturalny. */
 const KOREKTA_MIN = 0.35
 const KOREKTA_MAKS = 2.5
