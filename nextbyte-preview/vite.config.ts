@@ -20,7 +20,24 @@ export default defineConfig({
     __CANVAS_WERSJA__: JSON.stringify(hashCommita()),
     __SERWER_START__: JSON.stringify(new Date().toISOString()),
   },
-  plugins: [react(), runwareProxy(), agentProxy(), notatnikProxy()],
+  plugins: [
+    react(),
+    runwareProxy(),
+    agentProxy(),
+    notatnikProxy(),
+    {
+      // Aktualny commit NA DYSKU (za każdym razem z gita) — porównywany w Canvas
+      // z wersją załadowaną przy starcie serwera: różnica = trzeba zrestartować.
+      name: 'nb-wersja',
+      configureServer(server) {
+        server.middlewares.use('/api/canvas/wersja', (_req, res) => {
+          res.setHeader('Content-Type', 'application/json')
+          res.setHeader('Cache-Control', 'no-store')
+          res.end(JSON.stringify({ dysk: hashCommita() }))
+        })
+      },
+    },
+  ],
   server: {
     port: 5190,
     strictPort: true,

@@ -89,6 +89,14 @@ export function CzatCanvas({
   onWstawNaPlotno,
 }: Props) {
   const [zwiniety, setZwiniety] = useState(false)
+  // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
+  const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
+  useEffect(() => {
+    void fetch('/api/canvas/wersja', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { dysk?: string } | null) => setWersjaDysk(d?.dysk ?? null))
+      .catch(() => setWersjaDysk(null))
+  }, [])
   const [otwartyPodglad, setOtwartyPodglad] = useState(false)
   const [wycinki, setWycinki] = useState<Record<string, string>>({})
   const [historiaWiadomosci, setHistoriaWiadomosci] = useState<WiadomoscCzatu[]>([])
@@ -320,6 +328,11 @@ export function CzatCanvas({
               <span className="tabular-nums" title={`serwer wystartował ${SERWER_START} · strona załadowana ${ZALADOWANO}`}>
                 v{WERSJA} · serwer {SERWER_START} · strona {ZALADOWANO}
               </span>
+              {wersjaDysk && wersjaDysk !== WERSJA && (
+                <span className="font-semibold text-amber-500">
+                  ⚠ na dysku v{wersjaDysk} — zrestartuj serwer (npm run dev)
+                </span>
+              )}
             </div>
           </div>
         </div>
