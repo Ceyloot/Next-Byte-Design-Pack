@@ -892,8 +892,14 @@
 ---
 
 ## Canvas · Operacje na obrazie (prompty: `canvas/prompts`)
-- [x] Object swap — zamień obiekt na inny (z drugiego zdjęcia lub z opisu), `canvas/prompts/operacje/object-swap.ts`
-- [x] Object transfer — przenieś obiekt z jednego zdjęcia na drugie / w obrębie zdjęcia z zachowaniem proporcji, `canvas/prompts/operacje/object-transfer.ts` (wstaw obiekt z drugiego zdjęcia → object transfer)
+- [ ] Object swap — zamień obiekt na inny, `canvas/prompts/operacje/object-swap.ts` (testy: 1/3)
+  - [x] T1 samochód → inny samochód (dwa zdjęcia)
+  - [ ] T2 obiekt → obiekt innej wielkości (np. samochód → mały samolot / motocykl)
+  - [ ] T3 obiekt w pomieszczeniu (np. lampa na stole → wazon z drugiego zdjęcia)
+- [ ] Object transfer — przenieś obiekt z jednego zdjęcia na drugie z zachowaniem proporcji, `canvas/prompts/operacje/object-transfer.ts` (testy: 0/3)
+  - [ ] T1 samochód z drugiego zdjęcia na podjazd / drogę (widok z góry)
+  - [ ] T2 mały obiekt z drugiego zdjęcia na stół / półkę (np. kubek, lampka)
+  - [ ] T3 przeniesienie w obrębie jednego zdjęcia (np. ławka / samochód bliżej kamery) — stare miejsce odbudowane
 - [x] Pinezka = mała magentowa kropka + współrzędne w PIN MAP
 - [x] Skala od Gemini (obwiednia obiektu) + korekta po generacji (wstaw / przenieś; nie przy zamianie)
 - [x] Zapis projektu ze zdjęciami w IndexedDB
