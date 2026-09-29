@@ -28,6 +28,12 @@ import { BYTE_ZA_OBRAZ } from './dostawca'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
 
+const godzina = (d: Date) => d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+/** Wersja i czasy: po pullu zmienia się hash, po restarcie serwera — godzina serwera, po odświeżeniu — godzina strony. */
+const WERSJA = typeof __CANVAS_WERSJA__ === 'string' ? __CANVAS_WERSJA__ : 'dev'
+const SERWER_START = typeof __SERWER_START__ === 'string' ? godzina(new Date(__SERWER_START__)) : '?'
+const ZALADOWANO = godzina(new Date())
+
 export interface WiadomoscCzatu {
   id: string
   rola: 'uzytkownik' | 'asystent' | 'system'
@@ -310,6 +316,10 @@ export function CzatCanvas({
               <span>Koszt: {BYTE_ZA_OBRAZ} Byte / generację</span>
               <span>•</span>
               <span className="text-emerald-600 font-medium">Gotowy do pracy</span>
+              <span>•</span>
+              <span className="tabular-nums" title={`serwer wystartował ${SERWER_START} · strona załadowana ${ZALADOWANO}`}>
+                v{WERSJA} · serwer {SERWER_START} · strona {ZALADOWANO}
+              </span>
             </div>
           </div>
         </div>
