@@ -62,6 +62,8 @@ export interface SkladajWejscie {
   opis?: OpisSceny
   /** rzeczywisty rozmiar obiektu względem kotwicy widocznej w Image 1 (od reżysera) */
   skala?: string
+  /** jak obiekt ma wyglądać w scenie docelowej: kierunek, widoczne ściany, kąt kamery (od reżysera) */
+  widok?: string
   /** precyzyjna instrukcja od reżysera dla tej sceny (fakty o typie obiektu, rozmiary) */
   instrukcja?: string
   pineskiChronione?: ObszarChroniony[]
@@ -245,9 +247,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const sekcjaSceny = liniaSceny.length ? `[SCALE — real-world size]\n${liniaSceny.join('\n')}` : ''
 
   // 3b. DIRECTION i STYLE DIRECTIVES — dopisane do operacji
-  const sekcjaKierunku = w.instrukcja?.trim()
-    ? `[DIRECTION]\n${w.instrukcja.trim()}`
-    : ''
+  const liniaKierunku = [w.instrukcja?.trim(), w.widok?.trim() && `View of the object at the destination (from the target camera, not from the donor photo): ${w.widok.trim()}`].filter(Boolean)
+  const sekcjaKierunku = liniaKierunku.length ? `[DIRECTION]\n${liniaKierunku.join('\n')}` : ''
   const sekcjaStylu = w.dyrektywyStylu
     ? `[STYLE DIRECTIVES — ${w.dyrektywyStylu.nazwa}]\n${w.dyrektywyStylu.reguly.map((x, i) => `${i + 1}. ${x}`).join('\n')}`
     : ''

@@ -694,6 +694,7 @@ export function CanvasSection() {
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
       const pelnePolecenie = zbudujPolecenie(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
+        widok: plan?.widok,
         skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, wycinek && warstwaWycinka ? { u: wycinek.w / zrodlo.naturalWidth, v: wycinek.h / zrodlo.naturalHeight } : null),
         instrukcja: warstwaWycinka
           ? 'Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.'
@@ -742,6 +743,7 @@ export function CanvasSection() {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
             skala: skalaDlaModelu(plan?.skala, rozmiarPlanu, null),
+            widok: plan?.widok,
             role: uklad.role,
             miejsca: plan?.miejsca,
             osoba: plan?.osoba,

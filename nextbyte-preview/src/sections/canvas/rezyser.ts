@@ -63,6 +63,8 @@ STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither 
 - "obiekt": the finished object's size as it appears AT THE DESTINATION (in metres of real length across the image plane at that spot): "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened). The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
 - For a replacement give both sizes in "skala" and their ratio.
 
+STEP 4b — "widok": how the finished object must APPEAR at the destination, 1–2 English sentences, derived from the destination scene's geometry: its heading relative to the lines of the surface it stands on (along, across or at an angle to them, and toward or away from the camera), which of its faces the target camera sees (front, side, rear, top) and from what camera height or elevation. It comes from the destination camera and surface, never from how the object looks in its reference photo; a reference view that differs from this is turned to match. Skip for objects without a natural heading.
+
 STEP 5 — BOXES on the destination image, [ymin, xmin, ymax, xmax] normalised 0–1000:
 - "obszar": where the change happens, anchored to the destination pin (centred horizontally on the crosshair, bottom edge at the point where the object meets the ground), compact and true to scale. "zamien": centred on the replaced object's pin. "usun": around the whole removed object with its shadow. "postac": head and hair. "ubranie": torso. "tlo"/"styl"/"pora_roku"/"pora_dnia": null.
 - "obszar_zrodla": only for "przenies" inside the canvas photo — the object where it stands now; otherwise null.
@@ -78,6 +80,7 @@ Answer ONLY with JSON:
   "obiekty": [{ "pin": 1, "opis": "short English name", "miejsce": "where the point lies, in words" }],
   "skala": "English, with numbers",
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
+  "widok": "<heading, visible faces, camera elevation at the destination>",
   "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres> },
   "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
   "obszar_zrodla": null,
@@ -134,6 +137,8 @@ export interface PlanRezysera {
   skala: string
   /** pomiar skali: kotwica o znanym rozmiarze + widoczne wymiary obiektu w metrach */
   pomiar?: PomiarSkali
+  /** widok obiektu w scenie docelowej (kierunek, widoczne ściany, kąt kamery), po angielsku */
+  widok: string
   analiza: string
   plan: string
 }
@@ -219,6 +224,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     obiekty,
     skala: String(json.skala ?? '').trim(),
     pomiar: odczytajPomiar(json.kotwice, json.obiekt),
+    widok: String(json.widok ?? '').trim(),
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),
   }

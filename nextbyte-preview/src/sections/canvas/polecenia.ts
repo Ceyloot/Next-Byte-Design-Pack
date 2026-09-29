@@ -301,6 +301,8 @@ function rozmiarPineski(a: Pineska['analiza']): string {
 export interface OpcjePolecenia {
   /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze (agent-reżyser) — sekcja SCALE */
   skala?: string
+  /** jak obiekt ma być widoczny w scenie docelowej (reżyser) */
+  widok?: string
   /** dodatkowa uwaga techniczna dla modelu (np. że Image 1 jest wycinkiem) */
   instrukcja?: string
   /** numer pineski → rola od agenta (SOURCE, DESTINATION, …) */
@@ -326,7 +328,7 @@ export function zbudujPolecenie(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): string {
-  const { skala = '', instrukcja = '', role = {}, miejsca = {}, osoba = false } = opcje
+  const { skala = '', widok = '', instrukcja = '', role = {}, miejsca = {}, osoba = false } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return ''
 
@@ -368,6 +370,7 @@ export function zbudujPolecenie(
     pineski: pineskiSklejka,
     obrazy: obrazyWejscia,
     skala: skala.trim() || undefined,
+    widok: widok.trim() || undefined,
     instrukcja: instrukcja.trim() || undefined,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,

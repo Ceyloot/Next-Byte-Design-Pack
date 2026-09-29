@@ -64,6 +64,8 @@ export interface Plan {
   skala?: string
   /** pomiar skali od reżysera (kotwica + wymiary obiektu w metrach) */
   pomiar?: PomiarSkali
+  /** widok obiektu w scenie docelowej (reżyser) */
+  widok?: string
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
@@ -305,6 +307,7 @@ export function agentProxy(): Plugin {
         plan: odczytany.plan,
         skala: odczytany.skala,
         pomiar: odczytany.pomiar,
+        widok: odczytany.widok || undefined,
         miejsca: miejscaZPlanu(odczytany),
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,
