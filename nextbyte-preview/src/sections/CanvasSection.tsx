@@ -34,6 +34,7 @@ import { Plotno } from '@/sections/canvas/Plotno'
 import { INTENCJE, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
+import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
@@ -241,16 +242,45 @@ export function CanvasSection() {
     return () => obserwator.disconnect()
   }, [])
 
+  // Zdjęcia zapisujemy w IndexedDB (localStorage mieści ~5 MB i gubił projekt).
+  // Do zakończenia odczytu nic nie zapisujemy — pusty stan startowy nie może
+  // nadpisać zapisanego projektu.
+  const [odczytano, setOdczytano] = useState(false)
   useEffect(() => {
+    let aktywny = true
+    void wczytajZPamieci(KLUCZ_ZAPISU).then(zapisany => {
+      if (!aktywny) return
+      try {
+        if (zapisany) {
+          const wczytany = wczytajProjekt(zapisany)
+          if (wczytany.warstwy.length > 0) {
+            setProjekt({ ...wczytany, ramka: wczytany.ramka ?? null })
+            setWybranaWarstwa(wczytany.warstwy[0].id)
+            setWybranaPineska(wczytany.pineski[0]?.id ?? null)
+          }
+        }
+      } catch {
+        /* uszkodzony zapis — zostaje to, co jest */
+      }
+      setOdczytano(true)
+    })
+    return () => {
+      aktywny = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!odczytano) return
     const id = setTimeout(() => {
+      void zapiszWPamieci(KLUCZ_ZAPISU, projekt)
       try {
         localStorage.setItem(KLUCZ_ZAPISU, JSON.stringify(projekt))
       } catch {
-        /* zdjęcia jako dataURL potrafią przepełnić localStorage */
+        /* zdjęcia jako dataURL przepełniają localStorage — pełny zapis jest w IndexedDB */
       }
     }, 500)
     return () => clearTimeout(id)
-  }, [projekt])
+  }, [projekt, odczytano])
 
   /* ── Wczytywanie zdjęć ─────────────────────────────────────────── */
 
