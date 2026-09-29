@@ -239,6 +239,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const liniaSceny = [
     w.opis?.miejsce && `Place: ${w.opis.miejsce}`,
     w.opis?.wyglad && `Look: ${w.opis.wyglad}`,
+    w.opis?.swiatlo && `Light (measured): ${w.opis.swiatlo}`,
     w.opis?.kotwice && `Scale anchors: ${w.opis.kotwice}`,
   ].filter(Boolean)
   if (w.szczegoly?.trim()) liniaSceny.push(w.szczegoly.trim())

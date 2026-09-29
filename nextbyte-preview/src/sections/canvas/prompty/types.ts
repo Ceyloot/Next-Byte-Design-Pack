@@ -151,6 +151,8 @@ export interface OpisSceny {
   wyglad: string;
   /** kotwice skali widoczne w kadrze (znane rozmiary) */
   kotwice: string;
+  /** światło sceny: kierunek, twardość, temperatura barwowa (K) */
+  swiatlo?: string;
   pineski: OpisPineski[];
 }
 

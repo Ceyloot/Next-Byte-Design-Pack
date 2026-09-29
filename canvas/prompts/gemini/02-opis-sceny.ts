@@ -40,8 +40,9 @@ ${listaPinesek(w.pineski)}
 WHAT TO DESCRIBE
 1. "place": where the scene of Image 1 is, in one sentence (e.g. "stone terrace of a country house, late afternoon").
 2. "look": the look of Image 1 — photographic medium (colour / black-and-white / sepia), light direction and colour temperature, grain and sharpness, condition (old, degraded, clean), mood.
-3. "anchors": objects of known size visible in Image 1 near the pins, with their real-world size (e.g. "door ≈ 2.0 m high, person ≈ 1.75 m, brick ≈ 6.5 cm").
-4. "pins": for EACH pin, in order:
+3. "light": the light of Image 1 as measurable facts — direction (where the light comes from, e.g. "from upper left, low sun"), hardness (hard / soft / diffuse), colour temperature in Kelvin (e.g. "≈ 5600 K"), and where the shadows fall.
+4. "anchors": objects of known size visible in Image 1 near the pins, with their real-world size (e.g. "door ≈ 2.0 m high, person ≈ 1.75 m, brick ≈ 6.5 cm").
+5. "pins": for EACH pin, in order:
    - "name": the WHOLE object or person under the pin (not only the part under the crosshair), 2–5 words;
    - "place": where it is in its image and what surrounds it;
    - "look": colour, material, condition and distinguishing details;
@@ -56,6 +57,7 @@ OUTPUT — return ONLY this JSON, no commentary:
 {
   "place": "...",
   "look": "...",
+  "light": "...",
   "anchors": "...",
   "pins": [{ "pin": <number>, "name": "...", "place": "...", "look": "...", "size": "..." }]
 }`
@@ -83,6 +85,7 @@ export function parsujOpisSceny(odpowiedz: string, w: WejscieOpisuSceny): OpisSc
     miejsce: tekst(json.place),
     wyglad: tekst(json.look),
     kotwice: tekst(json.anchors),
+    swiatlo: tekst(json.light),
     pineski,
   }
 }

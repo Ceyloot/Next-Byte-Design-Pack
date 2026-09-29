@@ -8,6 +8,7 @@ export const LIGHT_RULE: Brick = {
   tekst: [
     `LIGHT RULE — the element is lit exactly like the scene it lives in:`,
     `- Every generated, replaced or moved element receives the light that already exists in {{IMAGE_TARGET}}: the same direction, elevation, hardness, colour temperature and intensity as its neighbours.`,
+    `- If SCENE DETAILS lists a measured light (direction, hardness, Kelvin), those values are the light of the element — use them exactly rather than a generic guess.`,
     `- Sun rays, window light, lamp light, rim lights and dappled light strike the element on the same side and with the same colour as they strike the objects around it.`,
     `- Shadows: the cast shadow falls in the same direction, with the same length and softness as the other shadows in the scene; a soft contact shadow and ambient occlusion sit where the element touches a surface; the shadow bends over the shape of the surface beneath it (grass, steps, folds, uneven ground).`,
     `- Bounce and colour spill: nearby coloured surfaces tint the element, and the element tints its surroundings the same way.`,
