@@ -60,9 +60,6 @@ interface Props {
   onZmienNazwePineski: (id: string, label: string) => void
   onWlaczNarzędziePineska: () => void
   onGeneruj: () => void
-  /** tryb PSD: tylko prompt użytkownika + RULES */
-  trybPsd: boolean
-  onTrybPsd: (v: boolean) => void
   stanGeneracji: StanGeneracji
   powodBlokady: string | null
   trwa: boolean
@@ -83,8 +80,6 @@ export function CzatCanvas({
   onZmienNazwePineski,
   onWlaczNarzędziePineska,
   onGeneruj,
-  trybPsd,
-  onTrybPsd,
   stanGeneracji,
   powodBlokady,
   trwa,
@@ -688,21 +683,6 @@ export function CzatCanvas({
                 <Sparkles className="h-3 w-3 text-primary animate-pulse" />
                 <span>{INTENCJE.find(i => i.id === intencja)?.nazwa || 'Auto'}</span>
               </div>
-
-              <button
-                type="button"
-                onClick={() => onTrybPsd(!trybPsd)}
-                aria-pressed={trybPsd}
-                className={cn(
-                  'rounded-md border px-1.5 py-0.5 text-[10px] font-bold transition-colors',
-                  trybPsd
-                    ? 'border-primary/40 bg-primary/15 text-primary'
-                    : 'border-foreground/15 text-foreground/40 hover:text-foreground',
-                )}
-                title="Tryb PSD: do modelu idzie tylko Twój prompt + RULES (światło, skala, perspektywa, tożsamość) — bez reżysera Gemini"
-              >
-                PSD
-              </button>
 
               <button
                 type="button"
