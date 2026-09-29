@@ -151,14 +151,12 @@ NO COPY-PASTE — re-shoot, do not paste: render the frame as if one camera phot
 EDGE & BLEND — fine edges (hair, fur, foliage, glass) stay clean with the scene lens's softness; no halo, fringe or outline. Colour, brightness, grain and sharpness cross the border of the changed area with no visible step.
 
 [OPERATION — OBJECT SWAP]
-Replace the object at Pin 1 ("lamp", Image 1) with the new object (taken from Image 2, or as described in the COMMAND). The old object leaves the photograph completely; the new object takes its place.
+Replace the object at Pin 1 ("lamp", Image 1) with the new object (taken from Image 2, or as described in the COMMAND), so that the swap looks as natural as possible. The old object leaves the photograph completely; the new object takes its place.
 STEPS:
-1. Identify the old object at Pin 1 ("lamp", Image 1) as a whole (see the PIN MAP), not only the part under the pin.
-2. Remove it entirely together with its shadow and reflection and rebuild what was behind it (clean plate).
-3. Generate the new object from its reference or description at its OWN real size, turned to the camera angle of Image 1.
-4. Stand the new object where the old one stood: the same contact point, on the same surface plane, facing the same direction.
-5. If a person or animal touched the old object, they stay intact and the new object gets its own equivalent contacting part.
-6. Recompute light, shadows and reflections for the shape and material of the new object.
+1. Both objects are taken WHOLE: the old one at Pin 1 ("lamp", Image 1) (not only the part under the pin) and the new one from its reference or description (the whole object, not only the part under its pin). The pins' names decide which object is meant.
+2. Remove the old object entirely together with its shadow and reflection and rebuild what was behind it; the new object may be larger or smaller, so nothing of the old one may peek out around it.
+3. Draw the new object at its OWN real size (see SCALE), seen from the camera angle of Image 1, standing on the spot of the old one: footprint centred there, on the same surface plane, heading along the lines of that surface.
+4. Everything else in the photograph stays exactly as it is.
 
 [PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]
 - Pin 1 · TARGET · Image 1 — "lamp" — dot at x=40%, y=60% — place: on the wooden side table next to the sofa

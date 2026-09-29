@@ -281,7 +281,8 @@ const OPERACJE_Z_INTENCJI: Record<Intencja, OperationId> = {
  */
 export function operacjaZIntencji(intencja: Intencja, osoba = false): OperationId {
   if (osoba && intencja === 'zamien') return 'character_swap'
-  if (osoba && intencja === 'przenies') return 'character_transfer'
+  // wstawienie / przeniesienie całej osoby (też z innego zdjęcia) = operacja postaci
+  if (osoba && (intencja === 'przenies' || intencja === 'wstaw')) return 'character_transfer'
   return OPERACJE_Z_INTENCJI[intencja]
 }
 

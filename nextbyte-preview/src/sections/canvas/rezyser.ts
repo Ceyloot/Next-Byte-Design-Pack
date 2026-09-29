@@ -43,7 +43,7 @@ The image that STAYS and receives the change (where the object lands / the locat
 STEP 1 — WHAT EACH PIN POINTS AT
 - A pin on an object means the WHOLE object (not a part, unless the user names a part). A pin on open ground, water, floor or sky is a LOCATION.
 - "opis": the whole pinned object in English, 2–8 words (type and model if recognisable). Nothing about light or mood.
-- "miejsce": where the point lies in its image, in words from what you SEE — the surface it stands on, the nearest landmarks and which side of them, and whether it is near a frame edge. Landmarks only; never percentages or coordinates. Describe the pin's OWN spot: if the nearest subject is far, say so instead of writing "next to".
+- "miejsce": where the point lies in its image, in words from what you SEE — the surface it stands on, the nearest landmarks and which side of them, and whether it is near a frame edge. Landmarks only; never percentages or coordinates. If the user's words relate the new thing to the pinned object (leans on, stands next to, in front of, on), say in "miejsce" the object AND the spot where the new thing ends up (e.g. on the ground beside that object), not just the object's surface. Describe the pin's OWN spot: if the nearest subject is far, say so instead of writing "next to".
 
 STEP 1b — BIND THE USER'S WORDS TO PINS
 Each noun of the request that refers to a scene object resolves to a pin (users type fragments, inflected forms, synonyms). The operation acts on EXACTLY the named pinned objects — never on a more prominent object nearby. If a word matches no pin, say so in "analiza" and act only on what the pins clearly show.
@@ -51,7 +51,7 @@ Each noun of the request that refers to a scene object resolves to a pin (users 
 STEP 2 — OPERATION ("intencja"), exactly one of:
 "wstaw" (add an object at a location, nothing removed), "przenies" (an object goes to a location pin — same photo or from a reference), "zamien" (the object under a canvas pin is replaced), "postac" (face/identity of a reference person onto the person under a canvas pin), "ubranie" (new outfit for the marked person), "usun", "tekstura", "pora_roku", "pora_dnia", "efekt", "tlo", "styl", "popraw".
 "wstaw go tu", "daj to tam", "niech tu stoi" = put the object at the pin and keep everything else. A location pin next to an object means that object stays: "wstaw" or "przenies", never "zamien" unless a replacement is asked for.
-Set "dotyczy_osoby" true only when a "zamien"/"przenies" replaces or moves a WHOLE PERSON.
+Set "dotyczy_osoby" true when a "wstaw", "zamien" or "przenies" adds, replaces or moves a WHOLE PERSON (a human being, not an object) — including a person brought in from a reference photo.
 
 STEP 3 — ROLES
 When the pin list gives a role (SOURCE = object that moves or is brought in, DESTINATION = where it ends up), follow it.

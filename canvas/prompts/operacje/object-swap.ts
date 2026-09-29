@@ -27,13 +27,11 @@ export const OBJECT_SWAP: Operation = {
   ],
   dawca: 'opcjonalny',
   czystaPlyta: true,
-  misja: `Replace the object at {{PIN_TARGET}} with the new object (taken from {{IMAGE_DONOR}}, or as described in the COMMAND). The old object leaves the photograph completely; the new object takes its place.`,
+  misja: `Replace the object at {{PIN_TARGET}} with the new object (taken from {{IMAGE_DONOR}}, or as described in the COMMAND), so that the swap looks as natural as possible. The old object leaves the photograph completely; the new object takes its place.`,
   kroki: [
-    `Identify the old object at {{PIN_TARGET}} as a whole (see the PIN MAP), not only the part under the pin.`,
-    `Remove it entirely together with its shadow and reflection and rebuild what was behind it (clean plate).`,
-    `Generate the new object from its reference or description at its OWN real size, turned to the camera angle of {{IMAGE_TARGET}}.`,
-    `Stand the new object where the old one stood: the same contact point, on the same surface plane, facing the same direction.`,
-    `If a person or animal touched the old object, they stay intact and the new object gets its own equivalent contacting part.`,
-    `Recompute light, shadows and reflections for the shape and material of the new object.`,
+    `Both objects are taken WHOLE: the old one at {{PIN_TARGET}} (not only the part under the pin) and the new one from its reference or description (the whole object, not only the part under its pin). The pins' names decide which object is meant.`,
+    `Remove the old object entirely together with its shadow and reflection and rebuild what was behind it; the new object may be larger or smaller, so nothing of the old one may peek out around it.`,
+    `Draw the new object at its OWN real size (see SCALE), seen from the camera angle of {{IMAGE_TARGET}}, standing on the spot of the old one: footprint centred there, on the same surface plane, heading along the lines of that surface.`,
+    `Everything else in the photograph stays exactly as it is.`,
   ],
 }
