@@ -30,8 +30,7 @@ export interface ZadanieGeneracji {
   /** `settings.temperature` — Studio: swap 0.45, twarz 0.42, poprawka 0.2 */
   temperatura?: number
   /**
-   * `postac` wybiera model z RUNWARE_MODEL_POSTAC (np. google:4@2, Nano Banana Pro —
-   * na nim Studio robi swapy); bez tej zmiennej zostaje RUNWARE_MODEL.
+   * Znacznik operacji na człowieku (dziś bez wpływu na model — zawsze Nano Banana 2 Lite).
    */
   klasa?: 'postac'
 }
@@ -106,8 +105,8 @@ function czytajCialo(req: { on: (z: string, f: (c?: unknown) => void) => void })
 export function runwareProxy(): Plugin {
   let klucz = ''
   let kluczGemini = ''
-  let model = 'google:nano-banana@2-lite'
-  let modelPostaci = ''
+  /** Jeden model dla wszystkiego: Nano Banana 2 Lite. Zmienne RUNWARE_MODEL* w .env.local są ignorowane. */
+  const model = 'google:nano-banana@2-lite'
 
   const obsluz = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use(SCIEZKA, async (req, res) => {
@@ -130,7 +129,8 @@ export function runwareProxy(): Plugin {
         if (!zadanie.obrazy?.length) return odpowiedz(400, { blad: 'Brak obrazu wejściowego' })
 
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
-        const modelZadania = zadanie.klasa === 'postac' && modelPostaci ? modelPostaci : model
+        const modelZadania = model
+        console.info(`[canvas] generacja modelem ${modelZadania}`)
 
         // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.
         const settings: Record<string, unknown> = {}
@@ -289,8 +289,6 @@ export function runwareProxy(): Plugin {
       const env = loadEnv(config.mode, config.root, '')
       klucz = env.RUNWARE_API_KEY ?? ''
       kluczGemini = env.GEMINI_API_KEY || kluczGemini
-      model = env.RUNWARE_MODEL || model
-      modelPostaci = env.RUNWARE_MODEL_POSTAC || ''
     },
     configureServer: server => {
       obsluz(server)
