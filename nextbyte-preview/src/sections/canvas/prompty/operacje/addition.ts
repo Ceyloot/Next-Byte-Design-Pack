@@ -29,7 +29,7 @@ export const ADDITION: Operation = {
   misja: `Add the new object (from {{IMAGE_DONOR}}, or as described in the COMMAND) at {{PIN_TARGET}}. Insert only — remove nothing.`,
   kroki: [
     `INSERT ONLY — every object, animal and person already in the scene stays: the same count, the same positions, the same sizes.`,
-    `Place the new object at the marked point, where it touches the ground or the surface it rests on. "Next to" means immediately beside the named neighbours, sharing their ground line.`,
+    `Place the new object at the marked point: where it touches the ground or the surface it rests on, or — for an airborne or floating object — where its centre sits in the air. "Next to" means immediately beside the named neighbours, sharing their ground line.`,
     `Give it its own real size (see SCENE DETAILS) and the perspective of the scene.`,
     `Show it 100% complete; if its real size would clip the frame, set it deeper instead of truncating it.`,
   ],

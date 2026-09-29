@@ -32,7 +32,7 @@ export const OBJECT_TRANSFER: Operation = {
     `The object keeps its identity and surface condition: the same form, material, colour, dust, patina and details.`,
     `If the source pin lies in {{IMAGE_TARGET}}, restore a clean plate there: rebuild ground, vegetation and patterns as if the object had never stood there. If it lies in another image, only the object comes across from it.`,
     `Adapt the object to the new position: perspective, angle and scale follow the destination — farther from the camera means smaller along the same vanishing lines, closer means larger and sharper (an object moved from the distance to the foreground grows accordingly).`,
-    `Set it on the ground at the destination pin with a stable natural footprint and its own new contact shadow.`,
+    `Set it at the destination pin: on the ground with a stable natural footprint and its own new contact shadow — or, for an airborne or floating object, with its centre at the marked spot and no invented ground contact.`,
     `Its old cast shadow and reflection leave together with it.`,
     `People in contact with the object are never cut or erased: their contact adapts naturally.`,
   ],
