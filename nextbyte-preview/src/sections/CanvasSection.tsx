@@ -35,6 +35,7 @@ import {
 import { Plotno } from '@/sections/canvas/Plotno'
 import { INTENCJE, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
+import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
@@ -68,6 +69,9 @@ import {
  * po prawej stronie, do 10 precyzyjnych pinesek z automatycznym rozpoznawaniem obiektów,
  * obsługa natychmiastowego Object Transfer oraz Object Switch z Clean Plate.
  */
+
+/** Generacja na wycinku wokół pinu + złożenie po masce zmiany (pewna pozycja). */
+const GENERUJ_NA_WYCINKU = true
 
 const KLUCZ_ZAPISU = 'nb-canvas-projekt-v2'
 
@@ -610,9 +614,42 @@ export function CanvasSection() {
       // wyłącznie opisem + współrzędnymi pineski (prompt-first).
       const plotnoZObszarami: string | null = null
 
-      const pelnePolecenie = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
+      // Generacja na wycinku wokół miejsca zmiany: błąd pozycji modelu jest
+      // procentem WYCINKA, a nie całego kadru. Przy niepewności — pełny kadr.
+      const punktyZmiany = projekt.pineski
+        .filter(p => p.layerId === zrodlo.id && !p.chroniona)
+        .map(p => ({ x: p.normalizedX, y: p.normalizedY }))
+      const wycinek =
+        GENERUJ_NA_WYCINKU && pinDocelowy && ['wstaw', 'przenies', 'zamien'].includes(trybAgenta)
+          ? policzWycinek(zrodlo.naturalWidth, zrodlo.naturalHeight, punktyZmiany)
+          : null
+      const srcWycinka = wycinek ? await wytnijWycinek(await konwertujNaDataUrl(zrodlo.src), wycinek) : null
+      const trybWycinka = Boolean(wycinek && srcWycinka)
+
+      const warstwaWycinka: Warstwa | null =
+        trybWycinka && wycinek && srcWycinka
+          ? { ...zrodlo, id: `${zrodlo.id}-wycinek`, src: srcWycinka, naturalWidth: wycinek.w, naturalHeight: wycinek.h }
+          : null
+      const obrazyPolecenia = warstwaWycinka ? [warstwaWycinka, ...obrazy.slice(1)] : obrazy
+      const pineskiPolecenia =
+        warstwaWycinka && wycinek
+          ? projekt.pineski.map(p =>
+              p.layerId === zrodlo.id
+                ? {
+                    ...p,
+                    layerId: warstwaWycinka.id,
+                    normalizedX: (p.normalizedX * zrodlo.naturalWidth - wycinek.x) / wycinek.w,
+                    normalizedY: (p.normalizedY * zrodlo.naturalHeight - wycinek.y) / wycinek.h,
+                  }
+                : p,
+            )
+          : projekt.pineski
+
+      const pelnePolecenie = zbudujPolecenie(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         szczegoly: plan?.promptDlaModelu,
-        instrukcja: plan?.instrukcja,
+        instrukcja: warstwaWycinka
+          ? `${plan?.instrukcja ? `${plan.instrukcja}\n` : ''}Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.`
+          : plan?.instrukcja,
         role: uklad.role,
         miejsca: plan?.miejsca,
         osoba: plan?.osoba,
@@ -620,15 +657,39 @@ export function CanvasSection() {
 
       setOstatniPrompt(pelnePolecenie)
 
-      const czyste = await Promise.all(obrazy.map(w => konwertujNaDataUrl(w.src)))
+      const czyste = await Promise.all(obrazyPolecenia.map(w => konwertujNaDataUrl(w.src)))
       const obrazyDoModelu = plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste
 
-      const wynik = await generuj({
+      let wynik = await generuj({
         polecenie: pelnePolecenie,
         obrazy: obrazyDoModelu,
-        szerokosc: zrodlo.naturalWidth,
-        wysokosc: zrodlo.naturalHeight,
+        szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
+        wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
       })
+
+      if (warstwaWycinka && wycinek) {
+        const zlozony = await zlozWycinek(await konwertujNaDataUrl(zrodlo.src), wynik.obrazUrl, wycinek)
+        if (zlozony) {
+          wynik = { ...wynik, obrazUrl: zlozony }
+        } else {
+          console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
+          const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
+            szczegoly: plan?.promptDlaModelu,
+            instrukcja: plan?.instrukcja,
+            role: uklad.role,
+            miejsca: plan?.miejsca,
+            osoba: plan?.osoba,
+          })
+          setOstatniPrompt(pelnyPrompt)
+          const pelne = await generuj({
+            polecenie: pelnyPrompt,
+            obrazy: czyste.length ? [await konwertujNaDataUrl(zrodlo.src), ...czyste.slice(1)] : czyste,
+            szerokosc: zrodlo.naturalWidth,
+            wysokosc: zrodlo.naturalHeight,
+          })
+          wynik = { ...pelne, kosztUSD: (wynik.kosztUSD ?? 0) + (pelne.kosztUSD ?? 0) }
+        }
+      }
 
       // TWARDA BLOKADA FORMATU: Nano-Banana ignoruje żądane wymiary i potrafi
       // oddać wynik w proporcjach zdjęcia referencyjnego. Deterministycznie
