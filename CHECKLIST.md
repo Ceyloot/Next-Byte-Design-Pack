@@ -888,3 +888,16 @@
 | **RAZEM** | **181** | **783** |
 
 **Postęp: 23.1%**
+
+---
+
+## Canvas · Operacje na obrazie (prompty: `canvas/prompts`)
+- [x] Object swap — zamień obiekt na inny (z drugiego zdjęcia lub z opisu), `canvas/prompts/operacje/object-swap.ts`
+- [x] Object transfer — przenieś obiekt z jednego zdjęcia na drugie / w obrębie zdjęcia z zachowaniem proporcji, `canvas/prompts/operacje/object-transfer.ts` (wstaw obiekt z drugiego zdjęcia → object transfer)
+- [x] Pinezka = mała magentowa kropka + współrzędne w PIN MAP
+- [x] Skala od Gemini (obwiednia obiektu) + korekta po generacji (wstaw / przenieś; nie przy zamianie)
+- [x] Zapis projektu ze zdjęciami w IndexedDB
+- [ ] Hair swap
+- [ ] Face swap
+- [ ] Character swap / transfer (osobno: postacie)
+- [ ] Removal, addition, tło, pora dnia/roku, styl, tekstura, efekt

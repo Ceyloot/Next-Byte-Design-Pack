@@ -35,7 +35,7 @@ DECISION 2 — OPERATION (choose EXACTLY ONE id from this closed list; invent no
 - face_swap: Only the face and identity of a person change (face, hair, apparent age); their body, clothing, pose and the scene stay. Polish triggers: zamień twarz / daj mu twarz z drugiego zdjęcia / twarz tej osoby.
 - general_fix: Any other small local change that fits none of the operations above (recolour something, open a door, change a sign, adjust a detail). Choose this ONLY when no other operation fits.
 - object_swap: One object in the target photo is replaced by ANOTHER object — from a second photo or described in words. Polish triggers: zamień / podmień / zastąp / zamiast X daj Y / wstaw Y w miejsce X. The old object disappears, the new one takes its place.
-- object_transfer: The SAME object changes position — inside the target photo, or it is brought from another photo. Examples: move the cottage closer, put this here, take this object from photo 2 and place it there. Polish triggers: przenieś / przesuń / daj tu / ma być tu / przybliż / oddal.
+- object_transfer: The SAME object is carried to another place: brought from a donor photo into the target photo (put this car / this cottage here), or moved inside the target photo (move it closer, put it there). The object keeps its identity and true proportions; nothing else changes. Polish triggers: przenieś / przesuń / wstaw ten obiekt z drugiego zdjęcia tutaj / daj to tam / ma być tu / przybliż / oddal.
 - removal: Something is deleted from the target photo and nothing takes its place; the background is rebuilt. Polish triggers: usuń / skasuj / wytnij / wymaż / pozbądź się / zrób bez.
 - season_change: The whole scene changes season (spring, summer, autumn, winter). Polish triggers: zrób zimę / jesień / wiosnę / lato / pokryj śniegiem / niech liście będą żółte.
 - style_change: The look of the whole image changes to an artistic style (cartoon, oil painting, watercolour, sketch, anime, noir, vintage, cyberpunk); composition and content stay. Polish triggers: zrób w stylu / kreskówka / obraz olejny / akwarela / szkic / anime / vintage.
@@ -240,14 +240,13 @@ NO COPY-PASTE — re-shoot, do not paste: render the frame as if one camera phot
 EDGE & BLEND — fine edges (hair, fur, foliage, glass) stay clean with the scene lens's softness; no halo, fringe or outline. Colour, brightness, grain and sharpness cross the border of the changed area with no visible step.
 
 [OPERATION — OBJECT TRANSFER]
-Move the object at Pin 1 ("cottage", Image 1) to the destination Pin 2 ("path", Image 1). This is a relocation, not a copy: the same object changes position and appears exactly once, at the destination.
+Move the object from Pin 1 ("cottage", Image 1) to Pin 2 ("path", Image 1), keeping perfect proportions and making it look as natural as possible. It is the same object: the whole object, with its own real proportions, appears exactly once at the destination.
 STEPS:
-1. The object keeps its identity and surface condition: the same form, material, colour, dust, patina and details.
-2. If the source pin lies in Image 1, restore a clean plate there: rebuild ground, vegetation and patterns as if the object had never stood there. If it lies in another image, only the object comes across from it.
-3. Adapt the object to the new position: perspective, angle and scale follow the destination — farther from the camera means smaller along the same vanishing lines, closer means larger and sharper (an object moved from the distance to the foreground grows accordingly).
-4. Set it at the destination pin: on the ground with a stable natural footprint and its own new contact shadow — or, for an airborne or floating object, with its centre at the marked spot and no invented ground contact.
-5. Its old cast shadow and reflection leave together with it.
-6. People in contact with the object are never cut or erased: their contact adapts naturally.
+1. Take the object WHOLE (not only the part under its pin) and keep its identity: shape, proportions, material, colour, markings and surface condition. Its width-to-height ratio never changes; only its size in the frame does.
+2. Set its size by the real world, not by the donor photo: judge it against neighbours of known size at the destination (see SCALE) — a framing that fills the donor photo says nothing about how large it is here. Farther from the camera means smaller along the same vanishing lines, closer means larger.
+3. Turn it to the camera of Image 1 and stand it on the destination spot: footprint centred there, on the same surface plane, heading along the lines of that surface — or, for an airborne object, with its centre there.
+4. If the source pin lies in Image 1, restore a clean plate there, as if the object had never stood at the old spot; if it lies in another image, only the object comes across and that photo is left out of the result.
+5. Everything else in Image 1 stays exactly as it is.
 
 [PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]
 - Pin 1 · SOURCE · Image 1 — "cottage" — dot at x=50%, y=30% — place: on the far meadow below the tree line

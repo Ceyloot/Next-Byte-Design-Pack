@@ -723,7 +723,8 @@ export function CanvasSection() {
 
       if (warstwaWycinka && wycinek) {
         // rozmiar od reżysera (ułamek zdjęcia docelowego) → ułamek wycinka
-        const cel = plan?.rozmiar
+        // Przy zamianie zmieniony obszar obejmuje też stary obiekt — pomiar byłby zawyżony.
+        const cel = plan?.rozmiar && trybAgenta !== 'zamien'
           ? {
               szer: Math.min(0.95, plan.rozmiar.szer / 100 / (wycinek.w / zrodlo.naturalWidth)),
               wys: Math.min(0.95, plan.rozmiar.wys / 100 / (wycinek.h / zrodlo.naturalHeight)),

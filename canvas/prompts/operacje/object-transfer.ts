@@ -5,7 +5,7 @@ export const OBJECT_TRANSFER: Operation = {
   id: 'object_transfer',
   nazwa: 'Przenieś obiekt',
   kiedyUzyc:
-    'The SAME object changes position — inside the target photo, or it is brought from another photo. Examples: move the cottage closer, put this here, take this object from photo 2 and place it there. Polish triggers: przenieś / przesuń / daj tu / ma być tu / przybliż / oddal.',
+    'The SAME object is carried to another place: brought from a donor photo into the target photo (put this car / this cottage here), or moved inside the target photo (move it closer, put it there). The object keeps its identity and true proportions; nothing else changes. Polish triggers: przenieś / przesuń / wstaw ten obiekt z drugiego zdjęcia tutaj / daj to tam / ma być tu / przybliż / oddal.',
   bricks: [
     'object-identity-rule',
     'donor-isolation-rule',
@@ -27,13 +27,12 @@ export const OBJECT_TRANSFER: Operation = {
   ],
   dawca: 'opcjonalny',
   czystaPlyta: true,
-  misja: `Move the object at {{PIN_SOURCE}} to the destination {{PIN_TARGET}}. This is a relocation, not a copy: the same object changes position and appears exactly once, at the destination.`,
+  misja: `Move the object from {{PIN_SOURCE}} to {{PIN_TARGET}}, keeping perfect proportions and making it look as natural as possible. It is the same object: the whole object, with its own real proportions, appears exactly once at the destination.`,
   kroki: [
-    `The object keeps its identity and surface condition: the same form, material, colour, dust, patina and details.`,
-    `If the source pin lies in {{IMAGE_TARGET}}, restore a clean plate there: rebuild ground, vegetation and patterns as if the object had never stood there. If it lies in another image, only the object comes across from it.`,
-    `Adapt the object to the new position: perspective, angle and scale follow the destination — farther from the camera means smaller along the same vanishing lines, closer means larger and sharper (an object moved from the distance to the foreground grows accordingly).`,
-    `Set it at the destination pin: on the ground with a stable natural footprint and its own new contact shadow — or, for an airborne or floating object, with its centre at the marked spot and no invented ground contact.`,
-    `Its old cast shadow and reflection leave together with it.`,
-    `People in contact with the object are never cut or erased: their contact adapts naturally.`,
+    `Take the object WHOLE (not only the part under its pin) and keep its identity: shape, proportions, material, colour, markings and surface condition. Its width-to-height ratio never changes; only its size in the frame does.`,
+    `Set its size by the real world, not by the donor photo: judge it against neighbours of known size at the destination (see SCALE) — a framing that fills the donor photo says nothing about how large it is here. Farther from the camera means smaller along the same vanishing lines, closer means larger.`,
+    `Turn it to the camera of {{IMAGE_TARGET}} and stand it on the destination spot: footprint centred there, on the same surface plane, heading along the lines of that surface — or, for an airborne object, with its centre there.`,
+    `If the source pin lies in {{IMAGE_TARGET}}, restore a clean plate there, as if the object had never stood at the old spot; if it lies in another image, only the object comes across and that photo is left out of the result.`,
+    `Everything else in {{IMAGE_TARGET}} stays exactly as it is.`,
   ],
 }

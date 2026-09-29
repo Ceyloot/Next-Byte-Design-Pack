@@ -358,9 +358,13 @@ export function zbudujPolecenie(
 
   const styl = intencja === 'styl' ? wykryjStyl(zadanie) : undefined
 
+  // „Wstaw ten obiekt z drugiego zdjęcia” to przeniesienie obiektu (zachowane proporcje i tożsamość).
+  let operacja = operacjaZIntencji(intencja, osoba)
+  if (operacja === 'addition' && pineskiSklejka.some(p => p.rola === 'source' && p.obraz > 1)) operacja = 'object_transfer'
+
   return skladajPrompt({
     polecenie: zadanie,
-    operacja: operacjaZIntencji(intencja, osoba),
+    operacja,
     pineski: pineskiSklejka,
     obrazy: obrazyWejscia,
     skala: skala.trim() || undefined,
