@@ -7,14 +7,9 @@ export const GENERAL_FIX: Operation = {
   kiedyUzyc:
     'Any other small local change that fits none of the operations above (recolour something, open a door, change a sign, adjust a detail). Choose this ONLY when no other operation fits.',
   bricks: [
-    'minimal-change-rule',
-    'perspective-rule',
-    'light-rule',
-    'grain-medium-rule',
-    'fidelity-rule',
-    'framing-rule',
-    'output-contract-rule',
-    'edge-blend-rule',
+    'studio-inne',
+    'studio-scena-zostaje',
+    'studio-film',
   ],
   dawca: 'opcjonalny',
   czystaPlyta: false,

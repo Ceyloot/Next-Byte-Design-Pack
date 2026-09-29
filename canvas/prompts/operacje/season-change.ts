@@ -6,7 +6,7 @@ export const SEASON_CHANGE: Operation = {
   nazwa: 'Zmień porę roku',
   kiedyUzyc:
     'The whole scene changes season (spring, summer, autumn, winter). Polish triggers: zrób zimę / jesień / wiosnę / lato / pokryj śniegiem / niech liście będą żółte.',
-  bricks: ['season-rule', 'grain-medium-rule', 'framing-rule', 'output-contract-rule'],
+  bricks: [],
   dawca: 'brak',
   czystaPlyta: false,
   misja: `Transform the scene to the season requested in the COMMAND.`,

@@ -3,15 +3,13 @@
  * =========================================================================
  * Kolejność sekcji w złożonym prompcie (stała):
  *
- *   0. ALWAYS        — zasada naczelna o jednym ziarnie (też jako ostatnia linia promptu)
  *   1. IMAGES        — który obraz jest czym, w jakiej kolejności wysłany, format wyniku
  *   2. RULE BRICKS   — bricki włączone przez operację, rosnąco po numerze
  *   3. OPERATION     — misja + kroki wybranej operacji (+ DIRECTION od reżysera, + STYLE DIRECTIVES)
  *   4. PIN MAP       — pineski: rola, obraz, współrzędne X/Y, opis miejsca (+ PROTECTED AREAS)
  *   5. SCALE          — rzeczywisty rozmiar obiektu i kotwice skali
  *   6. COMMAND       — słowa użytkownika
- *   7. FINAL CHECK   — trzy sprawdzenia na końcu (pozycja, ziarno, czysty wynik)
- *   8. FINAL QUALITY — blok pozytywny
+ *   Bricki (RULES) to wyłącznie teksty ze Studia Zdjęć (PDF) — patrz bricks/index.ts.
  *
  * Tokeny podmieniane w brickach i operacjach:
  *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
@@ -161,14 +159,10 @@ function nazwaDawcy(w: SkladajWejscie): string {
 }
 
 /**
- * Zasady, które obowiązują w KAŻDEJ operacji (poza zmianą stylu, gdzie wygląd
- * zmienia się celowo): jedno ziarno, ten sam kadr, kontrakt wyniku.
+ * Zasada, która obowiązuje w KAŻDEJ operacji poza zmianą stylu: układ sceny
+ * i kadr bez zmian (Studio Zdjęć, poz. 43). Wszystkie reguły pochodzą z PDF.
  */
-const BRICKI_ZAWSZE: BrickId[] = ['grain-medium-rule', 'framing-rule', 'output-contract-rule']
-
-/** Zasada naczelna: na samej górze i na samym końcu promptu. */
-const ZASADA_ZAWSZE =
-  'ALWAYS: the generated object has the SAME GRAIN as the photograph (size, density, contrast, sharpness, colour) — no sticker look, never two kinds of grain or style in one image.'
+const BRICKI_ZAWSZE: BrickId[] = ['studio-uklad-sceny']
 
 /** Operacje, w których jest generowany obiekt (pin docelowy = tu ma stanąć obiekt). */
 const OPERACJE_Z_OBIEKTEM = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'character_swap', 'character_transfer'])
@@ -227,14 +221,14 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   }
   const sekcjaObrazow = `[IMAGES]\n${linieObrazow.join('\n')}`
 
-  if (op.gotowy === 'studio-character-swap') return skladajGotowySwap(w, sekcjaObrazow, zasadaZawsze0(), cel, zrodlo)
+  if (op.gotowy === 'studio-character-swap') return skladajGotowySwap(w, sekcjaObrazow, cel, zrodlo)
   if (op.gotowy === 'studio-face-swap') return skladajGotowaTwarz(w, sekcjaObrazow, cel, zrodlo)
 
   // 2. RULE BRICKS
   const pominiete: BrickId[] = []
   const stale: BrickId[] = op.id === 'style_change' ? [] : BRICKI_ZAWSZE
   const wlaczone = [...op.bricks, ...stale].filter((id) => {
-    if (id === 'clean-plate-rule' && czyszczenie === null) {
+    if (id === 'studio-usuniecie' && czyszczenie === null) {
       pominiete.push(id)
       return false
     }
@@ -242,7 +236,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
   const sekcjaBrickow =
-    `[RULES — all hold at once]\n` + bricki.map((b) => podmien(b.tekst)).join('\n')
+    `[RULES — Studio Zdjęć]\n` + bricki.map((b) => podmien(b.tekst)).join('\n')
 
   // 3. TASK — jedno zdanie; kroki tylko tam, gdzie bricki ich nie pokrywają
   const sekcjaOperacji =
@@ -291,30 +285,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         .join('\n')}\nThese stay indistinguishable from the original; on conflict, protection wins.`
     : ''
 
-  // 6b. FINAL CHECK — najczęstsze porażki, krótko tuż przed końcem promptu
-  const uzyte = new Set(bricki.map((b) => b.id))
-  const celNaObrazie1 = w.pineski.find((p) => p.rola === 'target' && p.obraz === 1)
-  const liniaKontroli: string[] = []
-  if (uzyte.has('position-rule') && celNaObrazie1) {
-    liniaKontroli.push(
-      `- POSITION: the generated object stands exactly on the magenta dot at x=${Math.round(celNaObrazie1.x * 100)}%, y=${Math.round(celNaObrazie1.y * 100)}% of Image 1 (base of a resting object, centre of an airborne one).`,
-    )
-  }
-  if (op.id !== 'style_change') {
-    liniaKontroli.push(
-      `- ONE PHOTOGRAPH: grain, sharpness, light, shadow and viewing angle of the changed area belong to Image 1's camera — it does not look pasted or like a sticker.`,
-    )
-  }
-  liniaKontroli.push(`- CLEAN: no magenta dots, marks or text anywhere in the frame.`)
-  const sekcjaKontroli = `[FINAL CHECK]\n${liniaKontroli.join('\n')}`
+  // Jedyna reguła spoza PDF: kropki pinesek to nakładka Canvasu, nie treść zdjęcia.
+  const sekcjaKontroli = w.pineski.length ? `The small magenta dots are guides only and must not appear in the result.` : ''
 
   // 6. COMMAND (tekst użytkownika wstawiany bez podmiany tokenów)
   const sekcjaPolecenia = `[COMMAND]\n${w.polecenie.trim() || op.nazwa}`
 
-  const zasadaZawsze = op.id === 'style_change' ? '' : ZASADA_ZAWSZE
-
   const sekcje: SekcjaPromptu[] = [
-    { klucz: 'always', tekst: zasadaZawsze },
     { klucz: 'operation', tekst: sekcjaOperacji },
     { klucz: 'images', tekst: sekcjaObrazow },
     { klucz: 'pins', tekst: sekcjaPinesek },
@@ -345,10 +322,6 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   }
 }
 
-function zasadaZawsze0(): string {
-  return ZASADA_ZAWSZE
-}
-
 /**
  * Zamiana postaci: prompt Studia Zdjęć 1:1 (rola, baza, kotwica, anatomia, tożsamość)
  * + mapa „który element skąd, gdzie i jak” (obrazy i kropki pinesek) + polecenie.
@@ -356,7 +329,6 @@ function zasadaZawsze0(): string {
 function skladajGotowySwap(
   w: SkladajWejscie,
   sekcjaObrazow: string,
-  zawsze: string,
   cel: PineskaSklejka | undefined,
   zrodlo: PineskaSklejka | undefined,
 ): SkladajWynik {
@@ -381,7 +353,6 @@ function skladajGotowySwap(
   // Kolejność jak w Studiu (poz. 24): baza → instrukcja → kotwica → zamek → realizm.
   // Rola kompozytora (poz. 19) idzie jako systemPrompt, tak jak w runware-character-swap.
   const sekcje: SekcjaPromptu[] = [
-    { klucz: 'always', tekst: zawsze },
     { klucz: 'images', tekst: sekcjaObrazow },
     { klucz: 'pins', tekst: mapa.join('\n') },
     { klucz: 'operation', tekst: baza },
@@ -390,7 +361,6 @@ function skladajGotowySwap(
     { klucz: 'check', tekst: STUDIO_SWAP_KONTROLA },
     { klucz: 'identity', tekst: sekcjaTozsamosci(w.tozsamosc) },
     { klucz: 'quality', tekst: `${STUDIO_REALIZM_TWARZY}\n${STUDIO_ANATOMIA}\n${STUDIO_TOZSAMOSC}\nThe frame holds no magenta dot, numeral, letter or marker anywhere.` },
-    { klucz: 'always', tekst: zawsze },
   ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),

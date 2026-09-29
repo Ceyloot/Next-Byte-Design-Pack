@@ -7,15 +7,9 @@ export const TEXTURE_CHANGE: Operation = {
   kiedyUzyc:
     'The material or surface texture of an area changes while its shape stays. Polish triggers: zmień materiał / zrób z drewna / marmurowa podłoga / inna faktura / inny kolor elewacji.',
   bricks: [
-    'texture-rule',
-    'perspective-rule',
-    'reflection-rule',
-    'light-rule',
-    'grain-medium-rule',
-    'fidelity-rule',
-    'framing-rule',
-    'output-contract-rule',
-    'edge-blend-rule',
+    'studio-inne',
+    'studio-scena-zostaje',
+    'studio-film',
   ],
   dawca: 'opcjonalny',
   czystaPlyta: false,

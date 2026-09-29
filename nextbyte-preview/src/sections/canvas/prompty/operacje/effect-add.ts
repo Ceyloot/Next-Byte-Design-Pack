@@ -7,14 +7,9 @@ export const EFFECT_ADD: Operation = {
   kiedyUzyc:
     'A visual or atmospheric effect is added: shadow, reflection, glow, fog, rain, snow, sparks, particles. Polish triggers: dodaj cień / odbicie / poświatę / mgłę / deszcz / śnieg / iskry.',
   bricks: [
-    'effect-rule',
-    'depth-occlusion-rule',
-    'reflection-rule',
-    'light-rule',
-    'grain-medium-rule',
-    'fidelity-rule',
-    'framing-rule',
-    'output-contract-rule',
+    'studio-inne',
+    'studio-scena-zostaje',
+    'studio-film',
   ],
   dawca: 'brak',
   czystaPlyta: false,
