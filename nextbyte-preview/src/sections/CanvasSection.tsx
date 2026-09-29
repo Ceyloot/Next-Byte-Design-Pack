@@ -34,6 +34,7 @@ import { Plotno } from '@/sections/canvas/Plotno'
 import { INTENCJE, idZrodelNaPlotnie, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
+import { zbudujPoleceniePsd } from './canvas/tryb-psd'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
@@ -530,9 +531,28 @@ export function CanvasSection() {
 
   // Bez legendy mapy: do modelu idą same czyste zdjęcia, więc polecenie
   // nie może opisywać obrazu z celownikami, którego model nie dostaje.
+  // Tryb PSD (przełącznik w czacie): tylko prompt użytkownika + RULES, bez reżysera i bricków operacji.
+  const [trybPsd, setTrybPsd] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('nb-canvas-psd') === '1'
+    } catch {
+      return false
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('nb-canvas-psd', trybPsd ? '1' : '0')
+    } catch {
+      /* brak localStorage */
+    }
+  }, [trybPsd])
+
   const polecenie = useMemo(
-    () => zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
-    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
+    () =>
+      trybPsd
+        ? zbudujPoleceniePsd(projekt.tekst)
+        : zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
+    [trybPsd, projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
   )
 
   const uwagi = useMemo(
@@ -551,6 +571,47 @@ export function CanvasSection() {
   /* Uruchomienie generacji z Nano-Banana */
   const uruchomGeneracje = useCallback(async () => {
     if (!warstwaZrodlowa) return
+
+    // Tryb PSD: prompt użytkownika + RULES, zdjęcia z kropkami pinesek, nic więcej.
+    if (trybPsd) {
+      setStanGeneracji({ faza: 'trwa' })
+      try {
+        const celPsd = obrazyWejsciowe[0] ?? warstwaZrodlowa
+        const obrazyPsd = await Promise.all(
+          obrazyWejsciowe.map(w =>
+            konwertujNaDataUrl(w.src).then(src =>
+              narysujKropki(
+                src,
+                projekt.pineski
+                  .filter(p => p.layerId === w.id && !p.chroniona)
+                  .map(p => ({ x: p.normalizedX, y: p.normalizedY })),
+              ),
+            ),
+          ),
+        )
+        setOstatniPrompt(polecenie)
+        const wynikPsd = await generuj({
+          polecenie,
+          obrazy: obrazyPsd,
+          szerokosc: celPsd.naturalWidth,
+          wysokosc: celPsd.naturalHeight,
+        })
+        wynikPsd.obrazUrl = await dopasujFormatDoObrazu(wynikPsd.obrazUrl, celPsd.naturalWidth, celPsd.naturalHeight)
+        const nazwaPsd = `psd_${nazwijWynik(projekt.tekst, projekt.pineski)}`
+        dodajZeZrodla(wynikPsd.obrazUrl, nazwaPsd, 'wynik', celPsd)
+        setStanGeneracji({
+          faza: 'gotowe',
+          wynik: { ...wynikPsd, nazwa: nazwaPsd, opis: 'Tryb PSD: tylko Twój prompt + RULES.' },
+        })
+      } catch (e) {
+        setStanGeneracji({
+          faza: 'blad',
+          tresc: e instanceof Error ? e.message : 'Wystąpił błąd podczas generacji obrazu.',
+        })
+      }
+      return
+    }
+
     setStanGeneracji({ faza: 'planuje' })
 
     try {
@@ -857,6 +918,7 @@ export function CanvasSection() {
     warstwaZrodlowa,
     obrazyWejsciowe,
     polecenie,
+    trybPsd,
     intencja,
     projekt.tekst,
     projekt.pineski,
@@ -1156,6 +1218,8 @@ export function CanvasSection() {
         onZmienNazwePineski={(id, label) => zmienPineske(id, { label })}
         onWlaczNarzędziePineska={() => setNarzedzie('pineska')}
         onGeneruj={uruchomGeneracje}
+        trybPsd={trybPsd}
+        onTrybPsd={setTrybPsd}
         stanGeneracji={stanGeneracji}
         powodBlokady={powodBlokady}
         trwa={['planuje', 'trwa', 'sprawdza'].includes(stanGeneracji.faza)}
