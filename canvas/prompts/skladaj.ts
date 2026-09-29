@@ -9,7 +9,8 @@
  *   4. PIN MAP       — pineski: rola, obraz, współrzędne X/Y, opis miejsca
  *   5. SCENE DETAILS — miejsce, wygląd i kotwice skali (prompt Gemini 2)
  *   6. COMMAND       — słowa użytkownika
- *   7. FINAL QUALITY — blok pozytywny
+ *   7. FINAL CHECK   — trzy sprawdzenia na końcu (pozycja, ziarno, czysty wynik)
+ *   8. FINAL QUALITY — blok pozytywny
  *
  * Tokeny podmieniane w brickach i operacjach:
  *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
@@ -44,7 +45,7 @@ export interface SkladajWejscie {
 }
 
 export interface SekcjaPromptu {
-  klucz: 'images' | 'bricks' | 'operation' | 'pins' | 'scene' | 'command' | 'quality'
+  klucz: 'images' | 'bricks' | 'operation' | 'pins' | 'scene' | 'command' | 'check' | 'quality'
   tekst: string
 }
 
@@ -211,6 +212,26 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? `[SCENE DETAILS — from visual analysis of Image 1]\n${liniaSceny.join('\n')}`
     : ''
 
+  // 6b. FINAL CHECK — to, co najczęściej zawodzi, powtórzone krótko tuż przed końcem
+  //     (model najmocniej trzyma początek i koniec promptu). Z generacji, w której
+  //     obiekt wyszedł bez ziarna sceny, obok pineski i z cyfrą znacznika.
+  const uzyte = new Set(bricki.map((b) => b.id))
+  const liniaKontroli: string[] = []
+  if (uzyte.has('position-rule')) {
+    liniaKontroli.push(
+      `- POSITION: the base of the element sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.`,
+    )
+  }
+  if (uzyte.has('object-identity-rule') || uzyte.has('character-identity-rule') || uzyte.has('clothing-rule')) {
+    liniaKontroli.push(
+      `- GRAIN: look closely at the element — its grain, noise, contrast and sharpness are the same as the ground and sky right beside it; it is not smoother or cleaner than its surroundings.`,
+    )
+  }
+  liniaKontroli.push(
+    `- CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.`,
+  )
+  const sekcjaKontroli = `[FINAL CHECK — verify before returning the image]\n${liniaKontroli.join('\n')}`
+
   // 6. COMMAND (tekst użytkownika wstawiany bez podmiany tokenów)
   const sekcjaPolecenia = `[COMMAND — the user's words]\n${w.polecenie.trim() || op.nazwa}`
 
@@ -221,6 +242,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     { klucz: 'pins', tekst: sekcjaPinesek },
     { klucz: 'scene', tekst: sekcjaSceny },
     { klucz: 'command', tekst: sekcjaPolecenia },
+    { klucz: 'check', tekst: sekcjaKontroli },
     { klucz: 'quality', tekst: POZYTYW },
   ].filter((s): s is SekcjaPromptu => s.tekst.trim().length > 0)
 

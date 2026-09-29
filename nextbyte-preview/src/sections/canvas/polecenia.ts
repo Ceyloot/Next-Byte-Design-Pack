@@ -250,11 +250,40 @@ function sekcjaCzystegoWyniku(): string {
     'CLEAN OUTPUT — ONE SEAMLESS PHOTOGRAPH (ANTI-AI LOOK):',
     'Pin numbers, names and coordinates in this prompt are instructions for you only.',
     'The result is a single clean, unannotated photograph: the scene itself with natural surfaces and colours from edge to edge.',
+    'Every pixel around the placed object — the ground, grass, sky and neighbouring subjects — shows only the photographed scene itself, with no typography of any kind beside or on the object.',
     'Re-render the whole scene as one brand-new photograph. Never paste, mask, composite or overlay: no hard cut edges, no seams, no leftover rectangles, no donor background travelling with a moved object.',
     'GENERATE FROM SCRATCH — NEVER COPY-PASTE (absolute rule): the object is DRAWN ANEW, pixel by pixel, as a native part of this photograph. It is FORBIDDEN to copy, cut, lift, warp or paste the object\'s pixels from the reference image and merely recolour them. Re-create the object from understanding — same identity, but freshly rendered in the destination scene so it shares the scene\'s exact grain, lighting and texture. A recoloured cut-out is always wrong.',
     'This is NOT an enhancer or upscaler: do not merely sharpen, brighten, beautify or drop the object in wearing its own colour and resolution. The object is re-photographed into the scene\'s own medium (see APPEARANCE MATCH) — if the scene is black-and-white and grainy, the object comes out black-and-white and grainy too.',
     'Any object brought in or moved is redrawn into this scene — its medium and colour treatment, light direction and colour temperature, perspective, depth-of-field / lens blur, grain and colour cast all match the canvas scene, so the edit is impossible to spot.',
   ].join('\n')
+}
+
+/**
+ * KONTROLA KOŃCOWA — trzy sprawdzenia na samym dole promptu.
+ *
+ * Z konkretnej generacji (foka wstawiona do czarno-białego zdjęcia z gęśmi):
+ * obiekt wyszedł dobrze, ale bez ziarna sceny, przesunięty o kilkanaście
+ * procent od pineski w stronę sąsiadów i z małą cyfrą „2” obok. Reguły były
+ * w prompcie, ale w środku; model najlepiej trzyma początek i koniec, więc
+ * to, co zawiodło, powtarzamy krótko na końcu jako listę do odhaczenia.
+ */
+function sekcjaKontroliKoncowej(intencja: Intencja): string {
+  const tryb = TRYBY[intencja]
+  const linie: string[] = []
+  if (tryb.zeSkala) {
+    linie.push(
+      '- POSITION: the base of the object sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.',
+    )
+  }
+  if (tryb.zeSkala || intencja === 'postac' || intencja === 'ubranie') {
+    linie.push(
+      '- GRAIN: look closely at the object — its grain, noise, contrast and sharpness are the same as the ground and sky right beside it; it is not smoother or cleaner than its surroundings.',
+    )
+  }
+  linie.push(
+    '- CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the object.',
+  )
+  return `FINAL CHECK — verify before returning the image:\n${linie.join('\n')}`
 }
 
 /**
@@ -460,7 +489,7 @@ function sekcjaUchwytow(
         '- A pin is a point ON an object. Its name may describe only the part under the point (a hood, a sleeve, a wheel). ' +
         'The operation concerns the WHOLE object that contains the point, unless the task explicitly names a part.\n' +
         '- A destination or insertion pin marks where the object stands on the ground. Everything already near that point ' +
-        'stays in its place at its size; the new object stands beside it and shares the space.',
+        'stays in its place at its size; the new object stands on the marked point itself and neither overlaps nor replaces any of them.',
     )
   }
 
@@ -533,10 +562,12 @@ function sekcjaTozsamosci(_intencja: Intencja): string {
 function sekcjaPozycji(): string {
   return [
     '② POSITION — LANDS EXACTLY AT THE MARKED SPOT:',
-    '- The object lands EXACTLY at the marked point — that pin is where its base / point of contact meets the ground or surface. Its footprint is centred on that spot, not drifted to the side, not floating, not pushed to another part of the frame. Getting the object at the marked location is a top priority.',
+    '- The object lands EXACTLY at the marked point — that pin is where its base / point of contact meets the ground or surface. Its footprint is centred on that spot, not drifted to the side, not floating, not pushed to another part of the frame. Getting the object at the marked location is a top priority: the contact point of its base lies within about 3% of the frame width and height from the pin.',
+    '- PRIORITY WHEN RULES COMPETE: (1) the marked point, (2) the object shown complete, (3) the room left for neighbours. Nearby subjects never pull the object off the marked point — they stay where they are and the object stands on the free ground at the point itself.',
+    '- NEAR THE FRAME EDGE: when the marked point is close to an edge and the object is wide, keep the contact point on the marked point as far as the frame allows; shift it inward only by the smallest amount that keeps the object whole (usually a few percent of the frame). Inward means away from the edge — never toward a neighbouring subject.',
     '- It stands with a stable, natural footprint and a soft contact shadow tying it to the ground there.',
     '- Respect depth order: whatever is closer to the camera overlaps it; it overlaps whatever is behind it. Foreground subjects stay sharp and seal it out.',
-    '- Keep the spacing to its neighbours — it stands beside what is already there, each object on its own footprint, with no clipping into or overlap onto other objects.',
+    '- Keep the spacing to its neighbours — each object on its own footprint, with no clipping into or overlap onto other objects. The object shares the space by not overlapping; it does not move toward its neighbours to be "beside" them.',
     '- Its perspective follows the scene: horizontal edges converge to the same vanishing points as the surrounding ground, walls and objects; verticals stay parallel to the scene\'s verticals.',
   ].join('\n')
 }
@@ -572,7 +603,7 @@ function sekcjaDopasowania(obrazy: Warstwa[], intencja: Intencja): string {
   const tryb = TRYBY[intencja]
   const reguly: string[] = [
     'MEDIUM & COLOUR TREATMENT (highest priority here): adopt the canvas photo\'s exact photographic medium. If the canvas is black-and-white, monochrome, sepia, cross-processed or heavily desaturated, render the incoming/edited object in that SAME treatment — leave NO full modern colour on it. Match the canvas\'s tonal curve, contrast, dynamic range, black point and overall colour cast so the object reads as part of the same photograph.',
-    'FILM GRAIN & ANALOG TEXTURE: cover the incoming object with the SAME heavy, authentic film grain, film noise and imperfect analog texture as the destination photo — the same grain size, density and contrast. If the destination is a grainy vintage photo, the object is equally grainy; the grain runs continuously across the object and the background with no clean patch around it.',
+    'FILM GRAIN & ANALOG TEXTURE: cover the incoming object with the SAME heavy, authentic film grain, film noise and imperfect analog texture as the destination photo — the same grain size, density and contrast. If the destination is a grainy vintage photo, the object is equally grainy; the grain runs continuously across the object and the background with no clean patch around it. MEASURABLE TEST: the object\'s surface shows the same visible speckle and contrast as the ground and sky right beside it — if the object looks even slightly smoother, cleaner or sharper than its surroundings, it is wrong. Apply the grain last, after the object\'s shading and colour are set, so it lies ON TOP of the object exactly as it lies on the rest of the photograph.',
     'NO DIGITAL SMOOTHNESS, NO CGI / AI LOOK: the object must NOT be smooth, glossy, sharp, denoised or over-rendered. No digital smoothness, no CGI sheen, no 3D-render or AI-generated look — it must read as part of the same analog photograph, seamlessly matching its grain, contrast and blur. Consistent analog camera artifacts across the whole frame.',
     ...tryb.swiatlo,
   ]
@@ -667,6 +698,7 @@ export function zbudujPolecenie(
     sekcjaObszarow(obszary, intencja, obrazy.length + 1),
     sekcjaCzystegoWyniku(),
     `UNCHANGED:\n${[...tryb.zostaje, ...zostajeWspolne].map(z => `- ${z}`).join('\n')}`,
+    sekcjaKontroliKoncowej(intencja),
   ]
 
   return sekcje.filter(Boolean).join('\n\n')

@@ -130,7 +130,9 @@ LIGHT RULE — the element is lit exactly like the scene it lives in:
 
 [BRICK 02 · POSITION RULE]
 POSITION RULE — the element lands exactly where the pin says:
-- The element takes EXACTLY the position of Pin 2 [Image 1 · "lampa" · X 62%, Y 48%]. The pin marks the point where its base or point of contact meets the ground or supporting surface; its footprint is centred on that point — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the marked location is a top priority.
+- The element takes EXACTLY the position of Pin 2 [Image 1 · "lampa" · X 62%, Y 48%]. The pin marks the point where its base or point of contact meets the ground or supporting surface; its footprint is centred on that point — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the marked location is a top priority: the contact point of its base lies within about 3% of the frame width and height from the pin.
+- PRIORITY WHEN RULES COMPETE: (1) the marked point, (2) the element shown complete, (3) the room left for neighbours. Nearby subjects never pull the element off the marked point — they stay where they are and the element stands on the free ground at the point itself.
+- NEAR THE FRAME EDGE: when the marked point is close to an edge and the element is wide, keep the contact point on the marked point as far as the frame allows; shift it inward only by the smallest amount that keeps the element whole (usually a few percent of the frame). Inward means away from the edge — never toward a neighbouring subject.
 - When it replaces something, it inherits the position, footprint, orientation, rotation and facing direction of what stood there.
 - When it is moved, it appears at the destination pin (Pin 2 [Image 1 · "lampa" · X 62%, Y 48%]) and nowhere else; the old spot (Pin 2 [Image 1 · "lampa" · X 62%, Y 48%]) is left empty.
 - It aligns to the natural lines and flow of the surface it rests on and stands on a stable, natural footprint.
@@ -177,6 +179,7 @@ REFLECTION RULE — reflections work both ways:
 GRAIN & MEDIUM RULE — the element is re-photographed in the medium of the scene:
 - Adopt the exact photographic medium of Image 1. If it is black-and-white, monochrome, sepia, cross-processed or heavily desaturated, the element is rendered in that SAME treatment with no full modern colour left on it. Match the tonal curve, contrast, dynamic range, black point and overall colour cast.
 - Cover the element with the SAME film grain, sensor noise and analog texture: the same grain size, density and contrast, running continuously across the element and the background with no clean patch around it.
+- MEASURABLE TEST: the surface of the element shows the same visible speckle and contrast as the ground and sky right beside it. If the element looks even slightly smoother, cleaner or sharper than its surroundings, it is wrong. Apply the grain last, after shading and colour are set, so it lies ON TOP of the element exactly as it lies on the rest of the photograph.
 - Match sharpness, depth of field, motion blur, lens softness, vignetting and compression artifacts of the scene.
 - The element is never smooth, glossy, over-sharp, denoised or over-rendered: no digital smoothness, no CGI sheen, no 3D-render or AI-generated look.
 - The result reads as one photograph from one camera, one exposure, one film stock.
@@ -201,7 +204,7 @@ OUTPUT CONTRACT (fixed, non-negotiable):
 - The result keeps the exact aspect ratio, resolution, framing, camera position and grain level of Image 1. Aspect ratio, resolution, quality, framing and crop are never taken from any other image.
 - Further images are REFERENCES. They contribute only the identity or appearance of their pinned object — nothing about frame, format, resolution, quality, background or lighting.
 - Add nothing the task did not ask for and remove nothing it did not ask for: every existing subject that the task does not change stays, with the same count and positions.
-- Pins, numbered dots, crosshairs, masks and boxes are guides for you only. The result is one clean photograph in which none of these markers, labels or outlines are visible.
+- Pins, numbered dots, crosshairs, masks and boxes are guides for you only. The result is one clean photograph in which none of these markers, labels or outlines are visible. Every pixel around the changed area shows only the photographed scene itself, with no typography of any kind beside or on the element.
 
 [BRICK 12 · CLEAN PLATE RULE]
 CLEAN PLATE RULE — what leaves the frame leaves without a trace:
@@ -267,6 +270,11 @@ Scale anchors: door ≈ 2.0 m high, chair seat ≈ 45 cm
 [COMMAND — the user's words]
 zamień lampę na wazon z drugiego zdjęcia
 
+[FINAL CHECK — verify before returning the image]
+- POSITION: the base of the element sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.
+- GRAIN: look closely at the element — its grain, noise, contrast and sharpness are the same as the ground and sky right beside it; it is not smoother or cleaner than its surroundings.
+- CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
+
 [FINAL QUALITY]
 - One seamless, photorealistic photograph that is indistinguishable from an unedited capture of the same moment.
 - Every detail is as sharp where the scene is sharp and as soft where the scene is soft; the edit is impossible to spot.
@@ -298,7 +306,9 @@ LIGHT RULE — the element is lit exactly like the scene it lives in:
 
 [BRICK 02 · POSITION RULE]
 POSITION RULE — the element lands exactly where the pin says:
-- The element takes EXACTLY the position of Pin 2 [Image 1 · X 55%, Y 80%]. The pin marks the point where its base or point of contact meets the ground or supporting surface; its footprint is centred on that point — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the marked location is a top priority.
+- The element takes EXACTLY the position of Pin 2 [Image 1 · X 55%, Y 80%]. The pin marks the point where its base or point of contact meets the ground or supporting surface; its footprint is centred on that point — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the marked location is a top priority: the contact point of its base lies within about 3% of the frame width and height from the pin.
+- PRIORITY WHEN RULES COMPETE: (1) the marked point, (2) the element shown complete, (3) the room left for neighbours. Nearby subjects never pull the element off the marked point — they stay where they are and the element stands on the free ground at the point itself.
+- NEAR THE FRAME EDGE: when the marked point is close to an edge and the element is wide, keep the contact point on the marked point as far as the frame allows; shift it inward only by the smallest amount that keeps the element whole (usually a few percent of the frame). Inward means away from the edge — never toward a neighbouring subject.
 - When it replaces something, it inherits the position, footprint, orientation, rotation and facing direction of what stood there.
 - When it is moved, it appears at the destination pin (Pin 2 [Image 1 · X 55%, Y 80%]) and nowhere else; the old spot (Pin 1 [Image 1 · "chatka" · X 30%, Y 35%]) is left empty.
 - It aligns to the natural lines and flow of the surface it rests on and stands on a stable, natural footprint.
@@ -345,6 +355,7 @@ REFLECTION RULE — reflections work both ways:
 GRAIN & MEDIUM RULE — the element is re-photographed in the medium of the scene:
 - Adopt the exact photographic medium of Image 1. If it is black-and-white, monochrome, sepia, cross-processed or heavily desaturated, the element is rendered in that SAME treatment with no full modern colour left on it. Match the tonal curve, contrast, dynamic range, black point and overall colour cast.
 - Cover the element with the SAME film grain, sensor noise and analog texture: the same grain size, density and contrast, running continuously across the element and the background with no clean patch around it.
+- MEASURABLE TEST: the surface of the element shows the same visible speckle and contrast as the ground and sky right beside it. If the element looks even slightly smoother, cleaner or sharper than its surroundings, it is wrong. Apply the grain last, after shading and colour are set, so it lies ON TOP of the element exactly as it lies on the rest of the photograph.
 - Match sharpness, depth of field, motion blur, lens softness, vignetting and compression artifacts of the scene.
 - The element is never smooth, glossy, over-sharp, denoised or over-rendered: no digital smoothness, no CGI sheen, no 3D-render or AI-generated look.
 - The result reads as one photograph from one camera, one exposure, one film stock.
@@ -369,7 +380,7 @@ OUTPUT CONTRACT (fixed, non-negotiable):
 - The result keeps the exact aspect ratio, resolution, framing, camera position and grain level of Image 1. Aspect ratio, resolution, quality, framing and crop are never taken from any other image.
 - Further images are REFERENCES. They contribute only the identity or appearance of their pinned object — nothing about frame, format, resolution, quality, background or lighting.
 - Add nothing the task did not ask for and remove nothing it did not ask for: every existing subject that the task does not change stays, with the same count and positions.
-- Pins, numbered dots, crosshairs, masks and boxes are guides for you only. The result is one clean photograph in which none of these markers, labels or outlines are visible.
+- Pins, numbered dots, crosshairs, masks and boxes are guides for you only. The result is one clean photograph in which none of these markers, labels or outlines are visible. Every pixel around the changed area shows only the photographed scene itself, with no typography of any kind beside or on the element.
 
 [BRICK 12 · CLEAN PLATE RULE]
 CLEAN PLATE RULE — what leaves the frame leaves without a trace:
@@ -434,6 +445,11 @@ Scale anchors: cottage door ≈ 1.9 m high, fence post ≈ 1.2 m, sheep ≈ 0.7 
 
 [COMMAND — the user's words]
 przenieś chatkę bliżej
+
+[FINAL CHECK — verify before returning the image]
+- POSITION: the base of the element sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.
+- GRAIN: look closely at the element — its grain, noise, contrast and sharpness are the same as the ground and sky right beside it; it is not smoother or cleaner than its surroundings.
+- CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
 [FINAL QUALITY]
 - One seamless, photorealistic photograph that is indistinguishable from an unedited capture of the same moment.

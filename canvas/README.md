@@ -86,9 +86,10 @@ Prompt: `prompts/gemini/02-opis-sceny.ts`. Dostaje zdjęcia **już w nowej kolej
 | 4 | `PIN MAP` | pineski: rola, obraz, X/Y, nazwa, miejsce, wygląd, wymiary |
 | 5 | `SCENE DETAILS` | miejsce, wygląd i kotwice skali (Gemini nr 2) |
 | 6 | `COMMAND` | słowa użytkownika, bez zmian |
-| 7 | `FINAL QUALITY` | blok pozytywny (`pozytyw.ts`) |
+| 7 | `FINAL CHECK` | trzy sprawdzenia tuż przed końcem: pozycja (pod pineską ±3%), ziarno (nie gładsze od otoczenia), czysty wynik (bez cyfr i znaczników); pozycja i ziarno tylko gdy operacja włączyła odpowiednie bricki |
+| 8 | `FINAL QUALITY` | blok pozytywny (`pozytyw.ts`) |
 
-**Dlaczego tak:** zasady stałe idą na górę (najsilniej wiążą), potem konkretna operacja, potem fakty o tej scenie, na końcu polecenie i jakość.
+**Dlaczego tak:** zasady stałe idą na górę (najsilniej wiążą), potem konkretna operacja, potem fakty o tej scenie, na końcu polecenie. `FINAL CHECK` powtarza krótko to, co w praktyce zawodzi najczęściej (pozycja, ziarno obiektu, znaczniki w wyniku), bo model najmocniej trzyma początek i koniec promptu.
 
 ### Krok 6 — maska obszaru pracy
 - Tylko na obrazie docelowym, tylko gdy operacja działa lokalnie (bez `background_change`, `season_change`, `time_of_day_change`, `style_change`).
