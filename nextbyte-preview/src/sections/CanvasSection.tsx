@@ -646,10 +646,10 @@ export function CanvasSection() {
           : projekt.pineski
 
       const pelnePolecenie = zbudujPolecenie(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
-        szczegoly: plan?.promptDlaModelu,
+        skala: plan?.skala,
         instrukcja: warstwaWycinka
-          ? `${plan?.instrukcja ? `${plan.instrukcja}\n` : ''}Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.`
-          : plan?.instrukcja,
+          ? 'Image 1 is a close-up crop of a larger photograph: keep its framing, edges and scale exactly; do not extend, zoom or reframe it.'
+          : undefined,
         role: uklad.role,
         miejsca: plan?.miejsca,
         osoba: plan?.osoba,
@@ -674,8 +674,7 @@ export function CanvasSection() {
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
-            szczegoly: plan?.promptDlaModelu,
-            instrukcja: plan?.instrukcja,
+            skala: plan?.skala,
             role: uklad.role,
             miejsca: plan?.miejsca,
             osoba: plan?.osoba,

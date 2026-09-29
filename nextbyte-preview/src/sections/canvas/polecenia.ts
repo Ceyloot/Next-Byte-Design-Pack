@@ -16,7 +16,6 @@
  */
 import { etykietaPineski, type Pineska, type Warstwa } from './typy'
 import { wykryjStyl, type Intencja } from './tryby-edycji'
-import { opisAnalizy } from './dostawca'
 import { skladajPrompt, type ObrazWejscia, type OperationId, type PineskaSklejka } from './prompty'
 
 export { INTENCJE, TABELA_STYLOW, wykryjStyl, type Intencja } from './tryby-edycji'
@@ -289,10 +288,19 @@ export function operacjaZIntencji(intencja: Intencja, osoba = false): OperationI
 /** Role „biorę stąd” (dawca, źródło, styl) kontra „działam tutaj” (cel, miejsce, obszar). */
 const ROLA_ZRODLA = /^(SOURCE|DONOR|IDENTITY DONOR|STYLE|NEW ENVIRONMENT|additional reference|reference)/
 
+/** Tylko rozmiar z analizy pineski — bez opisu wyglądu, światła i stanu powierzchni. */
+function rozmiarPineski(a: Pineska['analiza']): string {
+  if (!a) return ''
+  const wymiary = [a.wysokoscCm ? `height ≈ ${a.wysokoscCm} cm` : '', a.dlugoscCm ? `length ≈ ${a.dlugoscCm} cm` : '']
+    .filter(Boolean)
+    .join(', ')
+  return wymiary ? `size: ${wymiary}` : ''
+}
+
 export interface OpcjePolecenia {
-  /** opis obiektów i sceny od agenta-reżysera */
-  szczegoly?: string
-  /** precyzyjna instrukcja od agenta-reżysera */
+  /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze (agent-reżyser) — sekcja SCALE */
+  skala?: string
+  /** dodatkowa uwaga techniczna dla modelu (np. że Image 1 jest wycinkiem) */
   instrukcja?: string
   /** numer pineski → rola od agenta (SOURCE, DESTINATION, …) */
   role?: Record<number, string>
@@ -307,9 +315,8 @@ export interface OpcjePolecenia {
 /**
  * Pełne polecenie dla modelu.
  *
- * `szczegoly` i `instrukcja` pochodzą od agenta-reżysera (`rezyser.ts`),
- * który oglądał zdjęcia: opis całych obiektów, światło i medium sceny oraz
- * fakty o typie obiektu. Wchodzą W szkielet z bricków, nigdy zamiast niego.
+ * `skala` pochodzi od agenta-reżysera (`rezyser.ts`), który oglądał zdjęcia:
+ * to jedyny opis sceny, jaki idzie do modelu (rzeczywisty rozmiar obiektu). Wchodzą W szkielet z bricków, nigdy zamiast niego.
  */
 export function zbudujPolecenie(
   tekst: string,
@@ -318,7 +325,7 @@ export function zbudujPolecenie(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): string {
-  const { szczegoly = '', instrukcja = '', role = {}, miejsca = {}, osoba = false } = opcje
+  const { skala = '', instrukcja = '', role = {}, miejsca = {}, osoba = false } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return ''
 
@@ -338,7 +345,7 @@ export function zbudujPolecenie(
       y: p.normalizedY,
       nazwa: nazwy.get(p.id),
       miejsce: miejsca[numer],
-      opis: [rolaOpis, opisAnalizy(p.analiza)].filter(Boolean).join('; '),
+      opis: [rolaOpis, rozmiarPineski(p.analiza)].filter(Boolean).join('; '),
     }
   })
 
@@ -355,7 +362,7 @@ export function zbudujPolecenie(
     operacja: operacjaZIntencji(intencja, osoba),
     pineski: pineskiSklejka,
     obrazy: obrazyWejscia,
-    szczegoly: szczegoly.trim() || undefined,
+    skala: skala.trim() || undefined,
     instrukcja: instrukcja.trim() || undefined,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,

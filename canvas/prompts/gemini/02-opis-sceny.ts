@@ -4,7 +4,7 @@
  * Wywoływany PO wyborze zdjęcia docelowego. Gemini dostaje zdjęcia już w
  * kolejności wysyłki do generatora (Image 1 = docelowe) i opisuje pineski
  * po kolei: najpierw pineska 1 (miejsce, wygląd, wymiary), potem pineska 2 itd.
- * Wynik trafia do sekcji SCENE DETAILS finalnego promptu.
+ * Wynik trafia do sekcji SCALE finalnego promptu (tylko skala: kotwice i wymiary).
  *
  * Prompt służy też do szybkiego nazwania obiektu pod świeżo postawioną pineską
  * (jedna pineska, bez analizy operacji).
@@ -28,38 +28,27 @@ export function zbudujPromptOpisuSceny(w: WejscieOpisuSceny): string {
 - Pin roles: ${w.analiza.role.map((r) => `pin ${r.pineska} = ${r.rola}`).join(', ')}.`
     : `- Describe what the pin points at.`
 
-  return `You are the scene analyst of an image-editing pipeline. You look at the images and write a SHORT factual description that a downstream image model will use. You do not edit anything.
+  return `You are the scale analyst of an image-editing pipeline. You look at the images and report ONLY real-world sizes, so that an inserted or moved object is rendered at a realistic scale. You do not describe looks, light or mood, and you do not edit anything.
 
 INPUT
 - ${w.liczbaZdjec} image(s), labelled Image 1 … Image ${w.liczbaZdjec} in the order sent. Pins are drawn as numbered magenta dots, only for you.
 ${kontekst}
-- Pin list (describe them in this order):
+- Pin list (report them in this order):
 ${listaPinesek(w.pineski)}
 - The user's command (usually colloquial Polish): "${w.polecenie.trim() || '(none)'}"
 
-WHAT TO DESCRIBE
-1. "place": where the scene of Image 1 is, in one sentence (e.g. "stone terrace of a country house, late afternoon").
-2. "look": the look of Image 1 — photographic medium (colour / black-and-white / sepia), light direction and colour temperature, grain and sharpness, condition (old, degraded, clean), mood.
-3. "light": the light of Image 1 as measurable facts — direction (where the light comes from, e.g. "from upper left, low sun"), hardness (hard / soft / diffuse), colour temperature in Kelvin (e.g. "≈ 5600 K"), and where the shadows fall.
-4. "anchors": objects of known size visible in Image 1 near the pins, with their real-world size (e.g. "door ≈ 2.0 m high, person ≈ 1.75 m, brick ≈ 6.5 cm").
-5. "pins": for EACH pin, in order:
-   - "name": the WHOLE object or person under the pin (not only the part under the crosshair), 2–5 words;
-   - "place": where it is in its image and what surrounds it;
-   - "look": colour, material, condition and distinguishing details;
-   - "size": real-world dimensions (height × width or length) with a comparison to a visible anchor. For a pin on a donor image, give the true size of the donor object; for a pin on the target image, give the size of the thing there or of the free space.
+REPORT
+1. "anchors": objects of known size visible in Image 1 near the pins, with their real-world size (e.g. "door ≈ 2.0 m high, person ≈ 1.75 m, paving stone ≈ 30 cm").
+2. "pins": for EACH pin, in order:
+   - "name": the WHOLE object or person under the pin, 2–5 words (the pin's name and the user's word decide it, never a more prominent neighbour);
+   - "size": true real-world dimensions (height × width or length) compared with a visible anchor. For a pin on a donor image give the true size of the donor object; for a pin on Image 1 give the size of the thing there or of the free space.
 
-RULES
-- The pin's NAME and the user's word decide what the pinned thing is — even when the crosshair sits near a bigger, brighter or more central object. Never retarget to a more prominent object.
-- Recogniser hints may be wrong; trust what you see.
-- Facts only, no opinions. Each text field is at most 25 words. Write in English.
+Facts only, at most 25 words per field, English.
 
-OUTPUT — return ONLY this JSON, no commentary:
+OUTPUT — return ONLY this JSON:
 {
-  "place": "...",
-  "look": "...",
-  "light": "...",
   "anchors": "...",
-  "pins": [{ "pin": <number>, "name": "...", "place": "...", "look": "...", "size": "..." }]
+  "pins": [{ "pin": <number>, "name": "...", "size": "..." }]
 }`
 }
 
@@ -75,17 +64,16 @@ export function parsujOpisSceny(odpowiedz: string, w: WejscieOpisuSceny): OpisSc
     return {
       pineska: p.numer,
       nazwa: tekst(wpis.name, p.nazwa ?? 'object'),
-      miejsce: tekst(wpis.place),
-      wyglad: tekst(wpis.look),
+      miejsce: '',
+      wyglad: '',
       wymiary: tekst(wpis.size),
     }
   })
 
   return {
-    miejsce: tekst(json.place),
-    wyglad: tekst(json.look),
+    miejsce: '',
+    wyglad: '',
     kotwice: tekst(json.anchors),
-    swiatlo: tekst(json.light),
     pineski,
   }
 }

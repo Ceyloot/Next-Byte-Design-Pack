@@ -6,10 +6,6 @@ export const POSE_EXPRESSION_RULE: Brick = {
   numer: 22,
   nazwa: 'Poza i mimika',
   tekst: [
-    `POSE & EXPRESSION RULE — the scene decides the pose:`,
-    `- The person keeps the exact pose of the scene at the destination pin: sitting, standing, lying, walking, leaning — the same body posture, gesture, head tilt and gaze direction. The pose of the donor photo is never used.`,
-    `- The face is redrawn turned to that exact head angle and keeps the same size in the frame as the face it replaces.`,
-    `- The expression stays natural and subtle, and follows the expression of the scene unless the task asks otherwise.`,
-    `- The person interacts with the surroundings exactly as before: the same seat, the same handrail, the same object held.`,
+    `POSE & EXPRESSION — the scene decides the pose: same posture, gesture, head tilt and gaze as at the destination; the donor's pose is never used. The face is redrawn to that head angle at the same size, with a natural expression, and interacts with the surroundings as before.`,
   ].join('\n'),
 }

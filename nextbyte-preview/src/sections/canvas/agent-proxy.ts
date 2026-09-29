@@ -23,7 +23,6 @@ import {
   SYSTEM_REZYSERA,
   miejscaZPlanu,
   odczytajPlanRezysera,
-  szczegolyZPlanu,
   trescZadaniaRezysera,
   type Prostokat,
 } from './rezyser'
@@ -58,16 +57,12 @@ export interface Plan {
   osoba?: boolean
   /** co agent widzi na zdjęciach i pod pineskami */
   analiza: string
-  /** sekcja doklejana do promptu — wiedza, której kod nie miał */
-  doprecyzowanie: string
   /** jedno zdanie po polsku dla użytkownika, przed generacją */
   plan: string
-  /** opis całych obiektów i światła, po angielsku — sekcja SCENE DETAILS w poleceniu */
-  promptDlaModelu?: string
+  /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze, po angielsku — sekcja SCALE */
+  skala?: string
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
-  /** precyzyjna instrukcja edycji od reżysera, po angielsku — sekcja OPERATION */
-  instrukcja?: string
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
   obszar?: Prostokat
   /** przy przeniesieniu w kadrze: gdzie obiekt stoi teraz */
@@ -304,11 +299,9 @@ export function agentProxy(): Plugin {
         intencja: odczytany.intencja,
         osoba: odczytany.osoba,
         analiza: odczytany.analiza,
-        doprecyzowanie: odczytany.scena,
         plan: odczytany.plan,
-        promptDlaModelu: szczegolyZPlanu(odczytany),
+        skala: odczytany.skala,
         miejsca: miejscaZPlanu(odczytany),
-        instrukcja: odczytany.instrukcja,
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,
         kosztTokenow: tokeny,

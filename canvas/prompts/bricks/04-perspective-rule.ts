@@ -6,10 +6,7 @@ export const PERSPECTIVE_RULE: Brick = {
   numer: 4,
   nazwa: 'Perspektywa',
   tekst: [
-    `PERSPECTIVE RULE — one camera, one viewpoint:`,
-    `- The element is drawn from the camera position, height, focal length and angle of {{IMAGE_TARGET}}. It is turned to that camera angle, never shown from the angle of its own source photo.`,
-    `- Horizontal edges converge to the same vanishing points as the surrounding ground, walls and objects; verticals stay parallel to the verticals of the scene.`,
-    `- The horizon line stays where it is; the element sits on the ground plane of the scene at the right distance from the camera, with correct foreshortening and lens distortion.`,
-    `- Further from the camera means smaller and slightly softer, along the same vanishing lines.`,
+    `PERSPECTIVE — one camera: the element is drawn from the camera position, height, focal length and angle of {{IMAGE_TARGET}}, never from its source photo's angle.`,
+    `- Its lines converge to the same vanishing points as the ground and walls around it; farther from the camera means smaller and slightly softer along the same lines.`,
   ].join('\n'),
 }

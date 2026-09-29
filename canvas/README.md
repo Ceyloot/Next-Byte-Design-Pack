@@ -77,7 +77,7 @@ Prompt: `prompts/gemini/02-opis-sceny.ts`. Dostaje zdjęcia **już w nowej kolej
 - `anchors` — obiekty o znanym rozmiarze w kadrze (drzwi, człowiek, cegła),
 - dla każdej pineski: `name` (cały obiekt, nie tylko punkt pod celownikiem), `place`, `look`, `size` (wymiary rzeczywiste z porównaniem do kotwicy).
 
-**Dlaczego tak:** to jest `SCENE DETAILS` i `PIN MAP` w prompcie. Bez opisu wymiarów model zgaduje skalę; bez nazwy całego obiektu zamienia tylko fragment pod kropką.
+**Dlaczego tak:** to jest `SCALE` i `PIN MAP` w prompcie. Bez opisu wymiarów model zgaduje skalę; bez nazwy całego obiektu zamienia tylko fragment pod kropką.
 
 ### Krok 5 — składanie promptu (bricks + operacja)
 `prompts/skladaj.ts` → `skladajPrompt()`. Z wybranej operacji bierze listę bricków, sortuje je po numerze i składa w **stałej kolejności**:
@@ -88,7 +88,7 @@ Prompt: `prompts/gemini/02-opis-sceny.ts`. Dostaje zdjęcia **już w nowej kolej
 | 2 | `RULE BRICKS` | bricki operacji, rosnąco po numerze |
 | 3 | `OPERATION` | misja + kroki wybranej operacji |
 | 4 | `PIN MAP` | pineski: rola, obraz, nazwa, miejsce opisane słowami, wygląd, wymiary (bez współrzędnych) |
-| 5 | `SCENE DETAILS` | miejsce, wygląd i kotwice skali (Gemini nr 2) |
+| 5 | `SCALE` | miejsce, wygląd i kotwice skali (Gemini nr 2) |
 | 6 | `COMMAND` | słowa użytkownika, bez zmian |
 | 7 | `FINAL CHECK` | trzy sprawdzenia tuż przed końcem: pozycja (dokładnie w opisanym miejscu pineski), ziarno (to samo co otoczenie), czysty wynik (bez cyfr i znaczników); pozycja tylko gdy operacja włączyła brick pozycji |
 | 8 | `FINAL QUALITY` | blok pozytywny (`pozytyw.ts`) |

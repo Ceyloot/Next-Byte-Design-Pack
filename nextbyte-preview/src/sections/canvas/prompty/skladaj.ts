@@ -8,7 +8,7 @@
  *   2. RULE BRICKS   — bricki włączone przez operację, rosnąco po numerze
  *   3. OPERATION     — misja + kroki wybranej operacji (+ DIRECTION od reżysera, + STYLE DIRECTIVES)
  *   4. PIN MAP       — pineski: rola, obraz, współrzędne X/Y, opis miejsca (+ PROTECTED AREAS)
- *   5. SCENE DETAILS — miejsce, wygląd i kotwice skali (analiza Gemini)
+ *   5. SCALE          — rzeczywisty rozmiar obiektu i kotwice skali
  *   6. COMMAND       — słowa użytkownika
  *   7. FINAL CHECK   — trzy sprawdzenia na końcu (pozycja, ziarno, czysty wynik)
  *   8. FINAL QUALITY — blok pozytywny
@@ -52,8 +52,8 @@ export interface SkladajWejscie {
   /** obrazy w kolejności wysyłki do generatora (pierwszy = docelowy) */
   obrazy: ObrazWejscia[]
   opis?: OpisSceny
-  /** swobodny opis sceny i obiektów od reżysera (zamiast lub obok `opis`) */
-  szczegoly?: string
+  /** rzeczywisty rozmiar obiektu względem kotwicy widocznej w Image 1 (od reżysera) */
+  skala?: string
   /** precyzyjna instrukcja od reżysera dla tej sceny (fakty o typie obiektu, rozmiary) */
   instrukcja?: string
   pineskiChronione?: ObszarChroniony[]
@@ -201,10 +201,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
   const sekcjaBrickow =
-    `[RULE BRICKS — ${bricki.length} non-negotiable rules; the result must satisfy all of them at once]\n\n` +
-    bricki
-      .map((b) => `[BRICK ${String(b.numer).padStart(2, '0')} · ${nazwaBricka(b.id)}]\n${podmien(b.tekst)}`)
-      .join('\n\n')
+    `[RULES — ${bricki.length} rules; all hold at once]\n` + bricki.map((b) => podmien(b.tekst)).join('\n')
 
   // 3. OPERATION
   const nazwaOp = op.id.replace(/_/g, ' ').toUpperCase()
@@ -221,7 +218,6 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       const nazwa = o?.nazwa || p.nazwa
       const szczegoly = [
         (o?.miejsce || p.miejsce) && `place: ${o?.miejsce || p.miejsce}`,
-        o?.wyglad && `appearance: ${o.wyglad}`,
         o?.wymiary && `size: ${o.wymiary}`,
         p.opis,
       ]
@@ -232,24 +228,16 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       }`
     })
   const sekcjaPinesek = liniePinesek.length
-    ? `[PIN MAP]\nEach pin is described in words: the place is what the point stands on and what surrounds it. Find exactly that spot in its image.\n${liniePinesek.join('\n')}`
+    ? `[PIN MAP — find exactly that spot in its image]\n${liniePinesek.join('\n')}`
     : ''
 
   // 5. SCENE DETAILS
-  const liniaSceny = [
-    w.opis?.miejsce && `Place: ${w.opis.miejsce}`,
-    w.opis?.wyglad && `Look: ${w.opis.wyglad}`,
-    w.opis?.swiatlo && `Light (measured): ${w.opis.swiatlo}`,
-    w.opis?.kotwice && `Scale anchors: ${w.opis.kotwice}`,
-  ].filter(Boolean)
-  if (w.szczegoly?.trim()) liniaSceny.push(w.szczegoly.trim())
-  const sekcjaSceny = liniaSceny.length
-    ? `[SCENE DETAILS — from visual analysis of the images]\n${liniaSceny.join('\n')}`
-    : ''
+  const liniaSceny = [w.skala?.trim(), w.opis?.kotwice && `Scale anchors in Image 1: ${w.opis.kotwice}`].filter(Boolean)
+  const sekcjaSceny = liniaSceny.length ? `[SCALE — real-world size]\n${liniaSceny.join('\n')}` : ''
 
   // 3b. DIRECTION i STYLE DIRECTIVES — dopisane do operacji
   const sekcjaKierunku = w.instrukcja?.trim()
-    ? `[DIRECTION — specifics for this scene, from visual analysis]\n${w.instrukcja.trim()}`
+    ? `[DIRECTION]\n${w.instrukcja.trim()}`
     : ''
   const sekcjaStylu = w.dyrektywyStylu
     ? `[STYLE DIRECTIVES — ${w.dyrektywyStylu.nazwa}]\n${w.dyrektywyStylu.reguly.map((x, i) => `${i + 1}. ${x}`).join('\n')}`

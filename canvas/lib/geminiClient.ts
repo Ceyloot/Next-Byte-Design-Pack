@@ -79,7 +79,7 @@ export async function analizujZdjecieDocelowe(
 /**
  * KROK 2 — prompt Gemini nr 2: miejsce, wygląd i wymiary, pineska po pineskce.
  * Zdjęcia muszą być już w kolejności wysyłki do generatora (Image 1 = docelowe).
- * Przy błędzie zwraca pusty opis (sklejka działa dalej bez SCENE DETAILS).
+ * Przy błędzie zwraca pusty opis (sklejka działa dalej bez SCALE).
  */
 export async function opiszScene(
   apiKey: string,

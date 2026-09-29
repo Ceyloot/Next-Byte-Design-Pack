@@ -6,10 +6,6 @@ export const SKIN_BODY_RULE: Brick = {
   numer: 20,
   nazwa: 'Skóra i ciało',
   tekst: [
-    `SKIN & BODY RULE — one consistent body:`,
-    `- Skin tone on the face, neck, hands, arms and legs matches as one person; the neck, jawline and hairline blend continuously into the body with no colour step.`,
-    `- Body proportions, build, shoulder line and height follow the person being shown (or the person being replaced, when the task keeps the body).`,
-    `- Skin texture, pores, sharpness and grain match the rest of the photograph — never plastic, waxy or airbrushed.`,
-    `- Tattoos, scars and marks are preserved where they were; nothing is added.`,
+    `SKIN & BODY — one consistent person: skin tone matches across face, neck, hands and limbs with no colour step at the jaw or neck; proportions follow the body kept; skin texture and grain match the photograph, never waxy or airbrushed; tattoos and scars stay.`,
   ].join('\n'),
 }

@@ -6,10 +6,6 @@ export const STYLE_RULE: Brick = {
   numer: 27,
   nazwa: 'Styl',
   tekst: [
-    `STYLE RULE — change only the look:`,
-    `- Keep the geometry completely: the same objects, shapes, proportions, positions, perspective and edges. The result is recognisable: the same places and objects are visible after the change.`,
-    `- Change only rendering, texture, palette, lighting and atmosphere, as described in the COMMAND.`,
-    `- Apply the style evenly across the whole frame with the same intensity from edge to edge.`,
-    `- Keep the number and placement of all subjects, and the readability of what the picture shows.`,
+    `STYLE — change only the look (rendering, texture, palette, atmosphere) as the COMMAND says. Geometry, objects, positions, perspective and edges stay recognisable; apply the style evenly across the frame.`,
   ].join('\n'),
 }

@@ -6,11 +6,6 @@ export const TEXTURE_RULE: Brick = {
   numer: 28,
   nazwa: 'Tekstura i materiał',
   tekst: [
-    `TEXTURE RULE — a new material on the same geometry:`,
-    `- Apply the new texture over the exact surface geometry, preserving all 3D contours, curvature, bevels and perspective.`,
-    `- Scale the grain and pattern realistically for the scene dimensions and camera distance, without stretching.`,
-    `- Blend the texture boundary smoothly into adjoining surfaces with no hard seam.`,
-    `- Keep all hardware, seams, fixtures, buttons and structural details intact.`,
-    `- Reflectivity, specularity and ambient occlusion follow the new material under the existing scene light.`,
+    `TEXTURE — apply the new material over the exact geometry, keeping contours, curvature and perspective; scale the pattern realistically, blend seams into adjoining surfaces, keep hardware and details, and let reflectivity follow the new material under the existing light.`,
   ].join('\n'),
 }
