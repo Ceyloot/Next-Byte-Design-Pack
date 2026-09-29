@@ -155,10 +155,6 @@ const ZASADA_ZAWSZE =
 
 const TOKEN = /\{\{\s*([A-Z_]+)\s*\}\}/g
 
-function nazwaBricka(id: BrickId): string {
-  return id.replace(/-/g, ' ').toUpperCase()
-}
-
 /** Składa finalny prompt dla modelu obrazu. */
 export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const op = getOperation(w.operacja)
