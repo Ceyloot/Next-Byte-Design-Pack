@@ -109,6 +109,7 @@ ZASADA NADRZĘDNA — SĄDŹ DOSŁOWNIE WG ZADANIA:
 - Oceniasz WYŁĄCZNIE to, o co prosi zadanie użytkownika. Nie wymyślaj własnych oczekiwań.
 - Jeśli zadanie mówi „wstaw/dodaj kaczkę", to poprawnym wynikiem jest KACZKA dodana do sceny — NIE oczekuj gęsi ani innego obiektu, tylko dlatego że scena jest ich pełna. Obiekt nazwany w zadaniu (i wskazany pineską) jest tym właściwym; jego obecność = sukces.
 - „obok X" znaczy blisko X; nie wymagaj idealnego stykania się, ale odstęp na drugi koniec kadru to błąd pozycji.
+- POZYCJA: współrzędna pineski dotyczy tylko zdjęcia, na którym pineska leży (procenty od lewego górnego rogu TEGO zdjęcia). Pineska na zdjęciu referencyjnym, którego tu nie widzisz, NIE mówi, gdzie ma być obiekt w wyniku. Odchyłkę do ok. 10% szerokości lub wysokości kadru od pineski docelowej uznaj za poprawną pozycję; błędem jest dopiero wyraźne przesunięcie w inne miejsce.
 - Rozróżniaj rodzaj operacji: „wstaw/dodaj" NIE usuwa niczego — jeśli reszta sceny została, to dobrze; „zamień" usuwa stary obiekt; „przenieś" zostawia jeden obiekt w nowym miejscu.
 
 "znaczniki" = true, gdy w wyniku widać różowe celowniki, kółka, numery albo inne naniesione oznaczenia, których nie powinno tam być.

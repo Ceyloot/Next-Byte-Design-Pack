@@ -12,6 +12,7 @@ Nic poza `prompts/` nie zawiera treści promptów. Reszta kodu tylko je wysyła 
 > **Gdzie to działa.** Ten folder (`canvas/`) jest samodzielną paczką z pełnym pipeline'em (dwa prompty Gemini → bricki → generacja) i **nie jest podpięty do żadnej aplikacji**.
 > W `nextbyte-preview` działa ta sama logika **bricków i operacji** — kopia przestrzeni promptów w `nextbyte-preview/src/sections/canvas/prompty/`.
 > Źródłem prawdy jest `canvas/prompts/`. Po każdej zmianie bricków, operacji lub składarki uruchom `skrypty/sync-prompty-canvas.sh`, żeby odświeżyć kopię (nie edytuj `prompty/` ręcznie).
+> Po generacji preview dodatkowo dopasowuje ziarno obiektu (`dopasuj-ziarno.ts`): mierzy ziarno tła i dosypuje brakujące wyłącznie w obszarze zmiany, gdy obiekt jest mierzalnie gładszy od otoczenia.
 > Preview ma własnego reżysera (`rezyser.ts`), który w jednym wywołaniu robi to, co tu robią dwa prompty Gemini: wybiera zdjęcie docelowe i operację oraz opisuje scenę. Analiza pineski (nazwa, wymiary) jest robiona zaraz po jej postawieniu.
 
 ---

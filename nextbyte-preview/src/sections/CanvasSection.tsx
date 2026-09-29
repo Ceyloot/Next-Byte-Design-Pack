@@ -35,6 +35,7 @@ import {
 import { Plotno } from '@/sections/canvas/Plotno'
 import { INTENCJE, polozenie, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
+import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad } from '@/sections/canvas/uklad-pinesek'
@@ -632,6 +633,13 @@ export function CanvasSection() {
       // dopasowujemy wynik do dokładnego formatu Image 1 (zdjęcie docelowe).
       wynik.obrazUrl = await dopasujFormatDoObrazu(wynik.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
 
+      // Ziarno obiektu dosypujemy deterministycznie: prompt prosi o nie kilka razy,
+      // a model i tak potrafi oddać wstawiony obiekt gładszy od reszty zdjęcia.
+      // Zmienia tylko obszar zmiany i tylko wtedy, gdy obiekt jest mierzalnie gładszy.
+      if (['wstaw', 'przenies', 'zamien', 'postac', 'ubranie'].includes(trybAgenta)) {
+        wynik.obrazUrl = await dopasujZiarno(wynik.obrazUrl, zrodlo.src)
+      }
+
       const nazwa = nazwijWynik(projekt.tekst, projekt.pineski)
       dodajZeZrodla(wynik.obrazUrl, nazwa, 'wynik', zrodlo)
 
@@ -642,6 +650,27 @@ export function CanvasSection() {
       }
       setStanGeneracji({ faza: 'sprawdza', wynik: gotowy })
 
+      // Kontroler widzi tylko zdjęcie docelowe przed i po. Pineska leżąca na zdjęciu
+      // referencyjnym ma współrzędne względem TEGO zdjęcia — podane kontrolerowi bez
+      // tej informacji kazały mu szukać obiektu w środku kadru docelowego.
+      const uchwytyKontroli = projekt.pineski
+        .map((p, i) => {
+          const nrObrazu = obrazy.findIndex(w => w.id === p.layerId) + 1 || 1
+          const nazwaPineski = etykietaPineski(p, i + 1)
+          if (nrObrazu !== 1) {
+            return `Pin ${i + 1} "${nazwaPineski}" — on a REFERENCE photo that is not shown here (the object that was brought in); its coordinates say nothing about where it should appear in the result`
+          }
+          const rola = uklad.role[i + 1]
+          const znaczenie =
+            rola === 'DESTINATION'
+              ? 'the object should stand HERE in the result'
+              : rola === 'SOURCE'
+                ? 'the object stood here before'
+                : 'a point on this photo'
+          return `Pin ${i + 1} "${nazwaPineski}" — on this photo, ${polozenie(p.normalizedX, p.normalizedY)}: ${znaczenie}`
+        })
+        .join('\n')
+
       const obszaryKontroli = [obszarCelu, obszarZrodla].filter((o): o is Prostokat => Boolean(o))
       const [ocena, nakladka, bezZmian] = await Promise.all([
         sprawdzWynik({
@@ -650,7 +679,7 @@ export function CanvasSection() {
           wynik: wynik.obrazUrl,
           intencja: trybAgenta,
           plan: plan?.plan,
-          uchwyty: uchwytyTekst,
+          uchwyty: uchwytyKontroli,
         }),
         plotnoZObszarami ? wykryjNakladke(wynik.obrazUrl, zrodlo.src, obszaryKontroli) : Promise.resolve(null),
         czyBezZmian(wynik.obrazUrl, zrodlo.src),
