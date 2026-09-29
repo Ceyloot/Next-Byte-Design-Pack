@@ -115,6 +115,13 @@ export async function czyBezZmian(wynikSrc: string, oryginalSrc: string): Promis
   const [a, b] = await Promise.all([szare(wynikSrc), szare(oryginalSrc)])
   if (!a || !b) return null
   let suma = 0
-  for (let i = 0; i < a.length; i++) suma += Math.abs(a[i] - b[i])
-  return suma / a.length < 3
+  let zmienione = 0
+  for (let i = 0; i < a.length; i++) {
+    const d = Math.abs(a[i] - b[i])
+    suma += d
+    if (d > 30) zmienione++
+  }
+  // Mały obiekt (auto na podjeździe) prawie nie rusza średniej całego kadru,
+  // więc liczy się też garstka wyraźnie zmienionych pikseli.
+  return suma / a.length < 3 && zmienione < a.length * 0.003
 }
