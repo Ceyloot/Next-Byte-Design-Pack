@@ -239,7 +239,7 @@ function dobierzRozmycie(r1Tla: number, r2Tla: number): { sigma: number; wzmocni
  * jasności komórek, nie piksele: ziarno tła jest w obu obrazach inne, ale
  * uśrednione po 64 pikselach znika, a obiekt zostaje.
  */
-function wykryjObszar(lo: Float32Array, lr: Float32Array, w: number, h: number, gw: number, gh: number) {
+function wykryjObszar(lo: Float32Array, lr: Float32Array, w: number, h: number, gw: number, gh: number, progMin = 14) {
   const roznica = new Float32Array(gw * gh)
   for (let cy = 0; cy < gh; cy++) {
     for (let cx = 0; cx < gw; cx++) {
@@ -257,7 +257,7 @@ function wykryjObszar(lo: Float32Array, lr: Float32Array, w: number, h: number, 
       roznica[cy * gw + cx] = Math.abs(sr - so) / Math.max(1, n)
     }
   }
-  const prog = Math.max(14, mediana(Array.from(roznica)) * 4 + 8)
+  const prog = Math.max(progMin, mediana(Array.from(roznica)) * 4 + 8)
   const surowa = roznica.map(v => (v > prog ? 1 : 0))
 
   // otwarcie: komórka zostaje, gdy ma co najmniej dwóch sąsiadów w obszarze
@@ -563,6 +563,86 @@ export function dopasujZiarnoNaPikselach(oryginal: Piksele, wynik: Piksele): Wyn
     odbarwiono,
     dosypanoZiarno,
   }
+}
+
+/**
+ * Miękka maska obszaru, w którym wynik różni się od oryginału (0–1 na piksel).
+ *
+ * Służy do złożenia wygenerowanego wycinka z oryginałem: poza maską zostają
+ * piksele oryginału, w masce — wygenerowane. Globalne przesunięcie jasności
+ * między obrazami (modele lubią lekko zmienić ekspozycję) jest wcześniej
+ * odejmowane, żeby nie brać go za obiekt. Zwraca `null`, gdy obszaru nie da
+ * się pewnie wyznaczyć.
+ */
+export function alfaZmiany(oryginal: Piksele, wynik: Piksele, dylatacja = 2): Float32Array | null {
+  const { width: w, height: h } = wynik
+  if (oryginal.width !== w || oryginal.height !== h || w < 4 * BLOK || h < 4 * BLOK) return null
+
+  const gw = Math.ceil(w / BLOK)
+  const gh = Math.ceil(h / BLOK)
+  const lo = jasnosc(oryginal)
+  const lr = jasnosc(wynik)
+
+  // globalne przesunięcie jasności (mediana różnic z próbki)
+  const probki: number[] = []
+  for (let i = 0; i < lo.length; i += 7) probki.push(lr[i] - lo[i])
+  const przesuniecie = mediana(probki)
+  for (let i = 0; i < lr.length; i++) lr[i] -= przesuniecie
+
+  const obszar = wykryjObszar(lo, lr, w, h, gw, gh, 9)
+  if (!obszar) return null
+  let komorek = 0
+  for (const v of obszar) komorek += v
+  const udzial = komorek / (gw * gh)
+  if (udzial < 0.001 || udzial > 0.7) return null
+
+  // dylatacja o `dylatacja` komórek: obejmuje kontur, cień i pył wokół obiektu
+  let siatka = obszar
+  for (let krok = 0; krok < dylatacja; krok++) {
+    const nowa = new Float32Array(gw * gh)
+    for (let cy = 0; cy < gh; cy++) {
+      for (let cx = 0; cx < gw; cx++) {
+        if (!siatka[cy * gw + cx]) continue
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const x = cx + dx
+            const y = cy + dy
+            if (x >= 0 && y >= 0 && x < gw && y < gh) nowa[y * gw + x] = 1
+          }
+        }
+      }
+    }
+    siatka = nowa
+  }
+
+  // dwa wygładzenia 3×3 → miękka krawędź maski
+  for (let krok = 0; krok < 2; krok++) {
+    const gladka = new Float32Array(gw * gh)
+    for (let cy = 0; cy < gh; cy++) {
+      for (let cx = 0; cx < gw; cx++) {
+        let sum = 0
+        let n = 0
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const x = cx + dx
+            const y = cy + dy
+            if (x >= 0 && y >= 0 && x < gw && y < gh) {
+              sum += siatka[y * gw + x]
+              n++
+            }
+          }
+        }
+        gladka[cy * gw + cx] = sum / n
+      }
+    }
+    siatka = gladka
+  }
+
+  const alfa = new Float32Array(w * h)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) alfa[y * w + x] = Math.min(1, zSiatki(siatka, gw, gh, x, y) * 1.15)
+  }
+  return alfa
 }
 
 function wczytaj(src: string): Promise<HTMLImageElement> {
