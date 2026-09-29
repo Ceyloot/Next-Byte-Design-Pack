@@ -73,6 +73,7 @@ STEP 2 — CHOOSE THE OPERATION ("intencja"), exactly one of:
 - "styl": keep all geometry, change artistic style (watercolor, oil, sketch, anime, cyberpunk, noir, etc.).
 - "popraw": any other local change.
 Decide from the user's words AND from what lies under the pins. Colloquial Polish such as "wstaw go tu", "daj to tam", "niech tu stoi" means: put the object at the pin and keep everything else. If a location pin sits on the ground NEXT TO an object, that object stays — choose "wstaw" or "przenies", never "zamien". Choose "zamien" only when the user asks for a replacement.
+Also set "dotyczy_osoby" to true when the operation is "zamien" or "przenies" and the pinned thing that is replaced or moved is a WHOLE PERSON (a human being, not an object); otherwise false.
 
 STEP 3 — RESPECT GIVEN ROLES
 Pin numbers say nothing about roles — the user may pin the destination first. When the pin list gives a role (SOURCE = the object that moves or is brought in, DESTINATION = where it ends up), that role was already checked against the pictures: follow it. In "wstaw go tutaj" the object comes from the SOURCE pin and goes to the DESTINATION pin.
@@ -88,34 +89,16 @@ STEP 4 — WRITE "instrukcja": 4 to 8 English sentences, imperative, concrete, d
 - Say what is taken or changed: the whole object, unless a part was asked for.
 - Say exactly where, relative to visible landmarks in the canvas photo ("on the wet sand to the right of the second sea lion, with its wheels at the waterline").
 - "obok" / "next to" / "przy" means IMMEDIATELY BESIDE — the new object stands right at the edge of the named group, sharing the same ground line and close enough to read as one group (near-touching, slight natural overlap in depth is fine). Do NOT leave a wide empty gap or push it to the far side of the frame. When the target is a group (e.g. the geese), place the object hard against the nearest bird of that group.
-- FULL RE-RENDER, NEVER A CUT-OUT (ANTI-AI LOOK): the result is one brand-new photograph of the whole scene, re-rendered from scratch. The incoming object is re-drawn into the canvas — never pasted, masked, or composited. There must be NO hard cut edges, NO seam, NO leftover rectangle, NO donor background travelling with the object. It must be impossible to tell the image was edited. Explicitly re-render the object into the canvas scene's own light direction and colour temperature, its perspective and camera angle, its depth-of-field / lens blur at that distance (sharp in foreground, matching bokeh in background), and its colour cast — e.g. a green plant carried into a room lit blue is bathed in that same blue light, not left in its original lighting.
-- SAME-IMAGE MOVE (CLEAN PLATE): if the base object and its destination are pins on the SAME image, this is a relocation — fully rebuild the spot where the object stood now (ground, pattern, background, shadow) so no trace remains, and re-render the object once at the destination. The object appears exactly once in the result.
-
-- CRITICAL: PHYSICAL CONTACT & INTERACTING PEOPLE (DO NOT CUT OR ERASE HUMANS):
-  If any person or animal is touching, holding, leaning on, sitting on, or interacting with the object (e.g. a man leaning against the open car door with one leg on the sill; a man sitting with hands on a laptop in front of the background):
-  1. THE PERSON MUST REMAIN 100% INTACT in their exact pose, limb positions, clothing, and posture. NEVER truncate, cut in half, or erase the interacting human!
-  2. The new object must precisely adapt ITS OWN geometry to maintain physical contact (e.g. if the original car door was open with a person leaning on it, the replacement car must open ITS OWN door — the new car's own door in its own shape, colour and details — at the matching angle so the person's arm and foot rest naturally against the NEW door frame).
-  3. NEVER carry over, keep or graft the removed object's part (its door, panel, handle) onto the replacement. The old object and every part the person touched disappear completely; the new object supplies its own authentic equivalent part. State this explicitly in "instrukcja" when a person leans on a part being replaced (e.g. "the black Urus door the man leans on is removed entirely; the Ford GT40's own driver door is opened to the same angle, keeping all of the GT40's own details — blue paint, white stripes, racing number 6, dust — so the man leans on the GT40's own door").
-
-- CRITICAL: DEPTH PLANES & OPTICAL BOKEH (FOREGROUND SEALING):
-  Distinguish foreground, midground, and background planes:
-  1. If editing an element in the BACKGROUND (e.g. behind a person or behind a desk/laptop), the entire foreground human and foreground objects are completely preserved and occlude the background.
-  2. The background object MUST inherit the depth of field of that plane: if the background is soft/out of focus, the inserted object must be optically blurred (bokeh) to match the lens focal plane.
-  3. Real-world physical scale: a small 15 cm figurine placed in the background must remain a 15 cm figurine at that distance, never scaled up into a giant.
-
-- CRITICAL: SURFACE CONDITION & PATINA FIDELITY (DIRT STAYS DIRTY):
-  Never clean or polish an object unless the user explicitly demands it ("wyczyść", "umyj", "odrestauruj", "czysty"). If the reference object is dirty, covered in thick barn dust, cobwebs, grime, or weathered patina (e.g. a dusty barn-find Ford GT40), the replacement object in the scene MUST REMAIN DUSTY AND DIRTY, matching the reference patina exactly.
-
-- CRITICAL: LIGHT VECTORS & SHADOW FALLOFF:
-  Map the scene's primary light vectors explicitly:
-  1. For outdoor sunset: low direct golden rays (e.g. from the right at 15°), long deep shadows cast to the left, warm amber rim lighting.
-  2. For dark studio with vertical neon LED light tubes: cool blue vertical rim lighting along edges, low-key fill, and dark moody contrast.
-  3. Dusty or matte surfaces receive soft diffuse highlights without artificial glossy sheen.
+- SCENE FACTS ONLY. The fixed rule bricks that follow your instruction already require, for every result: a full re-render (never a cut-out), the scene's light, depth of field and grain, physical contact, surface condition, completeness and a clean plate. Do NOT restate those rules. Your "instrukcja" supplies the scene-specific facts they cannot know:
+  1. CONTACT: if a person or animal touches, holds, leans on or sits on the pinned object, name them and the exact contact (e.g. "the man leans his left arm on the driver door of the car being replaced").
+  2. DEPTH PLANE: say whether the destination is in the foreground, midground or background and what stands in front of it.
+  3. SURFACE CONDITION of the incoming object in concrete words (dust, dirt, patina, wear) so it is kept.
+  4. LIGHT at the destination spot: direction, colour and hardness.
+  5. SAME-IMAGE MOVE: say what the ground or background looks like where the object stood, so it can be rebuilt.
 
 - ALWAYS include one sentence on size with numbers. Pins carry an ANALYSIS with real dimensions — use them as ground truth facts. For a replacement, state both sizes and the ratio ("the Ford GT40 is about 102 cm tall; the Lamborghini Urus is about 164 cm tall, so the Urus is about 1.6 times taller").
 - DO NOT COPY THE DONOR'S FRAMING SIZE. The incoming object often fills most of the reference photo; that says nothing about how big it should be in the canvas. Re-derive its size from the canvas perspective and the distance of the destination pin, comparing to an anchor that is actually visible in the canvas — a lane width, kerb, lane markings, a person, a door. State that comparison with a number in "instrukcja" (e.g. "the car is about 1.8 m wide, a bit over half of the ~3 m road lane, so it occupies roughly a quarter of the frame width here and leaves open asphalt on both sides").
 - ANTI-GIANT ON OPEN ROADS: on bare asphalt / a road with no buildings, never let the vehicle span the full road or the full frame width. Keep empty road visible around and in front of it; if unsure, make it smaller and set it deeper.
-- FIDELITY — NOT AN ENHANCER: state in "instrukcja" that this is an edit, not an upscale/restore. Keep the SAME resolution, the SAME camera perspective (position, focal length, field of view, angle) and the SAME lighting as the canvas. Preserve the canvas's original quality everywhere the task does not touch — its grain, film noise, softness, low resolution and old-photo artifacts must stay; do NOT sharpen, denoise, clean, brighten or re-grade the untouched scene. A degraded old photo stays a degraded old photo.
 - FOR "wstaw" ADD ONE SENTENCE that every existing subject is kept (name the count if visible, e.g. "all the geese in the scene remain in place").
 - CRITICAL ARCHITECTURAL SCALE HIERARCHY:
   In residential, estate, or landscape settings, compare the object directly to adjacent structures:
@@ -130,7 +113,6 @@ STEP 4 — WRITE "instrukcja": 4 to 8 English sentences, imperative, concrete, d
   4. If the destination pin is on the left/right side of the road, the vehicle must sit neatly on that side, leaving the other lane clear.
   5. REFLECTIONS & AMBIENT INTEGRATION: Glossy paint, windshield, chrome, and windows MUST reflect the canvas environment (sky, clouds, trees, lawn, stone paving, house facade). STRICTLY FORBID indoor showroom banners, dealership text logos, studio lightboxes, or indoor reflections from the donor photo.
 
-- COMPLETENESS: Object must be 100% complete (wheels, limbs, wings, roof). Scale down and position deeper rather than cutting off any part.
 - Give the orientation to the camera, matched to the perspective of the canvas photo.
 - Name the nearby things that stay exactly as they are.
 - For removals, say what fills the freed space.
@@ -170,6 +152,7 @@ Answer ONLY with JSON:
 {
   "zdjecie_docelowe": 1,
   "intencja": "wstaw",
+  "dotyczy_osoby": false,
   "obiekty": [{ "pin": 1, "opis": "English description" }, { "pin": 2, "opis": "English description" }],
   "instrukcja": "English instruction",
   "obszar": [450, 690, 505, 800],
@@ -216,6 +199,8 @@ export interface PlanRezysera {
   /** numer zdjęcia docelowego (1-based, w kolejności jak reżyser je widział) */
   zdjecieDocelowe?: number
   intencja?: Intencja
+  /** zamiana / przeniesienie dotyczy całej osoby → operacje postaci */
+  osoba?: boolean
   /** obszar zmiany na płótnie — z niego wynika skala wstawianego obiektu */
   obszar?: Prostokat
   /** przy przeniesieniu w kadrze: gdzie obiekt stoi teraz */
@@ -244,6 +229,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
   const plan: PlanRezysera = {
     zdjecieDocelowe: Number.isFinite(nrDocelowego) && nrDocelowego >= 1 ? Math.round(nrDocelowego) : undefined,
     intencja,
+    osoba: json.dotyczy_osoby === true,
     obszar: odczytajProstokat(json.obszar),
     obszarZrodla: odczytajProstokat(json.obszar_zrodla),
     obiekty,

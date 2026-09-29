@@ -612,7 +612,7 @@ export function CanvasSection() {
         szczegoly: plan?.promptDlaModelu,
         instrukcja: plan?.instrukcja,
         role: uklad.role,
-        obszary: undefined,
+        osoba: plan?.osoba,
       })
 
       setOstatniPrompt(pelnePolecenie)

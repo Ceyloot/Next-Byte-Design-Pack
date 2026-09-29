@@ -53,6 +53,8 @@ export interface Plan {
   /** które zdjęcie jest docelowe (1-based) — promowane na Image 1 przy wysyłce */
   zdjecieDocelowe?: number
   intencja?: string
+  /** zamiana / przeniesienie dotyczy całej osoby */
+  osoba?: boolean
   /** co agent widzi na zdjęciach i pod pineskami */
   analiza: string
   /** sekcja doklejana do promptu — wiedza, której kod nie miał */
@@ -284,6 +286,7 @@ export function agentProxy(): Plugin {
       const plan: Plan = {
         zdjecieDocelowe: odczytany.zdjecieDocelowe,
         intencja: odczytany.intencja,
+        osoba: odczytany.osoba,
         analiza: odczytany.analiza,
         doprecyzowanie: odczytany.scena,
         plan: odczytany.plan,
