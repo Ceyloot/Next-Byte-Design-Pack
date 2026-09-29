@@ -690,7 +690,7 @@ export function CanvasSection() {
           : projekt.pineski
 
       // Skala liczona z kotwicy o znanym rozmiarze (nie z oka): % kadru docelowego.
-      const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight) : undefined
+      const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
       const pelnePolecenie = zbudujPolecenie(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {

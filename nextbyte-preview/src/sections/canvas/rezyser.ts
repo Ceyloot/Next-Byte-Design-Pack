@@ -58,8 +58,9 @@ When the pin list gives a role (SOURCE = object that moves or is brought in, DES
 
 STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither inflated nor shrunk: use your knowledge of the typical real-world dimensions of the objects involved and be as accurate as you can.
 - "skala": 1–3 English sentences: the true real-world size of the incoming / changed object, and how it compares with the anchor below. Words only — no percentages of the image. Never take the size from how much of the reference photo the object fills; distance changes the share of the frame, never the real size.
-- "kotwica": ONE anchor of known real size in the DESTINATION image, chosen so it stands at about the same distance from the camera as the destination pin (similar depth — a lane, a doorway, a person, a similar object, a paving course at that row of the image). Give its real width in metres ("szer_m") and a tight box around its horizontal extent ("box", [ymin, xmin, ymax, xmax], 0–1000 of the destination image). Prefer a wide, clearly bounded anchor; never use one at a very different depth from the pin.
-- "obiekt": the finished object's apparent size in the destination image, in metres: "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened). The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
+- PERSPECTIVE decides apparent size: things shrink with distance from the camera, so a distant house can look smaller than a car standing near the camera, and the same car ten metres farther looks far smaller than right beside the camera. Real size and apparent size are different things — judge apparent size at the DESTINATION's distance, never the object's size in its own photo and never a fixed ratio between object types.
+- "kotwice": 2 or 3 anchors of known real size in the DESTINATION image, standing at DIFFERENT distances from the camera (one nearer, one farther; the destination pin lies between or near them). Each gives its real width in metres ("szer_m") and a tight box around its horizontal extent ("box", [ymin, xmin, ymax, xmax], 0–1000 of the destination image) whose BOTTOM edge sits where the anchor touches the ground. The code uses their sizes at their image rows to derive how scale changes with distance and reads the scale exactly at the destination pin's row. One anchor is acceptable only when nothing else of known size is visible.
+- "obiekt": the finished object's size as it appears AT THE DESTINATION (in metres of real length across the image plane at that spot): "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened). The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
 - For a replacement give both sizes in "skala" and their ratio.
 
 STEP 5 — BOXES on the destination image, [ymin, xmin, ymax, xmax] normalised 0–1000:
@@ -76,7 +77,7 @@ Answer ONLY with JSON:
   "dotyczy_osoby": false,
   "obiekty": [{ "pin": 1, "opis": "short English name", "miejsce": "where the point lies, in words" }],
   "skala": "English, with numbers",
-  "kotwica": { "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] },
+  "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres> },
   "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
   "obszar_zrodla": null,
@@ -137,33 +138,62 @@ export interface PlanRezysera {
   plan: string
 }
 
-/** Kotwica (znany rozmiar, box 0–1) i widoczne wymiary obiektu w metrach. */
+/** Kotwice (znany rozmiar, szerokość i dolna krawędź w kadrze 0–1) i widoczne wymiary obiektu w metrach. */
 export interface PomiarSkali {
-  kotwica: { szerM: number; szer: number }
+  kotwice: { szerM: number; szer: number; rzad: number }[]
   obiekt: { szerM: number; wysM: number }
 }
 
-function odczytajPomiar(kotwica: unknown, obiekt: unknown): PomiarSkali | undefined {
-  const k = kotwica as { szer_m?: unknown; box?: unknown } | null | undefined
+function odczytajPomiar(kotwice: unknown, obiekt: unknown): PomiarSkali | undefined {
+  const lista = Array.isArray(kotwice) ? (kotwice as { szer_m?: unknown; box?: unknown }[]) : []
+  const k = lista.flatMap(x => {
+    const szerM = Number(x?.szer_m)
+    const box = Array.isArray(x?.box) ? (x.box as unknown[]).map(Number) : []
+    if (!Number.isFinite(szerM) || szerM <= 0 || box.length !== 4 || box.some(n => !Number.isFinite(n))) return []
+    const szer = Math.abs(box[3] - box[1]) / 1000
+    const rzad = Math.max(box[0], box[2]) / 1000
+    return szer >= 0.02 && szer <= 1 ? [{ szerM, szer, rzad }] : []
+  })
   const o = obiekt as { szer_m?: unknown; wys_m?: unknown } | null | undefined
-  const szerM = Number(k?.szer_m)
-  const box = Array.isArray(k?.box) ? (k.box as unknown[]).map(Number) : []
   const oSzer = Number(o?.szer_m)
   const oWys = Number(o?.wys_m)
-  if (![szerM, oSzer, oWys].every(n => Number.isFinite(n) && n > 0) || box.length !== 4 || box.some(n => !Number.isFinite(n))) {
-    return undefined
-  }
-  const szer = Math.abs(box[3] - box[1]) / 1000
-  if (szer < 0.02 || szer > 1) return undefined
-  return { kotwica: { szerM, szer }, obiekt: { szerM: oSzer, wysM: oWys } }
+  if (!k.length || ![oSzer, oWys].every(n => Number.isFinite(n) && n > 0)) return undefined
+  return { kotwice: k, obiekt: { szerM: oSzer, wysM: oWys } }
 }
 
 /**
- * Obwiednia obiektu jako % szerokości i wysokości zdjęcia docelowego:
- * skala (ułamek szerokości na metr) wynika z kotwicy, więc rozmiar jest liczony, nie zgadywany.
+ * Skala (ułamek szerokości kadru na metr) w danym rzędzie zdjęcia.
+ * Dla płaskiego podłoża skala rośnie liniowo ku dołowi kadru: a(y) = k·(y − y_horyzontu).
+ * Z ≥2 kotwic na różnych rzędach dopasowujemy tę prostą i odczytujemy skalę dokładnie
+ * w rzędzie pinu; przy jednej kotwicy (albo niespójnym dopasowaniu) bierzemy kotwicę
+ * najbliższą temu rzędowi.
  */
-export function rozmiarZPomiaru(p: PomiarSkali, szerPx: number, wysPx: number): { szer: number; wys: number } | undefined {
-  const naMetr = p.kotwica.szer / p.kotwica.szerM
+export function skalaWRzedzie(p: PomiarSkali, rzad: number): number {
+  const a = p.kotwice.map(k => ({ y: k.rzad, s: k.szer / k.szerM }))
+  const najblizsza = a.reduce((b, x) => (Math.abs(x.y - rzad) < Math.abs(b.y - rzad) ? x : b), a[0])
+  if (a.length < 2) return najblizsza.s
+  const n = a.length
+  const my = a.reduce((t, x) => t + x.y, 0) / n
+  const ms = a.reduce((t, x) => t + x.s, 0) / n
+  const sxx = a.reduce((t, x) => t + (x.y - my) ** 2, 0)
+  if (sxx < 0.0025) return najblizsza.s // kotwice na prawie tym samym rzędzie — brak informacji o perspektywie
+  const k = a.reduce((t, x) => t + (x.y - my) * (x.s - ms), 0) / sxx
+  const przewidziana = ms + k * (rzad - my)
+  return k > 0 && przewidziana > 0 ? przewidziana : najblizsza.s
+}
+
+/**
+ * Obwiednia obiektu jako % szerokości i wysokości zdjęcia docelowego, liczona
+ * z perspektywy: skala w rzędzie pinu × wymiary obiektu w metrach.
+ */
+export function rozmiarZPomiaru(
+  p: PomiarSkali,
+  szerPx: number,
+  wysPx: number,
+  rzadPinu?: number,
+): { szer: number; wys: number } | undefined {
+  const rzad = rzadPinu ?? p.kotwice.reduce((t, k) => t + k.rzad, 0) / p.kotwice.length
+  const naMetr = skalaWRzedzie(p, rzad)
   const szer = p.obiekt.szerM * naMetr * 100
   const wys = p.obiekt.wysM * naMetr * (szerPx / wysPx) * 100
   return szer >= 0.5 && szer <= 95 && wys >= 0.5 && wys <= 95 ? { szer: Math.round(szer * 10) / 10, wys: Math.round(wys * 10) / 10 } : undefined
@@ -188,7 +218,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     obszarZrodla: odczytajProstokat(json.obszar_zrodla),
     obiekty,
     skala: String(json.skala ?? '').trim(),
-    pomiar: odczytajPomiar(json.kotwica, json.obiekt),
+    pomiar: odczytajPomiar(json.kotwice, json.obiekt),
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),
   }
