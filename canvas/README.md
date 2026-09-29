@@ -3,7 +3,7 @@
 Kanwa generatywna: zdjęcia są **wejściem dla modelu**, a pineski opisują, co ma zostać zrobione.
 Cała logika promptów jest w jednym miejscu — `prompts/` — i składa się z trzech sekcji:
 
-1. **Prompty Gemini** (`prompts/gemini/`) — analiza: które zdjęcie jest docelowe + opis miejsca, wyglądu i wymiarów.
+1. **Prompty Gemini** (`prompts/gemini/`) — analiza: które zdjęcie jest docelowe + skala (kotwice i rzeczywiste wymiary).
 2. **Operacje** (`prompts/operacje/`) — jeden prompt na sytuację: object swap, character swap, object transfer, removal, addition…
 3. **Bricks** (`prompts/bricks/`) — cegiełki-zasady (light rule, position rule, character identity rule…), bez których generacja nie może przejść.
 
@@ -32,7 +32,7 @@ canvas/
     types.ts                 typy, zamknięty słownik operacji i bricków
     gemini/
       01-zdjecie-docelowe.ts prompt 1: zdjęcie docelowe + operacja + role pinesek
-      02-opis-sceny.ts       prompt 2: miejsce, wygląd, wymiary (pineska po pineskce)
+      02-opis-sceny.ts       prompt 2: tylko skala (kotwice, wymiary pinesek)
       wspolne.ts             model, konfiguracja, parser JSON
     operacje/                15 plików: jedna operacja = jeden plik
     bricks/                  30 plików: jeden brick = jeden plik (numerowane)
