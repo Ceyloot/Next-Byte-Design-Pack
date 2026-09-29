@@ -21,6 +21,7 @@ import {
   KONFIG_REZYSERA,
   MODEL_REZYSERA,
   SYSTEM_REZYSERA,
+  miejscaZPlanu,
   odczytajPlanRezysera,
   szczegolyZPlanu,
   trescZadaniaRezysera,
@@ -63,6 +64,8 @@ export interface Plan {
   plan: string
   /** opis całych obiektów i światła, po angielsku — sekcja SCENE DETAILS w poleceniu */
   promptDlaModelu?: string
+  /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
+  miejsca?: Record<number, string>
   /** precyzyjna instrukcja edycji od reżysera, po angielsku — sekcja OPERATION */
   instrukcja?: string
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
@@ -158,10 +161,10 @@ const NL = String.fromCharCode(10)
  */
 const SYSTEM_ANALIZY_PINESKI = [
   'The image has ONE magenta crosshair (a pin). Analyse what it points at in every dimension.',
-  '1. The pin means the WHOLE object containing the point (a pin on a car hood = the whole car; a pin on a chair/pillow = that specific item). If the point is on open ground/floor/water, the object is that location.',
-  '2. Identify it precisely: type, make and model if recognisable, colour, exact condition (e.g. "dark blue Ford GT40 Mk II covered in thick barn dust").',
-  '3. Estimate its REAL-WORLD size semantically, calibrating against WHATEVER known-size object sits next to it in ITS OWN photo. References for big things: door ~200 cm, adult ~175 cm, car ~450 cm long, chair ~45 cm. References for small things: takeaway drink cup ~15 cm, hand ~18 cm, phone ~15 cm, food packet ~12 cm, mug ~10 cm. A plush toy or figurine is usually 15–40 cm — if a seal plush is about as tall as a large drink cup, it is only ~20–30 cm, NOT life-size. Use factory dimensions if a real product is recognisable. Report the honest small size for small objects.',
-  '4. PHYSICAL INTERACTION & CONTACT: Does ANY person, animal, or object touch, lean against, hold, sit on, or interact with this object? (e.g. "a young man in white clothes is leaning against the open driver door with one leg on the sill", "a man sits at the desk typing on a laptop placed in front of this item"). This is CRITICAL to prevent cutting or erasing interacting people.',
+  '1. The pin means the WHOLE object containing the point (a pin on a part of an object = the whole object; a pin on a small item = that specific item). If the point is on open ground/floor/water, the object is that location.',
+  '2. Identify it precisely: type, make and model if recognisable, colour, exact condition (e.g. "<colour> <type, make and model if recognisable>, <condition>").',
+  '3. Estimate its REAL-WORLD size semantically, calibrating against WHATEVER known-size object sits next to it in ITS OWN photo. References for big things: door ~200 cm, adult ~175 cm, car ~450 cm long, chair ~45 cm. References for small things: takeaway drink cup ~15 cm, hand ~18 cm, phone ~15 cm, food packet ~12 cm, mug ~10 cm. A soft toy or figurine is usually 15–40 cm — if it is about as tall as a visible small everyday item, take the size of that item, NOT life-size. Use factory dimensions if a real product is recognisable. Report the honest small size for small objects.',
+  '4. PHYSICAL INTERACTION & CONTACT: Does ANY person, animal, or object touch, lean against, hold, sit on, or interact with this object? (e.g. "a person is leaning against the open door with one leg on the sill", "a person sits at the desk with hands on a device placed in front of this item"). This is CRITICAL to prevent cutting or erasing interacting people.',
   '5. 3D POSE & ORIENTATION: How is the object turned relative to the camera? (e.g. "front 3/4 view facing left, door open at 40 degrees, wheels turned slightly right").',
   '6. SURFACE CONDITION & PATINA: What is the exact surface state? (e.g. "covered in thick barn dust, dirt, cobwebs, matte finish — NOT clean" vs "glossy clean metallic finish"). Note: dirty objects must stay dirty unless explicitly requested to be cleaned.',
   '7. DEPTH PLANE & OPTICS: Where does this sit in depth? ("foreground", "midground", "background"). Is it in sharp focus or in blurred background bokeh / shallow depth of field?',
@@ -292,6 +295,7 @@ export function agentProxy(): Plugin {
         doprecyzowanie: odczytany.scena,
         plan: odczytany.plan,
         promptDlaModelu: szczegolyZPlanu(odczytany),
+        miejsca: miejscaZPlanu(odczytany),
         instrukcja: odczytany.instrukcja,
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,

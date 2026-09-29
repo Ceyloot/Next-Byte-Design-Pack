@@ -48,7 +48,7 @@ canvas/
 Za całość odpowiada `lib/pipeline.ts` → `przygotujGeneracje()`. Po nim `Canvas.tsx` wywołuje `generateGoogleImage()`.
 
 ### Krok 0 — użytkownik stawia pineski
-- Każda pineska dostaje numer (1, 2, …) i współrzędne znormalizowane `X, Y` (0–1) względem swojego zdjęcia.
+- Każda pineska dostaje numer (1, 2, …) i współrzędne znormalizowane `X, Y` (0–1) względem swojego zdjęcia. Współrzędne żyją tylko w kodzie (kropki, maski) i nie trafiają do promptu.
 - Zaraz po postawieniu robi się miniatura i szybkie nazwanie obiektu pod pineską (**prompt Gemini nr 2** wywołany dla jednej pineski).
 - Pineski mogą leżeć na różnych zdjęciach (np. pineska 1 na wazonie ze zdjęcia B, pineska 2 na lampie ze zdjęcia A).
 
@@ -87,10 +87,10 @@ Prompt: `prompts/gemini/02-opis-sceny.ts`. Dostaje zdjęcia **już w nowej kolej
 | 1 | `IMAGES` | który obraz jest czym, kolejność wysyłki, format wyniku (rozmiar Image 1), maska |
 | 2 | `RULE BRICKS` | bricki operacji, rosnąco po numerze |
 | 3 | `OPERATION` | misja + kroki wybranej operacji |
-| 4 | `PIN MAP` | pineski: rola, obraz, X/Y, nazwa, miejsce, wygląd, wymiary |
+| 4 | `PIN MAP` | pineski: rola, obraz, nazwa, miejsce opisane słowami, wygląd, wymiary (bez współrzędnych) |
 | 5 | `SCENE DETAILS` | miejsce, wygląd i kotwice skali (Gemini nr 2) |
 | 6 | `COMMAND` | słowa użytkownika, bez zmian |
-| 7 | `FINAL CHECK` | trzy sprawdzenia tuż przed końcem: pozycja (pod pineską ±3%), ziarno (nie gładsze od otoczenia), czysty wynik (bez cyfr i znaczników); pozycja i ziarno tylko gdy operacja włączyła odpowiednie bricki |
+| 7 | `FINAL CHECK` | trzy sprawdzenia tuż przed końcem: pozycja (dokładnie w opisanym miejscu pineski), ziarno (to samo co otoczenie), czysty wynik (bez cyfr i znaczników); pozycja tylko gdy operacja włączyła brick pozycji |
 | 8 | `FINAL QUALITY` | blok pozytywny (`pozytyw.ts`) |
 
 **Dlaczego tak:** zasady stałe idą na górę (najsilniej wiążą), potem konkretna operacja, potem fakty o tej scenie, na końcu polecenie. `FINAL CHECK` powtarza krótko to, co w praktyce zawodzi najczęściej (pozycja, ziarno obiektu, znaczniki w wyniku), bo model najmocniej trzyma początek i koniec promptu.
@@ -106,16 +106,16 @@ Prompt: `prompts/gemini/02-opis-sceny.ts`. Dostaje zdjęcia **już w nowej kolej
 
 ---
 
-## Współrzędne i magentowa kropka
+## Jak wskazywane jest miejsce (bez współrzędnych w prompcie)
 
-Punkt na zdjęciu jest opisany inaczej dla Gemini i inaczej dla generatora:
+Do promptu **nie trafiają** żadne współrzędne ani pasma położenia liczone przez kod (procenty, „near the bottom edge”). Miejsce opisuje Gemini słowami z tego, co widzi:
 
-| Gdzie | Jak jest opisany punkt |
+| Gdzie | Jak jest wskazany punkt |
 |---|---|
-| Do Gemini (kroki 2 i 4) | numerowana magentowa kropka na kopii zdjęcia **+** `X%, Y%` w liście pinesek |
-| Do generatora (krok 7) | `X%, Y%` + nazwa obiektu + opis miejsca w `PIN MAP` (zdjęcia bez kropek) |
+| Do Gemini (kroki 2 i 4) | numerowana magentowa kropka na kopii zdjęcia; lista pinesek zawiera tylko numer i zdjęcie |
+| Do generatora (krok 7) | opis słowny z analizy Gemini w `PIN MAP`: na czym stoi punkt, co jest obok i z której strony, czy jest blisko krawędzi kadru |
 
-Prompt nigdy nie każe modelowi szukać kropki — punkt jest wyznaczony liczbowo i słownie.
+Współrzędne zostają wyłącznie w kodzie (rysowanie kropek, maski). Dzięki temu prompt nie zawiera „zaszytych” wartości, które nie mówią nic o scenie, a model dostaje opis oparty na tym, co jest na zdjęciu.
 
 Tokeny w treści bricków i operacji (podmienia je składarka):
 

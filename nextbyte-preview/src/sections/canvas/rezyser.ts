@@ -46,20 +46,20 @@ STEP 0 — CHOOSE THE DESTINATION IMAGE ("zdjecie_docelowe")
 - Return its number as "zdjecie_docelowe". If there is only one image, it is 1. Your "obszar"/"obszar_zrodla" boxes are expressed on THIS destination image.
 
 STEP 1 — IDENTIFY WHAT EACH PIN POINTS AT
-- A pin on an object means the WHOLE object that contains the point: a pin on a car's hood means the whole car; a pin on a jacket means the whole person. Use a part only when the user explicitly names a part ("zmień kolor maski", "podmień koła").
+- A pin on an object means the WHOLE object that contains the point: a pin on a part of it (a sleeve, a lid, a wheel) means the whole thing. Use a part only when the user explicitly names a part.
 - A pin on open ground, water, floor, grass or sky is a LOCATION.
 - Describe every pinned object in English, concretely: type, make and model if recognisable, colour, material, distinctive features, how it faces the camera (e.g. "front three-quarter view, facing left"), and its real-world size.
-- For every location pin, name the surface and the neighbouring objects (e.g. "wet sand at the waterline, just right of the second sea lion").
+- For EVERY pin, object or location, also write "miejsce": where the point lies in its image, in words, from what you SEE — the surface it stands on, the nearest neighbouring objects and which side of them the point is on, and whether it is close to a frame edge. Use landmarks only; never percentages, coordinates or fixed position words copied from the pin list.
 
 STEP 1b — BIND THE USER'S WORDS TO PINS (ABSOLUTE, PREVENTS WRONG-OBJECT EDITS)
-- Every noun the user writes that refers to a scene object MUST be resolved to a pin. The user often types only a FRAGMENT or a colloquial/inflected form of a pin's name ("podusz" → the pin named "poduszka"; "żabę"/"żaba" → the pin "żaba"; "auto" → the pin "samochód"). Match each word to the pin whose name (or that pin's own object description) it most plausibly refers to.
-- The operation acts on EXACTLY the pinned objects the user named — never on a different, unpinned object that merely happens to sit nearby or in front. Example of the failure to avoid: pins on a "poduszka" and a "żaba", request "zamień poduszkę na żabę" — you replace the PILLOW under its pin, NOT the person standing in front of it. If a named word cannot be matched to any pin, say so in "analiza" and act only on what the pins clearly show; never guess a substitute object.
+- Every noun the user writes that refers to a scene object MUST be resolved to a pin. The user often types only a FRAGMENT or a colloquial/inflected form of a pin's name (a stem, another grammatical case or a synonym of the pin's name). Match each word to the pin whose name (or that pin's own object description) it most plausibly refers to.
+- The operation acts on EXACTLY the pinned objects the user named — never on a different, unpinned object that merely happens to sit nearby or in front. Example of the failure to avoid: with pins on a small object and on a second item, and a request to replace the small object with the item, you replace the small object under its pin — NOT a larger, more prominent subject standing in front of it. If a named word cannot be matched to any pin, say so in "analiza" and act only on what the pins clearly show; never guess a substitute object.
 - When two pins carry the same object type, disambiguate by which image and where each sits, and state in "analiza" which pin you bound each word to.
-- NEVER RETARGET TO A MORE PROMINENT OBJECT. The pinned object is whatever the pin's NAME and the user's matched word denote — even when the crosshair sits on, near, in front of, or overlapping a bigger, brighter or more central object (a person, a laptop, a car). If the pin is named "poduszka" / "pillow" and the user says "poduszkę", the target is THAT PILLOW, never the person sitting in front of it or the laptop beside it. A person/animal becomes the target ONLY when the user's own word denotes a person/animal. Silently swapping the operation onto the most salient thing in the frame is the single worst failure — do not do it.
+- NEVER RETARGET TO A MORE PROMINENT OBJECT. The pinned object is whatever the pin's NAME and the user's matched word denote — even when the crosshair sits on, near, in front of, or overlapping a bigger, brighter or more central object (a person, a screen, a vehicle). If the pin's name matches the small object the user names, the target is THAT small object, never the person in front of it or the device beside it. A person/animal becomes the target ONLY when the user's own word denotes a person/animal. Silently swapping the operation onto the most salient thing in the frame is the single worst failure — do not do it.
 - The pin's recogniser NAME wins over your own saliency when the name clearly matches the user's word: locate that named object at (or immediately around) the crosshair and operate on it, even if it is small, dark or partly hidden. If you truly cannot see the named object anywhere near the pin, say so in "analiza" and do NOT substitute a different object.
 
 STEP 2 — CHOOSE THE OPERATION ("intencja"), exactly one of:
-- "wstaw": add a new object (described in words or taken from a reference image) at a location; NOTHING is removed. Every existing subject stays — same count, same positions (e.g. all five geese remain, the new object is added beside them). Never delete or reduce existing objects to "make room".
+- "wstaw": add a new object (described in words or taken from a reference image) at a location; NOTHING is removed. Every existing subject stays — same count, same positions (e.g. every animal, person and object already standing there remains, and the new object is added beside them). Never delete or reduce existing objects to "make room".
 - "przenies": an object goes from one pin to a location pin. Same photo: it moves and its old spot is restored. From another photo: it is brought into the canvas at the location.
 - "zamien": the object under a canvas pin disappears and a new object (from a reference pin or from the words) takes its place.
 - "postac": the person under a canvas pin gets the face and identity of the person in a reference image; pose, body and clothing stay.
@@ -79,39 +79,29 @@ STEP 3 — RESPECT GIVEN ROLES
 Pin numbers say nothing about roles — the user may pin the destination first. When the pin list gives a role (SOURCE = the object that moves or is brought in, DESTINATION = where it ends up), that role was already checked against the pictures: follow it. In "wstaw go tutaj" the object comes from the SOURCE pin and goes to the DESTINATION pin.
 
 STEP 4 — WRITE "instrukcja": 4 to 8 English sentences, imperative, concrete, describing the target state.
-- YOU ARE THE ONLY SOURCE OF OBJECT-TYPE SPECIFICS. The fixed rule scaffold is deliberately UNIVERSAL and names no object types — it never assumes the object is a car, a person, a plant or anything else. So whenever the object type has specific behaviour, YOU must state it here from what you SEE: e.g. a vehicle on a road → align it along the road, front toward or away from the camera, its paint reflects the sky and surroundings (not the donor's indoor lights); a potted plant → stands on its surface at a believable height; furniture → squared to the room. Give the concrete size number against a visible anchor. Do not expect the scaffold to know any of this.
+- YOU ARE THE ONLY SOURCE OF OBJECT-TYPE SPECIFICS. The fixed rule scaffold is deliberately UNIVERSAL and names no object types — it never assumes the object is a car, a person, a plant or anything else. So whenever the object type has specific behaviour, YOU must state it here from what you SEE: e.g. an object with a natural axis (a vehicle, a boat, a piece of furniture) → align it with the lines of the surface it stands on and state which way it faces; an object that stands on a surface → state the believable size and height at which it stands. Give the concrete size number against a visible anchor. Do not expect the scaffold to know any of this.
 - EVERY "instrukcja" MUST end with these three concrete requirements (they are ignored most often, so state them explicitly, with the scene's real details):
-  (a) SIZE: give the brought-in object's real size and compare it to a visible anchor in the DESTINATION scene, keeping small objects small (e.g. "the seal plush is only ~35 cm — smaller than a McDonald's cup — so in the field it is about half the height of a goose (~75 cm) and sits low to the ground, clearly smaller than the geese"). Never render a small object as large as the scene's subjects.
-  (b) KEEP EVERY EXISTING SUBJECT: name them and their count explicitly (e.g. "all five geese stay in their exact positions and sizes; nothing is removed or hidden").
-  (c) GRAIN MATCH: require the object to carry the destination photo's exact heavy film grain, noise, contrast and blur — not smooth, not sharpened, not a clean cut-out (e.g. "the seal is covered in the same heavy 1940s film grain as the geese, equally soft and grainy, no digital sharpness").
+  (a) SIZE: give the brought-in object's real size and compare it to a visible anchor in the DESTINATION scene, keeping small objects small (e.g. "the object is only about N cm — smaller than the visible anchor X — so at this distance it reaches about half of X's height and sits low, clearly smaller than the scene's subjects"). Never render a small object as large as the scene's subjects.
+  (b) KEEP EVERY EXISTING SUBJECT: name them and their count explicitly (e.g. "all N <subjects> stay in their exact positions and sizes; nothing is removed or hidden").
+  (c) GRAIN MATCH — ALWAYS: the object carries the destination photo's exact grain — the same grain size, density, contrast and softness as the neighbouring subjects — with no sticker look and never a second type of grain or style (e.g. "the object carries the same coarse film grain as the subjects around it, equally soft, no digital sharpness").
 - ORDER OF THE INSTRUCTION: first name the BASE object being brought in / changed with its full description and which image it comes from (the donor / source object the model must clearly know is "the thing"); THEN state how it enters the canvas scene — place, replace, move, dress, reface — and exactly where. This "base object first, then integrate" order is mandatory whenever an object crosses images or moves.
-- Refer to the images as "the canvas photo" and "the reference photo" (or "the reference photo of the ...", when there are several), and to objects by their description, never by a pronoun ("the silver Nissan Almera hatchback from the reference photo", not "it").
+- Refer to the images as "the canvas photo" and "the reference photo" (or "the reference photo of the ...", when there are several), and to objects by their description, never by a pronoun ("the <colour> <type> from the reference photo", not "it").
 - Say what is taken or changed: the whole object, unless a part was asked for.
-- Say exactly where, relative to visible landmarks in the canvas photo ("on the wet sand to the right of the second sea lion, with its wheels at the waterline").
-- "obok" / "next to" / "przy" means IMMEDIATELY BESIDE — the new object stands right at the edge of the named group, sharing the same ground line and close enough to read as one group (near-touching, slight natural overlap in depth is fine). Do NOT leave a wide empty gap or push it to the far side of the frame. When the target is a group (e.g. the geese), place the object hard against the nearest bird of that group.
+- Say exactly where, relative to visible landmarks in the canvas photo ("on <the surface>, <side> of <the named neighbour>, with its base on <the ground line>").
+- "obok" / "next to" / "przy" means IMMEDIATELY BESIDE — the new object stands right at the edge of the named group, sharing the same ground line and close enough to read as one group (near-touching, slight natural overlap in depth is fine). Do NOT leave a wide empty gap or push it to the far side of the frame. When the target is a group (e.g. a row of animals or a group of people), place the object hard against the nearest member of that group.
 - SCENE FACTS ONLY. The fixed rule bricks that follow your instruction already require, for every result: a full re-render (never a cut-out), the scene's light, depth of field and grain, physical contact, surface condition, completeness and a clean plate. Do NOT restate those rules. Your "instrukcja" supplies the scene-specific facts they cannot know:
-  1. CONTACT: if a person or animal touches, holds, leans on or sits on the pinned object, name them and the exact contact (e.g. "the man leans his left arm on the driver door of the car being replaced").
+  1. CONTACT: if a person or animal touches, holds, leans on or sits on the pinned object, name them and the exact contact (e.g. "the person leans an arm on the door of the object being replaced").
   2. DEPTH PLANE: say whether the destination is in the foreground, midground or background and what stands in front of it.
   3. SURFACE CONDITION of the incoming object in concrete words (dust, dirt, patina, wear) so it is kept.
   4. LIGHT at the destination spot: direction, colour and hardness.
   5. SAME-IMAGE MOVE: say what the ground or background looks like where the object stood, so it can be rebuilt.
 
-- ALWAYS include one sentence on size with numbers. Pins carry an ANALYSIS with real dimensions — use them as ground truth facts. For a replacement, state both sizes and the ratio ("the Ford GT40 is about 102 cm tall; the Lamborghini Urus is about 164 cm tall, so the Urus is about 1.6 times taller").
-- DO NOT COPY THE DONOR'S FRAMING SIZE. The incoming object often fills most of the reference photo; that says nothing about how big it should be in the canvas. Re-derive its size from the canvas perspective and the distance of the destination pin, comparing to an anchor that is actually visible in the canvas — a lane width, kerb, lane markings, a person, a door. State that comparison with a number in "instrukcja" (e.g. "the car is about 1.8 m wide, a bit over half of the ~3 m road lane, so it occupies roughly a quarter of the frame width here and leaves open asphalt on both sides").
-- ANTI-GIANT ON OPEN ROADS: on bare asphalt / a road with no buildings, never let the vehicle span the full road or the full frame width. Keep empty road visible around and in front of it; if unsure, make it smaller and set it deeper.
-- FOR "wstaw" ADD ONE SENTENCE that every existing subject is kept (name the count if visible, e.g. "all the geese in the scene remain in place").
-- CRITICAL ARCHITECTURAL SCALE HIERARCHY:
-  In residential, estate, or landscape settings, compare the object directly to adjacent structures:
-  1. A vehicle on a driveway MUST fit through the garage door (~2.1 m high, ~2.4 m wide) and comfortably sit within ONE driveway lane.
-  2. A sports car (Ford GT40, height 102 cm / 40 inches) is ultra-low: its roofline is lower than an adult's waist and reaches only halfway up a garage door.
-  3. IN WIDE / ELEVATED LANDSCAPE SHOTS: The house and mountains are the primary scale anchors. The car is a SMALL LOCALIZED ELEMENT (only ~3–6% of image width). NEVER enlarge the car to dominate the courtyard or dwarf the house.
-- CRITICAL: VEHICLE ORIENTATION & ROAD AXIS (NO DIAGONAL ROADBLOCKS):
-  When placing or moving a vehicle on a road, street, driveway, or lane:
-  1. The vehicle MUST be aligned naturally along the longitudinal axis of the road (following the direction of travel or parked parallel to the curb / edge of the road).
-  2. It must face along the road — pointing towards camera (driving down/out) or towards garage/building (driving up), or parked neatly parallel along the side of the driveway at the pin location.
-  3. NEVER place a vehicle rotated sideways or diagonally across the road lanes blocking the driveway like a barricade or car crash.
-  4. If the destination pin is on the left/right side of the road, the vehicle must sit neatly on that side, leaving the other lane clear.
-  5. REFLECTIONS & AMBIENT INTEGRATION: Glossy paint, windshield, chrome, and windows MUST reflect the canvas environment (sky, clouds, trees, lawn, stone paving, house facade). STRICTLY FORBID indoor showroom banners, dealership text logos, studio lightboxes, or indoor reflections from the donor photo.
+- ALWAYS include one sentence on size with numbers. Pins carry an ANALYSIS with real dimensions — use them as ground truth facts. For a replacement, state both sizes and the ratio ("object A is about X cm tall; object B is about Y cm tall, so B is about Y/X times taller").
+- DO NOT COPY THE DONOR'S FRAMING SIZE. The incoming object often fills most of the reference photo; that says nothing about how big it should be in the canvas. Re-derive its size from the canvas perspective and the distance of the destination pin, comparing to an anchor that is actually visible in the canvas — a person, a door, a paving stone, a lane marking. State that comparison with numbers in "instrukcja" (e.g. "the object is about X m wide, roughly a third of the visible anchor Y, so it takes up only a small part of the frame here and leaves free surface around it").
+- ANTI-GIANT: on an open surface with no large structures in view, never let the brought-in object span the whole surface or the whole frame width. Keep free surface visible around and in front of it; if unsure, make it smaller and set it deeper.
+- FOR "wstaw" ADD ONE SENTENCE that every existing subject is kept (name the count if visible, e.g. "all N <subjects> in the scene remain in place").
+- SCALE HIERARCHY: compare the object with the nearest large structures in view (buildings, doors, furniture, trees). In wide or elevated shots an ordinary-sized object is a SMALL LOCALISED element — never enlarge it to dominate the scene or to dwarf the structures around it.
+- ORIENTATION ALONG THE SURFACE: an object with a natural axis (a vehicle, a boat, furniture, an animal) is aligned with the lines of the surface it stands on — a road, a shelf, floor boards, a shoreline — facing the direction that fits the scene, never rotated diagonally across it, and standing on the side of the surface where the destination pin lies.
 
 - Give the orientation to the camera, matched to the perspective of the canvas photo.
 - Name the nearby things that stay exactly as they are.
@@ -120,20 +110,10 @@ STEP 4 — WRITE "instrukcja": 4 to 8 English sentences, imperative, concrete, d
 
 STEP 5 — MARK THE AREAS ON IMAGE 1 as boxes [ymin, xmin, ymax, xmax], normalised 0–1000 to Image 1:
 - "obszar": where the change happens in the canvas photo.
-  • ABSOLUTE RULE OF PIN ANCHORING: The box MUST BE DIRECTLY ANCHORED TO THE DESTINATION PIN.
-    - The horizontal center (xmin + xmax)/2 MUST match the destination pin's X coordinate.
-    - The bottom edge ymax MUST touch the destination pin's Y coordinate where it contacts the ground.
-    - NEVER return a box located far away from the destination pin!
-  • VEHICLE PROPORTIONS ON LONGITUDINAL ROADS:
-    On a road running towards/away from camera, a car facing along the road has an aspect ratio around 1.1:1 to 1.4:1 (width ~1.8 m, height ~1.4 m). Do NOT draw a wide 2.5:1 box that forces the vehicle to rotate sideways across the road!
-  • CRITICAL CALIBRATION FOR ELEVATED / LANDSCAPE / WIDE SHOTS:
-    The box MUST strictly correspond to the true physical dimensions of the object relative to surrounding buildings.
-    - In an elevated hillside or landscape shot where an entire house is visible:
-      A car is ~4 m long and ~1 m high (roughly 1/3 of garage width, 1/8 of house height).
-      Therefore, the box MUST BE COMPACT (e.g. height: 35–60 units, width: 70–130 units out of 1000).
-      NEVER output a massive 250–400 unit box for a vehicle in a landscape/hillside shot!
+  • ABSOLUTE RULE OF PIN ANCHORING: the box MUST BE DIRECTLY ANCHORED TO THE DESTINATION PIN as drawn on the image (the numbered crosshair): the box is centred horizontally on the crosshair and its bottom edge touches the crosshair where the object meets the ground. Never return a box located far from the destination pin.
+  • COMPACT AND TRUE TO SCALE: the box matches the object's real-world size relative to the structures in view — in a wide or elevated shot a small object gets a small box. Never draw a box much larger than the object's true footprint, and never a shape that would force the object to rotate away from the lines of its surface.
   • "wstaw" / "przenies": the box the finished object will occupy, tightly bounded to its real-world scale in this perspective.
-  • "zamien": centre the box on the TARGET pin — the named object being replaced (e.g. the pillow), NOT a larger neighbour. Start from the named object's own footprint at the pin, then size the box to the NEW object's real-world size on that same ground spot (same bottom edge and centre). If the named target is small, the box stays around that small spot; never expand it to cover a nearby person or laptop.
+  • "zamien": centre the box on the TARGET pin — the named object being replaced (e.g. the small named object), NOT a larger neighbour. Start from the named object's own footprint at the pin, then size the box to the NEW object's real-world size on that same ground spot (same bottom edge and centre). If the named target is small, the box stays around that small spot; never expand it to cover a larger nearby subject.
   • "usun": the box tightly around the whole object that is removed, including its shadow.
   • "postac": the box around the head and hair of the target person.
   • "ubranie": the box around the torso and clothing of the person.
@@ -142,7 +122,7 @@ STEP 5 — MARK THE AREAS ON IMAGE 1 as boxes [ymin, xmin, ymax, xmax], normalis
   • "tlo" / "styl" / "pora_roku" / "pora_dnia": null.
 - "obszar_zrodla": only for "przenies" within the canvas photo — the box around the object where it stands now; otherwise null.
 
-STEP 6 — WRITE "scena": 2 to 4 English sentences about the canvas photo: direction and colour of the light, time of day, which way the shadows fall, the surface at the target spot (wet sand, asphalt, carpet) and what reflects there. ALSO name the canvas's photographic MEDIUM in concrete terms — colour vs black-and-white / monochrome / sepia / desaturated, the AMOUNT and size of film grain, the contrast, the sharpness/blur and the era or stock (e.g. "1940s archival black-and-white war press photo, heavy film grain, gelatin silver print, soft contrast" or "modern grainy 35mm colour film"). Require the incoming object to be re-photographed in that exact analog medium — same heavy film grain and noise, no digital smoothness, no CGI or AI-render look. If the canvas is monochrome, say so explicitly and require the object rendered monochrome. Name the era style precisely so it can be applied.
+STEP 6 — WRITE "scena": 2 to 4 English sentences about the canvas photo: direction and colour of the light, time of day, which way the shadows fall, the surface at the target spot (wet sand, asphalt, carpet) and what reflects there. ALSO name the canvas's photographic MEDIUM in concrete terms — colour vs black-and-white / monochrome / sepia / desaturated, the AMOUNT and size of film grain, the contrast, the sharpness/blur and the era or stock (e.g. "black-and-white archival print, coarse film grain, soft contrast" or "modern colour photo with fine digital noise"). Require the incoming object to be re-photographed in that exact analog medium — same heavy film grain and noise, no digital smoothness, no CGI or AI-render look. If the canvas is monochrome, say so explicitly and require the object rendered monochrome. Name the era style precisely so it can be applied.
 
 STEP 7 — FOR THE USER, WRITTEN IN POLISH (the user reads Polish; these two fields must be in Polish):
 - "analiza": one short Polish sentence per pin, what it really points at.
@@ -153,7 +133,7 @@ Answer ONLY with JSON:
   "zdjecie_docelowe": 1,
   "intencja": "wstaw",
   "dotyczy_osoby": false,
-  "obiekty": [{ "pin": 1, "opis": "English description" }, { "pin": 2, "opis": "English description" }],
+  "obiekty": [{ "pin": 1, "opis": "English description", "miejsce": "where the point lies, in words" }, { "pin": 2, "opis": "English description", "miejsce": "where the point lies, in words" }],
   "instrukcja": "English instruction",
   "obszar": [450, 690, 505, 800],
   "obszar_zrodla": null,
@@ -206,7 +186,7 @@ export interface PlanRezysera {
   /** przy przeniesieniu w kadrze: gdzie obiekt stoi teraz */
   obszarZrodla?: Prostokat
   /** opis całych obiektów pod pineskami, po angielsku */
-  obiekty: { pin: number; opis: string }[]
+  obiekty: { pin: number; opis: string; miejsce: string }[]
   /** precyzyjna instrukcja edycji, po angielsku — idzie jako OPERATION */
   instrukcja: string
   /** światło i podłoże Zdjęcia 1, po angielsku */
@@ -221,9 +201,9 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
   const intencja = INTENCJE.some(i => i.id === json.intencja) ? (json.intencja as Intencja) : undefined
   const obiekty = Array.isArray(json.obiekty)
     ? json.obiekty
-        .map(o => o as { pin?: unknown; opis?: unknown })
+        .map(o => o as { pin?: unknown; opis?: unknown; miejsce?: unknown })
         .filter(o => o && o.opis)
-        .map(o => ({ pin: Number(o.pin) || 0, opis: String(o.opis) }))
+        .map(o => ({ pin: Number(o.pin) || 0, opis: String(o.opis), miejsce: String(o.miejsce ?? '').trim() }))
     : []
   const nrDocelowego = Number(json.zdjecie_docelowe)
   const plan: PlanRezysera = {
@@ -239,6 +219,13 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     plan: String(json.plan ?? '').trim(),
   }
   return plan.instrukcja || plan.obiekty.length > 0 ? plan : null
+}
+
+/** Opis miejsca każdej pineski słowami (numer pineski → miejsce) — do sekcji PIN MAP w poleceniu. */
+export function miejscaZPlanu(plan: Pick<PlanRezysera, 'obiekty'>): Record<number, string> {
+  const wynik: Record<number, string> = {}
+  for (const o of plan.obiekty) if (o.pin > 0 && o.miejsce) wynik[o.pin] = o.miejsce
+  return wynik
 }
 
 /** Opis obiektów i sceny w jednym bloku — sekcja SCENE DETAILS w poleceniu. */

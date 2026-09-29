@@ -14,12 +14,10 @@ export const KONFIG_ANALIZY = {
   thinkingConfig: { thinkingBudget: 512 },
 }
 
-const proc = (v: number) => `${Math.round(Math.min(1, Math.max(0, v)) * 100)}%`
-
-/** Jedna linia opisu pineski dla Gemini (numer, zdjęcie, współrzędne, nazwa jeśli znana). */
+/** Jedna linia opisu pineski dla Gemini (numer, zdjęcie, nazwa jeśli znana). Punkt wskazuje numerowana kropka na zdjęciu. */
 export function liniaPineski(p: PineskaWejscie): string {
   const nazwa = p.nazwa ? ` — recogniser hint: "${p.nazwa}" (may be wrong or name only a part)` : ''
-  return `- Pin ${p.numer}: on Image ${p.zdjecie}, X ${proc(p.x)}, Y ${proc(p.y)} (0% = left / top edge, 100% = right / bottom edge)${nazwa}`
+  return `- Pin ${p.numer}: on Image ${p.zdjecie}, drawn as the numbered magenta dot ${p.numer}${nazwa}`
 }
 
 /** Lista wszystkich pinesek w kolejności numerów. */

@@ -33,7 +33,7 @@ import {
   zaplanuj,
 } from '@/sections/canvas/dostawca'
 import { Plotno } from '@/sections/canvas/Plotno'
-import { INTENCJE, polozenie, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
+import { INTENCJE, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
@@ -528,7 +528,8 @@ export function CanvasSection() {
           const rola = uklad.role[i + 1] ? ` — role: ${uklad.role[i + 1]}` : ''
           const ochrona = p.chroniona ? ' — PROTECTED, must stay unchanged' : ''
           const analiza = p.analiza ? `\n   ANALYSIS (measured at pin placement): ${opisAnalizy(p.analiza)}` : ''
-          return `Pin ${i + 1} "${etykietaPineski(p, i + 1)}" on Image ${nrObrazu}, ${polozenie(p.normalizedX, p.normalizedY)}${rola}${ochrona}${analiza}`
+          // Miejsce wskazuje numerowany celownik na zdjęciu — bez współrzędnych i pasm w tekście.
+          return `Pin ${i + 1} "${etykietaPineski(p, i + 1)}" on Image ${nrObrazu}, marked by the numbered magenta crosshair ${i + 1}${rola}${ochrona}${analiza}`
         })
         .join('\n')
 
@@ -613,6 +614,7 @@ export function CanvasSection() {
         szczegoly: plan?.promptDlaModelu,
         instrukcja: plan?.instrukcja,
         role: uklad.role,
+        miejsca: plan?.miejsca,
         osoba: plan?.osoba,
       })
 
@@ -667,7 +669,8 @@ export function CanvasSection() {
               : rola === 'SOURCE'
                 ? 'the object stood here before'
                 : 'a point on this photo'
-          return `Pin ${i + 1} "${nazwaPineski}" — on this photo, ${polozenie(p.normalizedX, p.normalizedY)}: ${znaczenie}`
+          const miejsce = plan?.miejsca?.[i + 1]
+          return `Pin ${i + 1} "${nazwaPineski}" — on this photo${miejsce ? `, ${miejsce}` : ''}: ${znaczenie}`
         })
         .join('\n')
 

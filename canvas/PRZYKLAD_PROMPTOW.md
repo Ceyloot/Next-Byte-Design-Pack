@@ -13,8 +13,8 @@ INPUT
 - You receive 2 image(s), labelled Image 1 … Image 2 in the order sent.
 - Pins are drawn as numbered magenta dots on the images. They are drawn only for you.
 - Pin list:
-- Pin 1: on Image 2, X 41%, Y 62% (0% = left / top edge, 100% = right / bottom edge)
-- Pin 2: on Image 1, X 62%, Y 48% (0% = left / top edge, 100% = right / bottom edge)
+- Pin 1: on Image 2, drawn as the numbered magenta dot 1
+- Pin 2: on Image 1, drawn as the numbered magenta dot 2
 - The user's command (usually colloquial Polish): "zamień lampę na wazon z drugiego zdjęcia"
 
 DECISION 1 — TARGET IMAGE
@@ -77,8 +77,8 @@ INPUT
 - Operation chosen for this edit: object_swap.
 - Pin roles: pin 1 = source, pin 2 = target.
 - Pin list (describe them in this order):
-- Pin 1: on Image 2, X 41%, Y 62% (0% = left / top edge, 100% = right / bottom edge)
-- Pin 2: on Image 1, X 62%, Y 48% (0% = left / top edge, 100% = right / bottom edge)
+- Pin 1: on Image 2, drawn as the numbered magenta dot 1
+- Pin 2: on Image 1, drawn as the numbered magenta dot 2
 - The user's command (usually colloquial Polish): "zamień lampę na wazon z drugiego zdjęcia"
 
 WHAT TO DESCRIBE
@@ -110,6 +110,9 @@ OUTPUT — return ONLY this JSON, no commentary:
 Zamiana lampy (zdjęcie 1) na wazon (zdjęcie 2). Do generatora idą: Image 1, Image 2 i maska.
 
 ```text
+[ALWAYS — NON-NEGOTIABLE]
+ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
+
 [IMAGES — sent in this order]
 Image 1 = TARGET (destination). The result is this photograph with only the requested change. Output format: exactly the aspect ratio and framing of this image (1200×800 px).
 Image 2 = DONOR (reference). It supplies only the identity or appearance of its pinned subject.
@@ -130,13 +133,12 @@ LIGHT RULE — the element is lit exactly like the scene it lives in:
 
 [BRICK 02 · POSITION RULE]
 POSITION RULE — the element lands exactly where the pin says:
-- The element takes EXACTLY the position of Pin 2 [Image 1 · "lampa" · X 62%, Y 48%]. The pin marks the point where its base or point of contact meets the ground or supporting surface; its footprint is centred on that point — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the marked location is a top priority: the contact point of its base lies within about 3% of the frame width and height from the pin.
-- PRIORITY WHEN RULES COMPETE: (1) the marked point, (2) the element shown complete, (3) the room left for neighbours. Nearby subjects never pull the element off the marked point — they stay where they are and the element stands on the free ground at the point itself.
-- NEAR THE FRAME EDGE: when the marked point is close to an edge and the element is wide, keep the contact point on the marked point as far as the frame allows; shift it inward only by the smallest amount that keeps the element whole (usually a few percent of the frame). Inward means away from the edge — never toward a neighbouring subject.
+- The element takes EXACTLY the position of Pin 2 ("lampa", Image 1). The PIN MAP describes that spot in words — what it is, what it stands on and what is around it. The base or point of contact of the element meets the ground or supporting surface at exactly that spot; its footprint is centred there — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the described spot is a top priority.
+- PRIORITY WHEN RULES COMPETE: (1) the described spot, (2) the element shown complete, (3) the room left for neighbours. Nearby subjects never pull the element off the described spot — they stay where they are and the element stands on the free ground at the spot itself.
+- NEAR THE FRAME EDGE: when the spot is close to an edge and the element is wide, keep its contact point on the spot as far as the frame allows; shift it inward only as far as needed to keep the element whole. Inward means away from the edge — never toward a neighbouring subject.
 - When it replaces something, it inherits the position, footprint, orientation, rotation and facing direction of what stood there.
-- When it is moved, it appears at the destination pin (Pin 2 [Image 1 · "lampa" · X 62%, Y 48%]) and nowhere else; the old spot (Pin 2 [Image 1 · "lampa" · X 62%, Y 48%]) is left empty.
+- When it is moved, it appears at the destination pin (Pin 2 ("lampa", Image 1)) and nowhere else; the old spot (Pin 2 ("lampa", Image 1)) is left empty.
 - It aligns to the natural lines and flow of the surface it rests on and stands on a stable, natural footprint.
-- The pin number, the X/Y percentages and the described place in the PIN MAP all describe the same point (0% = left / top edge of the image, 100% = right / bottom edge).
 
 [BRICK 03 · SCALE RULE]
 SCALE RULE — true real-world size, judged from the scene:
@@ -176,10 +178,11 @@ REFLECTION RULE — reflections work both ways:
 - Water ripples, wet asphalt and rain puddles break the reflection naturally.
 
 [BRICK 08 · GRAIN MEDIUM RULE]
-GRAIN & MEDIUM RULE — the element is re-photographed in the medium of the scene:
+GRAIN & MEDIUM RULE — ALWAYS: the generated object has the SAME GRAIN as the graphic (the photograph). No sticker look. Never two different types of grain and style in one image.
 - Adopt the exact photographic medium of Image 1. If it is black-and-white, monochrome, sepia, cross-processed or heavily desaturated, the element is rendered in that SAME treatment with no full modern colour left on it. Match the tonal curve, contrast, dynamic range, black point and overall colour cast.
-- Cover the element with the SAME film grain, sensor noise and analog texture: the same grain size, density and contrast, running continuously across the element and the background with no clean patch around it.
-- MEASURABLE TEST: the surface of the element shows the same visible speckle and contrast as the ground and sky right beside it. If the element looks even slightly smoother, cleaner or sharper than its surroundings, it is wrong. Apply the grain last, after shading and colour are set, so it lies ON TOP of the element exactly as it lies on the rest of the photograph.
+- ONE grain for the whole frame: the element carries the SAME film grain, sensor noise and analog texture as the ground and sky around it — the same grain SIZE (fine or clumpy), the same density, the same contrast and the same softness. It is not a second, finer or cleaner grain laid over the element, and not a different grain pattern: the grain runs continuously across the element and the background with no patch, seam or change of character at the outline.
+- MEASURABLE TEST: the surface of the element shows the same visible speckle and contrast as the ground and sky right beside it. If the element looks even slightly smoother, cleaner, sharper or differently grained than its surroundings, it is wrong. Apply the grain last, after shading and colour are set, so it lies ON TOP of the element exactly as it lies on the rest of the photograph.
+- NO STICKER LOOK: the outline of the element has the same softness as the rest of the photograph — no crisp cut-out edge, no bright rim, no halo, no outline sharper than the neighbouring edges, no flat pasted texture.
 - Match sharpness, depth of field, motion blur, lens softness, vignetting and compression artifacts of the scene.
 - The element is never smooth, glossy, over-sharp, denoised or over-rendered: no digital smoothness, no CGI sheen, no 3D-render or AI-generated look.
 - The result reads as one photograph from one camera, one exposure, one film stock.
@@ -208,7 +211,7 @@ OUTPUT CONTRACT (fixed, non-negotiable):
 
 [BRICK 12 · CLEAN PLATE RULE]
 CLEAN PLATE RULE — what leaves the frame leaves without a trace:
-- Remove the old element completely: the object itself, its shadow, its reflection, its dents, contact marks, cables and any part of it that others touched. Not one pixel of it remains at Pin 2 [Image 1 · "lampa" · X 62%, Y 48%].
+- Remove the old element completely: the object itself, its shadow, its reflection, its dents, contact marks, cables and any part of it that others touched. Not one pixel of it remains at Pin 2 ("lampa", Image 1).
 - Rebuild whatever logically lies behind and beneath it, inferred from the neighbourhood: ground, grass, paving, boards, tiles, wall courses, sky, vegetation.
 - Continue patterns and structures with the same direction, scale and rhythm; run the perspective lines of ground and walls through the rebuilt area as if nothing had interrupted them.
 - The rebuilt area matches the brightness, colour, grain and blur of its neighbourhood, so its edge is invisible.
@@ -248,9 +251,9 @@ EDGE & BLEND RULE — clean, natural transitions:
 - Where the element meets the background, a natural transition zone (soft shadow, slight colour spill, matching blur) ties it to the scene.
 
 [OPERATION — OBJECT SWAP]
-Replace the object at Pin 2 [Image 1 · "lampa" · X 62%, Y 48%] with the new object (taken from Image 2, or as described in the COMMAND). The old object leaves the photograph completely; the new object takes its place.
+Replace the object at Pin 2 ("lampa", Image 1) with the new object (taken from Image 2, or as described in the COMMAND). The old object leaves the photograph completely; the new object takes its place.
 STEPS:
-1. Identify the old object at Pin 2 [Image 1 · "lampa" · X 62%, Y 48%] as a whole (see the PIN MAP), not only the part under the pin.
+1. Identify the old object at Pin 2 ("lampa", Image 1) as a whole (see the PIN MAP), not only the part under the pin.
 2. Remove it entirely together with its shadow and reflection and rebuild what was behind it (clean plate).
 3. Generate the new object from its reference or description at its OWN real size, turned to the camera angle of Image 1.
 4. Stand the new object where the old one stood: the same contact point, on the same surface plane, facing the same direction.
@@ -258,11 +261,11 @@ STEPS:
 6. Recompute light, shadows and reflections for the shape and material of the new object.
 
 [PIN MAP]
-Coordinates: 0% = left / top edge, 100% = right / bottom edge of that image.
-- Pin 1 · SOURCE · Image 2 · X 41%, Y 62% — "ceramic vase" — place: on a shelf in Image 2; appearance: white glazed, blue rim; size: 30 cm high, 15 cm wide
-- Pin 2 · TARGET · Image 1 · X 62%, Y 48% — "table lamp" — place: on the wooden table, left of the window; appearance: brass base, linen shade; size: 45 cm high
+Each pin is described in words: the place is what the point stands on and what surrounds it. Find exactly that spot in its image.
+- Pin 1 · SOURCE · Image 2 — "ceramic vase" — place: on a shelf in Image 2; appearance: white glazed, blue rim; size: 30 cm high, 15 cm wide
+- Pin 2 · TARGET · Image 1 — "table lamp" — place: on the wooden table, left of the window; appearance: brass base, linen shade; size: 45 cm high
 
-[SCENE DETAILS — from visual analysis of Image 1]
+[SCENE DETAILS — from visual analysis of the images]
 Place: stone terrace of a country house, late afternoon
 Look: colour photo, warm low sun from the left, fine grain, slightly soft
 Scale anchors: door ≈ 2.0 m high, chair seat ≈ 45 cm
@@ -271,8 +274,8 @@ Scale anchors: door ≈ 2.0 m high, chair seat ≈ 45 cm
 zamień lampę na wazon z drugiego zdjęcia
 
 [FINAL CHECK — verify before returning the image]
-- POSITION: the base of the element sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.
-- GRAIN: look closely at the element — its grain, noise, contrast and sharpness are the same as the ground and sky right beside it; it is not smoother or cleaner than its surroundings.
+- POSITION: the base of the element stands exactly at the described spot of the destination pin; no nearby subject has pulled it aside.
+- GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
 - CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
 [FINAL QUALITY]
@@ -280,6 +283,9 @@ zamień lampę na wazon z drugiego zdjęcia
 - Every detail is as sharp where the scene is sharp and as soft where the scene is soft; the edit is impossible to spot.
 - Physically plausible everywhere: light, shadow, reflection, scale, anatomy and perspective all agree.
 - Return only the final image.
+
+[ALWAYS — NON-NEGOTIABLE]
+ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
 ```
 
 ## 4. Złożony prompt — `object_transfer` w obrębie jednego zdjęcia
@@ -287,6 +293,9 @@ zamień lampę na wazon z drugiego zdjęcia
 Polecenie „przenieś chatkę bliżej”: ta sama chatka, stare miejsce jest czyszczone (`clean-plate-rule` włączony, `PIN_CLEAR` = pineska źródłowa), nowe miejsce jest bliżej kamery, więc obiekt rośnie zgodnie z perspektywą. Operacja i bricki są **inne** niż w `object_swap` — to samo polecenie nie użyje promptu zamiany.
 
 ```text
+[ALWAYS — NON-NEGOTIABLE]
+ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
+
 [IMAGES — sent in this order]
 Image 1 = TARGET (destination). The result is this photograph with only the requested change. Output format: exactly the aspect ratio and framing of this image (1600×1067 px).
 Last image = MASK of the work area (white = where the change happens, black = untouched). It is a guide only — not a reference and not part of the result.
@@ -306,13 +315,12 @@ LIGHT RULE — the element is lit exactly like the scene it lives in:
 
 [BRICK 02 · POSITION RULE]
 POSITION RULE — the element lands exactly where the pin says:
-- The element takes EXACTLY the position of Pin 2 [Image 1 · X 55%, Y 80%]. The pin marks the point where its base or point of contact meets the ground or supporting surface; its footprint is centred on that point — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the marked location is a top priority: the contact point of its base lies within about 3% of the frame width and height from the pin.
-- PRIORITY WHEN RULES COMPETE: (1) the marked point, (2) the element shown complete, (3) the room left for neighbours. Nearby subjects never pull the element off the marked point — they stay where they are and the element stands on the free ground at the point itself.
-- NEAR THE FRAME EDGE: when the marked point is close to an edge and the element is wide, keep the contact point on the marked point as far as the frame allows; shift it inward only by the smallest amount that keeps the element whole (usually a few percent of the frame). Inward means away from the edge — never toward a neighbouring subject.
+- The element takes EXACTLY the position of Pin 2 (Image 1). The PIN MAP describes that spot in words — what it is, what it stands on and what is around it. The base or point of contact of the element meets the ground or supporting surface at exactly that spot; its footprint is centred there — not drifted sideways, not floating, not pushed to another part of the frame. Landing at the described spot is a top priority.
+- PRIORITY WHEN RULES COMPETE: (1) the described spot, (2) the element shown complete, (3) the room left for neighbours. Nearby subjects never pull the element off the described spot — they stay where they are and the element stands on the free ground at the spot itself.
+- NEAR THE FRAME EDGE: when the spot is close to an edge and the element is wide, keep its contact point on the spot as far as the frame allows; shift it inward only as far as needed to keep the element whole. Inward means away from the edge — never toward a neighbouring subject.
 - When it replaces something, it inherits the position, footprint, orientation, rotation and facing direction of what stood there.
-- When it is moved, it appears at the destination pin (Pin 2 [Image 1 · X 55%, Y 80%]) and nowhere else; the old spot (Pin 1 [Image 1 · "chatka" · X 30%, Y 35%]) is left empty.
+- When it is moved, it appears at the destination pin (Pin 2 (Image 1)) and nowhere else; the old spot (Pin 1 ("chatka", Image 1)) is left empty.
 - It aligns to the natural lines and flow of the surface it rests on and stands on a stable, natural footprint.
-- The pin number, the X/Y percentages and the described place in the PIN MAP all describe the same point (0% = left / top edge of the image, 100% = right / bottom edge).
 
 [BRICK 03 · SCALE RULE]
 SCALE RULE — true real-world size, judged from the scene:
@@ -352,10 +360,11 @@ REFLECTION RULE — reflections work both ways:
 - Water ripples, wet asphalt and rain puddles break the reflection naturally.
 
 [BRICK 08 · GRAIN MEDIUM RULE]
-GRAIN & MEDIUM RULE — the element is re-photographed in the medium of the scene:
+GRAIN & MEDIUM RULE — ALWAYS: the generated object has the SAME GRAIN as the graphic (the photograph). No sticker look. Never two different types of grain and style in one image.
 - Adopt the exact photographic medium of Image 1. If it is black-and-white, monochrome, sepia, cross-processed or heavily desaturated, the element is rendered in that SAME treatment with no full modern colour left on it. Match the tonal curve, contrast, dynamic range, black point and overall colour cast.
-- Cover the element with the SAME film grain, sensor noise and analog texture: the same grain size, density and contrast, running continuously across the element and the background with no clean patch around it.
-- MEASURABLE TEST: the surface of the element shows the same visible speckle and contrast as the ground and sky right beside it. If the element looks even slightly smoother, cleaner or sharper than its surroundings, it is wrong. Apply the grain last, after shading and colour are set, so it lies ON TOP of the element exactly as it lies on the rest of the photograph.
+- ONE grain for the whole frame: the element carries the SAME film grain, sensor noise and analog texture as the ground and sky around it — the same grain SIZE (fine or clumpy), the same density, the same contrast and the same softness. It is not a second, finer or cleaner grain laid over the element, and not a different grain pattern: the grain runs continuously across the element and the background with no patch, seam or change of character at the outline.
+- MEASURABLE TEST: the surface of the element shows the same visible speckle and contrast as the ground and sky right beside it. If the element looks even slightly smoother, cleaner, sharper or differently grained than its surroundings, it is wrong. Apply the grain last, after shading and colour are set, so it lies ON TOP of the element exactly as it lies on the rest of the photograph.
+- NO STICKER LOOK: the outline of the element has the same softness as the rest of the photograph — no crisp cut-out edge, no bright rim, no halo, no outline sharper than the neighbouring edges, no flat pasted texture.
 - Match sharpness, depth of field, motion blur, lens softness, vignetting and compression artifacts of the scene.
 - The element is never smooth, glossy, over-sharp, denoised or over-rendered: no digital smoothness, no CGI sheen, no 3D-render or AI-generated look.
 - The result reads as one photograph from one camera, one exposure, one film stock.
@@ -384,7 +393,7 @@ OUTPUT CONTRACT (fixed, non-negotiable):
 
 [BRICK 12 · CLEAN PLATE RULE]
 CLEAN PLATE RULE — what leaves the frame leaves without a trace:
-- Remove the old element completely: the object itself, its shadow, its reflection, its dents, contact marks, cables and any part of it that others touched. Not one pixel of it remains at Pin 1 [Image 1 · "chatka" · X 30%, Y 35%].
+- Remove the old element completely: the object itself, its shadow, its reflection, its dents, contact marks, cables and any part of it that others touched. Not one pixel of it remains at Pin 1 ("chatka", Image 1).
 - Rebuild whatever logically lies behind and beneath it, inferred from the neighbourhood: ground, grass, paving, boards, tiles, wall courses, sky, vegetation.
 - Continue patterns and structures with the same direction, scale and rhythm; run the perspective lines of ground and walls through the rebuilt area as if nothing had interrupted them.
 - The rebuilt area matches the brightness, colour, grain and blur of its neighbourhood, so its edge is invisible.
@@ -424,7 +433,7 @@ EDGE & BLEND RULE — clean, natural transitions:
 - Where the element meets the background, a natural transition zone (soft shadow, slight colour spill, matching blur) ties it to the scene.
 
 [OPERATION — OBJECT TRANSFER]
-Move the object at Pin 1 [Image 1 · "chatka" · X 30%, Y 35%] to the destination Pin 2 [Image 1 · X 55%, Y 80%]. This is a relocation, not a copy: the same object changes position and appears exactly once, at the destination.
+Move the object at Pin 1 ("chatka", Image 1) to the destination Pin 2 (Image 1). This is a relocation, not a copy: the same object changes position and appears exactly once, at the destination.
 STEPS:
 1. The object keeps its identity and surface condition: the same form, material, colour, dust, patina and details.
 2. If the source pin lies in Image 1, restore a clean plate there: rebuild ground, vegetation and patterns as if the object had never stood there. If it lies in another image, only the object comes across from it.
@@ -434,11 +443,11 @@ STEPS:
 6. People in contact with the object are never cut or erased: their contact adapts naturally.
 
 [PIN MAP]
-Coordinates: 0% = left / top edge, 100% = right / bottom edge of that image.
-- Pin 1 · SOURCE · Image 1 · X 30%, Y 35% — "stone cottage" — place: on the far slope, above the fence line; appearance: grey stone walls, dark slate roof, one chimney; size: ≈ 8 m wide, 5 m high
-- Pin 2 · TARGET · Image 1 · X 55%, Y 80% — "grass" — place: foreground meadow, lower centre; appearance: short grass, flat ground; size: free space ≈ 15 m wide
+Each pin is described in words: the place is what the point stands on and what surrounds it. Find exactly that spot in its image.
+- Pin 1 · SOURCE · Image 1 — "stone cottage" — place: on the far slope, above the fence line; appearance: grey stone walls, dark slate roof, one chimney; size: ≈ 8 m wide, 5 m high
+- Pin 2 · TARGET · Image 1 — "grass" — place: foreground meadow, lower centre; appearance: short grass, flat ground; size: free space ≈ 15 m wide
 
-[SCENE DETAILS — from visual analysis of Image 1]
+[SCENE DETAILS — from visual analysis of the images]
 Place: hillside meadow with a stone cottage on the slope, overcast afternoon
 Look: black-and-white photo, heavy film grain, soft focus, low contrast
 Scale anchors: cottage door ≈ 1.9 m high, fence post ≈ 1.2 m, sheep ≈ 0.7 m at the shoulder
@@ -447,8 +456,8 @@ Scale anchors: cottage door ≈ 1.9 m high, fence post ≈ 1.2 m, sheep ≈ 0.7 
 przenieś chatkę bliżej
 
 [FINAL CHECK — verify before returning the image]
-- POSITION: the base of the element sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.
-- GRAIN: look closely at the element — its grain, noise, contrast and sharpness are the same as the ground and sky right beside it; it is not smoother or cleaner than its surroundings.
+- POSITION: the base of the element stands exactly at the described spot of the destination pin; no nearby subject has pulled it aside.
+- GRAIN: look closely at the changed area — its grain has the same size, density, contrast and sharpness as the ground and sky right beside it; it is not smoother, cleaner, sharper or differently grained, and it does not look like a sticker.
 - CLEAN: the frame holds only the photographed scene from edge to edge — no numerals, letters, marks or outlines anywhere, including the ground next to the changed area.
 
 [FINAL QUALITY]
@@ -456,4 +465,7 @@ przenieś chatkę bliżej
 - Every detail is as sharp where the scene is sharp and as soft where the scene is soft; the edit is impossible to spot.
 - Physically plausible everywhere: light, shadow, reflection, scale, anatomy and perspective all agree.
 - Return only the final image.
+
+[ALWAYS — NON-NEGOTIABLE]
+ALWAYS: THE GENERATED OBJECT MUST HAVE THE SAME GRAIN AS THE PHOTOGRAPH — THE SAME GRAIN SIZE, DENSITY, CONTRAST, SHARPNESS AND COLOUR TREATMENT. NO STICKER LOOK, NO CUT-OUT LOOK. NEVER TWO DIFFERENT TYPES OF GRAIN OR STYLE IN ONE IMAGE.
 ```

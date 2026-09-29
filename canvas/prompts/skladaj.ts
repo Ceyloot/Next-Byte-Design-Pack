@@ -26,10 +26,12 @@ export interface PineskaSklejka {
   numer: number
   rola: RolaPineski
   obraz: number
-  /** współrzędne znormalizowane 0–1 względem obrazu, na którym leży pineska */
+  /** współrzędne znormalizowane 0–1 — służą kodowi (maski), NIE trafiają do promptu */
   x: number
   y: number
   nazwa?: string
+  /** miejsce pineski opisane słowami z analizy obrazu (na czym stoi, co jest obok) */
+  miejsce?: string
   /** dodatkowe fakty o obiekcie pod pineską (wymiary, stan, kontakt) — z analizy pineski */
   opis?: string
 }
@@ -38,9 +40,9 @@ export interface PineskaSklejka {
 export interface ObszarChroniony {
   numer: number
   obraz: number
-  x: number
-  y: number
   nazwa?: string
+  /** miejsce opisane słowami */
+  miejsce?: string
 }
 
 export interface SkladajWejscie {
@@ -82,11 +84,10 @@ export interface SkladajWynik {
   nierozwiazaneTokeny: string[]
 }
 
-const proc = (v: number) => `${Math.round(Math.min(1, Math.max(0, v)) * 100)}%`
-
+/** Odwołanie do pineski w treści bricków. Miejsce jest opisane słowami w sekcji PIN MAP. */
 function opisPineski(p: PineskaSklejka): string {
-  const nazwa = p.nazwa ? ` · "${p.nazwa}"` : ''
-  return `Pin ${p.numer} [Image ${p.obraz}${nazwa} · X ${proc(p.x)}, Y ${proc(p.y)}]`
+  const nazwa = p.nazwa ? `"${p.nazwa}", ` : ''
+  return `Pin ${p.numer} (${nazwa}Image ${p.obraz})`
 }
 
 /** Pineska docelowa: rola target, najlepiej na obrazie docelowym. */
@@ -219,19 +220,19 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       const o = opisyPinesek.get(p.numer)
       const nazwa = o?.nazwa || p.nazwa
       const szczegoly = [
-        o?.miejsce && `place: ${o.miejsce}`,
+        (o?.miejsce || p.miejsce) && `place: ${o?.miejsce || p.miejsce}`,
         o?.wyglad && `appearance: ${o.wyglad}`,
         o?.wymiary && `size: ${o.wymiary}`,
         p.opis,
       ]
         .filter(Boolean)
         .join('; ')
-      return `- Pin ${p.numer} · ${p.rola.toUpperCase()} · Image ${p.obraz} · X ${proc(p.x)}, Y ${proc(p.y)}${
-        nazwa ? ` — "${nazwa}"` : ''
-      }${szczegoly ? ` — ${szczegoly}` : ''}`
+      return `- Pin ${p.numer} · ${p.rola.toUpperCase()} · Image ${p.obraz}${nazwa ? ` — "${nazwa}"` : ''}${
+        szczegoly ? ` — ${szczegoly}` : ''
+      }`
     })
   const sekcjaPinesek = liniePinesek.length
-    ? `[PIN MAP]\nCoordinates: 0% = left / top edge, 100% = right / bottom edge of that image.\n${liniePinesek.join('\n')}`
+    ? `[PIN MAP]\nEach pin is described in words: the place is what the point stands on and what surrounds it. Find exactly that spot in its image.\n${liniePinesek.join('\n')}`
     : ''
 
   // 5. SCENE DETAILS
@@ -256,7 +257,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // 4b. PROTECTED AREAS — najwyższy priorytet
   const sekcjaChronionych = w.pineskiChronione?.length
     ? `[PROTECTED AREAS — HIGHEST PRIORITY]\n${w.pineskiChronione
-        .map((p) => `- ${p.nazwa ? `"${p.nazwa}" — ` : ''}Pin ${p.numer} · Image ${p.obraz} · X ${proc(p.x)}, Y ${proc(p.y)}`)
+        .map((p) => `- ${p.nazwa ? `"${p.nazwa}" — ` : ''}Pin ${p.numer} · Image ${p.obraz}${p.miejsce ? ` — ${p.miejsce}` : ''}`)
         .join('\n')}\nThese areas come out of the edit indistinguishable from the original: the same shape, colour, sharpness and position. On conflict with the task, protection wins — shrink the change, move it, or route it around these areas.`
     : ''
 
@@ -267,7 +268,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const liniaKontroli: string[] = []
   if (uzyte.has('position-rule')) {
     liniaKontroli.push(
-      `- POSITION: the base of the element sits on the marked point (within about 3% of the frame); no nearby subject has pulled it sideways.`,
+      `- POSITION: the base of the element stands exactly at the described spot of the destination pin; no nearby subject has pulled it aside.`,
     )
   }
   if (op.id !== 'style_change') {

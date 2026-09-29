@@ -153,25 +153,6 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
   return 'popraw'
 }
 
-/* ── Położenie ───────────────────────────────────────────────────── */
-
-/**
- * Położenie pineski po angielsku: opis słowny plus procenty.
- *
- * Opis słowny jest pierwszy, bo tak opisują sceny podpisy, na których
- * model był trenowany — same procenty trafiały obok. Procenty dokładamy
- * w nawiasie jako doprecyzowanie: Gemini zna współrzędne z zadań detekcji,
- * a przy pięciu pasach „lower part” obejmuje jedną piątą kadru.
- */
-export function polozenie(x: number, y: number): string {
-  const pas = (v: number, nazwy: [string, string, string, string, string]) =>
-    v < 0.18 ? nazwy[0] : v < 0.4 ? nazwy[1] : v < 0.6 ? nazwy[2] : v < 0.82 ? nazwy[3] : nazwy[4]
-
-  const pion = pas(y, ['near the top edge', 'in the upper part', 'at mid-height', 'in the lower part', 'near the bottom edge'])
-  const poziom = pas(x, ['near the left edge', 'left of centre', 'horizontally centred', 'right of centre', 'near the right edge'])
-  return `${pion}, ${poziom} (x ${Math.round(x * 100)}%, y ${Math.round(y * 100)}% from the top-left corner)`
-}
-
 /* ── Pineski ─────────────────────────────────────────────────────── */
 
 /**
@@ -315,6 +296,8 @@ export interface OpcjePolecenia {
   instrukcja?: string
   /** numer pineski → rola od agenta (SOURCE, DESTINATION, …) */
   role?: Record<number, string>
+  /** numer pineski → miejsce opisane słowami przez agenta (na czym stoi, co jest obok) */
+  miejsca?: Record<number, string>
   /** reżyser: zamiana lub przeniesienie dotyczy całej osoby */
   osoba?: boolean
 }
@@ -335,7 +318,7 @@ export function zbudujPolecenie(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): string {
-  const { szczegoly = '', instrukcja = '', role = {}, osoba = false } = opcje
+  const { szczegoly = '', instrukcja = '', role = {}, miejsca = {}, osoba = false } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return ''
 
@@ -354,9 +337,8 @@ export function zbudujPolecenie(
       x: p.normalizedX,
       y: p.normalizedY,
       nazwa: nazwy.get(p.id),
-      opis: [rolaOpis, `location: ${polozenie(p.normalizedX, p.normalizedY)}`, opisAnalizy(p.analiza)]
-        .filter(Boolean)
-        .join('; '),
+      miejsce: miejsca[numer],
+      opis: [rolaOpis, opisAnalizy(p.analiza)].filter(Boolean).join('; '),
     }
   })
 
@@ -378,9 +360,8 @@ export function zbudujPolecenie(
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,
       obraz: numerObrazu(p),
-      x: p.normalizedX,
-      y: p.normalizedY,
       nazwa: nazwy.get(p.id),
+      miejsce: miejsca[pineski.indexOf(p) + 1],
     })),
     dyrektywyStylu: styl ? { nazwa: styl.nazwa, reguly: styl.reguly } : undefined,
     format: obrazy[0] ? { szerokosc: obrazy[0].naturalWidth, wysokosc: obrazy[0].naturalHeight } : undefined,
