@@ -692,9 +692,16 @@ export function CanvasSection() {
       })
 
       if (warstwaWycinka && wycinek) {
-        const zlozony = await zlozWycinek(await konwertujNaDataUrl(zrodlo.src), wynik.obrazUrl, wycinek)
+        // rozmiar od reżysera (ułamek zdjęcia docelowego) → ułamek wycinka
+        const cel = plan?.rozmiar
+          ? {
+              szer: Math.min(0.95, plan.rozmiar.szer / 100 / (wycinek.w / zrodlo.naturalWidth)),
+              wys: Math.min(0.95, plan.rozmiar.wys / 100 / (wycinek.h / zrodlo.naturalHeight)),
+            }
+          : undefined
+        const zlozony = await zlozWycinek(await konwertujNaDataUrl(zrodlo.src), wynik.obrazUrl, wycinek, cel)
         if (zlozony) {
-          wynik = { ...wynik, obrazUrl: zlozony }
+          wynik = { ...wynik, obrazUrl: zlozony.src }
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {

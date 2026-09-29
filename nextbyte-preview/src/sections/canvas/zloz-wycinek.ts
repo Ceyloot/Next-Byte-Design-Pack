@@ -90,11 +90,58 @@ export async function wytnijWycinek(src: string, r: Wycinek): Promise<string | n
   }
 }
 
+/** Obwiednia obiektu w wycinku, jako ułamek jego szerokości i wysokości. */
+export interface Cel {
+  szer: number
+  wys: number
+}
+
+export interface WynikZlozenia {
+  src: string
+  /** współczynnik, o jaki obiekt został przeskalowany (1 = bez korekty) */
+  skala: number
+}
+
+/** Tolerancja: w tych granicach rozmiar od modelu zostaje bez korekty. */
+const TOLERANCJA_MIN = 0.85
+const TOLERANCJA_MAKS = 1.18
+/** Największa dopuszczalna korekta — poza nią obiekt i tak byłby nienaturalny. */
+const KOREKTA_MIN = 0.35
+const KOREKTA_MAKS = 2.5
+
+function obwiednia(alfa: Float32Array, w: number, h: number, prog: number) {
+  let x0 = w
+  let y0 = h
+  let x1 = -1
+  let y1 = -1
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (alfa[y * w + x] > prog) {
+        if (x < x0) x0 = x
+        if (x > x1) x1 = x
+        if (y < y0) y0 = y
+        if (y > y1) y1 = y
+      }
+    }
+  }
+  return x1 < 0 ? null : { x0, y0, x1, y1, w: x1 - x0 + 1, h: y1 - y0 + 1 }
+}
+
 /**
  * Składa wynik generacji wycinka z oryginałem. Zwraca pełny obraz w rozmiarze
  * oryginału albo `null`, gdy obszaru zmiany nie da się pewnie wyznaczyć.
+ *
+ * `cel` = rozmiar obiektu wyznaczony przez Gemini (ułamek wycinka). Model obrazu
+ * potrafi zignorować rozmiar z promptu, więc obwiednię wygenerowanego obiektu
+ * MIERZYMY i — gdy odbiega od celu — skalujemy sam obiekt (wraz z cieniem)
+ * względem jego podstawy i składamy na oryginale.
  */
-export async function zlozWycinek(oryginalSrc: string, wynikWycinkaSrc: string, r: Wycinek): Promise<string | null> {
+export async function zlozWycinek(
+  oryginalSrc: string,
+  wynikWycinkaSrc: string,
+  r: Wycinek,
+  cel?: Cel,
+): Promise<WynikZlozenia | null> {
   try {
     const [oryginal, wynik] = await Promise.all([wczytaj(oryginalSrc), wczytaj(wynikWycinkaSrc)])
     const calosc = plotno(oryginal.naturalWidth, oryginal.naturalHeight)
@@ -121,16 +168,51 @@ export async function zlozWycinek(oryginalSrc: string, wynikWycinkaSrc: string, 
       n++
     }
     const przesuniecie = n > 200 ? suma.map(s => s / n) : [0, 0, 0]
-
     for (let i = 0; i < alfa.length; i++) {
-      const a = alfa[i]
-      for (let k = 0; k < 3; k++) {
-        const wyn = Math.min(255, Math.max(0, d[i * 4 + k] + przesuniecie[k]))
-        o[i * 4 + k] = o[i * 4 + k] * (1 - a) + wyn * a
-      }
+      for (let k = 0; k < 3; k++) d[i * 4 + k] = Math.min(255, Math.max(0, d[i * 4 + k] + przesuniecie[k]))
     }
-    calosc.g.putImageData(daneOrg, r.x, r.y)
-    return calosc.c.toDataURL('image/jpeg', 0.95)
+
+    // pomiar obiektu (bez poszerzenia maski) i współczynnik korekty
+    let skala = 1
+    let kotwica = { x: 0, y: 0 }
+    const alfaMiary = cel ? alfaZmiany(daneOrg as Piksele, daneWyn as Piksele, 0) : null
+    const ob = alfaMiary ? obwiednia(alfaMiary, r.w, r.h, 0.7) : null
+    if (cel && ob && ob.w > 8 && ob.h > 8) {
+      const rSzer = (cel.szer * r.w) / ob.w
+      const rWys = (cel.wys * r.h) / ob.h
+      const s = Math.sqrt(rSzer * rWys)
+      if (s < TOLERANCJA_MIN || s > TOLERANCJA_MAKS) skala = Math.min(KOREKTA_MAKS, Math.max(KOREKTA_MIN, s))
+      kotwica = { x: (ob.x0 + ob.x1) / 2, y: ob.y1 }
+      console.info('[canvas] skala obiektu', {
+        zmierzone: `${Math.round((ob.w / r.w) * 100)}%×${Math.round((ob.h / r.h) * 100)}% wycinka`,
+        cel: `${Math.round(cel.szer * 100)}%×${Math.round(cel.wys * 100)}%`,
+        korekta: Number(skala.toFixed(2)),
+      })
+    }
+
+    if (skala === 1) {
+      for (let i = 0; i < alfa.length; i++) {
+        const a = alfa[i]
+        for (let k = 0; k < 3; k++) o[i * 4 + k] = o[i * 4 + k] * (1 - a) + d[i * 4 + k] * a
+      }
+      calosc.g.putImageData(daneOrg, r.x, r.y)
+      return { src: calosc.c.toDataURL('image/jpeg', 0.95), skala }
+    }
+
+    // warstwa obiektu (RGB wyniku + alfa) skalowana względem podstawy obiektu
+    const warstwa = plotno(r.w, r.h)
+    const baza = plotno(r.w, r.h)
+    if (!warstwa || !baza) return null
+    const dane = new ImageData(new Uint8ClampedArray(d), r.w, r.h)
+    for (let i = 0; i < alfa.length; i++) dane.data[i * 4 + 3] = Math.round(alfa[i] * 255)
+    warstwa.g.putImageData(dane, 0, 0)
+    baza.g.putImageData(daneOrg, 0, 0)
+    baza.g.imageSmoothingQuality = 'high'
+    baza.g.setTransform(skala, 0, 0, skala, kotwica.x * (1 - skala), kotwica.y * (1 - skala))
+    baza.g.drawImage(warstwa.c, 0, 0)
+    baza.g.setTransform(1, 0, 0, 1, 0, 0)
+    calosc.g.drawImage(baza.c, r.x, r.y)
+    return { src: calosc.c.toDataURL('image/jpeg', 0.95), skala }
   } catch {
     return null
   }
