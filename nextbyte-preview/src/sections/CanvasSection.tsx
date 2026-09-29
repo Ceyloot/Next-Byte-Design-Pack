@@ -31,7 +31,7 @@ import {
   zaplanuj,
 } from '@/sections/canvas/dostawca'
 import { Plotno } from '@/sections/canvas/Plotno'
-import { INTENCJE, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
+import { INTENCJE, idZrodelNaPlotnie, wykryjIntencje, zbudujPolecenie } from '@/sections/canvas/polecenia'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
@@ -713,12 +713,15 @@ export function CanvasSection() {
 
       // Mała magentowa kropka w miejscu każdej wskazującej pineski (współrzędne
       // kropki idą też do PIN MAP). Chronione pineski zostają bez kropki.
+      // Źródło na obrazie docelowym nie dostaje kropki: model zostawiał ją na oryginalnym obiekcie.
+      const zrodlaNaCelu = idZrodelNaPlotnie(projekt.pineski, obrazy, trybAgenta, uklad.role)
+      const zrodloNaCelu = (p: Pineska) => zrodlaNaCelu.has(p.id)
       const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
         konwertujNaDataUrl(w.src).then(src =>
           narysujKropki(
             src,
             pineski
-              .filter(p => p.layerId === w.id && !p.chroniona)
+              .filter(p => p.layerId === w.id && !p.chroniona && !zrodloNaCelu(p))
               .map(p => ({ x: p.normalizedX, y: p.normalizedY })),
           ),
         )

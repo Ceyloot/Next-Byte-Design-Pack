@@ -158,7 +158,7 @@ STEPS:
 3. Draw the new object at its OWN real size (see SCALE), seen from the camera angle of Image 1, standing on the spot of the old one: footprint centred there, on the same surface plane, heading along the lines of that surface.
 4. Everything else in the photograph stays exactly as it is.
 
-[PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]
+[PIN MAP — pins are small magenta dots drawn on their images (a source object inside Image 1 is not marked: find it by its x / y and name); x / y = position in % from the left / top edge of that image]
 - Pin 1 · TARGET · Image 1 — "lamp" — dot at x=40%, y=60% — place: on the wooden side table next to the sofa
 - Pin 2 · SOURCE · Image 2 — "vase" — dot at x=50%, y=50% — size: height ≈ 35 cm
 
@@ -249,8 +249,8 @@ STEPS:
 4. If the source pin lies in Image 1, restore a clean plate there, as if the object had never stood at the old spot; if it lies in another image, only the object comes across and that photo is left out of the result.
 5. Everything else in Image 1 stays exactly as it is.
 
-[PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]
-- Pin 1 · SOURCE · Image 1 — "cottage" — dot at x=50%, y=30% — place: on the far meadow below the tree line
+[PIN MAP — pins are small magenta dots drawn on their images (a source object inside Image 1 is not marked: find it by its x / y and name); x / y = position in % from the left / top edge of that image]
+- Pin 1 · SOURCE · Image 1 — "cottage" — NOT marked with a dot — the object is at x=50%, y=30% — place: on the far meadow below the tree line
 - Pin 2 · TARGET · Image 1 — "path" — dot at x=50%, y=80% — place: on the dirt path in the foreground
 
 [SCALE — real-world size]

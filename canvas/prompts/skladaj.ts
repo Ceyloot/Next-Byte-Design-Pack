@@ -233,13 +233,15 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
         .filter(Boolean)
         .join('; ')
-      const wsp = `dot at x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
+      const xy = `x=${Math.round(p.x * 100)}%, y=${Math.round(p.y * 100)}%`
+      // Źródło leżące na obrazie docelowym nie ma kropki (zostałaby w wyniku) — wskazują je współrzędne i nazwa.
+      const wsp = p.rola === 'source' && p.obraz === 1 ? `NOT marked with a dot — the object is at ${xy}` : `dot at ${xy}`
       return `- Pin ${p.numer} · ${p.rola.toUpperCase()} · Image ${p.obraz}${nazwa ? ` — "${nazwa}"` : ''} — ${wsp}${
         szczegoly ? ` — ${szczegoly}` : ''
       }`
     })
   const sekcjaPinesek = liniePinesek.length
-    ? `[PIN MAP — each pin is a small magenta dot drawn on its image; x / y = the dot's position in % from the left / top edge of that image]\n${liniePinesek.join('\n')}`
+    ? `[PIN MAP — pins are small magenta dots drawn on their images (a source object inside Image 1 is not marked: find it by its x / y and name); x / y = position in % from the left / top edge of that image]\n${liniePinesek.join('\n')}`
     : ''
 
   // 5. SCENE DETAILS

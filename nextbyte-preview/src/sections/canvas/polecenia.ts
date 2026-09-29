@@ -313,6 +313,26 @@ export interface OpcjePolecenia {
   osoba?: boolean
 }
 
+/**
+ * Pineski-źródła, które leżą na obrazie docelowym (obiekt do zamiany/przeniesienia
+ * stoi już w Image 1). Nie dostają kropki — zostałaby w wyniku — więc wskazują je
+ * współrzędne i nazwa w PIN MAP.
+ */
+export function idZrodelNaPlotnie(
+  pineski: Pineska[],
+  obrazy: Warstwa[],
+  intencja: Intencja,
+  role: Record<number, string> = {},
+): Set<string> {
+  const wskazane = pineski.filter(p => !p.chroniona)
+  const wynik = new Set<string>()
+  for (const p of wskazane) {
+    const opis = rolaPineski(intencja, p, wskazane, obrazy, role[pineski.indexOf(p) + 1])
+    if (ROLA_ZRODLA.test(opis) && p.layerId === obrazy[0]?.id) wynik.add(p.id)
+  }
+  return wynik
+}
+
 /* ── Złożenie ────────────────────────────────────────────────────── */
 
 /**
