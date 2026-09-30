@@ -51,7 +51,7 @@ import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
-import { odciskPinesek, pytanieORole, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
+import { odciskPinesek, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
 import type { ObrazDlaAgenta } from '@/sections/canvas/agent-proxy'
 import {
@@ -633,15 +633,7 @@ export function CanvasSection() {
             ? await klasyfikujPineski(projekt.pineski, projekt.warstwy)
             : null
         uklad = ustalUklad(projekt.pineski, projekt.warstwy, intencja, rodzaje)
-        const uchwyty = projekt.pineski.filter(p => !p.chroniona)
-        const niejasne =
-          Object.keys(uklad.role).length === 0 &&
-          (intencja !== 'zamien' || (uchwyty.length === 2 && uchwyty[0].layerId === uchwyty[1].layerId))
-        const pytanie = niejasne ? pytanieORole(projekt.pineski, intencja) : null
-        if (pytanie) {
-          setStanGeneracji({ faza: 'pyta', pytanie })
-          return
-        }
+        // Bez pytania do użytkownika: gdy role są niejasne, rozstrzyga reżyser (widzi zdjęcia).
         if (Object.keys(uklad.role).length) powodRol = 'Po wyglądzie pinesek: jedna leży na rzeczy, druga na miejscu.'
       }
       // Zdjęcie-baza wskazane słowami („edytuj zdjęcie 1”) wygrywa z każdym domysłem.
