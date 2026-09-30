@@ -627,8 +627,8 @@ export function CanvasSection() {
   // Bez legendy mapy: do modelu idą same czyste zdjęcia, więc polecenie
   // nie może opisywać obrazu z celownikami, którego model nie dostaje.
   const polecenie = useMemo(
-    () => zbudujPolecenie(plan?.polecenieEn || projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
-    [plan?.polecenieEn, projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
+    () => zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
+    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
   )
 
   const uwagi = useMemo(
