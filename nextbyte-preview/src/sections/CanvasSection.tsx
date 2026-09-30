@@ -911,12 +911,12 @@ export function CanvasSection() {
         const nrCel = projekt.pineski.findIndex(p => p.id === pinCelKadr.id) + 1
         const nazwaZr = plan?.odznaki?.[nrZr] || etykietaPineski(pinZr, nrZr)
         const f = (n: number) => n.toFixed(2)
-        const polecenieUsun = `Remove the ${nazwaZr} marked by the small magenta dot in Image 1 (at x=${f(pinZr.normalizedX)} y=${f(pinZr.normalizedY)}, x from the left edge, y from the top edge, 0–1) completely — the whole object under the dot, together with its shadow — and rebuild that spot naturally as the surroundings that would be there without it; the dot disappears with it. Remove only that one object. Everything else stays pixel-identical: the same colours, white balance, exposure, contrast, saturation and sharpness — no regrading, no enhancement.`
+        const polecenieUsun = `Remove the ${nazwaZr} at x=${f(pinZr.normalizedX)} y=${f(pinZr.normalizedY)} of Image 1 (x from the left edge, y from the top edge, 0–1) completely, together with its shadow, and rebuild that spot naturally as the surroundings that would be there without it. Remove only that one object; everything else in the photo stays exactly the same.`
         setOstatniPrompt(`[KROK 1 — usunięcie]\n${polecenieUsun}`)
         const krok1 = await generuj({
           ...ustawieniaModelu,
           polecenie: polecenieUsun,
-          obrazy: [await narysujKropki(await konwertujNaDataUrl(zrodlo.src), [{ x: pinZr.normalizedX, y: pinZr.normalizedY }])],
+          obrazy: [await konwertujNaDataUrl(zrodlo.src)],
           szerokosc: zrodlo.naturalWidth,
           wysokosc: zrodlo.naturalHeight,
         })
