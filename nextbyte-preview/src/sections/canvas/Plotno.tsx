@@ -31,6 +31,8 @@ interface Props {
   intencja?: string | null
   onZaladujDemo?: () => void
   onOtworzDodawanie?: () => void
+  /** prawy klik na zdjęciu — menu kontekstowe (pozycja w px okna) */
+  onMenuWarstwy?: (id: string, x: number, y: number) => void
 }
 
 type Uchwyt = 'nw' | 'ne' | 'se' | 'sw'
@@ -91,6 +93,7 @@ export function Plotno({
   intencja,
   onZaladujDemo,
   onOtworzDodawanie,
+  onMenuWarstwy,
 }: Props) {
   const refKontener = useRef<HTMLDivElement>(null)
   const refOperacja = useRef<Operacja | null>(null)
@@ -399,7 +402,17 @@ export function Plotno({
           return (
             <div
               key={warstwa.id}
-              onPointerDown={e => naWarstwieWDol(e, warstwa)}
+              onPointerDown={e => {
+                if (e.button === 2) return
+                naWarstwieWDol(e, warstwa)
+              }}
+              onContextMenu={e => {
+                if (!onMenuWarstwy) return
+                e.preventDefault()
+                e.stopPropagation()
+                onWybierzWarstwe(warstwa.id)
+                onMenuWarstwy(warstwa.id, e.clientX, e.clientY)
+              }}
               style={{
                 position: 'absolute',
                 left: warstwa.x,

@@ -89,6 +89,11 @@ import {
 const GENERUJ_NA_WYCINKU = false
 /** WYŁĄCZONE: żadnej obróbki pikseli po generacji poza dopasowaniem formatu. */
 const POSTPROCES_ZIARNA = false
+/**
+ * WYŁĄCZONE: automatyczny drugi strzał do modelu (korekta rozmiaru/pozycji i polish pass).
+ * Jedno „Generuj” = jedna generacja; pomiar zostaje tylko w ocenie.
+ */
+const DRUGI_PRZEBIEG = false
 
 const KLUCZ_ZAPISU = 'nb-canvas-projekt-v2'
 
@@ -398,6 +403,60 @@ export function CanvasSection() {
     setWybranaWarstwa(s => (s === id ? null : s))
   }, [])
 
+  /* ── Menu kontekstowe zdjęcia (prawy klik) ─────────────────────── */
+
+  const [menuWarstwy, setMenuWarstwy] = useState<{ id: string; x: number; y: number } | null>(null)
+  useEffect(() => {
+    if (!menuWarstwy) return
+    const zamknij = () => setMenuWarstwy(null)
+    const naKlawisz = (e: KeyboardEvent) => e.key === 'Escape' && zamknij()
+    window.addEventListener('pointerdown', zamknij)
+    window.addEventListener('keydown', naKlawisz)
+    window.addEventListener('resize', zamknij)
+    return () => {
+      window.removeEventListener('pointerdown', zamknij)
+      window.removeEventListener('keydown', naKlawisz)
+      window.removeEventListener('resize', zamknij)
+    }
+  }, [menuWarstwy])
+
+  const akcjaWarstwy = useCallback(
+    (id: string, akcja: 'duplikuj' | 'pobierz' | 'wierzch' | 'spod' | 'blokada' | 'ukryj' | 'usun') => {
+      const w = projekt.warstwy.find(x => x.id === id)
+      setMenuWarstwy(null)
+      if (!w) return
+      if (akcja === 'usun') return usunWarstwe(id)
+      if (akcja === 'pobierz') {
+        const a = document.createElement('a')
+        a.href = w.src
+        a.download = `${w.name || 'zdjecie'}.jpg`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        return
+      }
+      setProjekt(p => {
+        const reszta = p.warstwy.filter(x => x.id !== id)
+        switch (akcja) {
+          case 'duplikuj': {
+            const kopia = { ...w, id: nowyId('w'), x: w.x + 32, y: w.y + 32, name: `${w.name} (kopia)`, locked: false }
+            return { ...p, warstwy: [...p.warstwy, kopia] }
+          }
+          case 'wierzch':
+            return { ...p, warstwy: [...reszta, w] }
+          case 'spod':
+            return { ...p, warstwy: [w, ...reszta] }
+          case 'blokada':
+            return { ...p, warstwy: p.warstwy.map(x => (x.id === id ? { ...x, locked: !x.locked } : x)) }
+          case 'ukryj':
+            return { ...p, warstwy: p.warstwy.map(x => (x.id === id ? { ...x, visible: false } : x)) }
+        }
+        return p
+      })
+    },
+    [projekt.warstwy, usunWarstwe],
+  )
+
   /* ── Pineski (Obsługa od 1 do 10 pinesek) ────────────────────────── */
 
   const wbijPineske = useCallback(
@@ -543,8 +602,11 @@ export function CanvasSection() {
   const odpowiedzRol = useRef<{ odcisk: string; opcja: OpcjaRol } | null>(null)
 
   /* Uruchomienie generacji z Nano-Banana */
+  // Blokada: drugi klik / Enter w trakcie generacji nie odpala kolejnej
+  const refGeneruje = useRef(false)
   const uruchomGeneracje = useCallback(async () => {
-    if (!warstwaZrodlowa) return
+    if (!warstwaZrodlowa || refGeneruje.current) return
+    refGeneruje.current = true
     setStanGeneracji({ faza: 'planuje' })
 
     try {
@@ -856,8 +918,8 @@ export function CanvasSection() {
       }
 
       let pomiar = await ocenPomiar(wynik.obrazUrl)
-      if (pomiar?.bledy.length) {
-        console.info('[canvas] pomiar wyniku:', pomiar)
+      if (pomiar?.bledy.length) console.info('[canvas] pomiar wyniku:', pomiar)
+      if (DRUGI_PRZEBIEG && pomiar?.bledy.length) {
         dodajZeZrodla(wynik.obrazUrl, `${nazwa}_proba1`, 'wynik', zrodlo)
         setStanGeneracji({ faza: 'koryguje', wynik: { ...wynik, nazwa, opis: '' }, powod: pomiar.bledy.join('; ') })
         try {
@@ -948,7 +1010,7 @@ export function CanvasSection() {
       // Model dostaje wynik i czysty oryginał jako wzorzec; generuje cały kadr, bez masek.
       let ocenaPoPoprawce = ocenaKoncowa
       const warto = ['wstaw', 'przenies', 'zamien', 'postac', 'ubranie'].includes(trybAgenta)
-      if (ocenaKoncowa?.wklejone && !bezZmian && warto) {
+      if (DRUGI_PRZEBIEG && ocenaKoncowa?.wklejone && !bezZmian && warto) {
         setStanGeneracji({ faza: 'poprawia', wynik: gotowy })
         try {
           const pinElementu = pinZrodlowy ?? pinDocelowy
@@ -1000,6 +1062,8 @@ export function CanvasSection() {
         faza: 'blad',
         tresc: e instanceof Error ? e.message : 'Wystąpił błąd podczas generacji obrazu.',
       })
+    } finally {
+      refGeneruje.current = false
     }
   }, [
     warstwaZrodlowa,
@@ -1142,7 +1206,55 @@ export function CanvasSection() {
         onZmienRamke={ramka => setProjekt(p => ({ ...p, ramka }))}
         intencja={intencja}
         onOtworzDodawanie={() => refPlik.current?.click()}
+        onMenuWarstwy={(id, x, y) => setMenuWarstwy({ id, x, y })}
       />
+
+      {/* ══ Menu kontekstowe zdjęcia (prawy klik) ══ */}
+      {menuWarstwy &&
+        (() => {
+          const w = projekt.warstwy.find(x => x.id === menuWarstwy.id)
+          if (!w) return null
+          const pozycje: { akcja: Parameters<typeof akcjaWarstwy>[1]; etykieta: string; niebezpieczna?: boolean }[] = [
+            { akcja: 'duplikuj', etykieta: 'Duplikuj' },
+            { akcja: 'pobierz', etykieta: 'Pobierz' },
+            { akcja: 'wierzch', etykieta: 'Na wierzch' },
+            { akcja: 'spod', etykieta: 'Na spód' },
+            { akcja: 'blokada', etykieta: w.locked ? 'Odblokuj' : 'Zablokuj' },
+            { akcja: 'ukryj', etykieta: 'Ukryj' },
+            { akcja: 'usun', etykieta: 'Usuń zdjęcie', niebezpieczna: true },
+          ]
+          return (
+            <div
+              role="menu"
+              aria-label={`Opcje zdjęcia ${w.name}`}
+              onPointerDown={e => e.stopPropagation()}
+              onContextMenu={e => e.preventDefault()}
+              className="fixed z-50 min-w-[170px] rounded-xl border border-foreground/10 bg-card/90 p-1 shadow-[0_12px_32px_-8px_hsl(0_0%_0%/0.35)] backdrop-blur-xl"
+              style={{
+                left: Math.min(menuWarstwy.x, window.innerWidth - 190),
+                top: Math.min(menuWarstwy.y, window.innerHeight - 290),
+              }}
+            >
+              <p className="truncate px-2.5 pb-1 pt-1.5 text-[10px] font-medium text-muted-foreground">{w.name}</p>
+              {pozycje.map(({ akcja, etykieta, niebezpieczna }) => (
+                <button
+                  key={akcja}
+                  role="menuitem"
+                  type="button"
+                  onClick={() => akcjaWarstwy(w.id, akcja)}
+                  className={cn(
+                    'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors',
+                    niebezpieczna
+                      ? 'text-destructive hover:bg-destructive/10'
+                      : 'text-foreground hover:bg-foreground/[0.07]',
+                  )}
+                >
+                  {etykieta}
+                </button>
+              ))}
+            </div>
+          )
+        })()}
 
       {/* ══ Karta zaznaczonego obiektu na płótnie ══ */}
       {kartaPozycja && (
