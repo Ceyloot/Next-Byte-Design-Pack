@@ -899,62 +899,13 @@ export function CanvasSection() {
         setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
       }
 
-      // Przeniesienie w obrębie jednego zdjęcia = DWA kroki (jeden prompt „usuń tu, dodaj tam”
-      // model przerabiał na podmianę w miejscu): 1) usuń obiekt przy pineske źródłowej,
-      // 2) wstaw go z zbliżenia oryginału w miejsce docelowe — jak zwykłe wstawienie z drugiego zdjęcia.
-      const pinCelKadr = pineskiPolecenia.find(
-        p => p.layerId === obrazyPolecenia[0]?.id && !p.chroniona && !zrodloNaCelu(p),
-      )
-      let wynik: Awaited<ReturnType<typeof generuj>>
-      if (przeniesienieWKadrze && pinZr && pinCelKadr && zblizenie) {
-        const nrZr = projekt.pineski.findIndex(p => p.id === pinZr.id) + 1
-        const nrCel = projekt.pineski.findIndex(p => p.id === pinCelKadr.id) + 1
-        const nazwaZr = plan?.odznaki?.[nrZr] || etykietaPineski(pinZr, nrZr)
-        const f = (n: number) => n.toFixed(2)
-        const polecenieUsun = `Remove the ${nazwaZr} at x=${f(pinZr.normalizedX)} y=${f(pinZr.normalizedY)} of Image 1 (x from the left edge, y from the top edge, 0–1) completely, together with its shadow, and rebuild that spot naturally as the surroundings that would be there without it. Remove only that one object; everything else in the photo stays exactly the same.`
-        setOstatniPrompt(`[KROK 1 — usunięcie]\n${polecenieUsun}`)
-        const krok1 = await generuj({
-          ...ustawieniaModelu,
-          polecenie: polecenieUsun,
-          obrazy: [await konwertujNaDataUrl(zrodlo.src)],
-          szerokosc: zrodlo.naturalWidth,
-          wysokosc: zrodlo.naturalHeight,
-        })
-        const scena1 = await dopasujFormatDoObrazu(krok1.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
-
-        const warstwaSceny: Warstwa = { ...zrodlo, id: `${zrodlo.id}-krok1`, src: scena1 }
-        const warstwaObiektu: Warstwa = { ...zrodlo, id: `${zrodlo.id}-obiekt`, src: zblizenie, name: `${zrodlo.name}-obiekt` }
-        const pinObiekt: Pineska = { ...pinZr, id: `${pinZr.id}-obiekt`, layerId: warstwaObiektu.id, normalizedX: 0.5, normalizedY: 0.5 }
-        const pinMiejsce: Pineska = { ...pinCelKadr, layerId: warstwaSceny.id }
-        const zadanie2 = zbudujZadanieModelu(projekt.tekst, [pinObiekt, pinMiejsce], [warstwaSceny, warstwaObiektu], 'wstaw', {
-          role: { 1: 'SOURCE', 2: 'DESTINATION' },
-          osoba: plan?.osoba,
-          odznaki: { 1: nazwaZr, 2: plan?.odznaki?.[nrCel] ?? etykietaPineski(pinCelKadr, nrCel) },
-          swiatlo: plan?.swiatlo,
-        })
-        const polecenie2 = (zadanie2?.prompt ?? '').replace(
-          'the images carry no markers.',
-          'the only marker is a small magenta dot at the destination in Image 1, which the object covers; Image 2 is a close-up of the exact object to insert.',
-        )
-        setOstatniPrompt(`[KROK 1 — usunięcie]\n${polecenieUsun}\n\n[KROK 2 — wstawienie]\n${polecenie2}`)
-        const krok2 = await generuj({
-          system: zadanie2?.system,
-          temperatura: zadanie2?.temperatura,
-          polecenie: polecenie2,
-          obrazy: [await narysujKropki(scena1, [{ x: pinCelKadr.normalizedX, y: pinCelKadr.normalizedY }]), zblizenie],
-          szerokosc: zrodlo.naturalWidth,
-          wysokosc: zrodlo.naturalHeight,
-        })
-        wynik = { ...krok2, kosztUSD: (krok1.kosztUSD ?? 0) + (krok2.kosztUSD ?? 0) }
-      } else {
-        wynik = await generuj({
-          ...ustawieniaModelu,
-          polecenie: polecenieModelu,
-          obrazy: obrazyDoModelu,
-          szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
-          wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
-        })
-      }
+      let wynik = await generuj({
+        ...ustawieniaModelu,
+        polecenie: polecenieModelu,
+        obrazy: obrazyDoModelu,
+        szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
+        wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
+      })
 
       if (warstwaWycinka && wycinek) {
         // rozmiar od reżysera (ułamek zdjęcia docelowego) → ułamek wycinka
