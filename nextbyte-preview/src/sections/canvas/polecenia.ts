@@ -290,6 +290,8 @@ export interface OpcjePolecenia {
   osoba?: boolean
   /** numer pineski → krótki opis od Gemini, odróżniający obiekt od podobnych („zielony hatchback, lewy z dwóch”) */
   odznaki?: Record<number, string>
+  /** światło i kamera zdjęcia docelowego zmierzone przez reżysera */
+  swiatlo?: string
 }
 
 /** Operacje na człowieku — idą modelem postaci (RUNWARE_MODEL_POSTAC). */
@@ -342,7 +344,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {} } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -398,6 +400,7 @@ export function zbudujZadanieModelu(
     operacja,
     pineski: pineskiSklejka,
     obrazy: obrazyWejscia,
+    swiatlo,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,
       obraz: numerObrazu(p),

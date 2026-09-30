@@ -58,6 +58,8 @@ export interface SkladajWejscie {
   pineski: PineskaSklejka[]
   /** obrazy w kolejności wysyłki do generatora (pierwszy = docelowy) */
   obrazy: ObrazWejscia[]
+  /** zmierzone przez reżysera światło i kamera zdjęcia docelowego (EN) */
+  swiatlo?: string
   /** opis sceny z analizy Gemini (pipeline w canvas/lib) — nazwy pinesek */
   opis?: OpisSceny
   pineskiChronione?: ObszarChroniony[]
@@ -252,7 +254,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
   const kropki = w.pineski.length ? 'The small magenta dots are guides only and must not appear in the result.' : ''
-  const sekcjaRegul = ['[RULES]', ...bricki.map((b) => podmien(b.tekst)), kropki].filter(Boolean).join('\n')
+  const swiatlo = w.swiatlo?.trim()
+    ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
+    : ''
+  const sekcjaRegul = ['[RULES]', swiatlo, ...bricki.map((b) => podmien(b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },

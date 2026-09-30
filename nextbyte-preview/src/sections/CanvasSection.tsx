@@ -786,11 +786,12 @@ export function CanvasSection() {
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
 
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
-      // Rozmiar, światło i kierunek nie idą do promptu — służą tylko do pomiaru po generacji.
+      // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         role: uklad.role,
         osoba: plan?.osoba,
         odznaki: plan?.odznaki,
+        swiatlo: plan?.swiatlo,
       })
       const pelnePolecenie = zadanieModelu?.prompt ?? ''
       const ustawieniaModelu = {
