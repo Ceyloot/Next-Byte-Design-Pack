@@ -253,7 +253,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
   const kropki = w.pineski.length
-    ? 'Pin positions are given as x / y fractions of the image (x from the left edge, y from the top edge, 0–1); the images carry no markers.'
+    ? 'Pin positions are given as x / y fractions of the image (x from the left edge, y from the top edge, 0–1); Image 1 and the references carry no markers.'
     : ''
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`

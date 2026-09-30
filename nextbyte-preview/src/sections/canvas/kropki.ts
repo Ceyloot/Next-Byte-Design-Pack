@@ -16,7 +16,7 @@ export function promienKropki(szer: number, wys: number): number {
 }
 
 /** Zwraca kopię obrazu z kropkami (data URI, pełna rozdzielczość). Przy błędzie — obraz bez zmian. */
-export function narysujKropki(src: string, punkty: PunktKropki[]): Promise<string> {
+export function narysujKropki(src: string, punkty: PunktKropki[], pierscien = false): Promise<string> {
   if (!punkty.length) return Promise.resolve(src)
   return new Promise(resolve => {
     const obraz = new Image()
@@ -31,8 +31,19 @@ export function narysujKropki(src: string, punkty: PunktKropki[]): Promise<strin
         g.drawImage(obraz, 0, 0)
         const r = promienKropki(plotno.width, plotno.height)
         for (const p of punkty) {
+          const cx = p.x * plotno.width
+          const cy = p.y * plotno.height
+          if (pierscien) {
+            // wyraźne kółko + kropka — tylko na mapie pozycji, nie na scenie
+            const R = r * 6
+            g.lineWidth = Math.max(3, r * 0.9)
+            g.strokeStyle = '#FF00FF'
+            g.beginPath()
+            g.arc(cx, cy, R, 0, Math.PI * 2)
+            g.stroke()
+          }
           g.beginPath()
-          g.arc(p.x * plotno.width, p.y * plotno.height, r, 0, Math.PI * 2)
+          g.arc(cx, cy, r * (pierscien ? 1.5 : 1), 0, Math.PI * 2)
           g.fillStyle = '#FF00FF'
           g.fill()
         }
