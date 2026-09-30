@@ -1,3 +1,4 @@
+import { ZABLOKOWANY_MODEL_POSTACI } from './prompty/zablokowane/character-swap'
 /**
  * Proxy do Runware jako wtyczka Vite.
  *
@@ -129,8 +130,8 @@ export function runwareProxy(): Plugin {
         if (!zadanie.obrazy?.length) return odpowiedz(400, { blad: 'Brak obrazu wejściowego' })
 
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
-        // Operacje na ludziach (zamiana osoby / twarzy, przeniesienie postaci) — Gemini 3.1; Lite ich nie wykonuje.
-        const modelZadania = zadanie.klasa === 'postac' ? 'google:4@3' : model
+        // Operacje na ludziach — Gemini 3.1. Character swap: ZABLOKOWANY_MODEL_POSTACI (zablokowane/character-swap.ts), nie zmieniać.
+        const modelZadania = zadanie.klasa === 'postac' ? ZABLOKOWANY_MODEL_POSTACI : model
         console.info(`[canvas] generacja modelem ${modelZadania}`)
 
         // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.

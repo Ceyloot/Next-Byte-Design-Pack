@@ -16,18 +16,22 @@
  * Tokeny w brickach i operacjach:
  *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{DONOR_ROLE}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
  */
+import {
+  ZABLOKOWANA_SWAP_KONTROLA,
+  ZABLOKOWANA_SWAP_TEMPERATURA,
+  ZABLOKOWANY_BRICK_CZLOWIEK,
+  ZABLOKOWANY_SWAP_SYSTEM,
+  zablokowanaSwapBaza,
+  zablokowanaSwapBazaUbranieSceny,
+} from './zablokowane/character-swap'
 import type { BrickId, ObrazWejscia, OperationId, OpisSceny, RolaPineski, WymaganieDawcy } from './types'
 import { getOperation } from './operacje'
 import { BRICKS } from './bricks'
 import {
   STUDIO_FACE_KONTROLA,
   STUDIO_FACE_SYSTEM,
-  STUDIO_SWAP_KONTROLA,
-  STUDIO_SWAP_SYSTEM,
   SYSTEM_KOMPOZYTORA,
   studioFaceBaza,
-  studioSwapBaza,
-  studioSwapBazaUbranieSceny,
 } from './operacje/character-swap-studio'
 
 /** Pineska w układzie wysyłki do generatora (numer obrazu: 1 = docelowy). */
@@ -223,9 +227,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       refs.length > 1
         ? `the character reference images (Images ${refs.map((r) => r.numer).join(', ')}, all showing the SAME person from different angles)`
         : `the character reference image (Image ${refs[0]?.numer ?? 2})`
-    zadanie = `${(w.ubranieZeSceny ? studioSwapBazaUbranieSceny : studioSwapBaza)(opisRefs, 'Image 1')}\n${STUDIO_SWAP_KONTROLA}`
-    system = STUDIO_SWAP_SYSTEM
-    temperatura = 0.45
+    // ZABLOKOWANE (zablokowane/character-swap.ts) — nie zmieniać bez prośby użytkownika.
+    zadanie = `${(w.ubranieZeSceny ? zablokowanaSwapBazaUbranieSceny : zablokowanaSwapBaza)(opisRefs, 'Image 1')}\n${ZABLOKOWANA_SWAP_KONTROLA}`
+    system = ZABLOKOWANY_SWAP_SYSTEM
+    temperatura = ZABLOKOWANA_SWAP_TEMPERATURA
   } else if (op.gotowy === 'studio-face-swap') {
     const refs = w.obrazy.filter((o) => o.rola === 'donor').map((o) => o.numer)
     zadanie = `${studioFaceBaza('Image 1', refs.length > 1 ? `Images ${refs.join(', ')}` : `Image ${refs[0] ?? 2}`, Math.max(1, refs.length))}\n${STUDIO_FACE_KONTROLA}`
@@ -269,7 +274,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
-  const sekcjaRegul = ['[RULES]', swiatlo, ...bricki.map((b) => podmien(b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', swiatlo, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },

@@ -196,3 +196,9 @@ Gdy przystępujesz do czyszczenia pozostałych plików platformy (np. Chat AI, U
 > [!CAUTION]
 > **Nie dotykaj kolorów tożsamości!**
 > Kolory modułów (firmowy fiolet Studia Zdjęć, szmaragd zadań w wyszukiwarce) są danymi tożsamościowymi, a nie motywem interfejsu. Nie zamieniaj ich na tokeny motywu, chyba że użytkownik wprost o to poprosi.
+
+---
+
+## 6. Zablokowane w Canvas (nie zmieniać bez wyraźnej prośby użytkownika)
+
+- **Character swap (dwa różne zdjęcia: scena + referencja postaci)** — prompt, system, kontrola, brick „Człowiek”, temperatura i model są zamrożone w `nextbyte-preview/src/sections/canvas/prompty/zablokowane/character-swap.ts`. Zatwierdzone przez użytkownika jako działające. Nie edytuj tego pliku ani nie podpinaj character swapu z powrotem pod wspólne bricki, dopóki użytkownik wprost nie poprosi o zmianę character swapu.

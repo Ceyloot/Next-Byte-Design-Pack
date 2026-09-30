@@ -1,6 +1,7 @@
 import type { Operation } from '../types'
 
-/** Zamiana całej postaci (tożsamość + ciało + ubiór) na inną. */
+/** Zamiana całej postaci (tożsamość + ciało + ubiór) na inną.
+ *  ZABLOKOWANE: prompt i bricki character swapu są zamrożone w prompty/zablokowane/character-swap.ts — nie zmieniać bez prośby użytkownika. */
 export const CHARACTER_SWAP: Operation = {
   id: 'character_swap',
   nazwa: 'Zamień postać',
