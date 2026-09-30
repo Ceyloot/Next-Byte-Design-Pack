@@ -859,7 +859,7 @@ export function CanvasSection() {
       // (kropka zostawała w wyniku). Zmienna KROPKI_NA_ZDJECIACH przywraca kropki.
       // Przeniesienie w obrębie jednego zdjęcia: model gubił miejsce docelowe podane samymi
       // współrzędnymi, więc tylko wtedy miejsce docelowe dostaje kropkę (obiekt ją zakrywa).
-      const przeniesienieWKadrze = ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('Make TWO changes')
+      const przeniesienieWKadrze = ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
       const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
         konwertujNaDataUrl(w.src).then(src =>
           KROPKI_NA_ZDJECIACH || przeniesienieWKadrze
@@ -876,7 +876,7 @@ export function CanvasSection() {
       // (Image 1 ma kropkę w miejscu docelowym) — model wie dokładnie, KTÓRY obiekt i DOKĄD.
       const pinZr = pineskiPolecenia.find(p => zrodloNaCelu(p))
       const zblizenie =
-        pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('Make TWO changes')
+        pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
           ? await narysujKropki(await konwertujNaDataUrl(zrodlo.src), [{ x: pinZr.normalizedX, y: pinZr.normalizedY }])
           : null
       const obrazyDoModelu = [
@@ -885,8 +885,8 @@ export function CanvasSection() {
       ]
       const polecenieModelu = (zblizenie
         ? pelnePolecenie.replace(
-            'Make TWO changes in Image 1 and nothing else:',
-            `Make TWO changes in Image 1 and nothing else. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
+            'MOVE within Image 1:',
+            `MOVE within Image 1. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
           )
         : pelnePolecenie
       ).replace(

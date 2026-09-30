@@ -233,14 +233,12 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     temperatura = 0.42
   } else if ((op.id === 'object_transfer' || op.id === 'character_transfer' || op.id === 'object_swap') && zrodlo?.obraz === 1 && cel?.obraz === 1) {
     // Przeniesienie w obrębie JEDNEGO zdjęcia: „move” model czyta jako „popraw w miejscu”.
-    // Rozpisujemy to na dwie jawne zmiany w tym samym kadrze: usuń tu, narysuj tam.
+    // Proste „przenieś” + naturalne wypełnienie miejsca, które obiekt opuścił.
     const co = zrodlo.nazwa ? `the ${zrodlo.nazwa}` : 'the object'
     zadanie = [
-      `Make TWO changes in Image 1 and nothing else:`,
-      `1. REMOVE ${co} at ${opisPineski(zrodlo)} completely, with its shadow — rebuild that spot as the plain ground, grass and path that would be there without it.`,
-      `2. ADD the very same ${co.replace(/^the /, '')} at ${opisPineski(cel)}: identical design, shape, roof or body, materials and colours as the one you removed (look at it in Image 1 before removing it), standing on the ground at that point, resized for its new distance from the camera (closer = larger, farther = smaller), seen from Image 1's camera.`,
-      ...(op.id === 'object_swap' ? [`What is at ${opisPineski(cel)} now is replaced by it and disappears.`] : []),
-      `The result shows it exactly once — at the new spot only. The two spots are different places; nothing else in the photo changes.`,
+      `MOVE within Image 1:`,
+      `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — the same object, keeping its look and real proportions, sized for its new distance from the camera and seen from Image 1's camera.`,
+      `Afterwards the spot it left is filled naturally with what would be there without it, continuing the surroundings, so nobody could tell anything ever stood there. It appears exactly once; nothing else in the photo changes.`,
     ].join('\n')
     system = SYSTEM_KOMPOZYTORA
     temperatura = TEMPERATURA_OBIEKTU
