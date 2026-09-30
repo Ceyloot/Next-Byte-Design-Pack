@@ -16,7 +16,7 @@ export const OBJECT_TRANSFER: Operation = {
   ],
   dawca: 'opcjonalny',
   czystaPlyta: true,
-  misja: `Move the whole object from {{PIN_SOURCE}} so that it stands exactly on the magenta dot of {{PIN_TARGET}}, keeping its real proportions and looking as natural as possible. It is the same object, re-photographed in this scene, and it appears exactly once.`,
+  misja: `Move the whole object from {{PIN_SOURCE}} so that it stands exactly at the x / y point of {{PIN_TARGET}}, keeping its real proportions and looking as natural as possible. It is the same object, re-photographed in this scene, and it appears exactly once.`,
   kroki: [
     `Take the object WHOLE (not only the part under its pin) and keep its identity: shape, real 3D proportions (length, width and height relate exactly as in reality), material, colour, markings and surface condition. Its 2D silhouette is NOT kept: it is re-rendered as the target camera sees it at its new heading, so the visible faces and outline differ from the donor photo whenever the camera or heading differs.`,
     `Set its size by the real world, not by the donor photo: judge it against neighbours of known size at the destination (see SCALE) — a framing that fills the donor photo says nothing about how large it is here. Farther from the camera means smaller along the same vanishing lines, closer means larger.`,
