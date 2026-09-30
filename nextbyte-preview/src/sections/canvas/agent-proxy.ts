@@ -71,9 +71,7 @@ export interface Plan {
   swiatlo?: string
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
-  /** polecenie użytkownika po angielsku (do [USER] promptu obrazu) */
-  polecenieEn?: string
-  /** krótki opis każdej pineski odróżniający ją od podobnych obiektów (po angielsku) */
+  /** krótki opis każdej pineski odróżniający ją od podobnych obiektów (po polsku) */
   odznaki?: Record<number, string>
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
   obszar?: Prostokat
@@ -383,7 +381,6 @@ export function agentProxy(): Plugin {
         swiatlo: odczytany.swiatlo || undefined,
         miejsca: miejscaZPlanu(odczytany),
         odznaki: odznakiZPlanu(odczytany),
-        polecenieEn: odczytany.polecenieEn,
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,
         kosztTokenow: tokeny,

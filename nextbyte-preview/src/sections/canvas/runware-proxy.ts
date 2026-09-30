@@ -106,7 +106,7 @@ export function runwareProxy(): Plugin {
   let klucz = ''
   let kluczGemini = ''
   /** Jeden model dla wszystkiego: Nano Banana 2 Lite. Zmienne RUNWARE_MODEL* w .env.local są ignorowane. */
-  const model = 'google:nano-banana@2-lite' // obiekty: Lite (tak działało w b3797e7); ludzie: Gemini 3.1 niżej
+  const model = 'google:nano-banana@2-lite' // na testy Lite; Nano Banana 2 (Gemini 3.1): 'google:4@3'
 
   const obsluz = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use(SCIEZKA, async (req, res) => {
@@ -129,8 +129,7 @@ export function runwareProxy(): Plugin {
         if (!zadanie.obrazy?.length) return odpowiedz(400, { blad: 'Brak obrazu wejściowego' })
 
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
-        // Operacje na ludziach (zamiana osoby / twarzy, przeniesienie postaci) — Gemini 3.1; Lite ich nie wykonuje.
-        const modelZadania = zadanie.klasa === 'postac' ? 'google:4@3' : model
+        const modelZadania = model
         console.info(`[canvas] generacja modelem ${modelZadania}`)
 
         // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.
