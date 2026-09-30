@@ -896,10 +896,10 @@
   - [x] T1 samochód → inny samochód (dwa zdjęcia)
   - [ ] T2 obiekt → obiekt innej wielkości (np. samochód → mały samolot / motocykl)
   - [ ] T3 obiekt w pomieszczeniu (np. lampa na stole → wazon z drugiego zdjęcia)
-- [ ] Object transfer — przenieś obiekt z jednego zdjęcia na drugie z zachowaniem proporcji, `canvas/prompts/operacje/object-transfer.ts` (testy: 0/3)
-  - [ ] T1 samochód z drugiego zdjęcia na podjazd / drogę (widok z góry)
-  - [ ] T2 mały obiekt z drugiego zdjęcia na stół / półkę (np. kubek, lampka)
-  - [ ] T3 przeniesienie w obrębie jednego zdjęcia (np. ławka / samochód bliżej kamery) — stare miejsce odbudowane
+- [x] Object transfer — przenieś obiekt z jednego zdjęcia na drugie z zachowaniem proporcji, `canvas/prompts/operacje/object-transfer.ts` (testy: 3/3)
+  - [x] T1 samochód z drugiego zdjęcia na podjazd / drogę (widok z góry)
+  - [x] T2 mały obiekt z drugiego zdjęcia na powierzchnię (kaczka na grzejniku)
+  - [x] T3 przeniesienie w obrębie jednego zdjęcia (domek na zbocze) — stare miejsce odbudowane
 - [x] Pinezka = mała magentowa kropka + współrzędne w PIN MAP
 - [x] Skala od Gemini (obwiednia obiektu) + korekta po generacji (wstaw / przenieś; nie przy zamianie)
 - [x] Zapis projektu ze zdjęciami w IndexedDB
