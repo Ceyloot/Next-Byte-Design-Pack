@@ -869,11 +869,30 @@ export function CanvasSection() {
             : src,
         )
       const czyste = await Promise.all(obrazyPolecenia.map(w => zKropkami(w, pineskiPolecenia)))
-      const obrazyDoModelu = plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste
+      // Przeniesienie w obrębie jednego zdjęcia: zbliżenie obiektu (wycinek Image 1 wokół
+      // pineski źródłowej) jako dodatkowy obraz — model wie dokładnie, KTÓRY obiekt przenieść.
+      const pinZr = pineskiPolecenia.find(p => zrodloNaCelu(p))
+      const zblizenie =
+        pinZr && ['przenies'].includes(trybAgenta) && pelnePolecenie.includes('Make TWO changes')
+          ? await wytnijOkolice(czyste[0], pinZr.normalizedX, pinZr.normalizedY, 512, 0.2)
+          : null
+      const obrazyDoModelu = [
+        ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
+        ...(zblizenie ? [zblizenie] : []),
+      ]
+      const polecenieModelu = zblizenie
+        ? pelnePolecenie.replace(
+            'Make TWO changes in Image 1 and nothing else:',
+            `Make TWO changes in Image 1 and nothing else. Image ${obrazyDoModelu.length} is a close-up crop of Image 1 centred on the object to move — that exact object and only it (not its neighbours):`,
+          )
+        : pelnePolecenie
+      if (zblizenie) {
+        setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
+      }
 
       let wynik = await generuj({
         ...ustawieniaModelu,
-        polecenie: pelnePolecenie,
+        polecenie: polecenieModelu,
         obrazy: obrazyDoModelu,
         szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
         wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
