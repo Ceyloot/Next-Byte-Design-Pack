@@ -838,6 +838,11 @@ export function CanvasSection() {
         osoba: plan?.osoba,
         odznaki: plan?.odznaki,
         swiatlo: plan?.swiatlo,
+        // Rozmiar z kotwic reżysera — bez niego model brał wielkość obiektu z referencji.
+        rozmiar:
+          rozmiarPlanu && trybAgenta !== 'zamien'
+            ? `at the destination pin the whole object spans about ${Math.round(rozmiarPlanu.szer)}% of Image 1's width and ${Math.round(rozmiarPlanu.wys)}% of its height.${porownanie ? ` ${porownanie}` : ''}`
+            : undefined,
       })
       const pelnePolecenie = zadanieModelu?.prompt ?? ''
       const ustawieniaModelu = {

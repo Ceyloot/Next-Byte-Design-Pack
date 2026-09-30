@@ -292,6 +292,8 @@ export interface OpcjePolecenia {
   odznaki?: Record<number, string>
   /** światło i kamera zdjęcia docelowego zmierzone przez reżysera */
   swiatlo?: string
+  /** rozmiar obiektu w miejscu docelowym policzony z kotwic reżysera (EN) — idzie do [RULES] */
+  rozmiar?: string
 }
 
 /** Operacje na człowieku — idą modelem postaci (RUNWARE_MODEL_POSTAC). */
@@ -344,7 +346,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -401,6 +403,7 @@ export function zbudujZadanieModelu(
     pineski: pineskiSklejka,
     obrazy: obrazyWejscia,
     swiatlo,
+    rozmiar,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,
       obraz: numerObrazu(p),

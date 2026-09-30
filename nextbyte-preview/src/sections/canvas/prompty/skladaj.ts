@@ -64,6 +64,8 @@ export interface SkladajWejscie {
   obrazy: ObrazWejscia[]
   /** zmierzone przez reżysera światło i kamera zdjęcia docelowego (EN) */
   swiatlo?: string
+  /** zmierzony rozmiar obiektu w miejscu docelowym (EN) */
+  rozmiar?: string
   /** opis sceny z analizy Gemini (pipeline w canvas/lib) — nazwy pinesek */
   opis?: OpisSceny
   pineskiChronione?: ObszarChroniony[]
@@ -161,6 +163,7 @@ const ROLA_DAWCY: Partial<Record<OperationId, string>> = {
 const ROLA_INNA = 'a reference described in the prompt — use it exactly as the prompt says'
 
 /** Operacje z obiektem — rola kompozytora i niższa temperatura. */
+const OPERACJE_POSTACI_SKLADAJ = new Set<OperationId>(['character_swap', 'character_transfer', 'face_swap'])
 const OPERACJE_Z_OBIEKTEM = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'character_swap', 'character_transfer'])
 /** Operacje, których kroki dublowałyby bricki — wystarczy jedno zdanie zadania. */
 const BEZ_KROKOW = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'removal', 'character_transfer'])
@@ -274,7 +277,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
-  const sekcjaRegul = ['[RULES]', swiatlo, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : b.tekst)), kropki].filter(Boolean).join('\n')
+  const rozmiar = w.rozmiar?.trim() && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+    ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
+    : ''
+  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
