@@ -42,10 +42,11 @@ The image that STAYS and receives the change (where the object lands / the locat
 
 STEP 1 — WHAT EACH PIN POINTS AT
 - A pin on an object means the WHOLE object (not a part, unless the user names a part). A pin on open ground, water, floor or sky is a LOCATION.
-- "opis": a short BADGE in Polish, 3–8 words, that names exactly this pinned thing and tells it apart from similar ones in the same image — colour, type, make or model if recognisable, a visible marking (sticker, number, logo). If look-alikes are near, add which one ("lewy z dwóch", "najbliżej domu"). A location pin: the surface and its nearest landmark ("brukowany podjazd przed bramą garażu"). It goes into the image model's prompt next to the pin's x/y, so keep it short and exact; nothing about light or mood.
+- "opis": a short BADGE in English, 3–8 words, that names exactly this pinned thing and tells it apart from similar ones in the same image — colour, type, make or model if recognisable, a visible marking (sticker, number, logo). If look-alikes are near, add which one. A location pin: the surface and its nearest landmark. It goes into the image model's prompt next to the pin's x/y, so keep it short and exact; nothing about light or mood.
 - "miejsce": where the point lies in its image, in words from what you SEE — the surface it stands on, the nearest landmarks and which side of them, and whether it is near a frame edge. Landmarks only; never percentages or coordinates. If the user's words relate the new thing to the pinned object (leans on, stands next to, in front of, on), say in "miejsce" the object AND the spot where the new thing ends up (e.g. on the ground beside that object), not just the object's surface. Describe the pin's OWN spot: if the nearest subject is far, say so instead of writing "next to".
 
 STEP 1b — BIND THE USER'S WORDS TO PINS
+"polecenie_en": the user's request translated into plain English, same meaning and nothing added, with "Pin N" written right after each word that refers to a pinned thing.
 Each noun of the request that refers to a scene object resolves to a pin (users type fragments, inflected forms, synonyms). The operation acts on EXACTLY the named pinned objects — never on a more prominent object nearby. The user's word decides the TYPE of object: when the noun names a type that no pin is on, but a pin lies on or right next to an object of that type (a person leaning on the car the user calls "car"), the operation targets that object of the named type. If nothing of that type is near any pin, say so in "analiza" and act only on what the pins clearly show.
 
 STEP 2 — OPERATION ("intencja"), exactly one of:
@@ -85,7 +86,7 @@ Answer ONLY with JSON:
   "zdjecie_docelowe": 1,
   "intencja": "wstaw",
   "dotyczy_osoby": false,
-  "obiekty": [{ "pin": 1, "opis": "krótka odznaka po polsku", "miejsce": "where the point lies, in words" }],
+  "obiekty": [{ "pin": 1, "opis": "short English badge", "miejsce": "where the point lies, in words" }],
   "skala": "English, with numbers",
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
@@ -93,6 +94,7 @@ Answer ONLY with JSON:
   "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres>, "prawdziwe": { "dl_m": <true length>, "szer_m": <true width>, "wys_m": <true height> }, "kat_deg": <0–90>, "kamera_deg": <0–90> },
   "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
   "obszar_zrodla": null,
+  "polecenie_en": "Move the house Pin 1 to the hill Pin 2",
   "analiza": "Pineska 1 wskazuje ...",
   "plan": "Wstawię ..."
 }`
@@ -152,6 +154,8 @@ export interface PlanRezysera {
   swiatlo: string
   analiza: string
   plan: string
+  /** polecenie użytkownika po angielsku, z „Pin N” przy wskazanych rzeczach — idzie do [USER] */
+  polecenieEn?: string
 }
 
 /** Kotwice (znany rozmiar, szerokość i dolna krawędź w kadrze 0–1) i widoczne wymiary obiektu w metrach. */
@@ -298,6 +302,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     widok: String(json.widok ?? '').trim(),
     swiatlo: String(json.swiatlo ?? '').trim(),
     analiza: String(json.analiza ?? '').trim(),
+    polecenieEn: String(json.polecenie_en ?? '').trim() || undefined,
     plan: String(json.plan ?? '').trim(),
   }
   return plan.skala || plan.obiekty.length > 0 ? plan : null

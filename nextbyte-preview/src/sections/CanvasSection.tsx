@@ -627,8 +627,8 @@ export function CanvasSection() {
   // Bez legendy mapy: do modelu idą same czyste zdjęcia, więc polecenie
   // nie może opisywać obrazu z celownikami, którego model nie dostaje.
   const polecenie = useMemo(
-    () => zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
-    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
+    () => zbudujPolecenie(plan?.polecenieEn || projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
+    [plan?.polecenieEn, projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
   )
 
   const uwagi = useMemo(
@@ -833,7 +833,7 @@ export function CanvasSection() {
 
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
-      const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
+      const zadanieModelu = zbudujZadanieModelu(plan?.polecenieEn || projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         role: uklad.role,
         osoba: plan?.osoba,
         odznaki: plan?.odznaki,
@@ -921,7 +921,7 @@ export function CanvasSection() {
           wynik = { ...wynik, obrazUrl: zlozony.src }
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
-          const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
+          const pelnyPrompt = zbudujPolecenie(plan?.polecenieEn || projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
             role: uklad.role,
             osoba: plan?.osoba,
             odznaki: plan?.odznaki,

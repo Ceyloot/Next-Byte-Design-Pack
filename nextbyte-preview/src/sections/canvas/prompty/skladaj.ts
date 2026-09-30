@@ -186,7 +186,10 @@ function mapaObrazowIPinesek(w: SkladajWejscie): string {
     (p) =>
       `Pin ${p.numer} · Image ${p.obraz}${p.x !== undefined && p.y !== undefined ? ` · x=${wsp(p.x)} y=${wsp(p.y)}` : ''}${p.nazwa ? ` — "${p.nazwa}"` : ''} — keep exactly as it is`,
   )
-  return [obrazy, ...pineski, ...chronione].join('\n')
+  const tylkoPineski = pineski.length
+    ? 'Only the pinned objects are acted on — exactly the things at these points, never a larger, nearer or more prominent object of the same kind elsewhere in the photo. Everything not pinned stays exactly as it is and is never used as the subject or its model.'
+    : ''
+  return [obrazy, ...pineski, ...chronione, tylkoPineski].filter(Boolean).join('\n')
 }
 
 /** Składa finalny prompt dla modelu obrazu. */
