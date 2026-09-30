@@ -258,11 +258,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
-  // Dodatkowe życzenie całego kadru („enhance”, „ulepsz”) — bez tego reguła „scena bez zmian” je zjadała.
-  const ulepszenie = /\b(enhance|improve|upscale|sharpen|retouch|ulepsz\w*|popraw\w* jako\w*|wyostrz\w*|podkr[eę][cć]\w*|upi[eę]ksz\w*)/i.test(w.polecenie)
-    ? 'The USER also asks to ENHANCE THE WHOLE PHOTO: besides the edit, improve the entire frame — clarity, fine detail, dynamic range, contrast and colour — keeping its content, layout and camera the same. For image quality this overrides every "unchanged" rule below; the inserted subject is enhanced together with the scene so both match.'
-    : ''
-  const sekcjaRegul = ['[RULES]', ulepszenie, swiatlo, ...bricki.map((b) => podmien(b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', swiatlo, ...bricki.map((b) => podmien(b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
