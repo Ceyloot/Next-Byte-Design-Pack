@@ -244,7 +244,14 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     // Przeniesienie w obrębie JEDNEGO zdjęcia: „move” model czyta jako „popraw w miejscu”.
     // Proste „przenieś” + naturalne wypełnienie miejsca, które obiekt opuścił.
     const co = zrodlo.nazwa ? `the ${zrodlo.nazwa}` : 'the object'
-    zadanie = [
+    zadanie = op.id === 'object_swap' ? [
+      // Zamiana w obrębie jednego zdjęcia: najpierw pozycja, potem tożsamość tego konkretnego obiektu.
+      `MOVE within Image 1:`,
+      `SWAP: take ${co} that stands at ${opisPineski(zrodlo)} and put it at ${opisPineski(cel)}, in place of what stands there now.`,
+      `PRIORITY 1 — POSITION: it stands EXACTLY at the Pin 2 point — its base on the ground at that x / y, its body rising from there — never next to it, never nearer another object, never at a more convenient spot. Whatever stood at Pin 2 is removed entirely.`,
+      `PRIORITY 2 — THIS EXACT OBJECT: it is the very object from Pin 1 — the same design, shape, materials, colours and details — never another object from the photo, never a new or different one of the same kind. Only its size changes, to fit its new distance from the camera, seen from Image 1's camera.`,
+      `The spot at Pin 1 is left empty and filled naturally with what would be there without it. The object appears exactly once — only at Pin 2. Nothing else in the photo changes.`,
+    ].join('\n') : [
       `MOVE within Image 1:`,
       `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — the same object, keeping its look and real proportions, sized for its new distance from the camera and seen from Image 1's camera. Its centre lands EXACTLY on the Pin 2 point, even if that spot looks less logical — position always wins over plausibility; adapt the object to the spot, never the spot to the object.`,
       `Afterwards the spot it left is filled naturally with what would be there without it, continuing the surroundings, so nobody could tell anything ever stood there. It appears exactly once; nothing else in the photo changes.`,

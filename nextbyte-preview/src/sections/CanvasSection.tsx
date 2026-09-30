@@ -879,14 +879,25 @@ export function CanvasSection() {
         pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
           ? await narysujKropki(await konwertujNaDataUrl(zrodlo.src), [{ x: pinZr.normalizedX, y: pinZr.normalizedY }])
           : null
+      // Zamiana w kadrze: dodatkowo wycinek wokół obiektu z Pin 1 — model widzi dokładnie TEN obiekt.
+      const wycinekObiektu =
+        zblizenie && trybAgenta === 'zamien' && pinZr
+          ? await (async () => {
+              const bok = Math.round(Math.min(zrodlo.naturalWidth, zrodlo.naturalHeight) * 0.3)
+              const x = Math.round(Math.min(Math.max(0, pinZr.normalizedX * zrodlo.naturalWidth - bok / 2), zrodlo.naturalWidth - bok))
+              const y = Math.round(Math.min(Math.max(0, pinZr.normalizedY * zrodlo.naturalHeight - bok / 2), zrodlo.naturalHeight - bok))
+              return wytnijWycinek(await konwertujNaDataUrl(zrodlo.src), { x, y, w: bok, h: bok })
+            })()
+          : null
       const obrazyDoModelu = [
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
         ...(zblizenie ? [zblizenie] : []),
+        ...(wycinekObiektu ? [wycinekObiektu] : []),
       ]
       const polecenieModelu = (zblizenie
         ? pelnePolecenie.replace(
             'MOVE within Image 1:',
-            `MOVE within Image 1. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
+            `MOVE within Image 1.${wycinekObiektu ? ` Image ${obrazyDoModelu.length} is a close-up crop of Image 1 around Pin 1 — the exact object to put at Pin 2 is the one in its centre.` : ''} Image ${obrazyDoModelu.length - (wycinekObiektu ? 1 : 0)} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
           )
         : pelnePolecenie
       ).replace(
