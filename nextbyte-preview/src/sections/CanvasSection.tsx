@@ -833,12 +833,12 @@ export function CanvasSection() {
 
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
-      const opcjeZadania = { role: uklad.role, osoba: plan?.osoba, odznaki: plan?.odznaki, swiatlo: plan?.swiatlo }
-      const zadanieEn = zbudujZadanieModelu(plan?.polecenieEn || projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, opcjeZadania)
-      // Przeniesienie / zamiana w obrębie jednego zdjęcia: zdanie użytkownika bez tłumaczenia, jak w b3797e7.
-      const zadanieModelu = zadanieEn?.prompt.includes('MOVE within Image 1:')
-        ? zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, opcjeZadania)
-        : zadanieEn
+      const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
+        role: uklad.role,
+        osoba: plan?.osoba,
+        odznaki: plan?.odznaki,
+        swiatlo: plan?.swiatlo,
+      })
       const pelnePolecenie = zadanieModelu?.prompt ?? ''
       const ustawieniaModelu = {
         system: zadanieModelu?.system,
@@ -879,25 +879,14 @@ export function CanvasSection() {
         pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
           ? await narysujKropki(await konwertujNaDataUrl(zrodlo.src), [{ x: pinZr.normalizedX, y: pinZr.normalizedY }])
           : null
-      // Zamiana w kadrze: dodatkowo wycinek wokół obiektu z Pin 1 — model widzi dokładnie TEN obiekt.
-      const wycinekObiektu =
-        zblizenie && trybAgenta === 'zamien' && pinZr
-          ? await (async () => {
-              const bok = Math.round(Math.min(zrodlo.naturalWidth, zrodlo.naturalHeight) * 0.3)
-              const x = Math.round(Math.min(Math.max(0, pinZr.normalizedX * zrodlo.naturalWidth - bok / 2), zrodlo.naturalWidth - bok))
-              const y = Math.round(Math.min(Math.max(0, pinZr.normalizedY * zrodlo.naturalHeight - bok / 2), zrodlo.naturalHeight - bok))
-              return wytnijWycinek(await konwertujNaDataUrl(zrodlo.src), { x, y, w: bok, h: bok })
-            })()
-          : null
       const obrazyDoModelu = [
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
         ...(zblizenie ? [zblizenie] : []),
-        ...(wycinekObiektu ? [wycinekObiektu] : []),
       ]
       const polecenieModelu = (zblizenie
         ? pelnePolecenie.replace(
             'MOVE within Image 1:',
-            `MOVE within Image 1.${wycinekObiektu ? ` Image ${obrazyDoModelu.length} is a close-up crop of Image 1 around Pin 1 — the exact object to put at Pin 2 is the one in its centre.` : ''} Image ${obrazyDoModelu.length - (wycinekObiektu ? 1 : 0)} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
+            `MOVE within Image 1. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
           )
         : pelnePolecenie
       ).replace(
@@ -932,7 +921,7 @@ export function CanvasSection() {
           wynik = { ...wynik, obrazUrl: zlozony.src }
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
-          const pelnyPrompt = zbudujPolecenie(plan?.polecenieEn || projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
+          const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
             role: uklad.role,
             osoba: plan?.osoba,
             odznaki: plan?.odznaki,
