@@ -872,12 +872,12 @@ export function CanvasSection() {
             : src,
         )
       const czyste = await Promise.all(obrazyPolecenia.map(w => zKropkami(w, pineskiPolecenia)))
-      // Przeniesienie w obrębie jednego zdjęcia: zbliżenie obiektu (wycinek Image 1 wokół
-      // pineski źródłowej) jako dodatkowy obraz — model wie dokładnie, KTÓRY obiekt przenieść.
+      // Przeniesienie w obrębie jednego zdjęcia: to samo zdjęcie drugi raz, z kropką na obiekcie
+      // (Image 1 ma kropkę w miejscu docelowym) — model wie dokładnie, KTÓRY obiekt i DOKĄD.
       const pinZr = pineskiPolecenia.find(p => zrodloNaCelu(p))
       const zblizenie =
         pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('Make TWO changes')
-          ? await wytnijOkolice(czyste[0], pinZr.normalizedX, pinZr.normalizedY, 512, 0.2)
+          ? await narysujKropki(await konwertujNaDataUrl(zrodlo.src), [{ x: pinZr.normalizedX, y: pinZr.normalizedY }])
           : null
       const obrazyDoModelu = [
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
@@ -886,7 +886,7 @@ export function CanvasSection() {
       const polecenieModelu = (zblizenie
         ? pelnePolecenie.replace(
             'Make TWO changes in Image 1 and nothing else:',
-            `Make TWO changes in Image 1 and nothing else. Image ${obrazyDoModelu.length} is a close-up crop of Image 1 centred on the object to move — that exact object and only it (not its neighbours). The small magenta dot in Image 1 marks the exact destination (Pin 2); it is covered by the object and never visible in the result:`,
+            `Make TWO changes in Image 1 and nothing else. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
           )
         : pelnePolecenie
       ).replace(
