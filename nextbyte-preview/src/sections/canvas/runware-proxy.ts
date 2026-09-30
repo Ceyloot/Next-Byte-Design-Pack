@@ -105,10 +105,8 @@ function czytajCialo(req: { on: (z: string, f: (c?: unknown) => void) => void })
 export function runwareProxy(): Plugin {
   let klucz = ''
   let kluczGemini = ''
-  /** Jeden model dla wszystkiego. Zmienne RUNWARE_MODEL* w .env.local są ignorowane. */
-  // TYMCZASOWO do porównania: Nano Banana 2 (Gemini 3.1 Flash Image, google:4@3).
-  // Powrót do Lite: 'google:nano-banana@2-lite'.
-  const model = 'google:4@3'
+  /** Jeden model dla wszystkiego: Nano Banana 2 Lite. Zmienne RUNWARE_MODEL* w .env.local są ignorowane. */
+  const model = 'google:nano-banana@2-lite'
 
   const obsluz = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use(SCIEZKA, async (req, res) => {
