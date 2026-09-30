@@ -247,10 +247,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = op.id === 'object_swap' ? [
       // Zamiana w obrębie jednego zdjęcia: najpierw pozycja, potem tożsamość tego konkretnego obiektu.
       `MOVE within Image 1:`,
-      `SWAP: take ${co} that stands at ${opisPineski(zrodlo)} and put it at ${opisPineski(cel)}, in place of what stands there now.`,
-      `PRIORITY 1 — POSITION: it stands EXACTLY at the Pin 2 point — its base on the ground at that x / y, its body rising from there — never next to it, never nearer another object, never at a more convenient spot. Whatever stood at Pin 2 is removed entirely.`,
-      `PRIORITY 2 — THIS EXACT OBJECT: it is the very object from Pin 1 — the same design, shape, materials, colours and details — never another object from the photo, never a new or different one of the same kind. Only its size changes, to fit its new distance from the camera, seen from Image 1's camera.`,
-      `The spot at Pin 1 is left empty and filled naturally with what would be there without it. The object appears exactly once — only at Pin 2. Nothing else in the photo changes.`,
+      `TASK: Relocate ${co} from source ${opisPineski(zrodlo)} to exact target destination ${opisPineski(cel)}. If any object currently occupies the target spot at Pin 2, remove or replace it entirely.`,
+      ``,
+      `KEY INSTRUCTIONS:`,
+      `- TARGET PLACEMENT: The object must be anchored precisely at Pin 2 coordinates. Place its base directly on the ground/surface at that exact spot, adhering strictly to the scene's perspective, horizon line, local lighting, and occlusion.`,
+      `- PERSPECTIVE & SCALING: Keep the EXACT same object (identical geometry, materials, textures, and details as seen at Pin 1), adjusting ONLY its scale, focal perspective, contact shadows, and reflections to match its new physical depth and position at Pin 2.`,
+      `- SOURCE CLEANUP (INPAINTING): Completely remove the original object from Pin 1. Seamlessly inpaint and reconstruct the background and ground beneath Pin 1 so it blends naturally with surrounding textures, foliage, or surfaces as if the object was never there.`,
+      `- OUTPUT INTEGRITY: The moved object must exist EXACTLY ONCE in the final image (only at Pin 2). Do not leave ghosting, duplicates, pins, dots, or markers. All other areas of Image 1 outside Pin 1 and Pin 2 must remain completely unchanged.`,
     ].join('\n') : [
       `MOVE within Image 1:`,
       `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — the same object, keeping its look and real proportions, sized for its new distance from the camera and seen from Image 1's camera. Its centre lands EXACTLY on the Pin 2 point, even if that spot looks less logical — position always wins over plausibility; adapt the object to the spot, never the spot to the object.`,
