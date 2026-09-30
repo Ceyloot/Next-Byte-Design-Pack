@@ -246,7 +246,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = [
       `MOVE within Image 1:`,
       `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — the same object, keeping its look and real proportions, sized for its new distance from the camera and seen from Image 1's camera. It stands at the Pin 2 point, arranged logically as it would really stand there — base on the real surface, upright, following the ground and the scene's lines, facing and scaled naturally for that spot.`,
-      `This is a MOVE, not a copy: the object exists ONCE in the result. At ${opisPineski(zrodlo)} it is GONE — none of it survives there; that spot is filled naturally with what would be there without it, continuing the surroundings, so nobody could tell anything ever stood there. Two objects of it (one old, one new) is a failure. Nothing else in the photo changes.`,
+      `Afterwards the spot it left is filled naturally with what would be there without it, continuing the surroundings, so nobody could tell anything ever stood there. It appears exactly once — standing at Pin 2 and no longer at Pin 1: leaving it at Pin 1 is a failure, and removing it without placing it at Pin 2 is the same failure. Nothing else in the photo changes.`,
     ].join('\n')
     system = SYSTEM_KOMPOZYTORA
     temperatura = TEMPERATURA_OBIEKTU
