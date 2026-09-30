@@ -15,6 +15,13 @@ import {
   Trash2,
   Unlock,
   Upload,
+  Wand2,
+  ZoomIn,
+  Sun,
+  Aperture,
+  Eraser,
+  Film,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
@@ -421,6 +428,43 @@ export function CanvasSection() {
       window.removeEventListener('resize', zamknij)
     }
   }, [menuWarstwy])
+
+  /* ── Szybkie akcje AI na zdjęciu (pływający pasek nad zdjęciem) ── */
+  const [akcjaAI, setAkcjaAI] = useState<string | null>(null)
+  const AKCJE_AI = useMemo(
+    () => [
+      { id: 'enhance', etykieta: 'Enhance', ikona: Wand2, skala: 1, prompt: 'Enhance this photograph: improve clarity, fine detail, dynamic range, contrast and colour so it looks like a higher-end camera took it. Keep every object, person, position, framing and the lighting direction exactly the same. Natural, photographic — no over-sharpening, no HDR look, no plastic skin.' },
+      { id: 'upscale', etykieta: 'Upscale 2×', ikona: ZoomIn, skala: 2, prompt: 'Upscale this photograph to twice its resolution. Reconstruct crisp, natural fine detail (textures, edges, text) while keeping the content, composition, colours and lighting identical. No new objects, no style change.' },
+      { id: 'swiatlo', etykieta: 'Złota godzina', ikona: Sun, skala: 1, prompt: 'Relight this photograph to warm golden-hour sunlight: low sun, long soft shadows, warm highlights and gentle haze. Keep every object, person, position and the framing exactly the same.' },
+      { id: 'bokeh', etykieta: 'Rozmyj tło', ikona: Aperture, skala: 1, prompt: 'Give this photograph a shallow depth of field like an f/1.8 portrait lens: keep the main subject in the foreground perfectly sharp and blur the background with natural optical bokeh. Keep composition, colours and lighting the same.' },
+      { id: 'czysc', etykieta: 'Usuń zakłócenia', ikona: Eraser, skala: 1, prompt: 'Clean up this photograph: remove small distractions — litter, stray cables, dust spots, sensor spots, watermarks and small unwanted passers-by in the background — and rebuild what was behind them naturally. Keep the main subjects, composition and lighting exactly the same.' },
+      { id: 'film', etykieta: 'Film analog', ikona: Film, skala: 1, prompt: 'Give this photograph the look of 35mm analog film (Kodak Portra 400): soft film grain, gentle highlight roll-off, natural film colour. Keep every object, person, position and the framing exactly the same.' },
+    ],
+    [],
+  )
+  const uruchomAkcjeAI = useCallback(
+    async (warstwaId: string, akcjaId: string) => {
+      const w = projekt.warstwy.find(x => x.id === warstwaId)
+      const a = AKCJE_AI.find(x => x.id === akcjaId)
+      if (!w || !a || akcjaAI) return
+      setMenuWarstwy(null)
+      setAkcjaAI(akcjaId)
+      try {
+        const maks = 2048
+        const k = Math.min(a.skala, maks / Math.max(w.naturalWidth, w.naturalHeight))
+        const szer = Math.round(w.naturalWidth * Math.max(1, k))
+        const wys = Math.round(w.naturalHeight * Math.max(1, k))
+        const wynik = await generuj({ polecenie: a.prompt, obrazy: [await konwertujNaDataUrl(w.src)], szerokosc: szer, wysokosc: wys })
+        const src = await dopasujFormatDoObrazu(wynik.obrazUrl, szer, wys)
+        dodajZeZrodla(src, `${w.name}_${a.id}`, 'wynik', w)
+      } catch (e) {
+        window.alert(e instanceof Error ? e.message : 'Nie udało się wykonać akcji.')
+      } finally {
+        setAkcjaAI(null)
+      }
+    },
+    [projekt.warstwy, AKCJE_AI, akcjaAI, dodajZeZrodla],
+  )
 
   const akcjaWarstwy = useCallback(
     (id: string, akcja: 'duplikuj' | 'pobierz' | 'wierzch' | 'spod' | 'blokada' | 'ukryj' | 'usun') => {
@@ -1209,6 +1253,43 @@ export function CanvasSection() {
       />
 
       {/* ══ Menu kontekstowe zdjęcia (prawy klik) ══ */}
+      {/* ══ Pływający pasek akcji AI nad zdjęciem (prawy klik) ══ */}
+      {(menuWarstwy || akcjaAI) &&
+        (() => {
+          const id = menuWarstwy?.id ?? wybranaWarstwa
+          const w = projekt.warstwy.find(x => x.id === id)
+          if (!w) return null
+          const lewo = widok.x + w.x * widok.zoom
+          const gora = widok.y + w.y * widok.zoom
+          return (
+            <div
+              role="toolbar"
+              aria-label="Szybkie akcje AI"
+              onPointerDown={e => e.stopPropagation()}
+              onContextMenu={e => e.preventDefault()}
+              className="absolute z-50 flex items-center gap-1 rounded-2xl border border-foreground/10 bg-card/85 p-1 shadow-[0_12px_32px_-8px_hsl(0_0%_0%/0.35)] backdrop-blur-xl"
+              style={{ left: Math.max(8, lewo), top: Math.max(8, gora - 52) }}
+            >
+              {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
+                <button
+                  key={aid}
+                  type="button"
+                  disabled={Boolean(akcjaAI)}
+                  onClick={() => uruchomAkcjeAI(w.id, aid)}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11.5px] font-medium transition-colors',
+                    akcjaAI === aid ? 'bg-primary/15 text-primary' : 'text-foreground hover:bg-foreground/[0.07]',
+                    akcjaAI && akcjaAI !== aid && 'opacity-40',
+                  )}
+                >
+                  {akcjaAI === aid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ikona className="h-3.5 w-3.5 text-primary" />}
+                  {etykieta}
+                </button>
+              ))}
+            </div>
+          )
+        })()}
+
       {menuWarstwy &&
         (() => {
           const w = projekt.warstwy.find(x => x.id === menuWarstwy.id)
