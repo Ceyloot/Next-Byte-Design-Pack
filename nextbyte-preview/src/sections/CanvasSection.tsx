@@ -96,8 +96,6 @@ const POSTPROCES_ZIARNA = false
 const DRUGI_PRZEBIEG = false
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
 const KROPKI_NA_ZDJECIACH = false
-/** Osobny obraz-mapa z kółkiem w miejscu docelowym (scena zostaje czysta). */
-const MAPA_POZYCJI = true
 
 const KLUCZ_ZAPISU = 'nb-canvas-projekt-v2'
 
@@ -827,33 +825,11 @@ export function CanvasSection() {
             : src,
         )
       const czyste = await Promise.all(obrazyPolecenia.map(w => zKropkami(w, pineskiPolecenia)))
-
-      // MAPA POZYCJI: osobna kopia sceny z kółkiem w miejscu docelowym, jako OSTATNI obraz.
-      // Scena (Image 1) zostaje czysta, więc znacznik nie trafia do wyniku, a model widzi miejsce.
-      const docelowe = pineskiPolecenia.filter(
-        p => p.layerId === obrazyPolecenia[0]?.id && !p.chroniona && !zrodloNaCelu(p),
-      )
-      const mapaPozycji =
-        MAPA_POZYCJI && docelowe.length && ['wstaw', 'przenies', 'zamien'].includes(trybAgenta)
-          ? await narysujKropki(czyste[0], docelowe.map(p => ({ x: p.normalizedX, y: p.normalizedY })), true)
-          : null
-      const obrazyDoModelu = [
-        ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
-        ...(mapaPozycji ? [mapaPozycji] : []),
-      ]
-      const polecenieModelu = mapaPozycji
-        ? pelnePolecenie.replace(
-            'Image 1 = scene.',
-            `Image 1 = scene. Image ${obrazyDoModelu.length} = POSITION MAP: a copy of Image 1 with a magenta ring around the exact spot where the object must stand — use it only to locate that spot; it is never copied into the result and the result shows no ring.`,
-          )
-        : pelnePolecenie
-      setOstatniPrompt(
-        ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu,
-      )
+      const obrazyDoModelu = plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste
 
       let wynik = await generuj({
         ...ustawieniaModelu,
-        polecenie: polecenieModelu,
+        polecenie: pelnePolecenie,
         obrazy: obrazyDoModelu,
         szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
         wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
