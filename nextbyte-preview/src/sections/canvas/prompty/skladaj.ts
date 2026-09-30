@@ -238,9 +238,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = [
       `Make TWO changes in Image 1 and nothing else:`,
       `1. REMOVE ${co} at ${opisPineski(zrodlo)} completely, with its shadow — rebuild that spot as the plain ground, grass and path that would be there without it.`,
-      `2. ADD the very same ${co.replace(/^the /, '')} at ${opisPineski(cel)}: identical design, shape, roof or body, materials and colours as the one you removed (look at it in Image 1 before removing it), standing exactly at that point (if it is a slope or rock face, set into the terrain, not moved to flatter ground), resized for its new distance from the camera (closer = larger, farther = smaller), seen from Image 1's camera.`,
+      `2. ADD the very same ${co.replace(/^the /, '')} at ${opisPineski(cel)}: identical design, shape, roof or body, materials and colours as the one you removed (look at it in Image 1 before removing it), standing on the ground at that point, resized for its new distance from the camera (closer = larger, farther = smaller), seen from Image 1's camera.`,
       `The result shows it exactly once — at the new spot only. The two spots are different places; nothing else in the photo changes.`,
-      `CHECK before returning: is the old spot at ${opisPineski(zrodlo)} now empty? Does the object stand at ${opisPineski(cel)} and not at some other free spot? If not, redo.`,
     ].join('\n')
     system = SYSTEM_KOMPOZYTORA
     temperatura = TEMPERATURA_OBIEKTU
