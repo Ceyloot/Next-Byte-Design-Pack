@@ -859,7 +859,7 @@ export function CanvasSection() {
       // (kropka zostawała w wyniku). Zmienna KROPKI_NA_ZDJECIACH przywraca kropki.
       // Przeniesienie w obrębie jednego zdjęcia: model gubił miejsce docelowe podane samymi
       // współrzędnymi, więc tylko wtedy miejsce docelowe dostaje kropkę (obiekt ją zakrywa).
-      const przeniesienieWKadrze = trybAgenta === 'przenies' && pelnePolecenie.includes('Make TWO changes')
+      const przeniesienieWKadrze = ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('Make TWO changes')
       const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
         konwertujNaDataUrl(w.src).then(src =>
           KROPKI_NA_ZDJECIACH || przeniesienieWKadrze
@@ -876,7 +876,7 @@ export function CanvasSection() {
       // pineski źródłowej) jako dodatkowy obraz — model wie dokładnie, KTÓRY obiekt przenieść.
       const pinZr = pineskiPolecenia.find(p => zrodloNaCelu(p))
       const zblizenie =
-        pinZr && ['przenies'].includes(trybAgenta) && pelnePolecenie.includes('Make TWO changes')
+        pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('Make TWO changes')
           ? await wytnijOkolice(czyste[0], pinZr.normalizedX, pinZr.normalizedY, 512, 0.2)
           : null
       const obrazyDoModelu = [
