@@ -106,7 +106,7 @@ export function runwareProxy(): Plugin {
   let klucz = ''
   let kluczGemini = ''
   /** Jeden model dla wszystkiego: Nano Banana 2 Lite. Zmienne RUNWARE_MODEL* w .env.local są ignorowane. */
-  const model = 'google:nano-banana@2-lite' // na testy Lite; Nano Banana 2 (Gemini 3.1): 'google:4@3'
+  const model = 'google:4@3' // Nano Banana 2 (Gemini 3.1); na testy Lite: 'google:nano-banana@2-lite'
 
   const obsluz = (server: ViteDevServer | PreviewServer) => {
     server.middlewares.use(SCIEZKA, async (req, res) => {
