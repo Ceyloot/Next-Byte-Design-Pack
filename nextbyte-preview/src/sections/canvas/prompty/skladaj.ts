@@ -180,7 +180,8 @@ function mapaObrazowIPinesek(w: SkladajWejscie): string {
     .sort((a, b) => a.numer - b.numer)
     .map((p) => {
       const nazwa = p.nazwa || opisy.get(p.numer)
-      return `Pin ${p.numer} · Image ${p.obraz} · x=${wsp(p.x)} y=${wsp(p.y)}${nazwa ? ` — "${nazwa}"` : ''}`
+      const bezKropki = p.rola === 'source' && p.obraz === 1 ? ' (no dot)' : ''
+      return `Pin ${p.numer} · Image ${p.obraz} · x=${wsp(p.x)} y=${wsp(p.y)}${bezKropki}${nazwa ? ` — "${nazwa}"` : ''}`
     })
   const chronione = (w.pineskiChronione ?? []).map(
     (p) =>
@@ -252,9 +253,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     return !zbedny
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
-  const kropki = w.pineski.length
-    ? 'Pin positions are given as x / y fractions of the image (x from the left edge, y from the top edge, 0–1); the images carry no markers.'
-    : ''
+  const kropki = w.pineski.length ? 'The small magenta dots are guides only and must not appear in the result.' : ''
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''

@@ -94,8 +94,6 @@ const POSTPROCES_ZIARNA = false
  * Jedno „Generuj” = jedna generacja; pomiar zostaje tylko w ocenie.
  */
 const DRUGI_PRZEBIEG = false
-/** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
-const KROPKI_NA_ZDJECIACH = false
 
 const KLUCZ_ZAPISU = 'nb-canvas-projekt-v2'
 
@@ -811,18 +809,14 @@ export function CanvasSection() {
       // Źródło na obrazie docelowym nie dostaje kropki: model zostawiał ją na oryginalnym obiekcie.
       const zrodlaNaCelu = idZrodelNaPlotnie(projekt.pineski, obrazy, trybAgenta, uklad.role)
       const zrodloNaCelu = (p: Pineska) => zrodlaNaCelu.has(p.id)
-      // Bez kropek na zdjęciach: miejsce wskazują wyłącznie współrzędne x/y w prompcie
-      // (kropka zostawała w wyniku). Zmienna KROPKI_NA_ZDJECIACH przywraca kropki.
       const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
         konwertujNaDataUrl(w.src).then(src =>
-          KROPKI_NA_ZDJECIACH
-            ? narysujKropki(
-                src,
-                pineski
-                  .filter(p => p.layerId === w.id && !p.chroniona && !zrodloNaCelu(p))
-                  .map(p => ({ x: p.normalizedX, y: p.normalizedY })),
-              )
-            : src,
+          narysujKropki(
+            src,
+            pineski
+              .filter(p => p.layerId === w.id && !p.chroniona && !zrodloNaCelu(p))
+              .map(p => ({ x: p.normalizedX, y: p.normalizedY })),
+          ),
         )
       const czyste = await Promise.all(obrazyPolecenia.map(w => zKropkami(w, pineskiPolecenia)))
       const obrazyDoModelu = plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste
