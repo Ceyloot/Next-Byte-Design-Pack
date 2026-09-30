@@ -833,12 +833,12 @@ export function CanvasSection() {
 
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
-      const zadanieModelu = zbudujZadanieModelu(plan?.polecenieEn || projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
-        role: uklad.role,
-        osoba: plan?.osoba,
-        odznaki: plan?.odznaki,
-        swiatlo: plan?.swiatlo,
-      })
+      const opcjeZadania = { role: uklad.role, osoba: plan?.osoba, odznaki: plan?.odznaki, swiatlo: plan?.swiatlo }
+      const zadanieEn = zbudujZadanieModelu(plan?.polecenieEn || projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, opcjeZadania)
+      // Przeniesienie / zamiana w obrębie jednego zdjęcia: zdanie użytkownika bez tłumaczenia, jak w b3797e7.
+      const zadanieModelu = zadanieEn?.prompt.includes('MOVE within Image 1:')
+        ? zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, opcjeZadania)
+        : zadanieEn
       const pelnePolecenie = zadanieModelu?.prompt ?? ''
       const ustawieniaModelu = {
         system: zadanieModelu?.system,

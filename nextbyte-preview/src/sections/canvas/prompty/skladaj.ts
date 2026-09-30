@@ -166,7 +166,7 @@ const TEMPERATURA_OBIEKTU = 0.35
 const TOKEN = /\{\{\s*([A-Z_]+)\s*\}\}/g
 
 /** Linia obrazów + linie pinesek (część TASK). */
-function mapaObrazowIPinesek(w: SkladajWejscie): string {
+function mapaObrazowIPinesek(w: SkladajWejscie, wKadrze = false): string {
   const refs = w.obrazy.filter((o) => o.rola === 'donor').map((o) => o.numer)
   const obrazy = [
     'Image 1 = scene.',
@@ -186,10 +186,16 @@ function mapaObrazowIPinesek(w: SkladajWejscie): string {
     (p) =>
       `Pin ${p.numer} · Image ${p.obraz}${p.x !== undefined && p.y !== undefined ? ` · x=${wsp(p.x)} y=${wsp(p.y)}` : ''}${p.nazwa ? ` — "${p.nazwa}"` : ''} — keep exactly as it is`,
   )
-  const tylkoPineski = pineski.length
+  const tylkoPineski = pineski.length && !wKadrze
     ? 'Only the pinned objects are acted on — exactly the things at these points, never a larger, nearer or more prominent object of the same kind elsewhere in the photo. Everything not pinned stays exactly as it is and is never used as the subject or its model.'
     : ''
   return [obrazy, ...pineski, ...chronione, tylkoPineski].filter(Boolean).join('\n')
+}
+
+/** Teksty bricków dla przeniesienia w obrębie jednego zdjęcia — wersja z b3797e7. */
+const TEKSTY_W_KADRZE: Partial<Record<BrickId, string>> = {
+  'studio-scena': `FROM THE SCENE ({{IMAGE_TARGET}}) take everything else, unchanged: scene layout, every object and prop, camera angle, focal length, crop, framing and composition, and ALL text, watermarks, logos and signs reproduced EXACTLY.`,
+  'studio-kontrola': `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, and casting a shadow into it? If not, redo. ONE photograph — one light, one lens, one grade.`,
 }
 
 /** Składa finalny prompt dla modelu obrazu. */
@@ -253,7 +259,9 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     }
   }
   const styl = w.dyrektywyStylu ? `\nStyle — ${w.dyrektywyStylu.nazwa}: ${w.dyrektywyStylu.reguly.join(' ')}` : ''
-  const sekcjaZadania = `[TASK]\n${zadanie}${styl}\n${mapaObrazowIPinesek(w)}`
+  // Przeniesienie / zamiana w obrębie jednego zdjęcia: prompt dokładnie jak w b3797e7 (działał).
+  const wKadrze = zadanie.startsWith('MOVE within Image 1:')
+  const sekcjaZadania = `[TASK]\n${zadanie}${styl}\n${mapaObrazowIPinesek(w, wKadrze)}`
 
   // [USER]
   const sekcjaUzytkownika = `[USER]\n${w.polecenie.trim() || op.nazwa}`
@@ -272,7 +280,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
-  const sekcjaRegul = ['[RULES]', swiatlo, ...bricki.map((b) => podmien(b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', swiatlo, ...bricki.map((b) => podmien((wKadrze && TEKSTY_W_KADRZE[b.id]) || b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
