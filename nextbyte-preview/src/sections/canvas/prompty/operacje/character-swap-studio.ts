@@ -16,7 +16,7 @@ const OGON_BAZY =
 /** poz. 20 — ubranie bierzemy Z POSTACI (wariant domyślny). */
 export function studioSwapBaza(refsClause: string, scena: string): string {
   return (
-    `REPLACE the person in the scene image (${scena}) with the person from ${refsClause}. The original person must be COMPLETELY removed — none of their face or body may survive. FROM THE CHARACTER REFERENCE take ONLY identity: facial geometry, hair, body build, skin undertone, tattoos, scars, moles, and the exact garments and accessories (same cut, color, print, logo, lettering). FROM THE SCENE take everything else, unchanged: ` +
+    `REPLACE the person in the scene image (${scena}) with the person from ${refsClause}. The original person must be COMPLETELY removed — none of their face, body, clothing, headwear, glasses, jewellery or accessories may survive; the new person wears only what they wear in the character reference. FROM THE CHARACTER REFERENCE take ONLY identity: facial geometry, hair, body build, skin undertone, tattoos, scars, moles, and the exact garments and accessories (same cut, color, print, logo, lettering). FROM THE SCENE take everything else, unchanged: ` +
     OGON_BAZY
   )
 }

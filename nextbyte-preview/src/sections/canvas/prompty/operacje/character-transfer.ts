@@ -17,7 +17,7 @@ export const CHARACTER_TRANSFER: Operation = {
   ],
   dawca: 'opcjonalny',
   czystaPlyta: true,
-  misja: `Bring the same person from {{PIN_SOURCE}} to the destination {{PIN_TARGET}}, keeping their identity and clothing. They appear exactly once, at the destination.`,
+  misja: `Bring the same person from {{PIN_SOURCE}} to the destination {{PIN_TARGET}}, keeping their identity and clothing. They appear exactly once, at the destination. Their face stays exactly the face from the reference — same features, proportions and expression lines, never a similar-looking person. Every object they touch, lean on or stand behind keeps all of its parts (glass, window, frame, handle): nothing is removed or cut to make room — the object simply hides the parts of the person behind it.`,
   kroki: [
     `Keep identity, hair, body and the exact outfit of the person; only place, pose adaptation, size and light change.`,
     `Adapt the pose to the new ground: standing on level ground, sitting on the seat that is there, stepping on the stairs that are there — natural, balanced, weight on the right leg.`,
