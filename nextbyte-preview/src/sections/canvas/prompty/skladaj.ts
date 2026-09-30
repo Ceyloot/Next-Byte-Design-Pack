@@ -256,7 +256,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       `- OUTPUT INTEGRITY: The moved object must exist EXACTLY ONCE in the final image (only at Pin 2). Do not leave ghosting, duplicates, pins, dots, or markers. All other areas of Image 1 outside Pin 1 and Pin 2 must remain completely unchanged.`,
     ].join('\n') : [
       `MOVE within Image 1:`,
-      `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — the same object, keeping its look and real proportions, sized for its new distance from the camera and seen from Image 1's camera. Its centre lands EXACTLY on the Pin 2 point, even if that spot looks less logical — position always wins over plausibility; adapt the object to the spot, never the spot to the object.`,
+      `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — the same object, keeping its look and real proportions, sized for its new distance from the camera and seen from Image 1's camera.`,
       `Afterwards the spot it left is filled naturally with what would be there without it, continuing the surroundings, so nobody could tell anything ever stood there. It appears exactly once; nothing else in the photo changes.`,
     ].join('\n')
     system = SYSTEM_KOMPOZYTORA
