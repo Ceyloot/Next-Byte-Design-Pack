@@ -857,9 +857,12 @@ export function CanvasSection() {
       const zrodloNaCelu = (p: Pineska) => zrodlaNaCelu.has(p.id)
       // Bez kropek na zdjęciach: miejsce wskazują wyłącznie współrzędne x/y w prompcie
       // (kropka zostawała w wyniku). Zmienna KROPKI_NA_ZDJECIACH przywraca kropki.
+      // Przeniesienie w obrębie jednego zdjęcia: model gubił miejsce docelowe podane samymi
+      // współrzędnymi, więc tylko wtedy miejsce docelowe dostaje kropkę (obiekt ją zakrywa).
+      const przeniesienieWKadrze = trybAgenta === 'przenies' && pelnePolecenie.includes('Make TWO changes')
       const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
         konwertujNaDataUrl(w.src).then(src =>
-          KROPKI_NA_ZDJECIACH
+          KROPKI_NA_ZDJECIACH || przeniesienieWKadrze
             ? narysujKropki(
                 src,
                 pineski
@@ -880,13 +883,19 @@ export function CanvasSection() {
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
         ...(zblizenie ? [zblizenie] : []),
       ]
-      const polecenieModelu = zblizenie
+      const polecenieModelu = (zblizenie
         ? pelnePolecenie.replace(
             'Make TWO changes in Image 1 and nothing else:',
-            `Make TWO changes in Image 1 and nothing else. Image ${obrazyDoModelu.length} is a close-up crop of Image 1 centred on the object to move — that exact object and only it (not its neighbours):`,
+            `Make TWO changes in Image 1 and nothing else. Image ${obrazyDoModelu.length} is a close-up crop of Image 1 centred on the object to move — that exact object and only it (not its neighbours). The small magenta dot in Image 1 marks the exact destination (Pin 2); it is covered by the object and never visible in the result:`,
           )
         : pelnePolecenie
-      if (zblizenie) {
+      ).replace(
+        'the images carry no markers.',
+        przeniesienieWKadrze
+          ? 'the only marker is a small magenta dot at the destination (Pin 2) in Image 1, which the object covers.'
+          : 'the images carry no markers.',
+      )
+      if (zblizenie || przeniesienieWKadrze) {
         setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
       }
 
