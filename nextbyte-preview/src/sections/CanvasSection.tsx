@@ -924,17 +924,17 @@ export function CanvasSection() {
 
         const warstwaSceny: Warstwa = { ...zrodlo, id: `${zrodlo.id}-krok1`, src: scena1 }
         const warstwaObiektu: Warstwa = { ...zrodlo, id: `${zrodlo.id}-obiekt`, src: zblizenie, name: `${zrodlo.name}-obiekt` }
-        const pinObiekt: Pineska = { ...pinZr, id: `${pinZr.id}-obiekt`, layerId: warstwaObiektu.id, normalizedX: 0.5, normalizedY: 0.5 }
+        const pinObiekt: Pineska = { ...pinZr, id: `${pinZr.id}-obiekt`, layerId: warstwaObiektu.id }
         const pinMiejsce: Pineska = { ...pinCelKadr, layerId: warstwaSceny.id }
-        const zadanie2 = zbudujZadanieModelu(projekt.tekst, [pinObiekt, pinMiejsce], [warstwaSceny, warstwaObiektu], 'wstaw', {
-          role: { 1: 'SOURCE', 2: 'DESTINATION' },
+        const zadanie2 = zbudujZadanieModelu(projekt.tekst, [pinObiekt, pinMiejsce], [warstwaSceny, warstwaObiektu], trybAgenta === 'zamien' ? 'zamien' : 'wstaw', {
+          role: trybAgenta === 'zamien' ? { 1: 'DONOR', 2: 'TARGET' } : { 1: 'SOURCE', 2: 'DESTINATION' },
           osoba: plan?.osoba,
           odznaki: { 1: nazwaZr, 2: plan?.odznaki?.[nrCel] ?? etykietaPineski(pinCelKadr, nrCel) },
           swiatlo: plan?.swiatlo,
         })
         const polecenie2 = (zadanie2?.prompt ?? '').replace(
           'the images carry no markers.',
-          'the only marker is a small magenta dot at the destination in Image 1, which the object covers; Image 2 is a close-up of the exact object to insert.',
+          'the only marker is a small magenta dot at the destination in Image 1, which the object covers; Image 2 is the original photograph with a small magenta dot on the exact object to bring in (only that object, not its neighbours); no dot appears in the result.',
         )
         setOstatniPrompt(`[KROK 1 — usunięcie]\n${polecenieUsun}\n\n[KROK 2 — wstawienie]\n${polecenie2}`)
         const krok2 = await generuj({
