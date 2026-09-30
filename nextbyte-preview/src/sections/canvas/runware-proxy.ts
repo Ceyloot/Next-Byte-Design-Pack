@@ -129,7 +129,8 @@ export function runwareProxy(): Plugin {
         if (!zadanie.obrazy?.length) return odpowiedz(400, { blad: 'Brak obrazu wejściowego' })
 
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
-        const modelZadania = model
+        // Operacje na ludziach (zamiana osoby / twarzy, przeniesienie postaci) — Gemini 3.1; Lite ich nie wykonuje.
+        const modelZadania = zadanie.klasa === 'postac' ? 'google:4@3' : model
         console.info(`[canvas] generacja modelem ${modelZadania}`)
 
         // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.
