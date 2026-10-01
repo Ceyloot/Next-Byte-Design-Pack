@@ -317,6 +317,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ? `Change ONLY ONE ${cz}: the one at or nearest to the destination pin. Every other ${cz} of the object stays exactly as it was.`
         : `If the object has several of that part (a pair or a set), change EVERY one of them the same way; leaving any of them as it was is a failure.`,
       `A VISIBLE change is required: the ${cz} must clearly look as described, never like the old one, and it is fitted onto the same place of the object, in the object's own perspective, size and lighting.`,
+      `LIGHT ON THE NEW ${cz.toUpperCase()}: it is lit ONLY by Image 1's light, exactly like the neighbouring parts of the same object. Wherever it faces away from the key light it stays in shadow, with only the scene's ambient and bounce light on it; its highlights and shadows fall in the same directions as those of the parts around it; its shiny or reflective surfaces reflect Image 1's own surroundings (sky, sun, ground, buildings), never the reference's reflections or studio lighting. It is never brighter, cleaner or more evenly lit than the original parts around it.`,
       `Everything else stays exactly as it is: the rest of the object, everything around it, the framing and all text.`,
     ].join('\n')
     system = SYSTEM_KOMPOZYTORA
@@ -329,6 +330,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ? `Replace ONLY ONE ${cz}: the one at or nearest to the destination pin. Every other ${cz} of the object stays exactly as it was.`
         : `If the object has several of that part (a pair or a set), replace EVERY one of them, each fitted onto its own place — the reference shows one example, and all the others follow its design (mirrored as their side requires). Leaving any of them as it was is a failure.`,
       `Copy the new ${cz} exactly from the reference — shape, design, glass, trim, colours and every detail — and fit it onto the same place of the object, in the object's own perspective, size and lighting. A VISIBLE change is required: the ${cz} of the object must now look like the reference, never like the old one.`,
+      `LIGHT ON THE NEW ${cz.toUpperCase()}: it is lit ONLY by Image 1's light, exactly like the neighbouring parts of the same object. Wherever it faces away from the key light it stays in shadow, with only the scene's ambient and bounce light on it; its highlights and shadows fall in the same directions as those of the parts around it; its shiny or reflective surfaces reflect Image 1's own surroundings (sky, sun, ground, buildings), never the reference's reflections or studio lighting. It is never brighter, cleaner or more evenly lit than the original parts around it.`,
       `Everything else stays exactly as it is: the rest of the object, everything around it, the framing and all text.`,
     ].join('\n')
     system = SYSTEM_KOMPOZYTORA
