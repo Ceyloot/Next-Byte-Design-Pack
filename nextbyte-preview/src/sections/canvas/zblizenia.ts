@@ -149,7 +149,15 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
     if (w.pinZrodlowy) {
       const zrodlowa = w.warstwaZrodla ?? w.warstwaCelu
       const co = w.czesc ? `the ${w.czesc} to copy` : WSTAWIANIE.includes(w.operacja) ? 'the thing to bring' : 'the thing to put in'
-      dodaj(zblizenieRzeczy(zrodlowa.src, w.pinZrodlowy.normalizedX, w.pinZrodlowy.normalizedY), `a close-up of ${co}, enlarged around its pin — only to show its exact shape, material and details`)
+      // Przeniesienie w obrębie jednego zdjęcia: wycinek źródła ma być odczytany jako MIEJSCE DO OPRÓŻNIENIA,
+      // nie jako dodatkowy wzór do wstawienia (wtedy model zostawiał obiekt na starym miejscu).
+      const wKadrze = zrodlowa.id === w.warstwaCelu.id && ['object_transfer', 'character_transfer', 'object_swap'].includes(w.operacja) && !w.czesc
+      dodaj(
+        zblizenieRzeczy(zrodlowa.src, w.pinZrodlowy.normalizedX, w.pinZrodlowy.normalizedY),
+        wKadrze
+          ? 'a close-up of the object as it stands NOW at its old place in Image 1 — this is what is ERASED there (it must be gone from that spot in the result) and, in the same form, set down at the destination; it is not an extra object'
+          : `a close-up of ${co}, enlarged around its pin — only to show its exact shape, material and details`,
+      )
     }
     // cel: miejsce do wstawienia (obszar) albo rzecz do zmiany / usunięcia (zbliżenie rzeczy)
     if (w.pinDocelowy) {
