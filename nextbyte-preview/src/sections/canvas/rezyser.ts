@@ -53,6 +53,9 @@ When the user names a PART of an object (a component of it, not the whole thing)
 STEP 1a2 — FOREGROUND TO KEEP ("pierwszy_plan")
 Only for "tlo" (a change of surroundings / scenery / background): 1–3 English sentences naming exactly what stays untouched in the destination image — the main subjects the photo is about (what they are, where in the frame, how large), and any graphics, captions or text overlaid on the picture. Everything else of that image (ground, buildings, vegetation, sky, distant things) is the old surroundings that get replaced. Otherwise "".
 
+STEP 1a3 — ATTRIBUTE CHANGE ("cecha")
+When the user asks to change a PROPERTY of the single thing under the pin — its build, age, colour, material, condition, style, size — and not to add, remove or replace anything, set "cecha" to the English name of that property; otherwise "". The thing stays the same individual or object, in the same place and pose; only that property changes, to the degree the request states.
+
 STEP 1b — BIND THE USER'S WORDS TO PINS
 Each noun of the request that refers to a scene object resolves to a pin (users type fragments, inflected forms, synonyms). The operation acts on EXACTLY the named pinned objects — never on a more prominent object nearby. The user's word decides the TYPE of object: when the noun names a type that no pin is on, but a pin lies on or right next to an object of that type (a person leaning on the car the user calls "car"), the operation targets that object of the named type. If nothing of that type is near any pin, say so in "analiza" and act only on what the pins clearly show.
 
@@ -69,6 +72,7 @@ STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither 
 - "skala": 1–3 English sentences: the true real-world size of the incoming / changed object, and how it compares with the anchor below. Words only — no percentages of the image. Never take the size from how much of the reference photo the object fills; distance changes the share of the frame, never the real size.
 - PERSPECTIVE decides apparent size: things shrink with distance from the camera, so a distant house can look smaller than a car standing near the camera, and the same car ten metres farther looks far smaller than right beside the camera. Real size and apparent size are different things — judge apparent size at the DESTINATION's distance, never the object's size in its own photo and never a fixed ratio between object types.
 - "kotwice": 2 or 3 anchors of known real size in the DESTINATION image, standing at DIFFERENT distances from the camera (one nearer, one farther; the destination pin lies between or near them). Each gives its real width in metres ("szer_m") and a tight box around its horizontal extent ("box", [ymin, xmin, ymax, xmax], 0–1000 of the destination image) whose BOTTOM edge sits where the anchor touches the ground. The code uses their sizes at their image rows to derive how scale changes with distance and reads the scale exactly at the destination pin's row. One anchor is acceptable only when nothing else of known size is visible.
+- ALWAYS include the anchor that stands closest to the destination point in depth — at (almost) the same distance from the camera, the same image row: its real size gives the scale directly, with no perspective extrapolation, and wins over distant anchors when they disagree. Thin standardized things (a post or pole has a known standard diameter) are valid anchors; never trust the width of something whose size varies widely (a board, banner or sign) — use its post or fastening instead.
 - "obiekt": the finished object's size as it appears AT THE DESTINATION (in metres of real length across the image plane at that spot): "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened), "prawdziwe" = its TRUE dimensions {"dl_m" length, "szer_m" width, "wys_m" height}, "kat_deg" = its heading relative to the camera in degrees (0 = its long side faces the camera, full length visible; 90 = its front or back faces the camera, only its width visible; 45 = diagonal three-quarter view), and "kamera_deg" = how steeply the destination camera looks down at the spot (0 = eye level, 90 = straight down). The code computes the apparent size from these; give them even when unsure. An object turned at an angle to the camera shows part of its length: its apparent width then lies between its width and the diagonal of its footprint — an elongated object turned diagonally to the camera and seen from above spans nearly its full length, not its width. The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
 - For a replacement give both sizes in "skala" and their ratio.
 - Compare in NUMBERS, never with a bare "smaller / larger than": give the ratio of the object's real length and width to the nearest anchor (for example "length ≈ 1.5× the anchor width; width ≈ 0.6× it"). Check the arithmetic — an object longer than the anchor is more than 1× it, not less.
@@ -102,6 +106,7 @@ Answer ONLY with JSON:
   "widok": "<heading, visible faces, camera elevation at the destination>",
   "ulozenie": "<surface under the pin, how it fits on it, alignment, what to keep clear of>",
   "czesc": "",
+  "cecha": "",
   "czesc_zakres": "",
   "pierwszy_plan": "",
   "swiatlo": "<key light direction, hardness, Kelvin; shadow direction and softness; colour bounce; focal length, depth of field, grain, medium>",
@@ -171,6 +176,8 @@ export interface PlanRezysera {
   czesc: string
   /** ile sztuk części: all = komplet / więcej niż jedna, one = pojedyncza (z liczby gramatycznej i sensu) */
   czescZakres: 'all' | 'one' | ''
+  /** nazwa zmienianej WŁAŚCIWOŚCI rzeczy pod pinem (budowa, wiek, kolor, materiał…), EN; puste = nie dotyczy */
+  cecha: string
   /** tlo: co zostaje nietknięte (główne obiekty i nakładki), EN */
   pierwszyPlan: string
   analiza: string
@@ -322,6 +329,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     swiatlo: String(json.swiatlo ?? '').trim(),
     ulozenie: String(json.ulozenie ?? '').trim(),
     czesc: String(json.czesc ?? '').trim(),
+    cecha: String(json.cecha ?? '').trim(),
     czescZakres: json.czesc_zakres === 'all' ? 'all' : json.czesc_zakres === 'one' ? 'one' : '',
     pierwszyPlan: String(json.pierwszy_plan ?? '').trim(),
     analiza: String(json.analiza ?? '').trim(),

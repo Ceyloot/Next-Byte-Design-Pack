@@ -112,6 +112,8 @@ export interface SkladajWejscie {
   ulozenie?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (od reżysera) */
   czesc?: string
+  /** zmieniana właściwość rzeczy pod pinem (EN, od reżysera) */
+  cecha?: string
   /** numer obrazu ze zbliżeniem twarzy osoby z referencji (transfer postaci) */
   twarzObraz?: number
   /** ile sztuk części: all = komplet / więcej niż jedna, one = pojedyncza (z semantyki polecenia, od reżysera) */
@@ -271,11 +273,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const czescTryb = Boolean(w.czesc?.trim()) && (op.id === 'object_swap' || op.id === 'object_transfer') && cel !== undefined
   const czescSwap = czescTryb && zrodlo !== undefined
   const czescOpis = czescTryb && zrodlo === undefined
+  // Zmiana WŁAŚCIWOŚCI rzeczy pod jedną pinezką (budowa, wiek, kolor, materiał…): osobny prompt ATTRIBUTE CHANGE.
+  const cechaTryb = Boolean(w.cecha?.trim()) && !czescTryb && cel !== undefined && zrodlo === undefined && ['addition', 'object_swap', 'general_fix', 'texture_change'].includes(op.id)
   // Tryby zablokowane (przeniesienie w kadrze; transfer obiektu z drugiego zdjęcia) zostają bez stref kadru w opisie pinesek — prompt identyczny jak zamrożony.
   // Transfer z drugiego zdjęcia: tylko object_transfer z pinem źródłowym na innym zdjęciu niż docelowe (ZABLOKOWANE/transfer-z-drugiego-zdjecia.ts).
   const miedzyZdjeciami = !czescTryb && op.id === 'object_transfer' && !op.gotowy && zrodlo !== undefined && zrodlo.obraz > 1 && cel?.obraz === 1
   // Object swap z dwóch zdjęć (ZABLOKOWANE/object-swap-2-zdjecia.ts): każdy obiekt object_swap poza trybem w kadrze.
-  const swapZablokowany = !czescTryb && op.id === 'object_swap' && !op.gotowy && !(zrodlo?.obraz === 1 && cel?.obraz === 1)
+  const swapZablokowany = !czescTryb && !cechaTryb && op.id === 'object_swap' && !op.gotowy && !(zrodlo?.obraz === 1 && cel?.obraz === 1)
   const strefy = !miedzyZdjeciami && !(!czescTryb && ['object_transfer', 'character_transfer', 'object_swap'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1 && !op.gotowy)
   const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski, strefy)
   const dawca = numerDawcy(w)
@@ -322,6 +326,15 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = zablokowaneZadanieScenerii(dawca ?? undefined)
     system = ZABLOKOWANY_SYSTEM_SCENERII
     temperatura = ZABLOKOWANA_TEMPERATURA_SCENERII
+  } else if (cechaTryb && cel) {
+    const ce = w.cecha!.trim()
+    zadanie = [
+      `ATTRIBUTE CHANGE: change ONLY the ${ce} of the subject at ${opisPineski(cel)}, exactly as the USER request describes, to the degree it states.`,
+      `The subject stays the same individual or object: same identity, face or form, pose, position, clothing or surface, and framing. A VISIBLE change is required, and it must look like a real photograph of the changed subject — anatomically and physically correct, proportions consistent with the rest of the subject, nothing of the old state left where the change applies.`,
+      `The changed parts are lit ONLY by Image 1's light, with the same shading, shadows, skin or surface texture, grain and sharpness as the unchanged parts of the subject. Everything else stays exactly as it is: the rest of the subject, everything around it, the framing and all text.`,
+    ].join('\n')
+    system = SYSTEM_KOMPOZYTORA
+    temperatura = TEMPERATURA_OBIEKTU
   } else if (czescOpis && cel) {
     // ZABLOKOWANE (zablokowane/zmiana-czesci.ts) — nie zmieniać bez prośby użytkownika.
     zadanie = zablokowanyPartChange(w.czesc!.trim(), cel, w.czescZakres)
@@ -365,6 +378,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const pominiete: BrickId[] = []
   const wlaczone = op.bricks.filter((id) => {
     if (sceneria) { pominiete.push(id); return false }
+    if (cechaTryb && !['studio-scena', 'studio-jedno-zdjecie', 'studio-kontrola'].includes(id)) { pominiete.push(id); return false }
     if (czescTryb && !ZABLOKOWANE_ID_BRICKOW_CZESCI.includes(id)) { pominiete.push(id); return false }
     const zbedny = (id === 'studio-usuniecie' && czyszczenie === null) || (id === 'studio-referencja' && dawca === null)
     if (zbedny) pominiete.push(id)
@@ -379,11 +393,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : ''
   // Transfer postaci z drugiego zdjęcia dostaje zmierzony rozmiar i analizę osadzania jak obiekty (poza trybem w kadrze).
   const osadzalny = OPERACJE_Z_OBIEKTEM.has(op.id) && (!OPERACJE_POSTACI_SKLADAJ.has(op.id) || (op.id === 'character_transfer' && !wKadrze))
-  const rozmiar = !miedzyZdjeciami && !czescTryb && w.rozmiar?.trim() && osadzalny
+  const rozmiar = !miedzyZdjeciami && !czescTryb && !cechaTryb && w.rozmiar?.trim() && osadzalny
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
   // Analiza reżysera dla osadzania (nie dla trybu zablokowanego w kadrze): prawdziwy rozmiar, widok z kamery, opis miejsca i obiektu.
-  const osadzanie = !wKadrze && !miedzyZdjeciami && !czescTryb && osadzalny
+  const osadzanie = !wKadrze && !miedzyZdjeciami && !czescTryb && !cechaTryb && osadzalny
   const analizaOsadzania = osadzanie
     ? [
         op.id === 'character_transfer' && w.twarzObraz
@@ -410,7 +424,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     system,
     temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
-    gemini31: miedzyZdjeciami || (op.id === 'object_swap' && !wKadrze) || czescTryb || sceneria || undefined,
+    gemini31: miedzyZdjeciami || (op.id === 'object_swap' && !wKadrze) || czescTryb || cechaTryb || sceneria || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,
