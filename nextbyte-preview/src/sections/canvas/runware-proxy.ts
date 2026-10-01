@@ -31,9 +31,10 @@ export interface ZadanieGeneracji {
   /** `settings.temperature` — Studio: swap 0.45, twarz 0.42, poprawka 0.2 */
   temperatura?: number
   /**
-   * Znacznik operacji na człowieku (dziś bez wpływu na model — zawsze Nano Banana 2 Lite).
+   * Wybór modelu: 'postac' — operacja na człowieku (Gemini 3.1);
+   * 'gemini31' — object swap w obrębie jednego zdjęcia (Gemini 3.1); brak — Nano Banana 2 Lite.
    */
-  klasa?: 'postac'
+  klasa?: 'postac' | 'gemini31'
 }
 
 /** Żądanie rozpoznania obiektu pod pineską */
@@ -131,7 +132,8 @@ export function runwareProxy(): Plugin {
 
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
         // Operacje na ludziach — Gemini 3.1. Character swap: ZABLOKOWANY_MODEL_POSTACI (zablokowane/character-swap.ts), nie zmieniać.
-        const modelZadania = zadanie.klasa === 'postac' ? ZABLOKOWANY_MODEL_POSTACI : model
+        const modelZadania =
+          zadanie.klasa === 'postac' ? ZABLOKOWANY_MODEL_POSTACI : zadanie.klasa === 'gemini31' ? 'google:4@3' : model
         console.info(`[canvas] generacja modelem ${modelZadania}`)
 
         // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.

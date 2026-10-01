@@ -848,7 +848,12 @@ export function CanvasSection() {
       const ustawieniaModelu = {
         system: zadanieModelu?.system,
         temperatura: zadanieModelu?.temperatura,
-        klasa: postac ? ('postac' as const) : undefined,
+        // Object swap w obrębie jednego zdjęcia (zadanie „MOVE within Image 1”, tryb zamiany) — Gemini 3.1.
+        klasa: postac
+          ? ('postac' as const)
+          : trybAgenta === 'zamien' && pelnePolecenie.includes('MOVE within Image 1:')
+            ? ('gemini31' as const)
+            : undefined,
       }
 
       setOstatniPrompt(
