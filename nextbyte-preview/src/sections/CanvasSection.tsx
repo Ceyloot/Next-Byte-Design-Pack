@@ -1157,6 +1157,18 @@ export function CanvasSection() {
         }
       }
 
+      // Diagnostyka skali na ekranie (bez konsoli): kotwice reżysera, wymiary obiektu i surowy wynik pomiaru.
+      if (ocenaPoPoprawce && plan?.pomiar) {
+        const kotwiceTekst = plan.pomiar.kotwice
+          .map(k => `${k.opis || 'kotwica'} ${k.szerM} m (rząd ${k.rzad.toFixed(2)}, ${Math.round(k.szer * 100)}% szer.)`)
+          .join('; ')
+        const surowy = rozmiarSurowy ? `${Math.round(rozmiarSurowy.szer)}% szer.${rozmiarPlanu ? '' : ' — odrzucony'}` : 'brak'
+        ocenaPoPoprawce = {
+          ...ocenaPoPoprawce,
+          ocena: `${ocenaPoPoprawce.ocena} [Skala: kotwice — ${kotwiceTekst}; obiekt ${plan.pomiar.obiekt.szerM} × ${plan.pomiar.obiekt.wysM} m; pomiar ${surowy}]`.trim(),
+        }
+      }
+
       if (ocenaPoPoprawce && pomiar?.cel) {
         const zmierzone = `Pomiar: obiekt ma ${Math.round(pomiar.szer)}% szerokości kadru (cel ok. ${Math.round(pomiar.cel)}%)${pomiar.bledy.length ? ` — nadal ${pomiar.bledy.join('; ')}` : ''}.`
         ocenaPoPoprawce = {
