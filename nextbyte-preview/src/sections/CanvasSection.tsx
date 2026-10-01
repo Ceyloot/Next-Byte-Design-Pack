@@ -873,6 +873,8 @@ export function CanvasSection() {
                 pineski
                   .filter(p => p.layerId === w.id && !p.chroniona && !zrodloNaCelu(p))
                   .map(p => ({ x: p.normalizedX, y: p.normalizedY })),
+                // Przeniesienie w kadrze: miejsce docelowe jasnoczerwone, obiekt do przeniesienia (Image 2) magentowy.
+                przeniesienieWKadrze ? '#FF1F1F' : undefined,
               )
             : src,
         )
@@ -891,13 +893,13 @@ export function CanvasSection() {
       const polecenieModelu = (zblizenie
         ? pelnePolecenie.replace(
             'MOVE within Image 1:',
-            `MOVE within Image 1. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small magenta dot in Image 1 marks the exact destination (Pin 2). Edit Image 1 only; no dot is visible in the result:`,
+            `MOVE within Image 1. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small bright RED dot in Image 1 marks the exact destination (Pin 2) — a different colour from the magenta dot, so the two are never confused. Edit Image 1 only; no dot is visible in the result:`,
           )
         : pelnePolecenie
       ).replace(
         'the images carry no markers.',
         przeniesienieWKadrze
-          ? 'the only marker is a small magenta dot at the destination (Pin 2) in Image 1, which the object covers.'
+          ? 'the only marker is a small bright red dot at the destination (Pin 2) in Image 1, which the object covers.'
           : 'the images carry no markers.',
       )
       if (zblizenie || przeniesienieWKadrze) {
@@ -987,7 +989,7 @@ export function CanvasSection() {
         if (Math.abs(odX) > 0.08 || Math.abs(odY) > 0.09) {
           bledy.push(`obok pineski (środek na ${Math.round(cx * 100)}%, ${Math.round(cy * 100)}% zamiast ${Math.round(pinDocelowy.normalizedX * 100)}%, ${Math.round(pinDocelowy.normalizedY * 100)}%)`)
           korekta.push(
-            `POSITION: its centre came out at x=${Math.round(cx * 100)}%, y=${Math.round(cy * 100)}% — it must be at the magenta dot, x=${Math.round(pinDocelowy.normalizedX * 100)}%, y=${Math.round(pinDocelowy.normalizedY * 100)}% (move it ${odY > 0 ? 'up' : 'down'}${Math.abs(odX) > 0.08 ? ` and ${odX > 0 ? 'left' : 'right'}` : ''}).`,
+            `POSITION: its centre came out at x=${Math.round(cx * 100)}%, y=${Math.round(cy * 100)}% — it must be at the destination point, x=${Math.round(pinDocelowy.normalizedX * 100)}%, y=${Math.round(pinDocelowy.normalizedY * 100)}% (move it ${odY > 0 ? 'up' : 'down'}${Math.abs(odX) > 0.08 ? ` and ${odX > 0 ? 'left' : 'right'}` : ''}).`,
           )
         }
         return { szer, cel, bledy, korekta }
