@@ -752,7 +752,11 @@ export function CanvasSection() {
         ) ??
         projekt.pineski.find(p => p !== pinDocelowy && !p.chroniona)
 
-      const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
+      const rozmiarSurowy = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
+      // Bezpiecznik: obiekt przenoszony na zdjęcie rzadko zajmuje ponad 40% szerokości kadru — taki pomiar to prawie na pewno
+      // błąd kotwic reżysera (w teście samochód → miasteczko wyszło 48% przy faktycznych 18%). Nie wysyłamy go modelowi ani do kontroli.
+      if (rozmiarSurowy && rozmiarSurowy.szer > 40) console.warn('[canvas] pomiar rozmiaru odrzucony jako nieprawdopodobny', { rozmiarSurowy, pomiar: plan?.pomiar })
+      const rozmiarPlanu = rozmiarSurowy && rozmiarSurowy.szer <= 40 ? rozmiarSurowy : undefined
       const surowyObszar =
         trybAgenta === 'tlo' || trybAgenta === 'styl'
           ? undefined
