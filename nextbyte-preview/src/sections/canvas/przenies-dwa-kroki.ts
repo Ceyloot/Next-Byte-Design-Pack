@@ -66,3 +66,21 @@ export function promptKrok2(w: DwaKrokiWejscie): string {
     CALOSC,
   ].join('\n')
 }
+
+/** Jeden przebieg (inny model): opisowo „usuń z miejsca A i postaw w miejscu B”, bez numerów pinesek. */
+export function promptJedenPrzebieg(w: DwaKrokiWejscie): string {
+  const { zrodlo, cel } = w
+  const zbl = w.zblizenia?.length
+    ? `Enlarged crops of Image 1 are attached only to show exact detail: ${w.zblizenia.map((z) => `Image ${z.numer} = ${z.opis}`).join('; ')}. They are never extra things to put into the result.`
+    : ''
+  return [
+    `[TASK]`,
+    `Edit Image 1: MOVE one object from one spot to another — the result shows it ONCE, at the new spot only.`,
+    `1. TAKE IT AWAY: the ${czysc(zrodlo.nazwa) || 'object'} that stands ${polozenieSlowami(zrodlo.x, zrodlo.y)}${zrodlo.opis ? ` — ${czysc(zrodlo.opis)}` : ''}. Delete it completely from there: not a single part remains. Rebuild that spot with what would naturally be there without it (ground, grass, wall, trees, sky), continuing the surrounding texture and light, and smooth the background around it.`,
+    `2. SET IT DOWN: exactly the same object — every part, shape, proportion, material, colour and detail as it looks in Image 1, never a different object of the same kind — ${polozenieSlowami(cel.x, cel.y)}${cel.opis || cel.nazwa ? ` (${zdanie(cel.nazwa, cel.opis)})` : ''}. ${w.zamiana ? 'It takes exactly the place of what stands there now, which is removed completely. ' : ''}The middle of its footprint lands exactly on that x / y spot, in that very part of the frame — never beside it, never nearer the centre; if there is too little room it is made smaller or the ground shaped. It stands logically on the real surface, upright, following the ground and the scene's lines, scaled for its distance from the camera and seen from Image 1's camera, never floating, sunk or passing through other things.`,
+    w.rozmiar ? w.rozmiar : '',
+    w.swiatlo ? `LIGHT OF IMAGE 1 (the object is lit exactly like this, with a contact shadow and a cast shadow like the scene's): ${w.swiatlo}` : `The object is lit exactly like the scene, with a contact shadow and a cast shadow like the scene's.`,
+    zbl,
+    CALOSC,
+  ].filter(Boolean).join('\n')
+}

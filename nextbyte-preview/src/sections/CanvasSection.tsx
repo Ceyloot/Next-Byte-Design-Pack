@@ -62,7 +62,7 @@ import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
-import { promptKrok1, promptKrok2, type DwaKrokiWejscie, type MiejsceOpis } from '@/sections/canvas/przenies-dwa-kroki'
+import { promptJedenPrzebieg, promptKrok1, promptKrok2, type DwaKrokiWejscie, type MiejsceOpis } from '@/sections/canvas/przenies-dwa-kroki'
 import { odciskPinesek, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
 import type { ObrazDlaAgenta } from '@/sections/canvas/agent-proxy'
@@ -110,7 +110,12 @@ const DRUGI_PRZEBIEG = false
  * Przeniesienie w obrębie jednego zdjęcia = DWA zadania Nano Banana Lite: 1) przeniesienie,
  * 2) usunięcie tego, co zostało na starym miejscu. false = szybkie cofnięcie do jednego przebiegu.
  */
-const PRZENIESIENIE_DWA_ZADANIA = true
+const PRZENIESIENIE_DWA_ZADANIA = false
+/**
+ * Przeniesienie / zamiana na jednym zdjęciu w JEDNEJ generacji: opisowy prompt (bez numerów pinesek) i model Gemini 3.1.
+ * false = poprzednie zachowanie (zamrożony prompt „MOVE within Image 1”, Lite). Ma pierwszeństwo przed dwoma zadaniami.
+ */
+const PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG = true
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
@@ -815,7 +820,7 @@ export function CanvasSection() {
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
       // Przeniesienie / zamiana na jednym zdjęciu = dwa zadania: 1) dodaj kopię w nowym miejscu, 2) usuń oryginał.
       const dwaKroki =
-        PRZENIESIENIE_DWA_ZADANIA &&
+        (PRZENIESIENIE_DWA_ZADANIA || PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG) &&
         ['przenies', 'zamien'].includes(trybAgenta) &&
         !plan?.czesc &&
         !plan?.cecha &&
@@ -900,7 +905,9 @@ export function CanvasSection() {
         // Object swap w obrębie jednego zdjęcia (zadanie „MOVE within Image 1”, tryb zamiany) — Gemini 3.1.
         klasa: postac
           ? ('postac' as const)
-          : (trybAgenta === 'zamien' && pelnePolecenie.includes('MOVE within Image 1:')) || zadanieModelu?.gemini31
+          : (trybAgenta === 'zamien' && pelnePolecenie.includes('MOVE within Image 1:')) ||
+          (PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG && dwaKroki && pelnePolecenie.includes('MOVE within Image 1:')) ||
+          zadanieModelu?.gemini31
             ? ('gemini31' as const)
             : undefined,
       }
@@ -974,7 +981,7 @@ export function CanvasSection() {
               zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
             }
           : null
-      if (wejscieDwochKrokow) polecenieModelu = promptKrok1(wejscieDwochKrokow)
+      if (wejscieDwochKrokow) polecenieModelu = PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG ? promptJedenPrzebieg(wejscieDwochKrokow) : promptKrok1(wejscieDwochKrokow)
       if (zblizenie || przeniesienieWKadrze) {
         setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
       }
@@ -1019,7 +1026,7 @@ export function CanvasSection() {
       }
 
       // Drugie zadanie przeniesienia w kadrze: model często stawia obiekt w nowym miejscu, ale zostawia stary.
-      if (wejscieDwochKrokow) {
+      if (wejscieDwochKrokow && !PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG) {
         try {
           const polecenieUsuniecia = promptKrok2(wejscieDwochKrokow)
           const wynik2 = await generuj({
