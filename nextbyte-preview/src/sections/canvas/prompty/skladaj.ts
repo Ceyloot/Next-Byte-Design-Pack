@@ -248,7 +248,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = [
       `MOVE within Image 1:`,
       `Image 1 is a photograph with two small dots: a MAGENTA dot on an object and a bright RED dot at a spot. Image 2 is the same photograph without any dots.`,
-      `Move the object under the magenta dot to the place of the red dot${op.id === 'object_swap' ? ' — it takes the place of whatever is there, which is removed completely' : ''}. It stays exactly the same object (same shape, design, materials and colours); only its size and angle of view adapt to its new spot, and it stands there as it would really stand. Fill the spot it left naturally, as if nothing had ever stood there.`,
+      `Move the object under the magenta dot${zrodlo.nazwa ? ` (${zrodlo.nazwa})` : ''} to the place of the red dot${cel.nazwa ? ` (${cel.nazwa})` : ''}${op.id === 'object_swap' ? ' — it takes the place of whatever is there, which is removed completely' : ''}. It stays exactly the same object (same shape, design, materials and colours); only its size and angle of view adapt to its new spot, and it stands there as it would really stand. Fill the spot it left naturally, as if nothing had ever stood there.`,
       `The object appears once, at the red dot. Remove both dots. Everything else stays exactly as in the photo.`,
     ].join('\n')
     system = SYSTEM_KOMPOZYTORA
@@ -284,7 +284,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
   const sekcjaRegul = wKadrze
-    ? ['[RULES]', swiatlo, `The moved object looks photographed in this scene: its light, shadows, focus, grain and colour match the photo around it.`].filter(Boolean).join('\n')
+    ? ['[RULES]', swiatlo, rozmiar, `The moved object looks photographed in this scene: its light, shadows, focus, grain and colour match the photo around it.`].filter(Boolean).join('\n')
     : ['[RULES]', swiatlo, rozmiar, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [

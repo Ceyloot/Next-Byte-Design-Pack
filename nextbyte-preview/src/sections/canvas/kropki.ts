@@ -19,7 +19,7 @@ export function promienKropki(szer: number, wys: number): number {
 
 /** Zwraca kopię obrazu z kropkami (data URI, pełna rozdzielczość). Przy błędzie — obraz bez zmian. */
 /** `kolor`: domyślnie magenta (obiekt); jasna czerwień oznacza miejsce docelowe przy przeniesieniu w kadrze. */
-export function narysujKropki(src: string, punkty: PunktKropki[], kolor = '#FF00FF'): Promise<string> {
+export function narysujKropki(src: string, punkty: PunktKropki[], kolor = '#FF00FF', mnoznikPromienia = 1): Promise<string> {
   if (!punkty.length) return Promise.resolve(src)
   return new Promise(resolve => {
     const obraz = new Image()
@@ -32,7 +32,7 @@ export function narysujKropki(src: string, punkty: PunktKropki[], kolor = '#FF00
         const g = plotno.getContext('2d')
         if (!g) return resolve(src)
         g.drawImage(obraz, 0, 0)
-        const r = promienKropki(plotno.width, plotno.height)
+        const r = Math.round(promienKropki(plotno.width, plotno.height) * mnoznikPromienia)
         for (const p of punkty) {
           g.beginPath()
           g.arc(p.x * plotno.width, p.y * plotno.height, r, 0, Math.PI * 2)

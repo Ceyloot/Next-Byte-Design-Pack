@@ -840,7 +840,7 @@ export function CanvasSection() {
         swiatlo: plan?.swiatlo,
         // Rozmiar z kotwic reżysera — bez niego model brał wielkość obiektu z referencji.
         rozmiar:
-          rozmiarPlanu && trybAgenta !== 'zamien'
+          rozmiarPlanu && (trybAgenta !== 'zamien' || pineskiPolecenia.every(p => p.chroniona || p.layerId === zrodlo.id))
             ? `at the destination pin the whole object spans about ${Math.round(rozmiarPlanu.szer)}% of Image 1's width and ${Math.round(rozmiarPlanu.wys)}% of its height.${porownanie ? ` ${porownanie}` : ''}`
             : undefined,
       })
@@ -883,6 +883,9 @@ export function CanvasSection() {
                     y: p.normalizedY,
                     kolor: przeniesienieWKadrze ? (zrodloNaCelu(p) ? '#FF00FF' : '#FF1F1F') : undefined,
                   })),
+                undefined,
+                // w trybie przeniesienia w kadrze kropki są większe — model je wyraźnie widzi
+                przeniesienieWKadrze ? 2.5 : 1,
               )
             : src,
         )
