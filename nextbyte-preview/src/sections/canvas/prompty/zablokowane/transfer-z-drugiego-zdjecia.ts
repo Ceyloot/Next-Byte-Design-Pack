@@ -1,5 +1,5 @@
 /**
- * ZABLOKOWANE — OBJECT TRANSFER Z DRUGIEGO ZDJĘCIA (obiekt z Image 2, miejsce na Image 1) — tryb testowy A/B.
+ * ZABLOKOWANE — OBJECT TRANSFER Z DRUGIEGO ZDJĘCIA (obiekt z Image 2, miejsce na Image 1). Zatwierdzone przez użytkownika jako działające.
  * Pełna logika z commita dd2f587 (zadanie, bricki, rola modelu, temperatura, model Gemini 3.1) — TYLKO w tym trybie.
  * NIE ZMIENIAĆ bez wyraźnej prośby użytkownika. Teksty są kopiami — zmiany we wspólnych brickach ani w
  * operacje/object-transfer.ts NIE wpływają na ten tryb.
