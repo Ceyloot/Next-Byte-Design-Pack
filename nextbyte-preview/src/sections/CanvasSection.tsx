@@ -694,7 +694,17 @@ export function CanvasSection() {
       // Agent widział zdjęcia, więc jego tryb wygrywa z rozpoznaniem ze słów.
       // Jego opis obiektów i instrukcja wchodzą W rusztowanie — reguły kadru,
       // ochrony i czystego wyniku idą do modelu zawsze.
-      const trybAgenta = INTENCJE.find(i => i.id === plan?.intencja)?.id ?? intencja
+      let trybAgenta = INTENCJE.find(i => i.id === plan?.intencja)?.id ?? intencja
+      // „wstaw X tutaj” na JEDNYM zdjęciu, gdy jedna pineska jest obiektem (SOURCE), a druga miejscem (DESTINATION):
+      // obiekt się przenosi — „wstaw” (kopia, nic nie znika) tylko na wyraźne życzenie kopii.
+      if (trybAgenta === 'wstaw' && !plan?.osoba) {
+        const nrZr = Object.entries(uklad.role).find(([, r]) => r === 'SOURCE')?.[0]
+        const nrCel = Object.entries(uklad.role).find(([, r]) => r === 'DESTINATION')?.[0]
+        const pZr = nrZr ? projekt.pineski[Number(nrZr) - 1] : undefined
+        const pCel = nrCel ? projekt.pineski[Number(nrCel) - 1] : undefined
+        const chceKopie = /kopi|duplik|klon|jeszcze|drugi|kolejn|następn|nastepn|również|rowniez|też|tez\b/i.test(projekt.tekst)
+        if (pZr && pCel && pZr.layerId === pCel.layerId && pZr.layerId === uklad.plotno?.id && !chceKopie) trybAgenta = 'przenies'
+      }
 
       // Reżyser (widzi wszystkie zdjęcia) wskazuje, które jest DOCELOWE — tam
       // ląduje obiekt. Promujemy je na Image 1: z niego idą wymiary do Runware

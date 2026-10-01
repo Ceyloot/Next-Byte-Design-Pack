@@ -210,7 +210,7 @@ function gramatyka(t: Slowo[], wzmianki: Wzmianka[], numeryPinesek: number[] = [
         const b = przyimek >= 0 ? inneNiz(a.pin, przyimek + 1) : undefined
         if (b) return { rodzaj: 'wstaw', a: a.pin, b: b.pin }
         // „wstaw A w to miejsce / tutaj / tam” — wskazana jest tylko A; przy dwóch pineskach miejscem jest druga
-        const wskazanie = t.slice(a.poz + a.dl).some(s => /^(miejsce|tutaj|tu|tam|ten|tego)$/.test(s.tekst) && s.tekst !== 'ten' && s.tekst !== 'tego')
+        const wskazanie = t.some((s, j) => /^(miejsce|tutaj|tu|tam|tutej)$/.test(s.tekst) && (j < a.poz || j >= a.poz + a.dl))
         const druga = numeryPinesek.filter(n => n !== a.pin)
         if (wskazanie && numeryPinesek.length === 2 && druga.length === 1) return { rodzaj: 'wstaw', a: a.pin, b: druga[0] }
         // „wstaw A tutaj” — miejscem jest jedyna inna pineska przed czasownikiem
