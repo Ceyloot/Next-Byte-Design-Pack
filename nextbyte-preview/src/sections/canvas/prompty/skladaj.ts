@@ -76,6 +76,12 @@ export interface SkladajWejscie {
   swiatlo?: string
   /** zmierzony rozmiar obiektu w miejscu docelowym (EN) */
   rozmiar?: string
+  /** prawdziwy rozmiar obiektu i porównanie z kotwicą — słowami (EN, od reżysera) */
+  skala?: string
+  /** jak obiekt ma wyglądać w miejscu docelowym: kierunek, widoczne ściany, kamera (EN, od reżysera) */
+  widok?: string
+  /** logiczne ułożenie obiektu w miejscu docelowym (EN, od reżysera) */
+  ulozenie?: string
   /** opis sceny z analizy Gemini (pipeline w canvas/lib) — nazwy pinesek */
   opis?: OpisSceny
   pineskiChronione?: ObszarChroniony[]
@@ -115,14 +121,17 @@ export interface SkladajWynik {
 const wsp = (v: number) => v.toFixed(2)
 
 /** Odwołanie do pineski w treści bricków i operacji. */
-function opisPineski(p: PineskaSklejka): string {
-  return `Pin ${p.numer} (Image ${p.obraz}, x=${wsp(p.x)} y=${wsp(p.y)})`
+function opisPineski(p: PineskaSklejka, strefy = true): string {
+  // Miejsce docelowe dostaje też strefę kadru słowami — model lepiej trzyma „w prawej części, w dolnej połowie” niż ułamki.
+  const strefa = strefy && p.rola === 'target' ? `, ${slowaPolozenia(p.x, p.y, true)}` : ''
+  return `Pin ${p.numer} (Image ${p.obraz}, x=${wsp(p.x)} y=${wsp(p.y)}${strefa})`
 }
 
 /** Położenie punktu słowami (strefa kadru + odległość od krawędzi) — model lepiej wykonuje „po prawej, przy krawędzi” niż ułamek. */
-function slowaPolozenia(x: number, y: number): string {
+function slowaPolozenia(x: number, y: number, krotko = false): string {
   const poziom = x < 0.15 ? 'at the far left edge' : x < 0.35 ? 'in the left part' : x < 0.65 ? 'in the horizontal middle' : x < 0.85 ? 'in the right part' : 'at the far right edge'
   const pion = y < 0.15 ? 'at the very top' : y < 0.35 ? 'in the upper part' : y < 0.65 ? 'around the vertical middle' : y < 0.85 ? 'in the lower part' : 'at the very bottom'
+  if (krotko) return `${pion} and ${poziom} of the frame`
   return `${pion} and ${poziom} of the frame (${Math.round(x * 100)}% of the way from the left edge, ${Math.round(y * 100)}% of the way down from the top)`
 }
 
@@ -141,19 +150,19 @@ function pineskaZrodla(pineski: PineskaSklejka[]): PineskaSklejka | undefined {
  * - przeniesienie czyści stare miejsce — o ile leży na obrazie docelowym,
  * - null = nie ma czego czyścić (brick „usunięcie” odpada).
  */
-function miejsceCzyszczenia(operacja: OperationId, pineski: PineskaSklejka[]): string | null {
+function miejsceCzyszczenia(operacja: OperationId, pineski: PineskaSklejka[], strefy = true): string | null {
   switch (operacja) {
     case 'object_swap':
     case 'character_swap':
     case 'removal': {
       const cel = pineski.find((p) => p.rola === 'target' && p.obraz === 1)
-      return cel ? opisPineski(cel) : 'the object named in the USER request'
+      return cel ? opisPineski(cel, strefy) : 'the object named in the USER request'
     }
     case 'object_transfer':
     case 'character_transfer': {
       const zrodlo = pineskaZrodla(pineski)
       if (!zrodlo) return 'the old position of the object named in the USER request'
-      return zrodlo.obraz === 1 ? opisPineski(zrodlo) : null
+      return zrodlo.obraz === 1 ? opisPineski(zrodlo, strefy) : null
     }
     default:
       return null
@@ -219,15 +228,17 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const nierozwiazane = new Set<string>()
   const cel = pineskaCelu(w.pineski)
   const zrodlo = pineskaZrodla(w.pineski)
-  const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski)
+  // Tryb zablokowany (przeniesienie w kadrze) zostaje bez stref kadru w opisie pinesek — prompt identyczny jak zamrożony.
+  const strefy = !(['object_transfer', 'character_transfer', 'object_swap'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1 && !op.gotowy)
+  const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski, strefy)
   const dawca = numerDawcy(w)
 
   const wartosci: Record<string, string> = {
     IMAGE_TARGET: 'Image 1',
     IMAGE_DONOR: dawca ? `Image ${dawca}` : 'the reference described in the USER request',
     DONOR_ROLE: ROLA_DAWCY[op.id] ?? ROLA_INNA,
-    PIN_TARGET: cel ? opisPineski(cel) : 'the marked spot',
-    PIN_SOURCE: zrodlo ? opisPineski(zrodlo) : 'the source spot',
+    PIN_TARGET: cel ? opisPineski(cel, strefy) : 'the marked spot',
+    PIN_SOURCE: zrodlo ? opisPineski(zrodlo, strefy) : 'the source spot',
     PIN_CLEAR: czyszczenie ?? 'the cleared spot',
   }
   const podmien = (tekst: string): string =>
@@ -293,7 +304,18 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const rozmiar = w.rozmiar?.trim() && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
-  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  // Analiza reżysera dla osadzania (nie dla trybu zablokowanego w kadrze): prawdziwy rozmiar, widok z kamery, opis miejsca i obiektu.
+  const osadzanie = !wKadrze && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+  const analizaOsadzania = osadzanie
+    ? [
+        w.skala?.trim() ? `THE REAL SIZE OF THE SUBJECT (analysed against objects of known size in Image 1 — never take its size from how large it appears in its reference): ${w.skala.trim()}` : '',
+        w.widok?.trim() ? `HOW IT MUST APPEAR AT THE DESTINATION (from Image 1's camera and the surface it stands on — a different view in the reference is turned to match): ${w.widok.trim()}` : '',
+        w.ulozenie?.trim() ? `THE LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image 1's scene — follow it): ${w.ulozenie.trim()}` : '',
+        cel && (cel.miejsce || cel.szczegoly) ? `THE DESTINATION SPOT (Pin ${cel.numer}): ${[cel.miejsce, cel.szczegoly].filter(Boolean).join(' ')}` : '',
+        zrodlo?.szczegoly && zrodlo.obraz !== 1 ? `THE SUBJECT (Pin ${zrodlo.numer}): ${zrodlo.szczegoly}` : '',
+      ].filter(Boolean)
+    : []
+  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...analizaOsadzania, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },

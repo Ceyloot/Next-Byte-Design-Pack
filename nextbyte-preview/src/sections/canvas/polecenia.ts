@@ -298,6 +298,12 @@ export interface OpcjePolecenia {
   szczegoly?: Record<number, string>
   /** numer pineski → gdzie leży punkt, słowami (EN) */
   miejsca?: Record<number, string>
+  /** rzeczywisty rozmiar obiektu i porównanie z kotwicą, słowami (EN) — od reżysera */
+  skala?: string
+  /** jak obiekt ma WYGLĄDAĆ w miejscu docelowym: kierunek, widoczne ściany, wysokość kamery (EN) */
+  widok?: string
+  /** logiczne ułożenie: powierzchnia, dopasowanie, wyrównanie, odstępy (EN) */
+  ulozenie?: string
 }
 
 /** Operacje na człowieku — idą modelem postaci (RUNWARE_MODEL_POSTAC). */
@@ -350,7 +356,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {} } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -410,6 +416,9 @@ export function zbudujZadanieModelu(
     obrazy: obrazyWejscia,
     swiatlo,
     rozmiar,
+    skala,
+    widok,
+    ulozenie,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,
       obraz: numerObrazu(p),

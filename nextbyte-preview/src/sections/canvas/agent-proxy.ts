@@ -70,6 +70,8 @@ export interface Plan {
   widok?: string
   /** światło i kamera zdjęcia docelowego z konkretnymi wartościami (reżyser) */
   swiatlo?: string
+  /** logiczne ułożenie obiektu w miejscu docelowym (EN) */
+  ulozenie?: string
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
   /** szczegółowy opis każdej pineski (rzecz albo miejsce) */
@@ -382,6 +384,7 @@ export function agentProxy(): Plugin {
         pomiar: odczytany.pomiar,
         widok: odczytany.widok || undefined,
         swiatlo: odczytany.swiatlo || undefined,
+        ulozenie: odczytany.ulozenie || undefined,
         miejsca: miejscaZPlanu(odczytany),
         szczegoly: szczegolyZPlanu(odczytany),
         odznaki: odznakiZPlanu(odczytany),
