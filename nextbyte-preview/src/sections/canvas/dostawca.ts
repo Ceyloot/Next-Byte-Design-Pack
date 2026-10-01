@@ -125,6 +125,23 @@ export async function opiszObiektSzczegolowo(wycinek: string): Promise<string> {
   }
 }
 
+/** Karta tożsamości osoby (EN) + ramka twarzy [ymin,xmin,ymax,xmax] 0–1000 w wycinku; pusta, gdy się nie uda. */
+export async function opiszOsobeSzczegolowo(wycinek: string): Promise<{ opis: string; twarz?: [number, number, number, number] }> {
+  try {
+    const odp = await fetch('/api/canvas/rozpoznaj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wycinek, tryb: 'osoba' }),
+    })
+    if (!odp.ok) return { opis: '' }
+    const tresc = (await odp.json()) as { opis?: string; twarz?: number[] }
+    const t = tresc.twarz
+    return { opis: tresc.opis?.trim() ?? '', twarz: t && t.length === 4 ? [t[0], t[1], t[2], t[3]] : undefined }
+  } catch {
+    return { opis: '' }
+  }
+}
+
 /** Inwentarz sceny — co w ogóle jest na zdjęciu. */
 export async function rozpoznajScene(zdjecie: string): Promise<string[]> {
   const male = await zmniejszDoAnalizy(zdjecie)

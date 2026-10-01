@@ -306,6 +306,8 @@ export interface OpcjePolecenia {
   ulozenie?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (np. oświetlenie auta) */
   czesc?: string
+  /** numer obrazu ze zbliżeniem twarzy osoby z referencji (dodatkowy obraz tożsamości) */
+  twarzObraz?: number
   /** ile sztuk części: all = komplet, one = pojedyncza */
   czescZakres?: 'all' | 'one'
   /** tlo: co zostaje nietknięte — główne obiekty i nakładki (EN, od reżysera) */
@@ -362,7 +364,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc, czescZakres, pierwszyPlan } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc, czescZakres, pierwszyPlan, twarzObraz } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -427,6 +429,7 @@ export function zbudujZadanieModelu(
     ulozenie,
     czesc,
     czescZakres,
+    twarzObraz,
     pierwszyPlan,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,

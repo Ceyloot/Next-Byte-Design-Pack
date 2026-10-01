@@ -112,6 +112,8 @@ export interface SkladajWejscie {
   ulozenie?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (od reżysera) */
   czesc?: string
+  /** numer obrazu ze zbliżeniem twarzy osoby z referencji (transfer postaci) */
+  twarzObraz?: number
   /** ile sztuk części: all = komplet / więcej niż jedna, one = pojedyncza (z semantyki polecenia, od reżysera) */
   czescZakres?: 'all' | 'one'
   /** tlo: co zostaje nietknięte — główne obiekty i nakładki (EN, od reżysera) */
@@ -375,18 +377,23 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
-  const rozmiar = !miedzyZdjeciami && !czescTryb && w.rozmiar?.trim() && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+  // Transfer postaci z drugiego zdjęcia dostaje zmierzony rozmiar i analizę osadzania jak obiekty (poza trybem w kadrze).
+  const osadzalny = OPERACJE_Z_OBIEKTEM.has(op.id) && (!OPERACJE_POSTACI_SKLADAJ.has(op.id) || (op.id === 'character_transfer' && !wKadrze))
+  const rozmiar = !miedzyZdjeciami && !czescTryb && w.rozmiar?.trim() && osadzalny
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
   // Analiza reżysera dla osadzania (nie dla trybu zablokowanego w kadrze): prawdziwy rozmiar, widok z kamery, opis miejsca i obiektu.
-  const osadzanie = !wKadrze && !miedzyZdjeciami && !czescTryb && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+  const osadzanie = !wKadrze && !miedzyZdjeciami && !czescTryb && osadzalny
   const analizaOsadzania = osadzanie
     ? [
+        op.id === 'character_transfer' && w.twarzObraz
+          ? `Image ${w.twarzObraz} is a close-up of the FACE of the person from the reference, cut from the same photo — the identity reference: reproduce exactly this face, feature by feature (shape, eyes and their spacing, brows, nose, lips, jaw, ears, marks, asymmetries), never a similar-looking person.`
+          : '',
         w.skala?.trim() ? `THE REAL SIZE OF THE SUBJECT (analysed against objects of known size in Image 1 — never take its size from how large it appears in its reference): ${w.skala.trim()}` : '',
         w.widok?.trim() ? `HOW IT MUST APPEAR AT THE DESTINATION (from Image 1's camera and the surface it stands on — a different view in the reference is turned to match): ${w.widok.trim()}` : '',
         w.ulozenie?.trim() ? `THE LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image 1's scene — follow it): ${w.ulozenie.trim()}` : '',
         cel && (cel.miejsce || cel.szczegoly) ? `THE DESTINATION SPOT (Pin ${cel.numer}): ${[cel.miejsce, cel.szczegoly].filter(Boolean).join(' ')}` : '',
-        zrodlo?.szczegoly && zrodlo.obraz !== 1 ? `THE SUBJECT (Pin ${zrodlo.numer}): ${zrodlo.szczegoly}` : '',
+        zrodlo?.szczegoly && zrodlo.obraz !== 1 ? `${op.id === 'character_transfer' ? 'THE PERSON TO BRING — IDENTITY CARD, reproduce exactly (face, hair, build, outfit)' : 'THE SUBJECT'} (Pin ${zrodlo.numer}): ${zrodlo.szczegoly}` : '',
       ].filter(Boolean)
     : []
   // Scenografia: światło sceny docelowej NIE obowiązuje (zmienia się z otoczeniem) — zamiast tego reguły zmiany miejsca.

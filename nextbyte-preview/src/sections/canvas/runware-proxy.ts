@@ -46,7 +46,7 @@ export interface ZadanieRozpoznania {
    * `scena` robi inwentarz: co w ogóle jest na zdjęciu.
    * `opis` — wyczerpujący opis wizualny jednego obiektu w centrum wycinka (EN), do przeniesienia w kadrze.
    */
-  tryb?: 'obiekt' | 'scena' | 'opis'
+  tryb?: 'obiekt' | 'scena' | 'opis' | 'osoba'
 }
 
 /** Odpowiedź rozpoznania — krótkie nazwy po polsku */
@@ -230,6 +230,47 @@ export function runwareProxy(): Plugin {
       try {
         const { wycinek, tryb = 'obiekt' } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
         if (!wycinek) return odpowiedz(400, { blad: 'Brak wycinka' })
+
+        // Tryb „osoba”: karta tożsamości osoby (twarz cecha po cesze, włosy, budowa, ubiór) + ramka twarzy do zbliżenia.
+        if (tryb === 'osoba') {
+          const d = wycinek.match(/^data:([^;]+);base64,(.+)$/)
+          const oResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${kluczGemini}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { inlineData: { mimeType: d ? d[1] : 'image/jpeg', data: d ? d[2] : wycinek } },
+                      {
+                        text: 'This crop shows a person (the one at the centre). Write a precise IDENTITY CARD of exactly this person — facts you SEE only — so that an artist who cannot see the photo could redraw the same individual. FACE: overall shape and width; forehead height and hairline; eyes (shape, size, tilt, colour, exact spacing); eyebrows (shape, thickness, spacing); nose (bridge, width, tip, nostrils); lips (shape, fullness, corners); jaw, chin, cheekbones; ears; facial hair (exact pattern and length); skin tone and undertone; every mark, mole, scar, line and asymmetry; apparent age. HAIR: colour, length, texture, parting, volume, how it falls. BUILD: height cues, shoulder width, neck, torso, limbs, overall proportions and body type. OUTFIT: every garment and accessory with cut, colour, fabric, fit, fastenings, folds and details. Also say which parts of the body are visible in this photo, so the missing ones can be built. 8–12 sentences, plain English, no pose or mood. Also give the tight bounding box of the FACE (forehead to chin, ear to ear) as "twarz": [ymin, xmin, ymax, xmax], normalised 0–1000 within this crop. Answer only with JSON: {"opis": "...", "twarz": [0,0,0,0]}',
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 1400,
+                  responseMimeType: 'application/json',
+                  thinkingConfig: { thinkingBudget: 0 },
+                },
+              }),
+            },
+          )
+          if (oResp.ok) {
+            const oJson = await oResp.json()
+            const oTxt = oJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+            try {
+              const o = JSON.parse(oTxt) as { opis?: string; twarz?: number[] }
+              if (o.opis?.trim()) return odpowiedz(200, { opis: o.opis.trim(), twarz: Array.isArray(o.twarz) && o.twarz.length === 4 ? o.twarz.map(Number) : undefined, nazwy: [] })
+            } catch {
+              // bez karty — prompt użyje opisu reżysera
+            }
+          }
+          return odpowiedz(200, { opis: '', nazwy: [] })
+        }
 
         // Tryb „opis”: pełny Gemini 2.5 Flash (bez myślenia) — wyczerpujący opis jednego obiektu z wycinka.
         if (tryb === 'opis') {

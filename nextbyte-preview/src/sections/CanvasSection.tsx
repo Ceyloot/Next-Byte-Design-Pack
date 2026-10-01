@@ -33,6 +33,7 @@ import {
   opiszZmiane,
   rozpoznajObiekt,
   opiszObiektSzczegolowo,
+  opiszOsobeSzczegolowo,
   rozpoznajScene,
   sprawdzWynik,
   zmierzObiekt,
@@ -52,6 +53,7 @@ import {
 import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/operacje/character-swap-studio'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
+import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
@@ -808,7 +810,21 @@ export function CanvasSection() {
         const opisObiektu = wyc ? await opiszObiektSzczegolowo(wyc) : ''
         if (opisObiektu) szczegolyPlanu = { ...(plan?.szczegoly ?? {}), [projekt.pineski.indexOf(pinObiektuWKadrze) + 1]: opisObiektu }
       }
+      // Transfer postaci z drugiego zdjęcia: karta tożsamości osoby (twarz cecha po cesze, włosy, budowa, ubiór) z wycinka wokół
+      // pinu źródłowego + zbliżenie twarzy jako dodatkowy obraz referencyjny — wszystko w JEDNEJ generacji.
+      let zblizenieTwarzy: string | null = null
+      const pinOsoby = operacjaAgenta === 'character_transfer' && pinZrodlowy && pinZrodlowy.layerId !== zrodlo.id ? pinZrodlowy : undefined
+      if (pinOsoby) {
+        const warstwaOsoby = projekt.warstwy.find(w => w.id === pinOsoby.layerId)
+        const wycOsoby = warstwaOsoby ? await wytnijOkolice(warstwaOsoby.src, pinOsoby.normalizedX, pinOsoby.normalizedY, 1024, 0.6) : ''
+        if (wycOsoby) {
+          const karta = await opiszOsobeSzczegolowo(wycOsoby)
+          if (karta.opis) szczegolyPlanu = { ...(szczegolyPlanu ?? {}), [projekt.pineski.indexOf(pinOsoby) + 1]: karta.opis }
+          if (karta.twarz) zblizenieTwarzy = await wytnijZblizenieTwarzy(wycOsoby, karta.twarz)
+        }
+      }
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
+        twarzObraz: zblizenieTwarzy ? obrazyPolecenia.length + 1 : undefined,
         role: uklad.role,
         osoba: plan?.osoba,
         odznaki: plan?.odznaki,
@@ -880,6 +896,7 @@ export function CanvasSection() {
       const obrazyDoModelu = [
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
         ...(zblizenie ? [zblizenie] : []),
+        ...(zblizenieTwarzy ? [zblizenieTwarzy] : []),
       ]
       const polecenieModelu = pelnePolecenie
       if (zblizenie || przeniesienieWKadrze) {
