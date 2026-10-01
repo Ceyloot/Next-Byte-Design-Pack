@@ -7,7 +7,7 @@ Metoda: dla każdej operacji (15) × 4 konfiguracje (1 zdjęcie/1 pinezka, 1 zdj
 | Tryb (intencja → operacja) | 1 zdjęcie | 2 zdjęcia | Status |
 |---|---|---|---|
 | Ruch obiektu (przenieś / zamień, 2 pinezki na Image 1) | `ruch-w-kadrze.ts` | — | **ZABLOKOWANY**, działa (test hobbit) |
-| Przeniesienie z drugiego zdjęcia (`object_transfer`) | — | `transfer-z-drugiego-zdjecia.ts` | **ZABLOKOWANY**, działa |
+| Przeniesienie z drugiego zdjęcia (`object_transfer`) | — | `transfer-z-drugiego-zdjecia.ts` | **ZABLOKOWANY** (`0fc565d`), pozycja działa — **DO POPRAWEK SKALOWYCH** (daleki punkt → obiekt za duży) |
 | Zamiana obiektu (`object_swap`, cały obiekt) | `object-swap-2-zdjecia.ts` (też 1 pinezka + opis) | to samo | **ZABLOKOWANY**, działa (GT40→Mercedes) |
 | Zamiana postaci (`character_swap`) | — (wymaga 2 zdjęć) | `character-swap.ts` | **ZABLOKOWANY**, działa |
 | Zmiana części obiektu (`czesc`) | `zmiana-czesci.ts` | `zmiana-czesci.ts` | ZABLOKOWANY „póki co” |
