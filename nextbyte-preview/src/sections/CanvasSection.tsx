@@ -54,7 +54,7 @@ import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/opera
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
-import { zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
+import { doprecyzujKotwice, zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
@@ -752,6 +752,14 @@ export function CanvasSection() {
         ) ??
         projekt.pineski.find(p => p !== pinDocelowy && !p.chroniona)
 
+      // Doprecyzowanie pudełek kotwic skali na oryginale (pudełko od reżysera z całego zdjęcia bywa 2–3× za szerokie dla małych rzeczy).
+      if (plan?.pomiar) {
+        try {
+          plan.pomiar = await doprecyzujKotwice(plan.pomiar, zrodlo.src)
+        } catch (e) {
+          console.warn('[canvas] doprecyzowanie kotwic nieudane', e)
+        }
+      }
       const rozmiarSurowy = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
       // Bezpiecznik: obiekt przenoszony na zdjęcie rzadko zajmuje ponad 40% szerokości kadru — taki pomiar to prawie na pewno
       // błąd kotwic reżysera (w teście samochód → miasteczko wyszło 48% przy faktycznych 18%). Nie wysyłamy go modelowi ani do kontroli.
