@@ -294,6 +294,10 @@ export interface OpcjePolecenia {
   swiatlo?: string
   /** rozmiar obiektu w miejscu docelowym policzony z kotwic reżysera (EN) — idzie do [RULES] */
   rozmiar?: string
+  /** numer pineski → szczegółowy opis rzeczy / miejsca od reżysera (EN) */
+  szczegoly?: Record<number, string>
+  /** numer pineski → gdzie leży punkt, słowami (EN) */
+  miejsca?: Record<number, string>
 }
 
 /** Operacje na człowieku — idą modelem postaci (RUNWARE_MODEL_POSTAC). */
@@ -346,7 +350,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {} } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -366,6 +370,8 @@ export function zbudujZadanieModelu(
       x: p.normalizedX,
       y: p.normalizedY,
       nazwa: odznaka(p),
+      szczegoly: szczegoly[numer] || undefined,
+      miejsce: miejsca[numer] || undefined,
     }
   })
 

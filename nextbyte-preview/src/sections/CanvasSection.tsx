@@ -837,6 +837,8 @@ export function CanvasSection() {
         role: uklad.role,
         osoba: plan?.osoba,
         odznaki: plan?.odznaki,
+        szczegoly: plan?.szczegoly,
+        miejsca: plan?.miejsca,
         swiatlo: plan?.swiatlo,
         // Rozmiar z kotwic reżysera — bez niego model brał wielkość obiektu z referencji.
         rozmiar:
@@ -872,7 +874,7 @@ export function CanvasSection() {
       const przeniesienieWKadrze = ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
       const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
         konwertujNaDataUrl(w.src).then(src =>
-          KROPKI_NA_ZDJECIACH || przeniesienieWKadrze
+          KROPKI_NA_ZDJECIACH
             ? narysujKropki(
                 src,
                 pineski
@@ -894,9 +896,7 @@ export function CanvasSection() {
       // (Image 1 ma kropkę w miejscu docelowym) — model wie dokładnie, KTÓRY obiekt i DOKĄD.
       const pinZr = pineskiPolecenia.find(p => zrodloNaCelu(p))
       const zblizenie =
-        pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
-          ? await konwertujNaDataUrl(zrodlo.src) // Image 2: to samo zdjęcie bez kropek
-          : null
+        null // przeniesienie w kadrze bez kropek i bez drugiego zdjęcia — samo szczegółowe słowne wskazanie
       const obrazyDoModelu = [
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
         ...(zblizenie ? [zblizenie] : []),

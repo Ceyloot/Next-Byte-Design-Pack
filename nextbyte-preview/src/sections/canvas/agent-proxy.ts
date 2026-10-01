@@ -23,6 +23,7 @@ import {
   SYSTEM_REZYSERA,
   miejscaZPlanu,
   odznakiZPlanu,
+  szczegolyZPlanu,
   odczytajPlanRezysera,
   trescZadaniaRezysera,
   type PomiarSkali,
@@ -71,6 +72,8 @@ export interface Plan {
   swiatlo?: string
   /** miejsce każdej pineski opisane słowami (numer pineski → opis) — sekcja PIN MAP */
   miejsca?: Record<number, string>
+  /** szczegółowy opis każdej pineski (rzecz albo miejsce) */
+  szczegoly?: Record<number, string>
   /** krótki opis każdej pineski odróżniający ją od podobnych obiektów (po polsku) */
   odznaki?: Record<number, string>
   /** obszar zmiany na płótnie (0–1) — rysowany na kopii płótna dla modelu */
@@ -380,6 +383,7 @@ export function agentProxy(): Plugin {
         widok: odczytany.widok || undefined,
         swiatlo: odczytany.swiatlo || undefined,
         miejsca: miejscaZPlanu(odczytany),
+        szczegoly: szczegolyZPlanu(odczytany),
         odznaki: odznakiZPlanu(odczytany),
         obszar: odczytany.obszar,
         obszarZrodla: odczytany.obszarZrodla,

@@ -43,6 +43,7 @@ The image that STAYS and receives the change (where the object lands / the locat
 STEP 1 — WHAT EACH PIN POINTS AT
 - A pin on an object means the WHOLE object (not a part, unless the user names a part). A pin on open ground, water, floor or sky is a LOCATION.
 - "opis": a short BADGE in Polish, 3–8 words, that names exactly this pinned thing and tells it apart from similar ones in the same image — colour, type, make or model if recognisable, a visible marking (sticker, number, logo). If look-alikes are near, add which one ("lewy z dwóch", "najbliżej domu"). A location pin: the surface and its nearest landmark ("brukowany podjazd przed bramą garażu"). It goes into the image model's prompt next to the pin's x/y, so keep it short and exact; nothing about light or mood.
+- "szczegoly": a DETAILED, exact description in English (3–4 sentences) of EXACTLY the pinned thing, written so that someone who cannot see the image could point at it and nobody could confuse it with anything else. An object: what it is, its overall shape and silhouette, every distinctive part, materials, colours, relative size, what it stands on or against, and which of any look-alikes it is. A location: precisely what the spot is — the surface or thing under the point, what is there now, the nearest landmarks and on which side of each, how far from them in relation to the size of things around, and whether it is near a frame edge. Facts you SEE only; never coordinates or percentages.
 - "miejsce": where the point lies in its image, in words from what you SEE — the surface it stands on, the nearest landmarks and which side of them, and whether it is near a frame edge. Landmarks only; never percentages or coordinates. If the user's words relate the new thing to the pinned object (leans on, stands next to, in front of, on), say in "miejsce" the object AND the spot where the new thing ends up (e.g. on the ground beside that object), not just the object's surface. Describe the pin's OWN spot: if the nearest subject is far, say so instead of writing "next to".
 
 STEP 1b — BIND THE USER'S WORDS TO PINS
@@ -85,7 +86,7 @@ Answer ONLY with JSON:
   "zdjecie_docelowe": 1,
   "intencja": "wstaw",
   "dotyczy_osoby": false,
-  "obiekty": [{ "pin": 1, "opis": "krótka odznaka po polsku", "miejsce": "where the point lies, in words" }],
+  "obiekty": [{ "pin": 1, "opis": "short English badge", "miejsce": "where the point lies, in words", "szczegoly": "detailed description of exactly this pinned thing" }],
   "skala": "English, with numbers",
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
@@ -141,7 +142,7 @@ export interface PlanRezysera {
   /** przy przeniesieniu w kadrze: gdzie obiekt stoi teraz */
   obszarZrodla?: Prostokat
   /** opis całych obiektów pod pineskami, po angielsku */
-  obiekty: { pin: number; opis: string; miejsce: string }[]
+  obiekty: { pin: number; opis: string; miejsce: string; szczegoly: string }[]
   /** rzeczywisty rozmiar obiektu względem kotwicy w kadrze, po angielsku — sekcja SCALE */
   skala: string
   /** pomiar skali: kotwica o znanym rozmiarze + widoczne wymiary obiektu w metrach */
@@ -281,9 +282,9 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
   const intencja = INTENCJE.some(i => i.id === json.intencja) ? (json.intencja as Intencja) : undefined
   const obiekty = Array.isArray(json.obiekty)
     ? json.obiekty
-        .map(o => o as { pin?: unknown; opis?: unknown; miejsce?: unknown })
+        .map(o => o as { pin?: unknown; opis?: unknown; miejsce?: unknown; szczegoly?: unknown })
         .filter(o => o && o.opis)
-        .map(o => ({ pin: Number(o.pin) || 0, opis: String(o.opis), miejsce: String(o.miejsce ?? '').trim() }))
+        .map(o => ({ pin: Number(o.pin) || 0, opis: String(o.opis), miejsce: String(o.miejsce ?? '').trim(), szczegoly: String(o.szczegoly ?? '').trim() }))
     : []
   const nrDocelowego = Number(json.zdjecie_docelowe)
   const plan: PlanRezysera = {
@@ -307,6 +308,13 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
 export function odznakiZPlanu(plan: Pick<PlanRezysera, 'obiekty'>): Record<number, string> {
   const wynik: Record<number, string> = {}
   for (const o of plan.obiekty) if (o.pin > 0 && o.opis.trim()) wynik[o.pin] = o.opis.trim()
+  return wynik
+}
+
+/** Szczegółowy opis każdej pineski (numer pineski → opis rzeczy / miejsca) — idzie do promptu przeniesienia w kadrze. */
+export function szczegolyZPlanu(plan: Pick<PlanRezysera, 'obiekty'>): Record<number, string> {
+  const wynik: Record<number, string> = {}
+  for (const o of plan.obiekty) if (o.pin > 0 && o.szczegoly) wynik[o.pin] = o.szczegoly
   return wynik
 }
 
