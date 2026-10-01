@@ -343,15 +343,3 @@ export async function zmierzObiekt(
     return null
   }
 }
-
-/** Usunięcie obiektu po masce (biały = do usunięcia) dedykowanym modelem do wymazywania; rzuca błąd, gdy się nie uda. */
-export async function usunPoMasce(obraz: string, maska: string): Promise<WynikGeneracji> {
-  const odp = await fetch('/api/canvas/usun', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ obraz, maska }),
-  })
-  const tresc = (await odp.json().catch(() => ({}))) as Partial<WynikGeneracji> & { blad?: string }
-  if (!odp.ok || !tresc.obrazUrl) throw new Error(tresc.blad ?? `Usuwanie nie powiodło się (${odp.status})`)
-  return tresc as WynikGeneracji
-}

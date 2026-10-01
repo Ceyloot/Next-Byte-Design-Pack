@@ -45,12 +45,6 @@ import {
   ZABLOKOWANY_SYSTEM_TRANSFERU,
 } from './zablokowane/transfer-z-drugiego-zdjecia'
 import {
-  ZABLOKOWANA_TEMPERATURA_W_KADRZE,
-  ZABLOKOWANE_BRICKI_W_KADRZE,
-  ZABLOKOWANY_SYSTEM_W_KADRZE,
-  zablokowaneZadanieWKadrze,
-} from './zablokowane/przeniesienie-w-kadrze'
-import {
   ZABLOKOWANA_SWAP_KONTROLA,
   ZABLOKOWANA_SWAP_TEMPERATURA,
   ZABLOKOWANY_BRICK_CZLOWIEK,
@@ -303,7 +297,6 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
 
   // [TASK] — prompt operacji (zamiany postaci i twarzy: baza Studia 1:1, poz. 20/21/29)
   let zadanie: string
-  let wKadrze = false
   // Zmiana scenerii / tła: osobny prompt — zostaje pierwszy plan, wymieniane jest całe otoczenie.
   const sceneria = op.id === 'background_change'
   let system: string | undefined
@@ -347,12 +340,6 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = zablokowanyPartSwap(w.czesc!.trim(), cel, zrodlo, w.czescZakres)
     system = ZABLOKOWANY_SYSTEM_CZESCI
     temperatura = ZABLOKOWANA_TEMPERATURA_CZESCI
-  } else if (!czescTryb && (op.id === 'object_transfer' || op.id === 'character_transfer' || op.id === 'object_swap') && zrodlo?.obraz === 1 && cel?.obraz === 1) {
-    // ZABLOKOWANE (zablokowane/przeniesienie-w-kadrze.ts) — nie zmieniać bez prośby użytkownika.
-    wKadrze = true
-    zadanie = zablokowaneZadanieWKadrze(op.id, zrodlo, cel)
-    system = ZABLOKOWANY_SYSTEM_W_KADRZE
-    temperatura = ZABLOKOWANA_TEMPERATURA_W_KADRZE
   } else if (swapZablokowany) {
     // ZABLOKOWANE (zablokowane/object-swap-2-zdjecia.ts) — nie zmieniać bez prośby użytkownika.
     zadanie = podmien(ZABLOKOWANA_MISJA_SWAP_OBIEKTU)
@@ -394,12 +381,12 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
   // Transfer postaci z drugiego zdjęcia dostaje zmierzony rozmiar i analizę osadzania jak obiekty (poza trybem w kadrze).
-  const osadzalny = OPERACJE_Z_OBIEKTEM.has(op.id) && (!OPERACJE_POSTACI_SKLADAJ.has(op.id) || (op.id === 'character_transfer' && !wKadrze))
+  const osadzalny = OPERACJE_Z_OBIEKTEM.has(op.id) && (!OPERACJE_POSTACI_SKLADAJ.has(op.id) || (op.id === 'character_transfer'))
   const rozmiar = !miedzyZdjeciami && !czescTryb && !cechaTryb && w.rozmiar?.trim() && osadzalny
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
   // Analiza reżysera dla osadzania (nie dla trybu zablokowanego w kadrze): prawdziwy rozmiar, widok z kamery, opis miejsca i obiektu.
-  const osadzanie = !wKadrze && !miedzyZdjeciami && !czescTryb && !cechaTryb && osadzalny
+  const osadzanie = !miedzyZdjeciami && !czescTryb && !cechaTryb && osadzalny
   const analizaOsadzania = osadzanie
     ? [
         op.id === 'character_transfer' && w.twarzObraz
@@ -421,7 +408,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ...w.zblizenia.map((z) => `Image ${z.numer} = ${z.opis}.`),
       ].join('\n')
     : ''
-  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
@@ -433,7 +420,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     system,
     temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
-    gemini31: miedzyZdjeciami || (op.id === 'object_swap' && !wKadrze) || czescTryb || cechaTryb || sceneria || undefined,
+    gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,

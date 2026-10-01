@@ -62,9 +62,6 @@ import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
-import { usunPoMasce } from '@/sections/canvas/dostawca'
-import { maskaObiektuPodPinem } from '@/sections/canvas/zblizenia'
-import { promptJedenPrzebieg, promptKrok1, promptKrok2, promptUsun, promptWstaw, type DwaKrokiWejscie, type MiejsceOpis, type UsunWstawWejscie } from '@/sections/canvas/przenies-dwa-kroki'
 import { odciskPinesek, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
 import type { ObrazDlaAgenta } from '@/sections/canvas/agent-proxy'
@@ -108,24 +105,6 @@ const POSTPROCES_ZIARNA = false
  * Jedno „Generuj” = jedna generacja; pomiar zostaje tylko w ocenie.
  */
 const DRUGI_PRZEBIEG = false
-/**
- * Przeniesienie w obrębie jednego zdjęcia = DWA zadania (Gemini 3.1): 1) dodaj kopię w nowym miejscu,
- * 2) usuń oryginał ze starego. false = jeden przebieg (flaga niżej) albo zamrożony prompt „MOVE within Image 1”.
- */
-const PRZENIESIENIE_DWA_ZADANIA = false
-/**
- * Przeniesienie / zamiana na jednym zdjęciu w JEDNEJ generacji: opisowy prompt (bez numerów pinesek) i model Gemini 3.1.
- * false = poprzednie zachowanie (zamrożony prompt „MOVE within Image 1”, Lite). Ma pierwszeństwo przed dwoma zadaniami (przy true oba nie mogą być włączone naraz — wygrywa jeden przebieg).
- */
-const PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG = false
-/**
- * Przeniesienie / zamiana na jednym zdjęciu: DWA zadania na Nano Banana Lite w tej kolejności:
- * 1) zdjęcie + zbliżenie obiektu → tylko usuń go (odbuduj tło), 2) wynik + to samo zbliżenie → wstaw dokładnie w miejscu docelowym.
- * Ma pierwszeństwo przed pozostałymi wariantami. false = poprzednie warianty (flagi niżej).
- */
-const PRZENIESIENIE_USUN_POTEM_WSTAW = true
-/** Zadanie 2 przeniesienia: usunięcie oryginału dedykowanym modelem do wymazywania po masce (FLUX Erase); przy błędzie — prompt. false = zawsze prompt. */
-const USUWANIE_MASKA_ERASE = false
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
@@ -828,15 +807,6 @@ export function CanvasSection() {
       // Operacja na człowieku idzie modelem postaci (RUNWARE_MODEL_POSTAC, jeśli ustawiony).
       const operacjaAgenta = operacjaZIntencji(trybAgenta, plan?.osoba)
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
-      // Przeniesienie / zamiana na jednym zdjęciu = dwa zadania: 1) dodaj kopię w nowym miejscu, 2) usuń oryginał.
-      const dwaKroki =
-        (PRZENIESIENIE_USUN_POTEM_WSTAW || PRZENIESIENIE_DWA_ZADANIA || PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG) &&
-        ['przenies', 'zamien'].includes(trybAgenta) &&
-        !plan?.czesc &&
-        !plan?.cecha &&
-        !plan?.osoba &&
-        Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId === zrodlo.id && pinDocelowy.layerId === zrodlo.id)
-
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
       // Przeniesienie / zamiana w kadrze: wyczerpujący opis KONKRETNEGO obiektu spod pineski źródłowej z jego wycinka
@@ -878,7 +848,6 @@ export function CanvasSection() {
             warstwaCelu: zrodlo,
             warstwaZrodla: pinZrodlowy ? projekt.warstwy.find(w => w.id === pinZrodlowy.layerId) : undefined,
             szerokoscObiektu: rozmiarPlanu ? rozmiarPlanu.szer / 100 : undefined,
-            kopiaNaCelu: dwaKroki,
           })
         } catch (e) {
           console.warn('[canvas] zbliżenia nieudane', e)
@@ -912,12 +881,9 @@ export function CanvasSection() {
       const ustawieniaModelu = {
         system: zadanieModelu?.system,
         temperatura: zadanieModelu?.temperatura,
-        // Object swap w obrębie jednego zdjęcia (zadanie „MOVE within Image 1”, tryb zamiany) — Gemini 3.1.
         klasa: postac
           ? ('postac' as const)
-          : (trybAgenta === 'zamien' && pelnePolecenie.includes('MOVE within Image 1:')) ||
-          ((PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG || PRZENIESIENIE_DWA_ZADANIA) && dwaKroki && pelnePolecenie.includes('MOVE within Image 1:')) ||
-          zadanieModelu?.gemini31
+          : zadanieModelu?.gemini31
             ? ('gemini31' as const)
             : undefined,
       }
@@ -932,25 +898,16 @@ export function CanvasSection() {
       const zrodloNaCelu = (p: Pineska) => zrodlaNaCelu.has(p.id)
       // Bez kropek na zdjęciach: miejsce wskazują wyłącznie współrzędne x/y w prompcie
       // (kropka zostawała w wyniku). Zmienna KROPKI_NA_ZDJECIACH przywraca kropki.
-      // Przeniesienie w obrębie jednego zdjęcia: model gubił miejsce docelowe podane samymi
-      // współrzędnymi, więc tylko wtedy miejsce docelowe dostaje kropkę (obiekt ją zakrywa).
-      const przeniesienieWKadrze = ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
       const zKropkami = (w: Warstwa, pineski: Pineska[]) =>
         konwertujNaDataUrl(w.src).then(src =>
           KROPKI_NA_ZDJECIACH
             ? narysujKropki(
                 src,
                 pineski
-                  .filter(p => p.layerId === w.id && !p.chroniona && (przeniesienieWKadrze || !zrodloNaCelu(p)))
-                  // Przeniesienie w kadrze: obiekt do przeniesienia magentowy, miejsce docelowe jasnoczerwone — obie kropki na Image 1.
-                  .map(p => ({
-                    x: p.normalizedX,
-                    y: p.normalizedY,
-                    kolor: przeniesienieWKadrze ? (zrodloNaCelu(p) ? '#FF00FF' : '#FF1F1F') : undefined,
-                  })),
+                  .filter(p => p.layerId === w.id && !p.chroniona && !zrodloNaCelu(p))
+                  .map(p => ({ x: p.normalizedX, y: p.normalizedY, kolor: undefined })),
                 undefined,
-                // w trybie przeniesienia w kadrze kropki są większe — model je wyraźnie widzi
-                przeniesienieWKadrze ? 2.5 : 1,
+                1,
               )
             : src,
         )
@@ -966,77 +923,14 @@ export function CanvasSection() {
         ...(zblizenieTwarzy ? [zblizenieTwarzy] : []),
         ...zblizenia.map(z => z.src),
       ]
-      let polecenieModelu = pelnePolecenie
-      // Zadanie 1 (dwa zadania): opisowe „dodaj kopię w nowym miejscu”, bez numerów pinesek.
-      const opisMiejsca = (pin: Pineska): MiejsceOpis => {
-        const nr = projekt.pineski.indexOf(pin) + 1
-        return {
-          x: pin.normalizedX,
-          y: pin.normalizedY,
-          // świeże dane z tego przebiegu reżysera; analiza zapisana w pineskach bywa stara (po przesunięciu pineski)
-          nazwa: plan?.odznaki?.[nr] || etykietaPineski(pin, nr),
-          opis: [szczegolyPlanu?.[nr], plan?.miejsca?.[nr]].filter(Boolean).join(' '),
-          wyglad: szczegolyPlanu?.[nr],
-        }
-      }
-      const wejscieDwochKrokow: DwaKrokiWejscie | null =
-        dwaKroki && przeniesienieWKadrze && pinZrodlowy && pinDocelowy
-          ? {
-              zrodlo: opisMiejsca(pinZrodlowy),
-              cel: opisMiejsca(pinDocelowy),
-              zamiana: trybAgenta === 'zamien',
-              swiatlo: plan?.swiatlo,
-              rozmiar: rozmiarPlanu
-                ? `At the new spot the whole object spans about ${Math.round(rozmiarPlanu.szer)}% of Image 1's width and ${Math.round(rozmiarPlanu.wys)}% of its height.${porownanie ? ` ${porownanie}` : ''}`
-                : undefined,
-              zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
-            }
-          : null
-      if (wejscieDwochKrokow && !PRZENIESIENIE_USUN_POTEM_WSTAW) polecenieModelu = PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG ? promptJedenPrzebieg(wejscieDwochKrokow) : promptKrok1(wejscieDwochKrokow)
-      if (zblizenie || przeniesienieWKadrze) {
-        setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
-      }
-
-      let wynik: Awaited<ReturnType<typeof generuj>>
-      if (wejscieDwochKrokow && PRZENIESIENIE_USUN_POTEM_WSTAW) {
-        // Dwie akcje na Lite: 1) usuń obiekt (zdjęcie + zbliżenie obiektu), 2) wstaw go w miejscu docelowym (wynik + to samo zbliżenie).
-        const zbliz = zblizenia.find(z => z.rola === 'zrodlo')
-        const zblizCel = zblizenia.find(z => z.rola === 'cel')
-        const wejscie: UsunWstawWejscie = { ...wejscieDwochKrokow, maZblizenieObiektu: Boolean(zbliz), maZblizenieMiejsca: Boolean(zblizCel) }
-        const lite = { ...ustawieniaModelu, klasa: undefined }
-        const p1 = promptUsun(wejscie)
-        const p2 = promptWstaw(wejscie)
-        setOstatniPrompt(`── ZADANIE 1 (usuń obiekt) ──\n${p1}\n\n── ZADANIE 2 (wstaw w miejscu docelowym) ──\n${p2}`)
-        const w1 = await generuj({
-          ...lite,
-          polecenie: p1,
-          obrazy: [czyste[0], ...(zbliz ? [zbliz.src] : [])],
-          szerokosc: zrodlo.naturalWidth,
-          wysokosc: zrodlo.naturalHeight,
-        })
-        const poUsunieciu = await dopasujFormatDoObrazu(w1.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
-        // Diagnostyka: wynik kroku 1 jako klikalny link w konsoli przeglądarki (blob), żeby było widać, który krok zawodzi.
-        try {
-          const blob = await (await fetch(poUsunieciu)).blob()
-          console.info('[canvas] wynik kroku 1 (po usunięciu):', URL.createObjectURL(blob))
-        } catch { /* tylko diagnostyka */ }
-        const w2 = await generuj({
-          ...lite,
-          polecenie: p2,
-          obrazy: [poUsunieciu, ...(zbliz ? [zbliz.src] : []), ...(zblizCel ? [zblizCel.src] : [])],
-          szerokosc: zrodlo.naturalWidth,
-          wysokosc: zrodlo.naturalHeight,
-        })
-        wynik = { ...w2, kosztUSD: (w1.kosztUSD ?? 0) + (w2.kosztUSD ?? 0) }
-      } else {
-        wynik = await generuj({
-          ...ustawieniaModelu,
-          polecenie: polecenieModelu,
-          obrazy: obrazyDoModelu,
-          szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
-          wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
-        })
-      }
+      const polecenieModelu = pelnePolecenie
+      let wynik = await generuj({
+        ...ustawieniaModelu,
+        polecenie: polecenieModelu,
+        obrazy: obrazyDoModelu,
+        szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
+        wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
+      })
 
       if (warstwaWycinka && wycinek) {
         // rozmiar od reżysera (ułamek zdjęcia docelowego) → ułamek wycinka
@@ -1066,41 +960,6 @@ export function CanvasSection() {
             wysokosc: zrodlo.naturalHeight,
           })
           wynik = { ...pelne, kosztUSD: (wynik.kosztUSD ?? 0) + (pelne.kosztUSD ?? 0) }
-        }
-      }
-
-      // Drugie zadanie przeniesienia w kadrze: model często stawia obiekt w nowym miejscu, ale zostawia stary.
-      if (wejscieDwochKrokow && !PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG && !PRZENIESIENIE_USUN_POTEM_WSTAW) {
-        try {
-          const polecenieUsuniecia = promptKrok2(wejscieDwochKrokow)
-          // 1) Dedykowany model do wymazywania po MASCE (ramka obiektu od Gemini na ORYGINALE) — deterministyczne, nie zależy od posłuszeństwa modelu.
-          let wynikUsuniecia: Awaited<ReturnType<typeof generuj>> | null = null
-          if (USUWANIE_MASKA_ERASE) {
-            try {
-              const maska = await maskaObiektuPodPinem(zrodlo.src, pinZrodlowy!.normalizedX, pinZrodlowy!.normalizedY)
-              if (maska) {
-                const poFormacie = await dopasujFormatDoObrazu(wynik.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
-                wynikUsuniecia = await usunPoMasce(poFormacie, maska)
-              } else {
-                console.info('[canvas] usuwanie po masce: brak ramki obiektu — usuwam promptem')
-              }
-            } catch (e) {
-              console.warn('[canvas] usuwanie po masce nieudane — usuwam promptem', e)
-            }
-          }
-          const wynik2 =
-            wynikUsuniecia ??
-            (await generuj({
-              ...ustawieniaModelu,
-              polecenie: polecenieUsuniecia,
-              obrazy: [await konwertujNaDataUrl(wynik.obrazUrl)],
-              szerokosc: zrodlo.naturalWidth,
-              wysokosc: zrodlo.naturalHeight,
-            }))
-          setOstatniPrompt(`── ZADANIE 1 (dodaj w nowym miejscu) ──\n${polecenieModelu}\n\n── ZADANIE 2 (usuń stare) ──\n${polecenieUsuniecia}`)
-          wynik = { ...wynik2, kosztUSD: (wynik.kosztUSD ?? 0) + (wynik2.kosztUSD ?? 0) }
-        } catch (e) {
-          console.warn('[canvas] drugie zadanie (usunięcie starego) nieudane — zostaje wynik pierwszego', e)
         }
       }
 

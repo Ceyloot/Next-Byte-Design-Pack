@@ -14,8 +14,6 @@ export interface Zblizenie {
   src: string
   /** opis dla modelu (EN) — po „Image N = …” */
   opis: string
-  /** zbliżenie rzeczy z pinezki źródłowej albo okolicy / rzeczy z pinezki docelowej */
-  rola?: 'zrodlo' | 'cel'
 }
 
 const wczytaj = (src: string) =>
@@ -110,33 +108,6 @@ export async function zblizenieRzeczy(src: string, x: number, y: number): Promis
   return wytnijZOryginalu(o, r, 0.25)
 }
 
-/**
- * Maska obiektu pod pinem do usuwania modelem do wymazywania: biały prostokąt (ramka od Gemini + margines) na czarnym tle,
- * w rozmiarze ORYGINAŁU. null, gdy ramka nie została znaleziona albo obiekt zajmuje podejrzanie duży obszar.
- */
-export async function maskaObiektuPodPinem(src: string, x: number, y: number, margines = 0.18): Promise<string | null> {
-  const o = await wczytaj(src)
-  if (!o) return null
-  const okno = oknoKwadratowe(o, x, y, 0.35)
-  if (!okno) return null
-  const { box } = await opiszRzeczZRamka(okno.src)
-  if (!box) return null
-  const r = naPiksele(okno, box)
-  if (Math.max(r.x1 - r.x0, r.y1 - r.y0) / okno.bok > 0.85) return null
-  const dw = (r.x1 - r.x0) * margines
-  const dh = (r.y1 - r.y0) * margines
-  const c = document.createElement('canvas')
-  c.width = o.naturalWidth
-  c.height = o.naturalHeight
-  const g = c.getContext('2d')
-  if (!g) return null
-  g.fillStyle = '#000'
-  g.fillRect(0, 0, c.width, c.height)
-  g.fillStyle = '#fff'
-  g.fillRect(Math.max(0, r.x0 - dw), Math.max(0, r.y0 - dh), r.x1 - r.x0 + 2 * dw, r.y1 - r.y0 + 2 * dh)
-  return c.toDataURL('image/png')
-}
-
 /** Zbliżenie OBSZARU wokół pinu: szerokość proporcjonalna do zmierzonego rozmiaru obiektu (ułamek szerokości kadru). */
 export async function zblizenieObszaru(src: string, x: number, y: number, szerokoscObiektu?: number): Promise<string | null> {
   const o = await wczytaj(src)
@@ -161,8 +132,6 @@ export async function zblizenieTwarzyPodPinem(src: string, x: number, y: number)
 export interface WejscieZblizen {
   /** operacja z reżysera (id operacji z rejestru promptów) */
   operacja: string
-  /** przeniesienie w dwóch zadaniach: zbliżenie źródła to wzór do skopiowania, nie miejsce do opróżnienia */
-  kopiaNaCelu?: boolean
   czesc?: string
   cecha?: string
   pinZrodlowy?: Pineska
@@ -181,8 +150,8 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
   const zadania: Promise<Zblizenie | null>[] = []
   const nrZdjecia = (l?: Warstwa) => (l ? `of its photograph` : '')
   void nrZdjecia
-  const dodaj = (p: Promise<string | null>, opis: string, rola?: 'zrodlo' | 'cel') =>
-    zadania.push(p.then(src => (src ? { src, opis, rola } : null)).catch(() => null))
+  const dodaj = (p: Promise<string | null>, opis: string) =>
+    zadania.push(p.then(src => (src ? { src, opis } : null)).catch(() => null))
 
   if (w.operacja === 'background_change') {
     if (w.pinZrodlowy && w.warstwaZrodla) {
@@ -200,24 +169,15 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
     if (w.pinZrodlowy) {
       const zrodlowa = w.warstwaZrodla ?? w.warstwaCelu
       const co = w.czesc ? `the ${w.czesc} to copy` : WSTAWIANIE.includes(w.operacja) ? 'the thing to bring' : 'the thing to put in'
-      // Przeniesienie w obrębie jednego zdjęcia: wycinek źródła ma być odczytany jako MIEJSCE DO OPRÓŻNIENIA,
-      // nie jako dodatkowy wzór do wstawienia (wtedy model zostawiał obiekt na starym miejscu).
-      const wKadrze = zrodlowa.id === w.warstwaCelu.id && ['object_transfer', 'character_transfer', 'object_swap'].includes(w.operacja) && !w.czesc && !w.kopiaNaCelu
-      dodaj(
-        zblizenieRzeczy(zrodlowa.src, w.pinZrodlowy.normalizedX, w.pinZrodlowy.normalizedY),
-        wKadrze
-          ? 'a close-up of the object as it stands NOW at its old place in Image 1 — this is what is ERASED there (it must be gone from that spot in the result) and, in the same form, set down at the destination; it is not an extra object'
-          : `a close-up of ${co}, enlarged around its pin — only to show its exact shape, material and details`,
-        'zrodlo',
-      )
+      dodaj(zblizenieRzeczy(zrodlowa.src, w.pinZrodlowy.normalizedX, w.pinZrodlowy.normalizedY), `a close-up of ${co}, enlarged around its pin — only to show its exact shape, material and details`)
     }
     // cel: miejsce do wstawienia (obszar) albo rzecz do zmiany / usunięcia (zbliżenie rzeczy)
     if (w.pinDocelowy) {
       const wstawianie = WSTAWIANIE.includes(w.operacja) && !w.czesc && !w.cecha
       if (wstawianie) {
-        dodaj(zblizenieObszaru(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY, w.szerokoscObiektu), 'a close-up of the area around the destination in Image 1 — only to judge the real ground, scale, perspective and light there', 'cel')
+        dodaj(zblizenieObszaru(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY, w.szerokoscObiektu), 'a close-up of the area around the destination in Image 1 — only to judge the real ground, scale, perspective and light there')
       } else if (w.operacja !== 'background_change') {
-        dodaj(zblizenieRzeczy(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY), 'a close-up of the thing that is changed in Image 1, enlarged around its pin — only to show its exact current state', 'cel')
+        dodaj(zblizenieRzeczy(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY), 'a close-up of the thing that is changed in Image 1, enlarged around its pin — only to show its exact current state')
       }
     }
   }
