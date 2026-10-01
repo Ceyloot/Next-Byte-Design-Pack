@@ -8,8 +8,8 @@
  * Na prośbę użytkownika (test samochód → droga): do bricka „Miejsce” dopisane „THE POINT IS FIXED” (punkt ważniejszy niż pokazanie całego obiektu, może być uciety krawędzią, rozmiar wg odległości) oraz strefy kadru w opisie pinu docelowego (skladaj.ts).
  * lista przykładów powierzchni („a shelf, a radiator…”) zastąpiona ogólnym „whatever is there” (uogólnienie, bez przykładów).
  *
- * W tym trybie do modelu NIE idą późniejsze dodatki: zmierzony rozmiar, skala, widok, ułożenie, opisy
- * szczegółowe, strefy kadru w opisie pinu. Model: Gemini 3.1 (`google:4@3`) — znacznik `gemini31` z `skladajPrompt`.
+ * Dodane na prośbę użytkownika (skala w teście samochód → miasteczko): zmierzony rozmiar, skala, widok i ułożenie (linie poniżej).
+ * Nadal NIE idą: opisy szczegółowe i strefy kadru w opisie pinu. Model: Gemini 3.1 (`google:4@3`) — znacznik `gemini31` z `skladajPrompt`.
  */
 
 /** Zadanie [TASK] z dd2f587 (tokeny {{…}} podstawia skladaj.ts). Bez kroków — object_transfer jest w BEZ_KROKOW. */
@@ -29,4 +29,16 @@ export const ZABLOKOWANE_BRICKI_TRANSFERU: Record<string, string> = {
   'studio-jedno-zdjecie': `ONE photograph captured in-camera, not a composite — RE-LIGHT AND RE-SHOOT the subject into the scene; the reference lighting is an identity document, not a look. Copy from the scene: key-light direction, height and color temperature, fill level, ambient bounce color, contrast ratio and shadow density. Add the shadows that lighting implies: a contact shadow where it meets the ground and a cast shadow pointing the same way as the scene's shadows, with the same edge sharpness. MATCH THE CAMERA AND THE FILM: same focus state and depth of field, same motion blur, white balance, grade, grain and haze — never sharper than the scene; photographic edges with no halo, outline or sticker look.`,
   'studio-czlowiek': `Do not beautify, de-age, slim, symmetrize, airbrush, change ethnicity or alter facial/body proportions. Anatomically correct: exactly 2 eyes with matching irises and catchlights that match the scene light, 5 fingers on each hand. Skin as photographed, never retouched — visible pores, fine vellus hair, natural redness and faint asymmetry, individual hair strands at the hairline, the same sensor grain over the face as over the rest of the frame.`,
   'studio-kontrola': `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, and casting a shadow into it? If not, redo. ONE photograph — one light, one lens, one grade.`,
+}
+
+/** Linie skali w [RULES] — zmierzony rozmiar w miejscu docelowym, prawdziwy rozmiar, widok i ułożenie (od reżysera). */
+export function zablokowaneLinieSkaliTransferu(w: { rozmiar?: string; skala?: string; widok?: string; ulozenie?: string }): string[] {
+  return [
+    w.rozmiar?.trim()
+      ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
+      : '',
+    w.skala?.trim() ? `THE REAL SIZE OF THE SUBJECT (analysed against objects of known size in Image 1 — never take its size from how large it appears in its reference): ${w.skala.trim()}` : '',
+    w.widok?.trim() ? `HOW IT MUST APPEAR AT THE DESTINATION (from Image 1's camera and the surface it stands on — a different view in the reference is turned to match): ${w.widok.trim()}` : '',
+    w.ulozenie?.trim() ? `THE LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image 1's scene — follow it): ${w.ulozenie.trim()}` : '',
+  ].filter(Boolean)
 }
