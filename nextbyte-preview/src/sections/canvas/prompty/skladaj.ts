@@ -311,6 +311,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     const cz = w.czesc!.trim()
     zadanie = [
       `PART CHANGE: On the object at ${opisPineski(cel)}, change ONLY its ${cz}, exactly as the USER request describes.`,
+      `If the object has several of that part (a pair or a set), change EVERY one of them the same way; leaving any of them as it was is a failure.`,
       `A VISIBLE change is required: the ${cz} must clearly look as described, never like the old one, and it is fitted onto the same place of the object, in the object's own perspective, size and lighting.`,
       `Everything else stays exactly as it is: the rest of the object, everything around it, the framing and all text.`,
     ].join('\n')
@@ -320,6 +321,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     const cz = w.czesc!.trim()
     zadanie = [
       `PART SWAP: On the object at ${opisPineski(cel)}, replace ONLY its ${cz} with the ${cz} shown at ${opisPineski(zrodlo)}.`,
+      `If the object has several of that part (a pair or a set), replace EVERY one of them, each fitted onto its own place — the reference shows one example, and all the others follow its design (mirrored as their side requires). Leaving any of them as it was is a failure.`,
       `Copy the new ${cz} exactly from the reference — shape, design, glass, trim, colours and every detail — and fit it onto the same place of the object, in the object's own perspective, size and lighting. A VISIBLE change is required: the ${cz} of the object must now look like the reference, never like the old one.`,
       `Everything else stays exactly as it is: the rest of the object, everything around it, the framing and all text.`,
     ].join('\n')
