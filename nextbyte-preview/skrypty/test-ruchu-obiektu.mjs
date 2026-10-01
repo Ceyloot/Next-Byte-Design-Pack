@@ -64,6 +64,9 @@ function wymiary(b) {
   throw new Error('Nie odczytałem wymiarów obrazu')
 }
 const { w: szer, h: wys } = wymiary(bajty)
+// Tryb TRANSFER (obiekt z drugiego zdjęcia): w konfiguracji dodatkowo "obraz2" (zdjęcie z obiektem) i "zrodlo.x/y" na obrazie 2.
+const bajty2 = konfig.obraz2 ? readFileSync(resolve(konfig.obraz2)) : null
+const dataUri2 = bajty2 ? `data:${/\.png$/i.test(konfig.obraz2) ? 'image/png' : 'image/jpeg'};base64,${bajty2.toString('base64')}` : null
 
 const DOZWOLONE = [[1024, 1024], [1264, 848], [848, 1264], [1200, 896], [896, 1200], [1152, 928], [928, 1152], [1376, 768], [768, 1376], [1584, 672], [672, 1584]]
 const [width, height] = DOZWOLONE.reduce((n, p) => (Math.abs(p[0] / p[1] - szer / wys) < Math.abs(n[0] / n[1] - szer / wys) ? p : n))
@@ -149,6 +152,22 @@ const WARIANTY = [
   { id: 'g_dodaj_erase', opis: 'Dodaj kopię (Gemini 3.1) → usuń oryginał dedykowanym FLUX Erase po masce', kroki: [{ model: 'google:4@3', prompt: P_DODAJ }, { erase: true, poprzedni: true }] },
 ]
 
+const SZER = konfig.cel?.szerokosc ? `about ${Math.round(konfig.cel.szerokosc * 100)}% of Image 1's width` : ''
+const P_T_BIEZACY = `Generate the object shown at Pin 1 (Image 2, x=${z.x.toFixed(2)} y=${z.y.toFixed(2)}) from zero inside Image 1, standing exactly at the x / y point of Pin 2 (Image 1, x=${c.x.toFixed(2)} y=${c.y.toFixed(2)}) with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once.${SZER ? ` At the destination it spans ${SZER}.` : ''}`
+const P_T_FOTO = `Edit Image 1: insert the ${NAZWA} from Image 2 into it, as a real photograph taken by the same camera at the same moment. Place it exactly at ${polozenie(c.x, c.y)}${c.nazwa ? ` (${c.nazwa})` : ''}, with its wheels or base on the real surface.${SZER ? ` Scale: it spans ${SZER}.` : ' Scale: judge it against people, doors and vehicles at the same distance from the camera.'} Keep its exact paint, finish and details from Image 2 but re-light it with Image 1's sun: same direction and hardness of light, matching highlights, reflections of the sky and surroundings, a soft contact shadow and a cast shadow on the ground like the other objects, the same colour cast, noise, sharpness and haze. Tone down studio contrast and saturation to Image 1's grade. Everything else in Image 1 stays exactly as it is.`
+const P_T_KROTKI = `Insert the ${NAZWA} from Image 2 into Image 1 at the ${krotko(c.x, c.y)}${SZER ? `, ${SZER}` : ''}. Match Image 1's lighting, shadows, perspective and colour grade so it looks photographed there. Keep the rest of Image 1 unchanged.`
+if (dataUri2) {
+  WARIANTY.length = 0
+  WARIANTY.push(
+    { id: 't_a_biezacy_nb31', opis: 'Transfer: obecny prompt (zamrożony styl) + opcjonalna szerokość, Gemini 3.1', obrazy: [dataUri, dataUri2], kroki: [{ model: 'google:4@3', prompt: P_T_BIEZACY }] },
+    { id: 't_b_foto_nb31', opis: 'Transfer: „wstaw jak zdjęcie” (zachowaj lakier, prześwietl słońcem sceny), Gemini 3.1', obrazy: [dataUri, dataUri2], kroki: [{ model: 'google:4@3', prompt: P_T_FOTO }] },
+    { id: 't_c_foto_lite', opis: 'Transfer: „wstaw jak zdjęcie”, Nano Banana 2 Lite', obrazy: [dataUri, dataUri2], kroki: [{ model: 'google:nano-banana@2-lite', prompt: P_T_FOTO }] },
+    { id: 't_d_krotki_nb31', opis: 'Transfer: krótki prompt, Gemini 3.1', obrazy: [dataUri, dataUri2], kroki: [{ model: 'google:4@3', prompt: P_T_KROTKI }] },
+    { id: 't_e_kontext', opis: 'Transfer: krótki prompt, FLUX Kontext pro', obrazy: [dataUri, dataUri2], kroki: [{ model: 'bfl:3@1', prompt: P_T_KROTKI }] },
+    { id: 't_f_seedream', opis: 'Transfer: „wstaw jak zdjęcie”, Seedream 4.0', obrazy: [dataUri, dataUri2], kroki: [{ model: 'bytedance:5@0', prompt: P_T_FOTO }] },
+  )
+}
+
 const wybrane = filtr.length ? WARIANTY.filter((v) => filtr.includes(v.id) || filtr.some((f) => v.id.startsWith(f))) : WARIANTY
 const powtorzenia = konfig.powtorzenia ?? 1
 
@@ -195,7 +214,7 @@ for (const v of wybrane) {
     try {
       for (const k of v.kroki) {
         const wej = k.poprzedni ? poprzedni : dataUri
-        const zad = k.erase ? erase(wej) : zapytanie(k.model, k.prompt, [wej])
+        const zad = k.erase ? erase(wej) : zapytanie(k.model, k.prompt, k.poprzedni ? [wej] : v.obrazy ?? [wej])
         const w = await wyslij(zad)
         koszt += w.koszt
         poprzedni = await pobierzJakoDataUri(w.url)
