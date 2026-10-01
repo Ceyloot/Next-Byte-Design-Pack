@@ -860,6 +860,7 @@ export function CanvasSection() {
         skala: plan?.skala,
         widok: plan?.widok,
         ulozenie: plan?.ulozenie,
+        czesc: plan?.czesc,
         miejsca: plan?.miejsca,
         swiatlo: plan?.swiatlo,
         // Rozmiar z kotwic reżysera — bez niego model brał wielkość obiektu z referencji.

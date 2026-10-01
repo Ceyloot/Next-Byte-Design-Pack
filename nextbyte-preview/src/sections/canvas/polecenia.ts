@@ -304,6 +304,8 @@ export interface OpcjePolecenia {
   widok?: string
   /** logiczne ułożenie: powierzchnia, dopasowanie, wyrównanie, odstępy (EN) */
   ulozenie?: string
+  /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (np. oświetlenie auta) */
+  czesc?: string
 }
 
 /** Operacje na człowieku — idą modelem postaci (RUNWARE_MODEL_POSTAC). */
@@ -356,7 +358,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -419,6 +421,7 @@ export function zbudujZadanieModelu(
     skala,
     widok,
     ulozenie,
+    czesc,
     pineskiChronione: chronione.map(p => ({
       numer: pineski.indexOf(p) + 1,
       obraz: numerObrazu(p),

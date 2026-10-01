@@ -46,11 +46,15 @@ STEP 1 — WHAT EACH PIN POINTS AT
 - "szczegoly": a DETAILED, exact description in English (3–4 sentences) of EXACTLY the pinned thing, written so that someone who cannot see the image could point at it and nobody could confuse it with anything else. An object: what it is, its overall shape and silhouette, every distinctive part, materials, colours, relative size, what it stands on or against, and which of any look-alikes it is. A location: precisely what the spot is — the surface or thing under the point, what is there now, the nearest landmarks and on which side of each, how far from them in relation to the size of things around, and whether it is near a frame edge. Facts you SEE only; never coordinates or percentages.
 - "miejsce": where the point lies in its image, in words from what you SEE — the surface it stands on, the nearest landmarks and which side of them, and whether it is near a frame edge. Landmarks only; never percentages or coordinates. If the user's words relate the new thing to the pinned object (leans on, stands next to, in front of, on), say in "miejsce" the object AND the spot where the new thing ends up (e.g. on the ground beside that object), not just the object's surface. Describe the pin's OWN spot: if the nearest subject is far, say so instead of writing "next to".
 
+STEP 1a — PART OR WHOLE ("czesc")
+When the user names a PART of an object (a component of it, not the whole thing) and wants that part changed, set "czesc" to the English name of that part; otherwise "". With a part, the operation is "zamien" or "przenies": ONLY that part of the object at the destination pin is replaced by the same kind of part shown at the source pin — the object itself, and everything else, stays.
+
 STEP 1b — BIND THE USER'S WORDS TO PINS
 Each noun of the request that refers to a scene object resolves to a pin (users type fragments, inflected forms, synonyms). The operation acts on EXACTLY the named pinned objects — never on a more prominent object nearby. The user's word decides the TYPE of object: when the noun names a type that no pin is on, but a pin lies on or right next to an object of that type (a person leaning on the car the user calls "car"), the operation targets that object of the named type. If nothing of that type is near any pin, say so in "analiza" and act only on what the pins clearly show.
 
 STEP 2 — OPERATION ("intencja"), exactly one of:
 "wstaw" (add an object at a location, nothing removed), "przenies" (an object goes to a location pin — same photo or from a reference), "zamien" (the object under a canvas pin is replaced), "postac" (FACE SWAP ONLY — only when the user explicitly asks for the face / twarz: the face of the reference person goes onto the person under a canvas pin; their body, clothing and pose stay), "ubranie" (new outfit for the marked person), "usun", "tekstura", "pora_roku", "pora_dnia", "efekt", "tlo", "styl", "popraw".
+"tlo" = the surroundings / scenery / background / place / location are replaced by another environment (taken from a reference photo, or described), while the subjects in the foreground stay as they are. "zmień scenerię / otoczenie / tło / miejsce / lokalizację na X", "niech to będzie w X", "przenieś to do X" with a place name or a reference photo of a place is ALWAYS "tlo" — never "wstaw" or "przenies": a place is not an object to add. A pin on the reference photo then marks the NEW ENVIRONMENT.
 "wstaw go tu", "daj to tam", "niech tu stoi" = put the object at the pin and keep everything else. A location pin next to an object means that object stays: "wstaw" or "przenies", never "zamien" unless a replacement is asked for.
 Replacing a PERSON with another person ("zamień go na tego", "podmień tę osobę", without the word face/twarz) is "zamien" with "dotyczy_osoby": true — a whole-person swap: the new person with their own face, hair AND clothing, in the pose and place of the old one. Set "dotyczy_osoby" true when a "wstaw", "zamien" or "przenies" adds, replaces or moves a WHOLE PERSON (a human being, not an object) — including a person brought in from a reference photo.
 
@@ -93,6 +97,7 @@ Answer ONLY with JSON:
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
   "ulozenie": "<surface under the pin, how it fits on it, alignment, what to keep clear of>",
+  "czesc": "",
   "swiatlo": "<key light direction, hardness, Kelvin; shadow direction and softness; colour bounce; focal length, depth of field, grain, medium>",
   "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres>, "prawdziwe": { "dl_m": <true length>, "szer_m": <true width>, "wys_m": <true height> }, "kat_deg": <0–90>, "kamera_deg": <0–90> },
   "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
@@ -156,6 +161,8 @@ export interface PlanRezysera {
   swiatlo: string
   /** logiczne ułożenie obiektu w miejscu docelowym: powierzchnia, dopasowanie, wyrównanie, odstępy (EN) */
   ulozenie: string
+  /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część; puste = cały obiekt */
+  czesc: string
   analiza: string
   plan: string
 }
@@ -304,6 +311,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     widok: String(json.widok ?? '').trim(),
     swiatlo: String(json.swiatlo ?? '').trim(),
     ulozenie: String(json.ulozenie ?? '').trim(),
+    czesc: String(json.czesc ?? '').trim(),
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),
   }
