@@ -84,9 +84,29 @@ export async function zblizenieRzeczy(src: string, x: number, y: number): Promis
   if (!okno) return null
   const { box } = await opiszRzeczZRamka(okno.src)
   if (!box) return null
-  const r = naPiksele(okno, box)
-  const wypelnienie = Math.max(r.x1 - r.x0, r.y1 - r.y0) / okno.bok
+  let r = naPiksele(okno, box)
+  let wypelnienie = Math.max(r.x1 - r.x0, r.y1 - r.y0) / okno.bok
   if (wypelnienie > 0.8 || wypelnienie < 0.02) return null
+  // Mała rzecz w dużym oknie (np. odległy domek): ramka bywa nieprecyzyjna i łapie sąsiada — drugie, ciaśniejsze
+  // przejście: okno ~4× rozmiar rzeczy wokół jej środka daje dokładniejszą ramkę.
+  if (wypelnienie < 0.15) {
+    const cx = (r.x0 + r.x1) / 2
+    const cy = (r.y0 + r.y1) / 2
+    const bok2 = Math.max(96, 4 * Math.max(r.x1 - r.x0, r.y1 - r.y0))
+    const okno2 = oknoKwadratowe(o, cx / o.naturalWidth, cy / o.naturalHeight, Math.min(1, bok2 / Math.min(o.naturalWidth, o.naturalHeight)))
+    if (okno2) {
+      const drugie = await opiszRzeczZRamka(okno2.src)
+      if (drugie.box) {
+        const r2 = naPiksele(okno2, drugie.box)
+        const w2 = Math.max(r2.x1 - r2.x0, r2.y1 - r2.y0) / okno2.bok
+        // przyjmujemy ramkę z drugiego przejścia, gdy ma sensowny rozmiar względem okna
+        if (w2 >= 0.1 && w2 <= 0.9) {
+          r = r2
+          wypelnienie = w2
+        }
+      }
+    }
+  }
   return wytnijZOryginalu(o, r, 0.25)
 }
 
