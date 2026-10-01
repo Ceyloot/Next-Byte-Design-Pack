@@ -115,83 +115,39 @@ interface Projekt {
 }
 
 /**
- * Kotwiczy i kalibruje obszar inpaintingu do punktu wbicia pineski.
- * Eliminuje problem halucynacji współrzędnych przez model językowy
- * (np. lądowanie auta na tarasie zamiast przed garażem) oraz gigantyzmu
- * w szerokich kadrach krajobrazowych.
+ * Obszar kontrolny wokół pineski docelowej (do oceny wyniku). Rozmiar bierze ze zmierzonego przez reżysera
+ * udziału obiektu w kadrze (kotwice o znanym rozmiarze + perspektywa) — nie z klas obiektów ani list słów.
+ * Bez pomiaru: obszar zasugerowany przez reżysera, ograniczony ogólnym priorytetem perspektywy
+ * (im wyżej w kadrze, tym mniejszy obiekt).
  */
 function skalibrujObszarPineski(
   sugerowany: Prostokat | undefined,
   pinDocelowy: Pineska | undefined,
-  pinZrodlowy: Pineska | undefined,
-  tekstZadania: string,
+  rozmiar?: { szer: number; wys: number },
 ): Prostokat | undefined {
   if (!pinDocelowy) return sugerowany
 
   const px = pinDocelowy.normalizedX
   const py = pinDocelowy.normalizedY
 
-  // Wymiary sugerowane przez reżysera (lub domyślne):
-  let w = sugerowany ? sugerowany.x1 - sugerowany.x0 : 0.12
-  let h = sugerowany ? sugerowany.y1 - sugerowany.y0 : 0.06
-
-  // Zbieramy kontekst ze wszystkich dostępnych źródeł (zadanie, etykiety pinesek, analiza wizualna obiektów):
-  const teksty = [
-    tekstZadania,
-    pinDocelowy.label,
-    pinDocelowy.analiza?.obiekt,
-    pinDocelowy.analiza?.obiektEn,
-    ...(pinDocelowy.sugestie || []),
-    pinZrodlowy?.label,
-    pinZrodlowy?.analiza?.obiekt,
-    pinZrodlowy?.analiza?.obiektEn,
-    ...(pinZrodlowy?.sugestie || []),
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
-
-  const hCm = pinZrodlowy?.analiza?.wysokoscCm ?? pinDocelowy?.analiza?.wysokoscCm
-  const lCm = pinZrodlowy?.analiza?.dlugoscCm ?? pinDocelowy?.analiza?.dlugoscCm
-
-  const czyPojazd =
-    /\b(samoch[oó]d|auto|pojazd|ford|gt40|lambo\w*|car|vehicle|suv|truck|wy[sś]cig\w*|racecar)\b/i.test(teksty) ||
-    (Boolean(hCm && hCm >= 80 && hCm <= 220) && Boolean(lCm && lCm >= 250))
-  const czyMaly =
-    /\b(figurk\w*|[żz]ab\w*|kubek|telefon|ptak|frog|toy|maskotk\w*|zegar|miniatur\w*)\b/i.test(teksty) ||
-    Boolean(hCm && hCm <= 35)
-  const czyCzlowiek =
-    /\b(osoba|cz[łl]owiek|posta[ćc]|m[ęe][żz]czyzn\w*|kobiet\w*|person|ludzie|ch[łl]opak|dziewczyn\w*)\b/i.test(teksty) ||
-    Boolean(hCm && hCm >= 140 && hCm <= 210 && (!lCm || lCm < 120))
-
-  // Współczynnik perspektywiczny (im wyżej w kadrze, tym mniejszy obiekt w dali):
-  const wspGlebi = Math.max(0.4, Math.min(1.15, py * 1.25))
-
-  if (czyPojazd) {
-    // Samochód na podjeździe/drodze:
-    // W perspektywie wzdłużnej drogi (auto przodem do kamery lub w stronę garażu)
-    // naturalne proporcje to ok. 1.1:1 do 1.35:1. Zbyt szeroka ramka zmuszała model
-    // do obracania auta w poprzek jezdni i blokowania drogi jak po kolizji.
-    // Przykręcone względem wcześniejszego — auto na gołym asfalcie wychodziło
-    // gigantyczne na całą szerokość drogi. Górny limit niżej, dolny bez zmian,
-    // żeby nie wpaść w drugą skrajność (miniatura).
-    w = Math.min(w, 0.10 * wspGlebi)
-    h = Math.min(h, 0.075 * wspGlebi)
-    w = Math.max(w, 0.06 * wspGlebi)
-    h = Math.max(h, 0.045 * wspGlebi)
-  } else if (czyMaly) {
-    w = Math.min(w, 0.045 * wspGlebi)
-    h = Math.min(h, 0.035 * wspGlebi)
-  } else if (czyCzlowiek) {
-    w = Math.min(w, 0.08 * wspGlebi)
-    h = Math.min(h, 0.14 * wspGlebi)
+  let w: number
+  let h: number
+  if (rozmiar) {
+    // zmierzony rozmiar (% kadru) — wiarygodniejszy niż jakakolwiek stała
+    w = rozmiar.szer / 100
+    h = rozmiar.wys / 100
   } else {
+    w = sugerowany ? sugerowany.x1 - sugerowany.x0 : 0.12
+    h = sugerowany ? sugerowany.y1 - sugerowany.y0 : 0.06
+    const wspGlebi = Math.max(0.4, Math.min(1.15, py * 1.25))
     w = Math.min(w, 0.18 * wspGlebi)
     h = Math.min(h, 0.12 * wspGlebi)
   }
+  w = Math.max(0.015, Math.min(0.5, w))
+  h = Math.max(0.015, Math.min(0.5, h))
 
   // ZAWSZE kotwiczymy horyzontalnie na px (środek obiektu)
-  // i wertykalnie na py (styk z gruntem / koła):
+  // i wertykalnie na py (styk z gruntem):
   const x0 = Math.max(0.005, Math.min(0.995 - w, px - w / 2))
   const y1 = Math.min(0.995, Math.max(0.005 + h, py + h * 0.08)) // lekki margines na cień pod spodem
   const y0 = Math.max(0.005, y1 - h)
@@ -781,6 +737,7 @@ export function CanvasSection() {
         ) ??
         projekt.pineski.find(p => p !== pinDocelowy && !p.chroniona)
 
+      const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
       const surowyObszar =
         trybAgenta === 'tlo' || trybAgenta === 'styl'
           ? undefined
@@ -789,7 +746,7 @@ export function CanvasSection() {
       // Jeśli użytkownik nie narysował ręcznie ramki, deterministycznie kotwiczymy i kalibrujemy obszar do pineski:
       const obszarCelu = ramkaCelu
         ? ramkaCelu
-        : skalibrujObszarPineski(surowyObszar, pinDocelowy, pinZrodlowy, projekt.tekst)
+        : skalibrujObszarPineski(surowyObszar, pinDocelowy, rozmiarPlanu)
 
       const obszarZrodla = trybAgenta === 'przenies' && !przestawiono ? plan?.obszarZrodla : undefined
       // Magentowe boxy WYŁĄCZONE: dawały 3. obraz (clean canvas), blok „MARKED
@@ -829,7 +786,6 @@ export function CanvasSection() {
           : projekt.pineski
 
       // Skala liczona z kotwicy o znanym rozmiarze (nie z oka): % kadru docelowego.
-      const rozmiarPlanu = plan?.pomiar ? rozmiarZPomiaru(plan.pomiar, zrodlo.naturalWidth, zrodlo.naturalHeight, pinDocelowy?.normalizedY) : undefined
       const porownanie = plan?.pomiar ? porownanieZKotwica(plan.pomiar, pinDocelowy?.normalizedY) : ''
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
