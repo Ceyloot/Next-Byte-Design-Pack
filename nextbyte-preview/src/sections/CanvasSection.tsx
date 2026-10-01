@@ -811,9 +811,18 @@ export function CanvasSection() {
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
       // Przeniesienie / zamiana w kadrze: wyczerpujący opis KONKRETNEGO obiektu spod pineski źródłowej z jego wycinka
       // (opis reżysera z całego zdjęcia bywał zbyt ogólny — model rysował inny obiekt tego samego rodzaju).
+      // Ruch / zamiana obiektu w obrębie jednego zdjęcia (dwie pineski na Image 1): prompt ma tylko położenie x / y pinesek,
+      // więc nie robimy opisów szczegółowych ani zbliżeń (nie miałyby gdzie trafić w prompcie).
+      const ruchWKadrze =
+        ['przenies', 'zamien'].includes(trybAgenta) &&
+        ['object_transfer', 'object_swap', 'character_transfer'].includes(operacjaAgenta) &&
+        !plan?.czesc &&
+        !plan?.cecha &&
+        Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId === zrodlo.id && pinDocelowy.layerId === zrodlo.id)
       let szczegolyPlanu = plan?.szczegoly
       const pinObiektuWKadrze = projekt.pineski.find(p => zrodlaNaCelu.has(p.id))
       if (
+        !ruchWKadrze &&
         pinObiektuWKadrze &&
         ['przenies', 'zamien'].includes(trybAgenta) &&
         projekt.pineski.every(p => p.chroniona || p.layerId === zrodlo.id)
@@ -837,7 +846,7 @@ export function CanvasSection() {
       }
       // Zbliżenia w pobliżu pinesek (inteligentne: ramka rzeczy od Gemini, wycinek z oryginału, margines proporcjonalny).
       let zblizenia: Zblizenie[] = []
-      if (ZBLIZENIA_W_POBLIZU_PINEZKI) {
+      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze) {
         try {
           zblizenia = await zbudujZblizenia({
             operacja: operacjaAgenta,

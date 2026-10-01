@@ -258,6 +258,13 @@ function mapaObrazowIPinesek(w: SkladajWejscie): string {
   return [obrazy, ...pineski, ...chronione].join('\n')
 }
 
+/** Położenie punktu w kadrze słowami + współrzędne (do promptu ruchu w obrębie jednego zdjęcia). */
+function polozenieSlowami(x: number, y: number): string {
+  const poziom = x < 0.15 ? 'at the far left edge' : x < 0.35 ? 'in the left part' : x < 0.65 ? 'in the horizontal middle' : x < 0.85 ? 'in the right part' : 'at the far right edge'
+  const pion = y < 0.15 ? 'at the very top' : y < 0.35 ? 'in the upper part' : y < 0.65 ? 'around the vertical middle' : y < 0.85 ? 'in the lower part' : 'at the very bottom'
+  return `${pion} and ${poziom} of the frame, ${Math.round(x * 100)}% from the left edge and ${Math.round(y * 100)}% down from the top (x=${x.toFixed(2)}, y=${y.toFixed(2)})`
+}
+
 /** Składa finalny prompt dla modelu obrazu. */
 export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const op = getOperation(w.operacja)
@@ -410,17 +417,35 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : ''
   const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
-  const sekcje: SekcjaPromptu[] = [
-    { klucz: 'task', tekst: sekcjaZadania },
-    { klucz: 'user', tekst: sekcjaUzytkownika },
-    { klucz: 'rules', tekst: sekcjaRegul },
-  ]
+  // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia: z całej logiki zostaje tylko rozumienie położenia pinesek
+  // (słowa + współrzędne x / y). Bez bricków, opisów Gemini, skali, światła i zbliżeń.
+  const ruchWKadrze =
+    !czescTryb && !cechaTryb && ['object_transfer', 'object_swap', 'character_transfer'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1
+  const zadanieRuchu = ruchWKadrze && zrodlo && cel
+    ? [
+        `[TASK]`,
+        `Edit Image 1: ${op.id === 'object_swap' ? 'MOVE one object within the photo, in place of what stands at its destination' : 'MOVE one object within the photo'}.`,
+        `THE OBJECT stands ${polozenieSlowami(zrodlo.x, zrodlo.y)}.`,
+        `IT MUST END UP ${polozenieSlowami(cel.x, cel.y)}: the middle of its footprint exactly on that x / y point, in that very part of the frame.${op.id === 'object_swap' ? ' What stands there now is removed.' : ''}`,
+        `At its old position nothing of it remains. Everything else in the photo stays exactly as it is.`,
+      ].join('\n')
+    : ''
+  const sekcje: SekcjaPromptu[] = ruchWKadrze
+    ? [
+        { klucz: 'task', tekst: zadanieRuchu },
+        { klucz: 'user', tekst: sekcjaUzytkownika },
+      ]
+    : [
+        { klucz: 'task', tekst: sekcjaZadania },
+        { klucz: 'user', tekst: sekcjaUzytkownika },
+        { klucz: 'rules', tekst: sekcjaRegul },
+      ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system,
-    temperatura,
+    system: ruchWKadrze ? undefined : system,
+    temperatura: ruchWKadrze ? undefined : temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
-    gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || undefined,
+    gemini31: ruchWKadrze ? undefined : miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,
