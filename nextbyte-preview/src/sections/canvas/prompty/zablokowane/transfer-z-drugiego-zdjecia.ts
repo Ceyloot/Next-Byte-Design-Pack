@@ -1,0 +1,28 @@
+/**
+ * ZABLOKOWANE — OBJECT TRANSFER Z DRUGIEGO ZDJĘCIA (obiekt z Image 2, miejsce na Image 1) — tryb testowy A/B.
+ * Pełna logika z commita dd2f587 (zadanie, bricki, rola modelu, temperatura, model Gemini 3.1) — TYLKO w tym trybie.
+ * NIE ZMIENIAĆ bez wyraźnej prośby użytkownika. Teksty są kopiami — zmiany we wspólnych brickach ani w
+ * operacje/object-transfer.ts NIE wpływają na ten tryb.
+ *
+ * W tym trybie do modelu NIE idą późniejsze dodatki: zmierzony rozmiar, skala, widok, ułożenie, opisy
+ * szczegółowe, strefy kadru w opisie pinu. Model: Gemini 3.1 (`google:4@3`) — znacznik `gemini31` z `skladajPrompt`.
+ */
+
+/** Zadanie [TASK] z dd2f587 (tokeny {{…}} podstawia skladaj.ts). Bez kroków — object_transfer jest w BEZ_KROKOW. */
+export const ZABLOKOWANA_MISJA_TRANSFERU = `Generate the object shown at {{PIN_SOURCE}} from zero inside Image 1, standing exactly at the x / y point of {{PIN_TARGET}} with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once.`
+
+/** Rola modelu (systemPrompt) z dd2f587. */
+export const ZABLOKOWANY_SYSTEM_TRANSFERU = `You are a high-end photographic compositor, not a copy-paste editor. You never cut out, paste, sticker or overlay a reference object into a plate. You RE-PHOTOGRAPH the object inside the target photograph: one exposure, one light set, one lens, one sensor, one color grade for the whole frame. Everything the edit does not touch stays as it was.`
+
+export const ZABLOKOWANA_TEMPERATURA_TRANSFERU = 0.35
+
+/** Bricki [RULES] z dd2f587 (z tokenami {{…}}). */
+export const ZABLOKOWANE_BRICKI_TRANSFERU: Record<string, string> = {
+  'studio-referencja': `{{IMAGE_DONOR}} shows {{DONOR_ROLE}}. Use it ONLY for the subject's visual identity — a person: facial features, face shape, hair, skin tone, age, body build; a product/object: exact shape, colors, materials, labels, branding and proportions — do not redesign it. Do NOT copy pose, camera angle, lighting or background from any reference, and never copy text, logos or watermarks from it. NEVER COPY THE REFERENCE PIXELS: do not cut, paste, transplant or reuse the reference picture of the object in any form (not its outline, not its viewing angle, not its lighting, not its blur or compression). Generate the object from zero together with the whole photograph, as if it had been standing in this scene when the photo was taken: seen from Image 1's camera angle, lit by Image 1's light, with Image 1's sharpness, grain and colour. If the result looks like the reference picture placed onto the scene, it is wrong.`,
+  'studio-usuniecie': `The original element at {{PIN_CLEAR}} must be COMPLETELY removed — none of it may survive.`,
+  'studio-miejsce': `Place the subject at the exact location of {{PIN_TARGET}}, at its true real-world size and in the perspective of {{IMAGE_TARGET}}'s camera: correct size relative to the environment, contact points correctly placed in 3D space. Seat it logically: it rests on the surface at that point (the top of what is there — a shelf, a radiator, a table, the floor), its base touching it, never floating in front of it and never dropped below it.`,
+  'studio-scena': `FROM THE SCENE ({{IMAGE_TARGET}}) take everything else, unchanged: scene layout, every object and prop, camera angle, focal length, crop, framing and composition, and ALL text, watermarks, logos and signs reproduced EXACTLY.`,
+  'studio-jedno-zdjecie': `ONE photograph captured in-camera, not a composite — RE-LIGHT AND RE-SHOOT the subject into the scene; the reference lighting is an identity document, not a look. Copy from the scene: key-light direction, height and color temperature, fill level, ambient bounce color, contrast ratio and shadow density. Add the shadows that lighting implies: a contact shadow where it meets the ground and a cast shadow pointing the same way as the scene's shadows, with the same edge sharpness. MATCH THE CAMERA AND THE FILM: same focus state and depth of field, same motion blur, white balance, grade, grain and haze — never sharper than the scene; photographic edges with no halo, outline or sticker look.`,
+  'studio-czlowiek': `Do not beautify, de-age, slim, symmetrize, airbrush, change ethnicity or alter facial/body proportions. Anatomically correct: exactly 2 eyes with matching irises and catchlights that match the scene light, 5 fingers on each hand. Skin as photographed, never retouched — visible pores, fine vellus hair, natural redness and faint asymmetry, individual hair strands at the hairline, the same sensor grain over the face as over the rest of the frame.`,
+  'studio-kontrola': `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, and casting a shadow into it? If not, redo. ONE photograph — one light, one lens, one grade.`,
+}

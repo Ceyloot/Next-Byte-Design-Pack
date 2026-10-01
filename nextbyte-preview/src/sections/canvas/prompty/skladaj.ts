@@ -17,6 +17,12 @@
  *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{DONOR_ROLE}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
  */
 import {
+  ZABLOKOWANA_MISJA_TRANSFERU,
+  ZABLOKOWANA_TEMPERATURA_TRANSFERU,
+  ZABLOKOWANE_BRICKI_TRANSFERU,
+  ZABLOKOWANY_SYSTEM_TRANSFERU,
+} from './zablokowane/transfer-z-drugiego-zdjecia'
+import {
   ZABLOKOWANA_TEMPERATURA_W_KADRZE,
   ZABLOKOWANE_BRICKI_W_KADRZE,
   ZABLOKOWANY_SYSTEM_W_KADRZE,
@@ -106,6 +112,8 @@ export interface SkladajWynik {
   system?: string
   /** temperatura modelu obrazu (Studio: swap 0.45, twarz 0.42, poprawka 0.2) */
   temperatura?: number
+  /** tryb zablokowany: transfer obiektu z drugiego zdjęcia → model Gemini 3.1 (CanvasSection → klasa `gemini31`) */
+  gemini31?: boolean
   sekcje: SekcjaPromptu[]
   operacja: OperationId
   nazwaOperacji: string
@@ -228,8 +236,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const nierozwiazane = new Set<string>()
   const cel = pineskaCelu(w.pineski)
   const zrodlo = pineskaZrodla(w.pineski)
-  // Tryb zablokowany (przeniesienie w kadrze) zostaje bez stref kadru w opisie pinesek — prompt identyczny jak zamrożony.
-  const strefy = !(['object_transfer', 'character_transfer', 'object_swap'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1 && !op.gotowy)
+  // Tryby zablokowane (przeniesienie w kadrze; transfer obiektu z drugiego zdjęcia) zostają bez stref kadru w opisie pinesek — prompt identyczny jak zamrożony.
+  // Transfer z drugiego zdjęcia: tylko object_transfer z pinem źródłowym na innym zdjęciu niż docelowe (ZABLOKOWANE/transfer-z-drugiego-zdjecia.ts).
+  const miedzyZdjeciami = op.id === 'object_transfer' && !op.gotowy && zrodlo !== undefined && zrodlo.obraz > 1 && cel?.obraz === 1
+  const strefy = !miedzyZdjeciami && !(['object_transfer', 'character_transfer', 'object_swap'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1 && !op.gotowy)
   const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski, strefy)
   const dawca = numerDawcy(w)
 
@@ -274,6 +284,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = zablokowaneZadanieWKadrze(op.id, zrodlo, cel)
     system = ZABLOKOWANY_SYSTEM_W_KADRZE
     temperatura = ZABLOKOWANA_TEMPERATURA_W_KADRZE
+  } else if (miedzyZdjeciami) {
+    // ZABLOKOWANE (zablokowane/transfer-z-drugiego-zdjecia.ts) — logika z dd2f587, tylko w tym trybie.
+    zadanie = podmien(ZABLOKOWANA_MISJA_TRANSFERU)
+    system = ZABLOKOWANY_SYSTEM_TRANSFERU
+    temperatura = ZABLOKOWANA_TEMPERATURA_TRANSFERU
   } else {
     zadanie = podmien(op.misja) + (BEZ_KROKOW.has(op.id) ? '' : `\n${op.kroki.map((k, i) => `${i + 1}. ${podmien(k)}`).join('\n')}`)
     if (OPERACJE_Z_OBIEKTEM.has(op.id)) {
@@ -301,11 +316,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
-  const rozmiar = w.rozmiar?.trim() && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+  const rozmiar = !miedzyZdjeciami && w.rozmiar?.trim() && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
   // Analiza reżysera dla osadzania (nie dla trybu zablokowanego w kadrze): prawdziwy rozmiar, widok z kamery, opis miejsca i obiektu.
-  const osadzanie = !wKadrze && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+  const osadzanie = !wKadrze && !miedzyZdjeciami && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
   const analizaOsadzania = osadzanie
     ? [
         w.skala?.trim() ? `THE REAL SIZE OF THE SUBJECT (analysed against objects of known size in Image 1 — never take its size from how large it appears in its reference): ${w.skala.trim()}` : '',
@@ -315,7 +330,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         zrodlo?.szczegoly && zrodlo.obraz !== 1 ? `THE SUBJECT (Pin ${zrodlo.numer}): ${zrodlo.szczegoly}` : '',
       ].filter(Boolean)
     : []
-  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...analizaOsadzania, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...analizaOsadzania, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
@@ -326,6 +341,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
     system,
     temperatura,
+    gemini31: miedzyZdjeciami || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,

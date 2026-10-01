@@ -875,7 +875,7 @@ export function CanvasSection() {
         // Object swap w obrębie jednego zdjęcia (zadanie „MOVE within Image 1”, tryb zamiany) — Gemini 3.1.
         klasa: postac
           ? ('postac' as const)
-          : trybAgenta === 'zamien' && pelnePolecenie.includes('MOVE within Image 1:')
+          : (trybAgenta === 'zamien' && pelnePolecenie.includes('MOVE within Image 1:')) || zadanieModelu?.gemini31
             ? ('gemini31' as const)
             : undefined,
       }
