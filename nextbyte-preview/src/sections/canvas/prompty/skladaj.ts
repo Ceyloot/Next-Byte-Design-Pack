@@ -98,6 +98,8 @@ export interface SkladajWejscie {
   ulozenie?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (od reżysera) */
   czesc?: string
+  /** tlo: co zostaje nietknięte — główne obiekty i nakładki (EN, od reżysera) */
+  pierwszyPlan?: string
   /** opis sceny z analizy Gemini (pipeline w canvas/lib) — nazwy pinesek */
   opis?: OpisSceny
   pineskiChronione?: ObszarChroniony[]
@@ -278,6 +280,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // [TASK] — prompt operacji (zamiany postaci i twarzy: baza Studia 1:1, poz. 20/21/29)
   let zadanie: string
   let wKadrze = false
+  // Zmiana scenerii / tła: osobny prompt — zostaje pierwszy plan, wymieniane jest całe otoczenie.
+  const sceneria = op.id === 'background_change'
   let system: string | undefined
   let temperatura: number | undefined
   if (op.gotowy === 'studio-character-swap') {
@@ -295,6 +299,14 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = `${studioFaceBaza('Image 1', refs.length > 1 ? `Images ${refs.join(', ')}` : `Image ${refs[0] ?? 2}`, Math.max(1, refs.length))}\n${STUDIO_FACE_KONTROLA}`
     system = STUDIO_FACE_SYSTEM
     temperatura = 0.42
+  } else if (sceneria) {
+    const zrodloMiejsca = dawca ? `Image ${dawca}` : 'the place described in the USER request'
+    zadanie = [
+      `SCENERY CHANGE: replace the WHOLE surroundings of Image 1 — its location, ground, buildings, vegetation, sky, weather and light — with the place ${dawca ? `shown in ${zrodloMiejsca}` : 'described in the USER request'}.`,
+      dawca ? `Image 1 = the photograph whose subjects stay. Image ${dawca} = the new place.` : `Image 1 = the photograph whose subjects stay.`,
+    ].join('\n')
+    system = SYSTEM_KOMPOZYTORA
+    temperatura = TEMPERATURA_OBIEKTU
   } else if (czescOpis && cel) {
     const cz = w.czesc!.trim()
     zadanie = [
@@ -337,7 +349,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     }
   }
   const styl = w.dyrektywyStylu ? `\nStyle — ${w.dyrektywyStylu.nazwa}: ${w.dyrektywyStylu.reguly.join(' ')}` : ''
-  const sekcjaZadania = `[TASK]\n${zadanie}${styl}\n${mapaObrazowIPinesek(w)}`
+  const sekcjaZadania = `[TASK]\n${zadanie}${styl}${sceneria ? '' : `\n${mapaObrazowIPinesek(w)}`}`
 
   // [USER]
   const sekcjaUzytkownika = `[USER]\n${w.polecenie.trim() || op.nazwa}`
@@ -345,13 +357,14 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // [RULES] — bricki operacji; bez dawcy odpada referencja, bez starego miejsca odpada usunięcie
   const pominiete: BrickId[] = []
   const wlaczone = op.bricks.filter((id) => {
+    if (sceneria) { pominiete.push(id); return false }
     if (czescTryb && !['studio-referencja', 'studio-scena', 'studio-jedno-zdjecie', 'studio-kontrola'].includes(id)) { pominiete.push(id); return false }
     const zbedny = (id === 'studio-usuniecie' && czyszczenie === null) || (id === 'studio-referencja' && dawca === null)
     if (zbedny) pominiete.push(id)
     return !zbedny
   })
   const bricki = [...new Set(wlaczone)].map((id) => BRICKS[id]).sort((a, b) => a.numer - b.numer)
-  const kropki = w.pineski.length
+  const kropki = w.pineski.length && !sceneria
     ? 'Pin positions are given as x / y fractions of the image (x from the left edge, y from the top edge, 0–1); the images carry no markers.'
     : ''
   const swiatlo = w.swiatlo?.trim()
@@ -371,7 +384,17 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         zrodlo?.szczegoly && zrodlo.obraz !== 1 ? `THE SUBJECT (Pin ${zrodlo.numer}): ${zrodlo.szczegoly}` : '',
       ].filter(Boolean)
     : []
-  const sekcjaRegul = ['[RULES]', swiatlo, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  // Scenografia: światło sceny docelowej NIE obowiązuje (zmienia się z otoczeniem) — zamiast tego reguły zmiany miejsca.
+  const regulySceneria = sceneria
+    ? [
+        `THE NEW PLACE: take its location only — ground, buildings, vegetation, sky, weather, atmosphere and light — never the subjects standing in it, and never its pixels: build it anew, as one photograph, from Image 1's camera height, lens and framing.`,
+        `THE SUBJECTS OF IMAGE 1 STAY EXACTLY: ${w.pierwszyPlan?.trim() || 'the main subjects of Image 1'} keep their position, size, pose, shape, colours and details, and any graphics or text laid over the picture stays exactly where and as it is.`,
+        `Nothing of the old surroundings survives behind or around the subjects; their edges are clean and photographic, with no halo, outline or cut-out look.`,
+        `RE-LIGHT the subjects for the new place: its light direction, colour temperature, weather and contrast; add contact shadows on the new ground and matching reflections; one grain, one depth of field, one colour grade across the whole frame.`,
+        `FINAL CHECK: is the frame exactly the frame of Image 1 — same crop, same zoom, same field of view — with the subjects and any overlaid text untouched and the new place as the only change? Is everything lit and graded as ONE photograph? If not, redo.`,
+      ]
+    : []
+  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
@@ -383,7 +406,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     system,
     temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
-    gemini31: miedzyZdjeciami || (op.id === 'object_swap' && !wKadrze) || czescTryb || undefined,
+    gemini31: miedzyZdjeciami || (op.id === 'object_swap' && !wKadrze) || czescTryb || sceneria || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,
