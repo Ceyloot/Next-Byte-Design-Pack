@@ -177,7 +177,7 @@ interface Gramatyka {
   b: number
 }
 
-function gramatyka(t: Slowo[], wzmianki: Wzmianka[]): Gramatyka | null {
+function gramatyka(t: Slowo[], wzmianki: Wzmianka[], numeryPinesek: number[] = []): Gramatyka | null {
   const pinPo = (od: number, doK = t.length) => wzmianki.find(w => w.poz >= od && w.poz < doK)
   const inneNiz = (pin: number, od: number) => wzmianki.find(w => w.poz >= od && w.pin !== pin)
 
@@ -209,6 +209,10 @@ function gramatyka(t: Slowo[], wzmianki: Wzmianka[]): Gramatyka | null {
         const przyimek = t.findIndex((s, j) => j > a.poz && PRZYIMEK.has(s.tekst))
         const b = przyimek >= 0 ? inneNiz(a.pin, przyimek + 1) : undefined
         if (b) return { rodzaj: 'wstaw', a: a.pin, b: b.pin }
+        // „wstaw A w to miejsce / tutaj / tam” — wskazana jest tylko A; przy dwóch pineskach miejscem jest druga
+        const wskazanie = t.slice(a.poz + a.dl).some(s => /^(miejsce|tutaj|tu|tam|ten|tego)$/.test(s.tekst) && s.tekst !== 'ten' && s.tekst !== 'tego')
+        const druga = numeryPinesek.filter(n => n !== a.pin)
+        if (wskazanie && numeryPinesek.length === 2 && druga.length === 1) return { rodzaj: 'wstaw', a: a.pin, b: druga[0] }
         // „wstaw A tutaj” — miejscem jest jedyna inna pineska przed czasownikiem
         const przed = wzmianki.find(x => x.poz < k && x.pin !== a.pin)
         const przyimekPrzed = przed && t.slice(Math.max(0, przed.poz - 2), przed.poz).some(s => PRZYIMEK.has(s.tekst))
@@ -254,7 +258,7 @@ export function roleZPolecenia(
   }
 
   // Poziom 2 — gramatyka
-  const g = gramatyka(t, znajdzWzmianki(t, pineski))
+  const g = gramatyka(t, znajdzWzmianki(t, pineski), pineski.map((p, i) => (p.chroniona ? 0 : i + 1)).filter(Boolean))
   if (g) {
     if (g.rodzaj === 'wstaw' && intencja !== 'zamien') {
       role[g.a] = 'SOURCE'
