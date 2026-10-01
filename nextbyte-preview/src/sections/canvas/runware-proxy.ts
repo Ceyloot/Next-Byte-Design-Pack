@@ -44,8 +44,9 @@ export interface ZadanieRozpoznania {
   /**
    * `obiekt` (domyślnie) nazywa jedną rzecz w centrum kadru.
    * `scena` robi inwentarz: co w ogóle jest na zdjęciu.
+   * `opis` — wyczerpujący opis wizualny jednego obiektu w centrum wycinka (EN), do przeniesienia w kadrze.
    */
-  tryb?: 'obiekt' | 'scena'
+  tryb?: 'obiekt' | 'scena' | 'opis'
 }
 
 /** Odpowiedź rozpoznania — krótkie nazwy po polsku */
@@ -229,6 +230,47 @@ export function runwareProxy(): Plugin {
       try {
         const { wycinek, tryb = 'obiekt' } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
         if (!wycinek) return odpowiedz(400, { blad: 'Brak wycinka' })
+
+        // Tryb „opis”: pełny Gemini 2.5 Flash (bez myślenia) — wyczerpujący opis jednego obiektu z wycinka.
+        if (tryb === 'opis') {
+          const d = wycinek.match(/^data:([^;]+);base64,(.+)$/)
+          const oResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${kluczGemini}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { inlineData: { mimeType: d ? d[1] : 'image/jpeg', data: d ? d[2] : wycinek } },
+                      {
+                        text: 'This crop is centred on ONE object (the one under the pin). Describe exactly THAT object in exhaustive visual detail, so that another artist who cannot see the image could redraw it identically: what it is; its overall shape and silhouette; every distinctive part and feature with its position on the object, shape, colour and material; surface textures, edges and wear; its size relative to what is around it; what it stands on or against. 4–6 sentences, plain English, facts you SEE only. Describe only the object — nothing of the background. Answer only with JSON: {"opis": "..."}',
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 700,
+                  responseMimeType: 'application/json',
+                  thinkingConfig: { thinkingBudget: 0 },
+                },
+              }),
+            },
+          )
+          if (oResp.ok) {
+            const oJson = await oResp.json()
+            const oTxt = oJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+            try {
+              const o = JSON.parse(oTxt) as { opis?: string }
+              if (o.opis?.trim()) return odpowiedz(200, { opis: o.opis.trim(), nazwy: [] })
+            } catch {
+              // bez opisu — prompt użyje opisu reżysera
+            }
+          }
+          return odpowiedz(200, { opis: '', nazwy: [] })
+        }
 
         // Gemini 2.5 Flash-Lite — tani, a pełny Flash zużywał limit 250 tokenów na myślenie i oddawał pustą odpowiedź
         if (kluczGemini) {

@@ -32,6 +32,7 @@ import {
   nazwijWynik,
   opiszZmiane,
   rozpoznajObiekt,
+  opiszObiektSzczegolowo,
   rozpoznajScene,
   sprawdzWynik,
   zmierzObiekt,
@@ -756,7 +757,11 @@ export function CanvasSection() {
             }
           : undefined
 
-      // Znajdź pineskę docelową na płótnie:
+      // Pineski-źródła leżące na płótnie (obiekt do przeniesienia / zamiany) — te same role co w prompcie.
+      const zrodlaNaCelu = idZrodelNaPlotnie(projekt.pineski, obrazy, trybAgenta, uklad.role)
+
+      // Znajdź pineskę docelową na płótnie (nie źródło: bez tego przy rolach z kolejności brana była pierwsza pineska,
+      // czyli obiekt — skala i kontrola liczyły się dla złego miejsca):
       const pinDocelowy =
         projekt.pineski.find(
           p =>
@@ -764,6 +769,7 @@ export function CanvasSection() {
             !p.chroniona &&
             uklad.role[projekt.pineski.indexOf(p) + 1] === 'DESTINATION',
         ) ??
+        projekt.pineski.find(p => p.layerId === zrodlo.id && !p.chroniona && !zrodlaNaCelu.has(p.id)) ??
         projekt.pineski.find(p => p.layerId === zrodlo.id && !p.chroniona)
 
       // Znajdź pineskę źródłową (dawcę obiektu):
@@ -833,11 +839,24 @@ export function CanvasSection() {
 
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
+      // Przeniesienie / zamiana w kadrze: wyczerpujący opis KONKRETNEGO obiektu spod pineski źródłowej z jego wycinka
+      // (opis reżysera z całego zdjęcia bywał zbyt ogólny — model rysował inny obiekt tego samego rodzaju).
+      let szczegolyPlanu = plan?.szczegoly
+      const pinObiektuWKadrze = projekt.pineski.find(p => zrodlaNaCelu.has(p.id))
+      if (
+        pinObiektuWKadrze &&
+        ['przenies', 'zamien'].includes(trybAgenta) &&
+        projekt.pineski.every(p => p.chroniona || p.layerId === zrodlo.id)
+      ) {
+        const wyc = await wytnijOkolice(zrodlo.src, pinObiektuWKadrze.normalizedX, pinObiektuWKadrze.normalizedY, 768, 0.22)
+        const opisObiektu = wyc ? await opiszObiektSzczegolowo(wyc) : ''
+        if (opisObiektu) szczegolyPlanu = { ...(plan?.szczegoly ?? {}), [projekt.pineski.indexOf(pinObiektuWKadrze) + 1]: opisObiektu }
+      }
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         role: uklad.role,
         osoba: plan?.osoba,
         odznaki: plan?.odznaki,
-        szczegoly: plan?.szczegoly,
+        szczegoly: szczegolyPlanu,
         miejsca: plan?.miejsca,
         swiatlo: plan?.swiatlo,
         // Rozmiar z kotwic reżysera — bez niego model brał wielkość obiektu z referencji.
@@ -865,7 +884,6 @@ export function CanvasSection() {
       // Mała magentowa kropka w miejscu każdej wskazującej pineski (współrzędne
       // kropki idą też do PIN MAP). Chronione pineski zostają bez kropki.
       // Źródło na obrazie docelowym nie dostaje kropki: model zostawiał ją na oryginalnym obiekcie.
-      const zrodlaNaCelu = idZrodelNaPlotnie(projekt.pineski, obrazy, trybAgenta, uklad.role)
       const zrodloNaCelu = (p: Pineska) => zrodlaNaCelu.has(p.id)
       // Bez kropek na zdjęciach: miejsce wskazują wyłącznie współrzędne x/y w prompcie
       // (kropka zostawała w wyniku). Zmienna KROPKI_NA_ZDJECIACH przywraca kropki.

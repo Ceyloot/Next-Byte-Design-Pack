@@ -109,6 +109,22 @@ export async function rozpoznajObiekt(
   }
 }
 
+/** Wyczerpujący opis wizualny jednego obiektu w centrum wycinka (po angielsku); pusty, gdy się nie uda. */
+export async function opiszObiektSzczegolowo(wycinek: string): Promise<string> {
+  try {
+    const odp = await fetch('/api/canvas/rozpoznaj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wycinek, tryb: 'opis' }),
+    })
+    if (!odp.ok) return ''
+    const tresc = (await odp.json()) as { opis?: string }
+    return tresc.opis?.trim() ?? ''
+  } catch {
+    return ''
+  }
+}
+
 /** Inwentarz sceny — co w ogóle jest na zdjęciu. */
 export async function rozpoznajScene(zdjecie: string): Promise<string[]> {
   const male = await zmniejszDoAnalizy(zdjecie)
