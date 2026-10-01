@@ -112,6 +112,12 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
   )
     return 'postac'
 
+  // 9b. Czasownik przeniesienia („przesuń / przenieś / przestaw ten domek w miejsce ogrodu”) to PRZENIESIENIE do miejsca,
+  // nie zamiana — „w miejsce X” oznacza tu cel, o ile polecenie nie mówi wprost „zamień / podmień / zastąp / zamiast”.
+  if (/\b(przenie[śs]|przesu[ńn]|przestaw|prze[łl][óo][żz])/.test(t) && !/\b(zamie[ńn]|podmie[ńn]|zast[ąa]p|zamiast|swap)/.test(t)) {
+    return 'przenies'
+  }
+
   // 10. Zamiana miejscami lub podmiana obiektu (Object Replace: "w miejsce tej poduszki", "zamiast auta", "zamień X na Y")
   if (
     /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p|zamiast|zamiana\s+miejscami|switch|swap|odwr[óo][ćc]|przer[óo]b\s+\w+\s+na|zr[óo]b\s+z\s+\w+)/.test(t) ||
