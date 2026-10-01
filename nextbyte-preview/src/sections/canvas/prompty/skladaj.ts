@@ -375,11 +375,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const swiatlo = w.swiatlo?.trim()
     ? `THE LIGHT OF IMAGE 1 (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}`
     : ''
-  const rozmiar = !miedzyZdjeciami && !czescTryb && w.rozmiar?.trim() && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+  // Transfer postaci (z drugiego zdjęcia) dostaje zmierzony rozmiar i analizę osadzania jak obiekty — wymiary postaci muszą być realistyczne.
+  const osadzalny = OPERACJE_Z_OBIEKTEM.has(op.id) && (!OPERACJE_POSTACI_SKLADAJ.has(op.id) || op.id === 'character_transfer')
+  const rozmiar = !miedzyZdjeciami && !czescTryb && w.rozmiar?.trim() && osadzalny
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
   // Analiza reżysera dla osadzania (nie dla trybu zablokowanego w kadrze): prawdziwy rozmiar, widok z kamery, opis miejsca i obiektu.
-  const osadzanie = !wKadrze && !miedzyZdjeciami && !czescTryb && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
+  const osadzanie = !wKadrze && !miedzyZdjeciami && !czescTryb && osadzalny
   const analizaOsadzania = osadzanie
     ? [
         w.skala?.trim() ? `THE REAL SIZE OF THE SUBJECT (analysed against objects of known size in Image 1 — never take its size from how large it appears in its reference): ${w.skala.trim()}` : '',
