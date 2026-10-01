@@ -14,6 +14,8 @@ export interface Zblizenie {
   src: string
   /** opis dla modelu (EN) — po „Image N = …” */
   opis: string
+  /** zbliżenie rzeczy z pinezki źródłowej albo okolicy / rzeczy z pinezki docelowej */
+  rola?: 'zrodlo' | 'cel'
 }
 
 const wczytaj = (src: string) =>
@@ -159,8 +161,8 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
   const zadania: Promise<Zblizenie | null>[] = []
   const nrZdjecia = (l?: Warstwa) => (l ? `of its photograph` : '')
   void nrZdjecia
-  const dodaj = (p: Promise<string | null>, opis: string) =>
-    zadania.push(p.then(src => (src ? { src, opis } : null)).catch(() => null))
+  const dodaj = (p: Promise<string | null>, opis: string, rola?: 'zrodlo' | 'cel') =>
+    zadania.push(p.then(src => (src ? { src, opis, rola } : null)).catch(() => null))
 
   if (w.operacja === 'background_change') {
     if (w.pinZrodlowy && w.warstwaZrodla) {
@@ -186,15 +188,16 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
         wKadrze
           ? 'a close-up of the object as it stands NOW at its old place in Image 1 — this is what is ERASED there (it must be gone from that spot in the result) and, in the same form, set down at the destination; it is not an extra object'
           : `a close-up of ${co}, enlarged around its pin — only to show its exact shape, material and details`,
+        'zrodlo',
       )
     }
     // cel: miejsce do wstawienia (obszar) albo rzecz do zmiany / usunięcia (zbliżenie rzeczy)
     if (w.pinDocelowy) {
       const wstawianie = WSTAWIANIE.includes(w.operacja) && !w.czesc && !w.cecha
       if (wstawianie) {
-        dodaj(zblizenieObszaru(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY, w.szerokoscObiektu), 'a close-up of the area around the destination in Image 1 — only to judge the real ground, scale, perspective and light there')
+        dodaj(zblizenieObszaru(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY, w.szerokoscObiektu), 'a close-up of the area around the destination in Image 1 — only to judge the real ground, scale, perspective and light there', 'cel')
       } else if (w.operacja !== 'background_change') {
-        dodaj(zblizenieRzeczy(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY), 'a close-up of the thing that is changed in Image 1, enlarged around its pin — only to show its exact current state')
+        dodaj(zblizenieRzeczy(w.warstwaCelu.src, w.pinDocelowy.normalizedX, w.pinDocelowy.normalizedY), 'a close-up of the thing that is changed in Image 1, enlarged around its pin — only to show its exact current state', 'cel')
       }
     }
   }

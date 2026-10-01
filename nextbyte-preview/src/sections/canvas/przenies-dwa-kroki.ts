@@ -85,3 +85,42 @@ export function promptJedenPrzebieg(w: DwaKrokiWejscie): string {
     CALOSC,
   ].filter(Boolean).join('\n')
 }
+
+/**
+ * Tryb „usuń, potem wstaw” (oba zadania na Nano Banana Lite):
+ *   1) zdjęcie + zbliżenie obiektu → TYLKO usuń go i odbuduj to, co było pod spodem,
+ *   2) wynik kroku 1 + to samo zbliżenie (wzór obiektu) [+ zbliżenie miejsca] → wstaw go dokładnie w miejscu docelowym.
+ */
+export interface UsunWstawWejscie extends DwaKrokiWejscie {
+  /** w kroku 1 jako Image 2, w kroku 2 jako Image 2 — zbliżenie obiektu (jest / nie ma) */
+  maZblizenieObiektu: boolean
+  /** w kroku 2 jako Image 3 (albo 2, gdy nie ma zbliżenia obiektu) — zbliżenie okolicy miejsca docelowego */
+  maZblizenieMiejsca: boolean
+}
+
+/** Krok 1: samo usunięcie (bez słowa o wstawianiu). */
+export function promptUsun(w: UsunWstawWejscie): string {
+  const { zrodlo } = w
+  return [
+    `[TASK]`,
+    `Edit Image 1: REMOVE one object and change nothing else. The object: the ${czysc(zrodlo.nazwa) || 'object'} that stands ${polozenieSlowami(zrodlo.x, zrodlo.y)}${zrodlo.opis ? ` — ${czysc(zrodlo.opis)}` : ''}.${w.maZblizenieObiektu ? ` Image 2 is an enlarged crop of exactly that object, only to show precisely what is deleted — it is not something to add.` : ''}`,
+    `Delete it completely: not a single part of it remains. Hide what is underneath — rebuild the spot with what would naturally be there without it (ground, grass, wall, trees, sky), continuing the surrounding texture, light and grain, and smooth the background around it so nobody could tell anything ever stood there.`,
+    `Add nothing, move nothing, put the object nowhere else. ${CALOSC}`,
+  ].join('\n')
+}
+
+/** Krok 2: wstaw dokładnie ten obiekt (ze zbliżenia) w miejscu docelowym. */
+export function promptWstaw(w: UsunWstawWejscie): string {
+  const { zrodlo, cel } = w
+  const nr = w.maZblizenieObiektu ? 2 : 0
+  const nrMiejsca = w.maZblizenieMiejsca ? (nr ? 3 : 2) : 0
+  return [
+    `[TASK]`,
+    `Edit Image 1: PLACE one object into the scene — insert only, nothing else changes.${nr ? ` Image ${nr} is an enlarged crop of the object to place: the ${czysc(zrodlo.nazwa) || 'object'}${zrodlo.opis ? ` — ${czysc(zrodlo.opis)}` : ''}.` : ` The object to place: the ${zdanie(zrodlo.nazwa, zrodlo.opis)}.`} Reproduce it EXACTLY — every part, shape, proportion, material, colour and detail as in that crop; never a different object of the same kind. Only its size and angle of view adapt to the new spot.`,
+    `WHERE: ${polozenieSlowami(cel.x, cel.y)}${cel.opis || cel.nazwa ? ` — ${zdanie(cel.nazwa, cel.opis)}` : ''}. ${w.zamiana ? 'It takes exactly the place of what stands there now, which is removed completely. ' : ''}The middle of its footprint lands exactly on that x / y spot, in that very part of the frame — never beside it, never nearer the centre; if there is too little room it is made smaller or the ground shaped. It stands logically on the real surface, upright, following the ground and the scene's lines, scaled for its distance from the camera and seen from Image 1's camera, never floating, sunk or passing through other things. It appears exactly once.`,
+    w.rozmiar ? w.rozmiar : '',
+    w.swiatlo ? `LIGHT OF IMAGE 1 (the object is lit exactly like this, with a contact shadow and a cast shadow like the scene's): ${w.swiatlo}` : `The object is lit exactly like the scene, with a contact shadow and a cast shadow like the scene's.`,
+    nrMiejsca ? `Image ${nrMiejsca} is an enlarged crop of the destination area of Image 1, only to judge the real ground, scale, perspective and light there — never an extra thing to add.` : '',
+    CALOSC,
+  ].filter(Boolean).join('\n')
+}

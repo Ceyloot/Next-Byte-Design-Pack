@@ -64,7 +64,7 @@ import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
 import { usunPoMasce } from '@/sections/canvas/dostawca'
 import { maskaObiektuPodPinem } from '@/sections/canvas/zblizenia'
-import { promptJedenPrzebieg, promptKrok1, promptKrok2, type DwaKrokiWejscie, type MiejsceOpis } from '@/sections/canvas/przenies-dwa-kroki'
+import { promptJedenPrzebieg, promptKrok1, promptKrok2, promptUsun, promptWstaw, type DwaKrokiWejscie, type MiejsceOpis, type UsunWstawWejscie } from '@/sections/canvas/przenies-dwa-kroki'
 import { odciskPinesek, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
 import type { ObrazDlaAgenta } from '@/sections/canvas/agent-proxy'
@@ -112,14 +112,20 @@ const DRUGI_PRZEBIEG = false
  * Przeniesienie w obrębie jednego zdjęcia = DWA zadania (Gemini 3.1): 1) dodaj kopię w nowym miejscu,
  * 2) usuń oryginał ze starego. false = jeden przebieg (flaga niżej) albo zamrożony prompt „MOVE within Image 1”.
  */
-const PRZENIESIENIE_DWA_ZADANIA = true
+const PRZENIESIENIE_DWA_ZADANIA = false
 /**
  * Przeniesienie / zamiana na jednym zdjęciu w JEDNEJ generacji: opisowy prompt (bez numerów pinesek) i model Gemini 3.1.
  * false = poprzednie zachowanie (zamrożony prompt „MOVE within Image 1”, Lite). Ma pierwszeństwo przed dwoma zadaniami (przy true oba nie mogą być włączone naraz — wygrywa jeden przebieg).
  */
 const PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG = false
+/**
+ * Przeniesienie / zamiana na jednym zdjęciu: DWA zadania na Nano Banana Lite w tej kolejności:
+ * 1) zdjęcie + zbliżenie obiektu → tylko usuń go (odbuduj tło), 2) wynik + to samo zbliżenie → wstaw dokładnie w miejscu docelowym.
+ * Ma pierwszeństwo przed pozostałymi wariantami. false = poprzednie warianty (flagi niżej).
+ */
+const PRZENIESIENIE_USUN_POTEM_WSTAW = true
 /** Zadanie 2 przeniesienia: usunięcie oryginału dedykowanym modelem do wymazywania po masce (FLUX Erase); przy błędzie — prompt. false = zawsze prompt. */
-const USUWANIE_MASKA_ERASE = true
+const USUWANIE_MASKA_ERASE = false
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
@@ -824,7 +830,7 @@ export function CanvasSection() {
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
       // Przeniesienie / zamiana na jednym zdjęciu = dwa zadania: 1) dodaj kopię w nowym miejscu, 2) usuń oryginał.
       const dwaKroki =
-        (PRZENIESIENIE_DWA_ZADANIA || PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG) &&
+        (PRZENIESIENIE_USUN_POTEM_WSTAW || PRZENIESIENIE_DWA_ZADANIA || PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG) &&
         ['przenies', 'zamien'].includes(trybAgenta) &&
         !plan?.czesc &&
         !plan?.cecha &&
@@ -985,18 +991,46 @@ export function CanvasSection() {
               zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
             }
           : null
-      if (wejscieDwochKrokow) polecenieModelu = PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG ? promptJedenPrzebieg(wejscieDwochKrokow) : promptKrok1(wejscieDwochKrokow)
+      if (wejscieDwochKrokow && !PRZENIESIENIE_USUN_POTEM_WSTAW) polecenieModelu = PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG ? promptJedenPrzebieg(wejscieDwochKrokow) : promptKrok1(wejscieDwochKrokow)
       if (zblizenie || przeniesienieWKadrze) {
         setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
       }
 
-      let wynik = await generuj({
-        ...ustawieniaModelu,
-        polecenie: polecenieModelu,
-        obrazy: obrazyDoModelu,
-        szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
-        wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
-      })
+      let wynik: Awaited<ReturnType<typeof generuj>>
+      if (wejscieDwochKrokow && PRZENIESIENIE_USUN_POTEM_WSTAW) {
+        // Dwie akcje na Lite: 1) usuń obiekt (zdjęcie + zbliżenie obiektu), 2) wstaw go w miejscu docelowym (wynik + to samo zbliżenie).
+        const zbliz = zblizenia.find(z => z.rola === 'zrodlo')
+        const zblizCel = zblizenia.find(z => z.rola === 'cel')
+        const wejscie: UsunWstawWejscie = { ...wejscieDwochKrokow, maZblizenieObiektu: Boolean(zbliz), maZblizenieMiejsca: Boolean(zblizCel) }
+        const lite = { ...ustawieniaModelu, klasa: undefined }
+        const p1 = promptUsun(wejscie)
+        const p2 = promptWstaw(wejscie)
+        setOstatniPrompt(`── ZADANIE 1 (usuń obiekt) ──\n${p1}\n\n── ZADANIE 2 (wstaw w miejscu docelowym) ──\n${p2}`)
+        const w1 = await generuj({
+          ...lite,
+          polecenie: p1,
+          obrazy: [czyste[0], ...(zbliz ? [zbliz.src] : [])],
+          szerokosc: zrodlo.naturalWidth,
+          wysokosc: zrodlo.naturalHeight,
+        })
+        const poUsunieciu = await dopasujFormatDoObrazu(w1.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
+        const w2 = await generuj({
+          ...lite,
+          polecenie: p2,
+          obrazy: [poUsunieciu, ...(zbliz ? [zbliz.src] : []), ...(zblizCel ? [zblizCel.src] : [])],
+          szerokosc: zrodlo.naturalWidth,
+          wysokosc: zrodlo.naturalHeight,
+        })
+        wynik = { ...w2, kosztUSD: (w1.kosztUSD ?? 0) + (w2.kosztUSD ?? 0) }
+      } else {
+        wynik = await generuj({
+          ...ustawieniaModelu,
+          polecenie: polecenieModelu,
+          obrazy: obrazyDoModelu,
+          szerokosc: warstwaWycinka?.naturalWidth ?? zrodlo.naturalWidth,
+          wysokosc: warstwaWycinka?.naturalHeight ?? zrodlo.naturalHeight,
+        })
+      }
 
       if (warstwaWycinka && wycinek) {
         // rozmiar od reżysera (ułamek zdjęcia docelowego) → ułamek wycinka
@@ -1030,7 +1064,7 @@ export function CanvasSection() {
       }
 
       // Drugie zadanie przeniesienia w kadrze: model często stawia obiekt w nowym miejscu, ale zostawia stary.
-      if (wejscieDwochKrokow && !PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG) {
+      if (wejscieDwochKrokow && !PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG && !PRZENIESIENIE_USUN_POTEM_WSTAW) {
         try {
           const polecenieUsuniecia = promptKrok2(wejscieDwochKrokow)
           // 1) Dedykowany model do wymazywania po MASCE (ramka obiektu od Gemini na ORYGINALE) — deterministyczne, nie zależy od posłuszeństwa modelu.
