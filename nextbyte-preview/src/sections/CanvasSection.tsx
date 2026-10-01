@@ -107,15 +107,15 @@ const POSTPROCES_ZIARNA = false
  */
 const DRUGI_PRZEBIEG = false
 /**
- * Przeniesienie w obrębie jednego zdjęcia = DWA zadania Nano Banana Lite: 1) przeniesienie,
- * 2) usunięcie tego, co zostało na starym miejscu. false = szybkie cofnięcie do jednego przebiegu.
+ * Przeniesienie w obrębie jednego zdjęcia = DWA zadania (Gemini 3.1): 1) dodaj kopię w nowym miejscu,
+ * 2) usuń oryginał ze starego. false = jeden przebieg (flaga niżej) albo zamrożony prompt „MOVE within Image 1”.
  */
-const PRZENIESIENIE_DWA_ZADANIA = false
+const PRZENIESIENIE_DWA_ZADANIA = true
 /**
  * Przeniesienie / zamiana na jednym zdjęciu w JEDNEJ generacji: opisowy prompt (bez numerów pinesek) i model Gemini 3.1.
- * false = poprzednie zachowanie (zamrożony prompt „MOVE within Image 1”, Lite). Ma pierwszeństwo przed dwoma zadaniami.
+ * false = poprzednie zachowanie (zamrożony prompt „MOVE within Image 1”, Lite). Ma pierwszeństwo przed dwoma zadaniami (przy true oba nie mogą być włączone naraz — wygrywa jeden przebieg).
  */
-const PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG = true
+const PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG = false
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
@@ -906,7 +906,7 @@ export function CanvasSection() {
         klasa: postac
           ? ('postac' as const)
           : (trybAgenta === 'zamien' && pelnePolecenie.includes('MOVE within Image 1:')) ||
-          (PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG && dwaKroki && pelnePolecenie.includes('MOVE within Image 1:')) ||
+          ((PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG || PRZENIESIENIE_DWA_ZADANIA) && dwaKroki && pelnePolecenie.includes('MOVE within Image 1:')) ||
           zadanieModelu?.gemini31
             ? ('gemini31' as const)
             : undefined,
