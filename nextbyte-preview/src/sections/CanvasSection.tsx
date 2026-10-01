@@ -62,6 +62,8 @@ import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
+import { usunPoMasce } from '@/sections/canvas/dostawca'
+import { maskaObiektuPodPinem } from '@/sections/canvas/zblizenia'
 import { promptJedenPrzebieg, promptKrok1, promptKrok2, type DwaKrokiWejscie, type MiejsceOpis } from '@/sections/canvas/przenies-dwa-kroki'
 import { odciskPinesek, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
@@ -116,6 +118,8 @@ const PRZENIESIENIE_DWA_ZADANIA = true
  * false = poprzednie zachowanie (zamrożony prompt „MOVE within Image 1”, Lite). Ma pierwszeństwo przed dwoma zadaniami (przy true oba nie mogą być włączone naraz — wygrywa jeden przebieg).
  */
 const PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG = false
+/** Zadanie 2 przeniesienia: usunięcie oryginału dedykowanym modelem do wymazywania po masce (FLUX Erase); przy błędzie — prompt. false = zawsze prompt. */
+const USUWANIE_MASKA_ERASE = true
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
@@ -1029,13 +1033,30 @@ export function CanvasSection() {
       if (wejscieDwochKrokow && !PRZENIESIENIE_OPISOWE_JEDEN_PRZEBIEG) {
         try {
           const polecenieUsuniecia = promptKrok2(wejscieDwochKrokow)
-          const wynik2 = await generuj({
-            ...ustawieniaModelu,
-            polecenie: polecenieUsuniecia,
-            obrazy: [await konwertujNaDataUrl(wynik.obrazUrl)],
-            szerokosc: zrodlo.naturalWidth,
-            wysokosc: zrodlo.naturalHeight,
-          })
+          // 1) Dedykowany model do wymazywania po MASCE (ramka obiektu od Gemini na ORYGINALE) — deterministyczne, nie zależy od posłuszeństwa modelu.
+          let wynikUsuniecia: Awaited<ReturnType<typeof generuj>> | null = null
+          if (USUWANIE_MASKA_ERASE) {
+            try {
+              const maska = await maskaObiektuPodPinem(zrodlo.src, pinZrodlowy!.normalizedX, pinZrodlowy!.normalizedY)
+              if (maska) {
+                const poFormacie = await dopasujFormatDoObrazu(wynik.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
+                wynikUsuniecia = await usunPoMasce(poFormacie, maska)
+              } else {
+                console.info('[canvas] usuwanie po masce: brak ramki obiektu — usuwam promptem')
+              }
+            } catch (e) {
+              console.warn('[canvas] usuwanie po masce nieudane — usuwam promptem', e)
+            }
+          }
+          const wynik2 =
+            wynikUsuniecia ??
+            (await generuj({
+              ...ustawieniaModelu,
+              polecenie: polecenieUsuniecia,
+              obrazy: [await konwertujNaDataUrl(wynik.obrazUrl)],
+              szerokosc: zrodlo.naturalWidth,
+              wysokosc: zrodlo.naturalHeight,
+            }))
           setOstatniPrompt(`── ZADANIE 1 (dodaj w nowym miejscu) ──\n${polecenieModelu}\n\n── ZADANIE 2 (usuń stare) ──\n${polecenieUsuniecia}`)
           wynik = { ...wynik2, kosztUSD: (wynik.kosztUSD ?? 0) + (wynik2.kosztUSD ?? 0) }
         } catch (e) {

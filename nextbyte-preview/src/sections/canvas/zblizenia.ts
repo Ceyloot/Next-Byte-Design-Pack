@@ -88,6 +88,33 @@ export async function zblizenieRzeczy(src: string, x: number, y: number): Promis
   return wytnijZOryginalu(o, r, 0.25)
 }
 
+/**
+ * Maska obiektu pod pinem do usuwania modelem do wymazywania: biały prostokąt (ramka od Gemini + margines) na czarnym tle,
+ * w rozmiarze ORYGINAŁU. null, gdy ramka nie została znaleziona albo obiekt zajmuje podejrzanie duży obszar.
+ */
+export async function maskaObiektuPodPinem(src: string, x: number, y: number, margines = 0.18): Promise<string | null> {
+  const o = await wczytaj(src)
+  if (!o) return null
+  const okno = oknoKwadratowe(o, x, y, 0.35)
+  if (!okno) return null
+  const { box } = await opiszRzeczZRamka(okno.src)
+  if (!box) return null
+  const r = naPiksele(okno, box)
+  if (Math.max(r.x1 - r.x0, r.y1 - r.y0) / okno.bok > 0.85) return null
+  const dw = (r.x1 - r.x0) * margines
+  const dh = (r.y1 - r.y0) * margines
+  const c = document.createElement('canvas')
+  c.width = o.naturalWidth
+  c.height = o.naturalHeight
+  const g = c.getContext('2d')
+  if (!g) return null
+  g.fillStyle = '#000'
+  g.fillRect(0, 0, c.width, c.height)
+  g.fillStyle = '#fff'
+  g.fillRect(Math.max(0, r.x0 - dw), Math.max(0, r.y0 - dh), r.x1 - r.x0 + 2 * dw, r.y1 - r.y0 + 2 * dh)
+  return c.toDataURL('image/png')
+}
+
 /** Zbliżenie OBSZARU wokół pinu: szerokość proporcjonalna do zmierzonego rozmiaru obiektu (ułamek szerokości kadru). */
 export async function zblizenieObszaru(src: string, x: number, y: number, szerokoscObiektu?: number): Promise<string | null> {
   const o = await wczytaj(src)

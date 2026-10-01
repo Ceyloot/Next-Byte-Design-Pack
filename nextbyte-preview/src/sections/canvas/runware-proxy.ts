@@ -16,6 +16,9 @@ import { loadEnv } from 'vite'
 
 const SCIEZKA = '/api/canvas/generuj'
 const SCIEZKA_OPISU = '/api/canvas/rozpoznaj'
+const SCIEZKA_USUNIECIA = '/api/canvas/usun'
+/** Dedykowany model usuwania obiektów z maską (Runware / Black Forest Labs, FLUX Erase) — odbudowuje to, co było za obiektem. */
+const MODEL_USUWANIA = 'bfl:flux@erase'
 const ENDPOINT = 'https://api.runware.ai/v1'
 
 /** Żądanie z przeglądarki */
@@ -368,6 +371,55 @@ export function runwareProxy(): Plugin {
     })
   }
 
+  /** Usunięcie obiektu po MASCE modelem do wymazywania (nie przez prompt): zdjęcie + maska → zdjęcie bez obiektu. */
+  const obsluzUsuniecie = (server: ViteDevServer | PreviewServer) => {
+    server.middlewares.use(SCIEZKA_USUNIECIA, async (req, res) => {
+      const odpowiedz = (status: number, dane: unknown) => {
+        res.statusCode = status
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify(dane))
+      }
+      if (req.method !== 'POST') return odpowiedz(405, { blad: 'Tylko POST' })
+      if (!klucz) return odpowiedz(503, { blad: 'Brak RUNWARE_API_KEY w .env.local' })
+      try {
+        const { obraz, maska, rozszerzenie = 12 } = JSON.parse(await czytajCialo(req)) as { obraz?: string; maska?: string; rozszerzenie?: number }
+        if (!obraz || !maska) return odpowiedz(400, { blad: 'Brak obrazu albo maski' })
+        console.info(`[canvas] usuwanie modelem ${MODEL_USUWANIA}`)
+        const tresc = (await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${klucz}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify([
+            {
+              taskType: 'imageInference',
+              taskUUID: crypto.randomUUID(),
+              model: MODEL_USUWANIA,
+              inputs: { image: obraz, mask: maska },
+              settings: { dilatePixels: rozszerzenie },
+              numberResults: 1,
+              outputType: 'URL',
+              outputFormat: 'JPG',
+              outputQuality: 95,
+              deliveryMethod: 'sync',
+              includeCost: true,
+            },
+          ]),
+        }).then(r => r.json())) as { data?: { imageURL?: string; cost?: number }[]; errors?: { message?: string }[] }
+        const blad = tresc.errors?.[0]?.message
+        if (blad) return odpowiedz(502, { blad })
+        const wynik = tresc.data?.[0]
+        if (!wynik?.imageURL) return odpowiedz(502, { blad: 'Runware nie zwrócił obrazu' })
+        let obrazUrl = wynik.imageURL
+        try {
+          const o = await fetch(wynik.imageURL)
+          if (o.ok) obrazUrl = `data:${o.headers.get('content-type') || 'image/jpeg'};base64,${Buffer.from(await o.arrayBuffer()).toString('base64')}`
+        } catch { /* zostaje URL */ }
+        odpowiedz(200, { obrazUrl, kosztUSD: wynik.cost ?? 0, model: MODEL_USUWANIA })
+      } catch (e) {
+        odpowiedz(500, { blad: e instanceof Error ? e.message : 'Nieznany błąd proxy' })
+      }
+    })
+  }
+
   return {
     name: 'nb-runware-proxy',
     configResolved(config) {
@@ -380,10 +432,12 @@ export function runwareProxy(): Plugin {
     configureServer: server => {
       obsluz(server)
       obsluzRozpoznanie(server)
+      obsluzUsuniecie(server)
     },
     configurePreviewServer: server => {
       obsluz(server)
       obsluzRozpoznanie(server)
+      obsluzUsuniecie(server)
     },
   }
 }
