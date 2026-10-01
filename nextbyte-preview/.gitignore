@@ -25,3 +25,4 @@ dist-ssr
 
 # Next Scribe — lokalny magazyn notatników w podglądzie
 .notatnik-dane.json
+wyniki-ruchu/
