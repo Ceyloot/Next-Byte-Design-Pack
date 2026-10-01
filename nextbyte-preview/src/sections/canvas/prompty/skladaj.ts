@@ -417,23 +417,31 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : ''
   const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
-  // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia: z całej logiki zostaje tylko rozumienie położenia pinesek
-  // (słowa + współrzędne x / y). Bez bricków, opisów Gemini, skali, światła i zbliżeń.
+  // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia: prosty prompt „PRZESUWASZ, nie kopiujesz” — znika z miejsca A,
+  // ląduje w miejscu B (położenie słowami + x / y) — plus wybrane bricki (usunięcie starego, miejsce, jedno zdjęcie),
+  // światło, rozmiar i analiza skali / ułożenia od Gemini. Bez zbliżeń i bez dedykowanych, zamrożonych tekstów.
   const ruchWKadrze =
     !czescTryb && !cechaTryb && ['object_transfer', 'object_swap', 'character_transfer'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1
+  const zamianaWKadrze = op.id === 'object_swap'
   const zadanieRuchu = ruchWKadrze && zrodlo && cel
     ? [
         `[TASK]`,
-        `Edit Image 1: ${op.id === 'object_swap' ? 'MOVE one object within the photo, in place of what stands at its destination' : 'MOVE one object within the photo'}.`,
-        `THE OBJECT stands ${polozenieSlowami(zrodlo.x, zrodlo.y)}.`,
-        `IT MUST END UP ${polozenieSlowami(cel.x, cel.y)}: the middle of its footprint exactly on that x / y point, in that very part of the frame.${op.id === 'object_swap' ? ' What stands there now is removed.' : ''}`,
-        `At its old position nothing of it remains. Everything else in the photo stays exactly as it is.`,
+        `Edit Image 1: MOVE one object — do not copy it. It leaves place A and lands at place B; afterwards it exists exactly once, at place B.`,
+        `THE OBJECT${zrodlo.nazwa ? ` ("${zrodlo.nazwa}")` : ''} stands at PLACE A, ${polozenieSlowami(zrodlo.x, zrodlo.y)}.`,
+        `PLACE B is ${polozenieSlowami(cel.x, cel.y)}: the middle of its footprint lands exactly on that x / y point, in that very part of the frame.${zamianaWKadrze ? ' What stands there now is removed and the object takes exactly its place.' : ''}`,
+        `PLACE A ends up empty: nothing of the object remains there — the spot is rebuilt with what would naturally be there without it. Everything else in the photo stays exactly as it is.`,
+        mapaObrazowIPinesek(w),
       ].join('\n')
+    : ''
+  const ID_BRICKOW_RUCHU = ['studio-usuniecie', 'studio-miejsce', 'studio-jedno-zdjecie']
+  const sekcjaReguRuchu = ruchWKadrze
+    ? ['[RULES]', swiatlo, rozmiar, ...analizaOsadzania, ...bricki.filter((b) => ID_BRICKOW_RUCHU.includes(b.id)).map((b) => podmien(b.tekst))].filter(Boolean).join('\n')
     : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
         { klucz: 'user', tekst: sekcjaUzytkownika },
+        { klucz: 'rules', tekst: sekcjaReguRuchu },
       ]
     : [
         { klucz: 'task', tekst: sekcjaZadania },
@@ -442,10 +450,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: ruchWKadrze ? undefined : system,
-    temperatura: ruchWKadrze ? undefined : temperatura,
+    system,
+    temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
-    gemini31: ruchWKadrze ? undefined : miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || undefined,
+    gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,

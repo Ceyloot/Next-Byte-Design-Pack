@@ -811,8 +811,8 @@ export function CanvasSection() {
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
       // Przeniesienie / zamiana w kadrze: wyczerpujący opis KONKRETNEGO obiektu spod pineski źródłowej z jego wycinka
       // (opis reżysera z całego zdjęcia bywał zbyt ogólny — model rysował inny obiekt tego samego rodzaju).
-      // Ruch / zamiana obiektu w obrębie jednego zdjęcia (dwie pineski na Image 1): prompt ma tylko położenie x / y pinesek,
-      // więc nie robimy opisów szczegółowych ani zbliżeń (nie miałyby gdzie trafić w prompcie).
+      // Ruch / zamiana obiektu w obrębie jednego zdjęcia (dwie pineski na Image 1): prosty prompt „przesuwasz, nie kopiujesz”
+      // (skladaj.ts) — bez zbliżeń i opisów szczegółowych obiektu.
       const ruchWKadrze =
         ['przenies', 'zamien'].includes(trybAgenta) &&
         ['object_transfer', 'object_swap', 'character_transfer'].includes(operacjaAgenta) &&
