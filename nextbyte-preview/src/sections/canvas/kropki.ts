@@ -8,6 +8,8 @@ export interface PunktKropki {
   x: number
   /** 0–1 od górnej krawędzi */
   y: number
+  /** kolor tej kropki; domyślnie kolor wywołania */
+  kolor?: string
 }
 
 /** Promień kropki: mały, ale widoczny w każdej rozdzielczości. */
@@ -34,7 +36,7 @@ export function narysujKropki(src: string, punkty: PunktKropki[], kolor = '#FF00
         for (const p of punkty) {
           g.beginPath()
           g.arc(p.x * plotno.width, p.y * plotno.height, r, 0, Math.PI * 2)
-          g.fillStyle = kolor
+          g.fillStyle = p.kolor ?? kolor
           g.fill()
         }
         resolve(plotno.toDataURL('image/jpeg', 0.95))

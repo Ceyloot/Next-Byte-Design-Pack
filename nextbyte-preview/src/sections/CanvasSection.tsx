@@ -876,10 +876,13 @@ export function CanvasSection() {
             ? narysujKropki(
                 src,
                 pineski
-                  .filter(p => p.layerId === w.id && !p.chroniona && !zrodloNaCelu(p))
-                  .map(p => ({ x: p.normalizedX, y: p.normalizedY })),
-                // Przeniesienie w kadrze: miejsce docelowe jasnoczerwone, obiekt do przeniesienia (Image 2) magentowy.
-                przeniesienieWKadrze ? '#FF1F1F' : undefined,
+                  .filter(p => p.layerId === w.id && !p.chroniona && (przeniesienieWKadrze || !zrodloNaCelu(p)))
+                  // Przeniesienie w kadrze: obiekt do przeniesienia magentowy, miejsce docelowe jasnoczerwone — obie kropki na Image 1.
+                  .map(p => ({
+                    x: p.normalizedX,
+                    y: p.normalizedY,
+                    kolor: przeniesienieWKadrze ? (zrodloNaCelu(p) ? '#FF00FF' : '#FF1F1F') : undefined,
+                  })),
               )
             : src,
         )
@@ -889,24 +892,13 @@ export function CanvasSection() {
       const pinZr = pineskiPolecenia.find(p => zrodloNaCelu(p))
       const zblizenie =
         pinZr && ['przenies', 'zamien'].includes(trybAgenta) && pelnePolecenie.includes('MOVE within Image 1:')
-          ? await narysujKropki(await konwertujNaDataUrl(zrodlo.src), [{ x: pinZr.normalizedX, y: pinZr.normalizedY }])
+          ? await konwertujNaDataUrl(zrodlo.src) // Image 2: to samo zdjęcie bez kropek
           : null
       const obrazyDoModelu = [
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
         ...(zblizenie ? [zblizenie] : []),
       ]
-      const polecenieModelu = (zblizenie
-        ? pelnePolecenie.replace(
-            'MOVE within Image 1:',
-            `MOVE within Image 1. Image ${obrazyDoModelu.length} is the SAME photograph as Image 1, with a small magenta dot on the object to move (Pin 1) — that exact object and only it, not its neighbours. The small bright RED dot in Image 1 marks the exact destination (Pin 2) — a different colour from the magenta dot, so the two are never confused. Edit Image 1 only; no dot is visible in the result:`,
-          )
-        : pelnePolecenie
-      ).replace(
-        'the images carry no markers.',
-        przeniesienieWKadrze
-          ? 'the only marker is a small bright red dot at the destination (Pin 2) in Image 1, which the object covers.'
-          : 'the images carry no markers.',
-      )
+      const polecenieModelu = pelnePolecenie
       if (zblizenie || przeniesienieWKadrze) {
         setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
       }
