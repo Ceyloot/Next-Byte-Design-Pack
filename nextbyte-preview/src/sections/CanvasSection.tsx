@@ -54,6 +54,7 @@ import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/opera
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
+import { zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
@@ -104,6 +105,8 @@ const POSTPROCES_ZIARNA = false
  * Jedno „Generuj” = jedna generacja; pomiar zostaje tylko w ocenie.
  */
 const DRUGI_PRZEBIEG = false
+/** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
+const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
 const KROPKI_NA_ZDJECIACH = false
 
@@ -823,8 +826,29 @@ export function CanvasSection() {
           if (karta.twarz) zblizenieTwarzy = await wytnijZblizenieTwarzy(wycOsoby, karta.twarz)
         }
       }
+      // Zbliżenia w pobliżu pinesek (inteligentne: ramka rzeczy od Gemini, wycinek z oryginału, margines proporcjonalny).
+      let zblizenia: Zblizenie[] = []
+      if (ZBLIZENIA_W_POBLIZU_PINEZKI) {
+        try {
+          zblizenia = await zbudujZblizenia({
+            operacja: operacjaAgenta,
+            czesc: plan?.czesc,
+            cecha: plan?.cecha,
+            pinZrodlowy,
+            pinDocelowy,
+            warstwaCelu: zrodlo,
+            warstwaZrodla: pinZrodlowy ? projekt.warstwy.find(w => w.id === pinZrodlowy.layerId) : undefined,
+            szerokoscObiektu: rozmiarPlanu ? rozmiarPlanu.szer / 100 : undefined,
+          })
+        } catch (e) {
+          console.warn('[canvas] zbliżenia nieudane', e)
+        }
+      }
+      // numeracja: po zdjęciach wejściowych najpierw zbliżenie twarzy (jeśli jest), potem pozostałe zbliżenia
+      const pierwszyDodatkowy = obrazyPolecenia.length + 1 + (zblizenieTwarzy ? 1 : 0)
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         twarzObraz: zblizenieTwarzy ? obrazyPolecenia.length + 1 : undefined,
+        zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
         role: uklad.role,
         osoba: plan?.osoba,
         odznaki: plan?.odznaki,
@@ -898,6 +922,7 @@ export function CanvasSection() {
         ...(plotnoZObszarami ? [plotnoZObszarami, ...czyste.slice(1), czyste[0]] : czyste),
         ...(zblizenie ? [zblizenie] : []),
         ...(zblizenieTwarzy ? [zblizenieTwarzy] : []),
+        ...zblizenia.map(z => z.src),
       ]
       const polecenieModelu = pelnePolecenie
       if (zblizenie || przeniesienieWKadrze) {

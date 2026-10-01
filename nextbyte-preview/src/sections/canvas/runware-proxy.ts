@@ -286,7 +286,7 @@ export function runwareProxy(): Plugin {
                     parts: [
                       { inlineData: { mimeType: d ? d[1] : 'image/jpeg', data: d ? d[2] : wycinek } },
                       {
-                        text: 'This crop is centred on ONE object (the one under the pin). Describe exactly THAT object in exhaustive visual detail, so that another artist who cannot see the image could redraw it identically: what it is; its overall shape and silhouette; every distinctive part and feature with its position on the object, shape, colour and material; surface textures, edges and wear; its size relative to what is around it; what it stands on or against. 4–6 sentences, plain English, facts you SEE only. Describe only the object — nothing of the background. Answer only with JSON: {"opis": "..."}',
+                        text: 'This crop is centred on ONE object (the one under the pin). Describe exactly THAT object in exhaustive visual detail, so that another artist who cannot see the image could redraw it identically: what it is; its overall shape and silhouette; every distinctive part and feature with its position on the object, shape, colour and material; surface textures, edges and wear; its size relative to what is around it; what it stands on or against. 4–6 sentences, plain English, facts you SEE only. Describe only the object — nothing of the background. Also give the tight bounding box of that object (all of it, nothing else) as "box": [ymin, xmin, ymax, xmax], normalised 0–1000 within this crop. Answer only with JSON: {"opis": "...", "box": [0,0,0,0]}',
                       },
                     ],
                   },
@@ -304,8 +304,8 @@ export function runwareProxy(): Plugin {
             const oJson = await oResp.json()
             const oTxt = oJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
             try {
-              const o = JSON.parse(oTxt) as { opis?: string }
-              if (o.opis?.trim()) return odpowiedz(200, { opis: o.opis.trim(), nazwy: [] })
+              const o = JSON.parse(oTxt) as { opis?: string; box?: number[] }
+              if (o.opis?.trim()) return odpowiedz(200, { opis: o.opis.trim(), box: Array.isArray(o.box) && o.box.length === 4 ? o.box.map(Number) : undefined, nazwy: [] })
             } catch {
               // bez opisu — prompt użyje opisu reżysera
             }

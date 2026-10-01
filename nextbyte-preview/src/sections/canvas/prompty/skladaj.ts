@@ -116,6 +116,8 @@ export interface SkladajWejscie {
   cecha?: string
   /** numer obrazu ze zbliżeniem twarzy osoby z referencji (transfer postaci) */
   twarzObraz?: number
+  /** dodatkowe obrazy-zbliżenia w pobliżu pinesek (numer obrazu + opis, EN) */
+  zblizenia?: { numer: number; opis: string }[]
   /** ile sztuk części: all = komplet / więcej niż jedna, one = pojedyncza (z semantyki polecenia, od reżysera) */
   czescZakres?: 'all' | 'one'
   /** tlo: co zostaje nietknięte — główne obiekty i nakładki (EN, od reżysera) */
@@ -412,7 +414,14 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : []
   // Scenografia: światło sceny docelowej NIE obowiązuje (zmienia się z otoczeniem) — zamiast tego reguły zmiany miejsca.
   const regulySceneria = sceneria ? zablokowaneRegulyScenerii(w.pierwszyPlan) : []
-  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  // Zbliżenia w pobliżu pinesek: ta sama fotografia powiększona — tylko szczegół i kontekst, nigdy dodatkowe rzeczy do wstawienia.
+  const liniaZblizen = w.zblizenia?.length
+    ? [
+        `ZOOMED DETAIL — the same photographs enlarged around the pins, only to show exact detail and context; they are never extra things to put into the result:`,
+        ...w.zblizenia.map((z) => `Image ${z.numer} = ${z.opis}.`),
+      ].join('\n')
+    : ''
+  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },

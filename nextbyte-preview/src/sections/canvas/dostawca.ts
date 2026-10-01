@@ -125,6 +125,23 @@ export async function opiszObiektSzczegolowo(wycinek: string): Promise<string> {
   }
 }
 
+/** Opis rzeczy pod pineską + ciasna ramka [ymin,xmin,ymax,xmax] 0–1000 w wycinku (do inteligentnego zbliżenia). */
+export async function opiszRzeczZRamka(wycinek: string): Promise<{ opis: string; box?: [number, number, number, number] }> {
+  try {
+    const odp = await fetch('/api/canvas/rozpoznaj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wycinek, tryb: 'opis' }),
+    })
+    if (!odp.ok) return { opis: '' }
+    const tresc = (await odp.json()) as { opis?: string; box?: number[] }
+    const b = tresc.box
+    return { opis: tresc.opis?.trim() ?? '', box: b && b.length === 4 ? [b[0], b[1], b[2], b[3]] : undefined }
+  } catch {
+    return { opis: '' }
+  }
+}
+
 /** Karta tożsamości osoby (EN) + ramka twarzy [ymin,xmin,ymax,xmax] 0–1000 w wycinku; pusta, gdy się nie uda. */
 export async function opiszOsobeSzczegolowo(wycinek: string): Promise<{ opis: string; twarz?: [number, number, number, number] }> {
   try {
