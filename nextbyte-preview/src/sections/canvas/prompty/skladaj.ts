@@ -113,6 +113,13 @@ function opisPineski(p: PineskaSklejka): string {
   return `Pin ${p.numer} (Image ${p.obraz}, x=${wsp(p.x)} y=${wsp(p.y)})`
 }
 
+/** Położenie punktu słowami (strefa kadru + odległość od krawędzi) — model lepiej wykonuje „po prawej, przy krawędzi” niż ułamek. */
+function slowaPolozenia(x: number, y: number): string {
+  const poziom = x < 0.15 ? 'at the far left edge' : x < 0.35 ? 'in the left part' : x < 0.65 ? 'in the horizontal middle' : x < 0.85 ? 'in the right part' : 'at the far right edge'
+  const pion = y < 0.15 ? 'at the very top' : y < 0.35 ? 'in the upper part' : y < 0.65 ? 'around the vertical middle' : y < 0.85 ? 'in the lower part' : 'at the very bottom'
+  return `${pion} and ${poziom} of the frame (${Math.round(x * 100)}% of the way from the left edge, ${Math.round(y * 100)}% of the way down from the top)`
+}
+
 /** Pineska docelowa: rola target, najlepiej na obrazie docelowym. */
 function pineskaCelu(pineski: PineskaSklejka[]): PineskaSklejka | undefined {
   return pineski.find((p) => p.rola === 'target' && p.obraz === 1) ?? pineski.find((p) => p.rola === 'target')
@@ -252,8 +259,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     const opisCelu = [cel.miejsce, cel.szczegoly].filter(Boolean).join(' ')
     zadanie = [
       `MOVE within Image 1:`,
-      ...(opisZrodla ? [`THE OBJECT TO MOVE (at ${opisPineski(zrodlo)}): ${opisZrodla}`] : []),
-      ...(opisCelu ? [`THE DESTINATION (exactly ${opisPineski(cel)}): ${opisCelu}`] : []),
+      `THE OBJECT TO MOVE (at ${opisPineski(zrodlo)}, ${slowaPolozenia(zrodlo.x, zrodlo.y)})${opisZrodla ? `: ${opisZrodla}` : ''}`,
+      `THE DESTINATION (exactly ${opisPineski(cel)}, ${slowaPolozenia(cel.x, cel.y)})${opisCelu ? `: ${opisCelu.replace(/\.+$/, '')}` : ''}. The object must end up in that very part of the frame — if the surroundings seem to leave too little room there, the object is made smaller or the ground shaped; it never drifts toward the middle of the frame.`,
       `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — EXACTLY the same object: every part, shape, material, colour and detail as it is now — copy its design, redraw nothing, never turn it into a different object of the same kind; only its size and angle of view adapt to the new spot (sized for its new distance from the camera, seen from Image 1's camera). The middle of its footprint lands exactly on the Pin 2 point — never beside it, never at an easier spot; ${op.id === 'object_swap' ? 'what stands there now is removed completely and the object takes exactly its place' : 'if a surface or object already exists at Pin 2 it stands on that very thing'}. It is arranged logically as it would really stand there — base on the real surface, upright, following the ground and the scene's lines, facing and scaled naturally, never passing through or covering other objects.`,
       `Afterwards the spot it left is filled naturally with what would be there without it, continuing the surroundings, so nobody could tell anything ever stood there. It appears exactly once — standing at Pin 2 and no longer at Pin 1: leaving it at Pin 1 is a failure, and removing it without placing it at Pin 2 is the same failure. Nothing else in the photo changes.`,
     ].join('\n')
