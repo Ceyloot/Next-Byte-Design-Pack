@@ -17,6 +17,14 @@
  *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{DONOR_ROLE}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
  */
 import {
+  ZABLOKOWANA_MISJA_SWAP_OBIEKTU,
+  ZABLOKOWANA_TEMPERATURA_SWAP_OBIEKTU,
+  ZABLOKOWANE_BRICKI_SWAP_OBIEKTU,
+  ZABLOKOWANY_SYSTEM_SWAP_OBIEKTU,
+  zablokowaneLinieAnalizySwapu,
+  zablokowanyOpisPineski,
+} from './zablokowane/object-swap-2-zdjecia'
+import {
   ZABLOKOWANA_MISJA_TRANSFERU,
   ZABLOKOWANA_TEMPERATURA_TRANSFERU,
   ZABLOKOWANE_BRICKI_TRANSFERU,
@@ -239,6 +247,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // Tryby zablokowane (przeniesienie w kadrze; transfer obiektu z drugiego zdjęcia) zostają bez stref kadru w opisie pinesek — prompt identyczny jak zamrożony.
   // Transfer z drugiego zdjęcia: tylko object_transfer z pinem źródłowym na innym zdjęciu niż docelowe (ZABLOKOWANE/transfer-z-drugiego-zdjecia.ts).
   const miedzyZdjeciami = op.id === 'object_transfer' && !op.gotowy && zrodlo !== undefined && zrodlo.obraz > 1 && cel?.obraz === 1
+  // Object swap z dwóch zdjęć (ZABLOKOWANE/object-swap-2-zdjecia.ts): każdy obiekt object_swap poza trybem w kadrze.
+  const swapZablokowany = op.id === 'object_swap' && !op.gotowy && !(zrodlo?.obraz === 1 && cel?.obraz === 1)
   const strefy = !miedzyZdjeciami && !(['object_transfer', 'character_transfer', 'object_swap'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1 && !op.gotowy)
   const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski, strefy)
   const dawca = numerDawcy(w)
@@ -247,9 +257,9 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     IMAGE_TARGET: 'Image 1',
     IMAGE_DONOR: dawca ? `Image ${dawca}` : 'the reference described in the USER request',
     DONOR_ROLE: ROLA_DAWCY[op.id] ?? ROLA_INNA,
-    PIN_TARGET: cel ? opisPineski(cel, strefy) : 'the marked spot',
-    PIN_SOURCE: zrodlo ? opisPineski(zrodlo, strefy) : 'the source spot',
-    PIN_CLEAR: czyszczenie ?? 'the cleared spot',
+    PIN_TARGET: cel ? (swapZablokowany ? zablokowanyOpisPineski(cel) : opisPineski(cel, strefy)) : 'the marked spot',
+    PIN_SOURCE: zrodlo ? (swapZablokowany ? zablokowanyOpisPineski(zrodlo) : opisPineski(zrodlo, strefy)) : 'the source spot',
+    PIN_CLEAR: swapZablokowany && cel ? zablokowanyOpisPineski(cel) : czyszczenie ?? 'the cleared spot',
   }
   const podmien = (tekst: string): string =>
     tekst.replace(TOKEN, (_m, klucz: string) => {
@@ -284,6 +294,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     zadanie = zablokowaneZadanieWKadrze(op.id, zrodlo, cel)
     system = ZABLOKOWANY_SYSTEM_W_KADRZE
     temperatura = ZABLOKOWANA_TEMPERATURA_W_KADRZE
+  } else if (swapZablokowany) {
+    // ZABLOKOWANE (zablokowane/object-swap-2-zdjecia.ts) — nie zmieniać bez prośby użytkownika.
+    zadanie = podmien(ZABLOKOWANA_MISJA_SWAP_OBIEKTU)
+    system = ZABLOKOWANY_SYSTEM_SWAP_OBIEKTU
+    temperatura = ZABLOKOWANA_TEMPERATURA_SWAP_OBIEKTU
   } else if (miedzyZdjeciami) {
     // ZABLOKOWANE (zablokowane/transfer-z-drugiego-zdjecia.ts) — logika z dd2f587, tylko w tym trybie.
     zadanie = podmien(ZABLOKOWANA_MISJA_TRANSFERU)
@@ -330,7 +345,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         zrodlo?.szczegoly && zrodlo.obraz !== 1 ? `THE SUBJECT (Pin ${zrodlo.numer}): ${zrodlo.szczegoly}` : '',
       ].filter(Boolean)
     : []
-  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...analizaOsadzania, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', swiatlo, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
