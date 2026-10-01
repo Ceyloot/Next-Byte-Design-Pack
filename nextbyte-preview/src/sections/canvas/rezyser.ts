@@ -76,7 +76,6 @@ STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither 
 - ALWAYS include the anchor that stands closest to the destination point in depth — at (almost) the same distance from the camera, the same image row: its real size gives the scale directly, with no perspective extrapolation, and wins over distant anchors when they disagree. Thin standardized things (a post or pole has a known standard diameter) are valid anchors; never trust the width of something whose size varies widely (a board, banner or sign) — use its post or fastening instead.
 - "obiekt": the finished object's size as it appears AT THE DESTINATION (in metres of real length across the image plane at that spot): "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened), "prawdziwe" = its TRUE dimensions {"dl_m" length, "szer_m" width, "wys_m" height}, "kat_deg" = its heading relative to the camera in degrees (0 = its long side faces the camera, full length visible; 90 = its front or back faces the camera, only its width visible; 45 = diagonal three-quarter view), and "kamera_deg" = how steeply the destination camera looks down at the spot (0 = eye level, 90 = straight down). The code computes the apparent size from these; give them even when unsure. An object turned at an angle to the camera shows part of its length: its apparent width then lies between its width and the diagonal of its footprint — an elongated object turned diagonally to the camera and seen from above spans nearly its full length, not its width. The code turns anchor + object into the object's exact share of the frame and rescales the generated object to it.
 - For a replacement give both sizes in "skala" and their ratio.
-- "horyzont": the image row (0 = top edge, 1 = bottom edge, a decimal) of the HORIZON of the ground plane the object stands on — where the parallel lines of the ground (road edges, fences, building bases, rows of objects) converge. It may lie ABOVE the frame (then a negative number). The code uses it together with the anchors to shrink the object correctly with distance, also when only one anchor is visible. null when the ground shows no readable perspective.
 - Compare in NUMBERS, never with a bare "smaller / larger than": give the ratio of the object's real length and width to the nearest anchor (for example "length ≈ 1.5× the anchor width; width ≈ 0.6× it"). Check the arithmetic — an object longer than the anchor is more than 1× it, not less.
 
 STEP 4b — "widok": how the finished object must APPEAR at the destination, 1–2 English sentences, derived from the destination scene's geometry: its heading relative to the lines of the surface it stands on (along, across or at an angle to them, and toward or away from the camera), which of its faces the target camera sees (front, side, rear, top) and from what camera height or elevation. It comes from the destination camera and surface, never from how the object looks in its reference photo; a reference view that differs from this is turned to match. Skip for objects without a natural heading.
@@ -111,7 +110,6 @@ Answer ONLY with JSON:
   "cecha": "",
   "czesc_zakres": "",
   "pierwszy_plan": "",
-  "horyzont": <number or null>,
   "swiatlo": "<key light direction, hardness, Kelvin; shadow direction and softness; colour bounce; focal length, depth of field, grain, medium>",
   "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres>, "prawdziwe": { "dl_m": <true length>, "szer_m": <true width>, "wys_m": <true height> }, "kat_deg": <0–90>, "kamera_deg": <0–90> },
   "obszar": [<ymin>, <xmin>, <ymax>, <xmax>],
@@ -189,13 +187,11 @@ export interface PlanRezysera {
 
 /** Kotwice (znany rozmiar, szerokość i dolna krawędź w kadrze 0–1) i widoczne wymiary obiektu w metrach. */
 export interface PomiarSkali {
-  /** rząd horyzontu płaszczyzny podłoża (0 = góra kadru, 1 = dół; może być ujemny) — do skalowania z odległością */
-  horyzont?: number
   kotwice: { opis: string; szerM: number; szer: number; rzad: number }[]
   obiekt: { szerM: number; wysM: number }
 }
 
-function odczytajPomiar(kotwice: unknown, obiekt: unknown, horyzont?: unknown): PomiarSkali | undefined {
+function odczytajPomiar(kotwice: unknown, obiekt: unknown): PomiarSkali | undefined {
   const lista = Array.isArray(kotwice) ? (kotwice as { opis?: unknown; szer_m?: unknown; box?: unknown }[]) : []
   const k = lista.flatMap(x => {
     const szerM = Number(x?.szer_m)
@@ -243,8 +239,7 @@ function odczytajPomiar(kotwice: unknown, obiekt: unknown, horyzont?: unknown): 
       oWys = Math.min(Math.hypot(przekatna, wysokosc), Math.max(0.5 * Math.min(wysokosc, bok), oWys))
     }
   }
-  const yh = typeof horyzont === 'number' && Number.isFinite(horyzont) && horyzont > -3 && horyzont < 1 ? horyzont : undefined
-  return { kotwice: k, obiekt: { szerM: Math.round(oSzer * 100) / 100, wysM: Math.round(oWys * 100) / 100 }, horyzont: yh }
+  return { kotwice: k, obiekt: { szerM: Math.round(oSzer * 100) / 100, wysM: Math.round(oWys * 100) / 100 } }
 }
 
 /**
@@ -257,16 +252,6 @@ function odczytajPomiar(kotwice: unknown, obiekt: unknown, horyzont?: unknown): 
 export function skalaWRzedzie(p: PomiarSkali, rzad: number): number {
   const a = p.kotwice.map(k => ({ y: k.rzad, s: k.szer / k.szerM }))
   const najblizsza = a.reduce((b, x) => (Math.abs(x.y - rzad) < Math.abs(b.y - rzad) ? x : b), a[0])
-  // Horyzont podłoża znany: skala rośnie liniowo od horyzontu, więc każda kotwica daje przewidywanie skali w rzędzie pinu
-  // (działa też przy JEDNEJ kotwicy — wtedy obiekt daleko od kamery maleje, a nie dziedziczy rozmiaru bliskiej kotwicy).
-  const yh = p.horyzont
-  if (yh !== undefined && rzad - yh > 0.02) {
-    const przew = a.filter(x => x.y - yh > 0.03).map(x => x.s * ((rzad - yh) / (x.y - yh))).sort((u, v) => u - v)
-    if (przew.length) {
-      const mediana = przew[Math.floor(przew.length / 2)]
-      return Math.min(najblizsza.s * 6, Math.max(najblizsza.s * 0.05, mediana))
-    }
-  }
   if (a.length < 2) return najblizsza.s
   const n = a.length
   const my = a.reduce((t, x) => t + x.y, 0) / n
@@ -340,7 +325,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     obszarZrodla: odczytajProstokat(json.obszar_zrodla),
     obiekty,
     skala: String(json.skala ?? '').trim(),
-    pomiar: odczytajPomiar(json.kotwice, json.obiekt, json.horyzont),
+    pomiar: odczytajPomiar(json.kotwice, json.obiekt),
     widok: String(json.widok ?? '').trim(),
     swiatlo: String(json.swiatlo ?? '').trim(),
     ulozenie: String(json.ulozenie ?? '').trim(),
