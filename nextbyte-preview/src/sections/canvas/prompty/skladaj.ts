@@ -341,7 +341,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
     system,
     temperatura,
-    gemini31: miedzyZdjeciami || undefined,
+    // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
+    gemini31: miedzyZdjeciami || (op.id === 'object_swap' && !wKadrze) || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,

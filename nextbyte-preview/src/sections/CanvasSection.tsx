@@ -864,7 +864,7 @@ export function CanvasSection() {
         swiatlo: plan?.swiatlo,
         // Rozmiar z kotwic reżysera — bez niego model brał wielkość obiektu z referencji.
         rozmiar:
-          rozmiarPlanu && (trybAgenta !== 'zamien' || pineskiPolecenia.every(p => p.chroniona || p.layerId === zrodlo.id))
+          rozmiarPlanu
             ? `at the destination pin the whole object spans about ${Math.round(rozmiarPlanu.szer)}% of Image 1's width and ${Math.round(rozmiarPlanu.wys)}% of its height.${porownanie ? ` ${porownanie}` : ''}`
             : undefined,
       })
