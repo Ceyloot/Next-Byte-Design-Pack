@@ -105,6 +105,11 @@ const POSTPROCES_ZIARNA = false
  * Jedno „Generuj” = jedna generacja; pomiar zostaje tylko w ocenie.
  */
 const DRUGI_PRZEBIEG = false
+/**
+ * Przeniesienie w obrębie jednego zdjęcia = DWA zadania Nano Banana Lite: 1) przeniesienie,
+ * 2) usunięcie tego, co zostało na starym miejscu. false = szybkie cofnięcie do jednego przebiegu.
+ */
+const PRZENIESIENIE_DWA_ZADANIA = true
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
@@ -965,6 +970,35 @@ export function CanvasSection() {
             wysokosc: zrodlo.naturalHeight,
           })
           wynik = { ...pelne, kosztUSD: (wynik.kosztUSD ?? 0) + (pelne.kosztUSD ?? 0) }
+        }
+      }
+
+      // Drugie zadanie przeniesienia w kadrze: model często stawia obiekt w nowym miejscu, ale zostawia stary.
+      if (PRZENIESIENIE_DWA_ZADANIA && przeniesienieWKadrze && trybAgenta === 'przenies' && pinZrodlowy && pinZrodlowy.layerId === zrodlo.id) {
+        try {
+          const nrZr = projekt.pineski.indexOf(pinZrodlowy) + 1
+          const opisZr = [szczegolyPlanu?.[nrZr], plan?.miejsca?.[nrZr]].filter(Boolean).join(' ')
+          const nazwaZr = pinZrodlowy.analiza?.obiektEn || etykietaPineski(pinZrodlowy, nrZr)
+          const x = pinZrodlowy.normalizedX
+          const y = pinZrodlowy.normalizedY
+          const polozenie = `${Math.round(x * 100)}% of the way from the left edge and ${Math.round(y * 100)}% of the way down from the top`
+          const polecenieUsuniecia = [
+            `[TASK]`,
+            `REMOVE one object from Image 1: ${nazwaZr} standing at x=${x.toFixed(2)} y=${y.toFixed(2)} (${polozenie})${opisZr ? ` — ${opisZr}` : ''}.`,
+            `The same kind of object has just been placed elsewhere in this photo — that new one STAYS exactly as it is. Only the one at the given x / y position is deleted, completely: not a single part of it remains. Rebuild that spot with what would be there without it (ground, grass, wall, sky), continuing the surroundings, so nobody could tell anything stood there. If nothing of that kind stands at that position any more, change nothing.`,
+            `Everything else stays exactly as it is: every object, the new placement, camera, crop, framing, light, grain and all text. Output the same frame.`,
+          ].join('\n')
+          const wynik2 = await generuj({
+            ...ustawieniaModelu,
+            polecenie: polecenieUsuniecia,
+            obrazy: [await konwertujNaDataUrl(wynik.obrazUrl)],
+            szerokosc: zrodlo.naturalWidth,
+            wysokosc: zrodlo.naturalHeight,
+          })
+          setOstatniPrompt(`${polecenieModelu}\n\n── ZADANIE 2 (usunięcie starego) ──\n${polecenieUsuniecia}`)
+          wynik = { ...wynik2, kosztUSD: (wynik.kosztUSD ?? 0) + (wynik2.kosztUSD ?? 0) }
+        } catch (e) {
+          console.warn('[canvas] drugie zadanie (usunięcie starego) nieudane — zostaje wynik pierwszego', e)
         }
       }
 
