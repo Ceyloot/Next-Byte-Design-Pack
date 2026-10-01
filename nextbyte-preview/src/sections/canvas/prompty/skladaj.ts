@@ -17,6 +17,12 @@
  *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{DONOR_ROLE}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
  */
 import {
+  ZABLOKOWANA_TEMPERATURA_W_KADRZE,
+  ZABLOKOWANE_BRICKI_W_KADRZE,
+  ZABLOKOWANY_SYSTEM_W_KADRZE,
+  zablokowaneZadanieWKadrze,
+} from './zablokowane/przeniesienie-w-kadrze'
+import {
   ZABLOKOWANA_SWAP_KONTROLA,
   ZABLOKOWANA_SWAP_TEMPERATURA,
   ZABLOKOWANY_BRICK_CZLOWIEK,
@@ -233,6 +239,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
 
   // [TASK] — prompt operacji (zamiany postaci i twarzy: baza Studia 1:1, poz. 20/21/29)
   let zadanie: string
+  let wKadrze = false
   let system: string | undefined
   let temperatura: number | undefined
   if (op.gotowy === 'studio-character-swap') {
@@ -251,21 +258,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     system = STUDIO_FACE_SYSTEM
     temperatura = 0.42
   } else if ((op.id === 'object_transfer' || op.id === 'character_transfer' || op.id === 'object_swap') && zrodlo?.obraz === 1 && cel?.obraz === 1) {
-    // Przeniesienie w obrębie JEDNEGO zdjęcia: „move” model czyta jako „popraw w miejscu”.
-    // Proste „przenieś” + naturalne wypełnienie miejsca, które obiekt opuścił.
-    const co = zrodlo.nazwa ? `the ${zrodlo.nazwa}` : 'the object'
-    // Szczegółowe opisy od reżysera: CO przenosimy i DOKŁADNIE GDZIE — identyfikacja obiektu i pozycji słowami.
-    const opisZrodla = [zrodlo.szczegoly, zrodlo.miejsce].filter(Boolean).join(' ')
-    const opisCelu = [cel.miejsce, cel.szczegoly].filter(Boolean).join(' ')
-    zadanie = [
-      `MOVE within Image 1:`,
-      `THE OBJECT TO MOVE (at ${opisPineski(zrodlo)}, ${slowaPolozenia(zrodlo.x, zrodlo.y)})${opisZrodla ? `: ${opisZrodla}` : ''}`,
-      `THE DESTINATION (exactly ${opisPineski(cel)}, ${slowaPolozenia(cel.x, cel.y)})${opisCelu ? `: ${opisCelu.replace(/\.+$/, '')}` : ''}. The object must end up in that very part of the frame — if the surroundings seem to leave too little room there, the object is made smaller or the ground shaped; it never drifts toward the middle of the frame.`,
-      `Move ${co} from ${opisPineski(zrodlo)} to ${opisPineski(cel)}${op.id === 'object_swap' ? `, in place of what is there now` : ''} — EXACTLY the same object: every part, shape, material, colour and detail as it is now — copy its design, redraw nothing, never turn it into a different object of the same kind; only its size and angle of view adapt to the new spot (sized for its new distance from the camera, seen from Image 1's camera). The middle of its footprint lands exactly on the Pin 2 point — never beside it, never at an easier spot; ${op.id === 'object_swap' ? 'what stands there now is removed completely and the object takes exactly its place' : 'if a surface or object already exists at Pin 2 it stands on that very thing'}. It is arranged logically as it would really stand there — base on the real surface, upright, following the ground and the scene's lines, facing and scaled naturally, never passing through or covering other objects.`,
-      `Afterwards the spot it left is filled naturally with what would be there without it, continuing the surroundings, so nobody could tell anything ever stood there. It appears exactly once — standing at Pin 2 and no longer at Pin 1: leaving it at Pin 1 is a failure, and removing it without placing it at Pin 2 is the same failure. Nothing else in the photo changes.`,
-    ].join('\n')
-    system = SYSTEM_KOMPOZYTORA
-    temperatura = TEMPERATURA_OBIEKTU
+    // ZABLOKOWANE (zablokowane/przeniesienie-w-kadrze.ts) — nie zmieniać bez prośby użytkownika.
+    wKadrze = true
+    zadanie = zablokowaneZadanieWKadrze(op.id, zrodlo, cel)
+    system = ZABLOKOWANY_SYSTEM_W_KADRZE
+    temperatura = ZABLOKOWANA_TEMPERATURA_W_KADRZE
   } else {
     zadanie = podmien(op.misja) + (BEZ_KROKOW.has(op.id) ? '' : `\n${op.kroki.map((k, i) => `${i + 1}. ${podmien(k)}`).join('\n')}`)
     if (OPERACJE_Z_OBIEKTEM.has(op.id)) {
@@ -296,7 +293,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const rozmiar = w.rozmiar?.trim() && OPERACJE_Z_OBIEKTEM.has(op.id) && !OPERACJE_POSTACI_SKLADAJ.has(op.id)
     ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
     : ''
-  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', swiatlo, rozmiar, ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
