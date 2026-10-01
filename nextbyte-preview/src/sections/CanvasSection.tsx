@@ -956,7 +956,8 @@ export function CanvasSection() {
         return {
           x: pin.normalizedX,
           y: pin.normalizedY,
-          nazwa: pin.analiza?.obiektEn || etykietaPineski(pin, nr),
+          // świeże dane z tego przebiegu reżysera; analiza zapisana w pineskach bywa stara (po przesunięciu pineski)
+          nazwa: plan?.odznaki?.[nr] || etykietaPineski(pin, nr),
           opis: [szczegolyPlanu?.[nr], plan?.miejsca?.[nr]].filter(Boolean).join(' '),
         }
       }
@@ -1367,7 +1368,7 @@ export function CanvasSection() {
         onWybierzWarstwe={setWybranaWarstwa}
         onWybierzPineske={setWybranaPineska}
         onZmienWarstwe={zmienWarstwe}
-        onPrzesunPineske={(id, x, y) => zmienPineske(id, { normalizedX: x, normalizedY: y })}
+        onPrzesunPineske={(id, x, y) => zmienPineske(id, { normalizedX: x, normalizedY: y, analiza: undefined })}
         onWbijPineske={wbijPineske}
         onUpuscPliki={pliki => wstawPliki(pliki, 'upuszczenie')}
         ramka={projekt.ramka}
