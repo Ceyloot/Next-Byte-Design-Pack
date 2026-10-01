@@ -9,7 +9,6 @@
  */
 import { opiszOsobeSzczegolowo, opiszRzeczZRamka } from './dostawca'
 import type { Pineska, Warstwa } from './typy'
-import type { PomiarSkali } from './rezyser'
 
 export interface Zblizenie {
   src: string
@@ -184,38 +183,4 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
   }
   const wyniki = await Promise.all(zadania)
   return wyniki.filter((z): z is Zblizenie => Boolean(z))
-}
-
-/**
- * Doprecyzowanie kotwic skali: pudełko z całego zdjęcia bywa nieprecyzyjne dla małych rzeczy (człowiek w tłumie wyszedł jako 5%
- * szerokości kadru zamiast ~2% — skala zawyżona 2,5×, auto 46% kadru). Dla każdej kotwicy wycinamy z ORYGINAŁU okno ~4× jej
- * rozmiaru wokół środka i prosimy Gemini o ciasne pudełko rzeczy w centrum; przyjmujemy je, gdy jest sensowne.
- */
-export async function doprecyzujKotwice(pomiar: PomiarSkali, src: string): Promise<PomiarSkali> {
-  const o = await wczytaj(src)
-  if (!o) return pomiar
-  const min = Math.min(o.naturalWidth, o.naturalHeight)
-  const kotwice = await Promise.all(
-    pomiar.kotwice.slice(0, 3).map(async (k) => {
-      if (k.x === undefined || k.gora === undefined) return k
-      try {
-        const wys = Math.max(0.01, k.rzad - k.gora)
-        const bok = Math.min(0.5, Math.max(0.06, (4 * Math.max(k.szer * o.naturalWidth, wys * o.naturalHeight)) / min))
-        const cy = (k.gora + k.rzad) / 2
-        const okno = oknoKwadratowe(o, k.x, cy, bok, 768)
-        if (!okno) return k
-        const { box } = await opiszRzeczZRamka(okno.src)
-        if (!box) return k
-        const r = naPiksele(okno, box)
-        const szer = (r.x1 - r.x0) / o.naturalWidth
-        const rzad = r.y1 / o.naturalHeight
-        // sensowne: nie większe niż okno i niezbyt różne od pierwotnego (4× w obie strony), rząd blisko pierwotnego
-        if (szer >= 0.008 && szer <= k.szer * 4 && szer >= k.szer / 4 && Math.abs(rzad - k.rzad) < 0.08) return { ...k, szer, rzad }
-      } catch {
-        /* zostaje pierwotna */
-      }
-      return k
-    }),
-  )
-  return { ...pomiar, kotwice: [...kotwice, ...pomiar.kotwice.slice(3)] }
 }

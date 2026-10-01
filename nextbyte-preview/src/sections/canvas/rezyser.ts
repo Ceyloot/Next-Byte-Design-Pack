@@ -187,7 +187,7 @@ export interface PlanRezysera {
 
 /** Kotwice (znany rozmiar, szerokość i dolna krawędź w kadrze 0–1) i widoczne wymiary obiektu w metrach. */
 export interface PomiarSkali {
-  kotwice: { opis: string; szerM: number; szer: number; rzad: number; /** środek poziomo (0–1) */ x?: number; /** górna krawędź pudełka (0–1) */ gora?: number }[]
+  kotwice: { opis: string; szerM: number; szer: number; rzad: number }[]
   obiekt: { szerM: number; wysM: number }
 }
 
@@ -202,7 +202,7 @@ function odczytajPomiar(kotwice: unknown, obiekt: unknown): PomiarSkali | undefi
     const opis = String(x?.opis ?? '').trim()
     // Rzeczy o dowolnym rozmiarze (znaki, banery, tablice) nie nadają się na miarę — reżyser dostał taką regułę w prompcie, tu ją egzekwujemy.
     if (/\b(sign|signs|banner|billboard|poster|board|placard|znak|znaki|baner|szyld|tablic\w*|plakat\w*)\b/i.test(opis) && !/\b(post|pole|słup|slup)\b/i.test(opis)) return []
-    return szer >= 0.02 && szer <= 1 ? [{ opis, szerM, szer, rzad, x: (box[1] + box[3]) / 2000, gora: Math.min(box[0], box[2]) / 1000 }] : []
+    return szer >= 0.02 && szer <= 1 ? [{ opis, szerM, szer, rzad }] : []
   })
   const o = obiekt as
     | {
