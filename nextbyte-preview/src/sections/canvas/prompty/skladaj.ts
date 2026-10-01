@@ -43,6 +43,7 @@ import {
   ZABLOKOWANA_MISJA_TRANSFERU,
   ZABLOKOWANA_TEMPERATURA_TRANSFERU,
   ZABLOKOWANE_BRICKI_TRANSFERU,
+  zablokowaneLinieSkaliTransferu,
   ZABLOKOWANY_SYSTEM_TRANSFERU,
 } from './zablokowane/transfer-z-drugiego-zdjecia'
 import {
@@ -416,7 +417,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ...w.zblizenia.map((z) => `Image ${z.numer} = ${z.opis}.`),
       ].join('\n')
     : ''
-  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : miedzyZdjeciami ? zablokowaneLinieSkaliTransferu(w) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia — ZABLOKOWANE (zablokowane/ruch-w-kadrze.ts), nie zmieniać
   // bez prośby użytkownika: prosty prompt „MOVE — do not copy” + wybrane bricki + światło, rozmiar i analiza reżysera.
