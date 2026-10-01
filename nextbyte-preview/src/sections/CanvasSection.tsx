@@ -102,8 +102,6 @@ const POSTPROCES_ZIARNA = false
  * Jedno „Generuj” = jedna generacja; pomiar zostaje tylko w ocenie.
  */
 const DRUGI_PRZEBIEG = false
-/** Transfer postaci z drugiego zdjęcia: zawsze drugi przebieg (harmonizacja). false = wraca pojedyncza generacja. */
-const POPRAWKA_TRANSFERU_POSTACI = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
 const KROPKI_NA_ZDJECIACH = false
 
@@ -1070,19 +1068,14 @@ export function CanvasSection() {
       // Model dostaje wynik i czysty oryginał jako wzorzec; generuje cały kadr, bez masek.
       let ocenaPoPoprawce = ocenaKoncowa
       const warto = ['wstaw', 'przenies', 'zamien', 'postac', 'ubranie'].includes(trybAgenta)
-      // Transfer postaci z drugiego zdjęcia: drugi przebieg (dopasowanie światła, cienia, ziarna i ostrości) ZAWSZE — pojedyncza generacja
-      // zostawiała wklejkę we wszystkim naraz. Obie wersje leżą na płótnie; jedna linia stałej cofa tryb.
-      const poprawkaPostaci = POPRAWKA_TRANSFERU_POSTACI && operacjaAgenta === 'character_transfer' && !pelnePolecenie.includes('MOVE within Image 1:')
-      if ((DRUGI_PRZEBIEG ? ocenaKoncowa?.wklejone : poprawkaPostaci) && !bezZmian && warto) {
+      if (DRUGI_PRZEBIEG && ocenaKoncowa?.wklejone && !bezZmian && warto) {
         setStanGeneracji({ faza: 'poprawia', wynik: gotowy })
         try {
           const pinElementu = pinZrodlowy ?? pinDocelowy
           const element =
             operacjaAgenta === 'face_swap'
               ? 'the replaced face'
-              : poprawkaPostaci
-                ? 'the inserted person'
-                : pinElementu
+              : pinElementu
                 ? `the edited element ("${etykietaPineski(pinElementu, projekt.pineski.indexOf(pinElementu) + 1)}")`
                 : 'the edited element'
           const poprawka = await generuj({
@@ -1103,11 +1096,9 @@ export function CanvasSection() {
             kosztUSD: (gotowy.kosztUSD ?? 0) + (poprawka.kosztUSD ?? 0),
           }
           ocenaPoPoprawce = {
-            wykonane: ocenaKoncowa?.wykonane ?? true,
-            znaczniki: ocenaKoncowa?.znaczniki ?? false,
-            kosztTokenow: ocenaKoncowa?.kosztTokenow ?? 0,
+            ...ocenaKoncowa,
             wklejone: false,
-            ocena: `${ocenaKoncowa?.ocena ?? ''} ${poprawkaPostaci ? 'Drugi przebieg dopasował światło, cień, ziarno i ostrość do zdjęcia' : 'Wyglądało na wklejone, więc drugi przebieg dopasował światło, cień i ziarno'} — obie wersje leżą na płótnie.`.trim(),
+            ocena: `${ocenaKoncowa.ocena} Wyglądało na wklejone, więc drugi przebieg dopasował światło, cień i ziarno — obie wersje leżą na płótnie.`.trim(),
           }
         } catch (e) {
           console.warn('[canvas] drugi przebieg nieudany', e)
