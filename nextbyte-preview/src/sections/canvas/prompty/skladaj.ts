@@ -17,6 +17,20 @@
  *   {{IMAGE_TARGET}} {{IMAGE_DONOR}} {{DONOR_ROLE}} {{PIN_TARGET}} {{PIN_SOURCE}} {{PIN_CLEAR}}
  */
 import {
+  ZABLOKOWANA_TEMPERATURA_CZESCI,
+  ZABLOKOWANE_BRICKI_CZESCI,
+  ZABLOKOWANE_ID_BRICKOW_CZESCI,
+  ZABLOKOWANY_SYSTEM_CZESCI,
+  zablokowanyPartChange,
+  zablokowanyPartSwap,
+} from './zablokowane/zmiana-czesci'
+import {
+  ZABLOKOWANA_TEMPERATURA_SCENERII,
+  ZABLOKOWANY_SYSTEM_SCENERII,
+  zablokowaneRegulyScenerii,
+  zablokowaneZadanieScenerii,
+} from './zablokowane/zmiana-scenerii'
+import {
   ZABLOKOWANA_MISJA_SWAP_OBIEKTU,
   ZABLOKOWANA_TEMPERATURA_SWAP_OBIEKTU,
   ZABLOKOWANE_BRICKI_SWAP_OBIEKTU,
@@ -302,39 +316,20 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     system = STUDIO_FACE_SYSTEM
     temperatura = 0.42
   } else if (sceneria) {
-    const zrodloMiejsca = dawca ? `Image ${dawca}` : 'the place described in the USER request'
-    zadanie = [
-      `SCENERY CHANGE: replace the WHOLE surroundings of Image 1 — its location, ground, buildings, vegetation, sky, weather and light — with the place ${dawca ? `shown in ${zrodloMiejsca}` : 'described in the USER request'}.`,
-      dawca ? `Image 1 = the photograph whose subjects stay. Image ${dawca} = the new place.` : `Image 1 = the photograph whose subjects stay.`,
-    ].join('\n')
-    system = SYSTEM_KOMPOZYTORA
-    temperatura = TEMPERATURA_OBIEKTU
+    // ZABLOKOWANE (zablokowane/zmiana-scenerii.ts) — nie zmieniać bez prośby użytkownika.
+    zadanie = zablokowaneZadanieScenerii(dawca ?? undefined)
+    system = ZABLOKOWANY_SYSTEM_SCENERII
+    temperatura = ZABLOKOWANA_TEMPERATURA_SCENERII
   } else if (czescOpis && cel) {
-    const cz = w.czesc!.trim()
-    zadanie = [
-      `PART CHANGE: On the object at ${opisPineski(cel)}, change ONLY its ${cz}, exactly as the USER request describes.`,
-      w.czescZakres === 'one'
-        ? `Change ONLY ONE ${cz}: the one at or nearest to the destination pin. Every other ${cz} of the object stays exactly as it was.`
-        : `If the object has several of that part (a pair or a set), change EVERY one of them the same way; leaving any of them as it was is a failure.`,
-      `A VISIBLE change is required: the ${cz} must clearly look as described, never like the old one, and it is fitted onto the same place of the object, in the object's own perspective, size and lighting.`,
-      `LIGHT ON THE NEW ${cz.toUpperCase()}: it is lit ONLY by Image 1's light, exactly like the neighbouring parts of the same object. Wherever it faces away from the key light it stays in shadow, with only the scene's ambient and bounce light on it; its highlights and shadows fall in the same directions as those of the parts around it; its shiny or reflective surfaces reflect Image 1's own surroundings (sky, sun, ground, buildings), never the reference's reflections or studio lighting. It is never brighter, cleaner or more evenly lit than the original parts around it.`,
-      `Everything else stays exactly as it is: the rest of the object, everything around it, the framing and all text.`,
-    ].join('\n')
-    system = SYSTEM_KOMPOZYTORA
-    temperatura = TEMPERATURA_OBIEKTU
+    // ZABLOKOWANE (zablokowane/zmiana-czesci.ts) — nie zmieniać bez prośby użytkownika.
+    zadanie = zablokowanyPartChange(w.czesc!.trim(), cel, w.czescZakres)
+    system = ZABLOKOWANY_SYSTEM_CZESCI
+    temperatura = ZABLOKOWANA_TEMPERATURA_CZESCI
   } else if (czescSwap && zrodlo && cel) {
-    const cz = w.czesc!.trim()
-    zadanie = [
-      `PART SWAP: On the object at ${opisPineski(cel)}, replace ONLY its ${cz} with the ${cz} shown at ${opisPineski(zrodlo)}.`,
-      w.czescZakres === 'one'
-        ? `Replace ONLY ONE ${cz}: the one at or nearest to the destination pin. Every other ${cz} of the object stays exactly as it was.`
-        : `If the object has several of that part (a pair or a set), replace EVERY one of them, each fitted onto its own place — the reference shows one example, and all the others follow its design (mirrored as their side requires). Leaving any of them as it was is a failure.`,
-      `Copy the new ${cz} exactly from the reference — shape, design, glass, trim, colours and every detail — and fit it onto the same place of the object, in the object's own perspective, size and lighting. A VISIBLE change is required: the ${cz} of the object must now look like the reference, never like the old one.`,
-      `LIGHT ON THE NEW ${cz.toUpperCase()}: it is lit ONLY by Image 1's light, exactly like the neighbouring parts of the same object. Wherever it faces away from the key light it stays in shadow, with only the scene's ambient and bounce light on it; its highlights and shadows fall in the same directions as those of the parts around it; its shiny or reflective surfaces reflect Image 1's own surroundings (sky, sun, ground, buildings), never the reference's reflections or studio lighting. It is never brighter, cleaner or more evenly lit than the original parts around it.`,
-      `Everything else stays exactly as it is: the rest of the object, everything around it, the framing and all text.`,
-    ].join('\n')
-    system = SYSTEM_KOMPOZYTORA
-    temperatura = TEMPERATURA_OBIEKTU
+    // ZABLOKOWANE (zablokowane/zmiana-czesci.ts) — nie zmieniać bez prośby użytkownika.
+    zadanie = zablokowanyPartSwap(w.czesc!.trim(), cel, zrodlo, w.czescZakres)
+    system = ZABLOKOWANY_SYSTEM_CZESCI
+    temperatura = ZABLOKOWANA_TEMPERATURA_CZESCI
   } else if (!czescTryb && (op.id === 'object_transfer' || op.id === 'character_transfer' || op.id === 'object_swap') && zrodlo?.obraz === 1 && cel?.obraz === 1) {
     // ZABLOKOWANE (zablokowane/przeniesienie-w-kadrze.ts) — nie zmieniać bez prośby użytkownika.
     wKadrze = true
@@ -368,7 +363,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const pominiete: BrickId[] = []
   const wlaczone = op.bricks.filter((id) => {
     if (sceneria) { pominiete.push(id); return false }
-    if (czescTryb && !['studio-referencja', 'studio-scena', 'studio-jedno-zdjecie', 'studio-kontrola'].includes(id)) { pominiete.push(id); return false }
+    if (czescTryb && !ZABLOKOWANE_ID_BRICKOW_CZESCI.includes(id)) { pominiete.push(id); return false }
     const zbedny = (id === 'studio-usuniecie' && czyszczenie === null) || (id === 'studio-referencja' && dawca === null)
     if (zbedny) pominiete.push(id)
     return !zbedny
@@ -395,16 +390,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ].filter(Boolean)
     : []
   // Scenografia: światło sceny docelowej NIE obowiązuje (zmienia się z otoczeniem) — zamiast tego reguły zmiany miejsca.
-  const regulySceneria = sceneria
-    ? [
-        `THE NEW PLACE: take its location only — ground, buildings, vegetation, sky, weather, atmosphere and light — never the subjects standing in it, and never its pixels: build it anew, as one photograph, from Image 1's camera height, lens and framing.`,
-        `THE SUBJECTS OF IMAGE 1 STAY EXACTLY: ${w.pierwszyPlan?.trim() || 'the main subjects of Image 1'} keep their position, size, pose, shape, colours and details, and any graphics or text laid over the picture stays exactly where and as it is.`,
-        `Nothing of the old surroundings survives behind or around the subjects; their edges are clean and photographic, with no halo, outline or cut-out look.`,
-        `RE-LIGHT the subjects for the new place: its light direction, colour temperature, weather and contrast; add contact shadows on the new ground and matching reflections; one grain, one depth of field, one colour grade across the whole frame.`,
-        `FINAL CHECK: is the frame exactly the frame of Image 1 — same crop, same zoom, same field of view — with the subjects and any overlaid text untouched and the new place as the only change? Is everything lit and graded as ONE photograph? If not, redo.`,
-      ]
-    : []
-  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  const regulySceneria = sceneria ? zablokowaneRegulyScenerii(w.pierwszyPlan) : []
+  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : wKadrze ? (ZABLOKOWANE_BRICKI_W_KADRZE[b.id] ?? b.tekst) : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   const sekcje: SekcjaPromptu[] = [
     { klucz: 'task', tekst: sekcjaZadania },
