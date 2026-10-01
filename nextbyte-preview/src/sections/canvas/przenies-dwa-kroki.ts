@@ -11,8 +11,10 @@ export interface MiejsceOpis {
   y: number
   /** krótka nazwa rzeczy / miejsca */
   nazwa: string
-  /** szczegółowy opis (od reżysera / z wycinka), EN */
+  /** szczegółowy opis (od reżysera / z wycinka), EN — wygląd + miejsce */
   opis?: string
+  /** sam wygląd rzeczy (bez opisu miejsca, w którym stoi) — do kroku „wstaw” */
+  wyglad?: string
 }
 
 export interface DwaKrokiWejscie {
@@ -103,7 +105,7 @@ export function promptUsun(w: UsunWstawWejscie): string {
   const { zrodlo } = w
   return [
     `[TASK]`,
-    `Edit Image 1: REMOVE one object and change nothing else. The object: the ${czysc(zrodlo.nazwa) || 'object'} that stands ${polozenieSlowami(zrodlo.x, zrodlo.y)}${zrodlo.opis ? ` — ${czysc(zrodlo.opis)}` : ''}.${w.maZblizenieObiektu ? ` Image 2 is an enlarged crop of exactly that object, only to show precisely what is deleted — it is not something to add.` : ''}`,
+    `Edit Image 1: REMOVE exactly one object and change nothing else. Only the single object right at the given x / y point is removed — any other structure or object standing close to it (a neighbouring house, cabin, tree, rock) stays untouched. The object: the ${czysc(zrodlo.nazwa) || 'object'} that stands ${polozenieSlowami(zrodlo.x, zrodlo.y)}${zrodlo.opis ? ` — ${czysc(zrodlo.opis)}` : ''}.${w.maZblizenieObiektu ? ` Image 2 is an enlarged crop of exactly that object, only to show precisely what is deleted — it is not something to add.` : ''}`,
     `Delete it completely: not a single part of it remains. Hide what is underneath — rebuild the spot with what would naturally be there without it (ground, grass, wall, trees, sky), continuing the surrounding texture, light and grain, and smooth the background around it so nobody could tell anything ever stood there.`,
     `Add nothing, move nothing, put the object nowhere else. ${CALOSC}`,
   ].join('\n')
@@ -116,7 +118,7 @@ export function promptWstaw(w: UsunWstawWejscie): string {
   const nrMiejsca = w.maZblizenieMiejsca ? (nr ? 3 : 2) : 0
   return [
     `[TASK]`,
-    `Edit Image 1: PLACE one object into the scene — insert only, nothing else changes.${nr ? ` Image ${nr} is an enlarged crop of the object to place: the ${czysc(zrodlo.nazwa) || 'object'}${zrodlo.opis ? ` — ${czysc(zrodlo.opis)}` : ''}.` : ` The object to place: the ${zdanie(zrodlo.nazwa, zrodlo.opis)}.`} Reproduce it EXACTLY — every part, shape, proportion, material, colour and detail as in that crop; never a different object of the same kind. Only its size and angle of view adapt to the new spot.`,
+    `Edit Image 1: PLACE one object into the scene — insert only, nothing else changes.${nr ? ` Image ${nr} is an enlarged crop of the object to place: the ${czysc(zrodlo.nazwa) || 'object'}${(zrodlo.wyglad ?? zrodlo.opis) ? ` — ${czysc(zrodlo.wyglad ?? zrodlo.opis)}` : ''}. Place the WHOLE object (all of it, not just a part such as its door or roof) without anything of the surroundings shown in that crop.` : ` The object to place: the ${zdanie(zrodlo.nazwa, zrodlo.wyglad ?? zrodlo.opis)}.`} Reproduce it EXACTLY — every part, shape, proportion, material, colour and detail as in that crop; never a different object of the same kind. Only its size and angle of view adapt to the new spot.`,
     `WHERE: ${polozenieSlowami(cel.x, cel.y)}${cel.opis || cel.nazwa ? ` — ${zdanie(cel.nazwa, cel.opis)}` : ''}. ${w.zamiana ? 'It takes exactly the place of what stands there now, which is removed completely. ' : ''}The middle of its footprint lands exactly on that x / y spot, in that very part of the frame — never beside it, never nearer the centre; if there is too little room it is made smaller or the ground shaped. It stands logically on the real surface, upright, following the ground and the scene's lines, scaled for its distance from the camera and seen from Image 1's camera, never floating, sunk or passing through other things. It appears exactly once.`,
     w.rozmiar ? w.rozmiar : '',
     w.swiatlo ? `LIGHT OF IMAGE 1 (the object is lit exactly like this, with a contact shadow and a cast shadow like the scene's): ${w.swiatlo}` : `The object is lit exactly like the scene, with a contact shadow and a cast shadow like the scene's.`,

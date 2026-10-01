@@ -976,6 +976,7 @@ export function CanvasSection() {
           // świeże dane z tego przebiegu reżysera; analiza zapisana w pineskach bywa stara (po przesunięciu pineski)
           nazwa: plan?.odznaki?.[nr] || etykietaPineski(pin, nr),
           opis: [szczegolyPlanu?.[nr], plan?.miejsca?.[nr]].filter(Boolean).join(' '),
+          wyglad: szczegolyPlanu?.[nr],
         }
       }
       const wejscieDwochKrokow: DwaKrokiWejscie | null =
@@ -1014,6 +1015,11 @@ export function CanvasSection() {
           wysokosc: zrodlo.naturalHeight,
         })
         const poUsunieciu = await dopasujFormatDoObrazu(w1.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
+        // Diagnostyka: wynik kroku 1 jako klikalny link w konsoli przeglądarki (blob), żeby było widać, który krok zawodzi.
+        try {
+          const blob = await (await fetch(poUsunieciu)).blob()
+          console.info('[canvas] wynik kroku 1 (po usunięciu):', URL.createObjectURL(blob))
+        } catch { /* tylko diagnostyka */ }
         const w2 = await generuj({
           ...lite,
           polecenie: p2,
