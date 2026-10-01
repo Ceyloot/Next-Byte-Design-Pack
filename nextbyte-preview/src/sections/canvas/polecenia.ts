@@ -112,7 +112,7 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
   )
     return 'postac'
 
-  // 9b. Czasownik przeniesienia („przesuń / przenieś / przestaw ten domek w miejsce ogrodu”) to PRZENIESIENIE do miejsca,
+  // 9b. ZABLOKOWANE (zablokowane/ruch-w-kadrze.ts) — nie zmieniać bez prośby użytkownika. Czasownik przeniesienia („przesuń / przenieś / przestaw ten domek w miejsce ogrodu”) to PRZENIESIENIE do miejsca,
   // nie zamiana — „w miejsce X” oznacza tu cel, o ile polecenie nie mówi wprost „zamień / podmień / zastąp / zamiast”.
   if (/\b(przenie[śs]|przesu[ńn]|przestaw|prze[łl][óo][żz])/.test(t) && !/\b(zamie[ńn]|podmie[ńn]|zast[ąa]p|zamiast|swap)/.test(t)) {
     return 'przenies'

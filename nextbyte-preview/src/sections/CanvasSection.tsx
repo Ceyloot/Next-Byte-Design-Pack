@@ -811,6 +811,7 @@ export function CanvasSection() {
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
       // Przeniesienie / zamiana w kadrze: wyczerpujący opis KONKRETNEGO obiektu spod pineski źródłowej z jego wycinka
       // (opis reżysera z całego zdjęcia bywał zbyt ogólny — model rysował inny obiekt tego samego rodzaju).
+      // ZABLOKOWANE (prompty/zablokowane/ruch-w-kadrze.ts) — nie zmieniać bez prośby użytkownika.
       // Ruch / zamiana obiektu w obrębie jednego zdjęcia (dwie pineski na Image 1): prosty prompt „przesuwasz, nie kopiujesz”
       // (skladaj.ts) — bez zbliżeń i opisów szczegółowych obiektu.
       const ruchWKadrze =

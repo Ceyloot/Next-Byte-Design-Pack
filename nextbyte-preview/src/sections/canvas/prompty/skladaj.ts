@@ -30,6 +30,7 @@ import {
   zablokowaneRegulyScenerii,
   zablokowaneZadanieScenerii,
 } from './zablokowane/zmiana-scenerii'
+import { zablokowaneReguRuchu, zablokowaneZadanieRuchu } from './zablokowane/ruch-w-kadrze'
 import {
   ZABLOKOWANA_MISJA_SWAP_OBIEKTU,
   ZABLOKOWANA_TEMPERATURA_SWAP_OBIEKTU,
@@ -417,25 +418,26 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : ''
   const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
-  // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia: prosty prompt „PRZESUWASZ, nie kopiujesz” — znika z miejsca A,
-  // ląduje w miejscu B (położenie słowami + x / y) — plus wybrane bricki (usunięcie starego, miejsce, jedno zdjęcie),
-  // światło, rozmiar i analiza skali / ułożenia od Gemini. Bez zbliżeń i bez dedykowanych, zamrożonych tekstów.
+  // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia — ZABLOKOWANE (zablokowane/ruch-w-kadrze.ts), nie zmieniać
+  // bez prośby użytkownika: prosty prompt „MOVE — do not copy” + wybrane bricki + światło, rozmiar i analiza reżysera.
   const ruchWKadrze =
     !czescTryb && !cechaTryb && ['object_transfer', 'object_swap', 'character_transfer'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1
-  const zamianaWKadrze = op.id === 'object_swap'
+  const opisyPinesek = new Map((w.opis?.pineski ?? []).map((o) => [o.pineska, o.nazwa]))
   const zadanieRuchu = ruchWKadrze && zrodlo && cel
-    ? [
-        `[TASK]`,
-        `Edit Image 1: MOVE one object — do not copy it. It leaves place A and lands at place B; afterwards it exists exactly once, at place B.`,
-        `THE OBJECT${zrodlo.nazwa ? ` ("${zrodlo.nazwa}")` : ''} stands at PLACE A, ${polozenieSlowami(zrodlo.x, zrodlo.y)}.`,
-        `PLACE B is ${polozenieSlowami(cel.x, cel.y)}: the middle of its footprint lands exactly on that x / y point, in that very part of the frame.${zamianaWKadrze ? ' What stands there now is removed and the object takes exactly its place.' : ''}`,
-        `PLACE A ends up empty: nothing of the object remains there — the spot is rebuilt with what would naturally be there without it. Everything else in the photo stays exactly as it is.`,
-        mapaObrazowIPinesek(w),
-      ].join('\n')
+    ? zablokowaneZadanieRuchu(op.id === 'object_swap', zrodlo, cel, w.pineski.map((p) => ({ numer: p.numer, obraz: p.obraz, x: p.x, y: p.y, nazwa: p.nazwa || opisyPinesek.get(p.numer) })))
     : ''
-  const ID_BRICKOW_RUCHU = ['studio-usuniecie', 'studio-miejsce', 'studio-jedno-zdjecie']
-  const sekcjaReguRuchu = ruchWKadrze
-    ? ['[RULES]', swiatlo, rozmiar, ...analizaOsadzania, ...bricki.filter((b) => ID_BRICKOW_RUCHU.includes(b.id)).map((b) => podmien(b.tekst))].filter(Boolean).join('\n')
+  const sekcjaReguRuchu = ruchWKadrze && cel
+    ? zablokowaneReguRuchu(
+        {
+          pinCzyszczenia: czyszczenie === null ? null : op.id === 'object_swap' ? cel : zrodlo ?? null,
+          swiatlo: w.swiatlo,
+          rozmiar: w.rozmiar,
+          skala: w.skala,
+          widok: w.widok,
+          ulozenie: w.ulozenie,
+        },
+        cel,
+      )
     : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
