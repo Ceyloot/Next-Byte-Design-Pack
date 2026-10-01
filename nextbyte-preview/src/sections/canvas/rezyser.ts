@@ -48,6 +48,7 @@ STEP 1 — WHAT EACH PIN POINTS AT
 
 STEP 1a — PART OR WHOLE ("czesc")
 When the user names a PART of an object (a component of it, not the whole thing) and wants that part changed, set "czesc" to the English name of that part; otherwise "". With a part, the operation is "zamien" or "przenies": ONLY that part of the object at the destination pin is replaced by the same kind of part shown at the source pin — the object itself, and everything else, stays.
+"czesc_zakres" — HOW MANY of that part, read semantically from the user's wording (grammatical number, numerals, "oba / obie / wszystkie", the plural of a part that an object normally has as a pair or a set): "all" when the user means the whole set or more than one; "one" when the wording is singular and points at a single item (then the one at or nearest to the destination pin); "" when the request is not about a part.
 
 STEP 1a2 — FOREGROUND TO KEEP ("pierwszy_plan")
 Only for "tlo" (a change of surroundings / scenery / background): 1–3 English sentences naming exactly what stays untouched in the destination image — the main subjects the photo is about (what they are, where in the frame, how large), and any graphics, captions or text overlaid on the picture. Everything else of that image (ground, buildings, vegetation, sky, distant things) is the old surroundings that get replaced. Otherwise "".
@@ -101,6 +102,7 @@ Answer ONLY with JSON:
   "widok": "<heading, visible faces, camera elevation at the destination>",
   "ulozenie": "<surface under the pin, how it fits on it, alignment, what to keep clear of>",
   "czesc": "",
+  "czesc_zakres": "",
   "pierwszy_plan": "",
   "swiatlo": "<key light direction, hardness, Kelvin; shadow direction and softness; colour bounce; focal length, depth of field, grain, medium>",
   "obiekt": { "szer_m": <apparent width in metres>, "wys_m": <apparent height in metres>, "prawdziwe": { "dl_m": <true length>, "szer_m": <true width>, "wys_m": <true height> }, "kat_deg": <0–90>, "kamera_deg": <0–90> },
@@ -167,6 +169,8 @@ export interface PlanRezysera {
   ulozenie: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część; puste = cały obiekt */
   czesc: string
+  /** ile sztuk części: all = komplet / więcej niż jedna, one = pojedyncza (z liczby gramatycznej i sensu) */
+  czescZakres: 'all' | 'one' | ''
   /** tlo: co zostaje nietknięte (główne obiekty i nakładki), EN */
   pierwszyPlan: string
   analiza: string
@@ -318,6 +322,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     swiatlo: String(json.swiatlo ?? '').trim(),
     ulozenie: String(json.ulozenie ?? '').trim(),
     czesc: String(json.czesc ?? '').trim(),
+    czescZakres: json.czesc_zakres === 'all' ? 'all' : json.czesc_zakres === 'one' ? 'one' : '',
     pierwszyPlan: String(json.pierwszy_plan ?? '').trim(),
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),

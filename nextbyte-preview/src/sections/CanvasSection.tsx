@@ -817,6 +817,7 @@ export function CanvasSection() {
         widok: plan?.widok,
         ulozenie: plan?.ulozenie,
         czesc: plan?.czesc,
+        czescZakres: plan?.czescZakres,
         pierwszyPlan: plan?.pierwszyPlan,
         miejsca: plan?.miejsca,
         swiatlo: plan?.swiatlo,
