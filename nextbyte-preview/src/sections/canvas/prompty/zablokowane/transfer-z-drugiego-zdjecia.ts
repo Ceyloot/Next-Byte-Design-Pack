@@ -8,8 +8,7 @@
  * Na prośbę użytkownika (test samochód → droga): do bricka „Miejsce” dopisane „THE POINT IS FIXED” (punkt ważniejszy niż pokazanie całego obiektu, może być uciety krawędzią, rozmiar wg odległości) oraz strefy kadru w opisie pinu docelowego (skladaj.ts).
  * lista przykładów powierzchni („a shelf, a radiator…”) zastąpiona ogólnym „whatever is there” (uogólnienie, bez przykładów).
  *
- * Dodane na prośbę użytkownika (skala w teście samochód → miasteczko): zmierzony rozmiar, skala, widok i ułożenie (linie poniżej).
- * Nadal NIE idą: opisy szczegółowe i strefy kadru w opisie pinu. Model: Gemini 3.1 (`google:4@3`) — znacznik `gemini31` z `skladajPrompt`.
+ * Dodane na prośbę użytkownika (skala): TYLKO zmierzony rozmiar w miejscu docelowym (horyzont + kotwice). Skala tekstowa, widok i ułożenie NIE idą — opis „prawdziwy rozmiar” bez perspektywy mylił model. Model: Gemini 3.1 (`google:4@3`) — znacznik `gemini31` z `skladajPrompt`.
  */
 
 /** Zadanie [TASK] z dd2f587 (tokeny {{…}} podstawia skladaj.ts). Bez kroków — object_transfer jest w BEZ_KROKOW. */
@@ -31,14 +30,9 @@ export const ZABLOKOWANE_BRICKI_TRANSFERU: Record<string, string> = {
   'studio-kontrola': `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, and casting a shadow into it? If not, redo. ONE photograph — one light, one lens, one grade.`,
 }
 
-/** Linie skali w [RULES] — zmierzony rozmiar w miejscu docelowym, prawdziwy rozmiar, widok i ułożenie (od reżysera). */
-export function zablokowaneLinieSkaliTransferu(w: { rozmiar?: string; skala?: string; widok?: string; ulozenie?: string }): string[] {
-  return [
-    w.rozmiar?.trim()
-      ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`
-      : '',
-    w.skala?.trim() ? `THE REAL SIZE OF THE SUBJECT (analysed against objects of known size in Image 1 — never take its size from how large it appears in its reference): ${w.skala.trim()}` : '',
-    w.widok?.trim() ? `HOW IT MUST APPEAR AT THE DESTINATION (from Image 1's camera and the surface it stands on — a different view in the reference is turned to match): ${w.widok.trim()}` : '',
-    w.ulozenie?.trim() ? `THE LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image 1's scene — follow it): ${w.ulozenie.trim()}` : '',
-  ].filter(Boolean)
+/** Linia rozmiaru w [RULES] — zmierzony rozmiar w miejscu docelowym (z horyzontem i kotwicami, ze względną miarą „N× szerokość X”). Bez tekstowych wymiarów obiektu. */
+export function zablokowaneLinieSkaliTransferu(w: { rozmiar?: string }): string[] {
+  return w.rozmiar?.trim()
+    ? [`THE SIZE AT THE DESTINATION (measured from objects of known size in Image 1 — follow it, never the size the object has in its reference): ${w.rozmiar.trim()}`]
+    : []
 }
