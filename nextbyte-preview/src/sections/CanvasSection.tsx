@@ -847,7 +847,10 @@ export function CanvasSection() {
       }
       // Zbliżenia w pobliżu pinesek (inteligentne: ramka rzeczy od Gemini, wycinek z oryginału, margines proporcjonalny).
       let zblizenia: Zblizenie[] = []
-      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze) {
+      // ZABLOKOWANE (prompty/zablokowane/transfer-z-drugiego-zdjecia.ts): w tym trybie do modelu nie idą późniejsze dodatki, w tym zbliżenia.
+      const transferZDrugiegoZdjecia =
+        operacjaAgenta === 'object_transfer' && Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId !== zrodlo.id && pinDocelowy.layerId === zrodlo.id)
+      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia) {
         try {
           zblizenia = await zbudujZblizenia({
             operacja: operacjaAgenta,
