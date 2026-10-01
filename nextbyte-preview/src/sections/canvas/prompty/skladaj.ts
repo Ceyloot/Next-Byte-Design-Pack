@@ -284,7 +284,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const miedzyZdjeciami = !czescTryb && op.id === 'object_transfer' && !op.gotowy && zrodlo !== undefined && zrodlo.obraz > 1 && cel?.obraz === 1
   // Object swap z dwóch zdjęć (ZABLOKOWANE/object-swap-2-zdjecia.ts): każdy obiekt object_swap poza trybem w kadrze.
   const swapZablokowany = !czescTryb && !cechaTryb && op.id === 'object_swap' && !op.gotowy && !(zrodlo?.obraz === 1 && cel?.obraz === 1)
-  const strefy = !miedzyZdjeciami && !(!czescTryb && ['object_transfer', 'character_transfer', 'object_swap'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1 && !op.gotowy)
+  const strefy = !(!czescTryb && ['object_transfer', 'character_transfer', 'object_swap'].includes(op.id) && zrodlo?.obraz === 1 && cel?.obraz === 1 && !op.gotowy)
   const czyszczenie = miejsceCzyszczenia(w.operacja, w.pineski, strefy)
   const dawca = numerDawcy(w)
 
