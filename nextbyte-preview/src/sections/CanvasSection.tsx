@@ -62,6 +62,7 @@ import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
+import { promptKrok1, promptKrok2, type DwaKrokiWejscie, type MiejsceOpis } from '@/sections/canvas/przenies-dwa-kroki'
 import { odciskPinesek, roleZPolecenia, type OpcjaRol } from '@/sections/canvas/role-z-polecenia'
 import { sprawdzPolecenie } from '@/sections/canvas/kontrola-polecenia'
 import type { ObrazDlaAgenta } from '@/sections/canvas/agent-proxy'
@@ -802,6 +803,14 @@ export function CanvasSection() {
       // Operacja na człowieku idzie modelem postaci (RUNWARE_MODEL_POSTAC, jeśli ustawiony).
       const operacjaAgenta = operacjaZIntencji(trybAgenta, plan?.osoba)
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
+      // Przeniesienie / zamiana na jednym zdjęciu = dwa zadania: 1) dodaj kopię w nowym miejscu, 2) usuń oryginał.
+      const dwaKroki =
+        PRZENIESIENIE_DWA_ZADANIA &&
+        ['przenies', 'zamien'].includes(trybAgenta) &&
+        !plan?.czesc &&
+        !plan?.cecha &&
+        !plan?.osoba &&
+        Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId === zrodlo.id && pinDocelowy.layerId === zrodlo.id)
 
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
@@ -844,6 +853,7 @@ export function CanvasSection() {
             warstwaCelu: zrodlo,
             warstwaZrodla: pinZrodlowy ? projekt.warstwy.find(w => w.id === pinZrodlowy.layerId) : undefined,
             szerokoscObiektu: rozmiarPlanu ? rozmiarPlanu.szer / 100 : undefined,
+            kopiaNaCelu: dwaKroki,
           })
         } catch (e) {
           console.warn('[canvas] zbliżenia nieudane', e)
@@ -929,7 +939,31 @@ export function CanvasSection() {
         ...(zblizenieTwarzy ? [zblizenieTwarzy] : []),
         ...zblizenia.map(z => z.src),
       ]
-      const polecenieModelu = pelnePolecenie
+      let polecenieModelu = pelnePolecenie
+      // Zadanie 1 (dwa zadania): opisowe „dodaj kopię w nowym miejscu”, bez numerów pinesek.
+      const opisMiejsca = (pin: Pineska): MiejsceOpis => {
+        const nr = projekt.pineski.indexOf(pin) + 1
+        return {
+          x: pin.normalizedX,
+          y: pin.normalizedY,
+          nazwa: pin.analiza?.obiektEn || etykietaPineski(pin, nr),
+          opis: [szczegolyPlanu?.[nr], plan?.miejsca?.[nr]].filter(Boolean).join(' '),
+        }
+      }
+      const wejscieDwochKrokow: DwaKrokiWejscie | null =
+        dwaKroki && przeniesienieWKadrze && pinZrodlowy && pinDocelowy
+          ? {
+              zrodlo: opisMiejsca(pinZrodlowy),
+              cel: opisMiejsca(pinDocelowy),
+              zamiana: trybAgenta === 'zamien',
+              swiatlo: plan?.swiatlo,
+              rozmiar: rozmiarPlanu
+                ? `At the new spot the whole object spans about ${Math.round(rozmiarPlanu.szer)}% of Image 1's width and ${Math.round(rozmiarPlanu.wys)}% of its height.${porownanie ? ` ${porownanie}` : ''}`
+                : undefined,
+              zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
+            }
+          : null
+      if (wejscieDwochKrokow) polecenieModelu = promptKrok1(wejscieDwochKrokow)
       if (zblizenie || przeniesienieWKadrze) {
         setOstatniPrompt(ustawieniaModelu.system ? `[SYSTEM]\n${ustawieniaModelu.system}\n\n${polecenieModelu}` : polecenieModelu)
       }
@@ -974,20 +1008,9 @@ export function CanvasSection() {
       }
 
       // Drugie zadanie przeniesienia w kadrze: model często stawia obiekt w nowym miejscu, ale zostawia stary.
-      if (PRZENIESIENIE_DWA_ZADANIA && przeniesienieWKadrze && trybAgenta === 'przenies' && pinZrodlowy && pinZrodlowy.layerId === zrodlo.id) {
+      if (wejscieDwochKrokow) {
         try {
-          const nrZr = projekt.pineski.indexOf(pinZrodlowy) + 1
-          const opisZr = [szczegolyPlanu?.[nrZr], plan?.miejsca?.[nrZr]].filter(Boolean).join(' ')
-          const nazwaZr = pinZrodlowy.analiza?.obiektEn || etykietaPineski(pinZrodlowy, nrZr)
-          const x = pinZrodlowy.normalizedX
-          const y = pinZrodlowy.normalizedY
-          const polozenie = `${Math.round(x * 100)}% of the way from the left edge and ${Math.round(y * 100)}% of the way down from the top`
-          const polecenieUsuniecia = [
-            `[TASK]`,
-            `REMOVE one object from Image 1: ${nazwaZr} standing at x=${x.toFixed(2)} y=${y.toFixed(2)} (${polozenie})${opisZr ? ` — ${opisZr}` : ''}.`,
-            `The same kind of object has just been placed elsewhere in this photo — that new one STAYS exactly as it is. Only the one at the given x / y position is deleted, completely: not a single part of it remains. Rebuild that spot with what would be there without it (ground, grass, wall, sky), continuing the surroundings, so nobody could tell anything stood there. If nothing of that kind stands at that position any more, change nothing.`,
-            `Everything else stays exactly as it is: every object, the new placement, camera, crop, framing, light, grain and all text. Output the same frame.`,
-          ].join('\n')
+          const polecenieUsuniecia = promptKrok2(wejscieDwochKrokow)
           const wynik2 = await generuj({
             ...ustawieniaModelu,
             polecenie: polecenieUsuniecia,
@@ -995,7 +1018,7 @@ export function CanvasSection() {
             szerokosc: zrodlo.naturalWidth,
             wysokosc: zrodlo.naturalHeight,
           })
-          setOstatniPrompt(`${polecenieModelu}\n\n── ZADANIE 2 (usunięcie starego) ──\n${polecenieUsuniecia}`)
+          setOstatniPrompt(`── ZADANIE 1 (dodaj w nowym miejscu) ──\n${polecenieModelu}\n\n── ZADANIE 2 (usuń stare) ──\n${polecenieUsuniecia}`)
           wynik = { ...wynik2, kosztUSD: (wynik.kosztUSD ?? 0) + (wynik2.kosztUSD ?? 0) }
         } catch (e) {
           console.warn('[canvas] drugie zadanie (usunięcie starego) nieudane — zostaje wynik pierwszego', e)

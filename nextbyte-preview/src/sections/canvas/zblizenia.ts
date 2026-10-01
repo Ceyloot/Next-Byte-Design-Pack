@@ -112,6 +112,8 @@ export async function zblizenieTwarzyPodPinem(src: string, x: number, y: number)
 export interface WejscieZblizen {
   /** operacja z reżysera (id operacji z rejestru promptów) */
   operacja: string
+  /** przeniesienie w dwóch zadaniach: zbliżenie źródła to wzór do skopiowania, nie miejsce do opróżnienia */
+  kopiaNaCelu?: boolean
   czesc?: string
   cecha?: string
   pinZrodlowy?: Pineska
@@ -151,7 +153,7 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
       const co = w.czesc ? `the ${w.czesc} to copy` : WSTAWIANIE.includes(w.operacja) ? 'the thing to bring' : 'the thing to put in'
       // Przeniesienie w obrębie jednego zdjęcia: wycinek źródła ma być odczytany jako MIEJSCE DO OPRÓŻNIENIA,
       // nie jako dodatkowy wzór do wstawienia (wtedy model zostawiał obiekt na starym miejscu).
-      const wKadrze = zrodlowa.id === w.warstwaCelu.id && ['object_transfer', 'character_transfer', 'object_swap'].includes(w.operacja) && !w.czesc
+      const wKadrze = zrodlowa.id === w.warstwaCelu.id && ['object_transfer', 'character_transfer', 'object_swap'].includes(w.operacja) && !w.czesc && !w.kopiaNaCelu
       dodaj(
         zblizenieRzeczy(zrodlowa.src, w.pinZrodlowy.normalizedX, w.pinZrodlowy.normalizedY),
         wKadrze
