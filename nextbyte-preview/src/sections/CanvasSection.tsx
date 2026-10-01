@@ -1437,8 +1437,8 @@ export function CanvasSection() {
       )}
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2">
-        <div className="pointer-events-auto relative flex flex-col items-center gap-1.5 rounded-2xl border border-foreground/[0.08] p-1.5 shadow-2xl backdrop-blur-2xl nb-szklo nb-szklo-plynne nb-szklo-canvas">
+      <div className="p2 pointer-events-none absolute left-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
+        <div className="p2-karta p2-pow-1 pointer-events-auto relative flex flex-col items-center gap-1 p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
             tytul="Wybór i przesuwanie (V)"
@@ -1477,7 +1477,7 @@ export function CanvasSection() {
             <Hand className="h-4 w-4" />
           </Narzedzie>
 
-          <span className="my-0.5 h-px w-6 bg-foreground/10" />
+          <span className="my-0.5 h-px w-5 bg-[hsl(var(--foreground)/0.1)]" />
 
           {/* Dodaj zdjęcie & Sceny demo */}
           <Narzedzie
@@ -1520,7 +1520,7 @@ export function CanvasSection() {
             position: relative i zdjęłoby `absolute` ze szklanego elementu. */}
         {menuDodawania && (
           <div className="pointer-events-auto absolute left-full top-1/2 z-40 ml-2.5 w-64 -translate-y-1/2">
-          <div className="overflow-hidden rounded-2xl border border-foreground/[0.08] p-1.5 shadow-2xl nb-szklo nb-szklo-plynne nb-szklo-canvas animate-in fade-in slide-in-from-left-2 duration-150">
+          <div className="p2-karta p2-pow-1 overflow-hidden p-1.5 animate-in fade-in slide-in-from-left-2 duration-150">
             <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground/40">
               Własne zdjęcia
             </div>
@@ -1574,8 +1574,8 @@ export function CanvasSection() {
 
       {/* ══ Panel warstw (wysuwany) ══ */}
       {panelWarstw && (
-        <div className="absolute left-20 top-4 z-20 w-64">
-          <div className="nb-szklo nb-szklo-plynne nb-szklo-canvas overflow-hidden rounded-2xl border border-foreground/[0.08] shadow-2xl animate-in fade-in slide-in-from-left-2 duration-150">
+        <div className="p2 absolute left-20 top-4 z-20 w-64">
+          <div className="p2-karta p2-pow-1 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150">
             <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-foreground/45 flex items-center justify-between">
               <span>Zdjęcia na płótnie ({projekt.warstwy.length})</span>
               <button
@@ -1632,9 +1632,9 @@ export function CanvasSection() {
       )}
 
       {/* ══ Zoom Indicator ══ */}
-      <div className="pointer-events-none absolute bottom-4 left-4 z-20 font-mono text-[11px] text-foreground/50 bg-card/70 backdrop-blur-md px-2 py-0.5 rounded-md border border-foreground/[0.08] shadow-sm">
+      <div className="p2 pointer-events-none absolute bottom-4 left-4 z-20"><div className="p2-kontrolka px-2 py-0.5 font-mono text-[11px] p2-cichy">
         {Math.round(widok.zoom * 100)}%
-      </div>
+      </div></div>
     </div>
   )
 }
@@ -1659,15 +1659,15 @@ function Narzedzie({
       title={tytul}
       onClick={onClick}
       className={cn(
-        'relative flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-150',
+        'relative flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-150 active:scale-95',
         aktywne
-          ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25 scale-105'
-          : 'text-foreground/60 hover:bg-foreground/10 hover:text-foreground active:scale-95',
+          ? 'p2-akcent-tlo shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.25)]'
+          : 'p2-cichy hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',
       )}
     >
       {children}
       {odznaka !== undefined && (
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-extrabold text-background shadow-sm ring-2 ring-[hsl(var(--card))]">
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
           {odznaka}
         </span>
       )}

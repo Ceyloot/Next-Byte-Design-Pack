@@ -24,6 +24,7 @@ import {
   Copy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijOkolice, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { LebekPinezki } from './ZnacznikPineski'
 import { BYTE_ZA_OBRAZ } from './dostawca'
@@ -314,166 +315,91 @@ export function CzatCanvas({
     )
   }
 
-  /* ══ WARIANT ROZWINIĘTY: Elegancki Liquid Glass Panel (Styl Dashboard 2.0) ══ */
+  /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
+  const wersjaRozjechana = Boolean(wersjaDysk && wersjaDysk !== WERSJA)
   return (
-    <div className="pointer-events-none absolute right-4 top-4 bottom-4 z-30 flex flex-col w-[380px] max-w-[calc(100vw-32px)]">
-      <div
-        className={cn(
-          'pointer-events-auto relative flex flex-col h-full w-full min-h-0',
-          'rounded-2xl border border-foreground/[0.08] shadow-2xl',
-          'nb-szklo nb-szklo-plynne nb-szklo-canvas overflow-hidden',
-          'transition-all duration-300 ease-out animate-in slide-in-from-right-4',
-        )}
-        style={{
-          boxShadow: '0 20px 50px -12px rgba(0, 0, 0, 0.45), inset 0 1px 0 0 hsl(0 0% 100% / 0.16)',
-        }}
-      >
-        {/* Accent hairline on top */}
-        <div className="pointer-events-none absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent z-20" />
-
-      {/* ── 1. NAGŁÓWEK CHATU ── */}
-      <div className="relative z-10 flex shrink-0 items-center justify-between border-b border-foreground/[0.06] px-3.5 py-2.5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/25 shadow-[0_0_12px_hsl(var(--primary)/0.25)]">
-            <Sparkles className="h-3.5 w-3.5" />
+    <div className="p2 pointer-events-none absolute bottom-4 right-4 top-4 z-30 flex w-[360px] max-w-[calc(100vw-32px)] flex-col">
+      <div className="p2-karta p2-pow-1 pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 overflow-hidden p-3.5 animate-in slide-in-from-right-4 duration-300">
+        {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
+        <div className="flex shrink-0 items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 p2-akcent" />
+            <span className="text-[14px] font-semibold tracking-tight text-[hsl(var(--foreground))]">Canvas</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[12.5px] font-bold text-foreground">Canvas Studio AI</span>
-              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-primary border border-primary/20">
-                Gemini 2.5 Flash
-              </span>
-            </div>
-            <div className="text-[9.5px] text-foreground/45 flex items-center gap-1.5">
-              <span>Koszt: {BYTE_ZA_OBRAZ} Byte / generację</span>
-              <span>•</span>
-              <span className="text-emerald-600 font-medium">Gotowy do pracy</span>
-              <span>•</span>
-              <span className="tabular-nums" title={`serwer wystartował ${SERWER_START} · strona załadowana ${ZALADOWANO}`}>
-                v{WERSJA} · serwer {SERWER_START} · strona {ZALADOWANO}
-              </span>
-              {wersjaDysk && wersjaDysk !== WERSJA && (
-                <span className="font-semibold text-amber-500">
-                  ⚠ na dysku v{wersjaDysk} — zrestartuj serwer (npm run dev)
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setZwiniety(true)}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-foreground/40 hover:bg-foreground/[0.08] hover:text-foreground transition-colors"
-            title="Zminimalizuj chat"
-          >
-            <Minimize2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* ── 2. SEKCJA PINESEK (PIN DOCK - DO 10 PINESEK) ── */}
-      <div className="relative z-10 shrink-0 border-b border-foreground/[0.06] bg-foreground/[0.02] p-2.5">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
-            Zaznaczone obiekty ({pineski.length}/10)
-          </span>
-          {pineski.length < 10 && (
-            <button
-              onClick={onWlaczNarzędziePineska}
-              className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/20 transition-colors"
+          <div className="flex items-center gap-1.5">
+            <span
+              className={cn('font-mono text-[10px] tabular-nums', wersjaRozjechana ? 'text-[hsl(var(--warning,var(--primary)))]' : 'p2-cichy')}
+              title={`serwer wystartował ${SERWER_START} · strona załadowana ${ZALADOWANO}${wersjaRozjechana ? ` · na dysku v${wersjaDysk} — zrestartuj serwer (npm run dev)` : ''}`}
             >
-              <Pin className="h-3 w-3" />
-              Wbij pineskę (P)
+              {wersjaRozjechana ? `⚠ v${WERSJA} → v${wersjaDysk}` : `v${WERSJA}`}
+            </span>
+            <button
+              onClick={() => setZwiniety(true)}
+              className="p2-kontrolka flex h-7 w-7 items-center justify-center p2-cichy hover:text-[hsl(var(--foreground))]"
+              title="Zwiń"
+              aria-label="Zwiń panel"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
             </button>
-          )}
+          </div>
         </div>
 
-        {pineski.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-foreground/15 p-2 text-center">
-            <p className="text-[10.5px] text-foreground/60 font-medium">Brak wbitych pinesek</p>
-            <p className="text-[9.5px] text-foreground/40 mt-0.5">
-              Wybierz pineskę z lewego paska (lub trzymaj Ctrl i kliknij obiekt), aby wskazać cel. Możesz dodać do 10 pinesek!
-            </p>
+        {/* Pinezki: łebek, nazwa, usuń — nic więcej */}
+        <div className="shrink-0 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="p2-etykieta">Pinezki {pineski.length > 0 && `· ${pineski.length}`}</span>
+            {pineski.length < 10 && (
+              <button
+                onClick={onWlaczNarzędziePineska}
+                className="p2-kontrolka flex items-center gap-1 px-2 py-1 text-[11px] font-medium p2-akcent"
+                title="Wbij pineskę (P)"
+              >
+                <Pin className="h-3 w-3" /> Pinezka
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="space-y-1.5 max-h-24 overflow-y-auto pr-1 scrollbar-none">
-            {pineski.map((p, idx) => {
-              const wybrana = wybranaPineska === p.id
-              const miniatura = wycinki[p.id]
-              const warstwa = warstwy.find(w => w.id === p.layerId)
 
-              return (
+          {pineski.length === 0 ? (
+            <p className="p2-sekcja px-3 py-2.5 text-[12px] leading-snug p2-cichy">
+              Wbij pinezkę na zdjęciu (P), potem napisz, co zrobić.
+            </p>
+          ) : (
+            <div className="max-h-[132px] space-y-1 overflow-y-auto scrollbar-none">
+              {pineski.map((p, idx) => (
                 <div
                   key={p.id}
                   onClick={() => onWybierzPineske(p.id)}
                   className={cn(
-                    'group flex items-center gap-2 rounded-xl p-1.5 transition-all cursor-pointer border',
-                    wybrana
-                      ? 'border-primary/50 bg-primary/10 shadow-sm'
-                      : 'border-foreground/[0.06] bg-card/40 hover:bg-foreground/[0.05]',
+                    'p2-kontrolka group flex cursor-pointer items-center gap-2 px-2 py-1.5',
+                    wybranaPineska === p.id && 'p2-akcent-rant',
                   )}
                 >
-                  {/* Łebek pinezki — ten sam, co na płótnie */}
-                  <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={24} />
-
-                  {/* Thumbnail / Smart Crop */}
-                  <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-md bg-foreground/10 ring-1 ring-border/20">
-                    {miniatura ? (
-                      <img src={miniatura} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center">
-                        <Loader2 className="h-3 w-3 animate-spin text-foreground/30" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Editable input / label */}
-                  <div className="min-w-0 flex-1">
-                    <input
-                      value={p.label ?? ''}
-                      onChange={e => onZmienNazwePineski(p.id, e.target.value)}
-                      placeholder={`obiekt ${idx + 1}`}
-                      className="w-full bg-transparent text-[11.5px] font-medium text-foreground outline-none placeholder:text-foreground/35"
-                    />
-                    <div className="text-[9px] text-foreground/40 truncate">
-                      {warstwa?.name || 'Zdjęcie'} · {Math.round(p.normalizedX * 100)}%, {Math.round(p.normalizedY * 100)}%
-                    </div>
-                  </div>
-
-                  {/* Insert into prompt button */}
-                  <button
-                    onClick={e => {
-                      e.stopPropagation()
-                      wstawChip(p, idx + 1)
-                    }}
-                    title="Wstaw do prompta"
-                    className="shrink-0 rounded p-1 text-[10px] text-foreground/35 hover:bg-foreground/10 hover:text-foreground transition-colors"
-                  >
-                    + chip
-                  </button>
-
-                  {/* Delete pin */}
+                  <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={22} />
+                  <input
+                    value={p.label ?? ''}
+                    onChange={e => onZmienNazwePineski(p.id, e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    placeholder={`obiekt ${idx + 1}`}
+                    className="min-w-0 flex-1 bg-transparent text-[12.5px] font-medium text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
+                  />
                   <button
                     onClick={e => {
                       e.stopPropagation()
                       onUsunPineske(p.id)
                     }}
                     title="Usuń pineskę"
-                    className="shrink-0 text-foreground/25 opacity-40 hover:opacity-100 hover:[color:color-mix(in_srgb,hsl(var(--destructive))_62%,hsl(var(--foreground)))] transition-opacity p-0.5"
+                    className="shrink-0 p-0.5 p2-cichy opacity-0 transition-opacity hover:text-[hsl(var(--destructive))] group-hover:opacity-100"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
-              )
-            })}
-          </div>
-        )}
-
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
 
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
-      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 scrollbar-none">
+      <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none">
         {historiaWiadomosci.map(msg => (
           <div
             key={msg.id}
@@ -484,14 +410,14 @@ export function CzatCanvas({
           >
             {/* Wiadomość użytkownika */}
             {msg.rola === 'uzytkownik' && (
-              <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary/20 border border-primary/30 px-3 py-2 text-[12px] text-foreground shadow-sm">
+              <div className="p2-akcent-tlo max-w-[88%] rounded-[14px] px-3 py-2 text-[12.5px] text-[hsl(var(--foreground))]">
                 <p className="leading-relaxed">{msg.tresc}</p>
                 {msg.pineskiSnap && msg.pineskiSnap.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1 border-t border-primary/20 pt-1">
+                  <div className="mt-1.5 flex flex-wrap gap-1">
                     {msg.pineskiSnap.map(snap => (
                       <span
                         key={snap.id}
-                        className="inline-flex items-center gap-1 rounded bg-card/70 px-1.5 py-0.5 text-[9.5px] font-semibold text-foreground"
+                        className="inline-flex items-center gap-1 rounded-md bg-[hsl(var(--background)/0.5)] px-1.5 py-0.5 text-[10.5px] font-medium text-[hsl(var(--foreground))]"
                       >
                         <LebekPinezki rozmiar={12} />
                         Pin {snap.numer}: {snap.label}
@@ -504,13 +430,13 @@ export function CzatCanvas({
 
             {/* Odpowiedź asystenta */}
             {msg.rola === 'asystent' && (
-              <div className="max-w-[90%] space-y-2 rounded-2xl rounded-tl-sm bg-card/60 border border-foreground/[0.08] p-3 text-[12px] text-foreground/85 shadow-sm">
+              <div className="p2-sekcja max-w-full space-y-2 p-2.5 text-[12.5px] text-[hsl(var(--foreground))]">
                 {msg.tresc && <p className="leading-relaxed text-[11.5px]">{msg.tresc}</p>}
 
                 {/* Wygenerowany obraz z opcjami */}
                 {msg.obrazUrl && (
-                  <div className="mt-2 space-y-2 overflow-hidden rounded-xl border border-foreground/15 bg-background/50 p-2">
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black/40">
+                  <div className="mt-1 space-y-2">
+                    <div className="relative aspect-video w-full overflow-hidden rounded-[10px] bg-[hsl(var(--background)/0.6)]">
                       <img
                         src={msg.obrazUrl}
                         alt="Wynik generacji"
@@ -548,14 +474,14 @@ export function CzatCanvas({
                     <div className="flex items-center gap-1.5 pt-1">
                       <button
                         onClick={() => onWstawNaPlotno(msg.obrazUrl!, msg.nazwaWyniku || 'Wynik AI')}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-primary py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-primary py-2 text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                       >
                         <Layers className="h-3 w-3" />
                         Wstaw na płótno
                       </button>
                       <button
                         onClick={() => window.open(msg.obrazUrl, '_blank')}
-                        className="flex items-center justify-center rounded-lg border border-foreground/15 bg-foreground/5 p-1.5 text-foreground/70 hover:text-foreground transition-colors"
+                        className="p2-kontrolka flex items-center justify-center p-2 p2-cichy hover:text-[hsl(var(--foreground))]"
                         title="Otwórz pełny obraz"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -627,20 +553,18 @@ export function CzatCanvas({
         <div ref={refKoniecWiadomosci} />
       </div>
 
-      {/* ── 4. KOMPOZYTOR POLECENIA (PROMPT COMPOSER) ── */}
-      <div className="relative z-10 shrink-0 border-t border-foreground/[0.06] bg-foreground/[0.02] p-2.5 space-y-2">
-        {/* Podgląd skompilowanego prompta dla ciekawych */}
+      {/* Kompozytor: podgląd (na żądanie), uwagi, podpowiedzi, chipy pinesek, jedno pole i jeden przycisk */}
+      <div className="shrink-0 space-y-2">
         {otwartyPodglad && podgladPolecenia && (
-          <div className="max-h-28 overflow-y-auto rounded-xl border border-foreground/15 bg-background/90 p-2 text-[10px] text-foreground/70 font-mono scrollbar-none">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <p className="font-bold uppercase text-foreground/40">Kontrakt z modelem:</p>
+          <div className="p2-sekcja max-h-40 overflow-y-auto p-2.5 font-mono text-[10.5px] leading-relaxed p2-cichy scrollbar-none">
+            <div className="mb-1 flex items-center justify-between gap-2 font-sans">
+              <span className="p2-etykieta">Prompt wysłany do modelu</span>
               <button
                 type="button"
                 onClick={kopiujPolecenie}
-                title="Kopiuj cały prompt"
-                className="flex items-center gap-1 rounded-md px-1.5 py-0.5 font-sans text-[10px] font-semibold text-foreground/55 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+                className="flex items-center gap-1 text-[11px] font-medium hover:text-[hsl(var(--foreground))]"
               >
-                {skopiowano ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                {skopiowano ? <Check className="h-3 w-3 p2-akcent" /> : <Copy className="h-3 w-3" />}
                 {skopiowano ? 'Skopiowano' : 'Kopiuj'}
               </button>
             </div>
@@ -648,17 +572,16 @@ export function CzatCanvas({
           </div>
         )}
 
-        {/* Ostrzeżenia i walidacja */}
         {uwagi.length > 0 && (
           <div className="space-y-1">
             {uwagi.map(u => (
               <div
                 key={u.id}
                 className={cn(
-                  'rounded-lg px-2 py-1 text-[10px] leading-snug flex items-center gap-1.5',
+                  'flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] leading-snug',
                   u.waga === 'blokada'
-                    ? 'bg-destructive/10 nb-tekst-bledu border border-destructive/25'
-                    : 'bg-amber-500/10 text-foreground border border-amber-500/35',
+                    ? 'bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]'
+                    : 'bg-[hsl(var(--foreground)/0.06)] text-[hsl(var(--foreground))]',
                 )}
               >
                 <Info className="h-3 w-3 shrink-0" />
@@ -668,47 +591,41 @@ export function CzatCanvas({
           </div>
         )}
 
-        {/* Smart-chip: podpowiedź pineski dla pisanego fragmentu */}
         {podpowiedzi.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-primary/25 bg-primary/[0.06] px-2 py-1.5">
-            <span className="text-[9.5px] font-semibold text-primary/80 mr-0.5">
-              „{fragment}…" →
-            </span>
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="mr-0.5 text-[11px] p2-cichy">„{fragment}…" →</span>
             {podpowiedzi.map(({ p, idx }) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => zastosujPodpowiedz(p, idx)}
-                className="flex items-center gap-1 rounded-full border border-primary/40 bg-card/70 px-2 py-0.5 text-[10px] font-medium text-foreground hover:bg-primary/20 hover:text-primary transition-all"
+                className="p2-kontrolka p2-akcent-rant flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[hsl(var(--foreground))]"
                 title={`Wstaw jako oznaczony obiekt (pineska ${idx + 1})`}
               >
-                <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={13} />
+                <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={14} />
                 {etykietaPineski(p, idx + 1)}
               </button>
             ))}
           </div>
         )}
 
-        {/* Chipy pinów jako szybkie wstawki */}
         {pineski.length > 0 && (
           <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[9.5px] text-foreground/40 font-semibold mr-0.5">Wstaw:</span>
             {pineski.map((p, idx) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => wstawChip(p, idx + 1)}
-                className="flex items-center gap-1 rounded-full border border-foreground/[0.08] bg-card/60 px-2 py-0.5 text-[10px] font-medium text-foreground/75 hover:border-primary/40 hover:text-primary transition-all"
+                className="p2-kontrolka flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium p2-cichy hover:text-[hsl(var(--foreground))]"
+                title="Wstaw nazwę obiektu do polecenia"
               >
-                <LebekPinezki chroniona={p.chroniona} rozmiar={13} />
-                @{etykietaPineski(p, idx + 1)}
+                <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={14} />@{etykietaPineski(p, idx + 1)}
               </button>
             ))}
           </div>
         )}
 
-        {/* Pole tekstowe z przyciskiem generuj */}
-        <div className="relative rounded-xl border border-foreground/15 bg-card/50 p-1.5 focus-within:border-primary/60 transition-colors shadow-inner">
+        <div className="p2-sekcja p-2.5 transition-[border-color,box-shadow] duration-200 focus-within:border-[hsl(var(--primary)/0.4)] focus-within:shadow-[inset_0_1px_3px_0_hsl(var(--foreground)/0.04),0_0_0_1px_hsl(var(--primary)/0.2)]">
           <textarea
             ref={refTextarea}
             value={tekst}
@@ -726,81 +643,57 @@ export function CzatCanvas({
             }}
             placeholder={
               pineski.length === 0
-                ? 'Wbij pineskę na zdjęciu, a potem opisz zmianę...'
+                ? 'Wbij pinezkę i opisz zmianę…'
                 : pineski.length === 1
-                  ? `Napisz co zrobić z obiektem ${etykietaPineski(pineski[0], 1)}...`
-                  : 'Napisz polecenie (np. przenieś obiekt 1 na miejsce 2)...'
+                  ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?`
+                  : 'np. przenieś obiekt 1 na miejsce 2'
             }
-            className="w-full resize-none bg-transparent px-2 py-1 text-[11.5px] text-foreground outline-none placeholder:text-foreground/35 min-h-[38px] max-h-[80px]"
+            aria-label="Polecenie"
+            className="max-h-[96px] min-h-[44px] w-full resize-none bg-transparent p-1 text-[13px] text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
           />
-
-          <div className="flex items-center justify-between border-t border-foreground/[0.06] pt-1.5 px-1">
-            <div className="flex items-center gap-1.5">
-              {/* Automatycznie rozpoznana intencja przez Gemini AI */}
-              <div
-                className="flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10.5px] font-semibold text-primary"
-                title="Automatycznie rozpoznana intencja zadania"
-              >
-                <Sparkles className="h-3 w-3 text-primary animate-pulse" />
-                <span>{INTENCJE.find(i => i.id === intencja)?.nazwa || 'Auto'}</span>
-              </div>
-
+          <div className="mt-1 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[11px] p2-cichy">
+              <span title="Automatycznie rozpoznane zadanie" className="font-medium">
+                {INTENCJE.find(i => i.id === intencja)?.nazwa || 'Auto'}
+              </span>
               <button
                 type="button"
                 onClick={() => setOtwartyPodglad(v => !v)}
-                className="text-[10px] text-foreground/40 hover:text-foreground transition-colors"
-                title="Pokaż podgląd promptu wysyłanego do Runware"
+                className="underline-offset-2 transition-colors hover:text-[hsl(var(--foreground))] hover:underline"
+                title="Pokaż prompt wysyłany do modelu"
               >
-                {otwartyPodglad ? 'Ukryj kontrakt' : 'Podgląd'}
+                {otwartyPodglad ? 'Ukryj prompt' : 'Prompt'}
               </button>
-
-              {podgladPolecenia && (
-                <button
-                  type="button"
-                  onClick={kopiujPolecenie}
-                  className="flex items-center gap-1 text-[10px] text-foreground/40 transition-colors hover:text-foreground"
-                  title="Kopiuj prompt wysłany do modelu"
-                  aria-label="Kopiuj prompt"
-                >
-                  {skopiowano ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-                  {skopiowano ? 'Skopiowano' : 'Kopiuj'}
-                </button>
-              )}
             </div>
-
-            {/* Przycisk Generuj */}
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
               className={cn(
-                'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all shadow-sm',
+                'flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-[12.5px] font-semibold transition-all active:scale-[0.98]',
                 trwa || !tekst.trim() || !!powodBlokady
-                  ? 'bg-foreground/10 text-foreground/30 cursor-not-allowed'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 shadow-primary/20',
+                  ? 'cursor-not-allowed bg-[hsl(var(--foreground)/0.08)] text-[hsl(var(--muted-foreground))]'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90',
               )}
             >
               {trwa ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Pracuję...</span>
+                  Pracuję…
                 </>
               ) : (
                 <>
-                  <Send className="h-3 w-3" />
-                  <span>Generuj</span>
-                  <span className="opacity-80 text-[10px]">({BYTE_ZA_OBRAZ}⟠)</span>
+                  <Send className="h-3.5 w-3.5" />
+                  Generuj
+                  <span className="font-mono text-[10.5px] opacity-75">{BYTE_ZA_OBRAZ}⟠</span>
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {powodBlokady && (
-          <p className="text-[10px] text-muted-foreground text-center">{powodBlokady}</p>
-        )}
+        {powodBlokady && <p className="text-center text-[11px] p2-cichy">{powodBlokady}</p>}
       </div>
     </div>
     </div>
   )
 }
-
