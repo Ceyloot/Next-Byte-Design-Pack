@@ -45,3 +45,13 @@ Skrót konfiguracji: `1z/1p` = 1 zdjęcie, 1 pinezka · `1z/2p` = 1 zdjęcie, 2 
 1. Numer testu i wersję aplikacji (`vXXXXXXX` z nagłówka czatu).
 2. Przycisk „Prompt” w czacie: pełny prompt wysłany do modelu.
 3. Ocenę 4 kryteriów i jedno zdanie o błędzie, jeśli jest.
+
+## Wyniki (aplikacja na żywo, Runware + Gemini; po poprawkach)
+
+OK: T01–T02 usuń · T03 dodaj (skala; położenie ±) · T04 · T06 zamiana twarzy · T08 ubranie · T09 ubranie z referencji · T10 atrybut · T11 tekstura · T12 pora dnia · T13 pora roku · T14 styl (Gemini 3.1) · T15 efekt · T18 · R01 · R04 · R05.
+Bez widocznej zmiany: T16 (popraw).
+Zablokowane przez aplikację: T07 (zamiana postaci z 1 zdjęcia, K4).
+Do decyzji (tryby zamrożone — nie ruszane): R03 (object swap: obiekt w złym miejscu), R02 (character swap zostawia ubiór sceny), T05 (zniknął drugi obiekt w kadrze).
+Nie testowane: T17 (K3, przesuwanie osoby — wymaga zgody).
+
+Wnioski: krótkie prompty (zadanie + role zdjęć + rozmiar z porównaniem do rzeczy na zdjęciu) dają lepsze wyniki niż prompty ~4–6 tys. znaków; zbliżenia obiektu „do usunięcia” szkodzą; sama liczba % rozmiaru bywa ignorowana, porównanie do znanego obiektu działa.
