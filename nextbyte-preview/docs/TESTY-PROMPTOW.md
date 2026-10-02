@@ -84,3 +84,7 @@ Wnioski: krótkie prompty (zadanie + role zdjęć + rozmiar z porównaniem do rz
 ## Character swap — poprawka po zgłoszeniu (rycerz zostawał w zbroi)
 
 Przyczyna: „zamień X na tę osobę” było rozpoznawane jako zamiana TWARZY (`postac`), a zamrożony prompt character swap zostawiał ubiór sceny. Teraz: bez słowa „twarz” = zamiana całej postaci, krótki prompt z rolami zdjęć i „cały ubiór z referencji”. Test W2 (scena: bluza, referencja: marynarka) 2/2: marynarka z referencji, twarz i włosy z referencji. Uwaga: w teście obie osoby stoją w tej samej pozie, więc „zostaje pozycja sceny” nie jest tu rozróżnialne — warto sprawdzić na zdjęciu z różnymi pozami.
+
+## Buty na osobie (zgłoszenie: dwa buty przy jednej ukrytej nodze, skala)
+
+Dodane do promptów ubrania z referencji i transferu obiektu: rzecz noszona jest skalowana wg części ciała, która ją nosi (nie wg referencji), a rzeczy „w parze” trafiają tylko na widoczne części ciała — nie na ukrytą lub uciętą kończynę. NIE testowane generacją (wyczerpany budżet) — do sprawdzenia na zdjęciu zgłaszającego.
