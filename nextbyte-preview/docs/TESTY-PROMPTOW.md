@@ -107,3 +107,7 @@ Wniosek: dla wstawiania osoby z referencji wersja Studio jest wyraźnie lepsza; 
 ## Test PODJAZD (Lamborghini Urus na podjazd, Nano Banana Pro, Studio)
 
 Wejścia: wycinki ze screenshotu użytkownika (podjazd z czerwonym klasykiem, Urus) z usuniętymi pinezkami. Polecenie „wstaw ten samochód na podjeździe”, wersja Studio, `google:4@2`, temp. 0,72. Wynik: auto na podjeździe, światło i kontakt z kostką naturalne (lekko mokry połysk), scena nietknięta. Rozbieżności: środek auta ok. x=0,54 przy pinezce 0,39 i ok. 1,5–2× za duże względem czerwonego klasyka w tle (przy jednej próbie).
+
+## Test GT40 (domek w górach + Ford GT40, Nano Banana Pro, Studio)
+
+Polecenie „wstaw ten samochód tutaj na podjazd”, pinezki „ford gt40” (auto) i „podjazd” (scena). Pierwszy przebieg: błąd ról pinesek — zdanie „…tutaj na podjazd” było czytane tak, że „podjazd” to obiekt, a zdjęcie z autem — scena (model narysował las z jesiennymi liśćmi pod autem). Poprawka w `role-z-polecenia.ts`: nazwana pinezka po przyimku miejsca („na / w / przy…”) to miejsce, obiektem jest druga. Drugi przebieg: GT40 na bruku podjazdu po prawej od domu, skala wiarygodna (ok. 14–23% szerokości), scena zachowana.

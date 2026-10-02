@@ -209,6 +209,11 @@ function gramatyka(t: Slowo[], wzmianki: Wzmianka[], numeryPinesek: number[] = [
         const przyimek = t.findIndex((s, j) => j > a.poz && PRZYIMEK.has(s.tekst))
         const b = przyimek >= 0 ? inneNiz(a.pin, przyimek + 1) : undefined
         if (b) return { rodzaj: 'wstaw', a: a.pin, b: b.pin }
+        // „wstaw ten samochód tutaj NA podjazd” — jedyna nazwana pineska stoi po przyimku miejsca, więc to ONA jest miejscem, a obiektem jest druga
+        // (bez tego „podjazd” był brany za obiekt i auto lądowało jako płótno — test GT40).
+        const przyimekPrzedA = t.slice(Math.max(0, a.poz - 2), a.poz).some((s) => PRZYIMEK.has(s.tekst))
+        const innaPineska = numeryPinesek.filter((n) => n !== a.pin)
+        if (przyimekPrzedA && numeryPinesek.length === 2 && innaPineska.length === 1) return { rodzaj: 'wstaw', a: innaPineska[0], b: a.pin }
         // „wstaw A w to miejsce / tutaj / tam” — wskazana jest tylko A; przy dwóch pineskach miejscem jest druga
         const wskazanie = t.some((s, j) => /^(miejsce|tutaj|tu|tam|tutej)$/.test(s.tekst) && (j < a.poz || j >= a.poz + a.dl))
         const druga = numeryPinesek.filter(n => n !== a.pin)
