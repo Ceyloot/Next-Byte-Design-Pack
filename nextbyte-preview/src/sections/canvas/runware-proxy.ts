@@ -35,7 +35,7 @@ export interface ZadanieGeneracji {
    * 'gemini31' — object swap w obrębie jednego zdjęcia (Gemini 3.1); brak — Nano Banana 2 Lite.
    */
   klasa?: 'postac' | 'gemini31'
-  /** Wybór użytkownika dla zwykłych edycji: 'lite' (domyślny, szybszy), 'nb2' (Nano Banana 2 / Gemini 3.1) albo 'pro' (Nano Banana Pro). Tryby zablokowane zawsze używają własnego modelu. */
+  /** Wybór użytkownika dla zwykłych edycji: 'lite' (domyślny, szybszy), 'nb2' (Nano Banana 2 / Gemini 3.1) albo 'pro' (Nano Banana Pro). Jawny wybór użytkownika (Lite / NB 2 / Pro) ma pierwszeństwo także w trybach osób i Gemini 3.1; przy „Auto” tryby używają własnego modelu. */
   model?: 'lite' | 'nb2' | 'pro'
 }
 
@@ -136,7 +136,7 @@ export function runwareProxy(): Plugin {
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
         // Operacje na ludziach — Gemini 3.1. Character swap: ZABLOKOWANY_MODEL_POSTACI (zablokowane/character-swap.ts), nie zmieniać.
         const modelZadania =
-          zadanie.klasa === 'postac' ? ZABLOKOWANY_MODEL_POSTACI : zadanie.klasa === 'gemini31' ? 'google:4@3' : zadanie.model === 'nb2' ? 'google:4@3' : zadanie.model === 'pro' ? 'google:4@2' : model
+          zadanie.model === 'pro' ? 'google:4@2' : zadanie.model === 'nb2' ? 'google:4@3' : zadanie.model === 'lite' ? model : zadanie.klasa === 'postac' ? ZABLOKOWANY_MODEL_POSTACI : zadanie.klasa === 'gemini31' ? 'google:4@3' : model
         console.info(`[canvas] generacja modelem ${modelZadania}`)
 
         // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.
