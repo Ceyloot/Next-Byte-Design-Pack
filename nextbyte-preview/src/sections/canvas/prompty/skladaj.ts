@@ -144,6 +144,8 @@ export interface SkladajWynik {
   temperatura?: number
   /** tryb zablokowany: transfer obiektu z drugiego zdjęcia → model Gemini 3.1 (CanvasSection → klasa `gemini31`) */
   gemini31?: boolean
+  /** tryb Studio (wstawianie z referencji): serwer dodaje ustawienia dostawcy jak w Studiu Zdjęć */
+  studio?: boolean
   sekcje: SekcjaPromptu[]
   operacja: OperationId
   nazwaOperacji: string
@@ -295,6 +297,28 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
  */
 export function brickSkali(nrObrazu = 1): string {
   return `SCALE: resolve scale and perspective so the subject fits naturally in the geometry of Image ${nrObrazu} — its size relative to the things around it at that depth (a person is human-sized next to the furniture, a shoe fits the foot that wears it, a car is car-sized next to a door or a boat), feet and contact points placed correctly in 3D space, the head not cropping into the wrong plane. Judge the size from the objects in Image ${nrObrazu}, never from how large the subject looks in its own reference photo.`
+}
+
+/**
+ * TRYB STUDIO — wstawianie osoby / rzeczy z referencji do sceny dokładnie jak w Studiu Zdjęć (PDF „Studio Zdjęć — prompty systemowe”, poz. 3, 13, 7):
+ * zdanie użytkownika + blok „ONE photograph” + „PHOTOGRAPHIC QUALITY” + „REFERENCE ROLES”, temperatura 0.72, bez roli systemowej.
+ * Bez pomiarów, współrzędnych i opisów od reżysera — tylko role zdjęć i pozycja słowami. Szybkie cofnięcie: false.
+ */
+export const TRYB_STUDIO = true
+const STUDIO_JEDNO_ZDJECIE =
+  'ONE photograph captured in-camera, not a composite: subject(s) from the references and the new environment photographed together, same camera, same moment. Relight and color-grade the subject(s) to the destination scene: same light direction, color temperature, softness, white balance, exposure and contrast. Match focal length, eye level, horizon and lens distortion; render true contact shadows, ambient occlusion and ground reflections where the subject touches surfaces. Unified film grain, sensor noise and depth of field — no halos, cut-out edges, sticker look or double lighting.'
+const STUDIO_JAKOSC =
+  'PHOTOGRAPHIC QUALITY: magazine-cover quality photograph with crisp micro-detail on the main subject. Background depth-of-field, bokeh, motion blur, atmospheric haze and any intentionally out-of-focus areas MUST be preserved — never force sharpness across the whole frame.'
+const STUDIO_ROLA = {
+  tlo: (n: number) => `Reference image ${n} is the location and background of the scene — keep its architecture, lighting and mood.`,
+  postac: (n: number) => `Reference image ${n} shows the person who must appear in the image — preserve their exact face, hair, skin tone, body and clothing.`,
+  inne: (n: number) => `Reference image ${n} is a reference described in the prompt — use it exactly as the prompt says.`,
+  produkt: (n: number) => `Reference image ${n} shows the product to depict faithfully — exact shape, colors, materials, labels and proportions; do not redesign it.`,
+}
+
+/** Zdanie użytkownika bez współrzędnych: „(Pin 2 · Image 2 · "mężczyzna" · x=0.50 y=0.30)” → „(mężczyzna, image 2)”. */
+function polecenieBezWspolrzednych(t: string): string {
+  return t.replace(/\(Pin \d+ · Image (\d+)(?: · "([^"]*)")? · x=[\d.]+ y=[\d.]+\)/g, (_m, img: string, nazwa?: string) => `(${nazwa ? `${nazwa}, ` : ''}image ${img})`)
 }
 
 /** Pierwsze zdania opisu światła od reżysera (kierunek, temperatura barwowa, twardość) — reszta to szczegóły, które tylko rozwadniają prompt. */
@@ -580,12 +604,43 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ].join('\n'),
       ].join('\n')
     : ''
+  // WSTAWIANIE Z REFERENCJI W STYLU STUDIA (osoba / rzecz z innego zdjęcia do sceny): patrz TRYB_STUDIO.
+  const studioMode =
+    TRYB_STUDIO &&
+    !ruchWKadrze &&
+    !czescTryb &&
+    !cechaTryb &&
+    !sceneria &&
+    cel !== undefined &&
+    ((['object_transfer', 'object_swap', 'character_transfer'].includes(op.id) && zrodlo !== undefined && zrodlo.obraz !== cel.obraz) ||
+      (op.id === 'addition' && dawca !== null))
+  const sekcjaStudio = studioMode && cel
+    ? (() => {
+        const osoba = op.id === 'character_transfer'
+        const donorzy = w.obrazy.filter((o) => o.numer !== cel.obraz)
+        const role = [
+          STUDIO_ROLA.tlo(cel.obraz),
+          ...donorzy.map((o) => (donorzy.length > 1 && o.numer !== w.twarzObraz ? STUDIO_ROLA.inne(o.numer) : osoba || o.numer === w.twarzObraz ? STUDIO_ROLA.postac(o.numer) : STUDIO_ROLA.produkt(o.numer))),
+        ]
+        const pozycja = `Position in Image ${cel.obraz}: ${nazwaPinu(cel) ? `${nazwaPinu(cel)} — ` : ''}${polozenieDokladne(cel.x, cel.y)} (x=${wsp(cel.x)} y=${wsp(cel.y)}). The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ' The subject replaces whatever stands there — remove that completely.' : ''}`
+        return [
+          polecenieBezWspolrzednych(w.polecenie.trim()),
+          pozycja,
+          brickSkali(cel.obraz),
+          STUDIO_JEDNO_ZDJECIE,
+          STUDIO_JAKOSC,
+          `REFERENCE ROLES: ${role.join(' ')}`,
+        ].join('\n\n')
+      })()
+    : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
         { klucz: 'user', tekst: sekcjaUzytkownika },
         { klucz: 'rules', tekst: sekcjaReguRuchu },
       ]
+    : studioMode
+    ? [{ klucz: 'task', tekst: sekcjaStudio }]
     : dodajKrotko
     ? [{ klucz: 'task', tekst: sekcjaDodaj }]
     : twarzKrotko
@@ -605,8 +660,9 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
-    temperatura: twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
+    system: studioMode || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
+    temperatura: studioMode ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
+    studio: studioMode || undefined,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
     gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || op.id === 'clothing_change' || op.id === 'character_transfer' || undefined,
     sekcje,

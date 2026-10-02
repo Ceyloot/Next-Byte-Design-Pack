@@ -37,6 +37,8 @@ export interface ZadanieGeneracji {
   klasa?: 'postac' | 'gemini31'
   /** Wybór użytkownika dla zwykłych edycji: 'lite' (domyślny, szybszy), 'nb2' (Nano Banana 2 / Gemini 3.1) albo 'pro' (Nano Banana Pro). Jawny wybór użytkownika (Lite / NB 2 / Pro) ma pierwszeństwo także w trybach osób i Gemini 3.1; przy „Auto” tryby używają własnego modelu. */
   model?: 'lite' | 'nb2' | 'pro'
+  /** tryb Studio (wstawianie z referencji): dostawca dostaje `providerSettings.google.safetyTolerance`, jak w Studiu Zdjęć */
+  studio?: boolean
 }
 
 /** Żądanie rozpoznania obiektu pod pineską */
@@ -170,6 +172,7 @@ export function runwareProxy(): Plugin {
                 deliveryMethod: 'sync',
                 includeCost: true,
                 ...(zUstawieniach(zUstawieniami) ? { settings } : {}),
+                ...(zadanie.studio && zUstawieniami ? { providerSettings: { google: { safetyTolerance: 'off' } } } : {}),
               },
             ]),
           }).then(r => r.json() as Promise<{

@@ -1035,6 +1035,7 @@ export function CanvasSection() {
           : zadanieModelu?.gemini31
             ? ('gemini31' as const)
             : undefined,
+        studio: zadanieModelu?.studio,
         // 'auto' = bez wyboru: serwer sam dobiera model do zadania (zwykłe edycje Lite, tryby postaci i Gemini 3.1 — własny)
         model: modelObrazu === 'auto' ? undefined : modelObrazu,
       }
