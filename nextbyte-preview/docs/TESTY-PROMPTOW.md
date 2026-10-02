@@ -73,3 +73,10 @@ Wnioski: krótkie prompty (zadanie + role zdjęć + rozmiar z porównaniem do rz
 - Zadania globalne bez pinezek (G12: pora dnia): OK (plan reżysera przyjmuje samą intencję).
 - Transfer z 2. zdjęcia (G4, G18): pozycja OK; lampart w dobrej skali, auto nadal duże (ok. 2× za duże).
 - Object swap z 2 zdjęć (G3 → G3b): położenie poprawione z x≈0,54 do ≈0,32 (pinezka 0,22), skala nadal ok. 2× za duża (ok. 30% szerokości zamiast ok. 13%). Dalszy krok do sprawdzenia: wycięcie referencji wokół obiektu (żeby model nie widział auta „na pełnym kadrze”).
+
+## Ostatnia tura (referencja wycinana wokół obiektu, T07, Gemini 3.1 dla osób)
+
+- Object swap łódź → auto (H3 ×2): 1/2 dobre (auto ok. 8,5% szerokości, x≈0,26 przy pinezce 0,22), 1/2 za duże (33%) — rozmiar zmierzony przez reżysera waha się 13–19% między przebiegami, model skaluje w przybliżeniu proporcjonalnie.
+- T07 zamiana dwóch osób na jednym zdjęciu: OK 2/2 (twarze i włosy zamienione, ciała na miejscu).
+- Ubranie na Gemini 3.1 (V8): OK. Transfer osoby z drugiego zdjęcia (V9): OK.
+- Regresja zamrożonych: ruch w kadrze, character swap, zmiana części, scenerie — prompt bez zmian względem 731b258.
