@@ -737,7 +737,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   const HorizontalNav = () => (
     <div
       ref={navRef}
-      className={cn('relative z-[500] px-3 sm:px-4 w-full shrink-0', navPosition === 'bottom' ? 'pt-2 pb-3' : 'pt-3 pb-2')}
+      className={cn(
+        'relative z-[500] px-3 sm:px-4 w-full shrink-0',
+        navPosition === 'bottom' ? 'pt-2 pb-3' : 'pt-3 pb-2',
+        // Canvas: pasek pływa nad płótnem, żeby przesunięte pod niego zdjęcia prześwitywały przez szkło
+        activeTab === 'canvas' && (navPosition === 'bottom' ? 'absolute bottom-0 left-0' : 'absolute left-0 top-0'),
+      )}
       onMouseLeave={scheduleClose}
     >
       <header
@@ -995,7 +1000,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       style={(
         activeTab === 'preview' && podNawigacja.length > 0
           ? { paddingTop: '48px' }
-          : {}
+          : activeTab === 'canvas'
+            ? ({
+                '--nb-canvas-gora': navPosition === 'top' ? '76px' : '16px',
+                '--nb-canvas-dol': navPosition === 'bottom' ? '76px' : '16px',
+              } as React.CSSProperties)
+            : {}
       )}
       >
 

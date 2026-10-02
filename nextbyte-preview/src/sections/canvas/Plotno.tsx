@@ -24,6 +24,8 @@ interface Props {
   onWybierzPineske: (id: string | null) => void
   onZmienWarstwe: (id: string, zmiany: Partial<Warstwa>) => void
   onPrzesunPineske: (id: string, normalizedX: number, normalizedY: number) => void
+  /** pineska została puszczona w nowym miejscu — pora odświeżyć jej opisy */
+  onPineskaPrzesunieta?: (id: string) => void
   onWbijPineske: (layerId: string, normalizedX: number, normalizedY: number) => void
   onUpuscPliki: (pliki: File[]) => void
   ramka?: RamkaObszaru | null
@@ -86,6 +88,7 @@ export function Plotno({
   onWybierzPineske,
   onZmienWarstwe,
   onPrzesunPineske,
+  onPineskaPrzesunieta,
   onWbijPineske,
   onUpuscPliki,
   ramka,
@@ -326,6 +329,7 @@ export function Plotno({
     // Kliknięcie pineski bez przeciągnięcia = otwarcie jej karty. Rozdzielamy
     // to dopiero tutaj, bo w chwili wciśnięcia nie wiadomo, co się stanie.
     if (op?.rodzaj === 'pineska' && !op.ruszony && op.idPineski) onWybierzPineske(op.idPineski)
+    if (op?.rodzaj === 'pineska' && op.ruszony && op.idPineski) onPineskaPrzesunieta?.(op.idPineski)
 
     // Kliknięcie narzędziem ramka bez przeciągnięcia = domyślny obszar roboczy 40% wokół wskazanego punktu
     if (op?.rodzaj === 'ramka' && op.migawka && op.startNormX !== undefined && op.startNormY !== undefined) {
@@ -381,7 +385,7 @@ export function Plotno({
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: 'radial-gradient(circle, hsl(var(--foreground) / 0.13) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, hsl(var(--foreground) / 0.055) 1px, transparent 1px)',
           backgroundSize: `${krokSiatki}px ${krokSiatki}px`,
           backgroundPosition: `${widok.x}px ${widok.y}px`,
         }}
@@ -565,6 +569,36 @@ export function Plotno({
                 onMouseLeave={() => setPodKursorem(s => (s === p.id ? null : s))}
               />
 
+              {/* Lupa przy przeciąganiu — mały podgląd tego, co jest pod szpicem pineski */}
+              {wReku && (() => {
+                const LUPA = 124
+                const POWIEKSZENIE = 1.6
+                const szer = warstwa.width * widok.zoom * POWIEKSZENIE
+                const wys = warstwa.height * widok.zoom * POWIEKSZENIE
+                return (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute overflow-hidden rounded-2xl border border-white/40 shadow-[0_14px_40px_-8px_rgba(0,0,0,0.65)]"
+                    style={{
+                      left: 30,
+                      top: -LUPA - 34,
+                      width: LUPA,
+                      height: LUPA,
+                      backgroundColor: 'hsl(var(--background))',
+                      backgroundImage: `url("${warstwa.src}")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: `${szer}px ${wys}px`,
+                      backgroundPosition: `${LUPA / 2 - p.normalizedX * szer}px ${LUPA / 2 - p.normalizedY * wys}px`,
+                    }}
+                  >
+                    {/* Celownik w punkcie pineski */}
+                    <span className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.5)]" />
+                    <span className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.5)]" />
+                    <span className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-black/20" />
+                  </div>
+                )
+              })()}
+
               {/* Dymek przy najechaniu — nazwa obiektu obok łebka */}
               {najechana && !aktywna && !wReku && (
                 <div
@@ -576,7 +610,10 @@ export function Plotno({
                     pointerEvents: 'none',
                   }}
                 >
-                  <div className="nb-szklo nb-szklo-plynne nb-szklo-canvas flex items-center gap-2 whitespace-nowrap rounded-lg border border-foreground/[0.08] px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-xl">
+                  <div
+                    className="nb-szklo nb-szklo-plynne nb-powierzchnia flex items-center gap-2 whitespace-nowrap rounded-xl border border-foreground/12 px-3 py-1.5 text-[11px] font-medium text-foreground"
+                    style={{ backgroundColor: 'hsl(var(--card) / 0.5)', WebkitBackdropFilter: 'blur(18px) saturate(170%)', backdropFilter: 'blur(18px) saturate(170%)' }}
+                  >
                     {p.chroniona && <Lock className="h-3 w-3 text-muted-foreground" />}
                     {etykietaPineski(p, i + 1)}
                     <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
@@ -596,7 +633,7 @@ export function Plotno({
           <div
             className={cn(
               'relative flex flex-col items-center max-w-md w-full p-8 rounded-3xl text-center',
-              'nb-szklo nb-szklo-plynne nb-szklo-canvas border border-foreground/[0.08] shadow-2xl backdrop-blur-2xl',
+              'nb-szklo nb-szklo-plynne nb-powierzchnia border border-foreground/[0.08] backdrop-blur-2xl',
               nadPlotnem ? 'border-primary/70 bg-primary/10' : 'bg-card/60',
             )}
             style={{

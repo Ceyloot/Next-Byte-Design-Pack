@@ -23,11 +23,11 @@ export function Dok({ k }: { k: KontekstDoku }) {
         // `.is-glass .nb-szklo` ustawia `position: relative` i ma wyższą
         // wagę niż klasa `absolute`, więc panel ze szkłem nie może sam
         // być kotwiczony.
-        'pointer-events-auto absolute right-3 top-3 bottom-3 z-30 transition-[width] duration-200',
+        'pointer-events-auto absolute right-3 top-[calc(var(--nb-canvas-gora,16px)-4px)] bottom-3 z-30 transition-[width] duration-200',
         zwiniety ? 'w-11' : 'w-[264px]',
       )}
     >
-      <div className="nb-szklo nb-szklo-canvas flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/70 shadow-2xl">
+      <div className="nb-szklo nb-szklo-plynne nb-powierzchnia flex h-full w-full flex-col overflow-hidden rounded-2xl border border-foreground/12">
       <button
         onClick={() => setZwiniety(v => !v)}
         title={zwiniety ? 'Rozwiń panel' : 'Zwiń panel'}

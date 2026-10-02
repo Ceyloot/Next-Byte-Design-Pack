@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Loader2, Sparkles, Trash2, TriangleAlert, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { etykietaPineski, wytnijOkolice, type Pineska, type Warstwa } from './typy'
+import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa } from './typy'
 import { BYTE_ZA_OBRAZ } from './dostawca'
 import { INTENCJE, type Intencja } from './polecenia'
 import type { Uwaga } from './kontrola-polecenia'
@@ -87,13 +87,13 @@ export function PasekPolecenia({
     <div className="pointer-events-auto w-[min(620px,calc(100vw-96px))]">
       {/* Podgląd tego, co poleci do modelu */}
       {otwartyPodglad && podglad && (
-        <div className="mb-2 max-h-40 overflow-y-auto nb-szklo nb-szklo-canvas rounded-2xl border border-border/60 bg-card/70 p-3 shadow-2xl scrollbar-none">
+        <div className="mb-2 max-h-40 overflow-y-auto nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/12 p-3 scrollbar-none">
           <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-foreground/40">Co poleci do modelu</p>
           <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/60">{podglad}</pre>
         </div>
       )}
 
-      <div className="nb-szklo nb-szklo-canvas rounded-2xl border border-border/60 bg-card/70 p-2 shadow-2xl">
+      <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/12 p-2">
         {/* Chipy zaznaczonych obiektów */}
         {pineski.length > 0 && (
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5 px-1 pt-0.5">
@@ -150,7 +150,7 @@ export function PasekPolecenia({
             </button>
 
             {menuTrybu && (
-              <div className="nb-szklo nb-szklo-canvas absolute bottom-full left-0 mb-1.5 w-56 overflow-hidden rounded-xl border border-border/60 bg-card/70 p-1 shadow-2xl">
+              <div className="nb-szklo nb-szklo-plynne nb-powierzchnia absolute bottom-full left-0 mb-1.5 w-56 overflow-hidden rounded-xl border border-foreground/12 p-1">
                 {INTENCJE.map(i => (
                   <button
                     key={i.id}
@@ -219,7 +219,7 @@ export function PasekPolecenia({
         </p>
       ))}
 
-      {powodBlokady && (
+      {powodBlokady && !uwagi.some(u => u.tresc === powodBlokady) && (
         <p className="mt-1.5 text-center text-[10.5px] text-foreground/30">{powodBlokady}</p>
       )}
     </div>
@@ -248,13 +248,13 @@ function Chip({
   useEffect(() => {
     if (!warstwa) return
     let aktualne = true
-    wytnijOkolice(warstwa.src, pineska.normalizedX, pineska.normalizedY, 48).then(d => {
+    wytnijPodgladPineski(warstwa.src, pineska, 48).then(d => {
       if (aktualne) setWycinek(d)
     })
     return () => {
       aktualne = false
     }
-  }, [warstwa, pineska.normalizedX, pineska.normalizedY])
+  }, [warstwa, pineska])
 
   return (
     <span className="group flex items-center gap-1.5 rounded-lg bg-foreground/[0.07] py-1 pl-1 pr-1.5 ring-1 ring-border/10">

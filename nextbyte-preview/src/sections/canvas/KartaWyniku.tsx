@@ -14,7 +14,7 @@ export function KartaWyniku({ stan, onZamknij }: { stan: StanGeneracji; onZamkni
   if (stan.faza === 'bezczynny') return null
 
   return (
-    <div className="nb-szklo nb-szklo-canvas pointer-events-auto mb-2 rounded-2xl border border-border/60 bg-card/70 p-2.5 shadow-2xl">
+    <div className="nb-szklo nb-szklo-plynne nb-powierzchnia pointer-events-auto mb-2 rounded-2xl border border-foreground/12 p-2.5">
       {stan.faza === 'planuje' && <Praca tresc="Asystent ogląda zdjęcia…" />}
 
       {stan.faza === 'trwa' && (
