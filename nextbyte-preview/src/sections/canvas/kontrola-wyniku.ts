@@ -94,7 +94,8 @@ export async function wykryjNakladke(
  * (sama rekompresja JPG daje ~1).
  */
 export async function czyBezZmian(wynikSrc: string, oryginalSrc: string): Promise<boolean | null> {
-  const szare = async (src: string) => {
+  // Kolor, nie odcienie szarości: zmiana koloru (niebieskie auto → czerwone) ma podobną jasność, więc w szarościach wyglądała na „bez zmian” (T10).
+  const rgb = async (src: string) => {
     const obrazek = await wczytaj(src)
     if (!obrazek) return null
     const plotno = document.createElement('canvas')
@@ -104,24 +105,22 @@ export async function czyBezZmian(wynikSrc: string, oryginalSrc: string): Promis
     if (!g) return null
     g.drawImage(obrazek, 0, 0, 64, 64)
     try {
-      const { data } = g.getImageData(0, 0, 64, 64)
-      const wynik = new Float32Array(64 * 64)
-      for (let i = 0; i < wynik.length; i++) wynik[i] = data[i * 4] * 0.3 + data[i * 4 + 1] * 0.59 + data[i * 4 + 2] * 0.11
-      return wynik
+      return g.getImageData(0, 0, 64, 64).data
     } catch {
       return null
     }
   }
-  const [a, b] = await Promise.all([szare(wynikSrc), szare(oryginalSrc)])
+  const [a, b] = await Promise.all([rgb(wynikSrc), rgb(oryginalSrc)])
   if (!a || !b) return null
+  const n = a.length / 4
   let suma = 0
   let zmienione = 0
-  for (let i = 0; i < a.length; i++) {
-    const d = Math.abs(a[i] - b[i])
+  for (let i = 0; i < n; i++) {
+    const d = (Math.abs(a[i * 4] - b[i * 4]) + Math.abs(a[i * 4 + 1] - b[i * 4 + 1]) + Math.abs(a[i * 4 + 2] - b[i * 4 + 2])) / 3
     suma += d
     if (d > 30) zmienione++
   }
   // Mały obiekt (auto na podjeździe) prawie nie rusza średniej całego kadru,
   // więc liczy się też garstka wyraźnie zmienionych pikseli.
-  return suma / a.length < 3 && zmienione < a.length * 0.003
+  return suma / n < 3 && zmienione < n * 0.003
 }

@@ -508,6 +508,19 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ].join('\n'),
       ].join('\n')
     : ''
+  // UBRANIE Z REFERENCJI (krótki prompt): jak przy zamianie twarzy — role zdjęć + „tylko ubiór”, reszta kadru (tło, światło) bez zmian (T09: tło traciło poświatę).
+  const ubranieKrotko = op.id === 'clothing_change' && cel !== undefined && zrodlo !== undefined && zrodlo.obraz !== cel.obraz
+  const sekcjaUbranie = ubranieKrotko && cel && zrodlo
+    ? [
+        '[TASK]',
+        `Image ${cel.obraz} is the BASE photograph${nazwaPinu(cel) ? `: ${nazwaPinu(cel)}` : ''}. Image ${zrodlo.obraz} is only the OUTFIT reference${nazwaPinu(zrodlo) ? `: ${nazwaPinu(zrodlo)}` : ''}.`,
+        `Edit Image ${cel.obraz}: dress the person at Pin ${cel.numer} (x=${wsp(cel.x)} y=${wsp(cel.y)}) in the outfit of Pin ${zrodlo.numer} of Image ${zrodlo.obraz} — the same garments, cut, colour, pattern and details, fitted to the body with natural folds. Keep from Image ${cel.obraz} everything else exactly: face, hair, pose, hands, the whole background and its light, crop. Take nothing but the garments from Image ${zrodlo.obraz}.`,
+        '',
+        sekcjaUzytkownika,
+        '',
+        `[RULES]\nThe new garments are lit by Image ${cel.obraz}'s light, with its grain. The background, its glow and colours stay pixel-for-pixel as in Image ${cel.obraz}.`,
+      ].join('\n')
+    : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
@@ -518,6 +531,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? [{ klucz: 'task', tekst: sekcjaDodaj }]
     : twarzKrotko
     ? [{ klucz: 'task', tekst: sekcjaTwarz }]
+    : ubranieKrotko
+    ? [{ klucz: 'task', tekst: sekcjaUbranie }]
     : [
         { klucz: 'task', tekst: sekcjaZadania },
         { klucz: 'user', tekst: sekcjaUzytkownika },
@@ -525,10 +540,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: twarzKrotko ? undefined : system,
-    temperatura: twarzKrotko ? undefined : temperatura,
+    system: twarzKrotko || ubranieKrotko ? undefined : system,
+    temperatura: twarzKrotko || ubranieKrotko ? undefined : temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
-    gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || undefined,
+    gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,

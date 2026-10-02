@@ -11,9 +11,9 @@ export const STYLE_CHANGE: Operation = {
   ],
   dawca: 'opcjonalny',
   czystaPlyta: false,
-  misja: `Recreate the exact content and composition of {{IMAGE_TARGET}} in the style requested in the USER request (style reference: {{IMAGE_DONOR}} if present).`,
+  misja: `Repaint {{IMAGE_TARGET}} as a real hand-made work in the style requested in the USER request (style reference: {{IMAGE_DONOR}} if present): the authentic marks of that medium — brush strokes, pigment, paper or canvas grain, line work — with simplified detail, clearly NOT a photograph with a filter. Keep the same subject, composition and the mood of the colours.`,
   kroki: [
-    `Keep the content, composition and proportions, but replace the photographic rendering with the real look of the requested medium: its characteristic marks, edges, colour handling and surface texture, clearly visible — not a light filter over a photograph.`,
     `Apply the style evenly across the whole frame.`,
   ],
+
 }

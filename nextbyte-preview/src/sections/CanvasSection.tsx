@@ -1161,7 +1161,8 @@ export function CanvasSection() {
         }
       }
 
-      if (ocenaPoPoprawce && pomiar?.cel) {
+      // Pomiar >40% szerokości kadru to błąd pomiaru (jak w planie — bezpiecznik), nie wynik: nie wolno z niego robić „Do poprawy” (T03).
+      if (ocenaPoPoprawce && pomiar?.cel && pomiar.szer <= 40) {
         const zmierzone = `Pomiar: obiekt ma ${Math.round(pomiar.szer)}% szerokości kadru (cel ok. ${Math.round(pomiar.cel)}%)${pomiar.bledy.length ? ` — nadal ${pomiar.bledy.join('; ')}` : ''}.`
         ocenaPoPoprawce = {
           ...ocenaPoPoprawce,
