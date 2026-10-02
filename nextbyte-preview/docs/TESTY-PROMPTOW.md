@@ -55,3 +55,15 @@ Do decyzji (tryby zamrożone — nie ruszane): R03 (object swap: obiekt w złym 
 Nie testowane: T17 (K3, przesuwanie osoby — wymaga zgody).
 
 Wnioski: krótkie prompty (zadanie + role zdjęć + rozmiar z porównaniem do rzeczy na zdjęciu) dają lepsze wyniki niż prompty ~4–6 tys. znaków; zbliżenia obiektu „do usunięcia” szkodzą; sama liczba % rozmiaru bywa ignorowana, porównanie do znanego obiektu działa.
+
+## Tryby zamrożone — tylko test (bez zmian w kodzie) i tymczasowo zamrożone
+
+| Tryb | Wynik |
+|---|---|
+| Ruch w kadrze (F1, R01) | OK 2/2 (łódź przeniesiona, stara usunięta) |
+| Character swap 2 zdjęcia (F2, R02) | OK z zastrzeżeniem: tożsamość z referencji, ubiór bywa ze sceny |
+| Object swap 2 zdjęcia (F3 ×3, R03) | BŁĄD 4/4: obiekt ok. 25–30% szerokości zamiast ok. 7% i przesunięty w prawo od pinezki |
+| Object swap w pokoju (F4) | pozycja OK, skala duża |
+| Transfer z 2. zdjęcia (T04, T18) | OK 2/2 |
+| Zmiana części (R04, P1–P3) | OK 4/4 |
+| Zmiana scenerii (R05, S1–S3) | OK 4/4 |
