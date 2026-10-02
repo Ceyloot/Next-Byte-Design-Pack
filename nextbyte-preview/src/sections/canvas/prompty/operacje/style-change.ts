@@ -13,7 +13,7 @@ export const STYLE_CHANGE: Operation = {
   czystaPlyta: false,
   misja: `Recreate the exact content and composition of {{IMAGE_TARGET}} in the style requested in the USER request (style reference: {{IMAGE_DONOR}} if present).`,
   kroki: [
-    `Keep every object, position, proportion and edge; change only the rendering.`,
+    `Keep the content, composition and proportions, but replace the photographic rendering with the real look of the requested medium: its characteristic marks, edges, colour handling and surface texture, clearly visible — not a light filter over a photograph.`,
     `Apply the style evenly across the whole frame.`,
   ],
 }
