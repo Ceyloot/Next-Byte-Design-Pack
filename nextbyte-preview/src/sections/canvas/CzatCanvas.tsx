@@ -289,20 +289,18 @@ export function CzatCanvas({
             'group relative flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5',
             'nb-szklo nb-szklo-plynne nb-szklo-canvas',
             'border border-foreground/[0.08] shadow-2xl backdrop-blur-2xl transition-all duration-200',
-            'hover:border-primary/40 hover:scale-105 active:scale-95',
+            'hover:border-foreground/25 active:scale-95',
           )}
           title="Rozwiń Chat Canvas"
         >
-          {/* Accent glow line */}
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-          <div className="relative flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Sparkles className="h-4 w-4 animate-pulse" />
+          <div className="relative flex h-7 w-7 items-center justify-center rounded-xl bg-foreground/[0.07] text-foreground">
+            <Sparkles className="h-4 w-4" />
           </div>
           <div className="flex flex-col text-left">
             <span className="text-[12px] font-bold text-foreground flex items-center gap-1.5">
               Canvas AI
               {pineski.length > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/20 px-1 text-[9px] font-extrabold text-primary">
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground/10 px-1 text-[9px] font-semibold text-foreground">
                   {pineski.length}
                 </span>
               )}
@@ -323,7 +321,7 @@ export function CzatCanvas({
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 p2-akcent" />
+            <Sparkles className="h-4 w-4 p2-cichy" />
             <span className="text-[14px] font-semibold tracking-tight text-[hsl(var(--foreground))]">Canvas</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -351,7 +349,7 @@ export function CzatCanvas({
             {pineski.length < 10 && (
               <button
                 onClick={onWlaczNarzędziePineska}
-                className="p2-kontrolka flex items-center gap-1 px-2 py-1 text-[11px] font-medium p2-akcent"
+                className="p2-kontrolka flex items-center gap-1 px-2 py-1 text-[11px] font-medium p2-cichy hover:text-[hsl(var(--foreground))]"
                 title="Wbij pineskę (P)"
               >
                 <Pin className="h-3 w-3" /> Pinezka
@@ -371,7 +369,7 @@ export function CzatCanvas({
                   onClick={() => onWybierzPineske(p.id)}
                   className={cn(
                     'p2-kontrolka group flex cursor-pointer items-center gap-2 px-2 py-1.5',
-                    wybranaPineska === p.id && 'p2-akcent-rant',
+                    wybranaPineska === p.id && 'border-[hsl(var(--foreground)/0.3)]',
                   )}
                 >
                   <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={22} />
@@ -410,7 +408,7 @@ export function CzatCanvas({
           >
             {/* Wiadomość użytkownika */}
             {msg.rola === 'uzytkownik' && (
-              <div className="p2-akcent-tlo max-w-[88%] rounded-[14px] px-3 py-2 text-[12.5px] text-[hsl(var(--foreground))]">
+              <div className="bg-[hsl(var(--foreground)/0.07)] max-w-[88%] rounded-[14px] px-3 py-2 text-[12.5px] text-[hsl(var(--foreground))]">
                 <p className="leading-relaxed">{msg.tresc}</p>
                 {msg.pineskiSnap && msg.pineskiSnap.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1">
@@ -474,7 +472,7 @@ export function CzatCanvas({
                     <div className="flex items-center gap-1.5 pt-1">
                       <button
                         onClick={() => onWstawNaPlotno(msg.obrazUrl!, msg.nazwaWyniku || 'Wynik AI')}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-primary py-2 text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-foreground py-2 text-[12px] font-semibold text-background transition-colors hover:bg-foreground/85"
                       >
                         <Layers className="h-3 w-3" />
                         Wstaw na płótno
@@ -496,7 +494,7 @@ export function CzatCanvas({
 
         {/* Trwający proces generacji / stan */}
         {trwa && (
-          <div className="flex items-center gap-2.5 rounded-2xl bg-primary/10 border border-primary/25 p-3 text-[12px] text-primary">
+          <div className="flex items-center gap-2.5 rounded-2xl border border-foreground/10 bg-foreground/[0.04] p-3 text-[12px] text-foreground">
             <Loader2 className="h-4 w-4 animate-spin shrink-0" />
             <div className="flex-1">
               <p className="font-semibold text-[11.5px]">
@@ -506,7 +504,7 @@ export function CzatCanvas({
                 {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
                 {stanGeneracji.faza === 'koryguje' && `Poprawiam rozmiar i miejsce: ${stanGeneracji.powod}`}
               </p>
-              <p className="text-[10px] text-primary/75 mt-0.5">
+              <p className="text-[10px] text-muted-foreground mt-0.5">
                 {stanGeneracji.faza === 'trwa' && stanGeneracji.role
                   ? stanGeneracji.role
                   : 'Nie ruszam nieoznaczonych elementów sceny.'}
@@ -517,9 +515,9 @@ export function CzatCanvas({
 
         {/* Pytanie o role pinesek — zamiast zgadywać, jedno kliknięcie */}
         {stanGeneracji.faza === 'pyta' && (
-          <div className="rounded-2xl border border-primary/25 bg-primary/10 p-2.5 text-[11.5px] text-foreground">
+          <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.04] p-2.5 text-[11.5px] text-foreground">
             <div className="mb-2 flex items-start gap-2">
-              <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="font-semibold leading-snug">{stanGeneracji.pytanie.tresc}</span>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -528,7 +526,7 @@ export function CzatCanvas({
                   key={opcja.etykieta}
                   type="button"
                   onClick={() => onOdpowiedzRol(opcja)}
-                  className="rounded-xl border border-foreground/10 bg-background/40 px-2.5 py-1.5 text-left text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary active:scale-[0.98]"
+                  className="rounded-xl border border-foreground/10 bg-background/40 px-2.5 py-1.5 text-left text-[11px] font-medium text-foreground transition-colors hover:border-foreground/30 active:scale-[0.98]"
                 >
                   {opcja.etykieta}
                 </button>
@@ -564,7 +562,7 @@ export function CzatCanvas({
                 onClick={kopiujPolecenie}
                 className="flex items-center gap-1 text-[11px] font-medium hover:text-[hsl(var(--foreground))]"
               >
-                {skopiowano ? <Check className="h-3 w-3 p2-akcent" /> : <Copy className="h-3 w-3" />}
+                {skopiowano ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 {skopiowano ? 'Skopiowano' : 'Kopiuj'}
               </button>
             </div>
@@ -599,7 +597,7 @@ export function CzatCanvas({
                 key={p.id}
                 type="button"
                 onClick={() => zastosujPodpowiedz(p, idx)}
-                className="p2-kontrolka p2-akcent-rant flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[hsl(var(--foreground))]"
+                className="p2-kontrolka flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[hsl(var(--foreground))]"
                 title={`Wstaw jako oznaczony obiekt (pineska ${idx + 1})`}
               >
                 <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={14} />
@@ -625,7 +623,7 @@ export function CzatCanvas({
           </div>
         )}
 
-        <div className="p2-sekcja p-2.5 transition-[border-color,box-shadow] duration-200 focus-within:border-[hsl(var(--primary)/0.4)] focus-within:shadow-[inset_0_1px_3px_0_hsl(var(--foreground)/0.04),0_0_0_1px_hsl(var(--primary)/0.2)]">
+        <div className="p2-sekcja p-2.5 transition-[border-color,box-shadow] duration-200 focus-within:border-[hsl(var(--foreground)/0.25)]">
           <textarea
             ref={refTextarea}
             value={tekst}
@@ -672,7 +670,7 @@ export function CzatCanvas({
                 'flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-[12.5px] font-semibold transition-all active:scale-[0.98]',
                 trwa || !tekst.trim() || !!powodBlokady
                   ? 'cursor-not-allowed bg-[hsl(var(--foreground)/0.08)] text-[hsl(var(--muted-foreground))]'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90',
+                  : 'bg-foreground text-background hover:bg-foreground/85',
               )}
             >
               {trwa ? (

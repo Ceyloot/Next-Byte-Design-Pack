@@ -73,7 +73,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
             }}
             placeholder={pineska.analizowana ? 'Rozpoznaję…' : 'Nazwij obiekt'}
             aria-label="Nazwa obiektu"
-            className="p2-sekcja min-w-0 flex-1 bg-transparent px-2.5 py-1.5 text-[13px] text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)] focus:border-[hsl(var(--primary)/0.5)]"
+            className="p2-sekcja min-w-0 flex-1 bg-transparent px-2.5 py-1.5 text-[13px] text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)] focus:border-[hsl(var(--foreground)/0.3)]"
           />
           <button
             title="Usuń pineskę (Delete)"
@@ -93,7 +93,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onChron
                 onClick={() => onNazwa(s)}
                 className={cn(
                   'p2-kontrolka px-2 py-0.5 text-[11.5px]',
-                  pineska.label === s ? 'p2-akcent-tlo' : 'p2-cichy hover:text-[hsl(var(--foreground))]',
+                  pineska.label === s ? 'bg-foreground/[0.09] text-foreground' : 'p2-cichy hover:text-[hsl(var(--foreground))]',
                 )}
               >
                 {s}
@@ -149,7 +149,7 @@ function PrzyciskTrybu({
       title={tytul}
       className={cn(
         'p2-kontrolka flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap px-2 py-1.5 text-[12px] font-medium',
-        aktywny ? 'p2-akcent-tlo p2-akcent-rant font-semibold' : 'p2-cichy hover:text-[hsl(var(--foreground))]',
+        aktywny ? 'bg-foreground/[0.09] text-foreground font-semibold' : 'p2-cichy hover:text-[hsl(var(--foreground))]',
       )}
     >
       {ikona}

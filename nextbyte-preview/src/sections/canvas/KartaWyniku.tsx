@@ -86,7 +86,7 @@ export function KartaWyniku({ stan, onZamknij }: { stan: StanGeneracji; onZamkni
 function Praca({ tresc }: { tresc: string }) {
   return (
     <div className="flex items-center gap-2.5 px-0.5 text-[12px] text-foreground/70">
-      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
       {tresc}
     </div>
   )

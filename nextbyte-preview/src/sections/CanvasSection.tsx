@@ -1348,11 +1348,11 @@ export function CanvasSection() {
                   onClick={() => uruchomAkcjeAI(w.id, aid)}
                   className={cn(
                     'flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11.5px] font-medium transition-colors',
-                    akcjaAI === aid ? 'bg-primary/15 text-primary' : 'text-foreground hover:bg-foreground/[0.07]',
+                    akcjaAI === aid ? 'bg-foreground/[0.08] text-foreground' : 'text-foreground hover:bg-foreground/[0.07]',
                     akcjaAI && akcjaAI !== aid && 'opacity-40',
                   )}
                 >
-                  {akcjaAI === aid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ikona className="h-3.5 w-3.5 text-primary" />}
+                  {akcjaAI === aid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ikona className="h-3.5 w-3.5 text-muted-foreground" />}
                   {etykieta}
                 </button>
               ))}
@@ -1605,7 +1605,7 @@ export function CanvasSection() {
                   className={cn(
                     'group flex cursor-default items-center gap-2 rounded-xl p-1.5 transition-colors border',
                     wybranaWarstwa === w.id
-                      ? 'border-primary/40 bg-primary/15'
+                      ? 'border-foreground/15 bg-foreground/[0.06]'
                       : 'border-transparent hover:bg-foreground/5',
                   )}
                 >
@@ -1668,13 +1668,13 @@ function Narzedzie({
       className={cn(
         'relative flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-150 active:scale-95',
         aktywne
-          ? 'p2-akcent-tlo shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.25)]'
+          ? 'bg-foreground/[0.09] text-foreground'
           : 'p2-cichy hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',
       )}
     >
       {children}
       {odznaka !== undefined && (
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-semibold text-background">
           {odznaka}
         </span>
       )}

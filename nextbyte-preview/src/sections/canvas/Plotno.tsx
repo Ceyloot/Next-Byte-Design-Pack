@@ -420,8 +420,8 @@ export function Plotno({
                 width: warstwa.width,
                 height: warstwa.height,
                 transform: `rotate(${warstwa.rotation}deg)`,
-                outline: zaznaczona ? `${2 * odwrotna}px solid #38bdf8` : undefined,
-                boxShadow: '0 24px 60px -30px rgba(0,0,0,0.9)',
+                outline: zaznaczona ? `${1.5 * odwrotna}px solid hsl(var(--foreground) / 0.9)` : undefined,
+                boxShadow: "0 8px 28px -12px rgba(0,0,0,0.35)",
                 cursor: narzedzie === 'pineska' || narzedzie === 'ramka' ? 'crosshair' : 'move',
               }}
             >
@@ -460,7 +460,7 @@ export function Plotno({
                       width: bok,
                       height: bok,
                       background: 'hsl(var(--background))',
-                      border: `${2 * odwrotna}px solid #38bdf8`,
+                      border: `${1.5 * odwrotna}px solid hsl(var(--foreground) / 0.9)`,
                       borderRadius: 3 * odwrotna,
                       cursor: r.kursor,
                     }}
@@ -597,16 +597,13 @@ export function Plotno({
             className={cn(
               'relative flex flex-col items-center max-w-md w-full p-8 rounded-3xl text-center',
               'nb-szklo nb-szklo-plynne nb-szklo-canvas border border-foreground/[0.08] shadow-2xl backdrop-blur-2xl',
-              nadPlotnem ? 'border-primary/70 bg-primary/10' : 'bg-card/60',
+              nadPlotnem ? 'border-foreground/40' : 'bg-card/60',
             )}
             style={{
-              boxShadow: '0 24px 60px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.16)',
+              boxShadow: '0 12px 32px -12px rgba(0, 0, 0, 0.25)',
             }}
           >
-            {/* Accent hairline */}
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary mb-4 border border-primary/25 shadow-[0_0_24px_hsl(var(--primary)/0.25)]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground/[0.06] text-foreground mb-4">
               <Sparkles className="h-7 w-7" />
             </div>
             <h2 className="text-xl font-bold text-foreground tracking-tight">Canvas Studio AI</h2>
@@ -620,7 +617,7 @@ export function Plotno({
                 <button
                   type="button"
                   onClick={onZaladujDemo}
-                  className="flex-1 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+                  className="flex-1 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-foreground text-background font-semibold text-xs hover:bg-foreground/85 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   <Zap className="h-4 w-4" />
                   Załaduj demo (Transfer)
@@ -646,7 +643,7 @@ export function Plotno({
       )}
 
       {nadPlotnem && warstwy.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 border-2 border-dashed border-primary/60 bg-primary/5" />
+        <div className="pointer-events-none absolute inset-0 border border-dashed border-foreground/40" />
       )}
 
       <style>{STYL_PINEZKI}</style>
