@@ -90,6 +90,18 @@
   -webkit-backdrop-filter: var(--p2-blur-sekcja);
 }
 
+/* Szkło paneli pływających (Canvas): półprzezroczyste, z mocnym rozmyciem —
+   zdjęcia i płótno przesunięte pod panel są widoczne, ale tekst zostaje czytelny. */
+.p2-szklo {
+  position: relative;
+  border: 1px solid hsl(var(--foreground) / 0.12);
+  border-radius: var(--p2-promien);
+  background: color-mix(in srgb, hsl(var(--card)) 42%, transparent);
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.14), 0 14px 40px -12px hsl(0 0% 0% / 0.55);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+
 /* Kontrolka: wiersz listy, przycisk wtórny, pole wyboru */
 .p2-kontrolka {
   border: 1px solid var(--p2-rant);

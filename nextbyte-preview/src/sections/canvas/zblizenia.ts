@@ -8,7 +8,7 @@
  * do zmierzonego rozmiaru obiektu, który tam stanie.
  */
 import { opiszOsobeSzczegolowo, opiszRzeczZRamka } from './dostawca'
-import type { Pineska, Warstwa } from './typy'
+import type { Pineska, RamkaObiektu, Warstwa } from './typy'
 
 export interface Zblizenie {
   src: string
@@ -74,17 +74,19 @@ const naPiksele = (okno: Okno, box: [number, number, number, number]) => ({
   y1: okno.sy + (Math.max(box[0], box[2]) / 1000) * okno.bok,
 })
 
-/** Zbliżenie RZECZY pod pinem: ramka od Gemini → wycinek z oryginału. null, gdy rzecz wypełnia całe okno albo analiza zawiodła. */
-export async function zblizenieRzeczy(src: string, x: number, y: number): Promise<string | null> {
-  const o = await wczytaj(src)
-  if (!o) return null
+/** Ramka rzeczy pod pinem (px oryginału) z Gemini; null, gdy analiza zawiodła albo rzecz jest pomijalnie mała. */
+async function znajdzRamkeRzeczy(
+  o: HTMLImageElement,
+  x: number,
+  y: number,
+): Promise<{ r: { x0: number; y0: number; x1: number; y1: number }; wypelnienie: number } | null> {
   const okno = oknoKwadratowe(o, x, y, 0.5)
   if (!okno) return null
   const { box } = await opiszRzeczZRamka(okno.src)
   if (!box) return null
   let r = naPiksele(okno, box)
   let wypelnienie = Math.max(r.x1 - r.x0, r.y1 - r.y0) / okno.bok
-  if (wypelnienie > 0.8 || wypelnienie < 0.02) return null
+  if (wypelnienie < 0.02) return null
   // Mała rzecz w dużym oknie (np. odległy domek): ramka bywa nieprecyzyjna i łapie sąsiada — drugie, ciaśniejsze
   // przejście: okno ~4× rozmiar rzeczy wokół jej środka daje dokładniejszą ramkę.
   if (wypelnienie < 0.15) {
@@ -105,7 +107,35 @@ export async function zblizenieRzeczy(src: string, x: number, y: number): Promis
       }
     }
   }
-  return wytnijZOryginalu(o, r, 0.25)
+  return { r, wypelnienie }
+}
+
+/** Zbliżenie RZECZY pod pinem: ramka od Gemini → wycinek z oryginału. null, gdy rzecz wypełnia całe okno albo analiza zawiodła. */
+export async function zblizenieRzeczy(src: string, x: number, y: number): Promise<string | null> {
+  const o = await wczytaj(src)
+  if (!o) return null
+  const znaleziona = await znajdzRamkeRzeczy(o, x, y)
+  if (!znaleziona || znaleziona.wypelnienie > 0.8) return null
+  return wytnijZOryginalu(o, znaleziona.r, 0.25)
+}
+
+/**
+ * Ramka CAŁEJ rzeczy pod pinem, w ułamkach kadru (0–1) — do podglądu przy pineskach.
+ * Pineska bywa wbita w skrawek (maska auta), a podgląd ma pokazać cały obiekt, nie ten skrawek.
+ * Zwraca null, gdy ramki nie da się ustalić — wtedy podgląd zostaje szerokim kadrem wokół pinu.
+ */
+export async function ramkaRzeczyPodPinem(src: string, x: number, y: number): Promise<RamkaObiektu | null> {
+  const o = await wczytaj(src)
+  if (!o) return null
+  const znaleziona = await znajdzRamkeRzeczy(o, x, y)
+  if (!znaleziona) return null
+  const { r } = znaleziona
+  return {
+    x0: r.x0 / o.naturalWidth,
+    y0: r.y0 / o.naturalHeight,
+    x1: r.x1 / o.naturalWidth,
+    y1: r.y1 / o.naturalHeight,
+  }
 }
 
 /** Zbliżenie OBSZARU wokół pinu: szerokość proporcjonalna do zmierzonego rozmiaru obiektu (ułamek szerokości kadru). */

@@ -98,6 +98,15 @@ export function ZnacznikPineski({
         role="img"
       >
         <defs>
+          <linearGradient id={`wyp-${id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#ffffff" />
+            <stop offset="1" stopColor="#dbe6f5" />
+          </linearGradient>
+          <linearGradient id={`wyp-akt-${id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#ffffff" />
+            <stop offset="0.55" stopColor="#bcdcfb" />
+            <stop offset="1" stopColor="#5aa9f2" />
+          </linearGradient>
           <filter id={`cien-${id}`} x="-60%" y="-40%" width="220%" height="200%">
             <feDropShadow
               dx="0"
@@ -123,15 +132,17 @@ export function ZnacznikPineski({
               Sam ciemny obrys ginął na ciemnych zdjęciach. */}
           <path
             d={KROPLA}
-            fill={aktywna ? GRAFIT : '#ffffff'}
+            fill={aktywna ? `url(#wyp-akt-${id})` : `url(#wyp-${id})`}
             stroke={aktywna ? '#ffffff' : 'rgba(0,0,0,0.22)'}
             strokeWidth={aktywna ? 1.5 : 1}
             filter={`url(#cien-${id})`}
           />
+          {/* Miękki połysk na główce — pinezka wygląda jak szklana kropla */}
+          <ellipse cx={GLOWKA.x - 4} cy={GLOWKA.y - 6.5} rx={5} ry={3} fill="#ffffff" opacity={aktywna ? 0.55 : 0.7} />
 
           {chroniona ? (
             // Kłódka zamiast numeru — „nie ruszaj” czytelne w sekundę
-            <g stroke={aktywna ? '#ffffff' : GRAFIT} strokeWidth={1.9} fill="none" strokeLinecap="round">
+            <g stroke={GRAFIT} strokeWidth={1.9} fill="none" strokeLinecap="round">
               <path d={`M ${GLOWKA.x - 3.2} ${GLOWKA.y - 0.5} v -2.4 a 3.2 3.2 0 0 1 6.4 0 v 2.4`} />
               <rect
                 x={GLOWKA.x - 5}
@@ -139,7 +150,7 @@ export function ZnacznikPineski({
                 width={10}
                 height={7.5}
                 rx={1.8}
-                fill={aktywna ? '#ffffff' : GRAFIT}
+                fill={GRAFIT}
                 stroke="none"
               />
             </g>
@@ -151,7 +162,7 @@ export function ZnacznikPineski({
               dominantBaseline="central"
               fontSize={numer > 9 ? 11.5 : 13.5}
               fontWeight={800}
-              fill={aktywna ? '#ffffff' : GRAFIT}
+              fill={GRAFIT}
               style={{ fontFamily: 'inherit', userSelect: 'none' }}
             >
               {numer}
@@ -205,14 +216,29 @@ export function LebekPinezki({
   chroniona?: boolean
   rozmiar?: number
 }) {
+  const id = useId().replace(/:/g, '')
+  // Szklana, mocno zamglona kropla: mleczny gradient z jasną krawędzią i połyskiem —
+  // wygląda jak matowe szkło, ale pozostaje dobrze widoczna na ciemnym i jasnym tle.
   return (
     <svg width={rozmiar * (24 / 28)} height={rozmiar} viewBox="0 0 24 28" className="shrink-0" aria-hidden="true">
+      <defs>
+        <linearGradient id={`lebek-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.98" />
+          <stop offset="0.6" stopColor="#dcebfb" stopOpacity="0.94" />
+          <stop offset="1" stopColor="#a9cdf3" stopOpacity="0.92" />
+        </linearGradient>
+        <filter id={`lebek-cien-${id}`} x="-40%" y="-30%" width="180%" height="170%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#000000" floodOpacity="0.35" />
+        </filter>
+      </defs>
       <path
         d="M 12 1.5 C 7.03 1.5 3 5.53 3 10.5 C 3 17.25 12 27 12 27 C 12 27 21 17.25 21 10.5 C 21 5.53 16.97 1.5 12 1.5 Z"
-        fill="#ffffff"
-        stroke="rgba(0,0,0,0.35)"
-        strokeWidth={1.2}
+        fill={`url(#lebek-${id})`}
+        stroke="rgba(255,255,255,0.75)"
+        strokeWidth={1}
+        filter={`url(#lebek-cien-${id})`}
       />
+      <ellipse cx="9.2" cy="6" rx="3.6" ry="2.1" fill="#ffffff" opacity="0.65" />
       {chroniona ? (
         <g stroke={GRAFIT} strokeWidth={1.8} fill="none" strokeLinecap="round">
           <path d="M 9.6 10.6 v -2 a 2.4 2.4 0 0 1 4.8 0 v 2" />

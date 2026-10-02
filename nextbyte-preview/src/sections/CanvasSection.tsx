@@ -17,6 +17,7 @@ import {
   Upload,
   Wand2,
   ZoomIn,
+  ZoomOut,
   Sun,
   Aperture,
   Eraser,
@@ -26,7 +27,7 @@ import {
 import { cn } from '@/lib/utils'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
-import { CzatCanvas } from '@/sections/canvas/CzatCanvas'
+import { CzatCanvas, type ModelObrazu } from '@/sections/canvas/CzatCanvas'
 import {
   generuj,
   nazwijWynik,
@@ -54,7 +55,7 @@ import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/opera
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
-import { referencjaWokolRzeczy, zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
+import { ramkaRzeczyPodPinem, referencjaWokolRzeczy, zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
@@ -178,6 +179,17 @@ export function CanvasSection() {
   })
 
   const [narzedzie, setNarzedzie] = useState<Narzedzie>('wybor')
+  // Model zwykłych edycji — pamiętany między sesjami. Tryby zablokowane (postać, Gemini 3.1) mają własny.
+  const [modelObrazu, setModelObrazu] = useState<ModelObrazu>(() => {
+    try {
+      const zapisany = localStorage.getItem('canvas-model-obrazu')
+      return zapisany === 'lite' || zapisany === 'nb2' || zapisany === 'pro' ? zapisany : 'auto'
+    } catch { return 'auto' }
+  })
+  const zmienModelObrazu = (m: ModelObrazu) => {
+    setModelObrazu(m)
+    try { localStorage.setItem('canvas-model-obrazu', m) } catch { /* brak dostępu do pamięci — wybór działa do końca sesji */ }
+  }
   const [wybranaWarstwa, setWybranaWarstwa] = useState<string | null>(() => {
     try {
       const zapisany = localStorage.getItem(KLUCZ_ZAPISU)
@@ -200,6 +212,35 @@ export function CanvasSection() {
   })
   const [widok, setWidok] = useState<Widok>({ x: 50, y: 60, zoom: 0.72 })
   const [menuDodawania, setMenuDodawania] = useState(false)
+  /** Zoom wokół środka płótna (okno minus prawy panel czatu), żeby widok „nie uciekał". */
+  const zmienZoom = (czynnik: number) => {
+    setWidok(w => {
+      const zoom = Math.min(6, Math.max(0.05, w.zoom * czynnik))
+      const cx = (window.innerWidth - 380) / 2
+      const cy = window.innerHeight / 2
+      const k = zoom / w.zoom
+      return { x: cx - (cx - w.x) * k, y: cy - (cy - w.y) * k, zoom }
+    })
+  }
+
+  /** Dopasuj widok: obejmij wszystkie widoczne zdjęcia z marginesem, bez nachodzenia na panele. */
+  const dopasujWidok = () => {
+    const widoczne = projekt.warstwy.filter(w => w.visible)
+    if (widoczne.length === 0) return setWidok({ x: 90, y: 70, zoom: 0.7 })
+    const x0 = Math.min(...widoczne.map(w => w.x))
+    const y0 = Math.min(...widoczne.map(w => w.y))
+    const x1 = Math.max(...widoczne.map(w => w.x + w.width))
+    const y1 = Math.max(...widoczne.map(w => w.y + w.height))
+    const dostepnaSzer = window.innerWidth - 380 - 120
+    const dostepnaWys = window.innerHeight - 180
+    const zoom = Math.min(1, Math.max(0.05, Math.min(dostepnaSzer / (x1 - x0), dostepnaWys / (y1 - y0))))
+    setWidok({
+      x: 80 + (dostepnaSzer - (x1 - x0) * zoom) / 2 - x0 * zoom,
+      y: 90 + (dostepnaWys - (y1 - y0) * zoom) / 2 - y0 * zoom,
+      zoom,
+    })
+  }
+
   const [stanGeneracji, setStanGeneracji] = useState<StanGeneracji>({ faza: 'bezczynny' })
   const [ostatniPrompt, setOstatniPrompt] = useState<string | null>(null)
   const [panelWarstw, setPanelWarstw] = useState(false)
@@ -502,6 +543,14 @@ export function CanvasSection() {
         // Jak w Lovart: pineska to tylko punkt + nazwa. Bez „analizy” wymiarów
         // (zgadywała rozmiar widocznego kawałka); skalę mierzy reżyser przy generacji.
         const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
+        // Ramka całego obiektu — tylko do podglądu przy pineskach (pineska bywa wbita w skrawek, np. maskę auta).
+        // Nie blokuje nazwy: nazwa pojawia się od razu, ramka dochodzi chwilę później.
+        void ramkaRzeczyPodPinem(warstwa.src, normalizedX, normalizedY)
+          .then(ramka => {
+            if (!ramka) return
+            setProjekt(p => ({ ...p, pineski: p.pineski.map(x => (x.id === pineska.id ? { ...x, ramka } : x)) }))
+          })
+          .catch(() => undefined)
         const zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
         const zeSceny = projekt.warstwy.find(w => w.id === layerId)?.obiekty ?? []
         const nazwy = zWycinka.length > 0 ? [...zWycinka, ...zeSceny].slice(0, 6) : zeSceny.slice(0, 6)
@@ -522,6 +571,49 @@ export function CanvasSection() {
     },
     [projekt.warstwy, projekt.pineski.length],
   )
+
+  /* Po przesunięciu pineski opisy przestają pasować do nowego miejsca — rozpoznajemy je od nowa.
+     Nazwę zamieniamy tylko wtedy, gdy była automatyczna (pusta albo jedna z propozycji):
+     nazwa wpisana ręcznie zostaje. Numer przebiegu odrzuca spóźnione odpowiedzi po kolejnym ruchu. */
+  const projektRef = useRef(projekt)
+  projektRef.current = projekt
+  const przebiegRozpoznania = useRef<Record<string, number>>({})
+  const rozpoznajPineskePonownie = useCallback((id: string) => {
+    const pin = projektRef.current.pineski.find(x => x.id === id)
+    const warstwa = pin && projektRef.current.warstwy.find(w => w.id === pin.layerId)
+    if (!pin || !warstwa) return
+    const przebieg = (przebiegRozpoznania.current[id] = (przebiegRozpoznania.current[id] ?? 0) + 1)
+    const etykietaAutomatyczna = !pin.label.trim() || (pin.sugestie ?? []).includes(pin.label)
+    const { normalizedX, normalizedY } = pin
+    setProjekt(p => ({ ...p, pineski: p.pineski.map(x => (x.id === id ? { ...x, analizowana: true, ramka: undefined } : x)) }))
+    void (async () => {
+      const aktualny = () => przebiegRozpoznania.current[id] === przebieg
+      void ramkaRzeczyPodPinem(warstwa.src, normalizedX, normalizedY)
+        .then(ramka => {
+          if (!ramka || !aktualny()) return
+          setProjekt(p => ({ ...p, pineski: p.pineski.map(x => (x.id === id ? { ...x, ramka } : x)) }))
+        })
+        .catch(() => undefined)
+      const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
+      const zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
+      if (!aktualny()) return
+      const zeSceny = warstwa.obiekty ?? []
+      const nazwy = zWycinka.length > 0 ? [...zWycinka, ...zeSceny].slice(0, 6) : zeSceny.slice(0, 6)
+      setProjekt(p => ({
+        ...p,
+        pineski: p.pineski.map(x =>
+          x.id === id
+            ? {
+                ...x,
+                analizowana: false,
+                sugestie: nazwy,
+                label: etykietaAutomatyczna ? nazwy[0] || x.label : x.label,
+              }
+            : x,
+        ),
+      }))
+    })()
+  }, [])
 
   const zmienPineske = useCallback((id: string, zmiany: Partial<Pineska>) => {
     setProjekt(p => ({ ...p, pineski: p.pineski.map(x => (x.id === id ? { ...x, ...zmiany } : x)) }))
@@ -933,6 +1025,8 @@ export function CanvasSection() {
           : zadanieModelu?.gemini31
             ? ('gemini31' as const)
             : undefined,
+        // 'auto' = bez wyboru: serwer sam dobiera model do zadania (zwykłe edycje Lite, tryby postaci i Gemini 3.1 — własny)
+        model: modelObrazu === 'auto' ? undefined : modelObrazu,
       }
 
       setOstatniPrompt(
@@ -1344,6 +1438,7 @@ export function CanvasSection() {
         onWybierzPineske={setWybranaPineska}
         onZmienWarstwe={zmienWarstwe}
         onPrzesunPineske={(id, x, y) => zmienPineske(id, { normalizedX: x, normalizedY: y, analiza: undefined })}
+        onPineskaPrzesunieta={rozpoznajPineskePonownie}
         onWbijPineske={wbijPineske}
         onUpuscPliki={pliki => wstawPliki(pliki, 'upuszczenie')}
         ramka={projekt.ramka}
@@ -1453,11 +1548,12 @@ export function CanvasSection() {
               wszystko, co wystaje poza jego obrys (contain: paint). */}
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute h-3 w-3 rotate-45 rounded-[2px] border border-foreground/[0.08]"
+            className="pointer-events-none absolute h-3.5 w-3.5 rotate-45 rounded-[4px] border border-border/60"
             style={{
-              top: kartaPozycja.ogonY - 6,
-              [kartaPozycja.naLewo ? 'right' : 'left']: -6,
-              background: 'hsl(var(--card) / 0.92)',
+              top: kartaPozycja.ogonY - 7,
+              [kartaPozycja.naLewo ? 'right' : 'left']: -7,
+              background: 'hsl(var(--card) / 0.9)',
+              clipPath: kartaPozycja.naLewo ? 'polygon(0 0, 100% 0, 100% 100%)' : 'polygon(0 0, 100% 100%, 0 100%)',
             }}
           />
           <KartaPineski
@@ -1466,17 +1562,14 @@ export function CanvasSection() {
             warstwa={kartaPozycja.warstwa}
             onNazwa={label => zmienPineske(kartaPozycja.pineska.id, { label })}
             onUsun={() => usunPineske(kartaPozycja.pineska.id)}
-            onChron={() =>
-              zmienPineske(kartaPozycja.pineska.id, { chroniona: !kartaPozycja.pineska.chroniona })
-            }
             onZamknij={() => setWybranaPineska(null)}
           />
         </div>
       )}
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="p2 pointer-events-none absolute left-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
-        <div className="p2-karta p2-pow-1 pointer-events-auto relative flex flex-col items-center gap-1 p-1.5">
+      <div className="p2 !bg-transparent pointer-events-none absolute left-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
+        <div className="p2-szklo pointer-events-auto relative flex flex-col items-center gap-1 p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
             tytul="Wybór i przesuwanie (V)"
@@ -1543,10 +1636,20 @@ export function CanvasSection() {
             <Layers className="h-4 w-4" />
           </Narzedzie>
 
-          {/* Reset / Dopasuj widok */}
+          <span className="my-0.5 h-px w-5 bg-[hsl(var(--foreground)/0.1)]" />
+
+          {/* Przybliż / oddal — wokół środka widocznego płótna */}
+          <Narzedzie tytul="Przybliż (+)" onClick={() => zmienZoom(1.25)}>
+            <ZoomIn className="h-4 w-4" />
+          </Narzedzie>
+          <Narzedzie tytul="Oddal (−)" onClick={() => zmienZoom(0.8)}>
+            <ZoomOut className="h-4 w-4" />
+          </Narzedzie>
+
+          {/* Dopasuj widok do wszystkich zdjęć na płótnie */}
           <Narzedzie
-            tytul="Dopasuj widok (Reset zoom)"
-            onClick={() => setWidok({ x: 90, y: 70, zoom: 0.7 })}
+            tytul="Dopasuj widok do zdjęć"
+            onClick={dopasujWidok}
           >
             <Maximize className="h-4 w-4" />
           </Narzedzie>
@@ -1597,6 +1700,11 @@ export function CanvasSection() {
         onZmienNazwePineski={(id, label) => zmienPineske(id, { label })}
         onWlaczNarzędziePineska={() => setNarzedzie('pineska')}
         onGeneruj={uruchomGeneracje}
+        modelObrazu={modelObrazu}
+        onModelObrazu={zmienModelObrazu}
+        onDodajPlik={() => refPlik.current?.click()}
+        onWklejZeSchowka={wstawZeSchowka}
+        onDodajZAdresu={wstawZAdresu}
         onOdpowiedzRol={opcja => {
           odpowiedzRol.current = { odcisk: odciskPinesek(projekt.pineski), opcja }
           uruchomGeneracje()
@@ -1612,8 +1720,8 @@ export function CanvasSection() {
 
       {/* ══ Panel warstw (wysuwany) ══ */}
       {panelWarstw && (
-        <div className="p2 absolute left-20 top-4 z-20 w-64">
-          <div className="p2-karta p2-pow-1 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150">
+        <div className="p2 !bg-transparent absolute left-20 top-[var(--nb-canvas-gora,16px)] z-20 w-64">
+          <div className="p2-szklo overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150">
             <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-foreground/45 flex items-center justify-between">
               <span>Zdjęcia na płótnie ({projekt.warstwy.length})</span>
               <button
@@ -1670,7 +1778,7 @@ export function CanvasSection() {
       )}
 
       {/* ══ Zoom Indicator ══ */}
-      <div className="p2 pointer-events-none absolute bottom-4 left-4 z-20"><div className="p2-kontrolka px-2 py-0.5 font-mono text-[11px] p2-cichy">
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] left-4 z-20"><div className="p2-kontrolka px-2 py-0.5 font-mono text-[11px] p2-cichy">
         {Math.round(widok.zoom * 100)}%
       </div></div>
     </div>

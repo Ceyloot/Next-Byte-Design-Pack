@@ -57,6 +57,14 @@ export const KOLORY_PINESEK = [
  * mówić w poleceniu jako o konkretnej rzeczy, zamiast opisywać słowami,
  * który z siedmiu obiektów na zdjęciu masz na myśli.
  */
+/** Prostokąt w ułamkach kadru (0–1). */
+export interface RamkaObiektu {
+  x0: number
+  y0: number
+  x1: number
+  y1: number
+}
+
 export interface Pineska {
   id: string
   layerId: string
@@ -87,6 +95,8 @@ export interface Pineska {
    * więc skala zamiany wynika z liczb, a nie z obrysu starego obiektu.
    */
   analiza?: AnalizaPineski
+  /** Ramka całego obiektu pod pineską (z rozpoznawania) — tylko do podglądu, nie trafia do modelu. */
+  ramka?: RamkaObiektu
 }
 
 export interface AnalizaPineski {
@@ -309,6 +319,39 @@ export function wytnijOkolice(
       if (!g) return resolve('')
       g.drawImage(obrazek, sx, sy, zrodloBok, zrodloBok, 0, 0, bok, bok)
       resolve(plotno.toDataURL('image/png'))
+    }
+    obrazek.onerror = () => resolve('')
+    obrazek.src = src
+  })
+}
+
+/**
+ * Podgląd obiektu przy pineskach: gdy znamy ramkę obiektu — kwadrat obejmujący
+ * go w całości z zapasem (pineska w masce auta pokazuje całe auto); gdy obiekt
+ * zajmuje niemal cały kadr, wychodzi prawie całe zdjęcie — bez sztucznego
+ * przybliżania. Bez ramki: szeroki kadr wokół pinu zamiast ciasnego skrawka.
+ */
+export function wytnijPodgladPineski(src: string, p: Pineska, bok = 96): Promise<string> {
+  const r = p.ramka
+  if (!r) return wytnijOkolice(src, p.normalizedX, p.normalizedY, bok, 0.45)
+  return new Promise(resolve => {
+    const obrazek = new Image()
+    obrazek.onload = () => {
+      const szer = (r.x1 - r.x0) * obrazek.width
+      const wys = (r.y1 - r.y0) * obrazek.height
+      const maks = Math.min(obrazek.width, obrazek.height)
+      const zrodloBok = Math.min(maks, Math.max(48, Math.max(szer, wys) * 1.18))
+      const cx = ((r.x0 + r.x1) / 2) * obrazek.width
+      const cy = ((r.y0 + r.y1) / 2) * obrazek.height
+      const sx = Math.max(0, Math.min(obrazek.width - zrodloBok, cx - zrodloBok / 2))
+      const sy = Math.max(0, Math.min(obrazek.height - zrodloBok, cy - zrodloBok / 2))
+      const plotno = document.createElement('canvas')
+      plotno.width = bok
+      plotno.height = bok
+      const g = plotno.getContext('2d')
+      if (!g) return resolve('')
+      g.drawImage(obrazek, sx, sy, zrodloBok, zrodloBok, 0, 0, bok, bok)
+      resolve(plotno.toDataURL('image/jpeg', 0.9))
     }
     obrazek.onerror = () => resolve('')
     obrazek.src = src
