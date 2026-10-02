@@ -159,10 +159,11 @@ export interface SkladajWynik {
 const wsp = (v: number) => v.toFixed(2)
 
 /** Odwołanie do pineski w treści bricków i operacji. */
-function opisPineski(p: PineskaSklejka, strefy = true): string {
+/** zNazwa: dopisuje nazwę rzeczy pod pinezką (tylko tryby niezamrożone — zamrożone mają własny, niezmienny tekst). */
+function opisPineski(p: PineskaSklejka, strefy = true, zNazwa = false): string {
   // Miejsce docelowe dostaje też strefę kadru słowami — model lepiej trzyma „w prawej części, w dolnej połowie” niż ułamki.
   const strefa = strefy && p.rola === 'target' ? `, ${slowaPolozenia(p.x, p.y, true)}` : ''
-  const nazwa = p.nazwa?.trim() ? `"${p.nazwa.trim()}", ` : ''
+  const nazwa = zNazwa && p.nazwa?.trim() ? `"${p.nazwa.trim()}", ` : ''
   return `Pin ${p.numer} (${nazwa}Image ${p.obraz}, x=${wsp(p.x)} y=${wsp(p.y)}${strefa})`
 }
 
@@ -195,7 +196,7 @@ function miejsceCzyszczenia(operacja: OperationId, pineski: PineskaSklejka[], st
     case 'character_swap':
     case 'removal': {
       const cel = pineski.find((p) => p.rola === 'target' && p.obraz === 1)
-      return cel ? opisPineski(cel, strefy) : 'the object named in the USER request'
+      return cel ? opisPineski(cel, strefy, true) : 'the object named in the USER request'
     }
     case 'object_transfer':
     case 'character_transfer': {
@@ -324,8 +325,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     IMAGE_TARGET: 'Image 1',
     IMAGE_DONOR: dawca ? `Image ${dawca}` : 'the reference described in the USER request',
     DONOR_ROLE: ROLA_DAWCY[op.id] ?? ROLA_INNA,
-    PIN_TARGET: cel ? (swapZablokowany ? zablokowanyOpisPineski(cel) : opisPineski(cel, strefy)) : 'the marked spot',
-    PIN_SOURCE: zrodlo ? (swapZablokowany ? zablokowanyOpisPineski(zrodlo) : opisPineski(zrodlo, strefy)) : 'the source spot',
+    PIN_TARGET: cel ? (swapZablokowany ? zablokowanyOpisPineski(cel) : opisPineski(cel, strefy, !miedzyZdjeciami)) : 'the marked spot',
+    PIN_SOURCE: zrodlo ? (swapZablokowany ? zablokowanyOpisPineski(zrodlo) : opisPineski(zrodlo, strefy, !miedzyZdjeciami)) : 'the source spot',
     PIN_CLEAR: swapZablokowany && cel ? zablokowanyOpisPineski(cel) : czyszczenie ?? 'the cleared spot',
   }
   const podmien = (tekst: string): string =>
@@ -364,7 +365,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   } else if (cechaTryb && cel) {
     const ce = w.cecha!.trim()
     zadanie = [
-      `ATTRIBUTE CHANGE: change ONLY the ${ce} of the subject at ${opisPineski(cel)}, exactly as the USER request describes, to the degree it states.`,
+      `ATTRIBUTE CHANGE: change ONLY the ${ce} of the subject at ${opisPineski(cel, true, true)}, exactly as the USER request describes, to the degree it states.`,
       `The subject stays the same individual or object: same identity, face or form, pose, position, clothing or surface, and framing. A VISIBLE change is required, and it must look like a real photograph of the changed subject — anatomically and physically correct, proportions consistent with the rest of the subject, nothing of the old state left where the change applies.`,
       `The changed parts are lit ONLY by Image 1's light, with the same shading, shadows, skin or surface texture, grain and sharpness as the unchanged parts of the subject. Everything else stays exactly as it is: the rest of the subject, everything around it, the framing and all text.`,
     ].join('\n')
@@ -489,6 +490,24 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ].filter(Boolean).join('\n'),
       ].join('\n')
     : ''
+  // ZAMIANA TWARZY (krótki prompt): każdemu zdjęciu przypisana rola i opis (BAZA / TOŻSAMOŚĆ) + „tylko twarz”. Test T06: długi prompt
+  // z bazą „Image 1” i 4 zdjęciami oddawał całe zdjęcie referencji; wersja z opisem obu zdjęć dała poprawną zamianę 2/2.
+  const twarzKrotko = op.id === 'face_swap' && cel !== undefined && zrodlo !== undefined
+  const nazwaPinu = (p: PineskaSklejka) => (p.nazwa || opisyPinesek.get(p.numer) || '').trim()
+  const sekcjaTwarz = twarzKrotko && cel && zrodlo
+    ? [
+        '[TASK]',
+        `Image ${cel.obraz} is the BASE photograph${nazwaPinu(cel) ? `: ${nazwaPinu(cel)}` : ''}. Image ${zrodlo.obraz} is only the IDENTITY reference${nazwaPinu(zrodlo) ? `: ${nazwaPinu(zrodlo)}` : ''}.`,
+        `Edit Image ${cel.obraz}: give the person at Pin ${cel.numer} (x=${wsp(cel.x)} y=${wsp(cel.y)}) the face of the person at Pin ${zrodlo.numer} of Image ${zrodlo.obraz} — face shape, eyes, nose, mouth, jaw, facial hair and skin marks. Keep from Image ${cel.obraz} everything else: hair, clothing, body, pose, background, light and crop. Take nothing but the face from Image ${zrodlo.obraz} — no clothes, no hair, no background.`,
+        '',
+        sekcjaUzytkownika,
+        '',
+        [
+          '[RULES]',
+          `The new face is lit by Image ${cel.obraz}'s light${w.swiatlo?.trim() ? ` — ${krotkieSwiatlo(w.swiatlo)}` : ''}, with its grain, and no visible seam. Natural skin: pores, no retouching. The result is Image ${cel.obraz}'s photograph with a new face.`,
+        ].join('\n'),
+      ].join('\n')
+    : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
@@ -497,6 +516,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
     : dodajKrotko
     ? [{ klucz: 'task', tekst: sekcjaDodaj }]
+    : twarzKrotko
+    ? [{ klucz: 'task', tekst: sekcjaTwarz }]
     : [
         { klucz: 'task', tekst: sekcjaZadania },
         { klucz: 'user', tekst: sekcjaUzytkownika },
@@ -504,8 +525,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system,
-    temperatura,
+    system: twarzKrotko ? undefined : system,
+    temperatura: twarzKrotko ? undefined : temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
     gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || undefined,
     sekcje,
