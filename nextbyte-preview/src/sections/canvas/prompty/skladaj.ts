@@ -270,6 +270,34 @@ function polozenieSlowami(x: number, y: number): string {
   return `${pion} and ${poziom} of the frame, ${Math.round(x * 100)}% from the left edge and ${Math.round(y * 100)}% down from the top (x=${x.toFixed(2)}, y=${y.toFixed(2)})`
 }
 
+/** Dokładniejsze słowa o położeniu punktu (7 stref w poziomie) — „środek kadru” dla x=0.62 ściągało obiekt do środka (test T03). */
+function polozenieDokladne(x: number, y: number): string {
+  const poziom = x < 0.12 ? 'at the far left edge' : x < 0.3 ? 'in the left part' : x < 0.45 ? 'left of the centre' : x < 0.55 ? 'in the centre' : x < 0.7 ? 'right of the centre' : x < 0.88 ? 'in the right part' : 'at the far right edge'
+  const pion = y < 0.12 ? 'at the very top' : y < 0.3 ? 'in the upper part' : y < 0.45 ? 'a little above the middle' : y < 0.55 ? 'at the vertical middle' : y < 0.7 ? 'a little below the middle' : y < 0.88 ? 'in the lower part' : 'at the very bottom'
+  return `${pion}, ${poziom} of the frame — ${Math.round(x * 100)}% from the left edge, ${Math.round(y * 100)}% down from the top`
+}
+
+/** Rozmiar w jednej linii: procent szerokości + porównanie z rzeczą znaną ze zdjęcia (liczby same model ignoruje — test T03). */
+function liniaRozmiaruDodaj(rozmiar: string): string {
+  const pct = Number(rozmiar.match(/spans about (\d+)% of Image 1's width/)?.[1])
+  const kotwica = rozmiar.match(/Size anchor: the (.+?) in Image 1 is [^;]*; at the destination the object spans about ([\d.]+)× the width/)
+  if (!Number.isFinite(pct)) return rozmiar.trim().split(/\s*Size anchor:/)[0]
+  const jak = pct <= 6 ? 'tiny in the frame, because it is far from the camera' : pct <= 15 ? 'small in the frame' : 'its size in the frame'
+  const wzgl = kotwica ? `; about ${kotwica[2]}× as wide as the ${kotwica[1]} already visible in Image 1` : ''
+  return `it spans about ${pct}% of the image width — ${jak}${wzgl}. Keep exactly that size; never enlarge it to fill the free space.`
+}
+
+/** Pierwsze zdania opisu światła od reżysera (kierunek, temperatura barwowa, twardość) — reszta to szczegóły, które tylko rozwadniają prompt. */
+function krotkieSwiatlo(t: string, limit = 280): string {
+  const zdania = t.trim().split(/(?<=[.!?])\s+/)
+  let wynik = ''
+  for (const z of zdania) {
+    if (wynik && (wynik + ' ' + z).length > limit) break
+    wynik = wynik ? `${wynik} ${z}` : z
+  }
+  return wynik
+}
+
 /** Składa finalny prompt dla modelu obrazu. */
 export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const op = getOperation(w.operacja)
@@ -443,12 +471,32 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         cel,
       )
     : ''
+  // DODAJ (krótki prompt): zadanie + rozmiar + światło w 2 zdaniach + jedna reguła naturalności. Test T03: pełny prompt (~6000 zn.)
+  // dawał obiekt 6× za duży, wersja ~600 zn. trzymała miejsce i skalę w obu próbach. Dotyczy dodawania bez pinu źródłowego.
+  const dodajKrotko = op.id === 'addition' && !czescTryb && !cechaTryb && cel !== undefined && zrodlo === undefined
+  const sekcjaDodaj = dodajKrotko && cel
+    ? [
+        '[TASK]',
+        `Edit Image 1: add the new object from the USER request (or from the reference image, if one is given) at Pin ${cel.numer}${cel.nazwa?.trim() ? ` ("${cel.nazwa.trim()}")` : ''}, ${polozenieDokladne(cel.x, cel.y)} (x=${wsp(cel.x)} y=${wsp(cel.y)}). The middle of its footprint sits exactly on that x / y point, resting on the real surface there, at its true size for that distance from the camera. Nothing else changes: every object already in Image 1 stays where it is.`,
+        '',
+        sekcjaUzytkownika,
+        '',
+        [
+          '[RULES]',
+          w.rozmiar?.trim() ? `SIZE: ${liniaRozmiaruDodaj(w.rozmiar)}` : '',
+          w.swiatlo?.trim() ? `LIGHT: match the scene — ${krotkieSwiatlo(w.swiatlo)}` : 'LIGHT: match the scene’s direction, colour temperature and softness.',
+          'ONE real photograph: the new object has the scene’s light, shadow or reflection, focus and grain; no halo, outline or sticker look. Everything else stays exactly as it is.',
+        ].filter(Boolean).join('\n'),
+      ].join('\n')
+    : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
         { klucz: 'user', tekst: sekcjaUzytkownika },
         { klucz: 'rules', tekst: sekcjaReguRuchu },
       ]
+    : dodajKrotko
+    ? [{ klucz: 'task', tekst: sekcjaDodaj }]
     : [
         { klucz: 'task', tekst: sekcjaZadania },
         { klucz: 'user', tekst: sekcjaUzytkownika },
