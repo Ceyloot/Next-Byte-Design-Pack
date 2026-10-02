@@ -162,7 +162,8 @@ const wsp = (v: number) => v.toFixed(2)
 function opisPineski(p: PineskaSklejka, strefy = true): string {
   // Miejsce docelowe dostaje też strefę kadru słowami — model lepiej trzyma „w prawej części, w dolnej połowie” niż ułamki.
   const strefa = strefy && p.rola === 'target' ? `, ${slowaPolozenia(p.x, p.y, true)}` : ''
-  return `Pin ${p.numer} (Image ${p.obraz}, x=${wsp(p.x)} y=${wsp(p.y)}${strefa})`
+  const nazwa = p.nazwa?.trim() ? `"${p.nazwa.trim()}", ` : ''
+  return `Pin ${p.numer} (${nazwa}Image ${p.obraz}, x=${wsp(p.x)} y=${wsp(p.y)}${strefa})`
 }
 
 /** Położenie punktu słowami (strefa kadru + odległość od krawędzi) — model lepiej wykonuje „po prawej, przy krawędzi” niż ułamek. */
