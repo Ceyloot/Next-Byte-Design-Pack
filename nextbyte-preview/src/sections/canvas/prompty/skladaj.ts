@@ -521,6 +521,26 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         `[RULES]\nThe new garments are lit by Image ${cel.obraz}'s light, with its grain. The background, its glow and colours stay pixel-for-pixel as in Image ${cel.obraz}.`,
       ].join('\n')
     : ''
+  // PRZENIESIENIE / ZAMIANA OBIEKTU Z DRUGIEGO ZDJĘCIA (krótki prompt): role zdjęć + miejsce + rozmiar z porównaniem do rzeczy na zdjęciu.
+  // Test F3 (3×): zamrożony długi prompt dawał obiekt 3–4× za duży i przesunięty od pinezki; krótka wersja jak przy „dodaj” trzyma skalę.
+  const zamianaMiedzy = op.id === 'object_swap' && !czescTryb && !cechaTryb && zrodlo !== undefined && cel !== undefined && zrodlo.obraz !== cel.obraz
+  const przenosKrotko = (miedzyZdjeciami || zamianaMiedzy) && cel !== undefined && zrodlo !== undefined
+  const sekcjaPrzenos = przenosKrotko && cel && zrodlo
+    ? [
+        '[TASK]',
+        `Image ${cel.obraz} is the BASE photograph${nazwaPinu(cel) ? `: ${nazwaPinu(cel)}` : ''}. Image ${zrodlo.obraz} is only the SUBJECT reference${nazwaPinu(zrodlo) ? `: ${nazwaPinu(zrodlo)}` : ''}.`,
+        `Edit Image ${cel.obraz}: put the subject from Pin ${zrodlo.numer} of Image ${zrodlo.obraz} into Image ${cel.obraz}, so that the middle of its footprint is exactly at Pin ${cel.numer} — ${polozenieDokladne(cel.x, cel.y)} (x=${wsp(cel.x)} y=${wsp(cel.y)}).${zamianaMiedzy ? ` It REPLACES whatever stands at that pin: remove that completely, nothing of it may remain.` : ' Nothing else is removed.'} Redraw the subject for Image ${cel.obraz} — its perspective, light and reflections; never a pasted copy of the reference picture. It appears exactly once. THE POINT IS FIXED: do not move it toward the centre or to an easier spot; near the frame edge it may be partly cut off. Everything else in Image ${cel.obraz} stays exactly as it is.`,
+        '',
+        sekcjaUzytkownika,
+        '',
+        [
+          '[RULES]',
+          w.rozmiar?.trim() ? `SIZE: ${liniaRozmiaruDodaj(w.rozmiar)}` : '',
+          w.swiatlo?.trim() ? `LIGHT: match Image ${cel.obraz} — ${krotkieSwiatlo(w.swiatlo)}` : `LIGHT: match Image ${cel.obraz}'s direction, colour temperature and softness.`,
+          `ONE real photograph: the subject has Image ${cel.obraz}'s light, shadow or reflection, focus and grain; no halo, outline or sticker look.`,
+        ].filter(Boolean).join('\n'),
+      ].join('\n')
+    : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
@@ -533,6 +553,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? [{ klucz: 'task', tekst: sekcjaTwarz }]
     : ubranieKrotko
     ? [{ klucz: 'task', tekst: sekcjaUbranie }]
+    : przenosKrotko
+    ? [{ klucz: 'task', tekst: sekcjaPrzenos }]
     : [
         { klucz: 'task', tekst: sekcjaZadania },
         { klucz: 'user', tekst: sekcjaUzytkownika },

@@ -855,7 +855,7 @@ export function CanvasSection() {
       const transferZDrugiegoZdjecia =
         operacjaAgenta === 'object_transfer' && Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId !== zrodlo.id && pinDocelowy.layerId === zrodlo.id)
       // Usuwanie: zbliżenie obiektu „do usunięcia” kazałoby modelowi zachować jego stan (T01/T02) — tu nic nie jest wstawiane ani oglądane.
-      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia && operacjaAgenta !== 'removal' && operacjaAgenta !== 'addition' && operacjaAgenta !== 'face_swap') {
+      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia && operacjaAgenta !== 'removal' && operacjaAgenta !== 'addition' && operacjaAgenta !== 'face_swap' && operacjaAgenta !== 'object_swap' && operacjaAgenta !== 'object_transfer') {
         try {
           zblizenia = await zbudujZblizenia({
             operacja: operacjaAgenta,

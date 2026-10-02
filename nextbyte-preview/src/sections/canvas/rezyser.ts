@@ -336,7 +336,8 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     analiza: String(json.analiza ?? '').trim(),
     plan: String(json.plan ?? '').trim(),
   }
-  return plan.skala || plan.obiekty.length > 0 ? plan : null
+  // Zadania globalne bez pinezek (pora dnia, styl) nie mają ani skali, ani obiektów — sama rozpoznana intencja wystarcza (T12/T14 bez pinezki).
+  return plan.skala || plan.obiekty.length > 0 || plan.intencja ? plan : null
 }
 
 /** Odznaka każdej pineski (numer → krótki opis odróżniający obiekt) — idzie do promptu obok x/y. */
