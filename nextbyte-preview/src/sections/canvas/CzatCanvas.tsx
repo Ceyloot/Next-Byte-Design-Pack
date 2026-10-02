@@ -25,7 +25,6 @@ import {
   Cpu,
   Plus,
   Gem,
-  ChevronRight,
   Upload,
   Link2,
   Clipboard,
@@ -159,7 +158,7 @@ export function CzatCanvas({
   const [szukajModelu, setSzukajModelu] = useState('')
   const modeleWidoczne = MODELE_OBRAZU.filter(m => {
     const fraza = szukajModelu.trim().toLowerCase()
-    return !fraza || `${m.nazwa} ${m.znacznik} ${m.opis}`.toLowerCase().includes(fraza)
+    return !fraza || `${m.nazwa} ${m.opis}`.toLowerCase().includes(fraza)
   })
   const [zwiniety, setZwiniety] = useState(false)
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
