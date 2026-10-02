@@ -554,6 +554,23 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         `[RULES]\nBoth faces are lit by Image 1's light, with its grain, and no visible seam. Natural skin: pores, no retouching. Everything else in Image 1 stays exactly as it is.`,
       ].join('\n')
     : ''
+  // ZAMIANA POSTACI (character swap, krótki prompt): zostaje tylko POZYCJA i MIEJSCE osoby ze sceny; twarz, włosy, budowa i UBIÓR — z referencji.
+  // Test R02 / screen użytkownika: długi zamrożony prompt zostawiał ubiór sceny (rycerz w zbroi z cudzą twarzą) — to byłby face swap.
+  const postacKrotko = op.id === 'character_swap' && cel !== undefined && zrodlo !== undefined && zrodlo.obraz !== cel.obraz
+  const sekcjaPostac = postacKrotko && cel && zrodlo
+    ? [
+        '[TASK]',
+        `Image ${cel.obraz} is the BASE photograph${nazwaPinu(cel) ? `: ${nazwaPinu(cel)}` : ''}. Image ${zrodlo.obraz} is the CHARACTER reference${nazwaPinu(zrodlo) ? `: ${nazwaPinu(zrodlo)}` : ''}.`,
+        `Edit Image ${cel.obraz}: REPLACE the whole person at Pin ${cel.numer} (x=${wsp(cel.x)} y=${wsp(cel.y)}) with the person at Pin ${zrodlo.numer} of Image ${zrodlo.obraz}. The new person is that character completely — face, hair, body build, skin AND every garment and accessory they wear in Image ${zrodlo.obraz} (same cut, colour, pattern, details). Nothing of the original person may remain: not their clothes, headwear, hair or accessories. What stays from Image ${cel.obraz}: the person's position, size, pose and posture, the camera, the whole background and the light. The new person takes the original's pose; objects the original held may stay only if they fit the new outfit.`,
+        '',
+        sekcjaUzytkownika,
+        '',
+        [
+          '[RULES]',
+          `The new person is lit by Image ${cel.obraz}'s light${w.swiatlo?.trim() ? ` — ${krotkieSwiatlo(w.swiatlo)}` : ''}, with its grain, a contact shadow on the ground, no visible seam or halo. Natural skin: pores, no retouching. Everything else in Image ${cel.obraz} stays exactly as it is.`,
+        ].join('\n'),
+      ].join('\n')
+    : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
@@ -570,6 +587,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? [{ klucz: 'task', tekst: sekcjaPrzenos }]
     : zamianaOsob
     ? [{ klucz: 'task', tekst: sekcjaZamianaOsob }]
+    : postacKrotko
+    ? [{ klucz: 'task', tekst: sekcjaPostac }]
     : [
         { klucz: 'task', tekst: sekcjaZadania },
         { klucz: 'user', tekst: sekcjaUzytkownika },
@@ -577,8 +596,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: twarzKrotko || ubranieKrotko || zamianaOsob ? undefined : system,
-    temperatura: twarzKrotko || ubranieKrotko || zamianaOsob ? undefined : temperatura,
+    system: twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
+    temperatura: twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
     gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || op.id === 'clothing_change' || op.id === 'character_transfer' || undefined,
     sekcje,

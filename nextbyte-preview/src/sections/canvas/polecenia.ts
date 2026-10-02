@@ -106,11 +106,10 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
 
   // 9. Zamiana twarzy / postaci — PRZED ogólną zamianą: „zamień twarz” i „zamień tę
   // osobę” zawierają „zamień”, więc sprawdzane później nigdy nie wygrywały.
-  if (
-    /\b(twarz|face|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t) ||
-    /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p)\w*[^.!?]{0,30}\b(posta[ćc]|osob|cz[łl]owiek|kobiet|m[ęe][żz]czyzn|dziewczyn|ch[łl]opa|dziecko)/.test(t)
-  )
-    return 'postac'
+  // Tylko WYRAŹNIE twarz / tożsamość = zamiana twarzy (face swap). „Zamień rycerza na tę osobę” to zamiana CAŁEJ postaci
+  // (character swap: zostaje pozycja i miejsce, reszta — twarz, włosy, budowa, ubiór — z referencji), nie samej twarzy.
+  if (/\b(twarz|face|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t)) return 'postac'
+  if (dotyczyCalejOsoby(t)) return 'zamien'
 
   // 9b. ZABLOKOWANE (zablokowane/ruch-w-kadrze.ts) — nie zmieniać bez prośby użytkownika. Czasownik przeniesienia („przesuń / przenieś / przestaw ten domek w miejsce ogrodu”) to PRZENIESIENIE do miejsca,
   // nie zamiana — „w miejsce X” oznacza tu cel, o ile polecenie nie mówi wprost „zamień / podmień / zastąp / zamiast”.
@@ -279,6 +278,13 @@ const OPERACJE_Z_INTENCJI: Record<Intencja, OperationId> = {
  * Operacja dla danej intencji. Gdy reżyser widzi, że zamiana albo przeniesienie
  * dotyczy CAŁEJ osoby, wchodzą operacje postaci (tożsamość, włosy, ubranie, poza…).
  */
+/** „Zamień / podmień X na tę osobę / postać / mężczyznę…” bez słowa o twarzy — zamiana całej postaci (character swap). */
+export function dotyczyCalejOsoby(tekst: string): boolean {
+  const t = tekst.toLowerCase()
+  if (/\b(twarz|face|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t)) return false
+  return /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p)\w*[^.!?]{0,40}\b(posta[ćc]|postaci|osob|cz[łl]owiek|kobiet|m[ęe][żz]czyzn|dziewczyn|ch[łl]op|dziecko|rycerz|aktor|model)/.test(t)
+}
+
 export function operacjaZIntencji(intencja: Intencja, osoba = false): OperationId {
   if (osoba && intencja === 'zamien') return 'character_swap'
   // wstawienie / przeniesienie całej osoby (też z innego zdjęcia) = operacja postaci

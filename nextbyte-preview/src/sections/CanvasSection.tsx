@@ -50,6 +50,7 @@ import {
   wykryjIntencje,
   zbudujPolecenie,
   zbudujZadanieModelu,
+  dotyczyCalejOsoby,
 } from '@/sections/canvas/polecenia'
 import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/operacje/character-swap-studio'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
@@ -783,6 +784,10 @@ export function CanvasSection() {
       // Jego opis obiektów i instrukcja wchodzą W rusztowanie — reguły kadru,
       // ochrony i czystego wyniku idą do modelu zawsze.
       let trybAgenta = INTENCJE.find(i => i.id === plan?.intencja)?.id ?? intencja
+      // Zamiana CAŁEJ osoby (bez słowa „twarz”) to character swap, nawet gdy reżyser lub rozpoznanie wskazały samą twarz (screen: rycerz zostawał w zbroi).
+      const calaOsoba = dotyczyCalejOsoby(projekt.tekst) && (trybAgenta === 'postac' || trybAgenta === 'zamien')
+      if (calaOsoba) trybAgenta = 'zamien'
+      const dotyczyOsoby = calaOsoba || plan?.osoba
       // „wstaw X tutaj” na JEDNYM zdjęciu, gdy jedna pineska jest obiektem (SOURCE), a druga miejscem (DESTINATION):
       // obiekt się przenosi — „wstaw” (kopia, nic nie znika) tylko na wyraźne życzenie kopii.
       if (trybAgenta === 'wstaw' && !plan?.osoba) {
@@ -903,7 +908,7 @@ export function CanvasSection() {
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
       // Operacja na człowieku idzie modelem postaci (RUNWARE_MODEL_POSTAC, jeśli ustawiony).
-      const operacjaAgenta = operacjaZIntencji(trybAgenta, plan?.osoba)
+      const operacjaAgenta = operacjaZIntencji(trybAgenta, dotyczyOsoby)
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
       // Obiekt z drugiego zdjęcia (transfer / zamiana): referencja = ciasny wycinek wokół rzeczy pod pinem źródłowym, nie cały kadr
       // — inaczej model bierze rozmiar z referencji (F3: auto ok. 2× za duże). Pin źródłowy przeliczony na wycinek.
@@ -976,7 +981,7 @@ export function CanvasSection() {
       const transferZDrugiegoZdjecia =
         operacjaAgenta === 'object_transfer' && Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId !== zrodlo.id && pinDocelowy.layerId === zrodlo.id)
       // Usuwanie: zbliżenie obiektu „do usunięcia” kazałoby modelowi zachować jego stan (T01/T02) — tu nic nie jest wstawiane ani oglądane.
-      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia && operacjaAgenta !== 'removal' && operacjaAgenta !== 'addition' && operacjaAgenta !== 'face_swap' && operacjaAgenta !== 'object_swap' && operacjaAgenta !== 'object_transfer') {
+      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia && operacjaAgenta !== 'removal' && operacjaAgenta !== 'addition' && operacjaAgenta !== 'face_swap' && operacjaAgenta !== 'character_swap' && operacjaAgenta !== 'object_swap' && operacjaAgenta !== 'object_transfer') {
         try {
           zblizenia = await zbudujZblizenia({
             operacja: operacjaAgenta,
@@ -998,7 +1003,7 @@ export function CanvasSection() {
         twarzObraz: zblizenieTwarzy ? obrazyPolecenia.length + 1 : undefined,
         zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
         role: uklad.role,
-        osoba: plan?.osoba,
+        osoba: dotyczyOsoby,
         odznaki: plan?.odznaki,
         szczegoly: szczegolyPlanu,
         skala: plan?.skala,
@@ -1089,7 +1094,7 @@ export function CanvasSection() {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
             role: uklad.role,
-            osoba: plan?.osoba,
+            osoba: dotyczyOsoby,
             odznaki: plan?.odznaki,
           })
           setOstatniPrompt(pelnyPrompt)
