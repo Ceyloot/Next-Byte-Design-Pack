@@ -67,3 +67,9 @@ Wnioski: krótkie prompty (zadanie + role zdjęć + rozmiar z porównaniem do rz
 | Transfer z 2. zdjęcia (T04, T18) | OK 2/2 |
 | Zmiana części (R04, P1–P3) | OK 4/4 |
 | Zmiana scenerii (R05, S1–S3) | OK 4/4 |
+
+## Po naprawach (transfer/zamiana z 2. zdjęcia, zadania bez pinezek)
+
+- Zadania globalne bez pinezek (G12: pora dnia): OK (plan reżysera przyjmuje samą intencję).
+- Transfer z 2. zdjęcia (G4, G18): pozycja OK; lampart w dobrej skali, auto nadal duże (ok. 2× za duże).
+- Object swap z 2 zdjęć (G3 → G3b): położenie poprawione z x≈0,54 do ≈0,32 (pinezka 0,22), skala nadal ok. 2× za duża (ok. 30% szerokości zamiast ok. 13%). Dalszy krok do sprawdzenia: wycięcie referencji wokół obiektu (żeby model nie widział auta „na pełnym kadrze”).
