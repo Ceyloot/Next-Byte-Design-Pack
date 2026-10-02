@@ -96,3 +96,10 @@ Reżyser (Gemini) nie podaje już rozmiaru w %, skali, widoku ani ułożenia —
 ## Tryb Studio (wstawianie osoby / rzeczy z referencji)
 
 Na podstawie dwóch działających payloadów Studia Zdjęć („@image3 siedzi na kanapie… ma buty @image1”; „wstaw ten samochód na podjeździe”): prompt = zdanie użytkownika (bez współrzędnych: „(mężczyzna, image 2)”) + pozycja słowami i x/y + brick skali + bloki z PDF („ONE photograph…”, „PHOTOGRAPHIC QUALITY”, „REFERENCE ROLES”), temperatura 0,72, bez roli systemowej, `providerSettings.google.safetyTolerance: off`. Przy wielu referencjach role = „reference described in the prompt”. Dotyczy: transfer / zamiana obiektu i transfer postaci z innego zdjęcia oraz dodawanie z referencją. Flaga `TRYB_STUDIO` w `skladaj.ts` (false = poprzednie krótkie prompty). Test ST1 (auto na brzeg, NB 2): integracja światła i odbić bardzo naturalna, auto ok. 28% szerokości i bliżej środka niż pinezka — położenie/skala niepewne po jednej próbie. Do A/B na Pro (Studio verbatim vs ten tryb vs poprzedni) po przydzieleniu budżetu.
+
+## Test SOFA (mężczyzna + buty + sofa, Nano Banana Pro `google:4@2`, ten sam przypadek co w Studiu)
+
+Wejścia: wycinki z screenshotu użytkownika, z usuniętymi znacznikami pinezek (Nano Banana, ok. 0,17 USD). Polecenie: „wstaw tego mężczyznę w tych butach aby siedział na sofie w pozycji amerykańskiej 4”.
+- **Studio (temp. 0,72, 3 obrazy, bloki z PDF):** sala i sofa z Image 1 zachowane, ten sam mężczyzna w tej samej kurtce i okularach, siedzi nogą na nogę, buty Louis Vuitton widoczne (nie dwie pary), skala ludzka wobec sofy. Dobre.
+- **Nasz (temp. 0,35, rola systemowa, 5 obrazów w tym zbliżenia):** inna sala, inna osoba (inna kurtka) — model nie zachował ani sceny, ani tożsamości. Źle.
+Wniosek: dla wstawiania osoby z referencji wersja Studio jest wyraźnie lepsza; ścieżka „Nasz” dla character transfer wymaga przeglądu (zbliżenia i rola systemowa to główni podejrzani).
