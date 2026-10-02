@@ -541,6 +541,19 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ].filter(Boolean).join('\n'),
       ].join('\n')
     : ''
+  // ZAMIANA DWÓCH OSÓB NA JEDNYM ZDJĘCIU (T07): osoby wymieniają się twarzami i włosami; ciała, ubiory i pozy zostają na swoich miejscach.
+  const pinyOsob = w.pineski.filter((p) => p.obraz === 1)
+  const zamianaOsob = op.id === 'character_swap' && w.obrazy.length === 1 && pinyOsob.length >= 2
+  const sekcjaZamianaOsob = zamianaOsob
+    ? [
+        '[TASK]',
+        `Edit Image 1: swap the two people. The person at Pin ${pinyOsob[0].numer} (x=${wsp(pinyOsob[0].x)} y=${wsp(pinyOsob[0].y)}) and the person at Pin ${pinyOsob[1].numer} (x=${wsp(pinyOsob[1].x)} y=${wsp(pinyOsob[1].y)}) exchange their faces and hair — each person gets the other's face, hair and facial hair. Each body, outfit, pose and place in the frame stays exactly where it is. Each swapped face keeps the head angle, expression and gaze of the body it now sits on.`,
+        '',
+        sekcjaUzytkownika,
+        '',
+        `[RULES]\nBoth faces are lit by Image 1's light, with its grain, and no visible seam. Natural skin: pores, no retouching. Everything else in Image 1 stays exactly as it is.`,
+      ].join('\n')
+    : ''
   const sekcje: SekcjaPromptu[] = ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
@@ -555,6 +568,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? [{ klucz: 'task', tekst: sekcjaUbranie }]
     : przenosKrotko
     ? [{ klucz: 'task', tekst: sekcjaPrzenos }]
+    : zamianaOsob
+    ? [{ klucz: 'task', tekst: sekcjaZamianaOsob }]
     : [
         { klucz: 'task', tekst: sekcjaZadania },
         { klucz: 'user', tekst: sekcjaUzytkownika },
@@ -562,10 +577,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: twarzKrotko || ubranieKrotko ? undefined : system,
-    temperatura: twarzKrotko || ubranieKrotko ? undefined : temperatura,
+    system: twarzKrotko || ubranieKrotko || zamianaOsob ? undefined : system,
+    temperatura: twarzKrotko || ubranieKrotko || zamianaOsob ? undefined : temperatura,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
-    gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || undefined,
+    gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || op.id === 'clothing_change' || op.id === 'character_transfer' || undefined,
     sekcje,
     operacja: w.operacja,
     nazwaOperacji: op.nazwa,

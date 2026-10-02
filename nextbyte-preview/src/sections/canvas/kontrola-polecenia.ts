@@ -107,7 +107,9 @@ export function sprawdzPolecenie(
   }
 
   // Zamiana postaci bierze twarz z innego zdjęcia — bez niego nie ma skąd.
-  if (intencja === 'postac' && warstwy.length < 2) {
+  // Jedno zdjęcie z dwiema osobami i dwiema pineskami = zamiana osób między sobą (T07), bez dawcy z drugiego zdjęcia.
+  const zamianaOsobNaJednym = warstwy.length < 2 && uchwyty.length >= 2
+  if (intencja === 'postac' && warstwy.length < 2 && !zamianaOsobNaJednym) {
     uwagi.push({
       id: 'postac-bez-dawcy',
       waga: 'blokada',

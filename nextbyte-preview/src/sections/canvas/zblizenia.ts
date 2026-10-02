@@ -184,3 +184,55 @@ export async function zbudujZblizenia(w: WejscieZblizen): Promise<Zblizenie[]> {
   const wyniki = await Promise.all(zadania)
   return wyniki.filter((z): z is Zblizenie => Boolean(z))
 }
+
+/**
+ * Referencja obiektu do wstawienia z innego zdjęcia: ciasny wycinek wokół rzeczy pod pinem (ramka od Gemini), a nie całe zdjęcie.
+ * Przy pełnym kadrze (np. auto na całą szerokość) model uznawał rozmiar z referencji za docelowy i rysował obiekt ok. 2× za duży (test F3).
+ * Okno jest dopełnione szarością tak, by pin leżał w środku — ramka dotyczy rzeczy pod pinem, nawet gdy jest większa niż kwadrat wokół niego.
+ * Zwraca wycinek i jego położenie w pikselach oryginału (do przeliczenia pinezki), albo null, gdy się nie uda.
+ */
+export async function referencjaWokolRzeczy(
+  src: string,
+  x: number,
+  y: number,
+): Promise<{ src: string; x0: number; y0: number; w: number; h: number } | null> {
+  const o = await wczytaj(src)
+  if (!o) return null
+  const W = o.naturalWidth
+  const H = o.naturalHeight
+  const Wp = 2 * Math.max(x, 1 - x) * W
+  const Hp = 2 * Math.max(y, 1 - y) * H
+  const sc = Math.min(1, 1024 / Math.max(Wp, Hp))
+  const c = document.createElement('canvas')
+  c.width = Math.max(64, Math.round(Wp * sc))
+  c.height = Math.max(64, Math.round(Hp * sc))
+  const g = c.getContext('2d')
+  if (!g) return null
+  g.fillStyle = '#808080'
+  g.fillRect(0, 0, c.width, c.height)
+  const ox = (Wp / 2 - x * W) * sc
+  const oy = (Hp / 2 - y * H) * sc
+  g.drawImage(o, ox, oy, W * sc, H * sc)
+  const { box } = await opiszRzeczZRamka(c.toDataURL('image/jpeg', 0.92))
+  if (!box) return null
+  const px = (v: number, wymiar: number, przes: number) => (((v / 1000) * wymiar - przes) / sc)
+  const x0 = Math.max(0, px(Math.min(box[1], box[3]), c.width, ox))
+  const x1 = Math.min(W, px(Math.max(box[1], box[3]), c.width, ox))
+  const y0 = Math.max(0, px(Math.min(box[0], box[2]), c.height, oy))
+  const y1 = Math.min(H, px(Math.max(box[0], box[2]), c.height, oy))
+  if (x1 - x0 < W * 0.03 || y1 - y0 < H * 0.03) return null
+  const dw = (x1 - x0) * 0.1
+  const dh = (y1 - y0) * 0.1
+  const cx0 = Math.max(0, x0 - dw)
+  const cy0 = Math.max(0, y0 - dh)
+  const cx1 = Math.min(W, x1 + dw)
+  const cy1 = Math.min(H, y1 + dh)
+  const out = document.createElement('canvas')
+  const sk = Math.min(1, 1280 / Math.max(cx1 - cx0, cy1 - cy0))
+  out.width = Math.round((cx1 - cx0) * sk)
+  out.height = Math.round((cy1 - cy0) * sk)
+  const go = out.getContext('2d')
+  if (!go) return null
+  go.drawImage(o, cx0, cy0, cx1 - cx0, cy1 - cy0, 0, 0, out.width, out.height)
+  return { src: out.toDataURL('image/jpeg', 0.95), x0: cx0, y0: cy0, w: cx1 - cx0, h: cy1 - cy0 }
+}

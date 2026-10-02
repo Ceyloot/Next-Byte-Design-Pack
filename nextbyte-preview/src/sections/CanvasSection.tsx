@@ -54,7 +54,7 @@ import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/opera
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
-import { zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
+import { referencjaWokolRzeczy, zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
@@ -107,6 +107,8 @@ const POSTPROCES_ZIARNA = false
 const DRUGI_PRZEBIEG = false
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
+/** Referencja obiektu z drugiego zdjęcia = wycinek wokół rzeczy (szybkie cofnięcie: false). */
+const REFERENCJA_WOKOL_RZECZY = true
 /** WYŁĄCZONE: magentowe kropki na zdjęciach — miejsce wskazują same współrzędne. */
 const KROPKI_NA_ZDJECIACH = false
 
@@ -789,8 +791,8 @@ export function CanvasSection() {
         trybWycinka && wycinek && srcWycinka
           ? { ...zrodlo, id: `${zrodlo.id}-wycinek`, src: srcWycinka, naturalWidth: wycinek.w, naturalHeight: wycinek.h }
           : null
-      const obrazyPolecenia = warstwaWycinka ? [warstwaWycinka, ...obrazy.slice(1)] : obrazy
-      const pineskiPolecenia =
+      let obrazyPolecenia = warstwaWycinka ? [warstwaWycinka, ...obrazy.slice(1)] : obrazy
+      let pineskiPolecenia =
         warstwaWycinka && wycinek
           ? projekt.pineski.map(p =>
               p.layerId === zrodlo.id
@@ -811,6 +813,33 @@ export function CanvasSection() {
       // Operacja na człowieku idzie modelem postaci (RUNWARE_MODEL_POSTAC, jeśli ustawiony).
       const operacjaAgenta = operacjaZIntencji(trybAgenta, plan?.osoba)
       const postac = OPERACJE_POSTACI.has(operacjaAgenta)
+      // Obiekt z drugiego zdjęcia (transfer / zamiana): referencja = ciasny wycinek wokół rzeczy pod pinem źródłowym, nie cały kadr
+      // — inaczej model bierze rozmiar z referencji (F3: auto ok. 2× za duże). Pin źródłowy przeliczony na wycinek.
+      if (
+        REFERENCJA_WOKOL_RZECZY &&
+        ['object_transfer', 'object_swap'].includes(operacjaAgenta) &&
+        pinZrodlowy &&
+        pinDocelowy &&
+        pinZrodlowy.layerId !== pinDocelowy.layerId
+      ) {
+        const dawca = obrazyPolecenia.find(w => w.id === pinZrodlowy.layerId)
+        const wycinekDawcy = dawca
+          ? await referencjaWokolRzeczy((await konwertujNaDataUrl(dawca.src)) || dawca.src, pinZrodlowy.normalizedX, pinZrodlowy.normalizedY).catch(() => null)
+          : null
+        if (dawca && wycinekDawcy) {
+          const nowa: Warstwa = { ...dawca, src: wycinekDawcy.src, naturalWidth: Math.round(wycinekDawcy.w), naturalHeight: Math.round(wycinekDawcy.h) }
+          obrazyPolecenia = obrazyPolecenia.map(w => (w.id === dawca.id ? nowa : w))
+          pineskiPolecenia = pineskiPolecenia.map(p =>
+            p.layerId === dawca.id
+              ? {
+                  ...p,
+                  normalizedX: Math.min(1, Math.max(0, (p.normalizedX * dawca.naturalWidth - wycinekDawcy.x0) / wycinekDawcy.w)),
+                  normalizedY: Math.min(1, Math.max(0, (p.normalizedY * dawca.naturalHeight - wycinekDawcy.y0) / wycinekDawcy.h)),
+                }
+              : p,
+          )
+        }
+      }
       // Prompt: [TASK] operacji + pineski z odznakami od Gemini, [USER], [RULES] z PDF Studia.
       // Światło zdjęcia docelowego (zmierzone przez reżysera) idzie do [RULES]; rozmiar i kierunek — tylko do pomiaru.
       // Przeniesienie / zamiana w kadrze: wyczerpujący opis KONKRETNEGO obiektu spod pineski źródłowej z jego wycinka
