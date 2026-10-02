@@ -230,6 +230,8 @@ const ROLA_INNA = 'a reference described in the prompt — use it exactly as the
 const OPERACJE_POSTACI_SKLADAJ = new Set<OperationId>(['character_swap', 'character_transfer', 'face_swap'])
 const OPERACJE_Z_OBIEKTEM = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'character_swap', 'character_transfer'])
 /** Operacje, których kroki dublowałyby bricki — wystarczy jedno zdanie zadania. */
+/** Tryby, których zadaniem jest zmiana światła/stylu — „oświetl dokładnie jak teraz” byłoby sprzeczne z poleceniem (K1/K2). */
+const ZMIENIAJA_SWIATLO = new Set<OperationId>(['time_of_day_change', 'season_change', 'style_change'])
 const BEZ_KROKOW = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'removal', 'character_transfer'])
 /** Temperatura operacji z obiektem — niżej niż swap postaci (0.45), bo miejsce zadaje pineska. */
 const TEMPERATURA_OBIEKTU = 0.35
@@ -417,7 +419,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ...w.zblizenia.map((z) => `Image ${z.numer} = ${z.opis}.`),
       ].join('\n')
     : ''
-  const sekcjaRegul = ['[RULES]', sceneria ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : miedzyZdjeciami ? zablokowaneLinieSkaliTransferu(w) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', sceneria || ZMIENIAJA_SWIATLO.has(op.id) ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : miedzyZdjeciami ? zablokowaneLinieSkaliTransferu(w) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia — ZABLOKOWANE (zablokowane/ruch-w-kadrze.ts), nie zmieniać
   // bez prośby użytkownika: prosty prompt „MOVE — do not copy” + wybrane bricki + światło, rozmiar i analiza reżysera.
