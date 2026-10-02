@@ -103,3 +103,7 @@ Wejścia: wycinki z screenshotu użytkownika, z usuniętymi znacznikami pinezek 
 - **Studio (temp. 0,72, 3 obrazy, bloki z PDF):** sala i sofa z Image 1 zachowane, ten sam mężczyzna w tej samej kurtce i okularach, siedzi nogą na nogę, buty Louis Vuitton widoczne (nie dwie pary), skala ludzka wobec sofy. Dobre.
 - **Nasz (temp. 0,35, rola systemowa, 5 obrazów w tym zbliżenia):** inna sala, inna osoba (inna kurtka) — model nie zachował ani sceny, ani tożsamości. Źle.
 Wniosek: dla wstawiania osoby z referencji wersja Studio jest wyraźnie lepsza; ścieżka „Nasz” dla character transfer wymaga przeglądu (zbliżenia i rola systemowa to główni podejrzani).
+
+## Test PODJAZD (Lamborghini Urus na podjazd, Nano Banana Pro, Studio)
+
+Wejścia: wycinki ze screenshotu użytkownika (podjazd z czerwonym klasykiem, Urus) z usuniętymi pinezkami. Polecenie „wstaw ten samochód na podjeździe”, wersja Studio, `google:4@2`, temp. 0,72. Wynik: auto na podjeździe, światło i kontakt z kostką naturalne (lekko mokry połysk), scena nietknięta. Rozbieżności: środek auta ok. x=0,54 przy pinezce 0,39 i ok. 1,5–2× za duże względem czerwonego klasyka w tle (przy jednej próbie).
