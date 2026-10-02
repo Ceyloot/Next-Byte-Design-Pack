@@ -12,7 +12,7 @@ export const REMOVAL: Operation = {
   ],
   dawca: 'brak',
   czystaPlyta: true,
-  misja: `Remove the object at {{PIN_TARGET}} and restore the background behind it, so that the photograph looks as if it had never been there.`,
+  misja: `Remove the WHOLE object at {{PIN_TARGET}} — every part of it, with its shadow and reflections — and rebuild the background that lies behind and beneath it, so that the photograph looks as if it had never been there. The object must not be in the result at all.`,
   kroki: [
     `Identify the whole object at {{PIN_TARGET}} (see the PIN MAP), together with everything attached to it: shadow, reflection, cables, contact marks.`,
     `Clear all of it and rebuild what logically lies behind and beneath, inferred from the neighbourhood.`,
