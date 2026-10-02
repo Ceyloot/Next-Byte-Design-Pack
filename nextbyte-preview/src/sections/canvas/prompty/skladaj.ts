@@ -288,6 +288,15 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
   return `it spans about ${pct}% of the image width — ${jak}${wzgl}. Keep exactly that size; never enlarge it to fill the free space.`
 }
 
+/**
+ * BRICK SKALI — z PDF „Studio Zdjęć — prompty systemowe” (poz. 52, MULTI-IMAGE COMPOSITING: „Resolve scale and perspective so the subject fits
+ * naturally in the environment's geometry”). Za skalę odpowiada MODEL; reżyser (Gemini) nie podaje już rozmiaru, skali, widoku ani ułożenia —
+ * tylko co jest czym i gdzie. Jedno wspólne zdanie dla każdej wstawianej rzeczy lub osoby.
+ */
+export function brickSkali(nrObrazu = 1): string {
+  return `SCALE: resolve scale and perspective so the subject fits naturally in the geometry of Image ${nrObrazu} — its size relative to the things around it at that depth (a person is human-sized next to the furniture, a shoe fits the foot that wears it, a car is car-sized next to a door or a boat), feet and contact points placed correctly in 3D space, the head not cropping into the wrong plane. Judge the size from the objects in Image ${nrObrazu}, never from how large the subject looks in its own reference photo.`
+}
+
 /** Pierwsze zdania opisu światła od reżysera (kierunek, temperatura barwowa, twardość) — reszta to szczegóły, które tylko rozwadniają prompt. */
 function krotkieSwiatlo(t: string, limit = 280): string {
   const zdania = t.trim().split(/(?<=[.!?])\s+/)
@@ -449,7 +458,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ...w.zblizenia.map((z) => `Image ${z.numer} = ${z.opis}.`),
       ].join('\n')
     : ''
-  const sekcjaRegul = ['[RULES]', sceneria || ZMIENIAJA_SWIATLO.has(op.id) ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : miedzyZdjeciami ? zablokowaneLinieSkaliTransferu(w) : [rozmiar, ...analizaOsadzania]), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
+  const sekcjaRegul = ['[RULES]', sceneria || ZMIENIAJA_SWIATLO.has(op.id) ? '' : swiatlo, liniaZblizen, ...regulySceneria, ...(swapZablokowany ? zablokowaneLinieAnalizySwapu(w, cel, zrodlo) : miedzyZdjeciami ? zablokowaneLinieSkaliTransferu(w) : [rozmiar, ...analizaOsadzania]), ...(OPERACJE_Z_OBIEKTEM.has(op.id) && !czescTryb && !cechaTryb && !(w.rozmiar?.trim() || w.skala?.trim()) ? [brickSkali(cel?.obraz ?? 1)] : []), ...bricki.map((b) => podmien(op.gotowy === 'studio-character-swap' && b.id === 'studio-czlowiek' ? ZABLOKOWANY_BRICK_CZLOWIEK : miedzyZdjeciami ? (ZABLOKOWANE_BRICKI_TRANSFERU[b.id] ?? b.tekst) : swapZablokowany ? (ZABLOKOWANE_BRICKI_SWAP_OBIEKTU[b.id] ?? b.tekst) : czescTryb ? (ZABLOKOWANE_BRICKI_CZESCI[b.id] ?? b.tekst) : b.tekst)), kropki].filter(Boolean).join('\n')
 
   // Przeniesienie / zamiana obiektu w obrębie JEDNEGO zdjęcia — ZABLOKOWANE (zablokowane/ruch-w-kadrze.ts), nie zmieniać
   // bez prośby użytkownika: prosty prompt „MOVE — do not copy” + wybrane bricki + światło, rozmiar i analiza reżysera.
@@ -470,7 +479,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           ulozenie: w.ulozenie,
         },
         cel,
-      )
+      ) + (w.rozmiar?.trim() || w.skala?.trim() ? '' : `\n${brickSkali(1)}`)
     : ''
   // DODAJ (krótki prompt): zadanie + rozmiar + światło w 2 zdaniach + jedna reguła naturalności. Test T03: pełny prompt (~6000 zn.)
   // dawał obiekt 6× za duży, wersja ~600 zn. trzymała miejsce i skalę w obu próbach. Dotyczy dodawania bez pinu źródłowego.
@@ -484,7 +493,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         '',
         [
           '[RULES]',
-          w.rozmiar?.trim() ? `SIZE: ${liniaRozmiaruDodaj(w.rozmiar)}` : '',
+          brickSkali(cel.obraz),
           w.swiatlo?.trim() ? `LIGHT: match the scene — ${krotkieSwiatlo(w.swiatlo)}` : 'LIGHT: match the scene’s direction, colour temperature and softness.',
           'ONE real photograph: the new object has the scene’s light, shadow or reflection, focus and grain; no halo, outline or sticker look. Everything else stays exactly as it is.',
         ].filter(Boolean).join('\n'),
@@ -518,7 +527,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         '',
         sekcjaUzytkownika,
         '',
-        `[RULES]\nThe new garments are lit by Image ${cel.obraz}'s light, with its grain. The background, its glow and colours stay pixel-for-pixel as in Image ${cel.obraz}.`,
+        `[RULES]\n${brickSkali(cel.obraz)}\nThe new garments are lit by Image ${cel.obraz}'s light, with its grain. The background, its glow and colours stay pixel-for-pixel as in Image ${cel.obraz}.`,
       ].join('\n')
     : ''
   // PRZENIESIENIE / ZAMIANA OBIEKTU Z DRUGIEGO ZDJĘCIA (krótki prompt): role zdjęć + miejsce + rozmiar z porównaniem do rzeczy na zdjęciu.
@@ -529,13 +538,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? [
         '[TASK]',
         `Image ${cel.obraz} is the BASE photograph${nazwaPinu(cel) ? `: ${nazwaPinu(cel)}` : ''}. Image ${zrodlo.obraz} is only the SUBJECT reference${nazwaPinu(zrodlo) ? `: ${nazwaPinu(zrodlo)}` : ''}.`,
-        `Edit Image ${cel.obraz}: put the subject from Pin ${zrodlo.numer} of Image ${zrodlo.obraz} into Image ${cel.obraz}, so that the middle of its footprint is exactly at Pin ${cel.numer} — ${polozenieDokladne(cel.x, cel.y)} (x=${wsp(cel.x)} y=${wsp(cel.y)}).${zamianaMiedzy ? ` It REPLACES whatever stands at that pin: remove that completely, nothing of it may remain.` : ' Nothing else is removed.'} Redraw the subject for Image ${cel.obraz} — its perspective, light and reflections; never a pasted copy of the reference picture. In Image ${zrodlo.obraz} it looks large only because that photo was taken up close: in Image ${cel.obraz} draw it at the SIZE given below. It appears exactly once. THE POINT IS FIXED: ${cel.x < 0.4 || cel.x > 0.6 ? `the subject stands in the ${cel.x < 0.5 ? 'left' : 'right'} part of the picture, NOT in the middle; ` : ''}do not move it toward the centre or to an easier spot; near the frame edge it may be partly cut off. Everything else in Image ${cel.obraz} stays exactly as it is. If the subject is something a person wears or holds (footwear, glasses, a watch, a bag), it goes on that person at the pin, sized by the body part that wears it; a pair is shown only as far as the matching body parts are visible in Image ${cel.obraz}, never on a hidden or cut-off limb.`,
+        `Edit Image ${cel.obraz}: put the subject from Pin ${zrodlo.numer} of Image ${zrodlo.obraz} into Image ${cel.obraz}, so that the middle of its footprint is exactly at Pin ${cel.numer} — ${polozenieDokladne(cel.x, cel.y)} (x=${wsp(cel.x)} y=${wsp(cel.y)}).${zamianaMiedzy ? ` It REPLACES whatever stands at that pin: remove that completely, nothing of it may remain.` : ' Nothing else is removed.'} Redraw the subject for Image ${cel.obraz} — its perspective, light and reflections; never a pasted copy of the reference picture. In Image ${zrodlo.obraz} it looks large only because that photo was taken up close: in Image ${cel.obraz} draw it at the scale given by the SCALE rule below. It appears exactly once. THE POINT IS FIXED: ${cel.x < 0.4 || cel.x > 0.6 ? `the subject stands in the ${cel.x < 0.5 ? 'left' : 'right'} part of the picture, NOT in the middle; ` : ''}do not move it toward the centre or to an easier spot; near the frame edge it may be partly cut off. Everything else in Image ${cel.obraz} stays exactly as it is. If the subject is something a person wears or holds (footwear, glasses, a watch, a bag), it goes on that person at the pin, sized by the body part that wears it; a pair is shown only as far as the matching body parts are visible in Image ${cel.obraz}, never on a hidden or cut-off limb.`,
         '',
         sekcjaUzytkownika,
         '',
         [
           '[RULES]',
-          w.rozmiar?.trim() ? `SIZE: ${liniaRozmiaruDodaj(w.rozmiar)}` : '',
+          brickSkali(cel.obraz),
           w.swiatlo?.trim() ? `LIGHT: match Image ${cel.obraz} — ${krotkieSwiatlo(w.swiatlo)}` : `LIGHT: match Image ${cel.obraz}'s direction, colour temperature and softness.`,
           `ONE real photograph: the subject has Image ${cel.obraz}'s light, shadow or reflection, focus and grain; no halo, outline or sticker look.`,
         ].filter(Boolean).join('\n'),

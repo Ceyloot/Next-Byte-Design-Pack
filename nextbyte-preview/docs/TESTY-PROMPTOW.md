@@ -88,3 +88,7 @@ Przyczyna: „zamień X na tę osobę” było rozpoznawane jako zamiana TWARZY 
 ## Buty na osobie (zgłoszenie: dwa buty przy jednej ukrytej nodze, skala)
 
 Dodane do promptów ubrania z referencji i transferu obiektu: rzecz noszona jest skalowana wg części ciała, która ją nosi (nie wg referencji), a rzeczy „w parze” trafiają tylko na widoczne części ciała — nie na ukrytą lub uciętą kończynę. NIE testowane generacją (wyczerpany budżet) — do sprawdzenia na zdjęciu zgłaszającego.
+
+## Skala po stronie modelu (brick z PDF Studia)
+
+Reżyser (Gemini) nie podaje już rozmiaru w %, skali, widoku ani ułożenia — tylko co jest czym (nazwy, opisy) i gdzie (pozycja). Skalę rozstrzyga model jednym bricklem z PDF „Studio Zdjęć — prompty systemowe” (poz. 52: „Resolve scale and perspective so the subject fits naturally in the environment's geometry”), `brickSkali()` w `skladaj.ts`: rozmiar względem rzeczy wokół na tej głębi (osoba jak człowiek przy meblach, but pasuje do stopy), stopy i punkty styku w 3D, głowa nie wchodzi w zły plan; rozmiar oceniany z obiektów sceny, nie z referencji. Włączone dla: dodaj, transfer/zamiana z 2. zdjęcia, ubranie z referencji, ruch w kadrze (dopisane po zamrożonym tekście). Flaga `SKALA_OD_MODELU` w `CanvasSection.tsx` (false = powrót do pomiaru z kotwic). NIE testowane generacją (budżet) — do sprawdzenia na zdjęciu z osobą na sofie.
