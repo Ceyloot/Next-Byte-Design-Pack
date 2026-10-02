@@ -231,8 +231,8 @@ const ROLA_INNA = 'a reference described in the prompt — use it exactly as the
 const OPERACJE_POSTACI_SKLADAJ = new Set<OperationId>(['character_swap', 'character_transfer', 'face_swap'])
 const OPERACJE_Z_OBIEKTEM = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'character_swap', 'character_transfer'])
 /** Operacje, których kroki dublowałyby bricki — wystarczy jedno zdanie zadania. */
-/** Tryby, których zadaniem jest zmiana światła/stylu — „oświetl dokładnie jak teraz” byłoby sprzeczne z poleceniem (K1/K2). */
-const ZMIENIAJA_SWIATLO = new Set<OperationId>(['time_of_day_change', 'season_change', 'style_change'])
+/** Tryby bez linii światła: zmiana światła/stylu (K1/K2 — „oświetl dokładnie jak teraz” byłoby sprzeczne z poleceniem) oraz usuwanie (nic nie jest wstawiane). */
+const ZMIENIAJA_SWIATLO = new Set<OperationId>(['time_of_day_change', 'season_change', 'style_change', 'removal'])
 const BEZ_KROKOW = new Set<OperationId>(['addition', 'object_swap', 'object_transfer', 'removal', 'character_transfer'])
 /** Temperatura operacji z obiektem — niżej niż swap postaci (0.45), bo miejsce zadaje pineska. */
 const TEMPERATURA_OBIEKTU = 0.35

@@ -12,7 +12,7 @@ export const REMOVAL: Operation = {
   ],
   dawca: 'brak',
   czystaPlyta: true,
-  misja: `Edit Image 1: delete {{PIN_TARGET}} completely — the whole object, nothing of it may remain. Leave the empty scene behind it: continue the surrounding background, ground and light naturally into the freed space, including where its shadow or reflection was. Everything else stays exactly as it is.`,
+  misja: `Edit Image 1: delete the object at {{PIN_TARGET}} completely — the whole object, nothing of it may remain. Leave the empty scene behind it: continue the surrounding background, ground and light naturally into the freed space, including where its shadow or reflection was. Everything else stays exactly as it is.`,
   kroki: [
     `Identify the whole object at {{PIN_TARGET}} (see the PIN MAP), together with everything attached to it: shadow, reflection, cables, contact marks.`,
     `Clear all of it and rebuild what logically lies behind and beneath, inferred from the neighbourhood.`,

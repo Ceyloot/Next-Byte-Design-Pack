@@ -854,7 +854,8 @@ export function CanvasSection() {
       // ZABLOKOWANE (prompty/zablokowane/transfer-z-drugiego-zdjecia.ts): w tym trybie do modelu nie idą późniejsze dodatki, w tym zbliżenia.
       const transferZDrugiegoZdjecia =
         operacjaAgenta === 'object_transfer' && Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId !== zrodlo.id && pinDocelowy.layerId === zrodlo.id)
-      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia) {
+      // Usuwanie: zbliżenie obiektu „do usunięcia” kazałoby modelowi zachować jego stan (T01/T02) — tu nic nie jest wstawiane ani oglądane.
+      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia && operacjaAgenta !== 'removal') {
         try {
           zblizenia = await zbudujZblizenia({
             operacja: operacjaAgenta,
