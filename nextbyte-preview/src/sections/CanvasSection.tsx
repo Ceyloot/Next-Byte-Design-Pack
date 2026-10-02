@@ -192,6 +192,15 @@ export function CanvasSection() {
       return zapisany === 'lite' || zapisany === 'nb2' || zapisany === 'pro' ? zapisany : 'auto'
     } catch { return 'auto' }
   })
+  // Wersja promptów: 'studio' (zdanie użytkownika + bloki z PDF Studia Zdjęć) albo 'nasz' (prompty z pinezkami, rozmiarami i regułami). Domyślnie Studio — do porównania.
+  const [trybPromptow, setTrybPromptow] = useState<'studio' | 'nasz'>(() => {
+    try { return localStorage.getItem('canvas-tryb-promptow') === 'nasz' ? 'nasz' : 'studio' } catch { return 'studio' }
+  })
+  const zmienTrybPromptow = (t: 'studio' | 'nasz') => {
+    setTrybPromptow(t)
+    try { localStorage.setItem('canvas-tryb-promptow', t) } catch { /* bez pamięci wybór działa do końca sesji */ }
+  }
+  const studio = trybPromptow === 'studio'
   const zmienModelObrazu = (m: ModelObrazu) => {
     setModelObrazu(m)
     try { localStorage.setItem('canvas-model-obrazu', m) } catch { /* brak dostępu do pamięci — wybór działa do końca sesji */ }
@@ -689,8 +698,8 @@ export function CanvasSection() {
   // Bez legendy mapy: do modelu idą same czyste zdjęcia, więc polecenie
   // nie może opisywać obrazu z celownikami, którego model nie dostaje.
   const polecenie = useMemo(
-    () => zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
-    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
+    () => zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja, { studio }),
+    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja, studio],
   )
 
   const uwagi = useMemo(
@@ -986,7 +995,7 @@ export function CanvasSection() {
       const transferZDrugiegoZdjecia =
         operacjaAgenta === 'object_transfer' && Boolean(pinZrodlowy && pinDocelowy && pinZrodlowy.layerId !== zrodlo.id && pinDocelowy.layerId === zrodlo.id)
       // Usuwanie: zbliżenie obiektu „do usunięcia” kazałoby modelowi zachować jego stan (T01/T02) — tu nic nie jest wstawiane ani oglądane.
-      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !ruchWKadrze && !transferZDrugiegoZdjecia && operacjaAgenta !== 'removal' && operacjaAgenta !== 'addition' && operacjaAgenta !== 'face_swap' && operacjaAgenta !== 'character_swap' && operacjaAgenta !== 'object_swap' && operacjaAgenta !== 'object_transfer') {
+      if (ZBLIZENIA_W_POBLIZU_PINEZKI && !studio && !ruchWKadrze && !transferZDrugiegoZdjecia && operacjaAgenta !== 'removal' && operacjaAgenta !== 'addition' && operacjaAgenta !== 'face_swap' && operacjaAgenta !== 'character_swap' && operacjaAgenta !== 'object_swap' && operacjaAgenta !== 'object_transfer') {
         try {
           zblizenia = await zbudujZblizenia({
             operacja: operacjaAgenta,
@@ -1005,6 +1014,7 @@ export function CanvasSection() {
       // numeracja: po zdjęciach wejściowych najpierw zbliżenie twarzy (jeśli jest), potem pozostałe zbliżenia
       const pierwszyDodatkowy = obrazyPolecenia.length + 1 + (zblizenieTwarzy ? 1 : 0)
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
+        studio,
         twarzObraz: zblizenieTwarzy ? obrazyPolecenia.length + 1 : undefined,
         zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
         role: uklad.role,
@@ -1099,6 +1109,7 @@ export function CanvasSection() {
         } else {
           console.info('[canvas] wycinek: nie da się pewnie złożyć — generuję na pełnym kadrze')
           const pelnyPrompt = zbudujPolecenie(projekt.tekst, projekt.pineski, obrazy, trybAgenta, {
+            studio,
             role: uklad.role,
             osoba: dotyczyOsoby,
             odznaki: plan?.odznaki,
@@ -1323,6 +1334,7 @@ export function CanvasSection() {
     projekt.pineski,
     projekt.warstwy,
     dodajZeZrodla,
+    studio,
   ])
 
   /**
@@ -1713,6 +1725,8 @@ export function CanvasSection() {
         onGeneruj={uruchomGeneracje}
         modelObrazu={modelObrazu}
         onModelObrazu={zmienModelObrazu}
+        trybPromptow={trybPromptow}
+        onTrybPromptow={zmienTrybPromptow}
         onDodajPlik={() => refPlik.current?.click()}
         onWklejZeSchowka={wstawZeSchowka}
         onDodajZAdresu={wstawZAdresu}

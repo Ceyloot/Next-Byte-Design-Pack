@@ -90,6 +90,8 @@ export interface ObszarChroniony {
 }
 
 export interface SkladajWejscie {
+  /** wersja Studio promptu (zdanie użytkownika + bloki z PDF Studia) zamiast „naszej” */
+  studio?: boolean
   /** słowa użytkownika — już z wplecionymi pineskami */
   polecenie: string
   operacja: OperationId
@@ -302,9 +304,8 @@ export function brickSkali(nrObrazu = 1): string {
 /**
  * TRYB STUDIO — wstawianie osoby / rzeczy z referencji do sceny dokładnie jak w Studiu Zdjęć (PDF „Studio Zdjęć — prompty systemowe”, poz. 3, 13, 7):
  * zdanie użytkownika + blok „ONE photograph” + „PHOTOGRAPHIC QUALITY” + „REFERENCE ROLES”, temperatura 0.72, bez roli systemowej.
- * Bez pomiarów, współrzędnych i opisów od reżysera — tylko role zdjęć i pozycja słowami. Szybkie cofnięcie: false.
+ * Bez pomiarów i opisów od reżysera — tylko role zdjęć i pozycja. Włączane polem `studio` (przełącznik w czacie).
  */
-export const TRYB_STUDIO = true
 const STUDIO_JEDNO_ZDJECIE =
   'ONE photograph captured in-camera, not a composite: subject(s) from the references and the new environment photographed together, same camera, same moment. Relight and color-grade the subject(s) to the destination scene: same light direction, color temperature, softness, white balance, exposure and contrast. Match focal length, eye level, horizon and lens distortion; render true contact shadows, ambient occlusion and ground reflections where the subject touches surfaces. Unified film grain, sensor noise and depth of field — no halos, cut-out edges, sticker look or double lighting.'
 const STUDIO_JAKOSC =
@@ -312,6 +313,9 @@ const STUDIO_JAKOSC =
 const STUDIO_ROLA = {
   tlo: (n: number) => `Reference image ${n} is the location and background of the scene — keep its architecture, lighting and mood.`,
   postac: (n: number) => `Reference image ${n} shows the person who must appear in the image — preserve their exact face, hair, skin tone, body and clothing.`,
+  ubranie: (n: number) => `Reference image ${n} shows the outfit and clothing to wear in the image.`,
+  styl: (n: number) => `Reference image ${n} is a STYLE reference only — borrow its palette, lighting, mood and framing, never its literal content, faces or text.`,
+  baza: (n: number) => `Reference image ${n} is the base photograph to edit — keep it as it is except for what the request changes.`,
   inne: (n: number) => `Reference image ${n} is a reference described in the prompt — use it exactly as the prompt says.`,
   produkt: (n: number) => `Reference image ${n} shows the product to depict faithfully — exact shape, colors, materials, labels and proportions; do not redesign it.`,
 }
@@ -604,43 +608,69 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ].join('\n'),
       ].join('\n')
     : ''
-  // WSTAWIANIE Z REFERENCJI W STYLU STUDIA (osoba / rzecz z innego zdjęcia do sceny): patrz TRYB_STUDIO.
-  const studioMode =
-    TRYB_STUDIO &&
-    !ruchWKadrze &&
-    !czescTryb &&
-    !cechaTryb &&
-    !sceneria &&
-    cel !== undefined &&
-    ((['object_transfer', 'object_swap', 'character_transfer'].includes(op.id) && zrodlo !== undefined && zrodlo.obraz !== cel.obraz) ||
-      (op.id === 'addition' && dawca !== null))
-  const sekcjaStudio = studioMode && cel
+  // WERSJA STUDIO WSZYSTKICH PROMPTÓW (przełącznik w czacie: Studio / Nasz): zdanie użytkownika + pozycje + role referencji + bloki z PDF Studia Zdjęć,
+  // temperatura 0.72, bez roli systemowej; bez ograniczeń kadru — model może zbliżać, chyba że użytkownik tego zakaże. Wersja „nasza” = reszta tego pliku.
+  const studioMode = Boolean(w.studio)
+  const sekcjaStudio = studioMode
     ? (() => {
-        const osoba = op.id === 'character_transfer'
-        const donorzy = w.obrazy.filter((o) => o.numer !== cel.obraz)
-        const role = [
-          STUDIO_ROLA.tlo(cel.obraz),
-          ...donorzy.map((o) => (donorzy.length > 1 && o.numer !== w.twarzObraz ? STUDIO_ROLA.inne(o.numer) : osoba || o.numer === w.twarzObraz ? STUDIO_ROLA.postac(o.numer) : STUDIO_ROLA.produkt(o.numer))),
-        ]
-        const pozycja = `Position in Image ${cel.obraz}: ${nazwaPinu(cel) ? `${nazwaPinu(cel)} — ` : ''}${polozenieDokladne(cel.x, cel.y)} (x=${wsp(cel.x)} y=${wsp(cel.y)}). The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ' The subject replaces whatever stands there — remove that completely.' : ''}`
+        const baza = cel?.obraz ?? 1
+        const donorzy = w.obrazy.filter((o) => o.numer !== baza)
+        const wstawianie = ['addition', 'object_transfer', 'object_swap', 'character_transfer'].includes(op.id)
+        const wKadrze = Boolean(zrodlo && cel && zrodlo.obraz === cel.obraz && ['object_transfer', 'object_swap', 'character_transfer'].includes(op.id))
+        const osobaOp = ['character_swap', 'character_transfer', 'face_swap'].includes(op.id)
+        const rolaDonora = (n: number) =>
+          donorzy.length > 1 && n !== w.twarzObraz && !sceneria && op.id !== 'clothing_change'
+            ? STUDIO_ROLA.inne(n)
+            : osobaOp || n === w.twarzObraz
+              ? STUDIO_ROLA.postac(n)
+              : op.id === 'clothing_change'
+                ? STUDIO_ROLA.ubranie(n)
+                : sceneria
+                  ? STUDIO_ROLA.tlo(n)
+                  : op.id === 'style_change'
+                    ? STUDIO_ROLA.styl(n)
+                    : wstawianie
+                      ? STUDIO_ROLA.produkt(n)
+                      : STUDIO_ROLA.inne(n)
+        const role = donorzy.length
+          ? [wstawianie ? STUDIO_ROLA.tlo(baza) : STUDIO_ROLA.baza(baza), ...donorzy.map((o) => rolaDonora(o.numer))]
+          : []
+        const slowa = (p: { x: number; y: number }) => `${polozenieDokladne(p.x, p.y)} (x=${wsp(p.x)} y=${wsp(p.y)})`
+        const nazwaP = (p: PineskaSklejka) => (nazwaPinu(p) ? `${nazwaPinu(p)}, ` : '')
+        const pozycje: string[] = []
+        if (wKadrze && zrodlo && cel) {
+          pozycje.push(
+            `Move (do not copy): the subject starts at ${nazwaP(zrodlo)}${slowa(zrodlo)} and ends at ${nazwaP(cel)}${slowa(cel)} of Image ${baza}. The middle of its footprint sits exactly on the destination point. At the old place nothing of it remains — fill it with the natural background; it appears exactly once.`,
+          )
+        } else if (wstawianie && cel) {
+          pozycje.push(
+            `Position in Image ${baza}: ${nazwaP(cel)}${slowa(cel)}. The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ' The subject replaces whatever stands there — remove that completely.' : ''}`,
+          )
+        } else if (w.pineski.length) {
+          pozycje.push(...w.pineski.map((p) => `Marked: ${nazwaP(p)}image ${p.obraz}, ${slowa(p)}.`))
+        }
+        for (const p of w.pineskiChronione ?? []) pozycje.push(`Keep exactly as it is: ${p.nazwa ? `${p.nazwa}, ` : ''}image ${p.obraz}.`)
+        const zSubiektem = wstawianie || op.id === 'clothing_change'
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
-          pozycja,
-          brickSkali(cel.obraz),
-          STUDIO_JEDNO_ZDJECIE,
-          STUDIO_JAKOSC,
-          `REFERENCE ROLES: ${role.join(' ')}`,
-        ].join('\n\n')
+          pozycje.join('\n'),
+          zSubiektem ? brickSkali(baza) : '',
+          donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
+          op.id === 'style_change' ? '' : STUDIO_JAKOSC,
+          role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n')
       })()
     : ''
-  const sekcje: SekcjaPromptu[] = ruchWKadrze
+  const sekcje: SekcjaPromptu[] = studioMode
+    ? [{ klucz: 'task', tekst: sekcjaStudio }]
+    : ruchWKadrze
     ? [
         { klucz: 'task', tekst: zadanieRuchu },
         { klucz: 'user', tekst: sekcjaUzytkownika },
         { klucz: 'rules', tekst: sekcjaReguRuchu },
       ]
-    : studioMode
-    ? [{ klucz: 'task', tekst: sekcjaStudio }]
     : dodajKrotko
     ? [{ klucz: 'task', tekst: sekcjaDodaj }]
     : twarzKrotko

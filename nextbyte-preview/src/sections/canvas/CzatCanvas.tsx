@@ -87,6 +87,9 @@ interface Props {
   onOdpowiedzRol: (opcja: OpcjaRol) => void
   modelObrazu: ModelObrazu
   onModelObrazu: (m: ModelObrazu) => void
+  /** wersja promptów: Studio (zdanie użytkownika + bloki Studia Zdjęć) albo Nasz */
+  trybPromptow: 'studio' | 'nasz'
+  onTrybPromptow: (t: 'studio' | 'nasz') => void
   /** menu „+”: dodawanie zdjęć na płótno */
   onDodajPlik: () => void
   onWklejZeSchowka: () => void
@@ -139,6 +142,8 @@ export function CzatCanvas({
   onOdpowiedzRol,
   modelObrazu,
   onModelObrazu,
+  trybPromptow,
+  onTrybPromptow,
   onDodajPlik,
   onWklejZeSchowka,
   onDodajZAdresu,
@@ -727,6 +732,16 @@ export function CzatCanvas({
                   </div>
                 )}
               </div>
+
+              {/* Wersja promptów: Studio / Nasz */}
+              <button
+                type="button"
+                onClick={() => onTrybPromptow(trybPromptow === 'studio' ? 'nasz' : 'studio')}
+                title="Wersja promptów: Studio = zdanie użytkownika + bloki z Studia Zdjęć; Nasz = prompty z pinezkami i regułami"
+                className="ml-0.5 flex h-8 shrink-0 items-center rounded-full bg-foreground/[0.07] px-2.5 text-[12px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.12]"
+              >
+                {trybPromptow === 'studio' ? 'Studio' : 'Nasz'}
+              </button>
 
               {/* Model obrazu — panel „Modele” (układ jak w Lovart: tytuł + Auto, zakładki, lista) */}
               <div>

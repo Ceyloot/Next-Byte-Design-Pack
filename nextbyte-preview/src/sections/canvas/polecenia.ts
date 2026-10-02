@@ -306,6 +306,8 @@ export interface OpcjePolecenia {
   swiatlo?: string
   /** rozmiar obiektu w miejscu docelowym policzony z kotwic reżysera (EN) — idzie do [RULES] */
   rozmiar?: string
+  /** wersja Studio promptów (przełącznik w czacie) */
+  studio?: boolean
   /** numer pineski → szczegółowy opis rzeczy / miejsca od reżysera (EN) */
   szczegoly?: Record<number, string>
   /** numer pineski → gdzie leży punkt, słowami (EN) */
@@ -380,7 +382,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc, czescZakres, cecha, pierwszyPlan, twarzObraz, zblizenia } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc, czescZakres, cecha, pierwszyPlan, twarzObraz, zblizenia, studio } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -434,6 +436,7 @@ export function zbudujZadanieModelu(
   if (operacja === 'addition' && pineskiSklejka.some(p => p.rola === 'source' && p.obraz > 1)) operacja = 'object_transfer'
 
   return skladajPrompt({
+    studio,
     polecenie: zPineskami,
     operacja,
     pineski: pineskiSklejka,
