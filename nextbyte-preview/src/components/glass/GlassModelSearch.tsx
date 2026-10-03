@@ -246,6 +246,8 @@ export interface GlassModelSearchProps {
   models?: Model[]
   mode?: 'dropdown' | 'inline'
   placement?: 'top' | 'bottom'
+  /** którą krawędzią wyzwalacza kotwiczyć popover (prawa — gdy pasek leży przy prawej krawędzi ekranu) */
+  align?: 'left' | 'right'
   defaultOpen?: boolean
 }
 
@@ -256,6 +258,7 @@ export function GlassModelSearch({
   models = DEFAULT_MODELS,
   mode = 'dropdown',
   placement = 'top',
+  align = 'left',
   defaultOpen = false,
 }: GlassModelSearchProps) {
   const { isGlass } = useGlass()
@@ -558,7 +561,8 @@ export function GlassModelSearch({
       {open && (
         <div
           className={cn(
-            'absolute z-50 left-0 animate-in fade-in zoom-in-95 duration-150',
+            'absolute z-50 animate-in fade-in zoom-in-95 duration-150',
+            align === 'right' ? 'right-0' : 'left-0',
             placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
           )}
         >

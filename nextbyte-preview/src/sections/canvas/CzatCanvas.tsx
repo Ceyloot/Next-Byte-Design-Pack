@@ -29,11 +29,10 @@ import {
   Link2,
   Clipboard,
   X,
-  Search,
   Zap,
-  ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { LebekPinezki } from './ZnacznikPineski'
@@ -121,6 +120,33 @@ const MODELE_OBRAZU = [
   { id: 'zimage', nazwa: 'Z-Image Turbo', krotko: 'Z-Image', ikona: Layers, opis: 'Runware — wkrótce w Canvas.', dostepny: false },
 ] as const
 
+/** Okrągły przycisk narzędzia — wymiary jak w GlassChatComposer (32px, neutralna obwódka). */
+const NARZEDZIE =
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-foreground/[0.10] bg-foreground/[0.04] p-0 transition-colors duration-200 hover:border-foreground/[0.20] hover:bg-foreground/[0.08]'
+
+const metryki = (i: number, sz: number, k: number) => [
+  { label: 'Jakość', value: i },
+  { label: 'Szybkość', value: sz },
+  { label: 'Skala i światło', value: Math.min(10, i + 1) },
+  { label: 'Koszt', value: k },
+]
+
+/** Modele obrazu w formacie wyszukiwarki z biblioteki (GlassModelSearch). */
+const MODELE_DO_WYSZUKIWARKI: Model[] = [
+  {
+    id: 'auto', name: 'Auto', provider: 'NextByte', badge: 'NEXTBYTE', group: 'NEXTBYTE',
+    description: 'NextByte dobiera model do zadania', tags: ['auto'], cost: BYTE_ZA_OBRAZ, speed: 'balanced',
+    icon: <Wand2 className="h-4 w-4" />, metrics: metryki(8, 8, 5), messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
+  },
+  ...MODELE_OBRAZU.map((m): Model => ({
+    id: m.id, name: m.nazwa, provider: m.dostepny ? 'NextByte' : 'Wkrótce', badge: m.dostepny ? 'NEXTBYTE' : 'WKRÓTCE',
+    group: m.dostepny ? 'NEXTBYTE' : 'INNE MODELE', description: m.opis, tags: ['obraz', m.krotko.toLowerCase()],
+    cost: m.dostepny ? BYTE_ZA_OBRAZ : undefined, speed: 'balanced', icon: <m.ikona className="h-4 w-4" />,
+    metrics: metryki(m.id === 'pro' ? 10 : m.id === 'nb2' ? 9 : 7, m.id === 'lite' ? 9 : 6, m.id === 'pro' ? 9 : 5),
+    messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
+  })),
+]
+
 export function CzatCanvas({
   pineski,
   warstwy,
@@ -149,8 +175,8 @@ export function CzatCanvas({
   onDodajZAdresu,
 }: Props) {
   // Jedno menu naraz: plus (dodawanie), modele
-  const [menu, setMenu] = useState<null | 'plus' | 'modele'>(null)
-  const menuModelu = menu === 'modele'
+  const [menu, setMenu] = useState<null | 'plus'>(null)
+  const [odswiez, setOdswiez] = useState(0)
   const refPasek = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!menu) return
@@ -160,11 +186,6 @@ export function CzatCanvas({
     document.addEventListener('mousedown', naKlik)
     return () => document.removeEventListener('mousedown', naKlik)
   }, [menu])
-  const [szukajModelu, setSzukajModelu] = useState('')
-  const modeleWidoczne = MODELE_OBRAZU.filter(m => {
-    const fraza = szukajModelu.trim().toLowerCase()
-    return !fraza || `${m.nazwa} ${m.opis}`.toLowerCase().includes(fraza)
-  })
   const [zwiniety, setZwiniety] = useState(false)
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
@@ -394,7 +415,7 @@ export function CzatCanvas({
   const wersjaRozjechana = Boolean(wersjaDysk && wersjaDysk !== WERSJA)
   return (
     <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] right-4 top-[var(--nb-canvas-gora,16px)] z-30 flex w-[360px] max-w-[calc(100vw-32px)] flex-col">
-      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 overflow-hidden p-3.5 animate-in slide-in-from-right-4 duration-300">
+      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3.5 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">
@@ -638,6 +659,45 @@ export function CzatCanvas({
 
 
         <div className="rounded-[18px] border border-foreground/[0.07] bg-[hsl(var(--background)/0.5)] p-3 shadow-[inset_0_1px_2px_0_hsl(0_0%_0%/0.25)] transition-[border-color,background-color] duration-200 focus-within:border-primary/35 focus-within:bg-[hsl(var(--background)/0.62)]">
+          {/* Górny pasek: model (wyszukiwarka z biblioteki) + wersja promptów */}
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <GlassModelSearch
+              key={`${modelObrazu}-${odswiez}`}
+              models={MODELE_DO_WYSZUKIWARKI}
+              selectedId={modelObrazu}
+              placement="top"
+              align="right"
+              onSelect={m => {
+                const model = MODELE_OBRAZU.find(x => x.id === m.id)
+                if (model?.dostepny || m.id === 'auto') onModelObrazu(m.id as ModelObrazu)
+                else setOdswiez(n => n + 1)
+              }}
+            />
+            <div
+              role="radiogroup"
+              aria-label="Wersja promptów"
+              title="Wersja promptów: Studio = zdanie użytkownika + bloki ze Studia Zdjęć; Nasz = prompty z pinezkami i regułami"
+              className="flex h-8 shrink-0 items-center rounded-full border border-foreground/[0.10] bg-foreground/[0.04] p-0.5"
+            >
+              {(['studio', 'nasz'] as const).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  role="radio"
+                  aria-checked={trybPromptow === t}
+                  onClick={() => onTrybPromptow(t)}
+                  className={cn(
+                    'h-7 rounded-full px-2.5 text-[11px] font-medium transition-colors',
+                    trybPromptow === t
+                      ? 'border border-foreground/[0.14] bg-foreground/[0.10] text-foreground'
+                      : 'border border-transparent text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t === 'studio' ? 'Studio' : 'Nasz'}
+                </button>
+              ))}
+            </div>
+          </div>
           {pineski.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-1">
               {pineski.map((p, idx) => (
@@ -692,7 +752,7 @@ export function CzatCanvas({
             className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
           />
           <div ref={refPasek} className="relative mt-1 flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-0.5">
+            <div className="flex min-w-0 items-center gap-1.5">
               {/* + : dodawanie zdjęć na płótno */}
               <div>
                 <button
@@ -702,12 +762,9 @@ export function CzatCanvas({
                   aria-expanded={menu === 'plus'}
                   aria-label="Dodaj zdjęcie"
                   title="Dodaj zdjęcie na płótno"
-                  className={cn(
-                    'grid h-8 w-8 place-items-center rounded-full transition-colors hover:bg-foreground/[0.08] hover:text-foreground',
-                    menu === 'plus' ? 'bg-foreground/[0.08] text-foreground' : 'text-muted-foreground',
-                  )}
+                  className={cn(NARZEDZIE, menu === 'plus' && 'border-foreground/[0.2] bg-foreground/[0.09]')}
                 >
-                  <Plus className="h-[18px] w-[18px]" />
+                  <Plus className="h-4 w-4 text-muted-foreground" />
                 </button>
                 {menu === 'plus' && (
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[230px]">
@@ -733,147 +790,21 @@ export function CzatCanvas({
                 )}
               </div>
 
-              {/* Wersja promptów: Studio / Nasz */}
-              <button
-                type="button"
-                onClick={() => onTrybPromptow(trybPromptow === 'studio' ? 'nasz' : 'studio')}
-                title="Wersja promptów: Studio = zdanie użytkownika + bloki z Studia Zdjęć; Nasz = prompty z pinezkami i regułami"
-                className="ml-0.5 flex h-8 shrink-0 items-center rounded-full bg-foreground/[0.07] px-2.5 text-[12px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.12]"
-              >
-                {trybPromptow === 'studio' ? 'Studio' : 'Nasz'}
-              </button>
-
-              {/* Model obrazu — panel „Modele” (układ jak w Lovart: tytuł + Auto, zakładki, lista) */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => { setMenu(m => (m === 'modele' ? null : 'modele')); setSzukajModelu('') }}
-                  aria-haspopup="menu"
-                  aria-expanded={menuModelu}
-                  title="Model obrazu"
-                  className={cn(
-                    'ml-0.5 flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] font-semibold transition-colors',
-                    menuModelu ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary hover:bg-primary/15',
-                  )}
-                >
-                  <Cpu className="h-4 w-4" />
-                  {modelObrazu === 'auto' ? 'Auto' : MODELE_OBRAZU.find(m => m.id === modelObrazu)?.krotko}
-                  <ChevronDown className={cn('h-3 w-3 transition-transform', menuModelu && 'rotate-180')} />
-                </button>
-                {menuModelu && (
-                  <div className="absolute bottom-full left-[-12px] z-40 mb-3 w-[calc(100%+24px)]">
-                    <div role="menu" className="overflow-hidden rounded-3xl border border-foreground/20" style={STYL_MENU}>
-                      <div className="flex items-center justify-between px-5 pb-3 pt-5">
-                        <p className="text-[20px] font-semibold tracking-tight text-foreground">Modele</p>
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-[14px] text-muted-foreground">Auto</span>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={modelObrazu === 'auto'}
-                            aria-label="Automatyczny wybór modelu"
-                            title="Auto — NextByte dobiera model do zadania"
-                            onClick={() => onModelObrazu(modelObrazu === 'auto' ? 'lite' : 'auto')}
-                            className={cn(
-                              'flex h-6 w-11 items-center rounded-full p-0.5 transition-colors',
-                              modelObrazu === 'auto' ? 'bg-primary' : 'bg-foreground/20',
-                            )}
-                          >
-                            <span
-                              className="h-5 w-5 rounded-full bg-background shadow-sm transition-transform"
-                              style={{ transform: modelObrazu === 'auto' ? 'translateX(20px)' : 'translateX(0)' }}
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Zakładki rodzaju modeli — wideo i 3D dojdą razem z generacją wideo i 3D */}
-                      <div className="mx-5 mb-3 grid grid-cols-3 rounded-2xl bg-foreground/[0.06] p-1">
-                        {['Obraz', 'Wideo', '3D'].map(z => (
-                          <span
-                            key={z}
-                            title={z === 'Obraz' ? undefined : 'Wkrótce'}
-                            className={cn(
-                              'rounded-xl py-2 text-center text-[14px]',
-                              z === 'Obraz' ? 'bg-background font-medium text-foreground shadow-sm' : 'cursor-not-allowed text-muted-foreground/60',
-                            )}
-                          >
-                            {z}
-                          </span>
-                        ))}
-                      </div>
-
-                      <label className="mx-5 mb-2 flex items-center gap-2 rounded-xl border border-foreground/10 bg-foreground/[0.04] px-3 py-2 focus-within:border-primary/40">
-                        <Search className="h-4 w-4 shrink-0 text-muted-foreground/70" />
-                        <input
-                          autoFocus
-                          value={szukajModelu}
-                          onChange={e => setSzukajModelu(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); setMenu(null) } }}
-                          placeholder="Szukaj modelu…"
-                          aria-label="Szukaj modelu"
-                          className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground/60"
-                        />
-                      </label>
-
-                      <p className="px-5 pb-1 pt-1 text-[13px] text-muted-foreground">Obraz</p>
-                      <div className={cn('max-h-[300px] overflow-y-auto px-3 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', modelObrazu === 'auto' && 'opacity-45')}>
-                        {modeleWidoczne.length === 0 && (
-                          <p className="px-3 py-4 text-center text-[13px] text-muted-foreground">Brak pasującego modelu</p>
-                        )}
-                        {modeleWidoczne.map(m => {
-                          const wybrany = m.id === modelObrazu
-                          return (
-                            <button
-                              key={m.id}
-                              role="menuitemradio"
-                              aria-checked={wybrany}
-                              aria-disabled={!m.dostepny}
-                              disabled={!m.dostepny}
-                              type="button"
-                              onClick={() => { if (m.dostepny) { onModelObrazu(m.id as ModelObrazu); setMenu(null); setSzukajModelu('') } }}
-                              className={cn(
-                                'flex w-full items-start gap-3.5 rounded-2xl px-2.5 py-3 text-left transition-colors',
-                                wybrany ? 'bg-primary/10' : m.dostepny ? 'hover:bg-foreground/[0.06]' : 'opacity-55',
-                              )}
-                            >
-                              <m.ikona className={cn('mt-0.5 h-[22px] w-[22px] shrink-0', wybrany ? 'text-primary' : 'text-foreground/80')} />
-                              <span className="min-w-0 flex-1">
-                                <span className={cn('block text-[16.5px] leading-tight', wybrany ? 'font-medium text-primary' : 'text-foreground')}>{m.nazwa}</span>
-                                <span className="mt-1 block text-[14px] leading-snug text-muted-foreground">{m.opis}</span>
-                              </span>
-                              {m.dostepny ? (
-                                wybrany ? <Check className="mt-1 h-[18px] w-[18px] shrink-0 text-primary" /> : <ChevronRight className="mt-1 h-[18px] w-[18px] shrink-0 text-muted-foreground/70" />
-                              ) : (
-                                <span className="mt-0.5 shrink-0 rounded-lg bg-foreground/[0.07] px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Wkrótce</span>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               <button
                 type="button"
                 onClick={() => setOtwartyPodglad(v => !v)}
                 aria-pressed={otwartyPodglad}
                 aria-label={otwartyPodglad ? 'Ukryj prompt' : 'Pokaż prompt'}
                 title={otwartyPodglad ? 'Ukryj prompt wysyłany do modelu' : 'Pokaż prompt wysyłany do modelu'}
-                className={cn(
-                  'grid h-8 w-8 place-items-center rounded-full transition-colors hover:bg-foreground/[0.08] hover:text-foreground',
-                  otwartyPodglad ? 'bg-foreground/[0.08] text-foreground' : 'text-muted-foreground',
-                )}
+                className={cn(NARZEDZIE, otwartyPodglad && 'border-foreground/[0.2] bg-foreground/[0.09]')}
               >
-                <Eye className="h-[18px] w-[18px]" />
+                <Eye className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
-              className="nb-cta nb-refleks-krawedzi flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold"
+              className="nb-cta nb-refleks-krawedzi group flex h-9 shrink-0 items-center gap-2 rounded-full px-4 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               {trwa ? (
                 <>
@@ -882,9 +813,9 @@ export function CzatCanvas({
                 </>
               ) : (
                 <>
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
                   Generuj
-                  <span className="font-mono text-[11px] font-medium text-foreground/60">{BYTE_ZA_OBRAZ}⟠</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-primary" />
+                  <span className="font-mono text-[11px] font-medium tabular-nums text-foreground/55">· {BYTE_ZA_OBRAZ} ⟠</span>
                 </>
               )}
             </button>
