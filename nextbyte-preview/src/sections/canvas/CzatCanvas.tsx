@@ -20,7 +20,6 @@ import {
   Download,
   AlertCircle,
   HelpCircle,
-  Cpu,
   Plus,
   Gem,
   Upload,
@@ -33,7 +32,6 @@ import { cn } from '@/lib/utils'
 import { AnthropicIcon, GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIcon } from '@/grafiki/znaki-marek'
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
-import { LebekPinezki } from './ZnacznikPineski'
 import { BYTE_ZA_OBRAZ } from './dostawca'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
@@ -429,10 +427,10 @@ export function CzatCanvas({
                     {msg.pineskiSnap.map(snap => (
                       <span
                         key={snap.id}
-                        className="inline-flex items-center gap-1 rounded-md bg-[hsl(var(--background)/0.5)] px-1.5 py-0.5 text-[10.5px] font-medium text-[hsl(var(--foreground))]"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] py-0.5 pl-1 pr-2 text-[10.5px] font-medium text-[hsl(var(--foreground))]"
                       >
-                        <LebekPinezki rozmiar={12} />
-                        Pin {snap.numer}: {snap.label}
+                        <NumerPinezki n={snap.numer} />
+                        {snap.label}
                       </span>
                     ))}
                   </div>
@@ -442,35 +440,32 @@ export function CzatCanvas({
 
             {/* Odpowiedź asystenta */}
             {msg.rola === 'asystent' && (
-              <div className="max-w-full space-y-2.5 rounded-2xl border border-foreground/10 bg-[hsl(var(--background)/0.35)] p-3.5 text-[13.5px] text-[hsl(var(--foreground))]">
+              <div className="w-full space-y-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[13.5px] text-[hsl(var(--foreground))]">
                 {msg.tresc && <p className="text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
 
                 {/* Wygenerowany obraz z opcjami */}
                 {msg.obrazUrl && (
                   <div className="mt-1 space-y-2">
                     {msg.model && (
-                      <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground">
-                        <Cpu className="h-3.5 w-3.5" />
-                        {msg.model}
-                      </p>
+                      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{msg.model}</p>
                     )}
-                    <div className="relative aspect-video w-full overflow-hidden rounded-[10px] bg-[hsl(var(--background)/0.6)]">
+                    <div className="relative w-full overflow-hidden rounded-lg border border-foreground/[0.12] bg-foreground/[0.05]">
                       <img
                         src={msg.obrazUrl}
                         alt="Wynik generacji"
-                        className="h-full w-full object-contain"
+                        className="mx-auto max-h-[240px] w-full object-contain"
                       />
                     </div>
 
                     <div className="flex items-center justify-between text-[10.5px]">
-                      <span className="font-semibold text-foreground truncate max-w-[150px]">
+                      <span className="max-w-[170px] truncate font-mono text-[10.5px] text-foreground/80">
                         {msg.nazwaWyniku || 'Wygenerowany obraz'}
                       </span>
                       {msg.ocena && (
                         <span
                           className={cn(
                             'font-medium flex items-center gap-1',
-                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'text-emerald-600' : 'nb-tekst-bledu',
+                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'text-emerald-500' : 'nb-tekst-bledu',
                           )}
                         >
                           {msg.ocena.wykonane && !msg.ocena.znaczniki ? (
@@ -492,15 +487,16 @@ export function CzatCanvas({
                     <div className="flex items-center gap-1.5 pt-1">
                       <button
                         onClick={() => onWstawNaPlotno(msg.obrazUrl!, msg.nazwaWyniku || 'Wynik AI')}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-primary py-2 text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                        className="nb-cta nb-refleks-krawedzi flex h-9 flex-1 items-center justify-center gap-2 rounded-xl text-[12px] font-semibold"
                       >
-                        <Layers className="h-3 w-3" />
+                        <Layers className="h-3.5 w-3.5 text-primary" />
                         Wstaw na płótno
                       </button>
                       <button
                         onClick={() => window.open(msg.obrazUrl, '_blank')}
-                        className="p2-kontrolka flex items-center justify-center p-2 p2-cichy hover:text-[hsl(var(--foreground))]"
+                        className={NARZEDZIE + ' h-9 w-9'}
                         title="Otwórz pełny obraz"
+                        aria-label="Otwórz pełny obraz"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </button>
@@ -514,8 +510,8 @@ export function CzatCanvas({
 
         {/* Trwający proces generacji / stan */}
         {trwa && (
-          <div className="flex items-center gap-2.5 rounded-2xl bg-primary/10 border border-primary/25 p-3 text-[12px] text-primary">
-            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+          <div className="flex items-start gap-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[12px] text-foreground">
+            <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
             <div className="flex-1">
               <p className="font-semibold text-[11.5px]">
                 {stanGeneracji.faza === 'planuje' && 'Asystent analizuje scenę i mapę miejsc...'}
@@ -524,7 +520,7 @@ export function CzatCanvas({
                 {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
                 {stanGeneracji.faza === 'koryguje' && `Poprawiam rozmiar i miejsce: ${stanGeneracji.powod}`}
               </p>
-              <p className="text-[10px] text-primary/75 mt-0.5">
+              <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
                 {stanGeneracji.faza === 'trwa' && stanGeneracji.role
                   ? stanGeneracji.role
                   : 'Nie ruszam nieoznaczonych elementów sceny.'}
@@ -535,7 +531,7 @@ export function CzatCanvas({
 
         {/* Pytanie o role pinesek — zamiast zgadywać, jedno kliknięcie */}
         {stanGeneracji.faza === 'pyta' && (
-          <div className="rounded-2xl border border-primary/25 bg-primary/10 p-2.5 text-[11.5px] text-foreground">
+          <div className="rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[11.5px] text-foreground">
             <div className="mb-2 flex items-start gap-2">
               <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <span className="font-semibold leading-snug">{stanGeneracji.pytanie.tresc}</span>
@@ -546,7 +542,7 @@ export function CzatCanvas({
                   key={opcja.etykieta}
                   type="button"
                   onClick={() => onOdpowiedzRol(opcja)}
-                  className="rounded-xl border border-foreground/10 bg-background/40 px-2.5 py-1.5 text-left text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary active:scale-[0.98]"
+                  className="rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] px-3 py-2 text-left text-[11.5px] font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/[0.08] hover:text-foreground active:scale-[0.98]"
                 >
                   {opcja.etykieta}
                 </button>
@@ -557,7 +553,7 @@ export function CzatCanvas({
 
         {/* Błąd generacji */}
         {stanGeneracji.faza === 'blad' && (
-          <div className="flex items-start gap-2 rounded-2xl bg-destructive/10 border border-destructive/30 p-2.5 text-[11.5px] text-foreground">
+          <div className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-[11.5px] text-foreground">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 nb-tekst-bledu" />
             <div className="flex-1">
               <span className="font-semibold block">Błąd generacji:</span>
