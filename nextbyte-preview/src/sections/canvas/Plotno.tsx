@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Lock, Sparkles, Upload, Zap } from 'lucide-react'
+import { Lock, Sparkles, Upload } from 'lucide-react'
 import { PRZESUNIECIE_LEBKA, STYL_PINEZKI, ZnacznikPineski } from './ZnacznikPineski'
 import { cn } from '@/lib/utils'
 import { etykietaPineski, pozycjaPineski, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
@@ -627,56 +627,40 @@ export function Plotno({
         })}
       </div>
 
-      {/* Podpowiedź na pustym płótnie */}
+      {/* Ekran startowy: jedno zdanie, wgranie z dysku albo wklejenie */}
       {warstwy.length === 0 && (
-        <div className="pointer-events-auto absolute inset-0 flex items-center justify-center p-4 z-10">
+        <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center p-4">
           <div
             className={cn(
-              'relative flex flex-col items-center max-w-md w-full p-8 rounded-3xl text-center',
-              'nb-szklo nb-szklo-plynne nb-powierzchnia border border-foreground/[0.08] backdrop-blur-2xl',
-              nadPlotnem ? 'border-primary/70 bg-primary/10' : 'bg-card/60',
+              'relative flex w-full max-w-sm flex-col items-center rounded-2xl border p-7 text-center',
+              nadPlotnem ? 'border-primary/60' : 'border-foreground/[0.13]',
             )}
             style={{
-              boxShadow: '0 24px 60px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.16)',
+              backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 72%, transparent)',
+              backdropFilter: 'blur(18px) saturate(135%)',
+              WebkitBackdropFilter: 'blur(18px) saturate(135%)',
+              boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.16), 0 2px 5px -1px hsl(0 0% 0% / 0.04), 0 12px 32px -8px hsl(0 0% 0% / 0.12)',
             }}
           >
-            {/* Accent hairline */}
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary mb-4 border border-primary/25 shadow-[0_0_24px_hsl(var(--primary)/0.25)]">
-              <Sparkles className="h-7 w-7" />
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full border border-foreground/[0.10] bg-foreground/[0.04] text-foreground">
+              <Sparkles className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">Canvas Studio AI</h2>
-            <p className="mt-2 text-xs leading-relaxed text-foreground/60 max-w-sm">
-              Generatywne studio Lovart oparte na modelu <strong className="text-foreground">Nano-Banana</strong> i analizie wizualnej <strong className="text-foreground">Gemini 2.5 Flash</strong>.
-              Przenieś obiekt, zamień miejscami lub modyfikuj kadry pineskami.
-            </p>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Canvas Studio AI</h2>
+            <p className="mt-1.5 text-[13px] text-muted-foreground">Wgraj zdjęcie, oznacz obiekt pinezką i opisz zmianę.</p>
 
-            <div className="mt-6 flex flex-col sm:flex-row items-center gap-2.5 w-full">
-              {onZaladujDemo && (
-                <button
-                  type="button"
-                  onClick={onZaladujDemo}
-                  className="flex-1 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  <Zap className="h-4 w-4" />
-                  Załaduj demo (Transfer)
-                </button>
-              )}
-              {onOtworzDodawanie && (
-                <button
-                  type="button"
-                  onClick={onOtworzDodawanie}
-                  className="flex-1 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/5 hover:bg-foreground/10 text-foreground font-semibold text-xs transition-all cursor-pointer"
-                >
-                  <Upload className="h-4 w-4" />
-                  Wgraj z dysku
-                </button>
-              )}
-            </div>
-
-            <p className="mt-4 text-[10px] text-foreground/40">
-              Możesz też upuścić zdjęcia na ten ekran lub wkleić bezpośrednio ze schowka (<kbd className="font-mono bg-foreground/10 px-1 py-0.5 rounded text-[9px]">Ctrl+V</kbd>)
+            {onOtworzDodawanie && (
+              <button
+                type="button"
+                onClick={onOtworzDodawanie}
+                className="nb-cta nb-refleks-krawedzi mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-full px-5 text-[13px] font-semibold"
+              >
+                <Upload className="h-4 w-4 text-primary" />
+                Wgraj z dysku
+              </button>
+            )}
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              albo upuść zdjęcie tutaj lub wklej{' '}
+              <kbd className="rounded-md border border-foreground/[0.12] bg-foreground/[0.05] px-1.5 py-0.5 font-mono text-[10px]">Ctrl+V</kbd>
             </p>
           </div>
         </div>

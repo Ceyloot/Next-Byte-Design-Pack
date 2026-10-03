@@ -23,6 +23,10 @@ import {
   Eraser,
   Film,
   Loader2,
+  Copy,
+  Download,
+  ArrowUpToLine,
+  ArrowDownToLine,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
@@ -1473,11 +1477,11 @@ export function CanvasSection() {
 
       {/* ══ Menu kontekstowe zdjęcia (prawy klik) ══ */}
       {/* ══ Pływający pasek akcji AI nad zdjęciem (prawy klik) ══ */}
-      {(menuWarstwy || akcjaAI) &&
+      {(menuWarstwy || akcjaAI || wybranaWarstwa) &&
         (() => {
           const id = menuWarstwy?.id ?? wybranaWarstwa
           const w = projekt.warstwy.find(x => x.id === id)
-          if (!w) return null
+          if (!w || w.type !== 'image') return null
           const lewo = widok.x + w.x * widok.zoom
           const gora = widok.y + w.y * widok.zoom
           return (
@@ -1486,8 +1490,14 @@ export function CanvasSection() {
               aria-label="Szybkie akcje AI"
               onPointerDown={e => e.stopPropagation()}
               onContextMenu={e => e.preventDefault()}
-              className="absolute z-50 flex items-center gap-1 rounded-2xl border border-foreground/10 bg-card/85 p-1 shadow-[0_12px_32px_-8px_hsl(0_0%_0%/0.35)] backdrop-blur-xl"
-              style={{ left: Math.max(8, lewo), top: Math.max(8, gora - 52) }}
+              className="absolute z-50 flex items-center gap-1 rounded-full border border-foreground/[0.14] p-1 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.14),0_12px_32px_-8px_hsl(0_0%_0%/0.35)]"
+              style={{
+                left: Math.max(8, Math.min(lewo, window.innerWidth - 740)),
+                top: Math.max(68, gora - 50),
+                backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 72%, transparent)',
+                backdropFilter: 'blur(18px) saturate(135%)',
+                WebkitBackdropFilter: 'blur(18px) saturate(135%)',
+              }}
             >
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
@@ -1496,8 +1506,8 @@ export function CanvasSection() {
                   disabled={Boolean(akcjaAI)}
                   onClick={() => uruchomAkcjeAI(w.id, aid)}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11.5px] font-medium transition-colors',
-                    akcjaAI === aid ? 'bg-foreground/[0.08] text-foreground' : 'text-foreground hover:bg-foreground/[0.07]',
+                    'flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[11.5px] font-medium transition-colors',
+                    akcjaAI === aid ? 'bg-foreground/[0.10] text-foreground' : 'text-foreground/90 hover:bg-foreground/[0.08]',
                     akcjaAI && akcjaAI !== aid && 'opacity-40',
                   )}
                 >
@@ -1513,14 +1523,14 @@ export function CanvasSection() {
         (() => {
           const w = projekt.warstwy.find(x => x.id === menuWarstwy.id)
           if (!w) return null
-          const pozycje: { akcja: Parameters<typeof akcjaWarstwy>[1]; etykieta: string; niebezpieczna?: boolean }[] = [
-            { akcja: 'duplikuj', etykieta: 'Duplikuj' },
-            { akcja: 'pobierz', etykieta: 'Pobierz' },
-            { akcja: 'wierzch', etykieta: 'Na wierzch' },
-            { akcja: 'spod', etykieta: 'Na spód' },
-            { akcja: 'blokada', etykieta: w.locked ? 'Odblokuj' : 'Zablokuj' },
-            { akcja: 'ukryj', etykieta: 'Ukryj' },
-            { akcja: 'usun', etykieta: 'Usuń zdjęcie', niebezpieczna: true },
+          const pozycje: { akcja: Parameters<typeof akcjaWarstwy>[1]; etykieta: string; niebezpieczna?: boolean; ikona: typeof Eye }[] = [
+            { akcja: 'duplikuj', etykieta: 'Duplikuj', ikona: Copy },
+            { akcja: 'pobierz', etykieta: 'Pobierz', ikona: Download },
+            { akcja: 'wierzch', etykieta: 'Na wierzch', ikona: ArrowUpToLine },
+            { akcja: 'spod', etykieta: 'Na spód', ikona: ArrowDownToLine },
+            { akcja: 'blokada', etykieta: w.locked ? 'Odblokuj' : 'Zablokuj', ikona: w.locked ? Unlock : Lock },
+            { akcja: 'ukryj', etykieta: 'Ukryj', ikona: EyeOff },
+            { akcja: 'usun', etykieta: 'Usuń zdjęcie', niebezpieczna: true, ikona: Trash2 },
           ]
           return (
             <div
@@ -1528,26 +1538,30 @@ export function CanvasSection() {
               aria-label={`Opcje zdjęcia ${w.name}`}
               onPointerDown={e => e.stopPropagation()}
               onContextMenu={e => e.preventDefault()}
-              className="fixed z-50 min-w-[170px] rounded-xl border border-foreground/10 bg-card/90 p-1 shadow-[0_12px_32px_-8px_hsl(0_0%_0%/0.35)] backdrop-blur-xl"
+              className="fixed z-50 min-w-[190px] rounded-2xl border border-foreground/[0.14] p-1.5 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.14),0_16px_40px_-12px_hsl(0_0%_0%/0.45)]"
               style={{
                 left: Math.min(menuWarstwy.x, window.innerWidth - 190),
-                top: Math.min(menuWarstwy.y, window.innerHeight - 290),
+                top: Math.min(menuWarstwy.y, window.innerHeight - 330),
+                backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 88%, transparent)',
+                backdropFilter: 'blur(22px) saturate(140%)',
+                WebkitBackdropFilter: 'blur(22px) saturate(140%)',
               }}
             >
-              <p className="truncate px-2.5 pb-1 pt-1.5 text-[10px] font-medium text-muted-foreground">{w.name}</p>
-              {pozycje.map(({ akcja, etykieta, niebezpieczna }) => (
+              <p className="truncate px-2.5 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{w.name}</p>
+              {pozycje.map(({ akcja, etykieta, niebezpieczna, ikona: Ik }) => (
                 <button
                   key={akcja}
                   role="menuitem"
                   type="button"
                   onClick={() => akcjaWarstwy(w.id, akcja)}
                   className={cn(
-                    'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors',
+                    'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[12.5px] transition-colors',
                     niebezpieczna
                       ? 'text-destructive hover:bg-destructive/10'
                       : 'text-foreground hover:bg-foreground/[0.07]',
                   )}
                 >
+                  <Ik className={cn('h-4 w-4', niebezpieczna ? 'text-destructive' : 'text-muted-foreground')} />
                   {etykieta}
                 </button>
               ))}
@@ -1586,6 +1600,12 @@ export function CanvasSection() {
             onNazwa={label => zmienPineske(kartaPozycja.pineska.id, { label })}
             onUsun={() => usunPineske(kartaPozycja.pineska.id)}
             onZamknij={() => setWybranaPineska(null)}
+            polecenie={projekt.tekst}
+            onPolecenie={tekst => setProjekt(p => ({ ...p, tekst }))}
+            onWyslij={() => {
+              setWybranaPineska(null)
+              void uruchomGeneracje()
+            }}
           />
         </div>
       )}
