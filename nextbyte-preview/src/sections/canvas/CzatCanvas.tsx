@@ -13,7 +13,6 @@ import {
   Maximize2,
   Wand2,
   Check,
-  Eye,
   Pin,
   RefreshCw,
   Info,
@@ -21,7 +20,6 @@ import {
   Download,
   AlertCircle,
   HelpCircle,
-  Copy,
   Cpu,
   Plus,
   Gem,
@@ -32,7 +30,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
+import { AnthropicIcon, GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIcon } from '@/grafiki/znaki-marek'
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { LebekPinezki } from './ZnacznikPineski'
@@ -95,14 +93,6 @@ interface Props {
   onDodajZAdresu: () => void
 }
 
-/** Wspólny styl wyskakujących menu paska: prawie kryjące szkło, żeby tekst z czatu nie przebijał. */
-const STYL_MENU: React.CSSProperties = {
-  backgroundColor: 'hsl(var(--card) / 0.96)',
-  WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-  backdropFilter: 'blur(24px) saturate(160%)',
-  boxShadow: '0 16px 40px -12px hsl(0 0% 0% / 0.45)',
-}
-
 /** Modele obrazu w panelu „Modele”. `dostepny: false` — model jest w cenniku, ale Canvas jeszcze go nie obsługuje. */
 export type ModelObrazu = 'auto' | 'lite' | 'nb2' | 'pro'
 
@@ -120,32 +110,23 @@ const MODELE_OBRAZU = [
   { id: 'zimage', nazwa: 'Z-Image Turbo', krotko: 'Z-Image', ikona: Layers, opis: 'Runware — wkrótce w Canvas.', dostepny: false },
 ] as const
 
-/** Okrągły przycisk narzędzia — wymiary jak w GlassChatComposer (32px, neutralna obwódka). */
+/** Mały przycisk narzędzia — kształt i obwódka jak przyciski „Ustawienia” / „Aa” w górnym pasku nawigacji. */
 const NARZEDZIE =
-  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-foreground/[0.10] bg-foreground/[0.04] p-0 transition-colors duration-200 hover:border-foreground/[0.20] hover:bg-foreground/[0.08]'
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/12 bg-foreground/[0.05] p-0 text-foreground/55 transition-all duration-200 hover:border-foreground/20 hover:text-foreground'
 
-const metryki = (i: number, sz: number, k: number) => [
-  { label: 'Jakość', value: i },
-  { label: 'Szybkość', value: sz },
-  { label: 'Skala i światło', value: Math.min(10, i + 1) },
-  { label: 'Koszt', value: k },
-]
-
-/** Modele obrazu w formacie wyszukiwarki z biblioteki (GlassModelSearch). */
-const MODELE_DO_WYSZUKIWARKI: Model[] = [
-  {
-    id: 'auto', name: 'Auto', provider: 'NextByte', badge: 'NEXTBYTE', group: 'NEXTBYTE',
-    description: 'NextByte dobiera model do zadania', tags: ['auto'], cost: BYTE_ZA_OBRAZ, speed: 'balanced',
-    icon: <Wand2 className="h-4 w-4" />, metrics: metryki(8, 8, 5), messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
-  },
-  ...MODELE_OBRAZU.map((m): Model => ({
-    id: m.id, name: m.nazwa, provider: m.dostepny ? 'NextByte' : 'Wkrótce', badge: m.dostepny ? 'NEXTBYTE' : 'WKRÓTCE',
-    group: m.dostepny ? 'NEXTBYTE' : 'INNE MODELE', description: m.opis, tags: ['obraz', m.krotko.toLowerCase()],
-    cost: m.dostepny ? BYTE_ZA_OBRAZ : undefined, speed: 'balanced', icon: <m.ikona className="h-4 w-4" />,
-    metrics: metryki(m.id === 'pro' ? 10 : m.id === 'nb2' ? 9 : 7, m.id === 'lite' ? 9 : 6, m.id === 'pro' ? 9 : 5),
-    messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
-  })),
-]
+/** Znak dostawcy modelu — z biblioteki znaków marek; brak znaku = neutralna ikona. */
+const ZNAK_MODELU: Record<string, React.ComponentType<{ className?: string }>> = {
+  auto: NextByteMarkIcon,
+  lite: GeminiIcon,
+  nb2: GeminiIcon,
+  pro: GeminiIcon,
+  klingo3: KlingIcon,
+  grok: XaiIcon,
+  gptimage2: OpenAIIcon,
+  zimage: RunwareIcon,
+  qwen3: AnthropicIcon,
+}
+const znakModelu = (id: string) => ZNAK_MODELU[id] ?? Layers
 
 export function CzatCanvas({
   pineski,
@@ -163,20 +144,16 @@ export function CzatCanvas({
   trwa,
   intencja,
   uwagi,
-  podgladPolecenia,
   onWstawNaPlotno,
   onOdpowiedzRol,
   modelObrazu,
   onModelObrazu,
-  trybPromptow,
-  onTrybPromptow,
   onDodajPlik,
   onWklejZeSchowka,
   onDodajZAdresu,
 }: Props) {
   // Jedno menu naraz: plus (dodawanie), modele
-  const [menu, setMenu] = useState<null | 'plus'>(null)
-  const [odswiez, setOdswiez] = useState(0)
+  const [menu, setMenu] = useState<null | 'plus' | 'modele'>(null)
   const refPasek = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!menu) return
@@ -195,25 +172,6 @@ export function CzatCanvas({
       .then((d: { dysk?: string } | null) => setWersjaDysk(d?.dysk ?? null))
       .catch(() => setWersjaDysk(null))
   }, [])
-  const [otwartyPodglad, setOtwartyPodglad] = useState(false)
-  // Kopiowanie promptu wysłanego do modelu — do diagnozy (sekcje SCALE, LIGHT…)
-  const [skopiowano, setSkopiowano] = useState(false)
-  const kopiujPolecenie = async () => {
-    if (!podgladPolecenia) return
-    try {
-      await navigator.clipboard.writeText(podgladPolecenia)
-    } catch {
-      // Schowek bywa zablokowany (brak uprawnień) — zapasowo przez zaznaczenie
-      const pole = document.createElement('textarea')
-      pole.value = podgladPolecenia
-      document.body.appendChild(pole)
-      pole.select()
-      document.execCommand('copy')
-      pole.remove()
-    }
-    setSkopiowano(true)
-    window.setTimeout(() => setSkopiowano(false), 1600)
-  }
   const [, setWycinki] = useState<Record<string, string>>({})
   const wycinkiKlucze = useRef<Record<string, string>>({})
   const [historiaWiadomosci, setHistoriaWiadomosci] = useState<WiadomoscCzatu[]>([])
@@ -418,10 +376,7 @@ export function CzatCanvas({
       <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3.5 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 p2-akcent" />
-            <span className="text-[14px] font-semibold tracking-tight text-[hsl(var(--foreground))]">Canvas</span>
-          </div>
+          <span className="text-[14px] font-semibold tracking-tight text-[hsl(var(--foreground))]">Canvas</span>
           <div className="flex items-center gap-1.5">
             <span
               className={cn('font-mono text-[10px] tabular-nums', wersjaRozjechana ? 'text-[hsl(var(--warning,var(--primary)))]' : 'p2-cichy')}
@@ -452,7 +407,7 @@ export function CzatCanvas({
           >
             {/* Wiadomość użytkownika */}
             {msg.rola === 'uzytkownik' && (
-              <div className="max-w-[88%] rounded-[20px] border border-foreground/20 bg-[hsl(var(--foreground)/0.05)] px-4 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))]">
+              <div className="max-w-[88%] rounded-xl border border-foreground/20 bg-[hsl(var(--foreground)/0.05)] px-4 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))]">
                 <p className="leading-relaxed">{msg.tresc}</p>
                 {msg.pineskiSnap && msg.pineskiSnap.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1">
@@ -603,23 +558,6 @@ export function CzatCanvas({
 
       {/* Kompozytor: podgląd (na żądanie), uwagi, podpowiedzi, chipy pinesek, jedno pole i jeden przycisk */}
       <div className="shrink-0 space-y-2">
-        {otwartyPodglad && podgladPolecenia && (
-          <div className="p2-sekcja max-h-40 overflow-y-auto p-2.5 font-mono text-[10.5px] leading-relaxed p2-cichy scrollbar-none">
-            <div className="mb-1 flex items-center justify-between gap-2 font-sans">
-              <span className="p2-etykieta">Prompt wysłany do modelu</span>
-              <button
-                type="button"
-                onClick={kopiujPolecenie}
-                className="flex items-center gap-1 text-[11px] font-medium hover:text-[hsl(var(--foreground))]"
-              >
-                {skopiowano ? <Check className="h-3 w-3 p2-akcent" /> : <Copy className="h-3 w-3" />}
-                {skopiowano ? 'Skopiowano' : 'Kopiuj'}
-              </button>
-            </div>
-            <pre className="whitespace-pre-wrap">{podgladPolecenia}</pre>
-          </div>
-        )}
-
         {uwagi.length > 0 && (
           <div className="space-y-1">
             {uwagi.map(u => (
@@ -658,46 +596,7 @@ export function CzatCanvas({
         )}
 
 
-        <div className="rounded-[18px] border border-foreground/[0.07] bg-[hsl(var(--background)/0.5)] p-3 shadow-[inset_0_1px_2px_0_hsl(0_0%_0%/0.25)] transition-[border-color,background-color] duration-200 focus-within:border-primary/35 focus-within:bg-[hsl(var(--background)/0.62)]">
-          {/* Górny pasek: model (wyszukiwarka z biblioteki) + wersja promptów */}
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <GlassModelSearch
-              key={`${modelObrazu}-${odswiez}`}
-              models={MODELE_DO_WYSZUKIWARKI}
-              selectedId={modelObrazu}
-              placement="top"
-              align="right"
-              onSelect={m => {
-                const model = MODELE_OBRAZU.find(x => x.id === m.id)
-                if (model?.dostepny || m.id === 'auto') onModelObrazu(m.id as ModelObrazu)
-                else setOdswiez(n => n + 1)
-              }}
-            />
-            <div
-              role="radiogroup"
-              aria-label="Wersja promptów"
-              title="Wersja promptów: Studio = zdanie użytkownika + bloki ze Studia Zdjęć; Nasz = prompty z pinezkami i regułami"
-              className="flex h-8 shrink-0 items-center rounded-full border border-foreground/[0.10] bg-foreground/[0.04] p-0.5"
-            >
-              {(['studio', 'nasz'] as const).map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  role="radio"
-                  aria-checked={trybPromptow === t}
-                  onClick={() => onTrybPromptow(t)}
-                  className={cn(
-                    'h-7 rounded-full px-2.5 text-[11px] font-medium transition-colors',
-                    trybPromptow === t
-                      ? 'border border-foreground/[0.14] bg-foreground/[0.10] text-foreground'
-                      : 'border border-transparent text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {t === 'studio' ? 'Studio' : 'Nasz'}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div ref={refPasek} className="p2-szklo !rounded-[14px] p-3 transition-[border-color] duration-200 focus-within:!border-primary/40">
           {pineski.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-1">
               {pineski.map((p, idx) => (
@@ -751,7 +650,7 @@ export function CzatCanvas({
             aria-label="Polecenie"
             className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
           />
-          <div ref={refPasek} className="relative mt-1 flex items-center justify-between gap-2">
+          <div className="mt-1 flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5">
               {/* + : dodawanie zdjęć na płótno */}
               <div>
@@ -762,13 +661,13 @@ export function CzatCanvas({
                   aria-expanded={menu === 'plus'}
                   aria-label="Dodaj zdjęcie"
                   title="Dodaj zdjęcie na płótno"
-                  className={cn(NARZEDZIE, menu === 'plus' && 'border-foreground/[0.2] bg-foreground/[0.09]')}
+                  className={cn(NARZEDZIE, menu === 'plus' && 'border-primary/40 bg-primary/[0.15] text-primary')}
                 >
-                  <Plus className="h-4 w-4 text-muted-foreground" />
+                  <Plus className="h-4 w-4" />
                 </button>
                 {menu === 'plus' && (
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[230px]">
-                    <div role="menu" className="overflow-hidden rounded-2xl border border-foreground/20 p-1.5" style={STYL_MENU}>
+                    <div role="menu" className="nb-szklo nb-szklo-plynne nb-powierzchnia overflow-hidden rounded-2xl border border-foreground/12 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
                       {[
                         { ikona: Upload, nazwa: 'Dodaj plik', akcja: onDodajPlik },
                         { ikona: Clipboard, nazwa: 'Wklej ze schowka', akcja: onWklejZeSchowka },
@@ -779,9 +678,9 @@ export function CzatCanvas({
                           role="menuitem"
                           type="button"
                           onClick={() => { setMenu(null); akcja() }}
-                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] text-foreground/90 transition-colors hover:bg-foreground/[0.06]"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12px] font-medium text-foreground/75 transition-all duration-150 hover:bg-foreground/[0.08] hover:text-foreground"
                         >
-                          <Ik className="h-[18px] w-[18px] text-foreground/70" />
+                          <Ik className="h-3.5 w-3.5" />
                           {nazwa}
                         </button>
                       ))}
@@ -790,21 +689,72 @@ export function CzatCanvas({
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setOtwartyPodglad(v => !v)}
-                aria-pressed={otwartyPodglad}
-                aria-label={otwartyPodglad ? 'Ukryj prompt' : 'Pokaż prompt'}
-                title={otwartyPodglad ? 'Ukryj prompt wysyłany do modelu' : 'Pokaż prompt wysyłany do modelu'}
-                className={cn(NARZEDZIE, otwartyPodglad && 'border-foreground/[0.2] bg-foreground/[0.09]')}
-              >
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </button>
+              {/* Model obrazu — zwykła lista, otwiera się nad polem */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMenu(m => (m === 'modele' ? null : 'modele'))}
+                  aria-haspopup="menu"
+                  aria-expanded={menu === 'modele'}
+                  title="Model obrazu"
+                  className={cn(
+                    'flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-semibold transition-all duration-200',
+                    menu === 'modele'
+                      ? 'border-primary/40 bg-primary/[0.15] text-primary'
+                      : 'border-foreground/12 bg-foreground/[0.05] text-foreground/70 hover:border-foreground/20 hover:text-foreground',
+                  )}
+                >
+                  {(() => { const Z = znakModelu(modelObrazu); return <Z className="h-3.5 w-3.5" /> })()}
+                  {modelObrazu === 'auto' ? 'Auto' : MODELE_OBRAZU.find(m => m.id === modelObrazu)?.krotko}
+                  <ChevronRight className={cn('h-3 w-3 transition-transform duration-200', menu === 'modele' ? '-rotate-90' : 'rotate-90 opacity-50')} />
+                </button>
+                {menu === 'modele' && (
+                  <div className="absolute bottom-full left-0 z-40 mb-2 w-[300px] max-w-full">
+                    <div
+                      role="menu"
+                      className="nb-szklo nb-szklo-plynne nb-powierzchnia max-h-[340px] overflow-y-auto rounded-2xl border border-foreground/12 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                      {[{ id: 'auto', nazwa: 'Auto', opis: 'NextByte dobiera model do zadania', dostepny: true }, ...MODELE_OBRAZU].map(m => {
+                        const wybrany = m.id === modelObrazu
+                        const Z = znakModelu(m.id)
+                        return (
+                          <button
+                            key={m.id}
+                            role="menuitemradio"
+                            aria-checked={wybrany}
+                            disabled={!m.dostepny}
+                            type="button"
+                            onClick={() => { onModelObrazu(m.id as ModelObrazu); setMenu(null) }}
+                            className={cn(
+                              'flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-all duration-150',
+                              wybrany
+                                ? 'border-primary/40 bg-primary/20 text-primary'
+                                : 'border-transparent text-foreground/80 hover:bg-foreground/[0.08] hover:text-foreground',
+                              !m.dostepny && 'pointer-events-none opacity-45',
+                            )}
+                          >
+                            <Z className="h-4 w-4 shrink-0" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[12px] font-medium">{m.nazwa}</span>
+                              <span className={cn('block truncate text-[10.5px]', wybrany ? 'text-primary/70' : 'text-muted-foreground')}>{m.opis}</span>
+                            </span>
+                            {!m.dostepny ? (
+                              <span className="shrink-0 rounded-md bg-foreground/[0.07] px-1.5 py-0.5 text-[9.5px] font-semibold text-muted-foreground">Wkrótce</span>
+                            ) : (
+                              wybrany && <Check className="h-3.5 w-3.5 shrink-0" />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
-              className="nb-cta nb-refleks-krawedzi group flex h-9 shrink-0 items-center gap-2 rounded-full px-4 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+              className="nb-cta nb-refleks-krawedzi group flex h-9 shrink-0 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               {trwa ? (
                 <>

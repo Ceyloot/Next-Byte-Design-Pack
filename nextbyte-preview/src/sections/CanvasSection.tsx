@@ -1490,15 +1490,13 @@ export function CanvasSection() {
               aria-label="Szybkie akcje AI"
               onPointerDown={e => e.stopPropagation()}
               onContextMenu={e => e.preventDefault()}
-              className="absolute z-50 flex items-center gap-1 rounded-full border border-foreground/[0.14] p-1 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.14),0_12px_32px_-8px_hsl(0_0%_0%/0.35)]"
+              className="absolute z-50"
               style={{
                 left: Math.max(8, Math.min(lewo, window.innerWidth - 740)),
-                top: Math.max(68, gora - 50),
-                backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 72%, transparent)',
-                backdropFilter: 'blur(18px) saturate(135%)',
-                WebkitBackdropFilter: 'blur(18px) saturate(135%)',
+                top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
             >
+            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 rounded-2xl border p-1.5 shadow-2xl">
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
                   key={aid}
@@ -1506,15 +1504,18 @@ export function CanvasSection() {
                   disabled={Boolean(akcjaAI)}
                   onClick={() => uruchomAkcjeAI(w.id, aid)}
                   className={cn(
-                    'flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[11.5px] font-medium transition-colors',
-                    akcjaAI === aid ? 'bg-foreground/[0.10] text-foreground' : 'text-foreground/90 hover:bg-foreground/[0.08]',
+                    'flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-1.5 text-[12px] font-medium transition-all duration-150',
+                    akcjaAI === aid
+                      ? 'border-primary/40 bg-primary/20 text-primary shadow-sm shadow-primary/10'
+                      : 'border-transparent text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground',
                     akcjaAI && akcjaAI !== aid && 'opacity-40',
                   )}
                 >
-                  {akcjaAI === aid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ikona className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {akcjaAI === aid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ikona className="h-3.5 w-3.5" />}
                   {etykieta}
                 </button>
               ))}
+            </div>
             </div>
           )
         })()}
@@ -1538,15 +1539,13 @@ export function CanvasSection() {
               aria-label={`Opcje zdjęcia ${w.name}`}
               onPointerDown={e => e.stopPropagation()}
               onContextMenu={e => e.preventDefault()}
-              className="fixed z-50 min-w-[190px] rounded-2xl border border-foreground/[0.14] p-1.5 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.14),0_16px_40px_-12px_hsl(0_0%_0%/0.45)]"
+              className="fixed z-50 min-w-[190px]"
               style={{
                 left: Math.min(menuWarstwy.x, window.innerWidth - 190),
                 top: Math.min(menuWarstwy.y, window.innerHeight - 330),
-                backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 88%, transparent)',
-                backdropFilter: 'blur(22px) saturate(140%)',
-                WebkitBackdropFilter: 'blur(22px) saturate(140%)',
               }}
             >
+            <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/12 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
               <p className="truncate px-2.5 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{w.name}</p>
               {pozycje.map(({ akcja, etykieta, niebezpieczna, ikona: Ik }) => (
                 <button
@@ -1555,16 +1554,17 @@ export function CanvasSection() {
                   type="button"
                   onClick={() => akcjaWarstwy(w.id, akcja)}
                   className={cn(
-                    'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[12.5px] transition-colors',
+                    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12px] font-medium transition-all duration-150',
                     niebezpieczna
                       ? 'text-destructive hover:bg-destructive/10'
-                      : 'text-foreground hover:bg-foreground/[0.07]',
+                      : 'text-foreground/75 hover:bg-foreground/[0.08] hover:text-foreground',
                   )}
                 >
-                  <Ik className={cn('h-4 w-4', niebezpieczna ? 'text-destructive' : 'text-muted-foreground')} />
+                  <Ik className="h-3.5 w-3.5" />
                   {etykieta}
                 </button>
               ))}
+            </div>
             </div>
           )
         })()}

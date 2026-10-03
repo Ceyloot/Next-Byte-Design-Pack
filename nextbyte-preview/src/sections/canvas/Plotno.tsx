@@ -632,17 +632,11 @@ export function Plotno({
         <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center p-4">
           <div
             className={cn(
-              'relative flex w-full max-w-sm flex-col items-center rounded-2xl border p-7 text-center',
-              nadPlotnem ? 'border-primary/60' : 'border-foreground/[0.13]',
+              'nb-szklo nb-szklo-plynne nb-powierzchnia relative flex w-full max-w-sm flex-col items-center rounded-2xl border p-7 text-center',
+              nadPlotnem ? 'border-primary/60' : 'border-foreground/12',
             )}
-            style={{
-              backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 72%, transparent)',
-              backdropFilter: 'blur(18px) saturate(135%)',
-              WebkitBackdropFilter: 'blur(18px) saturate(135%)',
-              boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.16), 0 2px 5px -1px hsl(0 0% 0% / 0.04), 0 12px 32px -8px hsl(0 0% 0% / 0.12)',
-            }}
           >
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full border border-foreground/[0.10] bg-foreground/[0.04] text-foreground">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-foreground/12 bg-foreground/[0.05] text-foreground/70">
               <Sparkles className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-semibold tracking-tight text-foreground">Canvas Studio AI</h2>
@@ -652,7 +646,7 @@ export function Plotno({
               <button
                 type="button"
                 onClick={onOtworzDodawanie}
-                className="nb-cta nb-refleks-krawedzi mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-full px-5 text-[13px] font-semibold"
+                className="nb-cta nb-refleks-krawedzi mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-xl px-5 text-[13px] font-semibold"
               >
                 <Upload className="h-4 w-4 text-primary" />
                 Wgraj z dysku
