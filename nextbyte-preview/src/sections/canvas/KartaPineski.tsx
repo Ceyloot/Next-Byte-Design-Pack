@@ -57,7 +57,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamkn
             onZamknij()
           }
         }}
-        className="nb-szklo nb-szklo-plynne nb-powierzchnia w-[316px] overflow-hidden rounded-2xl border border-foreground/12 p-3.5"
+        className="nb-szklo nb-szklo-plynne nb-powierzchnia w-[316px] overflow-hidden rounded-2xl border border-foreground/[0.12] p-3.5"
         style={{ backgroundColor: 'hsl(var(--card) / 0.72)' }}
       >
         <div className="flex gap-3">
@@ -86,7 +86,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamkn
                 }}
                 placeholder={pineska.analizowana ? 'Rozpoznaję…' : 'Nazwij obiekt'}
                 aria-label="Nazwa obiektu"
-                className="min-w-0 flex-1 rounded-lg border border-foreground/12 bg-foreground/[0.05] px-2.5 py-1.5 text-[13px] font-medium text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)] focus:border-[hsl(var(--primary)/0.5)]"
+                className="min-w-0 flex-1 rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] px-2.5 py-1.5 text-[13px] font-medium text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)] focus:border-[hsl(var(--primary)/0.5)]"
               />
               <button
                 title="Usuń pineskę (Delete)"
@@ -123,7 +123,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamkn
         </div>
 
         {onPolecenie && (
-          <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-foreground/12 bg-foreground/[0.05] py-1 pl-3 pr-1 transition-colors focus-within:border-primary/40">
+          <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.05] py-1 pl-3 pr-1 transition-colors focus-within:border-primary/40">
             <input
               value={polecenie ?? ''}
               onChange={e => onPolecenie(e.target.value)}

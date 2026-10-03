@@ -87,13 +87,13 @@ export function PasekPolecenia({
     <div className="pointer-events-auto w-[min(620px,calc(100vw-96px))]">
       {/* Podgląd tego, co poleci do modelu */}
       {otwartyPodglad && podglad && (
-        <div className="mb-2 max-h-40 overflow-y-auto nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/12 p-3 scrollbar-none">
+        <div className="mb-2 max-h-40 overflow-y-auto nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-3 scrollbar-none">
           <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-foreground/40">Co poleci do modelu</p>
           <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/60">{podglad}</pre>
         </div>
       )}
 
-      <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/12 p-2">
+      <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-2">
         {/* Chipy zaznaczonych obiektów */}
         {pineski.length > 0 && (
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5 px-1 pt-0.5">
@@ -150,7 +150,7 @@ export function PasekPolecenia({
             </button>
 
             {menuTrybu && (
-              <div className="nb-szklo nb-szklo-plynne nb-powierzchnia absolute bottom-full left-0 mb-1.5 w-56 overflow-hidden rounded-xl border border-foreground/12 p-1">
+              <div className="nb-szklo nb-szklo-plynne nb-powierzchnia absolute bottom-full left-0 mb-1.5 w-56 overflow-hidden rounded-xl border border-foreground/[0.12] p-1">
                 {INTENCJE.map(i => (
                   <button
                     key={i.id}

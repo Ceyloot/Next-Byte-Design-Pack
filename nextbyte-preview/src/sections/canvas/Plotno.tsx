@@ -611,7 +611,7 @@ export function Plotno({
                   }}
                 >
                   <div
-                    className="nb-szklo nb-szklo-plynne nb-powierzchnia flex items-center gap-2 whitespace-nowrap rounded-xl border border-foreground/12 px-3 py-1.5 text-[11px] font-medium text-foreground"
+                    className="nb-szklo nb-szklo-plynne nb-powierzchnia flex items-center gap-2 whitespace-nowrap rounded-xl border border-foreground/[0.12] px-3 py-1.5 text-[11px] font-medium text-foreground"
                     style={{ backgroundColor: 'hsl(var(--card) / 0.5)', WebkitBackdropFilter: 'blur(18px) saturate(170%)', backdropFilter: 'blur(18px) saturate(170%)' }}
                   >
                     {p.chroniona && <Lock className="h-3 w-3 text-muted-foreground" />}
@@ -633,10 +633,10 @@ export function Plotno({
           <div
             className={cn(
               'nb-szklo nb-szklo-plynne nb-powierzchnia relative flex w-full max-w-sm flex-col items-center rounded-2xl border p-7 text-center',
-              nadPlotnem ? 'border-primary/60' : 'border-foreground/12',
+              nadPlotnem ? 'border-primary/60' : 'border-foreground/[0.12]',
             )}
           >
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-foreground/12 bg-foreground/[0.05] text-foreground/70">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-foreground/[0.12] bg-foreground/[0.05] text-foreground/70">
               <Sparkles className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-semibold tracking-tight text-foreground">Canvas Studio AI</h2>

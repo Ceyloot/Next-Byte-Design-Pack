@@ -1545,7 +1545,7 @@ export function CanvasSection() {
                 top: Math.min(menuWarstwy.y, window.innerHeight - 330),
               }}
             >
-            <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/12 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+            <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
               <p className="truncate px-2.5 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{w.name}</p>
               {pozycje.map(({ akcja, etykieta, niebezpieczna, ikona: Ik }) => (
                 <button

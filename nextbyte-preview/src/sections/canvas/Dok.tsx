@@ -27,7 +27,7 @@ export function Dok({ k }: { k: KontekstDoku }) {
         zwiniety ? 'w-11' : 'w-[264px]',
       )}
     >
-      <div className="nb-szklo nb-szklo-plynne nb-powierzchnia flex h-full w-full flex-col overflow-hidden rounded-2xl border border-foreground/12">
+      <div className="nb-szklo nb-szklo-plynne nb-powierzchnia flex h-full w-full flex-col overflow-hidden rounded-2xl border border-foreground/[0.12]">
       <button
         onClick={() => setZwiniety(v => !v)}
         title={zwiniety ? 'Rozwiń panel' : 'Zwiń panel'}

@@ -112,7 +112,7 @@ const MODELE_OBRAZU = [
 
 /** Mały przycisk narzędzia — kształt i obwódka jak przyciski „Ustawienia” / „Aa” w górnym pasku nawigacji. */
 const NARZEDZIE =
-  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/12 bg-foreground/[0.05] p-0 text-foreground/55 transition-all duration-200 hover:border-foreground/20 hover:text-foreground'
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] p-0 text-foreground/55 transition-all duration-200 hover:border-foreground/20 hover:text-foreground'
 
 /** Znak dostawcy modelu — z biblioteki znaków marek; brak znaku = neutralna ikona. */
 const ZNAK_MODELU: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -667,7 +667,7 @@ export function CzatCanvas({
                 </button>
                 {menu === 'plus' && (
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[230px]">
-                    <div role="menu" className="nb-szklo nb-szklo-plynne nb-powierzchnia overflow-hidden rounded-2xl border border-foreground/12 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+                    <div role="menu" className="nb-szklo nb-szklo-plynne nb-powierzchnia overflow-hidden rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
                       {[
                         { ikona: Upload, nazwa: 'Dodaj plik', akcja: onDodajPlik },
                         { ikona: Clipboard, nazwa: 'Wklej ze schowka', akcja: onWklejZeSchowka },
@@ -701,7 +701,7 @@ export function CzatCanvas({
                     'flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-semibold transition-all duration-200',
                     menu === 'modele'
                       ? 'border-primary/40 bg-primary/[0.15] text-primary'
-                      : 'border-foreground/12 bg-foreground/[0.05] text-foreground/70 hover:border-foreground/20 hover:text-foreground',
+                      : 'border-foreground/[0.12] bg-foreground/[0.05] text-foreground/70 hover:border-foreground/20 hover:text-foreground',
                   )}
                 >
                   {(() => { const Z = znakModelu(modelObrazu); return <Z className="h-3.5 w-3.5" /> })()}
@@ -712,7 +712,7 @@ export function CzatCanvas({
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[300px] max-w-full">
                     <div
                       role="menu"
-                      className="nb-szklo nb-szklo-plynne nb-powierzchnia max-h-[340px] overflow-y-auto rounded-2xl border border-foreground/12 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      className="nb-szklo nb-szklo-plynne nb-powierzchnia max-h-[340px] overflow-y-auto rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
                       {[{ id: 'auto', nazwa: 'Auto', opis: 'NextByte dobiera model do zadania', dostepny: true }, ...MODELE_OBRAZU].map(m => {
                         const wybrany = m.id === modelObrazu
