@@ -128,6 +128,15 @@ const ZNAK_MODELU: Record<string, React.ComponentType<{ className?: string }>> =
 }
 const znakModelu = (id: string) => ZNAK_MODELU[id] ?? Layers
 
+/** Mały numerek pinezki do chipów — czytelny na jasnym i ciemnym szkle (kropla ze zdjęcia ginęła na jasnym). */
+function NumerPinezki({ n }: { n: number }) {
+  return (
+    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-md border border-foreground/[0.12] bg-foreground/[0.08] text-[10px] font-semibold leading-none text-foreground">
+      {n}
+    </span>
+  )
+}
+
 export function CzatCanvas({
   pineski,
   warstwy,
@@ -160,10 +169,15 @@ export function CzatCanvas({
     const naKlik = (e: MouseEvent) => {
       if (refPasek.current && !refPasek.current.contains(e.target as Node)) setMenu(null)
     }
+    const naEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(null) }
     document.addEventListener('mousedown', naKlik)
-    return () => document.removeEventListener('mousedown', naKlik)
+    document.addEventListener('keydown', naEsc)
+    return () => {
+      document.removeEventListener('mousedown', naKlik)
+      document.removeEventListener('keydown', naEsc)
+    }
   }, [menu])
-  const [zwiniety, setZwiniety] = useState(false)
+  const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
   useEffect(() => {
@@ -343,14 +357,15 @@ export function CzatCanvas({
             'group relative flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5',
             'nb-szklo nb-szklo-plynne nb-powierzchnia',
             'border border-foreground/[0.08] backdrop-blur-2xl transition-all duration-200',
-            'hover:border-primary/40 hover:scale-105 active:scale-95',
+            'hover:border-primary/40 active:scale-95',
           )}
+          style={{ backgroundColor: 'hsl(var(--card) / 0.8)' }}
           title="Rozwiń Chat Canvas"
         >
           {/* Accent glow line */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
           <div className="relative flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Sparkles className="h-4 w-4 animate-pulse" />
+            <Sparkles className="h-4 w-4" />
           </div>
           <div className="flex flex-col text-left">
             <span className="text-[12px] font-bold text-foreground flex items-center gap-1.5">
@@ -553,6 +568,13 @@ export function CzatCanvas({
           </div>
         )}
 
+        {historiaWiadomosci.length === 0 && stanGeneracji.faza !== 'blad' && (
+          <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-2 px-6 text-center">
+            <Sparkles className="h-5 w-5 text-muted-foreground/50" />
+            <p className="text-[12px] text-muted-foreground">Tu pojawią się wyniki. Wbij pinezkę na zdjęciu i opisz zmianę.</p>
+          </div>
+        )}
+
         <div ref={refKoniecWiadomosci} />
       </div>
 
@@ -586,9 +608,9 @@ export function CzatCanvas({
                 type="button"
                 onClick={() => zastosujPodpowiedz(p, idx)}
                 className="p2-kontrolka p2-akcent-rant flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[hsl(var(--foreground))]"
-                title={`Wstaw jako oznaczony obiekt (pineska ${idx + 1})`}
+                title={`Wstaw jako oznaczony obiekt (pinezka ${idx + 1})`}
               >
-                <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={14} />
+                <NumerPinezki n={idx + 1} />
                 {etykietaPineski(p, idx + 1)}
               </button>
             ))}
@@ -610,14 +632,14 @@ export function CzatCanvas({
                     className="flex items-center gap-1 py-0.5 pl-2 pr-1 transition-colors hover:text-[hsl(var(--foreground))]"
                     title="Wstaw nazwę obiektu do polecenia"
                   >
-                    <LebekPinezki numer={idx + 1} chroniona={p.chroniona} rozmiar={14} />@{etykietaPineski(p, idx + 1)}
+                    <NumerPinezki n={idx + 1} />@{etykietaPineski(p, idx + 1)}
                   </button>
                   <button
                     type="button"
                     onClick={() => onUsunPineske(p.id)}
                     className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-[hsl(var(--destructive)/0.15)] hover:text-[hsl(var(--destructive))]"
-                    title="Usuń pineskę"
-                    aria-label={`Usuń pineskę ${idx + 1}`}
+                    title="Usuń pinezkę"
+                    aria-label={`Usuń pinezkę ${idx + 1}`}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -712,7 +734,7 @@ export function CzatCanvas({
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[300px] max-w-full">
                     <div
                       role="menu"
-                      className="nb-szklo nb-szklo-plynne nb-powierzchnia max-h-[340px] overflow-y-auto rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      className="nb-szklo nb-szklo-plynne nb-powierzchnia max-h-[340px] overflow-y-auto rounded-2xl [mask-image:linear-gradient(to_bottom,black_calc(100%-20px),transparent)] border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
                       {[{ id: 'auto', nazwa: 'Auto', opis: 'NextByte dobiera model do zadania', dostepny: true }, ...MODELE_OBRAZU].map(m => {
                         const wybrany = m.id === modelObrazu
@@ -754,6 +776,7 @@ export function CzatCanvas({
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
+              title={powodBlokady ?? undefined}
               className="nb-cta nb-refleks-krawedzi group flex h-9 shrink-0 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               {trwa ? (

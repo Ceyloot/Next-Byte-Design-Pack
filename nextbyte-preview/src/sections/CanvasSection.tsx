@@ -715,7 +715,7 @@ export function CanvasSection() {
     if (!warstwaZrodlowa) return 'Dodaj przynajmniej jedno zdjęcie'
     const blokada = uwagi.find(u => u.waga === 'blokada')
     if (blokada) return blokada.tresc
-    if (!projekt.tekst.trim()) return 'Wpisz polecenie w chacie po prawej stronie'
+    if (!projekt.tekst.trim()) return 'Wbij pinezkę i wpisz polecenie'
     return null
   }, [warstwaZrodlowa, uwagi, projekt.tekst])
 
@@ -1254,7 +1254,7 @@ export function CanvasSection() {
             wklejone: false,
             kosztTokenow: ocena?.kosztTokenow ?? 0,
             ocena:
-              'Model oddał zdjęcie praktycznie bez zmian. Nazwij obiekty w pineskach i opisz zmianę konkretniej, np. „przenieś domek spod pineski 1 na ścieżkę pod pineską 2”.',
+              'Model oddał zdjęcie praktycznie bez zmian. Nazwij obiekty w pinezkach i opisz zmianę konkretniej, np. „przenieś domek spod pinezki 1 na ścieżkę pod pinezką 2”.',
           }
         : nakladka?.wykryto
         ? {
@@ -1492,11 +1492,12 @@ export function CanvasSection() {
               onContextMenu={e => e.preventDefault()}
               className="absolute z-50"
               style={{
-                left: Math.max(8, Math.min(lewo, window.innerWidth - 740)),
+                left: Math.max(80, Math.min(lewo, window.innerWidth - 760)),
+                maxWidth: 'calc(100vw - 96px)',
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
             >
-            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 rounded-2xl border p-1.5 shadow-2xl">
+            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
                   key={aid}
@@ -1507,7 +1508,7 @@ export function CanvasSection() {
                     'flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-1.5 text-[12px] font-medium transition-all duration-150',
                     akcjaAI === aid
                       ? 'border-primary/40 bg-primary/20 text-primary shadow-sm shadow-primary/10'
-                      : 'border-transparent text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground',
+                      : 'border-transparent text-foreground/70 hover:bg-foreground/[0.06] hover:text-foreground',
                     akcjaAI && akcjaAI !== aid && 'opacity-40',
                   )}
                 >
@@ -1634,7 +1635,7 @@ export function CanvasSection() {
 
           {/* Pineska (P) — zaznacz obiekt (do 10 pinesek) */}
           <Narzedzie
-            tytul="Pineska — wskaż obiekt (P)"
+            tytul="Pinezka — wskaż obiekt (P)"
             aktywne={narzedzie === 'pineska'}
             onClick={() => setNarzedzie('pineska')}
             odznaka={projekt.pineski.length || undefined}
@@ -1823,7 +1824,7 @@ export function CanvasSection() {
       )}
 
       {/* ══ Zoom Indicator ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] left-4 z-20"><div className="p2-kontrolka px-2 py-0.5 font-mono text-[11px] p2-cichy">
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] left-4 z-20"><div className="p2-kontrolka px-2 py-0.5 font-mono text-[11px] text-foreground/70">
         {Math.round(widok.zoom * 100)}%
       </div></div>
     </div>
@@ -1848,6 +1849,8 @@ function Narzedzie({
   return (
     <button
       title={tytul}
+      aria-label={tytul}
+      aria-pressed={aktywne}
       onClick={onClick}
       className={cn(
         'relative flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-150 active:scale-95',

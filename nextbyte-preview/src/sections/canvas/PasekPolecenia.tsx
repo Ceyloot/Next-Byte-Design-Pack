@@ -125,7 +125,7 @@ export function PasekPolecenia({
           placeholder={
             pineski.length > 0
               ? 'Co ma powstać? Np. „wstaw ten laptop na maskę samochodu”'
-              : 'Wbij pineskę w obiekt, a potem opisz, co z nim zrobić'
+              : 'Wbij pinezkę w obiekt, a potem opisz, co z nim zrobić'
           }
           className="w-full resize-none bg-transparent px-2 py-1.5 text-[13px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/70"
         />
@@ -279,7 +279,7 @@ function Chip({
 
       <button
         onClick={onUsun}
-        title="Usuń pineskę"
+        title="Usuń pinezkę"
         className="text-foreground/20 opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
       >
         <Trash2 className="h-3 w-3" />

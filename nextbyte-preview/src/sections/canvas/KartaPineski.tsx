@@ -89,7 +89,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamkn
                 className="min-w-0 flex-1 rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] px-2.5 py-1.5 text-[13px] font-medium text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)] focus:border-[hsl(var(--primary)/0.5)]"
               />
               <button
-                title="Usuń pineskę (Delete)"
+                title="Usuń pinezkę (Delete)"
                 onClick={onUsun}
                 className="shrink-0 rounded-lg p-1.5 p2-cichy transition-colors hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))]"
               >
@@ -153,11 +153,11 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamkn
 
         <div className="mt-3 flex items-center justify-between border-t border-foreground/[0.08] pt-2.5">
           <span className="text-[10.5px] text-muted-foreground/70">
-            Pineska {numer} · <kbd className="font-sans font-semibold">Enter</kbd> zatwierdza
+            Pinezka {numer} · <kbd className="font-sans font-semibold">Enter</kbd> zatwierdza
           </span>
           <button
             onClick={onZamknij}
-            className="rounded-xl border border-primary/40 bg-primary/20 px-3.5 py-1.5 text-[12px] font-semibold text-primary transition-colors hover:bg-primary/20"
+            className="rounded-xl border border-foreground/[0.12] bg-foreground/[0.05] px-3.5 py-1.5 text-[12px] font-semibold text-foreground/80 transition-colors hover:border-foreground/20 hover:text-foreground"
           >
             Gotowe
           </button>

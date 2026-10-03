@@ -94,7 +94,7 @@ export function ZnacznikPineski({
         viewBox={`0 0 ${SZER} ${WYS}`}
         className="nb-pinezka-wbicie"
         style={{ overflow: 'visible', transformOrigin: `${SZPIC.x}px ${SZPIC.y}px` }}
-        aria-label={chroniona ? `Pineska ${numer} — obszar chroniony` : `Pineska ${numer}`}
+        aria-label={chroniona ? `Pinezka ${numer} — obszar chroniony` : `Pinezka ${numer}`}
         role="img"
       >
         <defs>

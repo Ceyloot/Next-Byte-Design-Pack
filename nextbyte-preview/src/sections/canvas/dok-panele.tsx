@@ -94,7 +94,7 @@ const panelWarstwy: PanelDoku = {
         <div className="mt-2 border-t border-border/[0.06] pt-1.5">
           <Wiersz etykieta="Rozdzielczość" wartosc={`${w.naturalWidth}×${w.naturalHeight}`} />
           <Wiersz etykieta="Na płótnie" wartosc={`${Math.round(w.width)}×${Math.round(w.height)}`} />
-          <Wiersz etykieta="Pineski" wartosc={k.pineski.filter(p => p.layerId === w.id).length} />
+          <Wiersz etykieta="Pinezki" wartosc={k.pineski.filter(p => p.layerId === w.id).length} />
         </div>
       </>
     )

@@ -640,7 +640,7 @@ export function Plotno({
               <Sparkles className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-semibold tracking-tight text-foreground">Canvas Studio AI</h2>
-            <p className="mt-1.5 text-[13px] text-muted-foreground">Wgraj zdjęcie, oznacz obiekt pinezką i opisz zmianę.</p>
+            <p className="mt-1.5 whitespace-nowrap text-[13px] text-muted-foreground">Wgraj zdjęcie i oznacz obiekt pinezką.</p>
 
             {onOtworzDodawanie && (
               <button
