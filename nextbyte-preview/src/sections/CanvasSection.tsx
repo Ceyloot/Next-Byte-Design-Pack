@@ -24,6 +24,7 @@ import {
   Film,
   Loader2,
   Copy,
+  ClipboardCopy,
   Download,
   ArrowUpToLine,
   ArrowDownToLine,
@@ -491,11 +492,27 @@ export function CanvasSection() {
   )
 
   const akcjaWarstwy = useCallback(
-    (id: string, akcja: 'duplikuj' | 'pobierz' | 'wierzch' | 'spod' | 'blokada' | 'ukryj' | 'usun') => {
+    (id: string, akcja: 'duplikuj' | 'kopiuj' | 'pobierz' | 'wierzch' | 'spod' | 'blokada' | 'ukryj' | 'usun') => {
       const w = projekt.warstwy.find(x => x.id === id)
       setMenuWarstwy(null)
       if (!w) return
       if (akcja === 'usun') return usunWarstwe(id)
+      if (akcja === 'kopiuj') {
+        // Kopia obrazu do schowka systemowego (PNG), do wklejenia w innej aplikacji lub z powrotem przez Ctrl+V
+        const obraz = new Image()
+        obraz.crossOrigin = 'anonymous'
+        obraz.onload = () => {
+          const c = document.createElement('canvas')
+          c.width = obraz.naturalWidth
+          c.height = obraz.naturalHeight
+          c.getContext('2d')?.drawImage(obraz, 0, 0)
+          c.toBlob(b => {
+            if (b) void navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]).catch(() => undefined)
+          }, 'image/png')
+        }
+        obraz.src = w.src
+        return
+      }
       if (akcja === 'pobierz') {
         const a = document.createElement('a')
         a.href = w.src
@@ -1546,6 +1563,7 @@ export function CanvasSection() {
           const w = projekt.warstwy.find(x => x.id === menuWarstwy.id)
           if (!w) return null
           const pozycje: { akcja: Parameters<typeof akcjaWarstwy>[1]; etykieta: string; niebezpieczna?: boolean; ikona: typeof Eye }[] = [
+            { akcja: 'kopiuj', etykieta: 'Kopiuj', ikona: ClipboardCopy },
             { akcja: 'duplikuj', etykieta: 'Duplikuj', ikona: Copy },
             { akcja: 'pobierz', etykieta: 'Pobierz', ikona: Download },
             { akcja: 'wierzch', etykieta: 'Na wierzch', ikona: ArrowUpToLine },
@@ -1563,10 +1581,10 @@ export function CanvasSection() {
               className="fixed z-50 min-w-[190px]"
               style={{
                 left: Math.min(menuWarstwy.x, window.innerWidth - 190),
-                top: Math.min(menuWarstwy.y, window.innerHeight - 330),
+                top: Math.min(menuWarstwy.y, window.innerHeight - 370),
               }}
             >
-            <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+            <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]" style={{ backgroundColor: 'hsl(var(--card) / 0.95)' }}>
               <p className="truncate px-2.5 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{w.name}</p>
               {pozycje.map(({ akcja, etykieta, niebezpieczna, ikona: Ik }) => (
                 <button
