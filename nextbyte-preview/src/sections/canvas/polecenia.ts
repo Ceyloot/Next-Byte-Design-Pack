@@ -308,6 +308,8 @@ export interface OpcjePolecenia {
   rozmiar?: string
   /** wersja Studio promptów (przełącznik w czacie) */
   studio?: boolean
+  /** Studio + zmierzony rozmiar obiektu od reżysera (porównanie z czystym Studiem) */
+  hybryda?: boolean
   /** numer pineski → szczegółowy opis rzeczy / miejsca od reżysera (EN) */
   szczegoly?: Record<number, string>
   /** numer pineski → gdzie leży punkt, słowami (EN) */
@@ -382,7 +384,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc, czescZakres, cecha, pierwszyPlan, twarzObraz, zblizenia, studio } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc, czescZakres, cecha, pierwszyPlan, twarzObraz, zblizenia, studio, hybryda } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -437,6 +439,7 @@ export function zbudujZadanieModelu(
 
   return skladajPrompt({
     studio,
+    hybryda,
     polecenie: zPineskami,
     operacja,
     pineski: pineskiSklejka,

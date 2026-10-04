@@ -86,8 +86,8 @@ interface Props {
   modelObrazu: ModelObrazu
   onModelObrazu: (m: ModelObrazu) => void
   /** wersja promptów: Studio (zdanie użytkownika + bloki Studia Zdjęć) albo Nasz */
-  trybPromptow: 'studio' | 'nasz'
-  onTrybPromptow: (t: 'studio' | 'nasz') => void
+  trybPromptow: 'studio' | 'hybryda' | 'nasz'
+  onTrybPromptow: (t: 'studio' | 'hybryda' | 'nasz') => void
   /** menu „+”: dodawanie zdjęć na płótno */
   onDodajPlik: () => void
   onWklejZeSchowka: () => void
@@ -665,19 +665,28 @@ export function CzatCanvas({
                 else setOdswiez(n => n + 1)
               }}
             />
-            <button
-              type="button"
-              role="switch"
-              aria-checked={trybPromptow === 'nasz'}
-              onClick={() => onTrybPromptow(trybPromptow === 'nasz' ? 'studio' : 'nasz')}
-              title="Stara logika: prompty z pomiarem skali i kontrolą (zamiast czystego Studia) — do porównania"
-              className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] px-2.5 text-[11px] font-medium text-foreground/70 transition-colors hover:text-foreground"
+            <div
+              role="radiogroup"
+              aria-label="Logika promptów"
+              title="Studio — czyste prompty Studia · Hybryda — Studio + zmierzony rozmiar obiektu · Stara — prompty z pomiarem i kontrolą"
+              className="flex h-9 shrink-0 items-center rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] p-0.5"
             >
-              Stara logika
-              <span className={cn('flex h-4 w-7 items-center rounded-md p-0.5 transition-colors', trybPromptow === 'nasz' ? 'bg-primary/60' : 'bg-foreground/20')}>
-                <span className={cn('h-3 w-3 rounded-[4px] bg-foreground transition-transform', trybPromptow === 'nasz' && 'translate-x-3')} />
-              </span>
-            </button>
+              {([['studio', 'Studio'], ['hybryda', 'Hybryda'], ['nasz', 'Stara']] as const).map(([k, e]) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={trybPromptow === k}
+                  onClick={() => onTrybPromptow(k)}
+                  className={cn(
+                    'h-8 rounded-md px-2 text-[11px] font-medium transition-colors',
+                    trybPromptow === k ? 'bg-primary/20 text-primary' : 'text-foreground/60 hover:text-foreground',
+                  )}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
           </div>
           {pineski.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-1">

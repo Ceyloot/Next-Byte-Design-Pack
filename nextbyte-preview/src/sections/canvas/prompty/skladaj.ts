@@ -92,6 +92,7 @@ export interface ObszarChroniony {
 export interface SkladajWejscie {
   /** wersja Studio promptu (zdanie użytkownika + bloki z PDF Studia) zamiast „naszej” */
   studio?: boolean
+  hybryda?: boolean
   /** słowa użytkownika — już z wplecionymi pineskami */
   polecenie: string
   operacja: OperationId
@@ -148,6 +149,7 @@ export interface SkladajWynik {
   gemini31?: boolean
   /** tryb Studio (wstawianie z referencji): serwer dodaje ustawienia dostawcy jak w Studiu Zdjęć */
   studio?: boolean
+  hybryda?: boolean
   sekcje: SekcjaPromptu[]
   operacja: OperationId
   nazwaOperacji: string
@@ -654,7 +656,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
           pozycje.join('\n'),
-          zSubiektem ? brickSkali(baza) : '',
+          zSubiektem ? [brickSkali(baza), w.hybryda && w.rozmiar?.trim() ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image ${baza} — follow it, never the size the subject has in its reference): ${liniaRozmiaruDodaj(w.rozmiar)}` : ''].filter(Boolean).join(' ') : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           op.id === 'style_change' ? '' : STUDIO_JAKOSC,
           role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',

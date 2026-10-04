@@ -198,14 +198,15 @@ export function CanvasSection() {
     } catch { return 'nb2' }
   })
   // Wersja promptów: 'studio' (zdanie użytkownika + bloki z PDF Studia Zdjęć) albo 'nasz' (prompty z pinezkami, rozmiarami i regułami). Domyślnie Studio — do porównania.
-  const [trybPromptow, setTrybPromptow] = useState<'studio' | 'nasz'>(() => {
-    try { return localStorage.getItem('canvas-tryb-promptow') === 'nasz' ? 'nasz' : 'studio' } catch { return 'studio' }
+  const [trybPromptow, setTrybPromptow] = useState<'studio' | 'hybryda' | 'nasz'>(() => {
+    try { const z = localStorage.getItem('canvas-tryb-promptow'); return z === 'nasz' || z === 'hybryda' ? z : 'studio' } catch { return 'studio' }
   })
-  const zmienTrybPromptow = (t: 'studio' | 'nasz') => {
+  const zmienTrybPromptow = (t: 'studio' | 'hybryda' | 'nasz') => {
     setTrybPromptow(t)
     try { localStorage.setItem('canvas-tryb-promptow', t) } catch { /* bez pamięci wybór działa do końca sesji */ }
   }
-  const studio = trybPromptow === 'studio'
+  const studio = trybPromptow === 'studio' || trybPromptow === 'hybryda'
+  const hybryda = trybPromptow === 'hybryda'
   const zmienModelObrazu = (m: ModelObrazu) => {
     setModelObrazu(m)
     try { localStorage.setItem('canvas-model-obrazu', m) } catch { /* brak dostępu do pamięci — wybór działa do końca sesji */ }
@@ -719,8 +720,8 @@ export function CanvasSection() {
   // Bez legendy mapy: do modelu idą same czyste zdjęcia, więc polecenie
   // nie może opisywać obrazu z celownikami, którego model nie dostaje.
   const polecenie = useMemo(
-    () => zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja, { studio }),
-    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja, studio],
+    () => zbudujPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja, { studio, hybryda }),
+    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja, studio, hybryda],
   )
 
   const uwagi = useMemo(
@@ -1054,6 +1055,7 @@ export function CanvasSection() {
       const pierwszyDodatkowy = obrazyPolecenia.length + 1 + (zblizenieTwarzy ? 1 : 0)
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         studio,
+        hybryda,
         twarzObraz: zblizenieTwarzy ? obrazyPolecenia.length + 1 : undefined,
         zblizenia: zblizenia.map((z, i) => ({ numer: pierwszyDodatkowy + i, opis: z.opis })),
         role: uklad.role,
@@ -1374,6 +1376,7 @@ export function CanvasSection() {
     projekt.warstwy,
     dodajZeZrodla,
     studio,
+    hybryda,
     modelObrazu,
   ])
 
