@@ -40,8 +40,6 @@ import type { OpcjaRol } from './role-z-polecenia'
 const godzina = (d: Date) => d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 /** Wersja i czasy: po pullu zmienia się hash, po restarcie serwera — godzina serwera, po odświeżeniu — godzina strony. */
 const WERSJA = typeof __CANVAS_WERSJA__ === 'string' ? __CANVAS_WERSJA__ : 'dev'
-const SERWER_START = typeof __SERWER_START__ === 'string' ? godzina(new Date(__SERWER_START__)) : '?'
-const ZALADOWANO = godzina(new Date())
 
 export interface WiadomoscCzatu {
   id: string
@@ -383,7 +381,6 @@ export function CzatCanvas({
   }
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
-  const wersjaRozjechana = Boolean(wersjaDysk && wersjaDysk !== WERSJA)
   return (
     <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] right-4 top-[var(--nb-canvas-gora,16px)] z-30 flex w-[360px] max-w-[calc(100vw-32px)] flex-col">
       <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3.5 animate-in slide-in-from-right-4 duration-300">
@@ -391,12 +388,6 @@ export function CzatCanvas({
         <div className="flex shrink-0 items-center justify-between">
           <span className="text-[14px] font-semibold tracking-tight text-[hsl(var(--foreground))]">Canvas</span>
           <div className="flex items-center gap-1.5">
-            <span
-              className={cn('font-mono text-[10px] tabular-nums', wersjaRozjechana ? 'text-[hsl(var(--warning,var(--primary)))]' : 'p2-cichy')}
-              title={`serwer wystartował ${SERWER_START} · strona załadowana ${ZALADOWANO}${wersjaRozjechana ? ` · na dysku v${wersjaDysk} — zrestartuj serwer (npm run dev)` : ''}`}
-            >
-              {wersjaRozjechana ? `⚠ v${WERSJA} → v${wersjaDysk}` : `v${WERSJA}`}
-            </span>
             <button
               onClick={() => setZwiniety(true)}
               className="p2-kontrolka flex h-7 w-7 items-center justify-center p2-cichy hover:text-[hsl(var(--foreground))]"
@@ -791,10 +782,6 @@ export function CzatCanvas({
           </div>
         </div>
 
-        {/* Ten sam tekst bywa już w uwagach powyżej — drugi raz go nie piszemy */}
-        {powodBlokady && !uwagi.some(u => u.tresc === powodBlokady) && (
-          <p className="text-center text-[11px] p2-cichy">{powodBlokady}</p>
-        )}
       </div>
     </div>
     </div>
