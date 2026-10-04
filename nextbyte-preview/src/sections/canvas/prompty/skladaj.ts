@@ -654,7 +654,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
           pozycje.join('\n'),
-          zSubiektem ? brickSkali(baza) : '',
+          zSubiektem ? [brickSkali(baza), w.skala?.trim() ? `REAL SIZE OF THE SUBJECT (true dimensions, never taken from how large it looks in its reference): ${w.skala.trim()}` : ''].filter(Boolean).join(' ') : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           op.id === 'style_change' ? '' : STUDIO_JAKOSC,
           role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
