@@ -9,7 +9,9 @@ import {
   Shield,
   Layers,
   ChevronRight,
-  Minimize2,
+  CirclePlus,
+  PanelRightClose,
+  ArrowUp,
   Maximize2,
   Wand2,
   Check,
@@ -382,19 +384,27 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] right-4 top-[var(--nb-canvas-gora,16px)] z-30 flex w-[360px] max-w-[calc(100vw-32px)] flex-col">
-      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3.5 animate-in slide-in-from-right-4 duration-300">
+    <div className="p2 !bg-transparent pointer-events-none absolute bottom-0 right-0 top-[var(--nb-canvas-gora,16px)] z-30 flex w-[400px] max-w-[100vw] flex-col">
+      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
           <span className="text-[14px] font-semibold tracking-tight text-[hsl(var(--foreground))]">Canvas</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => { setHistoriaWiadomosci([]); onTekst('') }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+              title="Nowy czat"
+              aria-label="Nowy czat"
+            >
+              <CirclePlus className="h-[18px] w-[18px]" />
+            </button>
             <button
               onClick={() => setZwiniety(true)}
-              className="p2-kontrolka flex h-7 w-7 items-center justify-center p2-cichy hover:text-[hsl(var(--foreground))]"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
               title="Zwiń"
               aria-label="Zwiń panel"
             >
-              <Minimize2 className="h-3.5 w-3.5" />
+              <PanelRightClose className="h-[18px] w-[18px]" />
             </button>
           </div>
         </div>
@@ -605,7 +615,7 @@ export function CzatCanvas({
         )}
 
 
-        <div ref={refPasek} className="p2-szklo !rounded-[14px] p-3 transition-[border-color] duration-200 focus-within:!border-primary/40">
+        <div ref={refPasek} className="p2-szklo !rounded-[22px] p-3 transition-[border-color] duration-200 focus-within:!border-primary/40">
           {pineski.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-1">
               {pineski.map((p, idx) => (
@@ -651,7 +661,7 @@ export function CzatCanvas({
             }}
             placeholder={
               pineski.length === 0
-                ? 'Wbij pinezkę i opisz zmianę…'
+                ? 'Zacznij od pomysłu — wbij pinezkę i opisz zmianę'
                 : pineski.length === 1
                   ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?`
                   : 'np. przenieś obiekt 1 na miejsce 2'
@@ -763,21 +773,11 @@ export function CzatCanvas({
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
-              title={powodBlokady ?? undefined}
-              className="nb-cta nb-refleks-krawedzi group flex h-9 shrink-0 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+              title={powodBlokady ?? `Generuj · ${BYTE_ZA_OBRAZ} ⟠`}
+              aria-label="Generuj"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-background shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.25)] transition-all duration-200 hover:opacity-85 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
             >
-              {trwa ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Pracuję…
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  Generuj
-                  <span className="font-mono text-[11px] font-medium tabular-nums text-foreground/55">· {BYTE_ZA_OBRAZ} ⟠</span>
-                </>
-              )}
+              {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" />}
             </button>
           </div>
         </div>

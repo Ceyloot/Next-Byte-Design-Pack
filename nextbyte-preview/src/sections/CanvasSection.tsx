@@ -1616,12 +1616,12 @@ export function CanvasSection() {
       <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20">
         <div className="p2-szklo pointer-events-auto flex h-10 items-center gap-2 !rounded-xl px-3">
           <NextByteMarkIcon className="h-4 w-4 text-foreground" />
-          <span className="text-[13px] font-semibold text-foreground">Canvas</span>
+          <span className="text-[13px] font-semibold text-foreground">Bez tytułu</span>
         </div>
       </div>
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-4 left-[calc((100%-376px)/2)] z-20 flex -translate-x-1/2 flex-col items-center gap-2">
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-4 left-[calc((100%-400px)/2)] z-20 flex -translate-x-1/2 flex-col items-center gap-2">
         <div className="p2-szklo pointer-events-auto relative flex flex-row items-center gap-1 !rounded-2xl p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
@@ -1689,23 +1689,6 @@ export function CanvasSection() {
             <Layers className="h-4 w-4" />
           </Narzedzie>
 
-          <span className="mx-1 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
-
-          {/* Przybliż / oddal — wokół środka widocznego płótna */}
-          <Narzedzie tytul="Przybliż (+)" onClick={() => zmienZoom(1.25)}>
-            <ZoomIn className="h-4 w-4" />
-          </Narzedzie>
-          <Narzedzie tytul="Oddal (−)" onClick={() => zmienZoom(0.8)}>
-            <ZoomOut className="h-4 w-4" />
-          </Narzedzie>
-
-          {/* Dopasuj widok do wszystkich zdjęć na płótnie */}
-          <Narzedzie
-            tytul="Dopasuj widok do zdjęć"
-            onClick={dopasujWidok}
-          >
-            <Maximize className="h-4 w-4" />
-          </Narzedzie>
         </div>
 
         {/* Menu dodawania źródeł — obok docka, nie w nim: szkło docka przycina
@@ -1832,10 +1815,16 @@ export function CanvasSection() {
         </div>
       )}
 
-      {/* ══ Zoom Indicator ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] left-4 z-20"><div className="p2-kontrolka px-2 py-0.5 font-mono text-[11px] text-foreground/70">
-        {Math.round(widok.zoom * 100)}%
-      </div></div>
+      {/* ══ Zoom (lewy dolny róg, jak w Lovart) ══ */}
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-4 left-4 z-20">
+        <div className="p2-szklo pointer-events-auto flex h-10 items-center gap-0.5 !rounded-xl px-1.5">
+          <button type="button" title="Oddal (−)" aria-label="Oddal" onClick={() => zmienZoom(0.8)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomOut className="h-4 w-4" /></button>
+          <span className="w-10 text-center font-mono text-[11px] tabular-nums text-foreground/70">{Math.round(widok.zoom * 100)}%</span>
+          <button type="button" title="Przybliż (+)" aria-label="Przybliż" onClick={() => zmienZoom(1.25)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomIn className="h-4 w-4" /></button>
+          <span className="mx-0.5 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
+          <button type="button" title="Dopasuj widok do zdjęć" aria-label="Dopasuj widok" onClick={dopasujWidok} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><Maximize className="h-4 w-4" /></button>
+        </div>
+      </div>
     </div>
   )
 }
