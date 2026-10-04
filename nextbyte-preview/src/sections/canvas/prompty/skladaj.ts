@@ -297,6 +297,11 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
  * naturally in the environment's geometry”). Za skalę odpowiada MODEL; reżyser (Gemini) nie podaje już rozmiaru, skali, widoku ani ułożenia —
  * tylko co jest czym i gdzie. Jedno wspólne zdanie dla każdej wstawianej rzeczy lub osoby.
  */
+/** BRICK NATURALNEGO OSADZENIA — wymusza logiczne, fizyczne umieszczenie wstawianego obiektu w scenie (ogólny, bez nazw rzeczy). */
+export function brickOsadzenia(nrObrazu = 1): string {
+  return `NATURAL PLACEMENT: the subject must be physically believable exactly where it is put in Image ${nrObrazu}: it rests on a real surface that can hold it, at its true real-world size for that distance from the camera, with the right perspective, orientation and ground contact for that surface, a contact shadow and reflections that match the scene, and the same light, colour and grain as Image ${nrObrazu}. Where it lands must make logical sense for what it is; never floating, never oversized next to its surroundings, never pasted flat on top.`
+}
+
 export function brickSkali(nrObrazu = 1): string {
   return `SCALE: resolve scale and perspective so the subject fits naturally in the geometry of Image ${nrObrazu} — its size relative to the things around it at that depth (a person is human-sized next to the furniture, a shoe fits the foot that wears it, a car is car-sized next to a door or a boat), feet and contact points placed correctly in 3D space, the head not cropping into the wrong plane. Judge the size from the objects in Image ${nrObrazu}, never from how large the subject looks in its own reference photo.`
 }
@@ -654,7 +659,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
           pozycje.join('\n'),
-          zSubiektem ? brickSkali(baza) : '',
+          zSubiektem ? `${brickSkali(baza)}\n\n${brickOsadzenia(baza)}` : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           op.id === 'style_change' ? '' : STUDIO_JAKOSC,
           role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
