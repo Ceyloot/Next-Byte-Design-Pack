@@ -668,10 +668,10 @@ export function CzatCanvas({
             <div
               role="radiogroup"
               aria-label="Logika promptów"
-              title="Studio — czyste prompty Studia · Hybryda — Studio + zmierzony rozmiar obiektu · Stara — prompty z pomiarem i kontrolą"
+              title="Studio — prompty Studia, przy wstawianiu z drugiego zdjęcia z pomiarem skali i osadzenia od Gemini · Stara — pełne prompty z kontrolą"
               className="flex h-9 shrink-0 items-center rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] p-0.5"
             >
-              {([['studio', 'Studio'], ['hybryda', 'Hybryda'], ['nasz', 'Stara']] as const).map(([k, e]) => (
+              {([['studio', 'Studio'], ['nasz', 'Stara']] as const).map(([k, e]) => (
                 <button
                   key={k}
                   type="button"

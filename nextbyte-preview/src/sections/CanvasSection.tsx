@@ -199,14 +199,14 @@ export function CanvasSection() {
   })
   // Wersja promptów: 'studio' (zdanie użytkownika + bloki z PDF Studia Zdjęć) albo 'nasz' (prompty z pinezkami, rozmiarami i regułami). Domyślnie Studio — do porównania.
   const [trybPromptow, setTrybPromptow] = useState<'studio' | 'hybryda' | 'nasz'>(() => {
-    try { const z = localStorage.getItem('canvas-tryb-promptow'); return z === 'nasz' || z === 'hybryda' ? z : 'studio' } catch { return 'studio' }
+    try { const z = localStorage.getItem('canvas-tryb-promptow'); return z === 'nasz' ? 'nasz' : 'studio' } catch { return 'studio' }
   })
   const zmienTrybPromptow = (t: 'studio' | 'hybryda' | 'nasz') => {
     setTrybPromptow(t)
     try { localStorage.setItem('canvas-tryb-promptow', t) } catch { /* bez pamięci wybór działa do końca sesji */ }
   }
   const studio = trybPromptow === 'studio' || trybPromptow === 'hybryda'
-  const hybryda = trybPromptow === 'hybryda'
+  const hybryda = studio // pomiar skali i osadzenia od Gemini działa w Studiu przy wstawianiu z drugiego zdjęcia
   const zmienModelObrazu = (m: ModelObrazu) => {
     setModelObrazu(m)
     try { localStorage.setItem('canvas-model-obrazu', m) } catch { /* brak dostępu do pamięci — wybór działa do końca sesji */ }
@@ -1063,8 +1063,8 @@ export function CanvasSection() {
         odznaki: plan?.odznaki,
         szczegoly: szczegolyPlanu,
         skala: SKALA_OD_MODELU ? undefined : plan?.skala,
-        widok: SKALA_OD_MODELU && !hybryda ? undefined : plan?.widok,
-        ulozenie: SKALA_OD_MODELU && !hybryda ? undefined : plan?.ulozenie,
+        widok: SKALA_OD_MODELU && !studio ? undefined : plan?.widok,
+        ulozenie: SKALA_OD_MODELU && !studio ? undefined : plan?.ulozenie,
         czesc: plan?.czesc,
         cecha: plan?.cecha,
         czescZakres: plan?.czescZakres,
