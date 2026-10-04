@@ -24,7 +24,6 @@ import {
   Film,
   Loader2,
   Copy,
-  Diamond,
   Download,
   ArrowUpToLine,
   ArrowDownToLine,
@@ -1635,7 +1634,7 @@ export function CanvasSection() {
       <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20">
         <div className="p2-szklo pointer-events-auto flex h-10 items-center gap-2 !rounded-xl px-3.5" title="Saldo Bajtów">
           <span className="text-[14px] font-bold tabular-nums text-foreground">7</span>
-          <Diamond className="h-3.5 w-3.5 text-primary" />
+          <span className="text-[14px] font-semibold text-primary">⟠</span>
         </div>
       </div>
 
