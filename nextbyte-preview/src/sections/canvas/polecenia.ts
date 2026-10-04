@@ -390,7 +390,7 @@ export function zbudujZadanieModelu(
   const numerObrazu = (p: Pineska) => Math.max(1, obrazy.findIndex(w => w.id === p.layerId) + 1)
   const wskazane = pineski.filter(p => !p.chroniona)
   const chronione = pineski.filter(p => p.chroniona)
-  const odznaka = (p: Pineska) => odznaki[pineski.indexOf(p) + 1] || nazwy.get(p.id)
+  const odznaka = (p: Pineska) => nazwy.get(p.id) || odznaki[pineski.indexOf(p) + 1]
 
   const pineskiSklejka: PineskaSklejka[] = wskazane.map(p => {
     const numer = pineski.indexOf(p) + 1
