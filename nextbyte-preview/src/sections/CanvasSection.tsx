@@ -198,14 +198,10 @@ export function CanvasSection() {
     } catch { return 'nb2' }
   })
   // Wersja promptów: 'studio' (zdanie użytkownika + bloki z PDF Studia Zdjęć) albo 'nasz' (prompty z pinezkami, rozmiarami i regułami). Domyślnie Studio — do porównania.
-  const [trybPromptow, setTrybPromptow] = useState<'studio' | 'hybryda' | 'nasz'>(() => {
-    try { const z = localStorage.getItem('canvas-tryb-promptow'); return z === 'nasz' ? 'nasz' : 'studio' } catch { return 'studio' }
-  })
-  const zmienTrybPromptow = (t: 'studio' | 'hybryda' | 'nasz') => {
-    setTrybPromptow(t)
-    try { localStorage.setItem('canvas-tryb-promptow', t) } catch { /* bez pamięci wybór działa do końca sesji */ }
-  }
-  const studio = trybPromptow === 'studio' || trybPromptow === 'hybryda'
+  // Zawsze logika Studia (opcja „Stara” usunięta).
+  const trybPromptow = 'studio' as const
+  const zmienTrybPromptow = () => undefined
+  const studio = true
   const hybryda = studio // pomiar skali i osadzenia od Gemini działa w Studiu przy wstawianiu z drugiego zdjęcia
   const zmienModelObrazu = (m: ModelObrazu) => {
     setModelObrazu(m)

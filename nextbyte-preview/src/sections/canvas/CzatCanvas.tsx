@@ -651,7 +651,7 @@ export function CzatCanvas({
 
 
         <div ref={refPasek} className="p2-szklo !rounded-2xl p-3 transition-[border-color] duration-200 focus-within:!border-primary/40">
-          <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="mb-2">
             <GlassModelSearch
               key={`${modelObrazu}-${odswiez}`}
               models={MODELE_DO_WYSZUKIWARKI}
@@ -665,28 +665,6 @@ export function CzatCanvas({
                 else setOdswiez(n => n + 1)
               }}
             />
-            <div
-              role="radiogroup"
-              aria-label="Logika promptów"
-              title="Studio — prompty Studia, przy wstawianiu z drugiego zdjęcia z pomiarem skali i osadzenia od Gemini · Stara — pełne prompty z kontrolą"
-              className="flex h-9 shrink-0 items-center rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] p-0.5"
-            >
-              {([['studio', 'Studio'], ['nasz', 'Stara']] as const).map(([k, e]) => (
-                <button
-                  key={k}
-                  type="button"
-                  role="radio"
-                  aria-checked={trybPromptow === k}
-                  onClick={() => onTrybPromptow(k)}
-                  className={cn(
-                    'h-8 rounded-md px-2 text-[11px] font-medium transition-colors',
-                    trybPromptow === k ? 'bg-primary/20 text-primary' : 'text-foreground/60 hover:text-foreground',
-                  )}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
           </div>
           {pineski.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-1">
