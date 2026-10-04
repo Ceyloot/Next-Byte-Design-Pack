@@ -656,7 +656,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
           pozycje.join('\n'),
-          zSubiektem ? [brickSkali(baza), w.hybryda && w.rozmiar?.trim() ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image ${baza} — follow it, never the size the subject has in its reference): ${liniaRozmiaruDodaj(w.rozmiar)}` : ''].filter(Boolean).join(' ') : '',
+          zSubiektem ? [brickSkali(baza), w.hybryda && w.rozmiar?.trim() ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image ${baza} — follow it, never the size the subject has in its reference): ${liniaRozmiaruDodaj(w.rozmiar)}` : '', w.hybryda && w.ulozenie?.trim() ? `LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image ${baza}'s scene — follow it): ${w.ulozenie.trim()}` : '', w.hybryda && w.widok?.trim() ? `HOW IT MUST APPEAR THERE (from Image ${baza}'s camera and the surface it stands on): ${w.widok.trim()}` : ''].filter(Boolean).join(' ') : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           op.id === 'style_change' ? '' : STUDIO_JAKOSC,
           role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
