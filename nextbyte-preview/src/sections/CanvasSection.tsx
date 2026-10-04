@@ -1621,12 +1621,6 @@ export function CanvasSection() {
             onNazwa={label => zmienPineske(kartaPozycja.pineska.id, { label })}
             onUsun={() => usunPineske(kartaPozycja.pineska.id)}
             onZamknij={() => setWybranaPineska(null)}
-            polecenie={projekt.tekst}
-            onPolecenie={tekst => setProjekt(p => ({ ...p, tekst }))}
-            onWyslij={() => {
-              setWybranaPineska(null)
-              void uruchomGeneracje()
-            }}
           />
         </div>
       )}
