@@ -644,7 +644,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           )
         } else if (wstawianie && cel) {
           pozycje.push(
-            `Place ${zrodlo?.nazwa ? `the ${zrodlo.nazwa}` : 'the subject'} from Image ${zrodlo?.obraz ?? 2} into Image ${baza}, at: ${nazwaP(cel)}${slowa(cel)}. Image ${baza} stays the scene; only the one subject from Image ${zrodlo?.obraz ?? 2} is added. The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ' The subject replaces whatever stands there — remove that completely.' : ''}`,
+            `Position in Image ${baza}: ${nazwaP(cel)}${slowa(cel)}. The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ' The subject replaces whatever stands there — remove that completely.' : ''}`,
           )
         } else if (w.pineski.length) {
           pozycje.push(...w.pineski.map((p) => `Marked: ${nazwaP(p)}image ${p.obraz}, ${slowa(p)}.`))
