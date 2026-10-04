@@ -177,6 +177,8 @@ export function CzatCanvas({
   onOdpowiedzRol,
   modelObrazu,
   onModelObrazu,
+  trybPromptow,
+  onTrybPromptow,
   onDodajPlik,
   onWklejZeSchowka,
   onDodajZAdresu,
@@ -649,7 +651,7 @@ export function CzatCanvas({
 
 
         <div ref={refPasek} className="p2-szklo !rounded-2xl p-3 transition-[border-color] duration-200 focus-within:!border-primary/40">
-          <div className="mb-2">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <GlassModelSearch
               key={`${modelObrazu}-${odswiez}`}
               models={MODELE_DO_WYSZUKIWARKI}
@@ -663,6 +665,19 @@ export function CzatCanvas({
                 else setOdswiez(n => n + 1)
               }}
             />
+            <button
+              type="button"
+              role="switch"
+              aria-checked={trybPromptow === 'nasz'}
+              onClick={() => onTrybPromptow(trybPromptow === 'nasz' ? 'studio' : 'nasz')}
+              title="Stara logika: prompty z pomiarem skali i kontrolą (zamiast czystego Studia) — do porównania"
+              className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] px-2.5 text-[11px] font-medium text-foreground/70 transition-colors hover:text-foreground"
+            >
+              Stara logika
+              <span className={cn('flex h-4 w-7 items-center rounded-md p-0.5 transition-colors', trybPromptow === 'nasz' ? 'bg-primary/60' : 'bg-foreground/20')}>
+                <span className={cn('h-3 w-3 rounded-[4px] bg-foreground transition-transform', trybPromptow === 'nasz' && 'translate-x-3')} />
+              </span>
+            </button>
           </div>
           {pineski.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-1">
