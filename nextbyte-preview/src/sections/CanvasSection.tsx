@@ -1511,8 +1511,9 @@ export function CanvasSection() {
               onContextMenu={e => e.preventDefault()}
               className="absolute z-50"
               style={{
-                left: Math.max(16, Math.min(lewo, window.innerWidth - 760)),
-                maxWidth: 'calc(100vw - 96px)',
+                left: Math.max(380, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 420)),
+                transform: 'translateX(-50%)',
+                maxWidth: 'calc(100vw - 440px)',
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
             >
