@@ -967,7 +967,7 @@ export function CanvasSection() {
       // — inaczej model bierze rozmiar z referencji (F3: auto ok. 2× za duże). Pin źródłowy przeliczony na wycinek.
       if (
         REFERENCJA_WOKOL_RZECZY &&
-        ['object_transfer', 'object_swap', 'addition'].includes(operacjaAgenta) &&
+        ['object_transfer', 'object_swap'].includes(operacjaAgenta) &&
         pinZrodlowy &&
         pinDocelowy &&
         pinZrodlowy.layerId !== pinDocelowy.layerId
@@ -1060,7 +1060,7 @@ export function CanvasSection() {
         osoba: dotyczyOsoby,
         odznaki: plan?.odznaki,
         szczegoly: szczegolyPlanu,
-        skala: SKALA_OD_MODELU && !studio ? undefined : plan?.skala,
+        skala: SKALA_OD_MODELU ? undefined : plan?.skala,
         widok: SKALA_OD_MODELU ? undefined : plan?.widok,
         ulozenie: SKALA_OD_MODELU ? undefined : plan?.ulozenie,
         czesc: plan?.czesc,
