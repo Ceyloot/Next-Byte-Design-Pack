@@ -29,7 +29,6 @@ import {
   ArrowDownToLine,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { NextByteMarkIcon } from '@/grafiki/znaki-marek'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas, type ModelObrazu } from '@/sections/canvas/CzatCanvas'
@@ -194,8 +193,8 @@ export function CanvasSection() {
   const [modelObrazu, setModelObrazu] = useState<ModelObrazu>(() => {
     try {
       const zapisany = localStorage.getItem('canvas-model-obrazu')
-      return zapisany === 'lite' || zapisany === 'nb2' || zapisany === 'pro' ? zapisany : 'auto'
-    } catch { return 'auto' }
+      return zapisany === 'lite' || zapisany === 'nb2' || zapisany === 'pro' ? zapisany : 'nb2'
+    } catch { return 'nb2' }
   })
   // Wersja promptów: 'studio' (zdanie użytkownika + bloki z PDF Studia Zdjęć) albo 'nasz' (prompty z pinezkami, rozmiarami i regułami). Domyślnie Studio — do porównania.
   const [trybPromptow, setTrybPromptow] = useState<'studio' | 'nasz'>(() => {
@@ -1612,17 +1611,9 @@ export function CanvasSection() {
         </div>
       )}
 
-      {/* ══ Plakietka projektu (jak w Lovart: lewy górny róg) ══ */}
-      <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20">
-        <div className="p2-szklo pointer-events-auto flex h-10 items-center gap-2 !rounded-xl px-3">
-          <NextByteMarkIcon className="h-4 w-4 text-foreground" />
-          <span className="text-[13px] font-semibold text-foreground">Bez tytułu</span>
-        </div>
-      </div>
-
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-4 left-[calc((100%-400px)/2)] z-20 flex -translate-x-1/2 flex-col items-center gap-2">
-        <div className="p2-szklo pointer-events-auto relative flex flex-row items-center gap-1 !rounded-2xl p-1.5">
+      <div className="p2 !bg-transparent pointer-events-none absolute left-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
+        <div className="p2-szklo pointer-events-auto relative flex flex-col items-center gap-1 !rounded-2xl p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
             tytul="Wybór i przesuwanie (V)"
@@ -1632,19 +1623,9 @@ export function CanvasSection() {
             <MousePointer2 className="h-4 w-4" />
           </Narzedzie>
 
-          {/* Ramka obszaru roboczego (R) */}
-          <Narzedzie
-            tytul="Obszar roboczy (R) — zaznacz pole ramką (Lovart mask)"
-            aktywne={narzedzie === 'ramka'}
-            onClick={() => setNarzedzie('ramka')}
-            odznaka={projekt.ramka ? 1 : undefined}
-          >
-            <Square className="h-4 w-4" />
-          </Narzedzie>
-
           {/* Pineska (P) — zaznacz obiekt (do 10 pinesek) */}
           <Narzedzie
-            tytul="Pinezka — wskaż obiekt (P)"
+            tytul="Pinezka — Ctrl + lewy przycisk myszy albo P"
             aktywne={narzedzie === 'pineska'}
             onClick={() => setNarzedzie('pineska')}
             odznaka={projekt.pineski.length || undefined}
@@ -1661,7 +1642,7 @@ export function CanvasSection() {
             <Hand className="h-4 w-4" />
           </Narzedzie>
 
-          <span className="mx-1 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
+          <span className="my-0.5 h-px w-5 bg-[hsl(var(--foreground)/0.12)]" />
 
           {/* Dodaj zdjęcie & Sceny demo */}
           <Narzedzie
@@ -1696,8 +1677,8 @@ export function CanvasSection() {
             trzyma zewnętrzny div, bo `.is-glass .nb-szklo` wymusza
             position: relative i zdjęłoby `absolute` ze szklanego elementu. */}
         {menuDodawania && (
-          <div className="pointer-events-auto absolute bottom-full left-1/2 z-40 mb-2.5 w-64 -translate-x-1/2">
-          <div className="p2-karta p2-pow-1 overflow-hidden p-1.5 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="pointer-events-auto absolute left-full top-1/2 z-40 ml-2.5 w-64 -translate-y-1/2">
+          <div className="p2-karta p2-pow-1 overflow-hidden p-1.5 animate-in fade-in slide-in-from-left-2 duration-150">
             <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground/40">
               Własne zdjęcia
             </div>

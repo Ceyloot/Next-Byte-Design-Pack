@@ -10,6 +10,8 @@ import {
   Layers,
   ChevronRight,
   CirclePlus,
+  Paperclip,
+  Mic,
   PanelRightClose,
   ArrowUp,
   Maximize2,
@@ -31,7 +33,8 @@ import {
   Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { AnthropicIcon, GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIcon } from '@/grafiki/znaki-marek'
+import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
+import { GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIcon } from '@/grafiki/znaki-marek'
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { BYTE_ZA_OBRAZ } from './dostawca'
@@ -122,7 +125,6 @@ const ZNAK_MODELU: Record<string, React.ComponentType<{ className?: string }>> =
   grok: XaiIcon,
   gptimage2: OpenAIIcon,
   zimage: RunwareIcon,
-  qwen3: AnthropicIcon,
 }
 const znakModelu = (id: string) => ZNAK_MODELU[id] ?? Layers
 
@@ -134,6 +136,26 @@ function NumerPinezki({ n }: { n: number }) {
     </span>
   )
 }
+
+/** Model w formacie wyszukiwarki z biblioteki (GlassModelSearch); znak dostawcy z biblioteki znaków marek. */
+const metryki = (i: number, sz: number, k: number) => [
+  { label: 'Jakość', value: i },
+  { label: 'Szybkość', value: sz },
+  { label: 'Skala i światło', value: Math.min(10, i + 1) },
+  { label: 'Koszt', value: k },
+]
+const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
+  .sort((x, y) => (x.id === 'nb2' ? -1 : y.id === 'nb2' ? 1 : 0))
+  .map((m): Model => {
+    const Z = znakModelu(m.id)
+    return {
+      id: m.id, name: m.nazwa, provider: m.dostepny ? 'Google Gemini' : 'Wkrótce', badge: m.dostepny ? 'GEMINI' : 'WKRÓTCE',
+      group: m.dostepny ? 'NEXTBYTE' : 'INNE MODELE', description: m.opis, tags: ['obraz', m.krotko.toLowerCase()],
+      cost: m.dostepny ? BYTE_ZA_OBRAZ : undefined, speed: 'balanced', icon: <Z className="h-4 w-4" />,
+      metrics: metryki(m.id === 'pro' ? 10 : m.id === 'nb2' ? 9 : 7, m.id === 'lite' ? 9 : 6, m.id === 'pro' ? 9 : 5),
+      messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
+    }
+  })
 
 export function CzatCanvas({
   pineski,
@@ -161,6 +183,24 @@ export function CzatCanvas({
 }: Props) {
   // Jedno menu naraz: plus (dodawanie), modele
   const [menu, setMenu] = useState<null | 'plus' | 'modele'>(null)
+  const [odswiez, setOdswiez] = useState(0)
+  const [nagrywa, setNagrywa] = useState(false)
+  const rozpoznawanie = useRef<{ stop: () => void } | null>(null)
+  const przelaczNagrywanie = () => {
+    if (nagrywa) { rozpoznawanie.current?.stop(); return }
+    const SR = (window as unknown as { SpeechRecognition?: new () => any; webkitSpeechRecognition?: new () => any }).SpeechRecognition
+      ?? (window as unknown as { webkitSpeechRecognition?: new () => any }).webkitSpeechRecognition
+    if (!SR) return
+    const r = new SR()
+    r.lang = 'pl-PL'
+    r.interimResults = false
+    r.onresult = (e: any) => { const t = Array.from(e.results as ArrayLike<any>).map(x => x[0].transcript).join(' '); onTekst(`${tekst} ${t}`.trim()) }
+    r.onend = () => setNagrywa(false)
+    r.onerror = () => setNagrywa(false)
+    rozpoznawanie.current = r
+    setNagrywa(true)
+    r.start()
+  }
   const refPasek = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!menu) return
@@ -384,8 +424,8 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className="p2 !bg-transparent pointer-events-none absolute bottom-0 right-0 top-[var(--nb-canvas-gora,16px)] z-30 flex w-[400px] max-w-[100vw] flex-col">
-      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
+    <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] right-4 top-[var(--nb-canvas-gora,16px)] z-30 flex w-[380px] max-w-[calc(100vw-32px)] flex-col">
+      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-2xl p-3.5 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
           <span className="text-[14px] font-semibold tracking-tight text-[hsl(var(--foreground))]">Canvas</span>
@@ -565,13 +605,6 @@ export function CzatCanvas({
           </div>
         )}
 
-        {historiaWiadomosci.length === 0 && stanGeneracji.faza !== 'blad' && (
-          <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-2 px-6 text-center">
-            <Sparkles className="h-5 w-5 text-muted-foreground/50" />
-            <p className="text-[12px] text-muted-foreground">Tu pojawią się wyniki. Wbij pinezkę na zdjęciu i opisz zmianę.</p>
-          </div>
-        )}
-
         <div ref={refKoniecWiadomosci} />
       </div>
 
@@ -615,7 +648,21 @@ export function CzatCanvas({
         )}
 
 
-        <div ref={refPasek} className="p2-szklo !rounded-[22px] p-3 transition-[border-color] duration-200 focus-within:!border-primary/40">
+        <div ref={refPasek} className="p2-szklo !rounded-2xl p-3 transition-[border-color] duration-200 focus-within:!border-primary/40">
+          <div className="mb-2">
+            <GlassModelSearch
+              key={`${modelObrazu}-${odswiez}`}
+              models={MODELE_DO_WYSZUKIWARKI}
+              selectedId={modelObrazu}
+              placement="top"
+              align="right"
+              onSelect={mo => {
+                const model = MODELE_OBRAZU.find(x => x.id === mo.id)
+                if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)
+                else setOdswiez(n => n + 1)
+              }}
+            />
+          </div>
           {pineski.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-1">
               {pineski.map((p, idx) => (
@@ -669,20 +716,21 @@ export function CzatCanvas({
             aria-label="Polecenie"
             className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
           />
-          <div className="mt-1 flex items-center justify-between gap-2">
+          <div className="mx-0.5 my-2 h-px bg-foreground/[0.08]" />
+          <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5">
-              {/* + : dodawanie zdjęć na płótno */}
+              {/* Załącz plik — plik, schowek albo adres */}
               <div>
                 <button
                   type="button"
                   onClick={() => setMenu(m => (m === 'plus' ? null : 'plus'))}
                   aria-haspopup="menu"
                   aria-expanded={menu === 'plus'}
-                  aria-label="Dodaj zdjęcie"
-                  title="Dodaj zdjęcie na płótno"
+                  aria-label="Załącz plik"
+                  title="Załącz plik"
                   className={cn(NARZEDZIE, menu === 'plus' && 'border-primary/40 bg-primary/[0.15] text-primary')}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Paperclip className="h-4 w-4" />
                 </button>
                 {menu === 'plus' && (
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[230px]">
@@ -707,77 +755,26 @@ export function CzatCanvas({
                   </div>
                 )}
               </div>
-
-              {/* Model obrazu — zwykła lista, otwiera się nad polem */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setMenu(m => (m === 'modele' ? null : 'modele'))}
-                  aria-haspopup="menu"
-                  aria-expanded={menu === 'modele'}
-                  title="Model obrazu"
-                  className={cn(
-                    'flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-semibold transition-all duration-200',
-                    menu === 'modele'
-                      ? 'border-primary/40 bg-primary/[0.15] text-primary'
-                      : 'border-foreground/[0.12] bg-foreground/[0.05] text-foreground/70 hover:border-foreground/20 hover:text-foreground',
-                  )}
-                >
-                  {(() => { const Z = znakModelu(modelObrazu); return <Z className="h-3.5 w-3.5" /> })()}
-                  {modelObrazu === 'auto' ? 'Auto' : MODELE_OBRAZU.find(m => m.id === modelObrazu)?.krotko}
-                  <ChevronRight className={cn('h-3 w-3 transition-transform duration-200', menu === 'modele' ? '-rotate-90' : 'rotate-90 opacity-50')} />
-                </button>
-                {menu === 'modele' && (
-                  <div className="absolute bottom-full left-0 z-40 mb-2 w-[300px] max-w-full">
-                    <div
-                      role="menu"
-                      className="nb-szklo nb-szklo-plynne nb-powierzchnia max-h-[340px] overflow-y-auto rounded-2xl [mask-image:linear-gradient(to_bottom,black_calc(100%-20px),transparent)] border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                    >
-                      {[{ id: 'auto', nazwa: 'Auto', opis: 'NextByte dobiera model do zadania', dostepny: true }, ...MODELE_OBRAZU].map(m => {
-                        const wybrany = m.id === modelObrazu
-                        const Z = znakModelu(m.id)
-                        return (
-                          <button
-                            key={m.id}
-                            role="menuitemradio"
-                            aria-checked={wybrany}
-                            disabled={!m.dostepny}
-                            type="button"
-                            onClick={() => { onModelObrazu(m.id as ModelObrazu); setMenu(null) }}
-                            className={cn(
-                              'flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-all duration-150',
-                              wybrany
-                                ? 'border-primary/40 bg-primary/20 text-primary'
-                                : 'border-transparent text-foreground/80 hover:bg-foreground/[0.08] hover:text-foreground',
-                              !m.dostepny && 'pointer-events-none opacity-45',
-                            )}
-                          >
-                            <Z className="h-4 w-4 shrink-0" />
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[12px] font-medium">{m.nazwa}</span>
-                              <span className={cn('block truncate text-[10.5px]', wybrany ? 'text-primary/70' : 'text-muted-foreground')}>{m.opis}</span>
-                            </span>
-                            {!m.dostepny ? (
-                              <span className="shrink-0 rounded-md bg-foreground/[0.07] px-1.5 py-0.5 text-[9.5px] font-semibold text-muted-foreground">Wkrótce</span>
-                            ) : (
-                              wybrany && <Check className="h-3.5 w-3.5 shrink-0" />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={przelaczNagrywanie}
+                aria-pressed={nagrywa}
+                aria-label="Nagraj"
+                title={nagrywa ? 'Zatrzymaj nagrywanie' : 'Nagraj głosem'}
+                className={cn(NARZEDZIE, nagrywa && 'border-destructive/40 bg-destructive/15 text-destructive')}
+              >
+                <Mic className="h-4 w-4" />
+              </button>
             </div>
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
-              title={powodBlokady ?? `Generuj · ${BYTE_ZA_OBRAZ} ⟠`}
-              aria-label="Generuj"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-background shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.25)] transition-all duration-200 hover:opacity-85 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
+              title={powodBlokady ?? undefined}
+              className="nb-cta nb-refleks-krawedzi flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" />}
+              {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 text-primary" />}
+              {trwa ? 'Pracuję…' : 'Wyślij'}
+              {!trwa && <span className="font-mono text-[11px] tabular-nums text-foreground/55">· {BYTE_ZA_OBRAZ} ⟠</span>}
             </button>
           </div>
         </div>
