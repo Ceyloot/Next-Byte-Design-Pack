@@ -133,7 +133,7 @@ export function runwareProxy(): Plugin {
       try {
         const zadanie = JSON.parse(await czytajCialo(req)) as ZadanieGeneracji
         if (!zadanie.polecenie?.trim()) return odpowiedz(400, { blad: 'Puste polecenie' })
-        if (!zadanie.obrazy?.length) return odpowiedz(400, { blad: 'Brak obrazu wejściowego' })
+        zadanie.obrazy ??= []
 
         const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc)
         // Operacje na ludziach — Gemini 3.1. Character swap: ZABLOKOWANY_MODEL_POSTACI (zablokowane/character-swap.ts), nie zmieniać.
@@ -162,7 +162,7 @@ export function runwareProxy(): Plugin {
                 positivePrompt: zadanie.polecenie,
                 // Edycja, nie generacja od zera: zdjęcie z płótna idzie jako
                 // referencja. API przyjmuje data URI, więc nie ma uploadu.
-                inputs: { referenceImages: zadanie.obrazy },
+                ...(zadanie.obrazy.length ? { inputs: { referenceImages: zadanie.obrazy } } : {}),
                 width,
                 height,
                 numberResults: 1,

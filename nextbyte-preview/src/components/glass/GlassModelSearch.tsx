@@ -248,6 +248,8 @@ export interface GlassModelSearchProps {
   placement?: 'top' | 'bottom'
   /** którą krawędzią wyzwalacza kotwiczyć popover (prawa — gdy pasek leży przy prawej krawędzi ekranu) */
   align?: 'left' | 'right'
+  /** sama lista modeli — bez karty szczegółów, węższe okno, kanciastsze kształty */
+  compact?: boolean
   defaultOpen?: boolean
 }
 
@@ -259,6 +261,7 @@ export function GlassModelSearch({
   mode = 'dropdown',
   placement = 'top',
   align = 'left',
+  compact = false,
   defaultOpen = false,
 }: GlassModelSearchProps) {
   const { isGlass } = useGlass()
@@ -330,8 +333,9 @@ export function GlassModelSearch({
         isGlass
           ? 'nb-szklo nb-szklo-plynne border-border/60 bg-background/95 shadow-primary/10'
           : 'bg-card border-border/80 text-card-foreground',
-        mode === 'dropdown' && 'w-full md:w-[700px] max-w-[95vw]',
+        mode === 'dropdown' && (compact ? 'w-[340px] max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
       )}
+      style={compact ? { backgroundColor: 'hsl(var(--card) / 0.97)' } : undefined}
     >
       {/* LEWY PANEL — WYSZUKIWARKA I LISTA MODELI */}
       <div className="flex-1 min-w-0 flex flex-col gap-2">
@@ -445,7 +449,7 @@ export function GlassModelSearch({
       </div>
 
       {/* PRAWY PANEL — KARTA SZCZEGÓŁÓW (HOVER CARD) */}
-      <div className="w-full md:w-[320px] shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between">
+      {!compact && <div className="w-full md:w-[320px] shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between">
         <div>
           {/* Nagłówek: nazwa + dostawca */}
           <div className="flex items-start justify-between gap-2">
@@ -525,7 +529,7 @@ export function GlassModelSearch({
             </div>
           </div>
         )}
-      </div>
+      </div>}
     </div>
   )
 
@@ -540,7 +544,8 @@ export function GlassModelSearch({
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'group inline-flex items-center gap-2 border border-border bg-background/40 h-11 px-3 text-[14px] text-card-foreground rounded-full transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
+          'group inline-flex items-center gap-2 border border-border bg-background/40 h-11 px-3 text-[14px] text-card-foreground transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
+          compact ? 'rounded-lg !h-9 border-foreground/[0.12]' : 'rounded-full',
           open && 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]',
         )}
       >

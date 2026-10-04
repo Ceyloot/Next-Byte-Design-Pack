@@ -164,7 +164,7 @@ function AppInner() {
             activeTab={activeTab}
             onSelectTab={(k) => setActiveTab(k as TabKey)}
             onToggleSettings={() => setShowSettings(v => !v)}
-            navPosition={navPosition}
+            navPosition={activeTab === 'canvas' ? 'left' : navPosition}
             onNavPositionChange={setNavPosition}
           />
         </div>

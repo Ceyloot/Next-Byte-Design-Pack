@@ -24,6 +24,7 @@ import {
   Film,
   Loader2,
   Copy,
+  Diamond,
   Download,
   ArrowUpToLine,
   ArrowDownToLine,
@@ -712,7 +713,7 @@ export function CanvasSection() {
   )
 
   const powodBlokady = useMemo(() => {
-    if (!warstwaZrodlowa) return 'Dodaj przynajmniej jedno zdjęcie'
+    if (!warstwaZrodlowa) return projekt.tekst.trim() ? null : 'Opisz obraz, który mam wygenerować'
     const blokada = uwagi.find(u => u.waga === 'blokada')
     if (blokada) return blokada.tresc
     if (!projekt.tekst.trim()) return 'Wbij pinezkę i wpisz polecenie'
@@ -726,7 +727,25 @@ export function CanvasSection() {
   // Blokada: drugi klik / Enter w trakcie generacji nie odpala kolejnej
   const refGeneruje = useRef(false)
   const uruchomGeneracje = useCallback(async () => {
-    if (!warstwaZrodlowa || refGeneruje.current) return
+    if (refGeneruje.current) return
+    if (!warstwaZrodlowa) {
+      // Brak zdjęcia: czysta generacja z opisu (text-to-image)
+      const opis = projekt.tekst.trim()
+      if (!opis) return
+      refGeneruje.current = true
+      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…' })
+      try {
+        const w = await generuj({ polecenie: opis, obrazy: [], szerokosc: 1024, wysokosc: 1024, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        const nazwa = nazwijWynik(opis, [])
+        dodajZeZrodla(w.obrazUrl, nazwa, 'wynik')
+        setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: w.obrazUrl, kosztUSD: w.kosztUSD, model: w.model, nazwa, opis: `Polecenie: „${opis}”.` } })
+      } catch (e) {
+        setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
+      } finally {
+        refGeneruje.current = false
+      }
+      return
+    }
     refGeneruje.current = true
     setStanGeneracji({ faza: 'planuje' })
 
@@ -1339,6 +1358,7 @@ export function CanvasSection() {
     projekt.warstwy,
     dodajZeZrodla,
     studio,
+    modelObrazu,
   ])
 
   /**
@@ -1611,9 +1631,17 @@ export function CanvasSection() {
         </div>
       )}
 
+      {/* ══ Licznik Bajtów (lewy górny róg) — saldo demonstracyjne do czasu podpięcia portfela ══ */}
+      <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20">
+        <div className="p2-szklo pointer-events-auto flex h-10 items-center gap-2 !rounded-xl px-3.5" title="Saldo Bajtów">
+          <span className="text-[14px] font-bold tabular-nums text-foreground">7</span>
+          <Diamond className="h-3.5 w-3.5 text-primary" />
+        </div>
+      </div>
+
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute left-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
-        <div className="p2-szklo pointer-events-auto relative flex flex-col items-center gap-1 !rounded-2xl p-1.5">
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
+        <div className="p2-szklo pointer-events-auto relative flex flex-row items-center gap-1 !rounded-2xl p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
             tytul="Wybór i przesuwanie (V)"
@@ -1677,8 +1705,8 @@ export function CanvasSection() {
             trzyma zewnętrzny div, bo `.is-glass .nb-szklo` wymusza
             position: relative i zdjęłoby `absolute` ze szklanego elementu. */}
         {menuDodawania && (
-          <div className="pointer-events-auto absolute left-full top-1/2 z-40 ml-2.5 w-64 -translate-y-1/2">
-          <div className="p2-karta p2-pow-1 overflow-hidden p-1.5 animate-in fade-in slide-in-from-left-2 duration-150">
+          <div className="pointer-events-auto absolute bottom-full left-1/2 z-40 mb-2.5 w-64 -translate-x-1/2">
+          <div className="p2-karta p2-pow-1 overflow-hidden p-1.5 animate-in fade-in slide-in-from-bottom-2 duration-150">
             <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground/40">
               Własne zdjęcia
             </div>

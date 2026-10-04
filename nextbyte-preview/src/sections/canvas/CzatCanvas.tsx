@@ -609,7 +609,7 @@ export function CzatCanvas({
       </div>
 
       {/* Kompozytor: podgląd (na żądanie), uwagi, podpowiedzi, chipy pinesek, jedno pole i jeden przycisk */}
-      <div className="shrink-0 space-y-2">
+      <div className="relative z-20 shrink-0 space-y-2">
         {uwagi.length > 0 && (
           <div className="space-y-1">
             {uwagi.map(u => (
@@ -655,7 +655,8 @@ export function CzatCanvas({
               models={MODELE_DO_WYSZUKIWARKI}
               selectedId={modelObrazu}
               placement="top"
-              align="right"
+              align="left"
+              compact
               onSelect={mo => {
                 const model = MODELE_OBRAZU.find(x => x.id === mo.id)
                 if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)

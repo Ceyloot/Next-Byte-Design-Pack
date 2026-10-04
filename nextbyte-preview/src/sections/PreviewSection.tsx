@@ -508,7 +508,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
      firm, Historia) i na ekranach auth, które inaczej nie mają jak wrócić. */
   /** Panel 2.0 zajmuje cały ekran — chrome podglądu (górny/boczny pasek)
    *  znika, a powrót prowadzi przez „Wyjdź" w jego własnej nawigacji. */
-  const pelnyEkran = (activeTab === 'preview' && previewSubView === 'dashboard2') || activeTab === 'canvas'
+  const pelnyEkran = (activeTab === 'preview' && previewSubView === 'dashboard2')
 
   const podNawigacja =
     activeTab !== 'preview' ? []
