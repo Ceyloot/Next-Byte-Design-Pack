@@ -596,9 +596,11 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         `[RULES]\nBoth faces are lit by Image 1's light, with its grain, and no visible seam. Natural skin: pores, no retouching. Everything else in Image 1 stays exactly as it is.`,
       ].join('\n')
     : ''
+  // Zamiana postaci (dwa zdjęcia) idzie PROSTO Z PDF Studia (poz. 19/20/22/23): baza + „Additional instruction” + FINAL CHECK, rola kompozytora, temp 0.45
+  const swapPdf = op.gotowy === 'studio-character-swap' && Boolean(w.studio)
   // ZAMIANA POSTACI (character swap, krótki prompt): zostaje tylko POZYCJA i MIEJSCE osoby ze sceny; twarz, włosy, budowa i UBIÓR — z referencji.
   // Test R02 / screen użytkownika: długi zamrożony prompt zostawiał ubiór sceny (rycerz w zbroi z cudzą twarzą) — to byłby face swap.
-  const postacKrotko = op.id === 'character_swap' && cel !== undefined && zrodlo !== undefined && zrodlo.obraz !== cel.obraz
+  const postacKrotko = !swapPdf && op.id === 'character_swap' && cel !== undefined && zrodlo !== undefined && zrodlo.obraz !== cel.obraz
   const sekcjaPostac = postacKrotko && cel && zrodlo
     ? [
         '[TASK]',
@@ -615,7 +617,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : ''
   // WERSJA STUDIO WSZYSTKICH PROMPTÓW (przełącznik w czacie: Studio / Nasz): zdanie użytkownika + pozycje + role referencji + bloki z PDF Studia Zdjęć,
   // temperatura 0.72, bez roli systemowej; bez ograniczeń kadru — model może zbliżać, chyba że użytkownik tego zakaże. Wersja „nasza” = reszta tego pliku.
-  const studioMode = Boolean(w.studio)
+  const studioMode = Boolean(w.studio) && !swapPdf
   // Wstawianie / podmiana obiektu z DRUGIEGO zdjęcia: prompt „generuj od zera w scenie” (jak wersja, która dobrze trzymała skalę z dystansu)
   const studioCross = Boolean(studioMode && ['addition', 'object_transfer', 'object_swap'].includes(op.id) && zrodlo && cel && zrodlo.obraz !== cel.obraz)
   const sekcjaStudio = studioMode
@@ -677,7 +679,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           .join('\n\n')
       })()
     : ''
-  const sekcje: SekcjaPromptu[] = studioMode
+  const sekcje: SekcjaPromptu[] = swapPdf
+    ? [
+        { klucz: 'task', tekst: zadanie.replace(`\n${ZABLOKOWANA_SWAP_KONTROLA}`, '') },
+        { klucz: 'user', tekst: `Additional instruction: ${w.polecenie.trim().replace(/[.\s]+$/, '')}.` },
+        { klucz: 'rules', tekst: ZABLOKOWANA_SWAP_KONTROLA },
+      ]
+    : studioMode
     ? [{ klucz: 'task', tekst: sekcjaStudio }]
     : ruchWKadrze
     ? [
@@ -704,8 +712,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: studioCross ? SYSTEM_KOMPOZYTORA : studioMode || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
-    temperatura: studioCross ? 0.35 : studioMode ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
+    system: swapPdf ? system : studioCross ? SYSTEM_KOMPOZYTORA : studioMode || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
+    temperatura: swapPdf ? temperatura : studioCross ? 0.35 : studioMode ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
     studio: studioMode || undefined,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
     gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || op.id === 'clothing_change' || op.id === 'character_transfer' || undefined,
