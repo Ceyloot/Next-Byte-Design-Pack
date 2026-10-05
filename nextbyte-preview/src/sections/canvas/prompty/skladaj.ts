@@ -613,6 +613,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // WERSJA STUDIO WSZYSTKICH PROMPTÓW (przełącznik w czacie: Studio / Nasz): zdanie użytkownika + pozycje + role referencji + bloki z PDF Studia Zdjęć,
   // temperatura 0.72, bez roli systemowej; bez ograniczeń kadru — model może zbliżać, chyba że użytkownik tego zakaże. Wersja „nasza” = reszta tego pliku.
   const studioMode = Boolean(w.studio)
+  // Wstawianie / podmiana obiektu z DRUGIEGO zdjęcia: prompt „generuj od zera w scenie” (jak wersja, która dobrze trzymała skalę z dystansu)
+  const studioCross = Boolean(studioMode && ['addition', 'object_transfer', 'object_swap'].includes(op.id) && zrodlo && cel && zrodlo.obraz !== cel.obraz)
   const sekcjaStudio = studioMode
     ? (() => {
         const baza = cel?.obraz ?? 1
@@ -654,12 +656,16 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         for (const p of w.pineskiChronione ?? []) pozycje.push(`Keep exactly as it is: ${p.nazwa ? `${p.nazwa}, ` : ''}image ${p.obraz}.`)
         const zSubiektem = wstawianie || op.id === 'clothing_change'
         // Wstawianie / podmiana z DRUGIEGO zdjęcia: Gemini mierzy skalę i podpowiada logiczne osadzenie
-        const crossFoto = Boolean(wstawianie && zrodlo && cel && zrodlo.obraz !== cel.obraz)
+        const crossFoto = studioCross
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
           pozycje.join('\n'),
           zSubiektem ? [brickSkali(baza), crossFoto && w.rozmiar?.trim() ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image ${baza} — follow it, never the size the subject has in its reference): ${liniaRozmiaruDodaj(w.rozmiar)}` : '', crossFoto && zrodlo?.szczegoly?.trim() ? `THE SUBJECT TO BRING (from Image ${zrodlo.obraz}, only this one thing — identity card, reproduce exactly): ${zrodlo.szczegoly.trim()}` : '', crossFoto && (cel?.miejsce || cel?.szczegoly) ? `THE DESTINATION SPOT (Pin ${cel?.numer}, Image ${baza}): ${[cel?.miejsce, cel?.szczegoly].filter(Boolean).join(' ')}` : '', crossFoto && w.ulozenie?.trim() ? `LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image ${baza}'s scene — follow it): ${w.ulozenie.trim()} Every contact point of the subject rests on that surface with a margin from its edges; it is placed the way such a thing is normally placed there (aligned with the lines of the surface, never at a random angle, never half on grass or kerb).` : '', crossFoto && w.widok?.trim() ? `HOW IT MUST APPEAR THERE (from Image ${baza}'s camera and the surface it stands on): ${w.widok.trim()}` : ''].filter(Boolean).join('\n') : '',
+          crossFoto
+            ? `GENERATE THE SUBJECT FROM ZERO inside Image ${baza}, standing exactly at the x / y point of the destination pin, with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once. ${op.id === 'object_swap' ? 'It replaces the object at that point; nothing of the old object remains.' : 'ADD, never replace: every object already in Image ' + baza + ' stays exactly where it is, including one that looks similar to the new object (another car, another chair); the new object is an extra one on the free spot.'} NEVER COPY THE REFERENCE PIXELS: do not cut, paste or reuse the reference picture of the object in any form (not its outline, viewing angle, lighting, blur or compression); draw it for Image ${baza}'s camera angle, light, sharpness, grain and colour.${w.swiatlo?.trim() ? `\nTHE LIGHT OF IMAGE ${baza} (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}` : ''}`
+            : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
+          crossFoto ? `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, casting a shadow into it, resting on the right surface at the right size for its distance? If not, redo. ONE photograph — one light, one lens, one grade.` : '',
           op.id === 'style_change' ? '' : STUDIO_JAKOSC,
           role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
         ]
@@ -694,8 +700,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: studioMode || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
-    temperatura: studioMode ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
+    system: studioCross ? SYSTEM_KOMPOZYTORA : studioMode || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
+    temperatura: studioCross ? 0.35 : studioMode ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
     studio: studioMode || undefined,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
     gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || op.id === 'clothing_change' || op.id === 'character_transfer' || undefined,
