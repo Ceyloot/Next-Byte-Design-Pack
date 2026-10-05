@@ -159,7 +159,7 @@ export function runwareProxy(): Plugin {
                 taskType: 'imageInference',
                 taskUUID: crypto.randomUUID(),
                 model: modelZadania,
-                positivePrompt: zadanie.polecenie,
+                positivePrompt: !zUstawieniami && zadanie.system?.trim() ? `${zadanie.system.trim()}\n\n${zadanie.polecenie}` : zadanie.polecenie,
                 // Edycja, nie generacja od zera: zdjęcie z płótna idzie jako
                 // referencja. API przyjmuje data URI, więc nie ma uploadu.
                 ...(zadanie.obrazy.length ? { inputs: { referenceImages: zadanie.obrazy } } : {}),
