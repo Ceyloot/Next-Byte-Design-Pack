@@ -439,7 +439,7 @@ export function zbudujZadanieModelu(
   // [USER]: słowa użytkownika bez zmian, pineska w nawiasie przy słowie, które ją wskazuje
   const wsp = (v: number) => v.toFixed(2)
   const przesunWKadrze =
-    operacjaZIntencji(intencja, osoba) === 'addition' &&
+    ['addition', 'object_transfer'].includes(operacjaZIntencji(intencja, osoba)) &&
     !SLOWA_KOPII.test(zadanie) &&
     pineskiSklejka.some(p => p.rola === 'source' && p.obraz === 1) &&
     pineskiSklejka.some(p => p.rola === 'target' && p.obraz === 1)
