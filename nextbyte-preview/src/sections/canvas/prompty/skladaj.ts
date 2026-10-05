@@ -392,6 +392,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const sceneria = op.id === 'background_change'
   let system: string | undefined
   let temperatura: number | undefined
+  const ubranieSceny = Boolean(w.ubranieZeSceny) || /zachowaj\s+\w*\s*(ubrani|ubi[óo]r|str[óo]j)|zostaw\w*\s+\w*\s*(ubrani|ubi[óo]r|str[óo]j)|(tylko|samą|sama)\s+twarz|w\s+(tym\s+samym|swoim|jego|jej)\s+(ubrani|str[óo]j)|keep\s+(the\s+|his\s+|her\s+)?(clothes|outfit|clothing)/i.test(w.polecenie)
   if (op.gotowy === 'studio-character-swap') {
     const refs = w.obrazy.filter((o) => o.rola === 'donor')
     const opisRefs =
@@ -606,7 +607,6 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : ''
   // Zamiana postaci (dwa zdjęcia) idzie PROSTO Z PDF Studia (poz. 19/20/22/23): baza + „Additional instruction” + FINAL CHECK, rola kompozytora, temp 0.45
   const swapPdf = op.gotowy === 'studio-character-swap' && Boolean(w.studio)
-  const ubranieSceny = Boolean(w.ubranieZeSceny) || /zachowaj\s+\w*\s*(ubrani|ubi[óo]r|str[óo]j)|zostaw\w*\s+\w*\s*(ubrani|ubi[óo]r|str[óo]j)|(tylko|samą|sama)\s+twarz|w\s+(tym\s+samym|swoim|jego|jej)\s+(ubrani|str[óo]j)|keep\s+(the\s+|his\s+|her\s+)?(clothes|outfit|clothing)/i.test(w.polecenie)
   // ZAMIANA POSTACI (character swap, krótki prompt): zostaje tylko POZYCJA i MIEJSCE osoby ze sceny; twarz, włosy, budowa i UBIÓR — z referencji.
   // Test R02 / screen użytkownika: długi zamrożony prompt zostawiał ubiór sceny (rycerz w zbroi z cudzą twarzą) — to byłby face swap.
   const postacKrotko = !swapPdf && op.id === 'character_swap' && cel !== undefined && zrodlo !== undefined && zrodlo.obraz !== cel.obraz
