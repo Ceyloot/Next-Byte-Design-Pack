@@ -71,6 +71,7 @@ import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
 import { policzWycinek, wytnijWycinek, zlozWycinek } from './canvas/zloz-wycinek'
 import { dopasujZiarno } from '@/sections/canvas/dopasuj-ziarno'
+import { SZKIC_SCENY_SWAP, rozmyjDoSzkicu } from '@/sections/canvas/szkic-sceny'
 import { czyBezZmian, wykryjNakladke } from '@/sections/canvas/kontrola-wyniku'
 import type { Prostokat } from '@/sections/canvas/rezyser'
 import { ustalUklad, type Uklad } from '@/sections/canvas/uklad-pinesek'
@@ -1235,6 +1236,9 @@ export function CanvasSection() {
             : src,
         )
       const czyste = await Promise.all(obrazyPolecenia.map(w => zKropkami(w, pineskiPolecenia)))
+      if (SZKIC_SCENY_SWAP && operacjaAgenta === 'character_swap' && studio && czyste.length > 1) {
+        try { czyste[0] = await rozmyjDoSzkicu(czyste[0]) } catch (e) { console.warn('[canvas] szkic sceny nieudany', e) }
+      }
       // Przeniesienie w obrębie jednego zdjęcia: to samo zdjęcie drugi raz, z kropką na obiekcie
       // (Image 1 ma kropkę w miejscu docelowym) — model wie dokładnie, KTÓRY obiekt i DOKĄD.
       const pinZr = pineskiPolecenia.find(p => zrodloNaCelu(p))
