@@ -127,7 +127,7 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
   // osobę” zawierają „zamień”, więc sprawdzane później nigdy nie wygrywały.
   // Tylko WYRAŹNIE twarz / tożsamość = zamiana twarzy (face swap). „Zamień rycerza na tę osobę” to zamiana CAŁEJ postaci
   // (character swap: zostaje pozycja i miejsce, reszta — twarz, włosy, budowa, ubiór — z referencji), nie samej twarzy.
-  if (/\b(twarz|face|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t)) return 'postac'
+  if (/\b(twarz|face\b|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t)) return 'postac'
   if (dotyczyCalejOsoby(t)) return 'zamien'
 
   // 9b. ZABLOKOWANE (zablokowane/ruch-w-kadrze.ts) — nie zmieniać bez prośby użytkownika. Czasownik przeniesienia („przesuń / przenieś / przestaw ten domek w miejsce ogrodu”) to PRZENIESIENIE do miejsca,
@@ -300,8 +300,9 @@ const OPERACJE_Z_INTENCJI: Record<Intencja, OperationId> = {
 /** „Zamień / podmień X na tę osobę / postać / mężczyznę…” bez słowa o twarzy — zamiana całej postaci (character swap). */
 export function dotyczyCalejOsoby(tekst: string): boolean {
   const t = tekst.toLowerCase()
-  if (/\b(twarz|face|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t)) return false
-  return /\b(zamie[ńn]|podmie[ńn]|zast[ąa]p)\w*[^.!?]{0,40}\b(posta[ćc]|postaci|osob|cz[łl]owiek|kobiet|m[ęe][żz]czyzn|dziewczyn|ch[łl]op|dziecko|rycerz|aktor|model)/.test(t)
+  if (/\b(twarz|face\b|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t)) return false
+  const osoba = '(posta[ćc]|postaci|osob|cz[łl]owiek|ludzi|kobiet|baba|babk|pani|pan\\b|facet|typ\\b|go[śs][ćc]|m[ęe][żz]czyzn|dziewczyn|ch[łl]op|dziec|rycerz|aktor|aktork|model|bohater|character|person|man\\b|woman|guy|girl|boy)'
+  return new RegExp(`\\b(zamie[ńn]|podmie[ńn]|zast[ąa]p|wymie[ńn]|zmie[ńn]|swap|replace)\\w*[^.!?]{0,60}\\b${osoba}`).test(t)
 }
 
 export function operacjaZIntencji(intencja: Intencja, osoba = false): OperationId {
