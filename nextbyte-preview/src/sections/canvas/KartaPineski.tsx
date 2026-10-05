@@ -58,7 +58,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamkn
           }
         }}
         className="nb-szklo nb-szklo-plynne nb-powierzchnia w-[316px] overflow-hidden rounded-2xl border border-foreground/[0.12] p-3.5"
-        style={{ backgroundColor: 'hsl(var(--card) / 0.95)' }}
+        style={{ backgroundColor: 'hsl(var(--card) / 0.84)' }}
       >
         <div className="flex gap-3">
           {/* Wycinek zdjęcia — większy, żeby od razu było widać, co zaznaczono */}

@@ -1533,7 +1533,7 @@ export function CanvasSection() {
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
             >
-            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.94)' }}>
+            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
                   key={aid}
@@ -1583,7 +1583,7 @@ export function CanvasSection() {
                 top: Math.min(menuWarstwy.y, window.innerHeight - 370),
               }}
             >
-            <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]" style={{ backgroundColor: 'hsl(var(--card) / 0.97)' }}>
+            <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]" style={{ backgroundColor: 'hsl(var(--card) / 0.9)' }}>
               <p className="truncate px-2.5 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{w.name}</p>
               {pozycje.map(({ akcja, etykieta, niebezpieczna, ikona: Ik }) => (
                 <button
