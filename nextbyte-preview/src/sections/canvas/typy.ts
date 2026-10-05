@@ -333,14 +333,14 @@ export function wytnijOkolice(
  */
 export function wytnijPodgladPineski(src: string, p: Pineska, bok = 96): Promise<string> {
   const r = p.ramka
-  if (!r) return wytnijOkolice(src, p.normalizedX, p.normalizedY, bok, 0.45)
+  if (!r) return wytnijOkolice(src, p.normalizedX, p.normalizedY, bok, 0.6)
   return new Promise(resolve => {
     const obrazek = new Image()
     obrazek.onload = () => {
       const szer = (r.x1 - r.x0) * obrazek.width
       const wys = (r.y1 - r.y0) * obrazek.height
       const maks = Math.min(obrazek.width, obrazek.height)
-      const zrodloBok = Math.min(maks, Math.max(48, Math.max(szer, wys) * 1.18))
+      const zrodloBok = Math.min(maks, Math.max(48, Math.max(szer, wys) * 1.4))
       const cx = ((r.x0 + r.x1) / 2) * obrazek.width
       const cy = ((r.y0 + r.y1) / 2) * obrazek.height
       const sx = Math.max(0, Math.min(obrazek.width - zrodloBok, cx - zrodloBok / 2))

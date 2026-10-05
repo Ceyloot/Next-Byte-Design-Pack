@@ -575,7 +575,7 @@ export function CanvasSection() {
       void (async () => {
         // Jak w Lovart: pineska to tylko punkt + nazwa. Bez „analizy” wymiarów
         // (zgadywała rozmiar widocznego kawałka); skalę mierzy reżyser przy generacji.
-        const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
+        const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.45)
         // Ramka całego obiektu — tylko do podglądu przy pineskach (pineska bywa wbita w skrawek, np. maskę auta).
         // Nie blokuje nazwy: nazwa pojawia się od razu, ramka dochodzi chwilę później.
         void ramkaRzeczyPodPinem(warstwa.src, normalizedX, normalizedY)
@@ -627,7 +627,7 @@ export function CanvasSection() {
           setProjekt(p => ({ ...p, pineski: p.pineski.map(x => (x.id === id ? { ...x, ramka } : x)) }))
         })
         .catch(() => undefined)
-      const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.3)
+      const wycinek = await wytnijOkolice(warstwa.src, normalizedX, normalizedY, 384, 0.45)
       const zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
       if (!aktualny()) return
       const zeSceny = warstwa.obiekty ?? []
