@@ -1389,7 +1389,7 @@ export function CanvasSection() {
         .join('\n')
 
       const obszaryKontroli = [obszarCelu, obszarZrodla].filter((o): o is Prostokat => Boolean(o))
-      const [ocena, nakladka, bezZmian] = await Promise.all([
+      let [ocena, nakladka, bezZmian] = await Promise.all([
         sprawdzWynik({
           zadanie: projekt.tekst,
           przed: (await zmniejszDoAnalizy(zrodlo.src)) || zrodlo.src,
@@ -1401,6 +1401,37 @@ export function CanvasSection() {
         plotnoZObszarami ? wykryjNakladke(wynik.obrazUrl, zrodlo.src, obszaryKontroli) : Promise.resolve(null),
         czyBezZmian(wynik.obrazUrl, zrodlo.src),
       ])
+
+      // Model oddał scenę bez zmian — jedna automatyczna ponowna próba z twardym
+      // wskazaniem, że obiekt/osoba MUSI zostać zmieniona.
+      if (bezZmian && ['wstaw', 'przenies', 'zamien', 'postac', 'ubranie', 'twarz'].includes(trybAgenta)) {
+        setStanGeneracji({ faza: 'koryguje', wynik: { ...wynik, nazwa, opis: '' }, powod: 'model oddał zdjęcie bez zmian' })
+        try {
+          const ponowna = await generuj({
+            ...ustawieniaModelu,
+            polecenie: `[CORRECTION — the previous attempt returned the scene UNCHANGED, which is a failure]\nThe requested change MUST be visible this time: the original person/object at the marked point must actually be replaced or changed as described below. Do not return the input image as it is.\n\n${pelnePolecenie}`,
+            obrazy: obrazyDoModelu,
+            szerokosc: zrodlo.naturalWidth,
+            wysokosc: zrodlo.naturalHeight,
+          })
+          const src2 = await dopasujFormatDoObrazu(ponowna.obrazUrl, zrodlo.naturalWidth, zrodlo.naturalHeight)
+          const nadal = await czyBezZmian(src2, zrodlo.src)
+          wynik = { ...ponowna, obrazUrl: src2, kosztUSD: (wynik.kosztUSD ?? 0) + (ponowna.kosztUSD ?? 0) }
+          gotowy = { ...gotowy, ...wynik }
+          bezZmian = nadal
+          dodajZeZrodla(src2, `${nazwa}_proba2`, 'wynik', zrodlo)
+          if (!nadal) ocena = await sprawdzWynik({
+            zadanie: projekt.tekst,
+            przed: (await zmniejszDoAnalizy(zrodlo.src)) || zrodlo.src,
+            wynik: src2,
+            intencja: trybAgenta,
+            plan: plan?.plan,
+            uchwyty: uchwytyKontroli,
+          })
+        } catch (e) {
+          console.warn('[canvas] ponowna próba nieudana', e)
+        }
+      }
 
       // Piksele rozstrzygają pewniej niż ocena modelu: różowa plama w obszarze
       // to ślad nakładki, niezależnie od tego, co zobaczył kontroler.
