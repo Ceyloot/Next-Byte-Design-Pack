@@ -511,18 +511,20 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const zadanieRuchu = ruchWKadrze && zrodlo && cel
     ? zablokowaneZadanieRuchu(op.id === 'object_swap', zrodlo, cel, w.pineski.map((p) => ({ numer: p.numer, obraz: p.obraz, x: p.x, y: p.y, nazwa: p.nazwa || opisyPinesek.get(p.numer) })))
     : ''
+  // Studio + przesunięcie w kadrze: prosty prompt BEZ analizy reżysera (rozmiar, kotwice, widok, opis miejsca) — wersja, która działała w teście „wsunięty w skarpę”.
+  const prostyRuch = Boolean(w.studio) && ruchWKadrze && op.id === 'object_transfer'
   const sekcjaReguRuchu = ruchWKadrze && cel
     ? zablokowaneReguRuchu(
         {
           pinCzyszczenia: czyszczenie === null ? null : op.id === 'object_swap' ? cel : zrodlo ?? null,
-          swiatlo: w.swiatlo,
-          rozmiar: w.rozmiar,
-          skala: w.skala,
-          widok: w.widok,
-          ulozenie: w.ulozenie,
+          swiatlo: prostyRuch ? undefined : w.swiatlo,
+          rozmiar: prostyRuch ? undefined : w.rozmiar,
+          skala: prostyRuch ? undefined : w.skala,
+          widok: prostyRuch ? undefined : w.widok,
+          ulozenie: prostyRuch ? undefined : w.ulozenie,
         },
-        cel,
-      ) + (w.rozmiar?.trim() || w.skala?.trim() ? '' : `\n${brickSkali(1)}`)
+        prostyRuch ? { ...cel, miejsce: undefined, szczegoly: undefined } : cel,
+      ) + (prostyRuch || w.rozmiar?.trim() || w.skala?.trim() ? '' : `\n${brickSkali(1)}`)
     : ''
   // DODAJ (krótki prompt): zadanie + rozmiar + światło w 2 zdaniach + jedna reguła naturalności. Test T03: pełny prompt (~6000 zn.)
   // dawał obiekt 6× za duży, wersja ~600 zn. trzymała miejsce i skalę w obu próbach. Dotyczy dodawania bez pinu źródłowego.
@@ -737,8 +739,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
       ]
   return {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
-    system: swapPdf ? system : studioCross ? SYSTEM_KOMPOZYTORA : studioMode || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
-    temperatura: swapPdf ? (SZKIC_SCENY_SWAP ? 0.3 : temperatura) : studioCross ? 0.35 : studioMode ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
+    system: swapPdf ? system : studioCross ? SYSTEM_KOMPOZYTORA : studioMode || studioRuch || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
+    temperatura: swapPdf ? (SZKIC_SCENY_SWAP ? 0.3 : temperatura) : studioCross ? 0.35 : studioMode || studioRuch ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
     studio: studioMode || studioRuch || undefined,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
     gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || op.id === 'clothing_change' || op.id === 'character_transfer' || undefined,
