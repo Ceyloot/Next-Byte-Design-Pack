@@ -163,6 +163,11 @@ export interface SkladajWynik {
 }
 
 const wsp = (v: number) => v.toFixed(2)
+/** Opis osoby od reżysera do linii IMAGE ROLES — bez zdań o pinezce i bez podwójnej kropki. */
+const opisOsoby = (t?: string) => {
+  const c = (t ?? '').replace(/\s*The pin is[^.]*\.?/gi, '').trim().replace(/[.\s]+$/, '')
+  return c ? ` — ${c}` : ''
+}
 
 /** Odwołanie do pineski w treści bricków i operacji. */
 /** zNazwa: dopisuje nazwę rzeczy pod pinezką (tylko tryby niezamrożone — zamrożone mają własny, niezmienny tekst). */
@@ -696,7 +701,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ...(cel && zrodlo && zrodlo.obraz !== cel.obraz
           ? [{
               klucz: 'roles',
-              tekst: `IMAGE ROLES (read first): Image ${cel.obraz} is the SCENE${nazwaPinu(cel) ? ` — "${nazwaPinu(cel)}"` : ''}: the person to be REPLACED is at Pin ${cel.numer} (x=${wsp(cel.x)} y=${wsp(cel.y)})${cel.szczegoly?.trim() ? ` — ${cel.szczegoly.trim()}` : ''}. Image ${zrodlo.obraz} is the CHARACTER REFERENCE${nazwaPinu(zrodlo) ? ` — "${nazwaPinu(zrodlo)}"` : ''}: the person to bring in is at Pin ${zrodlo.numer}${zrodlo.szczegoly?.trim() ? ` — ${zrodlo.szczegoly.trim()}` : ''}. Image ${cel.obraz} is the only photograph that is edited and returned — same framing, background, pose and format as Image ${cel.obraz}. Image ${zrodlo.obraz} is never the base; its background and framing are never output.`,
+              tekst: `IMAGE ROLES (read first): Image ${cel.obraz} is the SCENE${nazwaPinu(cel) ? ` — "${nazwaPinu(cel)}"` : ''}: the person to be REPLACED is at Pin ${cel.numer} (x=${wsp(cel.x)} y=${wsp(cel.y)})${opisOsoby(cel.szczegoly)}. Image ${zrodlo.obraz} is the CHARACTER REFERENCE${nazwaPinu(zrodlo) ? ` — "${nazwaPinu(zrodlo)}"` : ''}: the person to bring in is at Pin ${zrodlo.numer}${opisOsoby(zrodlo.szczegoly)}. Image ${cel.obraz} is the only photograph that is edited and returned — same framing, background, pose and format as Image ${cel.obraz}. Image ${zrodlo.obraz} is never the base; its background and framing are never output.`,
             }]
           : []),
         { klucz: 'user', tekst: `Additional instruction: ${w.polecenie.trim().replace(/[.\s]+$/, '')}.` },
