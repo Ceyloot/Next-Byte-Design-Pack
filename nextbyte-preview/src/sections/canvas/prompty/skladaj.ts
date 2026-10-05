@@ -646,7 +646,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           )
         } else if (wstawianie && cel) {
           pozycje.push(
-            `Position in Image ${baza}: ${nazwaP(cel)}${slowa(cel)}. The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ' The subject replaces whatever stands there — remove that completely.' : ''}`,
+            `Position in Image ${baza}: ${nazwaP(cel)}${slowa(cel)}. The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ` The subject replaces the ${nazwaPinu(cel) || 'object'} that stands there: remove that old object completely (nothing of it may remain anywhere), and put the new subject exactly in its place, on the same ground position, at the scale that fits there.` : ''}`,
           )
         } else if (w.pineski.length) {
           pozycje.push(...w.pineski.map((p) => `Marked: ${nazwaP(p)}image ${p.obraz}, ${slowa(p)}.`))
