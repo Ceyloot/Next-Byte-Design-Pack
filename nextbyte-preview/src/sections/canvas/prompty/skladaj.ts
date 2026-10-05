@@ -693,7 +693,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     ? [
         { klucz: 'task', tekst: zadanie.replace(`\n${ZABLOKOWANA_SWAP_KONTROLA}`, '') },
         { klucz: 'user', tekst: `Additional instruction: ${w.polecenie.trim().replace(/[.\s]+$/, '')}.` },
-        { klucz: 'rules', tekst: `${ZABLOKOWANA_SWAP_KONTROLA}\nThe swap is mandatory: the person in the scene MUST be replaced by the person from the character reference. The FACE, HEAD SHAPE, HAIR and body build must visibly be the reference person's — compare them to the reference before answering; changing only the clothes or only the hair is a failure. Returning the scene with the original person is a failure.` },
+        { klucz: 'rules', tekst: `${ZABLOKOWANA_SWAP_KONTROLA}\nThe swap is mandatory: the person in the scene MUST be replaced by the person from the character reference. The identity (face shape, features, hair, build) must be the reference person's — changing only the clothes or only the hair is a failure — but the face is REDRAWN for this scene, never pasted: the head angle, expression and gaze of the scene person, this scene's light, sharpness and grain; no reference framing, lighting, blur, compression or video look carried over, even if the reference is low-resolution. Returning the scene with the original person is a failure.` },
       ]
     : studioMode
     ? [{ klucz: 'task', tekst: sekcjaStudio }]
