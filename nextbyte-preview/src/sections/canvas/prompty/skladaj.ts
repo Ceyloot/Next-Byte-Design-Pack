@@ -313,6 +313,9 @@ const STUDIO_JEDNO_ZDJECIE =
 /** Zachowaj widok i logikę osadzenia — ogólne, bez nazw rzeczy. */
 const STUDIO_ZACHOWAJ_UKLAD = (baza: number) =>
   `KEEP THE VIEW AND PLACE IT LOGICALLY: every object already in Image ${baza} keeps its own angle, orientation and framing, and so does the camera — never rotate, flip or re-angle an existing object or change the shot. The inserted subject keeps the same viewing angle and orientation it has in its reference (never turned or re-posed to another view) unless the request says otherwise. Anything worn, held or attached goes where it is normally worn, held or attached on the right part of the body or object, in its natural orientation (for example a watch sits on top of the wrist with its face outward, glasses on the nose, a handle in the hand).`
+/** Dopasowanie „filmu” sceny (PDF Studia, poz. 20: MATCH THE CAMERA / MATCH THE FILM) — zamiast „crisp micro-detail”, które psuło ziarno w miękkich, skompresowanych zdjęciach. */
+const STUDIO_DOPASUJ_FILM = (baza: number) =>
+  `MATCH THE FILM OF IMAGE ${baza}: the inserted subject gets the same sharpness, focus state and depth of field, the same resolution, softness, compression and noise, the same grain size and strength, white balance, grade, black level, highlight rolloff, saturation and atmospheric haze as the rest of the photo — it is NEVER sharper, cleaner or higher-resolution than the scene. If the scene is soft, grainy, blurred or low-quality, the subject is exactly as soft, grainy, blurred and low-quality. Edges are photographic: no halo, no outline, no crisp silhouette against a soft background, no brightness step between subject and scene. Background depth-of-field, bokeh, motion blur and haze are preserved.`
 const STUDIO_JAKOSC =
   'PHOTOGRAPHIC QUALITY: magazine-cover quality photograph with crisp micro-detail on the main subject. Background depth-of-field, bokeh, motion blur, atmospheric haze and any intentionally out-of-focus areas MUST be preserved — never force sharpness across the whole frame.'
 const STUDIO_ROLA = {
@@ -672,7 +675,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           wstawianie ? STUDIO_ZACHOWAJ_UKLAD(baza) : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           crossFoto ? `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, casting a shadow into it, resting on the right surface at the right size for its distance? If not, redo. ONE photograph — one light, one lens, one grade.` : '',
-          op.id === 'style_change' ? '' : STUDIO_JAKOSC,
+          op.id === 'style_change' ? '' : wstawianie ? STUDIO_DOPASUJ_FILM(baza) : STUDIO_JAKOSC,
           role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
         ]
           .filter(Boolean)
