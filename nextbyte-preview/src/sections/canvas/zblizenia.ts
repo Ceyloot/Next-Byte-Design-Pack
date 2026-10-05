@@ -87,6 +87,13 @@ async function znajdzRamkeRzeczy(
   let r = naPiksele(okno, box)
   let wypelnienie = Math.max(r.x1 - r.x0, r.y1 - r.y0) / okno.bok
   if (wypelnienie < 0.02) return null
+  // Pinezka musi leżeć wewnątrz (lub tuż przy) ramki — inaczej Gemini wskazał sąsiedni obiekt
+  const px = x * o.naturalWidth
+  const py = y * o.naturalHeight
+  const luzx = Math.max(6, (r.x1 - r.x0) * 0.08)
+  const luzy = Math.max(6, (r.y1 - r.y0) * 0.08)
+  const wRamce = (b: { x0: number; y0: number; x1: number; y1: number }) => px >= b.x0 - luzx && px <= b.x1 + luzx && py >= b.y0 - luzy && py <= b.y1 + luzy
+  if (!wRamce(r)) return null
   // Mała rzecz w dużym oknie (np. odległy domek): ramka bywa nieprecyzyjna i łapie sąsiada — drugie, ciaśniejsze
   // przejście: okno ~4× rozmiar rzeczy wokół jej środka daje dokładniejszą ramkę.
   if (wypelnienie < 0.15) {
@@ -100,7 +107,7 @@ async function znajdzRamkeRzeczy(
         const r2 = naPiksele(okno2, drugie.box)
         const w2 = Math.max(r2.x1 - r2.x0, r2.y1 - r2.y0) / okno2.bok
         // przyjmujemy ramkę z drugiego przejścia, gdy ma sensowny rozmiar względem okna
-        if (w2 >= 0.1 && w2 <= 0.9) {
+        if (w2 >= 0.1 && w2 <= 0.9 && wRamce(r2)) {
           r = r2
           wypelnienie = w2
         }
