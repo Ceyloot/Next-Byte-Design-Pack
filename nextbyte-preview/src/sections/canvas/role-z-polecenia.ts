@@ -297,6 +297,19 @@ export function roleZPolecenia(
       const wzm = znajdzWzmianki(t, pineski)
       const przed = [...new Set(wzm.filter(w => w.poz < kNa).map(w => w.pin))]
       const po = [...new Set(wzm.filter(w => w.poz > kNa).map(w => w.pin))]
+      if (przed.length === 0 && po.length === 1) {
+        // „zamień tę / go / to na tego człowieka” — po „na” jest nazwana pinezka (to, co przychodzi), przed „na” zaimek
+        const przychodzi = po[0]
+        const znika = aktywne.find(n => n !== przychodzi)!
+        role[znika] = 'TARGET'
+        role[przychodzi] = 'DONOR'
+        return {
+          role,
+          baza: bazaJawna ?? warstwaPineski(znika),
+          poziom: 'gramatyka',
+          powod: `Ze zdania: ${nazwa(przychodzi)} pojawia się w miejscu drugiej pinezki ${nazwa(znika)}.`,
+        }
+      }
       if (przed.length === 1 && po.length === 0) {
         const znika = przed[0]
         const przychodzi = aktywne.find(n => n !== znika)!
