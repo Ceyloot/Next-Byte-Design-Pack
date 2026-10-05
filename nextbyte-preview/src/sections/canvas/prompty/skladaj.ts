@@ -394,7 +394,8 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         ? `the character reference images (Images ${refs.map((r) => r.numer).join(', ')}, all showing the SAME person from different angles)`
         : `the character reference image (Image ${refs[0]?.numer ?? 2})`
     // ZABLOKOWANE (zablokowane/character-swap.ts) — nie zmieniać bez prośby użytkownika.
-    zadanie = `${(w.ubranieZeSceny ? zablokowanaSwapBazaUbranieSceny : zablokowanaSwapBaza)(opisRefs, 'Image 1')}\n${ZABLOKOWANA_SWAP_KONTROLA}`
+    const ubranieSceny = Boolean(w.ubranieZeSceny) || /zachowaj\s+\w*\s*(ubrani|ubi[óo]r|str[óo]j)|zostaw\w*\s+\w*\s*(ubrani|ubi[óo]r|str[óo]j)|(tylko|samą|sama)\s+twarz|w\s+(tym\s+samym|swoim|jego|jej)\s+(ubrani|str[óo]j)|keep\s+(the\s+|his\s+|her\s+)?(clothes|outfit|clothing)/i.test(w.polecenie)
+    zadanie = `${(ubranieSceny ? zablokowanaSwapBazaUbranieSceny : zablokowanaSwapBaza)(opisRefs, 'Image 1')}\n${ZABLOKOWANA_SWAP_KONTROLA}`
     system = ZABLOKOWANY_SWAP_SYSTEM
     temperatura = ZABLOKOWANA_SWAP_TEMPERATURA
   } else if (op.gotowy === 'studio-face-swap') {
@@ -692,6 +693,12 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const sekcje: SekcjaPromptu[] = swapPdf
     ? [
         { klucz: 'task', tekst: zadanie.replace(`\n${ZABLOKOWANA_SWAP_KONTROLA}`, '') },
+        ...(cel && zrodlo && zrodlo.obraz !== cel.obraz
+          ? [{
+              klucz: 'roles',
+              tekst: `IMAGE ROLES (read first): Image ${cel.obraz} is the SCENE${nazwaPinu(cel) ? ` — "${nazwaPinu(cel)}"` : ''}: the person to be REPLACED is at Pin ${cel.numer} (x=${wsp(cel.x)} y=${wsp(cel.y)}). Image ${zrodlo.obraz} is the CHARACTER REFERENCE${nazwaPinu(zrodlo) ? ` — "${nazwaPinu(zrodlo)}"` : ''}: the person to bring in is at Pin ${zrodlo.numer}. Image ${cel.obraz} is the only photograph that is edited and returned — same framing, background, pose and format as Image ${cel.obraz}. Image ${zrodlo.obraz} is never the base; its background and framing are never output.`,
+            }]
+          : []),
         { klucz: 'user', tekst: `Additional instruction: ${w.polecenie.trim().replace(/[.\s]+$/, '')}.` },
         { klucz: 'rules', tekst: `${ZABLOKOWANA_SWAP_KONTROLA}\nThe swap is mandatory: the person in the scene MUST be replaced by the person from the character reference. The identity (face shape, features, hair, build) must be the reference person's — changing only the clothes or only the hair is a failure — but the face is REDRAWN for this scene, never pasted: the head angle, expression and gaze of the scene person, this scene's light, sharpness and grain; no reference framing, lighting, blur, compression or video look carried over, even if the reference is low-resolution. Returning the scene with the original person is a failure.` },
       ]
