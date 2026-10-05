@@ -288,6 +288,30 @@ export function roleZPolecenia(
     }
   }
 
+  // „zamień X na niego / na to / na tego” — druga strona to zaimek bez nazwy: przy dwóch pineskach jest nią ta druga
+  const aktywne = pineski.map((p, i) => (p.chroniona ? 0 : i + 1)).filter(Boolean)
+  const kZamien = t.findIndex(x => ZAMIEN.test(x.tekst))
+  if (kZamien >= 0 && aktywne.length === 2) {
+    const kNa = t.findIndex((x, k) => k > kZamien && (x.tekst === 'na' || x.tekst === 'przez'))
+    if (kNa > 0) {
+      const wzm = znajdzWzmianki(t, pineski)
+      const przed = [...new Set(wzm.filter(w => w.poz < kNa).map(w => w.pin))]
+      const po = [...new Set(wzm.filter(w => w.poz > kNa).map(w => w.pin))]
+      if (przed.length === 1 && po.length === 0) {
+        const znika = przed[0]
+        const przychodzi = aktywne.find(n => n !== znika)!
+        role[znika] = 'TARGET'
+        role[przychodzi] = 'DONOR'
+        return {
+          role,
+          baza: bazaJawna ?? warstwaPineski(znika),
+          poziom: 'gramatyka',
+          powod: `Ze zdania: ${nazwa(znika)} znika, a w tym miejscu pojawia się ${nazwa(przychodzi)} (druga pinezka).`,
+        }
+      }
+    }
+  }
+
   if (bazaJawna || Object.keys(role).length) {
     return {
       role,
