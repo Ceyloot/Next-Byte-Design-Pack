@@ -28,6 +28,24 @@ export { INTENCJE, TABELA_STYLOW, wykryjStyl, type Intencja } from './tryby-edyc
  * „zamień tło na plażę” — zmianą tła, „usuń tę osobę” — usuwaniem, a nie
  * zamianą postaci. Dlatego najpierw idą tryby o najwęższych słowach.
  */
+/** Odległość edycyjna (Levenshtein) — do literówek w czasownikach poleceń. */
+function odlegloscEdycyjna(a: string, b: string): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)])
+  for (let j = 1; j <= b.length; j++) d[0][j] = j
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+  return d[a.length][b.length]
+}
+
+/** Czasownik usuwania z literówką („uusń to”, „usun to”, „usuwn”): pierwsze słowo bliskie jednemu z czasowników. */
+function czasownikUsuniecia(t: string): boolean {
+  const bez = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l')
+  const pierwsze = bez.trim().split(/\s+/).slice(0, 2)
+  const czasowniki = ['usun', 'usuwaj', 'wymaz', 'skasuj', 'zniknij', 'wytnij', 'wyczysc']
+  return pierwsze.some(w => w.length >= 3 && czasowniki.some(c => w[0] === c[0] && odlegloscEdycyjna(w, c) <= (c.length >= 4 ? 2 : 1)))
+}
+
 export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja {
   const t = tekst.toLowerCase().trim()
   if (!t) {
@@ -89,6 +107,7 @@ export function wykryjIntencje(tekst: string, pineski: Pineska[] = []): Intencja
   if (styl) return 'styl'
 
   // 7. Usuwanie obiektu / Clean Plate
+  if (czasownikUsuniecia(t)) return 'usun'
   if (
     /\b(usu[ńn]|wyma[żz]|skasuj|pozb[ąa]d[źz]|zniknij|znikn[ąa][ćc]|bez\s+\w+|wytnij|skasowa[ćc]|wyczy[sś][ćc]|odtw[óo]rz\s+t[łl]o)/.test(
       t,

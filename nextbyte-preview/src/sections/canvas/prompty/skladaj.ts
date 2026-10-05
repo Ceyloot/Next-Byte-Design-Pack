@@ -658,6 +658,13 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           pozycje.push(
             `Position in Image ${baza}: ${nazwaP(cel)}${slowa(cel)}. The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ` The subject replaces the ${nazwaPinu(cel) || 'object'} that stands there: remove that old object completely (nothing of it may remain anywhere), and put the new subject exactly in its place, on the same ground position, at the scale that fits there.` : ''}`,
           )
+        } else if (op.id === 'removal' && w.pineski.length) {
+          pozycje.push(
+            ...w.pineski.map(
+              (p) =>
+                `REMOVE the object marked here: ${nazwaP(p)}image ${p.obraz}, ${slowa(p)}. Take out the whole object together with its shadow, reflection and any part of it, and rebuild what was behind it exactly as the surrounding surface continues — the same texture, pattern, light, depth of field and grain — as if it had never been there. Nothing else in the image changes.`,
+            ),
+          )
         } else if (w.pineski.length) {
           pozycje.push(...w.pineski.map((p) => `Marked: ${nazwaP(p)}image ${p.obraz}, ${slowa(p)}.`))
         }
@@ -675,7 +682,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           wstawianie ? STUDIO_ZACHOWAJ_UKLAD(baza) : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           crossFoto ? `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, casting a shadow into it, resting on the right surface at the right size for its distance? If not, redo. ONE photograph — one light, one lens, one grade.` : '',
-          op.id === 'style_change' ? '' : wstawianie ? STUDIO_DOPASUJ_FILM(baza) : STUDIO_JAKOSC,
+          op.id === 'style_change' ? '' : wstawianie || op.id === 'removal' ? STUDIO_DOPASUJ_FILM(baza) : STUDIO_JAKOSC,
           role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
         ]
           .filter(Boolean)
