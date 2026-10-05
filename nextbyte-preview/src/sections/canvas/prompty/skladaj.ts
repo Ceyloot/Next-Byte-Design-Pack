@@ -627,7 +627,9 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     : ''
   // WERSJA STUDIO WSZYSTKICH PROMPTÓW (przełącznik w czacie: Studio / Nasz): zdanie użytkownika + pozycje + role referencji + bloki z PDF Studia Zdjęć,
   // temperatura 0.72, bez roli systemowej; bez ograniczeń kadru — model może zbliżać, chyba że użytkownik tego zakaże. Wersja „nasza” = reszta tego pliku.
-  const studioMode = Boolean(w.studio) && !swapPdf
+  // Przesunięcie w obrębie JEDNEGO zdjęcia idzie zatwierdzonym, krótkim promptem „MOVE — do not copy” (zablokowane/ruch-w-kadrze.ts), nie ogólnym Studio.
+  const studioRuch = Boolean(w.studio) && !swapPdf && ruchWKadrze && op.id === 'object_transfer'
+  const studioMode = Boolean(w.studio) && !swapPdf && !studioRuch
   // Wstawianie / podmiana obiektu z DRUGIEGO zdjęcia: prompt „generuj od zera w scenie” (jak wersja, która dobrze trzymała skalę z dystansu)
   const studioCross = Boolean(studioMode && ['addition', 'object_transfer', 'object_swap'].includes(op.id) && zrodlo && cel && zrodlo.obraz !== cel.obraz)
   const sekcjaStudio = studioMode
@@ -737,7 +739,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
     prompt: sekcje.map((s) => s.tekst).join('\n\n'),
     system: swapPdf ? system : studioCross ? SYSTEM_KOMPOZYTORA : studioMode || twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : system,
     temperatura: swapPdf ? (SZKIC_SCENY_SWAP ? 0.3 : temperatura) : studioCross ? 0.35 : studioMode ? 0.72 : twarzKrotko || ubranieKrotko || zamianaOsob || postacKrotko ? undefined : temperatura,
-    studio: studioMode || undefined,
+    studio: studioMode || studioRuch || undefined,
     // Transfer z drugiego zdjęcia (zablokowany) i object swap (poza trybem w kadrze, który wybiera model w CanvasSection) → Gemini 3.1.
     gemini31: miedzyZdjeciami || (op.id === 'object_swap') || czescTryb || cechaTryb || sceneria || op.id === 'style_change' || op.id === 'clothing_change' || op.id === 'character_transfer' || undefined,
     sekcje,
