@@ -6,7 +6,7 @@
 export const SZKIC_SCENY_SWAP = true
 
 /** Rozmywa obraz do poziomu, w którym zostają tylko duże plamy i sylwetki. */
-export async function rozmyjDoSzkicu(src: string, udzial = 0.035): Promise<string> {
+export async function rozmyjDoSzkicu(src: string, udzial = 0.012): Promise<string> {
   const img = await new Promise<HTMLImageElement>((ok, err) => {
     const i = new Image()
     i.crossOrigin = 'anonymous'
