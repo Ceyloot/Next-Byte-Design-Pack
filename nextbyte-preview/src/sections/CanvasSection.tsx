@@ -61,6 +61,7 @@ import {
   zbudujPolecenie,
   zbudujZadanieModelu,
   dotyczyCalejOsoby,
+  przepiszNaPrzesuniecie,
 } from '@/sections/canvas/polecenia'
 import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/operacje/character-swap-studio'
 import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
@@ -1395,7 +1396,7 @@ export function CanvasSection() {
       const obszaryKontroli = [obszarCelu, obszarZrodla].filter((o): o is Prostokat => Boolean(o))
       const [ocena, nakladka, bezZmian] = await Promise.all([
         sprawdzWynik({
-          zadanie: projekt.tekst,
+          zadanie: pinZrodlowy && pinDocelowy && pinZrodlowy.layerId === pinDocelowy.layerId && trybAgenta === 'wstaw' ? przepiszNaPrzesuniecie(projekt.tekst) : projekt.tekst,
           przed: (await zmniejszDoAnalizy(zrodlo.src)) || zrodlo.src,
           wynik: wynik.obrazUrl,
           intencja: trybAgenta,

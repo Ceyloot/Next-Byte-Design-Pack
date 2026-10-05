@@ -298,6 +298,13 @@ const OPERACJE_Z_INTENCJI: Record<Intencja, OperationId> = {
  * dotyczy CAŁEJ osoby, wchodzą operacje postaci (tożsamość, włosy, ubranie, poza…).
  */
 /** „Zamień / podmień X na tę osobę / postać / mężczyznę…” bez słowa o twarzy — zamiana całej postaci (character swap). */
+const SLOWA_KOPII = /kopi|powiel|zduplik|klon|jeszcze\s+jeden|kolejn|drugi\s+(egzemplarz|raz)|copy|duplicate|another/i
+/** „Wstaw ten domek tam” z obiektem i miejscem na JEDNYM zdjęciu to przesunięcie — czasownik w poleceniu zamieniamy na „przesuń”, żeby model nie kopiował. */
+export function przepiszNaPrzesuniecie(tekst: string): string {
+  if (SLOWA_KOPII.test(tekst)) return tekst
+  return tekst.replace(/^(\s*)(wstaw|dodaj|umie[śs][ćc]|postaw|po[łl][óo][żz]|wklej)\w*/i, '$1przesuń')
+}
+
 export function dotyczyCalejOsoby(tekst: string): boolean {
   const t = tekst.toLowerCase()
   if (/\b(twarz|face\b|tożsamo|tozsamo|wygl[ąa]da\w*\s+jak)/.test(t)) return false
@@ -431,8 +438,13 @@ export function zbudujZadanieModelu(
 
   // [USER]: słowa użytkownika bez zmian, pineska w nawiasie przy słowie, które ją wskazuje
   const wsp = (v: number) => v.toFixed(2)
+  const przesunWKadrze =
+    operacjaZIntencji(intencja, osoba) === 'addition' &&
+    !SLOWA_KOPII.test(zadanie) &&
+    pineskiSklejka.some(p => p.rola === 'source' && p.obraz === 1) &&
+    pineskiSklejka.some(p => p.rola === 'target' && p.obraz === 1)
   const zPineskami = wplecPineski(
-    zadanie,
+    przesunWKadrze ? przepiszNaPrzesuniecie(zadanie) : zadanie,
     pineski,
     numer => {
       const p = pineski[numer - 1]
@@ -457,13 +469,7 @@ export function zbudujZadanieModelu(
   let operacja = operacjaZIntencji(intencja, osoba)
   if (operacja === 'addition' && pineskiSklejka.some(p => p.rola === 'source' && p.obraz > 1)) operacja = 'object_transfer'
   // „Wstaw ten domek tam” z obiektem I miejscem na tym samym zdjęciu to PRZENIESIENIE: stary egzemplarz znika (chyba że polecenie mówi o kopii).
-  if (
-    operacja === 'addition' &&
-    !/kopi|powiel|zduplik|klon|jeszcze\s+jeden|kolejn|drugi\s+(egzemplarz|raz)|copy|duplicate|another/i.test(zadanie) &&
-    pineskiSklejka.some(p => p.rola === 'source' && p.obraz === 1) &&
-    pineskiSklejka.some(p => p.rola === 'target' && p.obraz === 1)
-  )
-    operacja = 'object_transfer'
+  if (przesunWKadrze && operacja === 'addition') operacja = 'object_transfer'
 
   return skladajPrompt({
     studio,
