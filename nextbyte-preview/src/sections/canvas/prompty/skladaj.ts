@@ -310,6 +310,9 @@ export function brickSkali(nrObrazu = 1): string {
  */
 const STUDIO_JEDNO_ZDJECIE =
   'ONE photograph captured in-camera, not a composite: subject(s) from the references and the new environment photographed together, same camera, same moment. Relight and color-grade the subject(s) to the destination scene: same light direction, color temperature, softness, white balance, exposure and contrast. Match focal length, eye level, horizon and lens distortion; render true contact shadows, ambient occlusion and ground reflections where the subject touches surfaces. Unified film grain, sensor noise and depth of field — no halos, cut-out edges, sticker look or double lighting.'
+/** Zachowaj widok i logikę osadzenia — ogólne, bez nazw rzeczy. */
+const STUDIO_ZACHOWAJ_UKLAD = (baza: number) =>
+  `KEEP THE VIEW AND PLACE IT LOGICALLY: every object already in Image ${baza} keeps its own angle, orientation and framing, and so does the camera — never rotate, flip or re-angle an existing object or change the shot. The inserted subject keeps the same viewing angle and orientation it has in its reference (never turned or re-posed to another view) unless the request says otherwise. Anything worn, held or attached goes where it is normally worn, held or attached on the right part of the body or object, in its natural orientation (for example a watch sits on top of the wrist with its face outward, glasses on the nose, a handle in the hand).`
 const STUDIO_JAKOSC =
   'PHOTOGRAPHIC QUALITY: magazine-cover quality photograph with crisp micro-detail on the main subject. Background depth-of-field, bokeh, motion blur, atmospheric haze and any intentionally out-of-focus areas MUST be preserved — never force sharpness across the whole frame.'
 const STUDIO_ROLA = {
@@ -664,6 +667,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           crossFoto
             ? `GENERATE THE SUBJECT FROM ZERO inside Image ${baza}, standing exactly at the x / y point of the destination pin, with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once. ${op.id === 'object_swap' ? 'It replaces the object at that point; nothing of the old object remains.' : 'ADD, never replace: every object already in Image ' + baza + ' stays exactly where it is, including one that looks similar to the new object (another car, another chair); the new object is an extra one on the free spot.'} NEVER COPY THE REFERENCE PIXELS: do not cut, paste or reuse the reference picture of the object in any form (not its outline, viewing angle, lighting, blur or compression); draw it for Image ${baza}'s camera angle, light, sharpness, grain and colour.${w.swiatlo?.trim() ? `\nTHE LIGHT OF IMAGE ${baza} (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}` : ''}`
             : '',
+          wstawianie ? STUDIO_ZACHOWAJ_UKLAD(baza) : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           crossFoto ? `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, casting a shadow into it, resting on the right surface at the right size for its distance? If not, redo. ONE photograph — one light, one lens, one grade.` : '',
           op.id === 'style_change' ? '' : STUDIO_JAKOSC,
