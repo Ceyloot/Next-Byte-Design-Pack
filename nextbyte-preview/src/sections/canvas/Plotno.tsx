@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Lock, Sparkles, Upload } from 'lucide-react'
 import { PRZESUNIECIE_LEBKA, STYL_PINEZKI, ZnacznikPineski } from './ZnacznikPineski'
 import { cn } from '@/lib/utils'
-import { etykietaPineski, pozycjaPineski, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
+import { etykietaPineski, pozycjaPineski, type Pociagniecie, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
 
 /**
  * Płótno: zdjęcia referencyjne i pineski.
@@ -35,12 +35,17 @@ interface Props {
   onOtworzDodawanie?: () => void
   /** prawy klik na zdjęciu — menu kontekstowe (pozycja w px okna) */
   onMenuWarstwy?: (id: string, x: number, y: number) => void
+  /** inpainting: dotychczasowe pociągnięcia pędzla, rozmiar pędzla i zakończenie pociągnięcia */
+  maska?: Pociagniecie[]
+  srednicaPedzla?: number
+  onPociagniecie?: (p: Pociagniecie) => void
 }
 
 type Uchwyt = 'nw' | 'ne' | 'se' | 'sw'
 
 interface Operacja {
-  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka'
+  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel'
+  punkty?: [number, number][]
   startX: number
   startY: number
   uchwyt?: Uchwyt
@@ -96,6 +101,9 @@ export function Plotno({
   intencja,
   onZaladujDemo,
   onOtworzDodawanie,
+  maska = [],
+  srednicaPedzla = 0.05,
+  onPociagniecie,
   onMenuWarstwy,
 }: Props) {
   const refKontener = useRef<HTMLDivElement>(null)
@@ -166,6 +174,8 @@ export function Plotno({
 
   /* ── Wskaźnik ─────────────────────────────────────────────────── */
 
+  const [zywe, setZywe] = useState<Pociagniecie | null>(null)
+
   function naTleWDol(e: React.PointerEvent) {
     przechwyc(e.target as Element, e.pointerId)
     if (narzedzie === 'reka' || e.button === 1 || e.altKey) {
@@ -184,6 +194,18 @@ export function Plotno({
     e.stopPropagation()
     przechwyc(e.currentTarget as Element, e.pointerId)
     const p = doSceny(e)
+
+    if (narzedzie === 'pedzel' && !warstwa.generator) {
+      const punkt: [number, number] = [
+        Math.min(1, Math.max(0, (p.x - warstwa.x) / warstwa.width)),
+        Math.min(1, Math.max(0, (p.y - warstwa.y) / warstwa.height)),
+      ]
+      refOperacja.current = { rodzaj: 'pedzel', startX: p.x, startY: p.y, migawka: warstwa, punkty: [punkt, punkt] }
+      onWybierzWarstwe(warstwa.id)
+      onWybierzPineske(null)
+      setZywe({ layerId: warstwa.id, punkty: [punkt, punkt], srednica: srednicaPedzla })
+      return
+    }
 
     if (narzedzie === 'ramka') {
       const normX = Math.min(1, Math.max(0, (p.x - warstwa.x) / warstwa.width))
@@ -266,6 +288,15 @@ export function Plotno({
       return
     }
 
+    if (op.rodzaj === 'pedzel' && op.migawka && op.punkty) {
+      op.punkty.push([
+        Math.min(1, Math.max(0, (p.x - op.migawka.x) / op.migawka.width)),
+        Math.min(1, Math.max(0, (p.y - op.migawka.y) / op.migawka.height)),
+      ])
+      setZywe({ layerId: op.migawka.id, punkty: [...op.punkty], srednica: srednicaPedzla })
+      return
+    }
+
     if (op.rodzaj === 'ramka' && op.migawka && op.startNormX !== undefined && op.startNormY !== undefined) {
       const currNormX = Math.min(1, Math.max(0, (p.x - op.migawka.x) / op.migawka.width))
       const currNormY = Math.min(1, Math.max(0, (p.y - op.migawka.y) / op.migawka.height))
@@ -326,6 +357,10 @@ export function Plotno({
     const op = refOperacja.current
     refOperacja.current = null
     setPrzeciagana(null)
+    if (op?.rodzaj === 'pedzel' && op.migawka && op.punkty) {
+      onPociagniecie?.({ layerId: op.migawka.id, punkty: op.punkty, srednica: srednicaPedzla })
+      setZywe(null)
+    }
     // Kliknięcie pineski bez przeciągnięcia = otwarcie jej karty. Rozdzielamy
     // to dopiero tutaj, bo w chwili wciśnięcia nie wiadomo, co się stanie.
     if (op?.rodzaj === 'pineska' && !op.ruszony && op.idPineski) onWybierzPineske(op.idPineski)
@@ -426,15 +461,46 @@ export function Plotno({
                 transform: `rotate(${warstwa.rotation}deg)`,
                 outline: zaznaczona ? `${2 * odwrotna}px solid #38bdf8` : undefined,
                 boxShadow: '0 24px 60px -30px rgba(0,0,0,0.9)',
-                cursor: narzedzie === 'pineska' || narzedzie === 'ramka' ? 'crosshair' : 'move',
+                cursor: narzedzie === 'pineska' || narzedzie === 'ramka' || narzedzie === 'pedzel' ? 'crosshair' : 'move',
               }}
             >
-              <img
-                src={warstwa.src}
-                alt={warstwa.name}
-                draggable={false}
-                style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', userSelect: 'none' }}
-              />
+              {warstwa.generator ? (
+                <div style={{ width: '100%', height: '100%', background: 'hsl(var(--foreground) / 0.1)', display: 'grid', placeItems: 'center' }}>
+                  <svg viewBox="0 0 24 24" width="22%" height="22%" fill="hsl(var(--foreground) / 0.18)" aria-hidden="true"><path d="M3 19 9.5 8l4 6.5 2.5-3.5L21 19H3Z" /><circle cx="17" cy="6.5" r="2" /></svg>
+                </div>
+              ) : (
+                <img
+                  src={warstwa.src}
+                  alt={warstwa.name}
+                  draggable={false}
+                  style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', userSelect: 'none' }}
+                />
+              )}
+              {warstwa.generator && (
+                <>
+                  <span style={{ position: 'absolute', left: 0, top: -22 * odwrotna, fontSize: 12 * odwrotna, color: '#38bdf8', whiteSpace: 'nowrap' }}>Image Generator</span>
+                  <span style={{ position: 'absolute', right: 0, top: -22 * odwrotna, fontSize: 12 * odwrotna, color: '#38bdf8', whiteSpace: 'nowrap' }}>{warstwa.naturalWidth} × {warstwa.naturalHeight}</span>
+                </>
+              )}
+              {[...maska, ...(zywe ? [zywe] : [])].filter(m => m.layerId === warstwa.id).length > 0 && (
+                <svg
+                  viewBox={`0 0 ${warstwa.width} ${warstwa.height}`}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+                  aria-hidden="true"
+                >
+                  <g opacity={0.5} stroke="#38bdf8" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                    {[...maska, ...(zywe ? [zywe] : [])]
+                      .filter(m => m.layerId === warstwa.id)
+                      .map((m, i) => (
+                        <polyline
+                          key={i}
+                          points={m.punkty.map(([x, y]) => `${x * warstwa.width},${y * warstwa.height}`).join(' ')}
+                          strokeWidth={m.srednica * warstwa.width}
+                        />
+                      ))}
+                  </g>
+                </svg>
+              )}
             </div>
           )
         })}

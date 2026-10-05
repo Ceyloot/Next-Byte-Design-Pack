@@ -28,8 +28,13 @@ import {
   Download,
   ArrowUpToLine,
   ArrowDownToLine,
+  Paintbrush,
+  ImagePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Prompter } from '@/sections/canvas/Prompter'
+import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
+import { zlozZMaskaMagenta, wklejWMaske, promptInpaintingu } from '@/sections/canvas/inpainting'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas, type ModelObrazu } from '@/sections/canvas/CzatCanvas'
@@ -83,6 +88,7 @@ import {
   wytnijOkolice,
   zmniejszDoAnalizy,
   type Narzedzie,
+  type Pociagniecie,
   type Pineska,
   type Warstwa,
   type Widok,
@@ -259,6 +265,11 @@ export function CanvasSection() {
   }
 
   const [stanGeneracji, setStanGeneracji] = useState<StanGeneracji>({ faza: 'bezczynny' })
+  // Inpainting pędzlem i generator (pusta ramka „Image Generator”)
+  const [maska, setMaska] = useState<Pociagniecie[]>([])
+  const [srednicaPedzla, setSrednicaPedzla] = useState(0.05)
+  const [menuGeneratora, setMenuGeneratora] = useState(false)
+  const [trwaPrompter, setTrwaPrompter] = useState(false)
   const [ostatniPrompt, setOstatniPrompt] = useState<string | null>(null)
   const [panelWarstw, setPanelWarstw] = useState(false)
   const refPlik = useRef<HTMLInputElement>(null)
@@ -657,6 +668,117 @@ export function CanvasSection() {
     setWybranaPineska(s => (s === id ? null : s))
   }, [])
 
+  /* ── Inpainting pędzlem i generator ────────────────────────────── */
+
+  const warstwaMaski = useMemo(
+    () => (maska.length ? projekt.warstwy.find(w => w.id === maska[0].layerId) ?? null : null),
+    [maska, projekt.warstwy],
+  )
+  const warstwaGeneratora = useMemo(
+    () => projekt.warstwy.find(w => w.generator && w.id === wybranaWarstwa) ?? projekt.warstwy.find(w => w.generator) ?? null,
+    [projekt.warstwy, wybranaWarstwa],
+  )
+
+  const anulujMaske = useCallback(() => setMaska([]), [])
+
+  const uruchomInpainting = useCallback(
+    async (tekst: string) => {
+      const w = warstwaMaski
+      if (!w || trwaPrompter) return
+      setTrwaPrompter(true)
+      setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…' })
+      try {
+        const zrodlo = await konwertujNaDataUrl(w.src)
+        const zMaska = await zlozZMaskaMagenta(zrodlo, maska)
+        const wynik = await generuj({
+          polecenie: promptInpaintingu(tekst),
+          obrazy: [zMaska],
+          szerokosc: w.naturalWidth,
+          wysokosc: w.naturalHeight,
+          model: modelObrazu === 'auto' ? 'nb2' : modelObrazu,
+          studio: true,
+        })
+        const dopasowany = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
+        const koncowy = await wklejWMaske(zrodlo, dopasowany, maska)
+        const nazwa = nazwijWynik(tekst, [])
+        dodajZeZrodla(koncowy, nazwa, 'wynik', w)
+        setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: koncowy, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Inpainting: „${tekst}”.` } })
+        setMaska([])
+      } catch (e) {
+        setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się namalować zaznaczonego obszaru.' })
+      } finally {
+        setTrwaPrompter(false)
+      }
+    },
+    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla],
+  )
+
+  const utworzRamkeGeneratora = useCallback((szer: number, wys: number) => {
+    setMenuGeneratora(false)
+    setProjekt(p => {
+      const skala = Math.min(1, 460 / Math.max(szer, wys))
+      const prawa = p.warstwy.reduce((m, x) => Math.max(m, x.x + x.width), 0)
+      const id = nowyId('w')
+      setWybranaWarstwa(id)
+      return {
+        ...p,
+        warstwy: [
+          ...p.warstwy,
+          {
+            id,
+            type: 'image' as const,
+            src: '',
+            x: p.warstwy.length === 0 ? 60 : prawa + 48,
+            y: 60,
+            width: Math.round(szer * skala),
+            height: Math.round(wys * skala),
+            naturalWidth: szer,
+            naturalHeight: wys,
+            rotation: 0,
+            name: 'Image Generator',
+            visible: true,
+            locked: false,
+            zrodlo: 'wynik' as const,
+            generator: true,
+          },
+        ],
+      }
+    })
+  }, [])
+
+  const uruchomGenerator = useCallback(
+    async (tekst: string) => {
+      const ramka = warstwaGeneratora
+      if (!ramka || trwaPrompter) return
+      setTrwaPrompter(true)
+      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…' })
+      try {
+        const w = await generuj({ polecenie: tekst, obrazy: [], szerokosc: ramka.naturalWidth, wysokosc: ramka.naturalHeight, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        const obraz = await new Promise<HTMLImageElement>((ok, err) => {
+          const o = new Image()
+          o.onload = () => ok(o)
+          o.onerror = () => err(new Error('Nie udało się wczytać wyniku'))
+          o.src = w.obrazUrl
+        })
+        const nazwa = nazwijWynik(tekst, [])
+        setProjekt(p => ({
+          ...p,
+          warstwy: p.warstwy.map(x =>
+            x.id === ramka.id
+              ? { ...x, src: w.obrazUrl, generator: false, name: nazwa, naturalWidth: obraz.width, naturalHeight: obraz.height, height: Math.round((x.width * obraz.height) / obraz.width) }
+              : x,
+          ),
+        }))
+        setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: w.obrazUrl, kosztUSD: w.kosztUSD, model: w.model, nazwa, opis: `Polecenie: „${tekst}”.` } })
+      } catch (e) {
+        setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
+      } finally {
+        setTrwaPrompter(false)
+      }
+    },
+    [warstwaGeneratora, modelObrazu, trwaPrompter],
+  )
+
   /* ── Skróty klawiszowe ─────────────────────────────────────────── */
 
   useEffect(() => {
@@ -667,9 +789,11 @@ export function CanvasSection() {
       if (e.key === 'Escape') {
         setWybranaPineska(null)
         setMenuDodawania(false)
+        setMenuGeneratora(false)
+        setMaska([])
         return
       }
-      const skroty: Record<string, Narzedzie> = { v: 'wybor', p: 'pineska', h: 'reka', r: 'ramka' }
+      const skroty: Record<string, Narzedzie> = { v: 'wybor', p: 'pineska', h: 'reka', b: 'pedzel' }
       const n = skroty[e.key.toLowerCase()]
       if (n) {
         setNarzedzie(n)
@@ -702,8 +826,8 @@ export function CanvasSection() {
     const zPineski = kluczowa ? projekt.warstwy.find(w => w.id === kluczowa.layerId) : null
     return (
       zPineski ??
-      (wybranaWarstwa ? projekt.warstwy.find(w => w.id === wybranaWarstwa) : null) ??
-      projekt.warstwy[0] ??
+      (wybranaWarstwa ? projekt.warstwy.find(w => w.id === wybranaWarstwa && !w.generator) : null) ??
+      projekt.warstwy.find(w => !w.generator) ??
       null
     )
   }, [projekt.pineski, projekt.warstwy, wybranaWarstwa, intencja])
@@ -1508,6 +1632,9 @@ export function CanvasSection() {
         intencja={intencja}
         onOtworzDodawanie={() => refPlik.current?.click()}
         onMenuWarstwy={(id, x, y) => setMenuWarstwy({ id, x, y })}
+        maska={maska}
+        srednicaPedzla={srednicaPedzla}
+        onPociagniecie={k => setMaska(m => [...m, k])}
       />
 
       {/* ══ Menu kontekstowe zdjęcia (prawy klik) ══ */}
@@ -1516,7 +1643,7 @@ export function CanvasSection() {
         (() => {
           const id = menuWarstwy?.id ?? wybranaWarstwa
           const w = projekt.warstwy.find(x => x.id === id)
-          if (!w || w.type !== 'image') return null
+          if (!w || w.type !== 'image' || w.generator || maska.length > 0) return null
           const lewo = widok.x + w.x * widok.zoom
           const gora = widok.y + w.y * widok.zoom
           return (
@@ -1650,6 +1777,43 @@ export function CanvasSection() {
         </div>
       </div>
 
+      {/* ══ Prompter: inpainting (po zamalowaniu) i generator (pod pustą ramką) ══ */}
+      {warstwaMaski && (
+        <Prompter
+          key={`maska-${warstwaMaski.id}`}
+          etykieta="Zaznaczony obszar"
+          placeholder="Co zrobić w tym miejscu?"
+          trwa={trwaPrompter}
+          onWyslij={uruchomInpainting}
+          onAnuluj={anulujMaske}
+          srednica={srednicaPedzla}
+          onSrednica={setSrednicaPedzla}
+          style={{
+            left: Math.max(16, Math.min(widok.x + (warstwaMaski.x + warstwaMaski.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
+            top: Math.max(16, widok.y + warstwaMaski.y * widok.zoom - 64),
+          }}
+        />
+      )}
+      {!warstwaMaski && warstwaGeneratora && (
+        <Prompter
+          key={`gen-${warstwaGeneratora.id}`}
+          etykieta={`${warstwaGeneratora.naturalWidth} × ${warstwaGeneratora.naturalHeight}`}
+          placeholder="Co mamy dzisiaj stworzyć?"
+          trwa={trwaPrompter}
+          onWyslij={uruchomGenerator}
+          onAnuluj={() => setProjekt(p => ({ ...p, warstwy: p.warstwy.filter(x => x.id !== warstwaGeneratora.id) }))}
+          style={{
+            left: Math.max(16, Math.min(widok.x + (warstwaGeneratora.x + warstwaGeneratora.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
+            top: Math.min(window.innerHeight - 90, widok.y + (warstwaGeneratora.y + warstwaGeneratora.height) * widok.zoom + 14),
+          }}
+        />
+      )}
+      {menuGeneratora && (
+        <div className="absolute bottom-20 left-1/2 z-40 -translate-x-1/2">
+          <MenuGeneratora onUtworz={utworzRamkeGeneratora} />
+        </div>
+      )}
+
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
       <div className="p2 !bg-transparent pointer-events-none absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
         <div className="p2-szklo pointer-events-auto relative flex flex-row items-center gap-1 !rounded-2xl p-1.5">
@@ -1694,6 +1858,29 @@ export function CanvasSection() {
             }}
           >
             <IkonaObrazu className="h-4 w-4" />
+          </Narzedzie>
+
+          {/* Pędzel (B) — inpainting: zamaluj obszar i opisz zmianę */}
+          <Narzedzie
+            tytul="Pędzel (B) — zamaluj obszar i opisz zmianę"
+            aktywne={narzedzie === 'pedzel'}
+            onClick={() => setNarzedzie('pedzel')}
+            odznaka={maska.length || undefined}
+          >
+            <Paintbrush className="h-4 w-4" />
+          </Narzedzie>
+
+          {/* Generuj zdjęcie — pusta ramka z prompterem */}
+          <Narzedzie
+            tytul="Generuj zdjęcie — wybierz wymiary"
+            aktywne={menuGeneratora}
+            onClick={() => {
+              setWybranaPineska(null)
+              setMenuDodawania(false)
+              setMenuGeneratora(v => !v)
+            }}
+          >
+            <ImagePlus className="h-4 w-4" />
           </Narzedzie>
 
           {/* Lista zdjęć / warstw */}

@@ -7,7 +7,14 @@
  * struktur — a to jest ważniejsze niż spójność słownika w jednym folderze.
  */
 
-export type Narzedzie = 'wybor' | 'pineska' | 'reka' | 'ramka'
+export type Narzedzie = 'wybor' | 'pineska' | 'reka' | 'ramka' | 'pedzel'
+
+/** Pociągnięcie pędzla do inpaintingu: punkty (0–1 względem zdjęcia) i średnica jako ułamek szerokości zdjęcia. */
+export interface Pociagniecie {
+  layerId: string
+  punkty: [number, number][]
+  srednica: number
+}
 
 export type ZrodloObrazu = 'dysk' | 'schowek' | 'upuszczenie' | 'adres' | 'wynik'
 
@@ -28,6 +35,8 @@ export interface Warstwa {
   locked: boolean
   /** skąd obraz trafił na płótno — przydaje się przy diagnozie */
   zrodlo: ZrodloObrazu
+  /** pusta ramka generatora („Image Generator”) — czeka na opis, nie jest zdjęciem do edycji */
+  generator?: boolean
   /**
    * Co widać na zdjęciu — rozpoznane w tle zaraz po wrzuceniu.
    * Służy za zapas nazw dla pinesek i za kontekst dla polecenia.
