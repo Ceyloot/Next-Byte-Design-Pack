@@ -456,6 +456,14 @@ export function zbudujZadanieModelu(
   // „Wstaw ten obiekt z drugiego zdjęcia” to przeniesienie obiektu (zachowane proporcje i tożsamość).
   let operacja = operacjaZIntencji(intencja, osoba)
   if (operacja === 'addition' && pineskiSklejka.some(p => p.rola === 'source' && p.obraz > 1)) operacja = 'object_transfer'
+  // „Wstaw ten domek tam” z obiektem I miejscem na tym samym zdjęciu to PRZENIESIENIE: stary egzemplarz znika (chyba że polecenie mówi o kopii).
+  if (
+    operacja === 'addition' &&
+    !/kopi|powiel|zduplik|klon|jeszcze\s+jeden|kolejn|drugi\s+(egzemplarz|raz)|copy|duplicate|another/i.test(zadanie) &&
+    pineskiSklejka.some(p => p.rola === 'source' && p.obraz === 1) &&
+    pineskiSklejka.some(p => p.rola === 'target' && p.obraz === 1)
+  )
+    operacja = 'object_transfer'
 
   return skladajPrompt({
     studio,
