@@ -905,7 +905,7 @@ export function CanvasSection() {
       // Bezpiecznik: obiekt przenoszony na zdjęcie rzadko zajmuje ponad 40% szerokości kadru — taki pomiar to prawie na pewno
       // błąd kotwic reżysera (w teście samochód → miasteczko wyszło 48% przy faktycznych 18%). Nie wysyłamy go modelowi ani do kontroli.
       if (rozmiarSurowy && rozmiarSurowy.szer > 40) console.warn('[canvas] pomiar rozmiaru odrzucony jako nieprawdopodobny', { rozmiarSurowy, pomiar: plan?.pomiar })
-      const rozmiarPlanu = !SKALA_OD_MODELU && rozmiarSurowy && rozmiarSurowy.szer <= 40 ? rozmiarSurowy : undefined
+      const rozmiarPlanu = (!SKALA_OD_MODELU || studio) && rozmiarSurowy && rozmiarSurowy.szer <= 40 ? rozmiarSurowy : undefined
       const surowyObszar =
         trybAgenta === 'tlo' || trybAgenta === 'styl'
           ? undefined
@@ -954,7 +954,7 @@ export function CanvasSection() {
           : projekt.pineski
 
       // Skala liczona z kotwicy o znanym rozmiarze (nie z oka): % kadru docelowego.
-      const porownanie = !SKALA_OD_MODELU && plan?.pomiar ? porownanieZKotwica(plan.pomiar, pinDocelowy?.normalizedY) : ''
+      const porownanie = (!SKALA_OD_MODELU || studio) && plan?.pomiar ? porownanieZKotwica(plan.pomiar, pinDocelowy?.normalizedY) : ''
       if (plan?.pomiar) console.info('[canvas] pomiar skali', { pomiar: plan.pomiar, rozmiarPlanu })
 
       // Operacja na człowieku idzie modelem postaci (RUNWARE_MODEL_POSTAC, jeśli ustawiony).
