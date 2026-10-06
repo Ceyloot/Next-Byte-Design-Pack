@@ -12,9 +12,10 @@ import type { ZadanieGeneracji } from './runware-proxy'
  * zaznaczenia (z kontekstem), w którym zamalowany obszar zajmuje sporą część kadru — nie ma gdzie się pomylić.
  * Wycinek ma proporcje z listy formatów modelu, więc kadr wraca 1:1 i trafia dokładnie na swoje miejsce.
  *
- * Przepływ: wycinek wokół maski → magenta w obrębie maski → model → CAŁY wygenerowany wycinek wstawiony na swoje
- * miejsce w oryginale (miękkie wtopienie brzegów wycinka). Wynik NIE jest przycinany maską — maska pilnuje tylko
- * miejsca i rozmiaru w prompcie, więc obiekt nigdy nie zostaje uciety krawędzią zaznaczenia.
+ * Przepływ: wycinek wokół maski → model dostaje wycinek z magentą ORAZ osobny obraz-maskę → wynik wraca na oryginał
+ * WYŁĄCZNIE przez maskę (miękka krawędź, minimalnie poszerzona o szerokość wtopienia). Poza maską piksele oryginału
+ * zostają bit w bit — model fizycznie nie może zmienić nic poza zaznaczeniem. Po złożeniu sprawdzamy piksele:
+ * obszar musi się zmienić i nie może zostać różowa nakładka (inaczej błąd zamiast złego wyniku).
  */
 
 /** Krycie magenty na wejściu: wyraźna maska, a pod spodem nadal widać oryginał (potrzebny przy „zmień / usuń”). */
@@ -123,7 +124,7 @@ export function policzWycinekMaski(w: number, h: number, kreski: Pociagniecie[])
   return { x: Math.round(x), y: Math.round(y), w: Math.round(cw), h: Math.round(ch) }
 }
 
-/** Wycinek zdjęcia z zamalowaną magentą maską — jedyne wejście dla modelu. */
+/** Wejście dla modelu: wycinek z magentą (Image 1) i czarno-biała maska tego samego kadru (Image 2: biel = wolno zmieniać). */
 function zlozWejscie(o: HTMLImageElement, kreski: Pociagniecie[], wyc: Prostokat) {
   const w = o.naturalWidth
   const h = o.naturalHeight
@@ -137,14 +138,52 @@ function zlozWejscie(o: HTMLImageElement, kreski: Pociagniecie[], wyc: Prostokat
   wej.g.drawImage(o, wyc.x, wyc.y, wyc.w, wyc.h, 0, 0, szer, wys)
   wej.g.globalAlpha = KRYCIE_MAGENTY
   wej.g.drawImage(maska.c, 0, 0, szer, wys)
-  return { src: wej.c.toDataURL('image/jpeg', 0.95), szer, wys }
+  // osobna maska: czarne tło, białe zaznaczenie
+  const bw = nowePlotno(szer, wys)
+  bw.g.fillStyle = '#000'
+  bw.g.fillRect(0, 0, szer, wys)
+  const bialy = nowePlotno(wyc.w, wyc.h)
+  rysujMaske(bialy.g, w, h, kreski, '#fff', wyc.x, wyc.y)
+  bw.g.drawImage(bialy.c, 0, 0, szer, wys)
+  return { src: wej.c.toDataURL('image/jpeg', 0.95), maska: bw.c.toDataURL('image/png'), szer, wys }
 }
 
-/** Wygenerowany wycinek wstawiony na swoje miejsce w oryginale; brzegi wycinka wtapiają się miękko (poza brzegami zdjęcia). */
-async function wstawWycinek(o: HTMLImageElement, wynik: string, wyc: Prostokat): Promise<string> {
+/** Średnie odchylenie (0–255) oryginału od wyniku i udział magenty — tylko wewnątrz maski, na zmniejszonej kopii. */
+function zmierzObszar(oryginal: HTMLCanvasElement, wynik: HTMLCanvasElement, maska: HTMLCanvasElement) {
+  const bok = 160
+  const k = bok / Math.max(oryginal.width, oryginal.height)
+  const sw = Math.max(1, Math.round(oryginal.width * k))
+  const sh = Math.max(1, Math.round(oryginal.height * k))
+  const dane = (c: HTMLCanvasElement) => {
+    const t = nowePlotno(sw, sh)
+    t.g.drawImage(c, 0, 0, sw, sh)
+    return t.g.getImageData(0, 0, sw, sh).data
+  }
+  const a = dane(oryginal)
+  const r = dane(wynik)
+  const m = dane(maska)
+  let n = 0
+  let roznica = 0
+  let magenta = 0
+  for (let i = 0; i < m.length; i += 4) {
+    if (m[i + 3] < 200) continue
+    n++
+    roznica += (Math.abs(a[i] - r[i]) + Math.abs(a[i + 1] - r[i + 1]) + Math.abs(a[i + 2] - r[i + 2])) / 3
+    // magenta nałożona w ~55% na dowolną treść: czerwony i niebieski wysokie, zielony wyraźnie niższy od nich
+    if (r[i] > 130 && r[i + 2] > 130 && r[i + 1] < 0.62 * Math.min(r[i], r[i + 2])) magenta++
+  }
+  return n ? { roznica: roznica / n, magenta: magenta / n } : { roznica: 255, magenta: 0 }
+}
+
+/**
+ * Wynik modelu wklejony w maskę na oryginał; poza maską zostaje oryginał (bit w bit).
+ * Rzuca błąd, gdy model nic nie zmienił w zaznaczeniu albo zostawił różową nakładkę.
+ */
+async function wklejWMaske(o: HTMLImageElement, wynik: string, kreski: Pociagniecie[], wyc: Prostokat): Promise<string> {
   const r = await wczytaj(wynik)
   const w = o.naturalWidth
   const h = o.naturalHeight
+  const miekko = Math.max(2, Math.round(Math.min(wyc.w, wyc.h) * 0.008))
 
   // wynik w rozmiarze wycinka: te same proporcje = rozciągnięcie, inne = przycięcie „cover” (bez przesunięcia środka)
   const warstwa = nowePlotno(wyc.w, wyc.h)
@@ -158,17 +197,19 @@ async function wstawWycinek(o: HTMLImageElement, wynik: string, wyc: Prostokat):
     warstwa.g.drawImage(r, (r.naturalWidth - sw) / 2, (r.naturalHeight - sh) / 2, sw, sh, 0, 0, wyc.w, wyc.h)
   }
 
-  // wtopienie: prostokątna maska z rozmytym brzegiem; krawędź przylegająca do brzegu zdjęcia zostaje ostra
-  const m = Math.max(6, Math.round(Math.min(wyc.w, wyc.h) * 0.05))
-  const wolne = m * 4
-  const lewo = wyc.x <= 0 ? -wolne : m
-  const gora = wyc.y <= 0 ? -wolne : m
-  const prawo = wyc.x + wyc.w >= w ? wyc.w + wolne : wyc.w - m
-  const dol = wyc.y + wyc.h >= h ? wyc.h + wolne : wyc.h - m
+  // kontrola pikseli (na surowym wyniku, w obrębie dokładnej maski): zmiana musi być i bez różowej nakładki
+  const scisla = nowePlotno(wyc.w, wyc.h)
+  rysujMaske(scisla.g, w, h, kreski, '#fff', wyc.x, wyc.y)
+  const orygWycinek = nowePlotno(wyc.w, wyc.h)
+  orygWycinek.g.drawImage(o, wyc.x, wyc.y, wyc.w, wyc.h, 0, 0, wyc.w, wyc.h)
+  const pomiar = zmierzObszar(orygWycinek.c, warstwa.c, scisla.c)
+  if (pomiar.magenta > 0.25) throw new Error('Model zostawił różową nakładkę w zaznaczeniu — spróbuj jeszcze raz.')
+  if (pomiar.roznica < 2.5) throw new Error('Model nie zmienił zaznaczonego obszaru — opisz zmianę dokładniej i spróbuj jeszcze raz.')
+
+  // maska miękka: zaznaczenie rozmyte o szerokość wtopienia — poza nią oryginał
   const maska = nowePlotno(wyc.w, wyc.h)
-  maska.g.filter = `blur(${Math.round(m / 2)}px)`
-  maska.g.fillStyle = '#fff'
-  maska.g.fillRect(lewo, gora, prawo - lewo, dol - gora)
+  maska.g.filter = `blur(${miekko}px)`
+  rysujMaske(maska.g, w, h, kreski, '#fff', wyc.x, wyc.y)
   maska.g.filter = 'none'
   warstwa.g.globalCompositeOperation = 'destination-in'
   warstwa.g.drawImage(maska.c, 0, 0)
@@ -183,13 +224,13 @@ async function wstawWycinek(o: HTMLImageElement, wynik: string, wyc: Prostokat):
 export function promptInpaintingu(tekst: string): string {
   return `${tekst.trim()}
 
-INPAINTING. Image 1 is a photograph with one region painted over in semi-transparent magenta. The magenta region marks WHERE the change goes and HOW BIG it is.
-- Do the request above INSIDE the magenta region: create the new content right there. If the request is to remove something, fill the region with what would naturally be behind it. Never draw it anywhere else in the frame and never add copies of it elsewhere.
-- FIT: the new content must fit COMPLETELY inside the magenta region — scale it so that every part of it, from one end to the other, lies within the painted shape with a small margin. Nothing may stick out past the edge of the painted area, be cut off by it or touch its border. The painted area is the maximum size.
-- Everything outside the magenta region stays exactly as it is: same objects, positions, colours, framing and composition.
+INPAINTING with a hard mask. Image 1 is a photograph with one region painted over in semi-transparent magenta. Image 2 is the mask of the same frame: WHITE = the only region you may change, BLACK = must stay identical.
+- Do the request above ONLY inside the white / magenta region: create the new content right there, filling that shape and sized to fit it. If the request is to remove something, fill the region with what would naturally be behind it. Never draw it anywhere else in the frame and never add copies of it elsewhere.
+- FIT: the new content must fit COMPLETELY inside the region — scale it so that every part of it, from one end to the other, lies within the painted shape with a small margin. Nothing may stick out past the edge of the region, be cut off by it or touch its border. The region is the maximum size.
+- Everything in the black area stays exactly as it is, pixel for pixel: same objects, positions, colours, framing and composition. Anything you draw outside the region will be discarded.
 - Remove the magenta paint completely — no pink tint, outline or residue may remain.
 - Make the new content continue its surroundings seamlessly: same light direction and colour, perspective, sharpness, noise and grain, with natural contact shadows and reflections.
-- Return the full frame with the same framing and aspect ratio as Image 1.`
+- Return only the edited version of Image 1 — the full frame, same framing and aspect ratio. Do not output the mask.`
 }
 
 /** Eraser: usuń zamalowany obiekt i odbuduj to, co naturalnie za nim jest; `uwaga` — opcjonalna wskazówka użytkownika. */
@@ -211,7 +252,7 @@ export interface WynikInpaintingu {
   model: string
 }
 
-/** Cały inpainting: jedna generacja na wycinku wokół maski, wygenerowany wycinek wstawiony w oryginał (rozdzielczość oryginału). */
+/** Cały inpainting: jedna generacja na wycinku wokół maski, wynik wklejony WYŁĄCZNIE w maskę na oryginał (rozdzielczość oryginału). */
 export async function wykonajInpainting({ src, kreski, tekst, model }: ZadanieInpaintingu): Promise<WynikInpaintingu> {
   if (!kreski.length) throw new Error('Zamaluj obszar do zmiany')
   const zrodlo = await konwertujNaDataUrl(src)
@@ -220,12 +261,12 @@ export async function wykonajInpainting({ src, kreski, tekst, model }: ZadanieIn
   const wejscie = zlozWejscie(o, kreski, wyc)
   const wynik = await generuj({
     polecenie: promptInpaintingu(tekst),
-    obrazy: [wejscie.src],
+    obrazy: [wejscie.src, wejscie.maska],
     szerokosc: wejscie.szer,
     wysokosc: wejscie.wys,
     model,
     studio: true,
   })
-  const obrazUrl = await wstawWycinek(o, wynik.obrazUrl, wyc)
+  const obrazUrl = await wklejWMaske(o, wynik.obrazUrl, kreski, wyc)
   return { obrazUrl, kosztUSD: wynik.kosztUSD, model: wynik.model }
 }
