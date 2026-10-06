@@ -10,7 +10,6 @@ import {
   Pin,
   Maximize,
   MousePointer2,
-  Sparkles,
   Square,
   Trash2,
   Unlock,
@@ -27,6 +26,7 @@ import {
   ArrowDownToLine,
   Paintbrush,
   ArrowLeft,
+  Scissors,
   ImagePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -474,7 +474,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     () => [
       { id: 'enhance', etykieta: 'Enhance', ikona: Wand2, skala: 1, prompt: 'Enhance this photograph: improve clarity, fine detail, dynamic range, contrast and colour so it looks like a higher-end camera took it. Keep every object, person, position, framing and the lighting direction exactly the same. Natural, photographic — no over-sharpening, no HDR look, no plastic skin.' },
       { id: 'upscale', etykieta: 'Upscale 2×', ikona: ZoomIn, skala: 2, prompt: 'Upscale this photograph to twice its resolution. Reconstruct crisp, natural fine detail (textures, edges, text) while keeping the content, composition, colours and lighting identical. No new objects, no style change.' },
-      { id: 'czysc', etykieta: 'Usuń zakłócenia', ikona: Sparkles, skala: 1, prompt: 'Clean up this photograph: remove small distractions — litter, stray cables, dust spots, sensor spots, watermarks and small unwanted passers-by in the background — and rebuild what was behind them naturally. Keep the main subjects, composition and lighting exactly the same.' },
+      { id: 'beztla', etykieta: 'Usuń tło', ikona: Scissors, skala: 1, prompt: 'Remove the background of this photograph: keep the main subject(s) exactly as they are — same shape, colours, detail and sharpness — with clean, precise cut-out edges (fine hair, glass, thin parts included, no halo or fringe) and place them on a plain pure white background with a soft natural contact shadow. Change nothing about the subject itself.' },
     ],
     [],
   )
@@ -1708,8 +1708,9 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
               onContextMenu={e => e.preventDefault()}
               className="absolute z-50"
               style={{
-                // pasek (≈800 px z Inpaintem) wyśrodkowany nad zdjęciem, ale w całości na ekranie i przed panelem czatu
-                left: Math.max(16, Math.min(lewo + (w.width * widok.zoom) / 2 - 400, window.innerWidth - 440 - 800)),
+                // wyśrodkowany nad zdjęciem (pasek ≈ 540 px), ale w całości na ekranie i przed panelem czatu
+                left: Math.max(16 + 280, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 280)),
+                transform: 'translateX(-50%)',
                 maxWidth: 'calc(100vw - 440px)',
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
