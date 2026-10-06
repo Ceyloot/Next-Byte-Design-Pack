@@ -1872,13 +1872,13 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           onAnuluj={zakonczInpaint}
           srednica={srednicaPedzla}
           onSrednica={setSrednicaPedzla}
+          // dokładnie w slocie paska szybkich akcji (ten sam wzór pozycji) — pasek „zamienia się” w prompter
           style={{
-            left: Math.max(16, Math.min(widok.x + (warstwaInpaint.x + warstwaInpaint.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
-            // nad zdjęciem; gdy brak miejsca (licznik Bajtów w lewym górnym rogu) — pod zdjęciem
+            left: Math.max(16, Math.min(widok.x + (warstwaInpaint.x + warstwaInpaint.width / 2) * widok.zoom - 280, window.innerWidth - 440 - 560)),
             top:
-              widok.y + warstwaInpaint.y * widok.zoom - 64 >= 64
-                ? widok.y + warstwaInpaint.y * widok.zoom - 64
-                : Math.min(window.innerHeight - 90, widok.y + (warstwaInpaint.y + warstwaInpaint.height) * widok.zoom + 14),
+              widok.y + warstwaInpaint.y * widok.zoom - 56 >= 68
+                ? widok.y + warstwaInpaint.y * widok.zoom - 56
+                : Math.min(window.innerHeight - 64, widok.y + (warstwaInpaint.y + warstwaInpaint.height) * widok.zoom + 10),
           }}
         />
       )}
