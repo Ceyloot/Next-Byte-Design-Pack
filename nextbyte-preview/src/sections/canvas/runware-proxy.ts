@@ -1,4 +1,5 @@
 import { ZABLOKOWANY_MODEL_POSTACI } from './prompty/zablokowane/character-swap'
+import { dopasujWymiary } from './formaty-modelu'
 /**
  * Proxy do Runware jako wtyczka Vite.
  *
@@ -70,35 +71,7 @@ export interface WynikGeneracji {
   seed?: number
 }
 
-/**
- * Nano Banana nie przyjmuje dowolnych wymiarów — tylko tę listę par.
- * Zwrócił ją sam model w komunikacie błędu przy pierwszej próbie.
- */
-const DOZWOLONE: [number, number][] = [
-  [1024, 1024],
-  [1264, 848], [848, 1264],
-  [1200, 896], [896, 1200],
-  [1152, 928], [928, 1152],
-  [1376, 768], [768, 1376],
-  [1584, 672], [672, 1584],
-  [2048, 512], [512, 2048],
-  [3072, 384], [384, 3072],
-]
-
-/**
- * Najbliższy dozwolony format do proporcji warstwy.
- *
- * Dobieramy po proporcji, nie po rozmiarze: pionowe zdjęcie 1453×2182
- * wysłane jako kwadrat wraca przycięte, a to najbardziej bolesny błąd,
- * bo wygląda na kaprys modelu, a nie na pomyłkę w żądaniu.
- */
-export function dopasujWymiary(szerokosc: number, wysokosc: number): { width: number; height: number } {
-  const cel = szerokosc / wysokosc
-  const [width, height] = DOZWOLONE.reduce((naj, para) =>
-    Math.abs(para[0] / para[1] - cel) < Math.abs(naj[0] / naj[1] - cel) ? para : naj,
-  )
-  return { width, height }
-}
+export { dopasujWymiary }
 
 function czytajCialo(req: { on: (z: string, f: (c?: unknown) => void) => void }): Promise<string> {
   return new Promise((resolve, reject) => {

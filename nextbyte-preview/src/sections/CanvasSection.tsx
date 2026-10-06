@@ -34,7 +34,8 @@ import {
 import { cn } from '@/lib/utils'
 import { Prompter } from '@/sections/canvas/Prompter'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
-import { zlozZMaskaMagenta, wklejWMaske, promptInpaintingu } from '@/sections/canvas/inpainting'
+import { wykonajInpainting } from '@/sections/canvas/inpainting'
+import { wykonajGenerowanie } from '@/sections/canvas/generowanie'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas, type ModelObrazu } from '@/sections/canvas/CzatCanvas'
@@ -692,18 +693,9 @@ export function CanvasSection() {
       setTrwaPrompter(true)
       setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…' })
       try {
-        const zrodlo = await konwertujNaDataUrl(w.src)
-        const zMaska = await zlozZMaskaMagenta(zrodlo, maska)
-        const wynik = await generuj({
-          polecenie: promptInpaintingu(tekst),
-          obrazy: [zMaska],
-          szerokosc: w.naturalWidth,
-          wysokosc: w.naturalHeight,
-          model: modelObrazu === 'auto' ? 'nb2' : modelObrazu,
-          studio: true,
-        })
-        const dopasowany = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
-        const koncowy = await wklejWMaske(zrodlo, dopasowany, maska)
+        // Osobny moduł (canvas/inpainting.ts): wycinek wokół zaznaczenia → model → wynik tylko w masce.
+        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        const koncowy = wynik.obrazUrl
         const nazwa = nazwijWynik(tekst, [])
         dodajZeZrodla(koncowy, nazwa, 'wynik', w)
         setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: koncowy, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Inpainting: „${tekst}”.` } })
@@ -757,19 +749,14 @@ export function CanvasSection() {
       setTrwaPrompter(true)
       setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…' })
       try {
-        const w = await generuj({ polecenie: tekst, obrazy: [], szerokosc: ramka.naturalWidth, wysokosc: ramka.naturalHeight, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
-        const obraz = await new Promise<HTMLImageElement>((ok, err) => {
-          const o = new Image()
-          o.onload = () => ok(o)
-          o.onerror = () => err(new Error('Nie udało się wczytać wyniku'))
-          o.src = w.obrazUrl
-        })
+        // Osobny moduł (canvas/generowanie.ts): sam opis, bez zdjęć wejściowych i reguł.
+        const w = await wykonajGenerowanie(tekst, ramka.naturalWidth, ramka.naturalHeight, modelObrazu === 'auto' ? 'nb2' : modelObrazu)
         const nazwa = nazwijWynik(tekst, [])
         setProjekt(p => ({
           ...p,
           warstwy: p.warstwy.map(x =>
             x.id === ramka.id
-              ? { ...x, src: w.obrazUrl, generator: false, name: nazwa, naturalWidth: obraz.width, naturalHeight: obraz.height, height: Math.round((x.width * obraz.height) / obraz.width) }
+              ? { ...x, src: w.obrazUrl, generator: false, name: nazwa, naturalWidth: w.szerokosc, naturalHeight: w.wysokosc, height: Math.round((x.width * w.wysokosc) / w.szerokosc) }
               : x,
           ),
         }))
