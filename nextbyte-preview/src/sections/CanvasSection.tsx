@@ -1726,12 +1726,11 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
                   setNarzedzie('pedzel')
                 }}
                 title="Inpaint — zamaluj miejsce na zdjęciu i opisz zmianę"
-                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-[12px] font-semibold text-foreground transition-all duration-150 hover:bg-primary/20 disabled:opacity-40"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-[12px] font-medium text-foreground/70 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40"
               >
-                <Paintbrush className="h-3.5 w-3.5 text-primary" />
+                <Paintbrush className="h-3.5 w-3.5" />
                 Inpaint
               </button>
-              <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-foreground/[0.12]" />
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
                   key={aid}
