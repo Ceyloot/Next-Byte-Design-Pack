@@ -1187,6 +1187,7 @@ export function CanvasSection() {
           ? await narysujObszary(zrodlo, obszarCelu as Prostokat, undefined, true)
           : ''
       const ramkaNaPlotnie = Boolean(zRamkaSrc)
+      if (plan?.dyrektywa) console.info('[canvas] dyrektywa reżysera:', plan.dyrektywa, '| pineski:', projekt.pineski.map((p, i) => `${i + 1}=${etykietaPineski(p, i + 1)}@${p.normalizedX.toFixed(2)},${p.normalizedY.toFixed(2)}`).join(' '))
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         studio,
         hybryda,
