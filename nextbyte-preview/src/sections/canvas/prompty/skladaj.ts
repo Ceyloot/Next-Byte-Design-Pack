@@ -308,7 +308,7 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
  * tylko co jest czym i gdzie. Jedno wspólne zdanie dla każdej wstawianej rzeczy lub osoby.
  */
 /** EKSPERYMENT: „wstaw tutaj” z innego zdjęcia — miejsce opisane relacyjnie przez reżysera (strony, odległości, liczby), bez współrzędnych i „THE POINT IS FIXED”. false = poprzedni prompt z pinezką. */
-export const UMIEJSCOWIENIE_RELACYJNE = false
+export const UMIEJSCOWIENIE_RELACYJNE = true
 
 export function brickSkali(nrObrazu = 1): string {
   return `SCALE: resolve scale and perspective so the subject fits naturally in the geometry of Image ${nrObrazu} — its size relative to the things around it at that depth (a person is human-sized next to the furniture, a shoe fits the foot that wears it, a car is car-sized next to a door or a boat), feet and contact points placed correctly in 3D space, the head not cropping into the wrong plane. Judge the size from the objects in Image ${nrObrazu}, never from how large the subject looks in its own reference photo.`
