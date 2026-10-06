@@ -12,8 +12,9 @@ import type { ZadanieGeneracji } from './runware-proxy'
  * zaznaczenia (z kontekstem), w którym zamalowany obszar zajmuje sporą część kadru — nie ma gdzie się pomylić.
  * Wycinek ma proporcje z listy formatów modelu, więc kadr wraca 1:1 i trafia dokładnie na swoje miejsce.
  *
- * Przepływ: wycinek wokół maski → magenta w obrębie maski → model → wynik wklejony TYLKO w maskę (miękka krawędź)
- * na oryginał. Poza maską piksele zostają oryginalne.
+ * Przepływ: wycinek wokół maski → magenta w obrębie maski → model → CAŁY wygenerowany wycinek wstawiony na swoje
+ * miejsce w oryginale (miękkie wtopienie brzegów wycinka). Wynik NIE jest przycinany maską — maska pilnuje tylko
+ * miejsca i rozmiaru w prompcie, więc obiekt nigdy nie zostaje uciety krawędzią zaznaczenia.
  */
 
 /** Krycie magenty na wejściu: wyraźna maska, a pod spodem nadal widać oryginał (potrzebny przy „zmień / usuń”). */
@@ -55,7 +56,7 @@ function nowePlotno(w: number, h: number) {
   return { c, g: c.getContext('2d')! }
 }
 
-/** Rysuje kreski maski; `dx`/`dy` — przesunięcie (początek wycinka), `grubsze` — poszerzenie pędzla w pikselach. */
+/** Rysuje kreski maski; `dx`/`dy` — przesunięcie (początek wycinka). */
 function rysujMaske(
   g: CanvasRenderingContext2D,
   w: number,
@@ -64,14 +65,13 @@ function rysujMaske(
   kolor: string,
   dx = 0,
   dy = 0,
-  grubsze = 0,
 ) {
   g.strokeStyle = kolor
   g.fillStyle = kolor
   g.lineCap = 'round'
   g.lineJoin = 'round'
   for (const k of kreski) {
-    g.lineWidth = Math.max(2, k.srednica * w) + grubsze
+    g.lineWidth = Math.max(2, k.srednica * w)
     g.beginPath()
     k.punkty.forEach(([x, y], i) => (i === 0 ? g.moveTo(x * w - dx, y * h - dy) : g.lineTo(x * w - dx, y * h - dy)))
     g.stroke()
@@ -140,12 +140,11 @@ function zlozWejscie(o: HTMLImageElement, kreski: Pociagniecie[], wyc: Prostokat
   return { src: wej.c.toDataURL('image/jpeg', 0.95), szer, wys }
 }
 
-/** Wynik modelu wklejony w maskę (miękka krawędź) na oryginał; poza maską zostaje oryginał. */
-async function wklejWMaske(o: HTMLImageElement, wynik: string, kreski: Pociagniecie[], wyc: Prostokat): Promise<string> {
+/** Wygenerowany wycinek wstawiony na swoje miejsce w oryginale; brzegi wycinka wtapiają się miękko (poza brzegami zdjęcia). */
+async function wstawWycinek(o: HTMLImageElement, wynik: string, wyc: Prostokat): Promise<string> {
   const r = await wczytaj(wynik)
   const w = o.naturalWidth
   const h = o.naturalHeight
-  const miekko = Math.max(2, Math.round(Math.min(wyc.w, wyc.h) * 0.008))
 
   // wynik w rozmiarze wycinka: te same proporcje = rozciągnięcie, inne = przycięcie „cover” (bez przesunięcia środka)
   const warstwa = nowePlotno(wyc.w, wyc.h)
@@ -159,10 +158,17 @@ async function wklejWMaske(o: HTMLImageElement, wynik: string, kreski: Pociagnie
     warstwa.g.drawImage(r, (r.naturalWidth - sw) / 2, (r.naturalHeight - sh) / 2, sw, sh, 0, 0, wyc.w, wyc.h)
   }
 
-  // maska lekko poszerzona i rozmyta: model często domalowuje obiekt o piksel dalej niż zamalowano, a krawędź ma się wtopić
+  // wtopienie: prostokątna maska z rozmytym brzegiem; krawędź przylegająca do brzegu zdjęcia zostaje ostra
+  const m = Math.max(6, Math.round(Math.min(wyc.w, wyc.h) * 0.05))
+  const wolne = m * 4
+  const lewo = wyc.x <= 0 ? -wolne : m
+  const gora = wyc.y <= 0 ? -wolne : m
+  const prawo = wyc.x + wyc.w >= w ? wyc.w + wolne : wyc.w - m
+  const dol = wyc.y + wyc.h >= h ? wyc.h + wolne : wyc.h - m
   const maska = nowePlotno(wyc.w, wyc.h)
-  maska.g.filter = `blur(${miekko}px)`
-  rysujMaske(maska.g, w, h, kreski, '#fff', wyc.x, wyc.y, miekko)
+  maska.g.filter = `blur(${Math.round(m / 2)}px)`
+  maska.g.fillStyle = '#fff'
+  maska.g.fillRect(lewo, gora, prawo - lewo, dol - gora)
   maska.g.filter = 'none'
   warstwa.g.globalCompositeOperation = 'destination-in'
   warstwa.g.drawImage(maska.c, 0, 0)
@@ -177,11 +183,12 @@ async function wklejWMaske(o: HTMLImageElement, wynik: string, kreski: Pociagnie
 export function promptInpaintingu(tekst: string): string {
   return `${tekst.trim()}
 
-INPAINTING. Image 1 is a photograph with one region painted over in semi-transparent magenta. That magenta region is the ONLY place where anything may change.
-- Do the request above INSIDE the magenta region: create the new content right there, filling the painted shape and sized to fit it. If the request is to remove something, fill the region with what would naturally be behind it. Never draw the content anywhere else in the frame and never add copies of it elsewhere.
+INPAINTING. Image 1 is a photograph with one region painted over in semi-transparent magenta. The magenta region marks WHERE the change goes and HOW BIG it is.
+- Do the request above INSIDE the magenta region: create the new content right there. If the request is to remove something, fill the region with what would naturally be behind it. Never draw it anywhere else in the frame and never add copies of it elsewhere.
+- FIT: the new content must fit COMPLETELY inside the magenta region — scale it so that every part of it, from one end to the other, lies within the painted shape with a small margin. Nothing may stick out past the edge of the painted area, be cut off by it or touch its border. The painted area is the maximum size.
 - Everything outside the magenta region stays exactly as it is: same objects, positions, colours, framing and composition.
 - Remove the magenta paint completely — no pink tint, outline or residue may remain.
-- Make the new content continue its surroundings seamlessly: same light direction and colour, perspective, scale, sharpness, noise and grain, and blend naturally at the edges of the region.
+- Make the new content continue its surroundings seamlessly: same light direction and colour, perspective, sharpness, noise and grain, with natural contact shadows and reflections.
 - Return the full frame with the same framing and aspect ratio as Image 1.`
 }
 
@@ -199,7 +206,7 @@ export interface WynikInpaintingu {
   model: string
 }
 
-/** Cały inpainting: jedna generacja na wycinku wokół maski, wynik wklejony w maskę na oryginał (rozdzielczość oryginału). */
+/** Cały inpainting: jedna generacja na wycinku wokół maski, wygenerowany wycinek wstawiony w oryginał (rozdzielczość oryginału). */
 export async function wykonajInpainting({ src, kreski, tekst, model }: ZadanieInpaintingu): Promise<WynikInpaintingu> {
   if (!kreski.length) throw new Error('Zamaluj obszar do zmiany')
   const zrodlo = await konwertujNaDataUrl(src)
@@ -214,6 +221,6 @@ export async function wykonajInpainting({ src, kreski, tekst, model }: ZadanieIn
     model,
     studio: true,
   })
-  const obrazUrl = await wklejWMaske(o, wynik.obrazUrl, kreski, wyc)
+  const obrazUrl = await wstawWycinek(o, wynik.obrazUrl, wyc)
   return { obrazUrl, kosztUSD: wynik.kosztUSD, model: wynik.model }
 }
