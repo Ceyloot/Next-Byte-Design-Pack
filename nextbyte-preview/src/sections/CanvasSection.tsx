@@ -1160,7 +1160,7 @@ export function CanvasSection() {
       // Transfer postaci z drugiego zdjęcia: karta tożsamości osoby (twarz cecha po cesze, włosy, budowa, ubiór) z wycinka wokół
       // pinu źródłowego + zbliżenie twarzy jako dodatkowy obraz referencyjny — wszystko w JEDNEJ generacji.
       let zblizenieTwarzy: string | null = null
-      const pinOsoby = operacjaAgenta === 'character_transfer' && pinZrodlowy && pinZrodlowy.layerId !== zrodlo.id ? pinZrodlowy : undefined
+      const pinOsoby = ['character_transfer', 'character_swap'].includes(operacjaAgenta) && pinZrodlowy && pinZrodlowy.layerId !== zrodlo.id ? pinZrodlowy : undefined
       if (pinOsoby) {
         const warstwaOsoby = projekt.warstwy.find(w => w.id === pinOsoby.layerId)
         const wycOsoby = warstwaOsoby ? await wytnijOkolice(warstwaOsoby.src, pinOsoby.normalizedX, pinOsoby.normalizedY, 1024, 0.6) : ''
