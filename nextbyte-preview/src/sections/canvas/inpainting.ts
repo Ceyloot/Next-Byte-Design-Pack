@@ -192,6 +192,11 @@ INPAINTING. Image 1 is a photograph with one region painted over in semi-transpa
 - Return the full frame with the same framing and aspect ratio as Image 1.`
 }
 
+/** Eraser: usuń zamalowany obiekt i odbuduj to, co naturalnie za nim jest; `uwaga` — opcjonalna wskazówka użytkownika. */
+export function promptErasera(uwaga = ''): string {
+  return `Remove everything inside the painted area (the object, person or marking there) completely and rebuild what would naturally be behind it: continue the surrounding background, textures, lines and perspective with the same light, sharpness and grain. Leave no trace, shadow, reflection or outline of the removed thing, and do not add anything new.${uwaga.trim() ? ` Note from the user: ${uwaga.trim()}.` : ''}`
+}
+
 export interface ZadanieInpaintingu {
   /** zdjęcie do edycji (adres lub data URI) */
   src: string

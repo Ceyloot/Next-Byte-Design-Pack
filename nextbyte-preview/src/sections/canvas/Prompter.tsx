@@ -10,6 +10,7 @@ export function Prompter({
   placeholder,
   trwa,
   blokada,
+  bezTekstu,
   onWyslij,
   onAnuluj,
   srednica,
@@ -21,6 +22,8 @@ export function Prompter({
   trwa: boolean
   /** blokuje wysyłanie (np. inpainting, dopóki nic nie zamalowano) */
   blokada?: boolean
+  /** wysyłanie bez wpisanego tekstu (eraser: samo zamalowanie wystarczy) */
+  bezTekstu?: boolean
   onWyslij: (tekst: string) => void
   onAnuluj: () => void
   srednica?: number
@@ -30,8 +33,12 @@ export function Prompter({
   const [tekst, setTekst] = useState('')
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => ref.current?.focus(), [])
+  // po zamalowaniu fokus wraca do pola — Enter od razu wysyła (eraser nie wymaga tekstu)
+  useEffect(() => {
+    if (!blokada) ref.current?.focus()
+  }, [blokada])
   const wyslij = () => {
-    if (trwa || blokada || !tekst.trim()) return
+    if (trwa || blokada || (!bezTekstu && !tekst.trim())) return
     onWyslij(tekst.trim())
   }
   return (
@@ -80,7 +87,7 @@ export function Prompter({
         <button
           type="button"
           onClick={wyslij}
-          disabled={trwa || blokada || !tekst.trim()}
+          disabled={trwa || blokada || (!bezTekstu && !tekst.trim())}
           aria-label="Generuj"
           title="Generuj (Enter)"
           className="nb-cta nb-refleks-krawedzi grid h-8 w-8 shrink-0 place-items-center rounded-lg disabled:cursor-not-allowed disabled:opacity-40"

@@ -18,10 +18,7 @@ import {
   Wand2,
   ZoomIn,
   ZoomOut,
-  Sun,
-  Aperture,
   Eraser,
-  Film,
   Loader2,
   Copy,
   ClipboardCopy,
@@ -35,7 +32,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Prompter } from '@/sections/canvas/Prompter'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
-import { wykonajInpainting } from '@/sections/canvas/inpainting'
+import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
 import { wykonajGenerowanie } from '@/sections/canvas/generowanie'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
@@ -477,10 +474,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     () => [
       { id: 'enhance', etykieta: 'Enhance', ikona: Wand2, skala: 1, prompt: 'Enhance this photograph: improve clarity, fine detail, dynamic range, contrast and colour so it looks like a higher-end camera took it. Keep every object, person, position, framing and the lighting direction exactly the same. Natural, photographic — no over-sharpening, no HDR look, no plastic skin.' },
       { id: 'upscale', etykieta: 'Upscale 2×', ikona: ZoomIn, skala: 2, prompt: 'Upscale this photograph to twice its resolution. Reconstruct crisp, natural fine detail (textures, edges, text) while keeping the content, composition, colours and lighting identical. No new objects, no style change.' },
-      { id: 'swiatlo', etykieta: 'Złota godzina', ikona: Sun, skala: 1, prompt: 'Relight this photograph to warm golden-hour sunlight: low sun, long soft shadows, warm highlights and gentle haze. Keep every object, person, position and the framing exactly the same.' },
-      { id: 'bokeh', etykieta: 'Rozmyj tło', ikona: Aperture, skala: 1, prompt: 'Give this photograph a shallow depth of field like an f/1.8 portrait lens: keep the main subject in the foreground perfectly sharp and blur the background with natural optical bokeh. Keep composition, colours and lighting the same.' },
-      { id: 'czysc', etykieta: 'Usuń zakłócenia', ikona: Eraser, skala: 1, prompt: 'Clean up this photograph: remove small distractions — litter, stray cables, dust spots, sensor spots, watermarks and small unwanted passers-by in the background — and rebuild what was behind them naturally. Keep the main subjects, composition and lighting exactly the same.' },
-      { id: 'film', etykieta: 'Film analog', ikona: Film, skala: 1, prompt: 'Give this photograph the look of 35mm analog film (Kodak Portra 400): soft film grain, gentle highlight roll-off, natural film colour. Keep every object, person, position and the framing exactly the same.' },
+      { id: 'czysc', etykieta: 'Usuń zakłócenia', ikona: Sparkles, skala: 1, prompt: 'Clean up this photograph: remove small distractions — litter, stray cables, dust spots, sensor spots, watermarks and small unwanted passers-by in the background — and rebuild what was behind them naturally. Keep the main subjects, composition and lighting exactly the same.' },
     ],
     [],
   )
@@ -692,7 +686,10 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         : null),
     [warstwaMaski, narzedzie, projekt.warstwy, wybranaWarstwa],
   )
+  // tryb sesji pędzla: zwykły inpaint (z poleceniem) albo eraser (zamaluj, co usunąć — polecenie niepotrzebne)
+  const [trybPedzla, setTrybPedzla] = useState<'inpaint' | 'eraser'>('inpaint')
   const zakonczInpaint = useCallback(() => {
+    setTrybPedzla('inpaint')
     setMaska([])
     setNarzedzie('wybor')
   }, [])
@@ -710,11 +707,13 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…', tryb: 'inpainting' })
       try {
         // Osobny moduł (canvas/inpainting.ts): wycinek wokół zaznaczenia → model → wynik tylko w masce.
-        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        const eraser = trybPedzla === 'eraser'
+        const polecenie = eraser ? promptErasera(tekst) : tekst
+        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst: polecenie, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
         const koncowy = wynik.obrazUrl
-        const nazwa = nazwijWynik(tekst, [])
+        const nazwa = eraser ? `${w.name}_bez_obiektu` : nazwijWynik(tekst, [])
         dodajZeZrodla(koncowy, nazwa, 'wynik', w)
-        setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: koncowy, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Inpainting: „${tekst}”.` } })
+        setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: koncowy, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: eraser ? 'Eraser: usunięto zamalowany obiekt.' : `Inpainting: „${tekst}”.` } })
         zakonczInpaint()
       } catch (e) {
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się namalować zaznaczonego obszaru.' })
@@ -722,7 +721,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         setTrwaPrompter(false)
       }
     },
-    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla, zakonczInpaint],
+    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla, zakonczInpaint, trybPedzla],
   )
 
   const utworzRamkeGeneratora = useCallback((szer: number, wys: number) => {
@@ -1723,6 +1722,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
                   setMenuWarstwy(null)
                   setWybranaWarstwa(w.id)
                   setWybranaPineska(null)
+                  setTrybPedzla('inpaint')
                   setNarzedzie('pedzel')
                 }}
                 title="Inpaint — zamaluj miejsce na zdjęciu i opisz zmianę"
@@ -1730,6 +1730,22 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
               >
                 <Paintbrush className="h-3.5 w-3.5" />
                 Inpaint
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(akcjaAI)}
+                onClick={() => {
+                  setMenuWarstwy(null)
+                  setWybranaWarstwa(w.id)
+                  setWybranaPineska(null)
+                  setTrybPedzla('eraser')
+                  setNarzedzie('pedzel')
+                }}
+                title="Eraser — zamaluj obiekt do usunięcia"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-[12px] font-medium text-foreground/70 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+                Eraser
               </button>
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
@@ -1863,8 +1879,13 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       {warstwaInpaint && (
         <Prompter
           key={`inpaint-${warstwaInpaint.id}`}
-          etykieta="Inpaint"
-          placeholder={maska.length ? 'Co zrobić w tym miejscu?' : 'Zamaluj miejsce i opisz zmianę'}
+          etykieta={trybPedzla === 'eraser' ? 'Eraser' : 'Inpaint'}
+          placeholder={
+            trybPedzla === 'eraser'
+              ? maska.length ? 'Enter — usuń zamalowane' : 'Zamaluj, co usunąć'
+              : maska.length ? 'Co zrobić w tym miejscu?' : 'Zamaluj miejsce i opisz zmianę'
+          }
+          bezTekstu={trybPedzla === 'eraser'}
           trwa={trwaPrompter}
           blokada={!warstwaMaski}
           onWyslij={uruchomInpainting}
