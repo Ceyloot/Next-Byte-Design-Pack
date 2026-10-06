@@ -29,6 +29,7 @@ import {
   ArrowUpToLine,
   ArrowDownToLine,
   Paintbrush,
+  ArrowLeft,
   ImagePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -189,7 +190,7 @@ function skalibrujObszarPineski(
   return { x0, y0, x1, y1 }
 }
 
-export function CanvasSection() {
+export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
   const [projekt, setProjekt] = useState<Projekt>(() => {
     try {
       const zapisany = localStorage.getItem(KLUCZ_ZAPISU)
@@ -682,12 +683,24 @@ export function CanvasSection() {
     () => (maska.length ? projekt.warstwy.find(w => w.id === maska[0].layerId) ?? null : null),
     [maska, projekt.warstwy],
   )
+  // Sesja inpaintingu: po kliknięciu „Inpaint” w górnym pasku (albo skrótem B) prompter jest od razu, pędzel działa na zaznaczonym zdjęciu.
+  const warstwaInpaint = useMemo(
+    () =>
+      warstwaMaski ??
+      (narzedzie === 'pedzel'
+        ? projekt.warstwy.find(w => w.id === wybranaWarstwa && w.type === 'image' && !w.generator && w.src) ?? null
+        : null),
+    [warstwaMaski, narzedzie, projekt.warstwy, wybranaWarstwa],
+  )
+  const zakonczInpaint = useCallback(() => {
+    setMaska([])
+    setNarzedzie('wybor')
+  }, [])
   const warstwaGeneratora = useMemo(
     () => projekt.warstwy.find(w => w.generator && w.id === wybranaWarstwa) ?? projekt.warstwy.find(w => w.generator) ?? null,
     [projekt.warstwy, wybranaWarstwa],
   )
 
-  const anulujMaske = useCallback(() => setMaska([]), [])
 
   const uruchomInpainting = useCallback(
     async (tekst: string) => {
@@ -702,14 +715,14 @@ export function CanvasSection() {
         const nazwa = nazwijWynik(tekst, [])
         dodajZeZrodla(koncowy, nazwa, 'wynik', w)
         setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: koncowy, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Inpainting: „${tekst}”.` } })
-        setMaska([])
+        zakonczInpaint()
       } catch (e) {
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się namalować zaznaczonego obszaru.' })
       } finally {
         setTrwaPrompter(false)
       }
     },
-    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla],
+    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla, zakonczInpaint],
   )
 
   const utworzRamkeGeneratora = useCallback((szer: number, wys: number) => {
@@ -784,7 +797,7 @@ export function CanvasSection() {
         setWybranaPineska(null)
         setMenuDodawania(false)
         setMenuGeneratora(false)
-        setMaska([])
+        zakonczInpaint()
         return
       }
       const skroty: Record<string, Narzedzie> = { v: 'wybor', p: 'pineska', h: 'reka', b: 'pedzel' }
@@ -1681,11 +1694,11 @@ export function CanvasSection() {
 
       {/* ══ Menu kontekstowe zdjęcia (prawy klik) ══ */}
       {/* ══ Pływający pasek akcji AI nad zdjęciem (prawy klik) ══ */}
-      {(menuWarstwy || akcjaAI || wybranaWarstwa) &&
+      {(menuWarstwy || akcjaAI || wybranaWarstwa) && !warstwaInpaint &&
         (() => {
           const id = menuWarstwy?.id ?? wybranaWarstwa
           const w = projekt.warstwy.find(x => x.id === id)
-          if (!w || w.type !== 'image' || w.generator || maska.length > 0) return null
+          if (!w || w.type !== 'image' || w.generator || warstwaInpaint) return null
           const lewo = widok.x + w.x * widok.zoom
           const gora = widok.y + w.y * widok.zoom
           return (
@@ -1696,13 +1709,29 @@ export function CanvasSection() {
               onContextMenu={e => e.preventDefault()}
               className="absolute z-50"
               style={{
-                left: Math.max(380, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 420)),
-                transform: 'translateX(-50%)',
+                // pasek (≈800 px z Inpaintem) wyśrodkowany nad zdjęciem, ale w całości na ekranie i przed panelem czatu
+                left: Math.max(16, Math.min(lewo + (w.width * widok.zoom) / 2 - 400, window.innerWidth - 440 - 800)),
                 maxWidth: 'calc(100vw - 440px)',
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
             >
             <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border border-foreground/[0.12] p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
+              <button
+                type="button"
+                disabled={Boolean(akcjaAI)}
+                onClick={() => {
+                  setMenuWarstwy(null)
+                  setWybranaWarstwa(w.id)
+                  setWybranaPineska(null)
+                  setNarzedzie('pedzel')
+                }}
+                title="Inpaint — zamaluj miejsce na zdjęciu i opisz zmianę"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-[12px] font-semibold text-foreground transition-all duration-150 hover:bg-primary/20 disabled:opacity-40"
+              >
+                <Paintbrush className="h-3.5 w-3.5 text-primary" />
+                Inpaint
+              </button>
+              <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-foreground/[0.12]" />
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
                   key={aid}
@@ -1812,7 +1841,19 @@ export function CanvasSection() {
       )}
 
       {/* ══ Licznik Bajtów (lewy górny róg) — saldo demonstracyjne do czasu podpięcia portfela ══ */}
-      <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20">
+      <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20 flex items-center gap-2">
+        {onWyjdz && (
+          <button
+            type="button"
+            onClick={onWyjdz}
+            title="Wyjdź z Canvasa — projekt zapisuje się automatycznie"
+            aria-label="Wyjdź z Canvasa"
+            className="p2-szklo pointer-events-auto flex h-10 items-center gap-1.5 !rounded-xl px-3 text-[12.5px] font-semibold text-foreground/80 transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Wyjdź
+          </button>
+        )}
         <div className="p2-szklo pointer-events-auto flex h-10 items-center gap-2 !rounded-xl px-3.5" title="Saldo Bajtów">
           <span className="text-[14px] font-bold tabular-nums text-foreground">7</span>
           <span className="text-[14px] font-semibold text-primary">⟠</span>
@@ -1820,27 +1861,28 @@ export function CanvasSection() {
       </div>
 
       {/* ══ Prompter: inpainting (po zamalowaniu) i generator (pod pustą ramką) ══ */}
-      {warstwaMaski && (
+      {warstwaInpaint && (
         <Prompter
-          key={`maska-${warstwaMaski.id}`}
-          etykieta="Zaznaczony obszar"
-          placeholder="Co zrobić w tym miejscu?"
+          key={`inpaint-${warstwaInpaint.id}`}
+          etykieta="Inpaint"
+          placeholder={maska.length ? 'Co zrobić w tym miejscu?' : 'Zamaluj miejsce i opisz zmianę'}
           trwa={trwaPrompter}
+          blokada={!warstwaMaski}
           onWyslij={uruchomInpainting}
-          onAnuluj={anulujMaske}
+          onAnuluj={zakonczInpaint}
           srednica={srednicaPedzla}
           onSrednica={setSrednicaPedzla}
           style={{
-            left: Math.max(16, Math.min(widok.x + (warstwaMaski.x + warstwaMaski.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
+            left: Math.max(16, Math.min(widok.x + (warstwaInpaint.x + warstwaInpaint.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
             // nad zdjęciem; gdy brak miejsca (licznik Bajtów w lewym górnym rogu) — pod zdjęciem
             top:
-              widok.y + warstwaMaski.y * widok.zoom - 64 >= 64
-                ? widok.y + warstwaMaski.y * widok.zoom - 64
-                : Math.min(window.innerHeight - 90, widok.y + (warstwaMaski.y + warstwaMaski.height) * widok.zoom + 14),
+              widok.y + warstwaInpaint.y * widok.zoom - 64 >= 64
+                ? widok.y + warstwaInpaint.y * widok.zoom - 64
+                : Math.min(window.innerHeight - 90, widok.y + (warstwaInpaint.y + warstwaInpaint.height) * widok.zoom + 14),
           }}
         />
       )}
-      {!warstwaMaski && warstwaGeneratora && (
+      {!warstwaInpaint && warstwaGeneratora && (
         <Prompter
           key={`gen-${warstwaGeneratora.id}`}
           etykieta={`${warstwaGeneratora.naturalWidth} × ${warstwaGeneratora.naturalHeight}`}
@@ -1904,16 +1946,6 @@ export function CanvasSection() {
             }}
           >
             <IkonaObrazu className="h-4 w-4" />
-          </Narzedzie>
-
-          {/* Pędzel (B) — inpainting: zamaluj obszar i opisz zmianę */}
-          <Narzedzie
-            tytul="Pędzel (B) — zamaluj obszar i opisz zmianę"
-            aktywne={narzedzie === 'pedzel'}
-            onClick={() => setNarzedzie('pedzel')}
-            odznaka={maska.length || undefined}
-          >
-            <Paintbrush className="h-4 w-4" />
           </Narzedzie>
 
           {/* Generuj zdjęcie — pusta ramka z prompterem */}

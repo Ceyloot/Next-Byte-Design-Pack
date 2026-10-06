@@ -518,7 +518,7 @@ export function Plotno({
               { id: 'sw', x: 0, y: w.height, kursor: 'nesw-resize' },
             ]
             return (
-              <div style={{ position: 'absolute', left: w.x, top: w.y, width: w.width, height: w.height }}>
+              <div style={{ position: 'absolute', left: w.x, top: w.y, width: w.width, height: w.height, pointerEvents: 'none' }}>
                 {rogi.map(r => (
                   <div
                     key={r.id}
@@ -533,6 +533,7 @@ export function Plotno({
                       border: `${2 * odwrotna}px solid #38bdf8`,
                       borderRadius: 3 * odwrotna,
                       cursor: r.kursor,
+                      pointerEvents: 'auto',
                     }}
                   />
                 ))}
