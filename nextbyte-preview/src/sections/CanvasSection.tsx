@@ -385,11 +385,9 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       const duch = zrodlo === 'wynik' ? duchId.current : null
       if (duch) duchId.current = null
       obrazek.onload = () => {
-        if (duch) {
-          let wypelniono = false
-          setProjekt(p => {
-            if (!p.warstwy.some(w => w.id === duch)) return p
-            wypelniono = true
+        setProjekt(p => {
+          // jedna atomowa aktualizacja: placeholder istnieje → wypełniamy go w miejscu, w przeciwnym razie dodajemy nową warstwę
+          if (duch && p.warstwy.some(w => w.id === duch)) {
             return {
               ...p,
               warstwy: p.warstwy.map(w =>
@@ -409,10 +407,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
                   : w,
               ),
             }
-          })
-          if (wypelniono) return
-        }
-        setProjekt(p => {
+          }
           const skala = Math.min(1, 460 / obrazek.width)
           const prawaKrawedz = p.warstwy.reduce((maks, w) => Math.max(maks, w.x + w.width), 0)
           const x = p.warstwy.length === 0 ? 60 : prawaKrawedz + 48
@@ -453,6 +448,10 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
             }))
           })
         }
+      }
+      // wyniku nie da się wczytać → placeholder nie może zostać z animacją na zawsze
+      obrazek.onerror = () => {
+        if (duch) setProjekt(p => ({ ...p, warstwy: p.warstwy.filter(w => w.id !== duch) }))
       }
       obrazek.src = src
     },
