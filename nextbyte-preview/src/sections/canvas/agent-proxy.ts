@@ -385,9 +385,18 @@ export function agentProxy(): Plugin {
       }
       tresci.push({ type: 'text', text: trescZadaniaRezysera(z.zadanie, z.uchwyty) })
 
-      const { json, tokeny, blad } = await zapytajAgenta(SYSTEM_REZYSERA, tresci, MODEL_REZYSERA, KONFIG_REZYSERA)
-      if (blad) return { status: 502, cialo: { blad } }
-      const odczytany = odczytajPlanRezysera(json)
+      // Reżyser czasem oddaje ucięty albo niepoprawny JSON (długa odpowiedź z wieloma polami) — ponawiamy do 3 razy, zanim zgłosimy błąd.
+      let json: Record<string, unknown> | null = null
+      let tokeny = 0
+      let odczytany: ReturnType<typeof odczytajPlanRezysera> = null
+      for (let proba = 0; proba < 3 && !odczytany; proba++) {
+        const wynikAgenta = await zapytajAgenta(SYSTEM_REZYSERA, tresci, MODEL_REZYSERA, KONFIG_REZYSERA)
+        if (wynikAgenta.blad) return { status: 502, cialo: { blad: wynikAgenta.blad } }
+        json = wynikAgenta.json
+        tokeny += wynikAgenta.tokeny
+        odczytany = odczytajPlanRezysera(json)
+        if (!odczytany) console.warn(`[canvas] reżyser: nieczytelny plan, próba ${proba + 1}/3`)
+      }
       if (!odczytany) return { status: 502, cialo: { blad: 'Agent nie zwrócił czytelnego planu' } }
 
       const plan: Plan = {
