@@ -121,7 +121,7 @@ const POSTPROCES_ZIARNA = false
  */
 const DRUGI_PRZEBIEG = false
 /** EKSPERYMENT: wstawianie z drugiego zdjęcia — na scenie cienka ramka (miejsce + rozmiar z pomiaru), „umieść obiekt w ramce, wynik bez ramki” (wzorzec Google / Finegrain) */
-const TRANSFER_Z_RAMKA = false
+const TRANSFER_Z_RAMKA = true
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /**
