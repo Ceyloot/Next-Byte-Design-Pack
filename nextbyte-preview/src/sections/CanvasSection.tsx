@@ -64,7 +64,7 @@ import {
   przepiszNaPrzesuniecie,
 } from '@/sections/canvas/polecenia'
 import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/operacje/character-swap-studio'
-import { narysujMapeMiejsc, narysujObszary } from '@/sections/canvas/mapa-miejsc'
+import { narysujMapeMiejsc, narysujObszary, zlozWklejke } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
 import { ramkaRzeczyPodPinem, referencjaWokolRzeczy, zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
@@ -122,6 +122,8 @@ const POSTPROCES_ZIARNA = false
 const DRUGI_PRZEBIEG = false
 /** EKSPERYMENT: wstawianie z drugiego zdjęcia — na scenie cienka ramka (miejsce + rozmiar z pomiaru), „umieść obiekt w ramce, wynik bez ramki” (wzorzec Google / Finegrain) */
 const TRANSFER_Z_RAMKA = false
+/** EKSPERYMENT: zamiast pustej ramki — przeskalowany wycinek obiektu wklejony w ramkę jako szkic rozmiaru i miejsca (model go przerysowuje) */
+const TRANSFER_Z_WKLEJKA = true
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /**
@@ -1177,6 +1179,7 @@ export function CanvasSection() {
       }
       // numeracja: po zdjęciach wejściowych najpierw zbliżenie twarzy (jeśli jest), potem pozostałe zbliżenia
       const pierwszyDodatkowy = obrazyPolecenia.length + 1 + (zblizenieTwarzy ? 1 : 0)
+      let wklejkaNaPlotnie = false
       const zRamkaSrc =
         TRANSFER_Z_RAMKA &&
         studio &&
@@ -1184,7 +1187,20 @@ export function CanvasSection() {
         Boolean(pinZrodlowy && pinZrodlowy.layerId !== zrodlo.id) &&
         Boolean(obszarCelu) &&
         !ramkaCelu
-          ? await narysujObszary(zrodlo, obszarCelu as Prostokat, undefined, true)
+          ? await (async () => {
+              if (TRANSFER_Z_WKLEJKA && pinZrodlowy) {
+                const dawcaW = obrazyPolecenia.find(w => w.id === pinZrodlowy.layerId)
+                const wyc = dawcaW
+                  ? await referencjaWokolRzeczy((await konwertujNaDataUrl(dawcaW.src)) || dawcaW.src, pinZrodlowy.normalizedX, pinZrodlowy.normalizedY).catch(() => null)
+                  : null
+                const wkl = wyc ? await zlozWklejke(zrodlo, wyc.src, obszarCelu as Prostokat) : ''
+                if (wkl) {
+                  wklejkaNaPlotnie = true
+                  return wkl
+                }
+              }
+              return await narysujObszary(zrodlo, obszarCelu as Prostokat, undefined, true)
+            })()
           : ''
       const ramkaNaPlotnie = Boolean(zRamkaSrc)
       if (plan?.dyrektywa) console.info('[canvas] dyrektywa reżysera:', plan.dyrektywa, '| pineski:', projekt.pineski.map((p, i) => `${i + 1}=${etykietaPineski(p, i + 1)}@${p.normalizedX.toFixed(2)},${p.normalizedY.toFixed(2)}`).join(' '))
@@ -1203,6 +1219,7 @@ export function CanvasSection() {
         umiejscowienie: plan?.umiejscowienie,
         dyrektywa: plan?.dyrektywa,
         ramkaCelu: ramkaNaPlotnie,
+        wklejka: wklejkaNaPlotnie,
         czesc: plan?.czesc,
         cecha: plan?.cecha,
         czescZakres: plan?.czescZakres,

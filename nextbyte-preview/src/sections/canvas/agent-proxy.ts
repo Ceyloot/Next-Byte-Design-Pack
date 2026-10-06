@@ -72,6 +72,8 @@ export interface Plan {
   swiatlo?: string
   /** logiczne ułożenie obiektu w miejscu docelowym (EN) */
   ulozenie?: string
+  umiejscowienie?: string
+  dyrektywa?: string
   /** nazwa części obiektu (EN), gdy zmieniana jest tylko część */
   czesc?: string
   /** zmieniana właściwość rzeczy pod pinem (EN) */
@@ -393,6 +395,8 @@ export function agentProxy(): Plugin {
         widok: odczytany.widok || undefined,
         swiatlo: odczytany.swiatlo || undefined,
         ulozenie: odczytany.ulozenie || undefined,
+        umiejscowienie: odczytany.umiejscowienie || undefined,
+        dyrektywa: odczytany.dyrektywa || undefined,
         czesc: odczytany.czesc || undefined,
         cecha: odczytany.cecha || undefined,
         czescZakres: odczytany.czescZakres || undefined,

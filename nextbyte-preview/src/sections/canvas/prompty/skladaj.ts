@@ -112,6 +112,7 @@ export interface SkladajWejscie {
   ulozenie?: string
   umiejscowienie?: string
   ramkaCelu?: boolean
+  wklejka?: boolean
   dyrektywa?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (od reżysera) */
   czesc?: string
@@ -675,6 +676,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         if (wKadrze && zrodlo && cel) {
           pozycje.push(
             `Move (do not copy): the subject starts at ${nazwaP(zrodlo)}${slowa(zrodlo)} and ends at ${nazwaP(cel)}${slowa(cel)} of Image ${baza}. The middle of its footprint sits exactly on the destination point. At the old place nothing of it remains — fill it with the natural background; it appears exactly once.`,
+          )
+        } else if (zRamka && cel && w.wklejka) {
+          pozycje.push(
+            `Image ${baza} already contains a ROUGH GUIDE PASTE of the new subject${nazwaPinu(zrodlo ?? cel) ? ` (${nazwaPinu(zrodlo ?? cel)}, from Image ${zrodlo?.obraz ?? 2})` : ''}: a flat cut-out placed at exactly the position and exactly the apparent size it must have in the scene. It is only a placement and size guide — NOT a finished result. Re-render it properly as part of the photograph: keep its position, its size and its footprint exactly (never scale it up or down, never move it), redraw the subject itself in Image ${baza}'s perspective, light, shadows and grain, remove the rectangular background that came with the paste and restore the scene behind and around it, add contact shadows and reflections. Nothing else in Image ${baza} changes.`,
           )
         } else if (zRamka && cel) {
           pozycje.push(

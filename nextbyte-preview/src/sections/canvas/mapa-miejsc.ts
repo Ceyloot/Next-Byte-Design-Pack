@@ -173,3 +173,42 @@ export function narysujObszary(warstwa: Warstwa, cel?: Prostokat, zrodlo?: Prost
     obrazek.src = warstwa.src
   })
 }
+
+
+/**
+ * Wklejka-przewodnik: wycięty obiekt (tight crop z referencji) przeskalowany tak, by mieścił się w prostokącie celu
+ * (zachowuje proporcje, dolna krawędź przy dolnej krawędzi prostokąta, wyśrodkowany poziomo) i położony na scenie.
+ * To tylko SZKIC rozmiaru i miejsca dla modelu obrazu — model ma go przerysować (światło, cienie, tło wklejki).
+ */
+export function zlozWklejke(scena: Warstwa, obiektSrc: string, cel: Prostokat): Promise<string> {
+  const wczytaj = (src: string) =>
+    new Promise<HTMLImageElement | null>(resolve => {
+      const i = new Image()
+      i.crossOrigin = 'anonymous'
+      i.onload = () => resolve(i)
+      i.onerror = () => resolve(null)
+      i.src = src
+    })
+  return (async () => {
+    const [tlo, obiekt] = await Promise.all([wczytaj(scena.src), wczytaj(obiektSrc)])
+    if (!tlo || !obiekt) return ''
+    const skala = Math.min(1, BOK_OBSZAROW / Math.max(tlo.width, tlo.height))
+    const szer = Math.round(tlo.width * skala)
+    const wys = Math.round(tlo.height * skala)
+    const plotno = document.createElement('canvas')
+    plotno.width = szer
+    plotno.height = wys
+    const g = plotno.getContext('2d')
+    if (!g) return ''
+    g.drawImage(tlo, 0, 0, szer, wys)
+    const rw = (cel.x1 - cel.x0) * szer
+    const rh = (cel.y1 - cel.y0) * wys
+    const k = Math.min(rw / obiekt.width, rh / obiekt.height)
+    const dw = obiekt.width * k
+    const dh = obiekt.height * k
+    const dx = cel.x0 * szer + (rw - dw) / 2
+    const dy = cel.y1 * wys - dh
+    g.drawImage(obiekt, dx, dy, dw, dh)
+    return plotno.toDataURL('image/jpeg', 0.92)
+  })()
+}
