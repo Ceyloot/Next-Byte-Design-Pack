@@ -121,7 +121,7 @@ const POSTPROCES_ZIARNA = false
  */
 const DRUGI_PRZEBIEG = false
 /** EKSPERYMENT: wstawianie z drugiego zdjęcia — na scenie cienka ramka (miejsce + rozmiar z pomiaru), „umieść obiekt w ramce, wynik bez ramki” (wzorzec Google / Finegrain) */
-const TRANSFER_Z_RAMKA = true
+const TRANSFER_Z_RAMKA = false
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /**
@@ -1200,6 +1200,7 @@ export function CanvasSection() {
         widok: SKALA_OD_MODELU && !studio ? undefined : plan?.widok,
         ulozenie: SKALA_OD_MODELU && !studio ? undefined : plan?.ulozenie,
         umiejscowienie: plan?.umiejscowienie,
+        dyrektywa: plan?.dyrektywa,
         ramkaCelu: ramkaNaPlotnie,
         czesc: plan?.czesc,
         cecha: plan?.cecha,

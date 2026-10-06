@@ -112,6 +112,7 @@ export interface SkladajWejscie {
   ulozenie?: string
   umiejscowienie?: string
   ramkaCelu?: boolean
+  dyrektywa?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (od reżysera) */
   czesc?: string
   /** zmieniana właściwość rzeczy pod pinem (EN, od reżysera) */
@@ -309,6 +310,8 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
  */
 /** EKSPERYMENT: „wstaw tutaj” z innego zdjęcia — miejsce opisane relacyjnie przez reżysera (strony, odległości, liczby), bez współrzędnych i „THE POINT IS FIXED”. false = poprzedni prompt z pinezką. */
 export const UMIEJSCOWIENIE_RELACYJNE = false
+/** EKSPERYMENT: pinezki tylko jako punkty dla reżysera; model obrazu dostaje jego dyrektywę (co skąd gdzie jak) + booster i role z PDF, bez współrzędnych i pomiarów — skalę rozstrzyga model. */
+export const DYREKTYWA_OD_REZYSERA = true
 
 export function brickSkali(nrObrazu = 1): string {
   return `SCALE: resolve scale and perspective so the subject fits naturally in the geometry of Image ${nrObrazu} — its size relative to the things around it at that depth (a person is human-sized next to the furniture, a shoe fits the foot that wears it, a car is car-sized next to a door or a boat), feet and contact points placed correctly in 3D space, the head not cropping into the wrong plane. Judge the size from the objects in Image ${nrObrazu}, never from how large the subject looks in its own reference photo.`
@@ -640,6 +643,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   // Wstawianie / podmiana obiektu z DRUGIEGO zdjęcia: prompt „generuj od zera w scenie” (jak wersja, która dobrze trzymała skalę z dystansu)
   const studioCross = Boolean(studioMode && ['addition', 'object_transfer', 'object_swap'].includes(op.id) && zrodlo && cel && zrodlo.obraz !== cel.obraz)
   const zRamka = studioCross && ['addition', 'object_transfer'].includes(op.id) && Boolean(w.ramkaCelu)
+  const zDyrektywa = DYREKTYWA_OD_REZYSERA && studioCross && ['addition', 'object_transfer', 'object_swap'].includes(op.id) && Boolean(w.dyrektywa?.trim())
   const relacyjnie = UMIEJSCOWIENIE_RELACYJNE && studioCross && ['addition', 'object_transfer'].includes(op.id) && Boolean(w.umiejscowienie?.trim())
   const sekcjaStudio = studioMode
     ? (() => {
@@ -698,6 +702,20 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         const zSubiektem = wstawianie || op.id === 'clothing_change'
         // Wstawianie / podmiana z DRUGIEGO zdjęcia: Gemini mierzy skalę i podpowiada logiczne osadzenie
         const crossFoto = studioCross
+        if (zDyrektywa) {
+          return [
+            w.dyrektywa!.trim(),
+            brickSkali(baza),
+            `It appears exactly once${op.id === 'object_swap' ? ', in place of the old object, which is removed completely' : `; ADD, never replace: every object already in Image ${baza} stays exactly where it is, including similar ones`}. NEVER COPY THE REFERENCE PIXELS: draw the object anew for Image ${baza}'s camera angle, light, sharpness, grain and colour, as if it had stood in the scene when the photo was taken.`,
+            STUDIO_ZACHOWAJ_UKLAD(baza),
+            STUDIO_JEDNO_ZDJECIE,
+            `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, casting a shadow into it, resting on the right surface at the right size for its distance? If not, redo. ONE photograph — one light, one lens, one grade.`,
+            STUDIO_DOPASUJ_FILM(baza),
+            role.length ? `REFERENCE ROLES: ${role.join(' ')}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n\n')
+        }
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
           pozycje.join('\n'),
