@@ -380,7 +380,7 @@ export function agentProxy(): Plugin {
         tresci.push({ type: 'image_url', image_url: { url: o.dane } })
       }
       for (const zb of z.zblizenia ?? []) {
-        tresci.push({ type: 'text', text: `[CLOSE-UP of Pin ${zb.numer} "${zb.nazwa}" — a tight crop with the pin's location exactly at the CENTRE. Use it ONLY to identify what lies under that pin (a small structure, an object, a surface); it is not an extra image]` })
+        tresci.push({ type: 'text', text: `[CLOSE-UP of Pin ${zb.numer} "${zb.nazwa}" — a tight crop around the thing the pin points at (the pin's location is at the CENTRE; when the recogniser found the object, the crop is boxed on it). THE PINNED THING IS THE OBJECT THAT SITS AT THE CENTRE / FILLS THIS CROP — never a bigger or more striking neighbour visible in the full image (e.g. a large glass-roofed building beside a tiny gazebo). Name and describe exactly that object in "opis", "miejsce" and "dyrektywa"; it is not an extra image]` })
         tresci.push({ type: 'image_url', image_url: { url: zb.dane } })
       }
       tresci.push({ type: 'text', text: trescZadaniaRezysera(z.zadanie, z.uchwyty) })

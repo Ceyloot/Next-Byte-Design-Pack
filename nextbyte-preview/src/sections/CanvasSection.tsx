@@ -88,6 +88,7 @@ import {
   pozycjaPineski,
   wczytajProjekt,
   wytnijOkolice,
+  wytnijPodgladPineski,
   zmniejszDoAnalizy,
   type Narzedzie,
   type Pociagniecie,
@@ -957,7 +958,8 @@ export function CanvasSection() {
           projekt.pineski.map(async (p, i) => {
             const w = obrazy.find(x => x.id === p.layerId)
             if (!w) return null
-            const dane = await wytnijOkolice((await konwertujNaDataUrl(w.src)) || w.src, p.normalizedX, p.normalizedY, 384, 0.2).catch(() => '')
+            const zrodloPinu = (await konwertujNaDataUrl(w.src)) || w.src
+            const dane = await (p.ramka ? wytnijPodgladPineski(zrodloPinu, p, 384) : wytnijOkolice(zrodloPinu, p.normalizedX, p.normalizedY, 384, 0.16)).catch(() => '')
             return dane ? { numer: i + 1, nazwa: etykietaPineski(p, i + 1), dane } : null
           }),
         )
