@@ -108,7 +108,7 @@ const panelWyniku: PanelDoku = {
   pasuje: k => k.stanGeneracji.faza === 'gotowe' || k.stanGeneracji.faza === 'blad',
   Tresc: ({ k }) => {
     const s = k.stanGeneracji
-    if (s.faza === 'blad') return <p className="text-[11.5px] leading-relaxed text-amber-300/80">{s.tresc}</p>
+    if (s.faza === 'blad') return <p className="text-[11.5px] leading-relaxed nb-tekst-bledu">{s.tresc}</p>
     if (s.faza !== 'gotowe') return null
     return (
       <>

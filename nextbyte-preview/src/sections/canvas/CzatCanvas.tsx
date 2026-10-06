@@ -508,7 +508,7 @@ export function CzatCanvas({
                         <span
                           className={cn(
                             'font-medium flex items-center gap-1',
-                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'text-emerald-500' : 'nb-tekst-bledu',
+                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'nb-tekst-sukcesu' : 'nb-tekst-bledu',
                           )}
                         >
                           {msg.ocena.wykonane && !msg.ocena.znaczniki ? (
@@ -553,21 +553,28 @@ export function CzatCanvas({
 
         {/* Trwający proces generacji / stan */}
         {trwa && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[12px] text-foreground">
+          <div role="status" aria-live="polite" className="flex items-start gap-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[12px] text-foreground">
             <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <p className="font-semibold text-[11.5px]">
                 {stanGeneracji.faza === 'planuje' && 'Asystent analizuje scenę i mapę miejsc...'}
-                {stanGeneracji.faza === 'trwa' && 'Runware generuje obraz z zachowaniem skali...'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting' && 'Maluję zaznaczony obszar…'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator' && 'Generuję obraz z opisu…'}
+                {stanGeneracji.faza === 'trwa' && !stanGeneracji.tryb && 'Runware generuje obraz z zachowaniem skali...'}
                 {stanGeneracji.faza === 'sprawdza' && 'Weryfikacja spójności kadru i oświetlenia...'}
                 {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
                 {stanGeneracji.faza === 'koryguje' && `Poprawiam rozmiar i miejsce: ${stanGeneracji.powod}`}
               </p>
               <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
-                {stanGeneracji.faza === 'trwa' && stanGeneracji.role
-                  ? stanGeneracji.role
-                  : 'Nie ruszam nieoznaczonych elementów sceny.'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting'
+                  ? 'Model pracuje na fragmencie wokół zaznaczenia — reszta zdjęcia zostaje bez zmian.'
+                  : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator'
+                    ? 'Tworzę nowe zdjęcie od zera, wyłącznie z Twojego opisu.'
+                    : stanGeneracji.faza === 'trwa' && stanGeneracji.role
+                      ? stanGeneracji.role
+                      : 'Nie ruszam nieoznaczonych elementów sceny.'}
               </p>
+              <div className="nb-pasek-pracy mt-2.5" aria-hidden />
             </div>
           </div>
         )}
@@ -596,11 +603,11 @@ export function CzatCanvas({
 
         {/* Błąd generacji */}
         {stanGeneracji.faza === 'blad' && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-[11.5px] text-foreground">
+          <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-[11.5px] text-foreground">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 nb-tekst-bledu" />
-            <div className="flex-1">
-              <span className="font-semibold block">Błąd generacji:</span>
-              <span className="text-[10.5px] text-muted-foreground leading-relaxed">
+            <div className="min-w-0 flex-1">
+              <span className="block font-semibold">Błąd generacji</span>
+              <span className="mt-0.5 block break-words text-[10.5px] leading-relaxed text-muted-foreground">
                 {stanGeneracji.tresc}
               </span>
             </div>

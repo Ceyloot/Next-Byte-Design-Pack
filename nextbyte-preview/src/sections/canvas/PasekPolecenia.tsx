@@ -213,7 +213,7 @@ export function PasekPolecenia({
           więc tutaj pokazujemy tylko te, które nie wstrzymują generacji —
           inaczej ten sam tekst wisiałby dwa razy. */}
       {uwagi.filter(u => u.waga === 'ostrzezenie').slice(0, 2).map(u => (
-        <p key={u.id} className="mt-1.5 flex items-start gap-1.5 px-1 text-[10.5px] leading-snug text-amber-300/70">
+        <p key={u.id} className="mt-1.5 flex items-start gap-1.5 px-1 text-[10.5px] leading-snug nb-tekst-ostrzezenia">
           <TriangleAlert className="mt-px h-3 w-3 shrink-0" />
           {u.tresc}
         </p>

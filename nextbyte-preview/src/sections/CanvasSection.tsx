@@ -691,7 +691,7 @@ export function CanvasSection() {
       const w = warstwaMaski
       if (!w || trwaPrompter) return
       setTrwaPrompter(true)
-      setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…' })
+      setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…', tryb: 'inpainting' })
       try {
         // Osobny moduł (canvas/inpainting.ts): wycinek wokół zaznaczenia → model → wynik tylko w masce.
         const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
@@ -747,7 +747,7 @@ export function CanvasSection() {
       const ramka = warstwaGeneratora
       if (!ramka || trwaPrompter) return
       setTrwaPrompter(true)
-      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…' })
+      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…', tryb: 'generator' })
       try {
         // Osobny moduł (canvas/generowanie.ts): sam opis, bez zdjęć wejściowych i reguł.
         const w = await wykonajGenerowanie(tekst, ramka.naturalWidth, ramka.naturalHeight, modelObrazu === 'auto' ? 'nb2' : modelObrazu)
@@ -861,7 +861,7 @@ export function CanvasSection() {
       const opis = projekt.tekst.trim()
       if (!opis) return
       refGeneruje.current = true
-      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…' })
+      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…', tryb: 'generator' })
       try {
         const w = await generuj({ polecenie: opis, obrazy: [], szerokosc: 1024, wysokosc: 1024, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
         const nazwa = nazwijWynik(opis, [])
@@ -1668,7 +1668,7 @@ export function CanvasSection() {
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
             >
-            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
+            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border border-foreground/[0.12] p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
                   key={aid}
@@ -1798,7 +1798,11 @@ export function CanvasSection() {
           onSrednica={setSrednicaPedzla}
           style={{
             left: Math.max(16, Math.min(widok.x + (warstwaMaski.x + warstwaMaski.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
-            top: Math.max(16, widok.y + warstwaMaski.y * widok.zoom - 64),
+            // nad zdjęciem; gdy brak miejsca (licznik Bajtów w lewym górnym rogu) — pod zdjęciem
+            top:
+              widok.y + warstwaMaski.y * widok.zoom - 64 >= 64
+                ? widok.y + warstwaMaski.y * widok.zoom - 64
+                : Math.min(window.innerHeight - 90, widok.y + (warstwaMaski.y + warstwaMaski.height) * widok.zoom + 14),
           }}
         />
       )}
