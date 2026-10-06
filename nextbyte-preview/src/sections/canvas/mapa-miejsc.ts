@@ -133,7 +133,7 @@ const BOK_OBSZAROW = 1536
  * musi widzieć przez nakładkę, co jest pod spodem. Pełna ramka na brzegu
  * trzyma granicę obszaru czytelną mimo słabszego wypełnienia.
  */
-export function narysujObszary(warstwa: Warstwa, cel?: Prostokat, zrodlo?: Prostokat): Promise<string> {
+export function narysujObszary(warstwa: Warstwa, cel?: Prostokat, zrodlo?: Prostokat, tylkoObrys = false): Promise<string> {
   if (!cel && !zrodlo) return Promise.resolve('')
 
   return new Promise(resolve => {
@@ -156,8 +156,10 @@ export function narysujObszary(warstwa: Warstwa, cel?: Prostokat, zrodlo?: Prost
         const y = r.y0 * wys
         const w = (r.x1 - r.x0) * szer
         const h = (r.y1 - r.y0) * wys
-        g.fillStyle = `rgba(${rgb}, 0.55)`
-        g.fillRect(x, y, w, h)
+        if (!tylkoObrys) {
+          g.fillStyle = `rgba(${rgb}, 0.55)`
+          g.fillRect(x, y, w, h)
+        }
         g.lineWidth = Math.max(3, Math.round(Math.min(szer, wys) * 0.004))
         g.strokeStyle = `rgb(${rgb})`
         g.strokeRect(x, y, w, h)

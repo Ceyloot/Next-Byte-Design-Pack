@@ -120,6 +120,8 @@ const POSTPROCES_ZIARNA = false
  * Jedno „Generuj” = jedna generacja; pomiar zostaje tylko w ocenie.
  */
 const DRUGI_PRZEBIEG = false
+/** EKSPERYMENT: wstawianie z drugiego zdjęcia — na scenie cienka ramka (miejsce + rozmiar z pomiaru), „umieść obiekt w ramce, wynik bez ramki” (wzorzec Google / Finegrain) */
+const TRANSFER_Z_RAMKA = true
 /** Inteligentne zbliżenia w pobliżu pinesek jako dodatkowe obrazy dla modelu (wszystkie tryby). false = szybkie cofnięcie. */
 const ZBLIZENIA_W_POBLIZU_PINEZKI = true
 /**
@@ -1175,6 +1177,16 @@ export function CanvasSection() {
       }
       // numeracja: po zdjęciach wejściowych najpierw zbliżenie twarzy (jeśli jest), potem pozostałe zbliżenia
       const pierwszyDodatkowy = obrazyPolecenia.length + 1 + (zblizenieTwarzy ? 1 : 0)
+      const zRamkaSrc =
+        TRANSFER_Z_RAMKA &&
+        studio &&
+        ['wstaw', 'przenies'].includes(trybAgenta) &&
+        Boolean(pinZrodlowy && pinZrodlowy.layerId !== zrodlo.id) &&
+        Boolean(obszarCelu) &&
+        !ramkaCelu
+          ? await narysujObszary(zrodlo, obszarCelu as Prostokat, undefined, true)
+          : ''
+      const ramkaNaPlotnie = Boolean(zRamkaSrc)
       const zadanieModelu = zbudujZadanieModelu(projekt.tekst, pineskiPolecenia, obrazyPolecenia, trybAgenta, {
         studio,
         hybryda,
@@ -1188,6 +1200,7 @@ export function CanvasSection() {
         widok: SKALA_OD_MODELU && !studio ? undefined : plan?.widok,
         ulozenie: SKALA_OD_MODELU && !studio ? undefined : plan?.ulozenie,
         umiejscowienie: plan?.umiejscowienie,
+        ramkaCelu: ramkaNaPlotnie,
         czesc: plan?.czesc,
         cecha: plan?.cecha,
         czescZakres: plan?.czescZakres,
@@ -1238,6 +1251,7 @@ export function CanvasSection() {
             : src,
         )
       const czyste = await Promise.all(obrazyPolecenia.map(w => zKropkami(w, pineskiPolecenia)))
+      if (ramkaNaPlotnie) czyste[0] = zRamkaSrc
       if (SZKIC_SCENY_SWAP && operacjaAgenta === 'character_swap' && studio && czyste.length > 1) {
         try { czyste[0] = await rozmyjDoSzkicu(czyste[0]) } catch (e) { console.warn('[canvas] szkic sceny nieudany', e) }
       }
