@@ -50,6 +50,8 @@ export interface ZadaniePlanu {
   obrazy: ObrazDlaAgenta[]
   /** nazwy i położenia pinesek, tak jak trafiają do promptu */
   uchwyty: string
+  /** zbliżenia wokół pinesek (celownik w środku) — tylko do rozpoznania, co leży pod punktem */
+  zblizenia?: { numer: number; nazwa: string; dane: string }[]
 }
 
 export interface Plan {
@@ -72,6 +74,8 @@ export interface Plan {
   swiatlo?: string
   /** logiczne ułożenie obiektu w miejscu docelowym (EN) */
   ulozenie?: string
+  umiejscowienie?: string
+  dyrektywa?: string
   /** nazwa części obiektu (EN), gdy zmieniana jest tylko część */
   czesc?: string
   /** zmieniana właściwość rzeczy pod pinem (EN) */
@@ -375,11 +379,24 @@ export function agentProxy(): Plugin {
         tresci.push({ type: 'text', text: `[Image ${i + 1}: "${o.nazwa}", pins drawn]` })
         tresci.push({ type: 'image_url', image_url: { url: o.dane } })
       }
+      for (const zb of z.zblizenia ?? []) {
+        tresci.push({ type: 'text', text: `[CLOSE-UP of Pin ${zb.numer} "${zb.nazwa}" — a tight crop around the thing the pin points at (the pin's location is at the CENTRE; when the recogniser found the object, the crop is boxed on it). THE PINNED THING IS THE OBJECT THAT SITS AT THE CENTRE / FILLS THIS CROP — never a bigger or more striking neighbour visible in the full image (e.g. a large glass-roofed building beside a tiny gazebo). Name and describe exactly that object in "opis", "miejsce" and "dyrektywa"; it is not an extra image]` })
+        tresci.push({ type: 'image_url', image_url: { url: zb.dane } })
+      }
       tresci.push({ type: 'text', text: trescZadaniaRezysera(z.zadanie, z.uchwyty) })
 
-      const { json, tokeny, blad } = await zapytajAgenta(SYSTEM_REZYSERA, tresci, MODEL_REZYSERA, KONFIG_REZYSERA)
-      if (blad) return { status: 502, cialo: { blad } }
-      const odczytany = odczytajPlanRezysera(json)
+      // Reżyser czasem oddaje ucięty albo niepoprawny JSON (długa odpowiedź z wieloma polami) — ponawiamy do 3 razy, zanim zgłosimy błąd.
+      let json: Record<string, unknown> | null = null
+      let tokeny = 0
+      let odczytany: ReturnType<typeof odczytajPlanRezysera> = null
+      for (let proba = 0; proba < 3 && !odczytany; proba++) {
+        const wynikAgenta = await zapytajAgenta(SYSTEM_REZYSERA, tresci, MODEL_REZYSERA, KONFIG_REZYSERA)
+        if (wynikAgenta.blad) return { status: 502, cialo: { blad: wynikAgenta.blad } }
+        json = wynikAgenta.json
+        tokeny += wynikAgenta.tokeny
+        odczytany = odczytajPlanRezysera(json)
+        if (!odczytany) console.warn(`[canvas] reżyser: nieczytelny plan, próba ${proba + 1}/3`)
+      }
       if (!odczytany) return { status: 502, cialo: { blad: 'Agent nie zwrócił czytelnego planu' } }
 
       const plan: Plan = {
@@ -393,6 +410,8 @@ export function agentProxy(): Plugin {
         widok: odczytany.widok || undefined,
         swiatlo: odczytany.swiatlo || undefined,
         ulozenie: odczytany.ulozenie || undefined,
+        umiejscowienie: odczytany.umiejscowienie || undefined,
+        dyrektywa: odczytany.dyrektywa || undefined,
         czesc: odczytany.czesc || undefined,
         cecha: odczytany.cecha || undefined,
         czescZakres: odczytany.czescZakres || undefined,

@@ -25,7 +25,7 @@ import { INTENCJE, type Intencja } from './tryby-edycji'
 export const MODEL_REZYSERA = 'gemini-2.5-flash'
 export const KONFIG_REZYSERA = {
   temperature: 0.1,
-  maxOutputTokens: 6000,
+  maxOutputTokens: 8192,
   responseMimeType: 'application/json',
   thinkingConfig: { thinkingBudget: 512 },
 }
@@ -63,6 +63,8 @@ STEP 2 — OPERATION ("intencja"), exactly one of:
 "wstaw" (add an object at a location, nothing removed), "przenies" (an object goes to a location pin — same photo or from a reference), "zamien" (the object under a canvas pin is replaced), "postac" (FACE SWAP ONLY — only when the user explicitly asks for the face / twarz: the face of the reference person goes onto the person under a canvas pin; their body, clothing and pose stay), "ubranie" (new outfit for the marked person), "usun", "tekstura", "pora_roku", "pora_dnia", "efekt", "tlo", "styl", "popraw".
 "tlo" = the surroundings / scenery / background / place / location are replaced by another environment (taken from a reference photo, or described), while the subjects in the foreground stay as they are. "zmień scenerię / otoczenie / tło / miejsce / lokalizację na X", "niech to będzie w X", "przenieś to do X" with a place name or a reference photo of a place is ALWAYS "tlo" — never "wstaw" or "przenies": a place is not an object to add. A pin on the reference photo then marks the NEW ENVIRONMENT.
 SAME PHOTO, two pins — one on an existing object, one on a location ("wstaw ten domek w to miejsce", "postaw to tam", "daj to tutaj"): the object is MOVED — it leaves its old place and stands at the new one — so the operation is "przenies"; use "wstaw" only when the user asks to keep the original too ("skopiuj", "jeszcze jeden", "drugi taki", "dodaj kolejny"). A pin from another photo that carries the object is "wstaw" (it is new to this photo).
+CROSSHAIR FIRST: what a pin points at is decided by the magenta crosshair on the image (its exact x / y), never by its label — user labels and recogniser names are hints and may name a different thing elsewhere in the picture (e.g. "chatka" while another cabin stands further up the path). If the label contradicts what lies under the crosshair, trust the crosshair and describe that.
+PINNED OBJECT IN THE WAY: when the destination pin sits ON an existing standalone object (a shed, greenhouse, table, parasol set, chair, vehicle) and the user says "wstaw tu / daj tu / tutaj" with a new object whose footprint would overlap that existing one, the existing object is REPLACED — the operation is "zamien" and the old object disappears completely. Only when the new object fits on free ground beside the pinned thing (in front of a gate, next to a car) is it "wstaw" and the old one stays.
 "wstaw go tu", "daj to tam", "niech tu stoi" = put the object at the pin and keep everything else. A location pin next to an object means that object stays: "wstaw" or "przenies", never "zamien" unless a replacement is asked for.
 Replacing a PERSON with another person ("zamień go na tego", "podmień tę osobę", without the word face/twarz) is "zamien" with "dotyczy_osoby": true — a whole-person swap: the new person with their own face, hair AND clothing, in the pose and place of the old one. Set "dotyczy_osoby" true when a "wstaw", "zamien" or "przenies" adds, replaces or moves a WHOLE PERSON (a human being, not an object) — including a person brought in from a reference photo.
 
@@ -70,8 +72,10 @@ STEP 3 — ROLES
 When the pin list gives a role (SOURCE = object that moves or is brought in, DESTINATION = where it ends up), follow it.
 
 STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither inflated nor shrunk: use your knowledge of the typical real-world dimensions of the objects involved and be as accurate as you can.
+- TRUE SIZE SANITY (mandatory before you write "skala" / "obiekt"): fix the incoming object's real dimensions from what that KIND of thing normally measures, not from how large it looks in its reference photo (a close-up makes everything look huge). Typical values: hot tub / jacuzzi 1.8–2.5 m across; round garden table with parasol 1.2–2.0 m; garden shed 2–3 m; greenhouse 2–4 m; passenger car 4.2–5.0 m, SUV 5.2–5.8 m long; single garage door 2.4–3 m wide, double 4.5–5 m; door 0.9 m wide, 2.0 m high; adult 1.7 m; sofa 2–2.4 m; armchair 0.8 m; bed 2 m; boat dinghy 3–4 m. Use a value outside the typical range only when the reference itself shows a clearly oversized or miniature version, and say so. A finished object that is wider than the house wall or garage door beside it, when such a thing is normally much smaller, is a measurement error — recompute it.
 - "skala": 1–3 English sentences: the TRUE real-world dimensions of the incoming / changed object (never how large it looks), and how they compare with the anchor below. Do NOT write that it "appears" or "should appear" at those dimensions — apparent size is given separately in "obiekt" and by the code. Words only — no percentages of the image. Never take the size from how much of the reference photo the object fills; distance changes the share of the frame, never the real size.
 - PERSPECTIVE decides apparent size: things shrink with distance from the camera, so a distant house can look smaller than a car standing near the camera, and the same car ten metres farther looks far smaller than right beside the camera. Real size and apparent size are different things — judge apparent size at the DESTINATION's distance, never the object's size in its own photo and never a fixed ratio between object types.
+- "horyzont": the y of the HORIZON LINE of the ground plane in the destination image, 0–1000 from the top (where the ground would meet the sky if it extended flat; objects standing on the ground get smaller linearly toward this line). For a camera at eye level it is where the sky meets the land (e.g. 430); for a high or aerial camera looking steeply down it lies ABOVE the frame — give a NEGATIVE number (e.g. -500 or -1500; the steeper the look-down, the closer to 0 / the farther above). Never leave it out when a "kotwice" exists.
 - "kotwice": 2 or 3 anchors of known real size in the DESTINATION image (use only things of standardized, reliable size — doors, windows, cars, people, lane markings, fence panels, street furniture, handrails and balustrades (height 0.9–1.1 m), stair steps (tread width about 1 m, rise about 0.17 m), timber raised-bed boards and sleepers (board about 0.2 m tall, bed width about 1.2 m), paving slabs, brick and block courses; never plants, bushes, trees, rocks or other irregular things), standing at DIFFERENT distances from the camera (one nearer, one farther; the destination pin lies between or near them). Each gives its real width in metres ("szer_m") and a tight box around its horizontal extent ("box", [ymin, xmin, ymax, xmax], 0–1000 of the destination image) whose BOTTOM edge sits where the anchor touches the ground. The code uses their sizes at their image rows to derive how scale changes with distance and reads the scale exactly at the destination pin's row. One anchor is acceptable only when nothing else of known size is visible.
 - ALWAYS include the anchor that stands closest to the destination point in depth — at (almost) the same distance from the camera, the same image row: its real size gives the scale directly, with no perspective extrapolation, and wins over distant anchors when they disagree. Thin standardized things (a post or pole has a known standard diameter) are valid anchors; never trust the width of something whose size varies widely (a board, banner or sign) — use its post or fastening instead.
 - "obiekt": the finished object's size as it appears AT THE DESTINATION (in metres of real length across the image plane at that spot): "szer_m" = its horizontal extent as seen from the camera at its heading in the scene, "wys_m" = its vertical extent as seen (for a high or aerial camera the vertical extent is foreshortened), "prawdziwe" = its TRUE dimensions {"dl_m" length, "szer_m" width, "wys_m" height}, "kat_deg" = its heading relative to the camera in degrees (0 = its long side faces the camera, full length visible; 90 = its front or back faces the camera, only its width visible; 45 = diagonal three-quarter view), and "kamera_deg" = how steeply the destination camera looks down at the spot (0 = eye level, 90 = straight down). The code computes the apparent size from these; give them even when unsure. An object turned at an angle to the camera shows part of its length: its apparent width then lies between its width and the diagonal of its footprint — an elongated object turned diagonally to the camera and seen from above spans nearly its full length, not its width. The code turns anchor + object into the object's exact share of the frame and sends that share to the image model.
@@ -80,7 +84,7 @@ STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither 
 
 STEP 4b — "widok": how the finished object must APPEAR at the destination, 1–2 English sentences, derived from the destination scene's geometry: its heading relative to the lines of the surface it stands on (along, across or at an angle to them, and toward or away from the camera), which of its faces the target camera sees (front, side, rear, top) and from what camera height or elevation. It comes from the destination camera and surface, never from how the object looks in its reference photo; a reference view that differs from this is turned to match. Skip for objects without a natural heading.
 
-STEP 4f — "dyrektywa": the ONE instruction the image model will receive for an insertion, replacement or move between photos — write it as a precise brief from a photo editor to a retoucher who can see both images, in 3–5 plain English sentences, with NO coordinates, NO percentages and NO mention of pins. Say: (1) WHAT to take and from which image (the object, in a few words that tell it from similar things); (2) WHERE it goes in the destination image, relative to 2 named visible landmarks (side, distance, the surface it stands on); (3) if something is replaced or moved: exactly what is removed and that nothing of it remains; (4) HOW it sits there: facing direction, contact with the ground or surface, seen from the destination camera; (5) its apparent size relative to the same landmarks, in words (e.g. "clearly smaller than the house, about as long as the jeep beside it") — the image model decides the final scale from this. Facts from the images only; skip for removal and for edits inside one image.
+STEP 4f — "dyrektywa": the ONE instruction the image model will receive for an insertion, replacement or move between photos — write it as a precise brief from a photo editor to a retoucher who can see both images, in 3–5 plain English sentences, with NO coordinates, NO percentages and NO mention of pins. Say: (1) WHAT to take and from which image (the object, in a few words that tell it from similar things) — and when the reference shows only PART of it (a close-up of a head, a front end, a corner), say what the COMPLETE thing is and that it must be generated whole ("a whole calf lying down", "the whole car"), never just the fragment; (2) WHERE it goes in the destination image, relative to 2 named visible landmarks (side, distance, the surface it stands on); (3) if something is replaced or moved: exactly what is removed and that nothing of it remains; (4) HOW it sits there: facing direction, contact with the ground or surface, seen from the destination camera; if anything is open or in motion (a car door a person gets out of, a lid, a hatch) name the part, its hinge side and swing direction in real-world terms — a front car door is hinged at its front edge and swings out with its rear edge outward, and the person sits in that very opening; (5) its apparent size as exactly ONE comparison, in words and from REAL dimensions: first fix the object's real size (hot tub 2.2 m, car 4.5 m, table with parasol 1.8 m, …), then compare it with ONE clearly visible landmark of standard size at a similar depth, giving the ratio (e.g. "a 2.2 m hot tub is about half the width of the double garage door"). Never compare it with the object it replaces (that thing's size is unreliable — it may be a miniature or far away), never give two different comparisons, and never say "smaller than" / "larger than" without the ratio — the image model decides the final scale from this one sentence, so it must be correct and unambiguous. ALL five points are mandatory in every brief: never drop the location (2) or what is replaced / removed (3) to make room for the size sentence, and when the pin sits on an existing object that the new one would overlap, say that object is replaced by name. Facts from the images only; skip for removal and for edits inside one image.
 
 STEP 4e — "umiejscowienie": where the finished object stands, described RELATIVELY, in 2–3 English sentences, as a photographer would brief an assistant — never with coordinates or percentages. Name 2 visible landmarks next to the destination pin (a gate, a car, a table, a wall, a path edge) and say on which side of each the object stands and how far from it in OBJECT-WIDTHS or metres; say what surface it rests on, which way it faces, and give its size in NUMBERS relative to those same landmarks (e.g. "about twice the width of the garage door, roughly 5 m long, clearly smaller than the house"). Use the pin's x / y only to decide left/right and near/far. Do not repeat the object's description and do not mention the pin.
 
@@ -107,6 +111,7 @@ Answer ONLY with JSON:
   "dotyczy_osoby": false,
   "obiekty": [{ "pin": 1, "opis": "short English badge", "miejsce": "where the point lies, in words", "szczegoly": "detailed description of exactly this pinned thing" }],
   "skala": "English, with numbers",
+  "horyzont": <number, y of the ground horizon line 0–1000, negative if above the frame>,
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
   "dyrektywa": "<3-5 sentence brief: what from which image, where relative to landmarks, what is removed, how it sits, size relative to landmarks>",
@@ -195,11 +200,13 @@ export interface PlanRezysera {
 
 /** Kotwice (znany rozmiar, szerokość i dolna krawędź w kadrze 0–1) i widoczne wymiary obiektu w metrach. */
 export interface PomiarSkali {
+  /** y linii horyzontu płaszczyzny podłoża w kadrze 0–1 (ujemny = nad kadrem); undefined = brak */
+  horyzont?: number
   kotwice: { opis: string; szerM: number; szer: number; rzad: number }[]
   obiekt: { szerM: number; wysM: number }
 }
 
-function odczytajPomiar(kotwice: unknown, obiekt: unknown): PomiarSkali | undefined {
+function odczytajPomiar(kotwice: unknown, obiekt: unknown, horyzontSurowy?: unknown): PomiarSkali | undefined {
   const lista = Array.isArray(kotwice) ? (kotwice as { opis?: unknown; szer_m?: unknown; box?: unknown }[]) : []
   const k = lista.flatMap(x => {
     const szerM = Number(x?.szer_m)
@@ -247,7 +254,9 @@ function odczytajPomiar(kotwice: unknown, obiekt: unknown): PomiarSkali | undefi
       oWys = Math.min(Math.hypot(przekatna, wysokosc), Math.max(0.5 * Math.min(wysokosc, bok), oWys))
     }
   }
-  return { kotwice: k, obiekt: { szerM: Math.round(oSzer * 100) / 100, wysM: Math.round(oWys * 100) / 100 } }
+  const h = Number(horyzontSurowy)
+  const horyzont = Number.isFinite(h) && h > -5000 && h < 1000 ? h / 1000 : undefined
+  return { horyzont, kotwice: k, obiekt: { szerM: Math.round(oSzer * 100) / 100, wysM: Math.round(oWys * 100) / 100 } }
 }
 
 /**
@@ -260,12 +269,21 @@ function odczytajPomiar(kotwice: unknown, obiekt: unknown): PomiarSkali | undefi
 export function skalaWRzedzie(p: PomiarSkali, rzad: number): number {
   const a = p.kotwice.map(k => ({ y: k.rzad, s: k.szer / k.szerM }))
   const najblizsza = a.reduce((b, x) => (Math.abs(x.y - rzad) < Math.abs(b.y - rzad) ? x : b), a[0])
-  if (a.length < 2) return najblizsza.s
+  // Perspektywa z horyzontu: skala rośnie liniowo od linii horyzontu ku dołowi kadru, więc jedna kotwica + horyzont wystarczą,
+  // gdy pin leży na innym rzędzie niż kotwica (auto na podjeździe blisko kamery, kotwica = auto daleko przy garażu).
+  const yh = p.horyzont
+  const zHoryzontu = (y0: number, s0: number) => {
+    if (yh === undefined || !(y0 - yh > 0.03) || !(rzad - yh > 0.03)) return null
+    const w = s0 * ((rzad - yh) / (y0 - yh))
+    return Math.min(s0 * 4, Math.max(s0 * 0.25, w))
+  }
+  const wynikH = zHoryzontu(najblizsza.y, najblizsza.s)
+  if (a.length < 2) return wynikH ?? najblizsza.s
   const n = a.length
   const my = a.reduce((t, x) => t + x.y, 0) / n
   const ms = a.reduce((t, x) => t + x.s, 0) / n
   const sxx = a.reduce((t, x) => t + (x.y - my) ** 2, 0)
-  if (sxx < 0.0025) return najblizsza.s // kotwice na prawie tym samym rzędzie — brak informacji o perspektywie
+  if (sxx < 0.0025) return wynikH ?? najblizsza.s // kotwice na prawie tym samym rzędzie — perspektywa tylko z horyzontu
   const k = a.reduce((t, x) => t + (x.y - my) * (x.s - ms), 0) / sxx
   const przewidziana = ms + k * (rzad - my)
   if (!(k > 0 && przewidziana > 0)) return najblizsza.s
@@ -333,7 +351,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     obszarZrodla: odczytajProstokat(json.obszar_zrodla),
     obiekty,
     skala: String(json.skala ?? '').trim(),
-    pomiar: odczytajPomiar(json.kotwice, json.obiekt),
+    pomiar: odczytajPomiar(json.kotwice, json.obiekt, json.horyzont),
     widok: String(json.widok ?? '').trim(),
     swiatlo: String(json.swiatlo ?? '').trim(),
     ulozenie: String(json.ulozenie ?? '').trim(),
