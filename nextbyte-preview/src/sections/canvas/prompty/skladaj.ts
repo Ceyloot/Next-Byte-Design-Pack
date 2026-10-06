@@ -309,6 +309,9 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
  * naturally in the environment's geometry”). Za skalę odpowiada MODEL; reżyser (Gemini) nie podaje już rozmiaru, skali, widoku ani ułożenia —
  * tylko co jest czym i gdzie. Jedno wspólne zdanie dla każdej wstawianej rzeczy lub osoby.
  */
+/** Mechanika ruchomych części — gdy osoba wsiada/wysiada albo coś jest otwarte (drzwi, klapa, pokrywa, szuflada). */
+export const BRICK_MECHANIKI = `MECHANICS: anything shown open obeys real mechanics. A hinge is a fixed edge on the body and the panel swings around it: a car's front door is hinged on its FRONT edge (at the front pillar, by the front wheel) and swings outward with its REAR edge farthest out; a rear door is hinged on its front edge too; a bonnet hinges at its rear edge, a boot lid at its top or rear. The opened panel stays physically attached to its own opening — never a panel hanging in the air, never hinged on the opposite side, never an empty doorway with the door beside it. A person who gets in or out sits or stands in that very opening, with their body clear of the swing path of the door. Left and right sides of a vehicle follow its heading; the same part is never opened on both sides at once unless requested.`
+
 /** EKSPERYMENT: „wstaw tutaj” z innego zdjęcia — miejsce opisane relacyjnie przez reżysera (strony, odległości, liczby), bez współrzędnych i „THE POINT IS FIXED”. false = poprzedni prompt z pinezką. */
 export const UMIEJSCOWIENIE_RELACYJNE = false
 /** EKSPERYMENT: pinezki tylko jako punkty dla reżysera; model obrazu dostaje jego dyrektywę (co skąd gdzie jak) + booster i role z PDF, bez współrzędnych i pomiarów — skalę rozstrzyga model. */
@@ -713,6 +716,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
             brickSkali(baza),
             `It appears exactly once${op.id === 'object_swap' ? ', in place of the old object, which is removed completely' : `; ADD, never replace: every object already in Image ${baza} stays exactly where it is, including similar ones`}. NEVER COPY THE REFERENCE PIXELS: draw the object anew for Image ${baza}'s camera angle, light, sharpness, grain and colour, as if it had stood in the scene when the photo was taken.`,
             STUDIO_ZACHOWAJ_UKLAD(baza),
+            BRICK_MECHANIKI,
             STUDIO_JEDNO_ZDJECIE,
             `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, casting a shadow into it, resting on the right surface at the right size for its distance? If not, redo. ONE photograph — one light, one lens, one grade.`,
             STUDIO_DOPASUJ_FILM(baza),
@@ -729,6 +733,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
             ? `GENERATE THE SUBJECT FROM ZERO inside Image ${baza}, standing ${zRamka ? 'exactly inside the magenta rectangle' : relacyjnie ? 'exactly where the Placement line says' : 'exactly at the x / y point of the destination pin'}, with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once. ${op.id === 'object_swap' ? 'It replaces the object at that point; nothing of the old object remains.' : 'ADD, never replace: every object already in Image ' + baza + ' stays exactly where it is, including one that looks similar to the new object (another car, another chair); the new object is an extra one on the free spot.'} NEVER COPY THE REFERENCE PIXELS: do not cut, paste or reuse the reference picture of the object in any form (not its outline, viewing angle, lighting, blur or compression); draw it for Image ${baza}'s camera angle, light, sharpness, grain and colour. Colour cast and bounce light stay subtle and only on the subject itself: the surfaces around it keep their original colour — no glow, tint, smear or coloured patch on them, and wherever the old object was, the surface behind it is restored in its own natural colour and texture.${w.swiatlo?.trim() ? `\nTHE LIGHT OF IMAGE ${baza} (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}` : ''}`
             : '',
           wstawianie ? STUDIO_ZACHOWAJ_UKLAD(baza) : '',
+          wstawianie ? BRICK_MECHANIKI : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
           crossFoto ? `FINAL CHECK: is the subject lit by this scene, blurred like this scene, graded and grained like this scene, casting a shadow into it, resting on the right surface at the right size for its distance? If not, redo. ONE photograph — one light, one lens, one grade.` : '',
           op.id === 'style_change' ? '' : wstawianie || op.id === 'removal' ? STUDIO_DOPASUJ_FILM(baza) : STUDIO_JAKOSC,
