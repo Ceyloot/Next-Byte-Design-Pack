@@ -951,11 +951,24 @@ export function CanvasSection() {
         })
         .join('\n')
 
+      // Zbliżenia wokół pinesek: na pełnym kadrze mała rzecz pod pinem (szklarnia przy garażu) ginie, a reżyser opisywał „trawę” albo „podjazd”.
+      const zblizeniaPinow = (
+        await Promise.all(
+          projekt.pineski.map(async (p, i) => {
+            const w = obrazy.find(x => x.id === p.layerId)
+            if (!w) return null
+            const dane = await wytnijOkolice((await konwertujNaDataUrl(w.src)) || w.src, p.normalizedX, p.normalizedY, 384, 0.2).catch(() => '')
+            return dane ? { numer: i + 1, nazwa: etykietaPineski(p, i + 1), dane } : null
+          }),
+        )
+      ).filter((z): z is { numer: number; nazwa: string; dane: string } => Boolean(z))
+
       const plan = await zaplanuj({
         zadanie: projekt.tekst,
         rusztowanie: polecenie,
         obrazy: obrazyDlaAgenta,
         uchwyty: uchwytyTekst,
+        zblizenia: zblizeniaPinow,
       })
 
       setStanGeneracji({ faza: 'trwa', plan: plan?.plan, role: powodRol || undefined })
@@ -1512,7 +1525,8 @@ export function CanvasSection() {
         ocenaPoPoprawce = {
           ...ocenaPoPoprawce,
           wykonane: ocenaPoPoprawce.wykonane && !pomiar.bledy.length,
-          ocena: `${ocenaPoPoprawce.ocena} ${zmierzone}`.trim(),
+          // Własny pomiar wygrywa z opisem kontrolera: gdy wynik stoi poza pinezką albo ma zły rozmiar, nie piszemy „zgodnie z poleceniem”.
+          ocena: pomiar.bledy.length ? `Obiekt jest na zdjęciu, ale nie tam ani nie takiej wielkości, jak trzeba. ${zmierzone}` : `${ocenaPoPoprawce.ocena} ${zmierzone}`.trim(),
         }
       }
 

@@ -50,6 +50,8 @@ export interface ZadaniePlanu {
   obrazy: ObrazDlaAgenta[]
   /** nazwy i położenia pinesek, tak jak trafiają do promptu */
   uchwyty: string
+  /** zbliżenia wokół pinesek (celownik w środku) — tylko do rozpoznania, co leży pod punktem */
+  zblizenia?: { numer: number; nazwa: string; dane: string }[]
 }
 
 export interface Plan {
@@ -376,6 +378,10 @@ export function agentProxy(): Plugin {
       for (const [i, o] of z.obrazy.entries()) {
         tresci.push({ type: 'text', text: `[Image ${i + 1}: "${o.nazwa}", pins drawn]` })
         tresci.push({ type: 'image_url', image_url: { url: o.dane } })
+      }
+      for (const zb of z.zblizenia ?? []) {
+        tresci.push({ type: 'text', text: `[CLOSE-UP of Pin ${zb.numer} "${zb.nazwa}" — a tight crop with the pin's location exactly at the CENTRE. Use it ONLY to identify what lies under that pin (a small structure, an object, a surface); it is not an extra image]` })
+        tresci.push({ type: 'image_url', image_url: { url: zb.dane } })
       }
       tresci.push({ type: 'text', text: trescZadaniaRezysera(z.zadanie, z.uchwyty) })
 
