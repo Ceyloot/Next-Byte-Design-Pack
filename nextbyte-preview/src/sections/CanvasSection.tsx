@@ -304,7 +304,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         if (zapisany) {
           const wczytany = wczytajProjekt(zapisany)
           if (wczytany.warstwy.length > 0) {
-            setProjekt({ ...wczytany, ramka: wczytany.ramka ?? null })
+            setProjekt({ ...wczytany, warstwy: wczytany.warstwy.filter(w => !w.duch).map(w => (w.generuje ? { ...w, generuje: false } : w)), ramka: wczytany.ramka ?? null })
             setWybranaWarstwa(wczytany.warstwy[0].id)
             setWybranaPineska(wczytany.pineski[0]?.id ?? null)
           }
@@ -334,11 +334,84 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
 
   /* ── Wczytywanie zdjęć ─────────────────────────────────────────── */
 
+  /**
+   * Placeholder generowania: format wyniku jest znany z góry, więc obok zdjęcia od razu pojawia się ramka z animacją,
+   * a gotowy wynik wypełnia ją w tym samym miejscu (zamiast dopiero wtedy wskakiwać nowa warstwa).
+   */
+  const duchId = useRef<string | null>(null)
+  const startDucha = useCallback((rozmiar: { width: number; height: number; y: number; naturalWidth: number; naturalHeight: number }, nazwa = 'Generuję…') => {
+    const id = nowyId('w')
+    duchId.current = id
+    setProjekt(p => {
+      const prawa = p.warstwy.reduce((m, x) => Math.max(m, x.x + x.width), 0)
+      return {
+        ...p,
+        warstwy: [
+          ...p.warstwy,
+          {
+            id,
+            type: 'image' as const,
+            src: '',
+            x: p.warstwy.length === 0 ? 60 : prawa + 48,
+            y: rozmiar.y,
+            width: rozmiar.width,
+            height: rozmiar.height,
+            naturalWidth: rozmiar.naturalWidth,
+            naturalHeight: rozmiar.naturalHeight,
+            rotation: 0,
+            name: nazwa,
+            visible: true,
+            locked: true,
+            zrodlo: 'wynik' as const,
+            generator: true,
+            generuje: true,
+            duch: true,
+          },
+        ],
+      }
+    })
+  }, [])
+  const usunDucha = useCallback(() => {
+    const id = duchId.current
+    duchId.current = null
+    if (id) setProjekt(p => ({ ...p, warstwy: p.warstwy.filter(w => w.id !== id) }))
+  }, [])
+
   const dodajZeZrodla = useCallback(
     (src: string, nazwa: string, zrodlo: ZrodloObrazu, wzorzec?: Warstwa) => {
       const obrazek = new Image()
       obrazek.crossOrigin = 'anonymous'
+      // pierwszy wynik po starcie generacji wypełnia placeholder (i tylko on)
+      const duch = zrodlo === 'wynik' ? duchId.current : null
+      if (duch) duchId.current = null
       obrazek.onload = () => {
+        if (duch) {
+          let wypelniono = false
+          setProjekt(p => {
+            if (!p.warstwy.some(w => w.id === duch)) return p
+            wypelniono = true
+            return {
+              ...p,
+              warstwy: p.warstwy.map(w =>
+                w.id === duch
+                  ? {
+                      ...w,
+                      src,
+                      name: nazwa,
+                      naturalWidth: obrazek.width,
+                      naturalHeight: obrazek.height,
+                      width: Math.round((obrazek.width / obrazek.height) * w.height),
+                      generator: false,
+                      generuje: false,
+                      duch: false,
+                      locked: false,
+                    }
+                  : w,
+              ),
+            }
+          })
+          if (wypelniono) return
+        }
         setProjekt(p => {
           const skala = Math.min(1, 460 / obrazek.width)
           const prawaKrawedz = p.warstwy.reduce((maks, w) => Math.max(maks, w.x + w.width), 0)
@@ -485,6 +558,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       if (!w || !a || akcjaAI) return
       setMenuWarstwy(null)
       setAkcjaAI(akcjaId)
+      startDucha(w, `${a.etykieta}…`)
       try {
         const maks = 2048
         const k = Math.min(a.skala, maks / Math.max(w.naturalWidth, w.naturalHeight))
@@ -496,10 +570,11 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       } catch (e) {
         window.alert(e instanceof Error ? e.message : 'Nie udało się wykonać akcji.')
       } finally {
+        usunDucha()
         setAkcjaAI(null)
       }
     },
-    [projekt.warstwy, AKCJE_AI, akcjaAI, dodajZeZrodla],
+    [projekt.warstwy, AKCJE_AI, akcjaAI, dodajZeZrodla, startDucha, usunDucha],
   )
 
   const akcjaWarstwy = useCallback(
@@ -694,7 +769,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     setNarzedzie('wybor')
   }, [])
   const warstwaGeneratora = useMemo(
-    () => projekt.warstwy.find(w => w.generator && w.id === wybranaWarstwa) ?? projekt.warstwy.find(w => w.generator) ?? null,
+    () => projekt.warstwy.find(w => w.generator && !w.duch && w.id === wybranaWarstwa) ?? projekt.warstwy.find(w => w.generator && !w.duch) ?? null,
     [projekt.warstwy, wybranaWarstwa],
   )
 
@@ -705,6 +780,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       if (!w || trwaPrompter) return
       setTrwaPrompter(true)
       setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…', tryb: 'inpainting' })
+      startDucha(w, 'Inpaint…')
       try {
         // Osobny moduł (canvas/inpainting.ts): wycinek wokół zaznaczenia → model → wynik tylko w masce.
         const eraser = trybPedzla === 'eraser'
@@ -718,10 +794,11 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       } catch (e) {
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się namalować zaznaczonego obszaru.' })
       } finally {
+        usunDucha()
         setTrwaPrompter(false)
       }
     },
-    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla, zakonczInpaint, trybPedzla],
+    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla, zakonczInpaint, trybPedzla, startDucha, usunDucha],
   )
 
   const utworzRamkeGeneratora = useCallback((szer: number, wys: number) => {
@@ -763,6 +840,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       if (!ramka || trwaPrompter) return
       setTrwaPrompter(true)
       setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…', tryb: 'generator' })
+      setProjekt(p => ({ ...p, warstwy: p.warstwy.map(x => (x.id === ramka.id ? { ...x, generuje: true } : x)) }))
       try {
         // Osobny moduł (canvas/generowanie.ts): sam opis, bez zdjęć wejściowych i reguł.
         const w = await wykonajGenerowanie(tekst, ramka.naturalWidth, ramka.naturalHeight, modelObrazu === 'auto' ? 'nb2' : modelObrazu)
@@ -771,12 +849,13 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           ...p,
           warstwy: p.warstwy.map(x =>
             x.id === ramka.id
-              ? { ...x, src: w.obrazUrl, generator: false, name: nazwa, naturalWidth: w.szerokosc, naturalHeight: w.wysokosc, height: Math.round((x.width * w.wysokosc) / w.szerokosc) }
+              ? { ...x, src: w.obrazUrl, generator: false, generuje: false, name: nazwa, naturalWidth: w.szerokosc, naturalHeight: w.wysokosc, height: Math.round((x.width * w.wysokosc) / w.szerokosc) }
               : x,
           ),
         }))
         setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: w.obrazUrl, kosztUSD: w.kosztUSD, model: w.model, nazwa, opis: `Polecenie: „${tekst}”.` } })
       } catch (e) {
+        setProjekt(p => ({ ...p, warstwy: p.warstwy.map(x => (x.id === ramka.id ? { ...x, generuje: false } : x)) }))
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
       } finally {
         setTrwaPrompter(false)
@@ -812,7 +891,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     }
     window.addEventListener('keydown', naKlawisz)
     return () => window.removeEventListener('keydown', naKlawisz)
-  }, [wybranaPineska, wybranaWarstwa, usunPineske, usunWarstwe])
+  }, [wybranaPineska, wybranaWarstwa, usunPineske, usunWarstwe, zakonczInpaint])
 
   /* ── Przygotowanie generacji ───────────────────────────────────── */
 
@@ -877,6 +956,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       if (!opis) return
       refGeneruje.current = true
       setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…', tryb: 'generator' })
+      startDucha({ width: 460, height: 460, y: 60, naturalWidth: 1024, naturalHeight: 1024 }, 'Generuję…')
       try {
         const w = await generuj({ polecenie: opis, obrazy: [], szerokosc: 1024, wysokosc: 1024, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
         const nazwa = nazwijWynik(opis, [])
@@ -885,12 +965,14 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       } catch (e) {
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
       } finally {
+        usunDucha()
         refGeneruje.current = false
       }
       return
     }
     refGeneruje.current = true
     setStanGeneracji({ faza: 'planuje' })
+    startDucha(warstwaZrodlowa)
 
     try {
       // Kto jest obiektem, a kto miejscem — cztery poziomy od najpewniejszego
@@ -1538,9 +1620,12 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         tresc: e instanceof Error ? e.message : 'Wystąpił błąd podczas generacji obrazu.',
       })
     } finally {
+      usunDucha()
       refGeneruje.current = false
     }
   }, [
+    startDucha,
+    usunDucha,
     warstwaZrodlowa,
     obrazyWejsciowe,
     polecenie,
@@ -2041,6 +2126,8 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         onUsunPineske={usunPineske}
         onZmienNazwePineski={(id, label) => zmienPineske(id, { label })}
         onWlaczNarzędziePineska={() => setNarzedzie('pineska')}
+        wybranaWarstwa={wybranaWarstwa}
+        onOdznaczWarstwe={() => setWybranaWarstwa(null)}
         onGeneruj={uruchomGeneracje}
         modelObrazu={modelObrazu}
         onModelObrazu={zmienModelObrazu}
@@ -2059,7 +2146,6 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         intencja={intencja}
         uwagi={uwagi}
         podgladPolecenia={ostatniPrompt || `[PODGLĄD WSTĘPNY — bez danych reżysera (światło, rozmiar, zbliżenia) i bez trybu dwóch zadań. Prawdziwy prompt pojawi się tu po „Generuj”.]\n\n${polecenie}`}
-        onWstawNaPlotno={(url, nazwa) => dodajZeZrodla(url, nazwa, 'wynik', warstwaZrodlowa || undefined)}
       />
 
       {/* ══ Panel warstw (wysuwany) ══ */}

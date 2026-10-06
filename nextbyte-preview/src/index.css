@@ -1700,3 +1700,47 @@ html.nb-refrakcja-chrome .nb-szklo.nb-szklo-canvas:not(.nb-powierzchnia),
 :root:is([data-theme='future-theme'], [data-theme='nextbyte-light'], [data-theme='scandinavian'], [data-theme='snowy-white']) .nb-znak-marki {
   filter: brightness(0) invert(0.3);
 }
+
+/* ── Canvas: animacja generowania i pojawiania się zdjęć ─────────────────── */
+@keyframes nb-generuje-obrot { to { transform: rotate(360deg); } }
+@keyframes nb-generuje-polysk {
+  0% { transform: translateX(-120%); }
+  60%, 100% { transform: translateX(120%); }
+}
+@keyframes nb-generuje-puls { 0%, 100% { opacity: 0.55; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1.06); } }
+.nb-generuje {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, hsl(var(--foreground) / 0.07), hsl(var(--foreground) / 0.13));
+}
+.nb-generuje::before {
+  content: '';
+  position: absolute;
+  inset: -45%;
+  background: conic-gradient(from 0deg, transparent 0 20%, hsl(var(--primary) / 0.38) 35%, transparent 50% 70%, hsl(var(--primary) / 0.26) 85%, transparent);
+  filter: blur(36px);
+  animation: nb-generuje-obrot 7s linear infinite;
+}
+.nb-generuje::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, hsl(0 0% 100% / 0.22) 50%, transparent 65%);
+  animation: nb-generuje-polysk 2s ease-in-out infinite;
+}
+.nb-generuje-znak { position: relative; z-index: 1; display: grid; justify-items: center; gap: 8px; color: hsl(var(--foreground) / 0.8); animation: nb-generuje-puls 1.8s ease-in-out infinite; }
+
+/* Zdjęcie wjeżdża na płótno: lekki blur → ostrość; po wygenerowaniu wynik „wywołuje się” w miejscu placeholdera */
+@keyframes nb-obraz-wejscie {
+  from { opacity: 0; filter: blur(14px) saturate(0.7); transform: scale(1.035); }
+  to { opacity: 1; filter: blur(0) saturate(1); transform: scale(1); }
+}
+.nb-obraz-wejscie { animation: nb-obraz-wejscie 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes nb-warstwa-wejscie { from { opacity: 0; } to { opacity: 1; } }
+.nb-warstwa-wejscie { animation: nb-warstwa-wejscie 0.35s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .nb-generuje::before, .nb-generuje::after, .nb-generuje-znak, .nb-obraz-wejscie, .nb-warstwa-wejscie { animation: none; }
+}

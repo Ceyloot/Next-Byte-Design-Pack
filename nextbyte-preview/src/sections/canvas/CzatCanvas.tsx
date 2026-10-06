@@ -68,6 +68,9 @@ export interface WiadomoscCzatu {
 interface Props {
   pineski: Pineska[]
   warstwy: Warstwa[]
+  /** zaznaczone zdjęcie na płótnie — pokazujemy je w kompozytorze jako „w odniesieniu do” */
+  wybranaWarstwa: string | null
+  onOdznaczWarstwe: () => void
   tekst: string
   onTekst: (t: string) => void
   onWybierzPineske: (id: string | null) => void
@@ -82,7 +85,6 @@ interface Props {
   intencja: Intencja
   uwagi: Uwaga[]
   podgladPolecenia: string
-  onWstawNaPlotno: (url: string, nazwa: string) => void
   /** odpowiedź na pytanie o role pinesek (poziom 4) — od razu uruchamia generację */
   onOdpowiedzRol: (opcja: OpcjaRol) => void
   modelObrazu: ModelObrazu
@@ -114,10 +116,13 @@ const MODELE_OBRAZU = [
 ] as const
 
 /** Mały przycisk narzędzia — kształt i obwódka jak przyciski „Ustawienia” / „Aa” w górnym pasku nawigacji. */
-/** `dodaj_samochod_sportowy` → „Dodaj samochod sportowy” (nazwa wyniku jest sluzkiem; w czacie ma czytac sie jak tytul). */
-function nazwaCzytelna(n: string): string {
-  const t = n.replace(/[_-]+/g, ' ').trim()
-  return t ? t.charAt(0).toUpperCase() + t.slice(1) : n
+/** Mała miniatura zdjęcia w chipie odniesienia (promień 4px = 8px chipa − 4px). */
+function Miniatura({ src }: { src: string }) {
+  return src ? (
+    <img src={src} alt="" className="h-5 w-5 shrink-0 rounded-[4px] object-cover ring-1 ring-foreground/15" />
+  ) : (
+    <span className="h-5 w-5 shrink-0 rounded-[4px] bg-foreground/10" />
+  )
 }
 
 const NARZEDZIE =
@@ -168,6 +173,8 @@ const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
 export function CzatCanvas({
   pineski,
   warstwy,
+  wybranaWarstwa,
+  onOdznaczWarstwe,
   tekst,
   onTekst,
   onWybierzPineske,
@@ -181,7 +188,6 @@ export function CzatCanvas({
   trwa,
   intencja,
   uwagi,
-  onWstawNaPlotno,
   onOdpowiedzRol,
   modelObrazu,
   onModelObrazu,
@@ -191,6 +197,7 @@ export function CzatCanvas({
   onWklejZeSchowka,
   onDodajZAdresu,
 }: Props) {
+  const zaznaczona = warstwy.find(w => w.id === wybranaWarstwa && w.type === 'image' && !w.generator && w.src) ?? null
   // Jedno menu naraz: plus (dodawanie), modele
   const [menu, setMenu] = useState<null | 'plus' | 'modele'>(null)
   const [odswiez, setOdswiez] = useState(0)
@@ -519,70 +526,24 @@ export function CzatCanvas({
               </div>
             )}
 
-            {/* Odpowiedź asystenta */}
+            {/* Odpowiedź asystenta: sam obraz (wynik sam ląduje na płótnie) + zapis po najechaniu */}
             {msg.rola === 'asystent' && (
-              <div className="w-full space-y-2 rounded-2xl border border-foreground/[0.10] bg-[color-mix(in_srgb,hsl(var(--card))_55%,transparent)] p-1.5 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.10),0_8px_24px_-12px_hsl(0_0%_0%/0.35)]">
-                {msg.tresc && <p className="px-2 pt-1 text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
-
-                {/* Wygenerowany obraz z opcjami */}
+              <div className="w-full space-y-2">
+                {msg.tresc && <p className="px-1 text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
                 {msg.obrazUrl && (
-                  <>
-                    {/* promień 10px = 16px karty − 6px paddingu (współśrodkowość); tło z rozmytej kopii obrazu zamiast pustych pasów */}
-                    <div className="relative overflow-hidden rounded-[10px] border border-foreground/[0.08] bg-foreground/[0.04]">
-                      <img src={msg.obrazUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl" />
-                      <img src={msg.obrazUrl} alt="Wynik generacji" className="relative mx-auto max-h-[260px] w-full object-contain" />
-                      {msg.model && (
-                        <span className="absolute left-2 top-2 rounded-md border border-foreground/[0.10] bg-[hsl(var(--background)/0.62)] px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-foreground/80 backdrop-blur-md">
-                          {msg.model}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 px-2">
-                      <span className="min-w-0 truncate text-[12.5px] font-medium text-foreground/90" title={msg.nazwaWyniku}>
-                        {nazwaCzytelna(msg.nazwaWyniku || 'Wygenerowany obraz')}
-                      </span>
-                      {msg.ocena && (
-                        <span
-                          className={cn(
-                            'flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] font-medium',
-                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'nb-tekst-sukcesu nb-ramka-sukcesu' : 'nb-tekst-bledu nb-ramka-bledu',
-                          )}
-                        >
-                          {msg.ocena.wykonane && !msg.ocena.znaczniki ? (
-                            <>
-                              <Check className="h-3 w-3" /> Wykonane
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle className="h-3 w-3" /> Do poprawy
-                            </>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    {msg.ocena && msg.ocena.tekst && (
-                      <p className="px-2 text-[10.5px] leading-snug text-muted-foreground">{msg.ocena.tekst}</p>
-                    )}
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => onWstawNaPlotno(msg.obrazUrl!, msg.nazwaWyniku || 'Wynik AI')}
-                        className="nb-cta nb-refleks-krawedzi flex h-9 flex-1 items-center justify-center gap-2 rounded-xl text-[12px] font-semibold"
-                      >
-                        <Layers className="h-3.5 w-3.5 text-primary" />
-                        Wstaw na płótno
-                      </button>
-                      <button
-                        onClick={() => window.open(msg.obrazUrl, '_blank')}
-                        className={NARZEDZIE + ' h-9 w-9'}
-                        title="Otwórz pełny obraz"
-                        aria-label="Otwórz pełny obraz"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </>
+                  <div className="group relative overflow-hidden rounded-2xl border border-foreground/[0.10] bg-foreground/[0.04] shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.10),0_8px_24px_-12px_hsl(0_0%_0%/0.35)]">
+                    <img src={msg.obrazUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl" />
+                    <img src={msg.obrazUrl} alt="Wynik generacji" className="nb-obraz-wejscie relative mx-auto max-h-[300px] w-full object-contain" />
+                    <a
+                      href={msg.obrazUrl}
+                      download={`${(msg.nazwaWyniku || 'nextbyte').replace(/[^\w.-]+/g, '_')}.jpg`}
+                      title="Zapisz obraz"
+                      aria-label="Zapisz obraz"
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-[10px] border border-foreground/[0.12] bg-[hsl(var(--background)/0.62)] text-foreground/80 opacity-0 backdrop-blur-md transition-all duration-150 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </div>
                 )}
               </div>
             )}
@@ -711,32 +672,51 @@ export function CzatCanvas({
               }}
             />
           </div>
-          {pineski.length > 0 && (
-            <div className="mb-2 flex flex-wrap items-center gap-1">
-              {pineski.map((p, idx) => (
-                <span
-                  key={p.id}
-                  className="p2-kontrolka group flex items-center overflow-hidden text-[11px] font-medium p2-cichy"
-                >
+          {/* W odniesieniu do czego jest polecenie: zaznaczone zdjęcie i pinezki — każda z miniaturą swojego zdjęcia */}
+          {(zaznaczona || pineski.length > 0) && (
+            <div className="mb-2 flex flex-wrap items-center gap-1" aria-label="Polecenie dotyczy">
+              {zaznaczona && !pineski.some(p => p.layerId === zaznaczona.id) && (
+                <span className="p2-kontrolka flex items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                  <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-2">
+                    <Miniatura src={zaznaczona.src} />
+                    <span className="max-w-[150px] truncate">{zaznaczona.name}</span>
+                  </span>
                   <button
                     type="button"
-                    onClick={() => wstawChip(p, idx + 1)}
-                    className="flex items-center gap-1 py-0.5 pl-2 pr-1 transition-colors hover:text-[hsl(var(--foreground))]"
-                    title="Wstaw nazwę obiektu do polecenia"
-                  >
-                    <NumerPinezki n={idx + 1} />@{etykietaPineski(p, idx + 1)}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onUsunPineske(p.id)}
-                    className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-[hsl(var(--destructive)/0.15)] hover:text-[hsl(var(--destructive))]"
-                    title="Usuń pinezkę"
-                    aria-label={`Usuń pinezkę ${idx + 1}`}
+                    onClick={onOdznaczWarstwe}
+                    className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+                    title="Odznacz zdjęcie"
+                    aria-label="Odznacz zdjęcie"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
-              ))}
+              )}
+              {pineski.map((p, idx) => {
+                const wz = warstwy.find(w => w.id === p.layerId)
+                return (
+                  <span key={p.id} className="p2-kontrolka group flex items-center overflow-hidden text-[11px] font-medium p2-cichy">
+                    <button
+                      type="button"
+                      onClick={() => wstawChip(p, idx + 1)}
+                      className="flex items-center gap-1.5 py-0.5 pl-1 pr-1 transition-colors hover:text-[hsl(var(--foreground))]"
+                      title={`Wstaw nazwę obiektu do polecenia${wz ? ` — zdjęcie: ${wz.name}` : ''}`}
+                    >
+                      {wz && <Miniatura src={wz.src} />}
+                      <NumerPinezki n={idx + 1} />@{etykietaPineski(p, idx + 1)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onUsunPineske(p.id)}
+                      className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-[hsl(var(--destructive)/0.15)] hover:text-[hsl(var(--destructive))]"
+                      title="Usuń pinezkę"
+                      aria-label={`Usuń pinezkę ${idx + 1}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )
+              })}
             </div>
           )}
           <textarea

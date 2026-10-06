@@ -441,6 +441,7 @@ export function Plotno({
           return (
             <div
               key={warstwa.id}
+              className="nb-warstwa-wejscie"
               onPointerDown={e => {
                 if (e.button === 2) return
                 naWarstwieWDol(e, warstwa)
@@ -464,7 +465,14 @@ export function Plotno({
                 cursor: narzedzie === 'pineska' || narzedzie === 'ramka' || narzedzie === 'pedzel' ? 'crosshair' : 'move',
               }}
             >
-              {warstwa.generator ? (
+              {warstwa.generuje ? (
+                <div className="nb-generuje" role="status" aria-label="Generowanie obrazu">
+                  <div className="nb-generuje-znak">
+                    <svg viewBox="0 0 24 24" width={34 * odwrotna} height={34 * odwrotna} fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9L12 2.5zM18.5 15l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.6z" /></svg>
+                    <span style={{ fontSize: 12 * odwrotna, fontWeight: 600, letterSpacing: '0.02em' }}>Generuję…</span>
+                  </div>
+                </div>
+              ) : warstwa.generator ? (
                 <div style={{ width: '100%', height: '100%', background: 'hsl(var(--foreground) / 0.1)', display: 'grid', placeItems: 'center' }}>
                   <svg viewBox="0 0 24 24" width="22%" height="22%" fill="hsl(var(--foreground) / 0.18)" aria-hidden="true"><path d="M3 19 9.5 8l4 6.5 2.5-3.5L21 19H3Z" /><circle cx="17" cy="6.5" r="2" /></svg>
                 </div>
@@ -472,11 +480,13 @@ export function Plotno({
                 <img
                   src={warstwa.src}
                   alt={warstwa.name}
+                  key={warstwa.src.length + warstwa.src.slice(-24)}
+                  className="nb-obraz-wejscie"
                   draggable={false}
                   style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', userSelect: 'none' }}
                 />
               )}
-              {warstwa.generator && (
+              {warstwa.generator && !warstwa.generuje && (
                 <>
                   <span style={{ position: 'absolute', left: 0, top: -22 * odwrotna, fontSize: 12 * odwrotna, color: '#38bdf8', whiteSpace: 'nowrap' }}>Image Generator</span>
                   <span style={{ position: 'absolute', right: 0, top: -22 * odwrotna, fontSize: 12 * odwrotna, color: '#38bdf8', whiteSpace: 'nowrap' }}>{warstwa.naturalWidth} × {warstwa.naturalHeight}</span>
