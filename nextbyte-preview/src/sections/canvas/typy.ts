@@ -382,7 +382,7 @@ export type StanGeneracji =
   | { faza: 'bezczynny' }
   | { faza: 'planuje' }
   /** `role` — skąd wiadomo, co jest obiektem, a co miejscem (po polsku) */
-  | { faza: 'trwa'; plan?: string; role?: string; tryb?: 'inpainting' | 'generator' }
+  | { faza: 'trwa'; plan?: string; role?: string; tryb?: 'inpainting' | 'generator' | 'referencje' }
   /** poziom 4: ani zdanie, ani wzrok nie rozstrzygnęły ról — pytamy jednym kliknięciem */
   | { faza: 'pyta'; pytanie: import('./role-z-polecenia').PytanieORole }
   | { faza: 'sprawdza'; wynik: import('./dostawca').Generacja }

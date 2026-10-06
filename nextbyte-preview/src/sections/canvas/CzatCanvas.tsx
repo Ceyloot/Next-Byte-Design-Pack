@@ -70,6 +70,8 @@ interface Props {
   warstwy: Warstwa[]
   /** zaznaczone zdjęcie na płótnie — pokazujemy je w kompozytorze jako „w odniesieniu do” */
   wybranaWarstwa: string | null
+  /** wiele zaznaczonych zdjęć (≥2) = referencje generacji bez pinesek */
+  zaznaczoneWarstwy: Warstwa[]
   onOdznaczWarstwe: () => void
   tekst: string
   onTekst: (t: string) => void
@@ -174,6 +176,7 @@ export function CzatCanvas({
   pineski,
   warstwy,
   wybranaWarstwa,
+  zaznaczoneWarstwy,
   onOdznaczWarstwe,
   tekst,
   onTekst,
@@ -344,11 +347,14 @@ export function CzatCanvas({
   const wyslij = () => {
     if (trwa || !tekst.trim() || powodBlokady) return
     const aktualnyTekst = tekst.trim()
-    const pinySnap = pineski.map((p, idx) => ({
-      id: p.id,
-      label: etykietaPineski(p, idx + 1),
-      numer: idx + 1,
-    }))
+    const pinySnap =
+      pineski.length === 0 && zaznaczoneWarstwy.length >= 2
+        ? zaznaczoneWarstwy.map((w, idx) => ({ id: w.id, label: w.name, numer: idx + 1 }))
+        : pineski.map((p, idx) => ({
+            id: p.id,
+            label: etykietaPineski(p, idx + 1),
+            numer: idx + 1,
+          }))
 
     setHistoriaWiadomosci(prev => [
       ...prev,
@@ -559,6 +565,7 @@ export function CzatCanvas({
                 {stanGeneracji.faza === 'planuje' && 'Asystent analizuje scenę i mapę miejsc...'}
                 {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting' && 'Maluję zaznaczony obszar…'}
                 {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator' && 'Generuję obraz z opisu…'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'referencje' && (stanGeneracji.plan ?? 'Generuję z referencji…')}
                 {stanGeneracji.faza === 'trwa' && !stanGeneracji.tryb && 'Runware generuje obraz z zachowaniem skali...'}
                 {stanGeneracji.faza === 'sprawdza' && 'Weryfikacja spójności kadru i oświetlenia...'}
                 {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
@@ -567,7 +574,9 @@ export function CzatCanvas({
               <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
                 {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting'
                   ? 'Model pracuje na fragmencie wokół zaznaczenia — reszta zdjęcia zostaje bez zmian.'
-                  : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator'
+                  : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'referencje'
+                    ? 'Wszystkie zaznaczone zdjęcia idą do modelu jako referencje.'
+                    : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator'
                     ? 'Tworzę nowe zdjęcie od zera, wyłącznie z Twojego opisu.'
                     : stanGeneracji.faza === 'trwa' && stanGeneracji.role
                       ? stanGeneracji.role
@@ -673,9 +682,22 @@ export function CzatCanvas({
             />
           </div>
           {/* W odniesieniu do czego jest polecenie: zaznaczone zdjęcie i pinezki — każda z miniaturą swojego zdjęcia */}
-          {(zaznaczona || pineski.length > 0) && (
+          {(zaznaczona || pineski.length > 0 || zaznaczoneWarstwy.length >= 2) && (
             <div className="mb-2 flex flex-wrap items-center gap-1" aria-label="Polecenie dotyczy">
-              {zaznaczona && !pineski.some(p => p.layerId === zaznaczona.id) && (
+              {pineski.length === 0 &&
+                zaznaczoneWarstwy.map((w, idx) => (
+                  <span key={w.id} className="p2-kontrolka flex items-center gap-1.5 py-0.5 pl-1 pr-2 text-[11px] font-medium text-foreground/85" title={`Referencja ${idx + 1}: ${w.name}`}>
+                    <Miniatura src={w.src} />
+                    <NumerPinezki n={idx + 1} />
+                    <span className="max-w-[110px] truncate">{w.name}</span>
+                  </span>
+                ))}
+              {pineski.length === 0 && zaznaczoneWarstwy.length >= 2 && (
+                <button type="button" onClick={onOdznaczWarstwe} className="grid h-6 w-6 place-items-center rounded-lg text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground" title="Odznacz wszystkie" aria-label="Odznacz wszystkie">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+              {zaznaczona && zaznaczoneWarstwy.length < 2 && !pineski.some(p => p.layerId === zaznaczona.id) && (
                 <span className="p2-kontrolka flex items-center overflow-hidden text-[11px] font-medium text-foreground/85">
                   <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-2">
                     <Miniatura src={zaznaczona.src} />
@@ -735,7 +757,9 @@ export function CzatCanvas({
               }
             }}
             placeholder={
-              pineski.length === 0
+              pineski.length === 0 && zaznaczoneWarstwy.length >= 2
+                ? `${zaznaczoneWarstwy.length} referencji — opisz wynik, np. „postać ze zdjęcia 1 w scenie ze zdjęcia 2”`
+                : pineski.length === 0
                 ? 'Zacznij od pomysłu — wbij pinezkę i opisz zmianę'
                 : pineski.length === 1
                   ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?`
