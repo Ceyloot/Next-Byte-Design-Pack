@@ -80,6 +80,8 @@ STEP 4 — SCALE. Realistic scale is measured, never guessed, and it is neither 
 
 STEP 4b — "widok": how the finished object must APPEAR at the destination, 1–2 English sentences, derived from the destination scene's geometry: its heading relative to the lines of the surface it stands on (along, across or at an angle to them, and toward or away from the camera), which of its faces the target camera sees (front, side, rear, top) and from what camera height or elevation. It comes from the destination camera and surface, never from how the object looks in its reference photo; a reference view that differs from this is turned to match. Skip for objects without a natural heading.
 
+STEP 4e — "umiejscowienie": where the finished object stands, described RELATIVELY, in 2–3 English sentences, as a photographer would brief an assistant — never with coordinates or percentages. Name 2 visible landmarks next to the destination pin (a gate, a car, a table, a wall, a path edge) and say on which side of each the object stands and how far from it in OBJECT-WIDTHS or metres; say what surface it rests on, which way it faces, and give its size in NUMBERS relative to those same landmarks (e.g. "about twice the width of the garage door, roughly 5 m long, clearly smaller than the house"). Use the pin's x / y only to decide left/right and near/far. Do not repeat the object's description and do not mention the pin.
+
 STEP 4d — "ulozenie": how the finished object is arranged LOGICALLY at the destination, 2–3 English sentences: exactly which surface it rests on at the pin and how far that surface extends around the point (compare its width with the object's footprint — the object must fit within its own ground and never overhang what is not ground for it), how it is aligned to the lines of that surface and of the scene, what free space it occupies, and which neighbouring things it must keep clear of (never touching, covering or standing inside them). Anchor the object to visible landmarks: name 1–2 things next to the pin and say on which side and how far from them the object sits, so its footprint is centred exactly on the pin (never moved along the surface to a roomier or more typical spot), and say which way it faces. Left and right are decided by the pin's x / y coordinates, never by impression: x below 0.5 is the left half of the frame, above 0.5 the right half — never contradict the coordinates. EVERY contact point of the object (all wheels, feet, legs, base) must rest on that one surface, with clear margin from its edges: never on grass, a verge, a kerb, a bed or a border beside it, and never straddling an edge. Things that belong on a specific kind of surface keep to it by their nature (vehicles stay on paved or road surfaces and are parked in line with the lanes or parallel to the kerb, furniture stands against walls or on the floor squarely, items sit flat on tables). If the object's footprint at the measured size is wider than the surface at that depth, move it along the surface toward where it is wider, or toward the centre line, and say so — it still stays on the surface. If the surface under the pin cannot hold the object (for example water for a car, a roof edge, open air), say so and name the nearest surface that can hold it, closest to the pin, and put the object there. Facts from the destination image only; skip for pure removal.
 
 STEP 4c — "swiatlo": the DESTINATION image's light and camera, measured from what you see, 2–4 English sentences with concrete values. The image model cannot guess these reliably, so "match the lighting" is useless — write numbers and directions:
@@ -105,6 +107,7 @@ Answer ONLY with JSON:
   "skala": "English, with numbers",
   "kotwice": [{ "opis": "<the anchor>", "szer_m": <real width in metres>, "box": [<ymin>, <xmin>, <ymax>, <xmax>] }],
   "widok": "<heading, visible faces, camera elevation at the destination>",
+  "umiejscowienie": "<relative placement beside 2 named landmarks, side and distance, surface, facing, size in numbers vs those landmarks>",
   "ulozenie": "<surface under the pin, how it fits on it, alignment, what to keep clear of>",
   "czesc": "",
   "cecha": "",
@@ -173,6 +176,7 @@ export interface PlanRezysera {
   swiatlo: string
   /** logiczne ułożenie obiektu w miejscu docelowym: powierzchnia, dopasowanie, wyrównanie, odstępy (EN) */
   ulozenie: string
+  umiejscowienie: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część; puste = cały obiekt */
   czesc: string
   /** ile sztuk części: all = komplet / więcej niż jedna, one = pojedyncza (z liczby gramatycznej i sensu) */
@@ -329,6 +333,7 @@ export function odczytajPlanRezysera(json: Record<string, unknown> | null | unde
     widok: String(json.widok ?? '').trim(),
     swiatlo: String(json.swiatlo ?? '').trim(),
     ulozenie: String(json.ulozenie ?? '').trim(),
+    umiejscowienie: String(json.umiejscowienie ?? '').trim(),
     czesc: String(json.czesc ?? '').trim(),
     cecha: String(json.cecha ?? '').trim(),
     czescZakres: json.czesc_zakres === 'all' ? 'all' : json.czesc_zakres === 'one' ? 'one' : '',

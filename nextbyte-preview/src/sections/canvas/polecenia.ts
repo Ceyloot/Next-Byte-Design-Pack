@@ -347,6 +347,8 @@ export interface OpcjePolecenia {
   widok?: string
   /** logiczne ułożenie: powierzchnia, dopasowanie, wyrównanie, odstępy (EN) */
   ulozenie?: string
+  /** reżyser: relacyjne umiejscowienie (EN) — eksperyment „wstaw tutaj” */
+  umiejscowienie?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (np. oświetlenie auta) */
   czesc?: string
   /** zmieniana właściwość rzeczy pod pinem (EN) */
@@ -411,7 +413,7 @@ export function zbudujZadanieModelu(
   intencja: Intencja = wykryjIntencje(tekst),
   opcje: OpcjePolecenia = {},
 ): SkladajWynik | null {
-  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, czesc, czescZakres, cecha, pierwszyPlan, twarzObraz, zblizenia, studio, hybryda } = opcje
+  const { role = {}, osoba = false, odznaki = {}, swiatlo, rozmiar, szczegoly = {}, miejsca = {}, skala, widok, ulozenie, umiejscowienie, czesc, czescZakres, cecha, pierwszyPlan, twarzObraz, zblizenia, studio, hybryda } = opcje
   const zadanie = tekst.trim()
   if (!zadanie) return null
 
@@ -483,6 +485,7 @@ export function zbudujZadanieModelu(
     skala,
     widok,
     ulozenie,
+    umiejscowienie,
     czesc,
     czescZakres,
     cecha,

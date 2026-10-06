@@ -1187,6 +1187,7 @@ export function CanvasSection() {
         skala: SKALA_OD_MODELU ? undefined : plan?.skala,
         widok: SKALA_OD_MODELU && !studio ? undefined : plan?.widok,
         ulozenie: SKALA_OD_MODELU && !studio ? undefined : plan?.ulozenie,
+        umiejscowienie: plan?.umiejscowienie,
         czesc: plan?.czesc,
         cecha: plan?.cecha,
         czescZakres: plan?.czescZakres,

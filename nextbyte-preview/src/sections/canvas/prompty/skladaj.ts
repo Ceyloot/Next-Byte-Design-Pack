@@ -110,6 +110,7 @@ export interface SkladajWejscie {
   widok?: string
   /** logiczne ułożenie obiektu w miejscu docelowym (EN, od reżysera) */
   ulozenie?: string
+  umiejscowienie?: string
   /** nazwa CZĘŚCI obiektu (EN), gdy użytkownik zmienia tylko część (od reżysera) */
   czesc?: string
   /** zmieniana właściwość rzeczy pod pinem (EN, od reżysera) */
@@ -305,6 +306,9 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
  * naturally in the environment's geometry”). Za skalę odpowiada MODEL; reżyser (Gemini) nie podaje już rozmiaru, skali, widoku ani ułożenia —
  * tylko co jest czym i gdzie. Jedno wspólne zdanie dla każdej wstawianej rzeczy lub osoby.
  */
+/** EKSPERYMENT: „wstaw tutaj” z innego zdjęcia — miejsce opisane relacyjnie przez reżysera (strony, odległości, liczby), bez współrzędnych i „THE POINT IS FIXED”. false = poprzedni prompt z pinezką. */
+export const UMIEJSCOWIENIE_RELACYJNE = true
+
 export function brickSkali(nrObrazu = 1): string {
   return `SCALE: resolve scale and perspective so the subject fits naturally in the geometry of Image ${nrObrazu} — its size relative to the things around it at that depth (a person is human-sized next to the furniture, a shoe fits the foot that wears it, a car is car-sized next to a door or a boat), feet and contact points placed correctly in 3D space, the head not cropping into the wrong plane. Judge the size from the objects in Image ${nrObrazu}, never from how large the subject looks in its own reference photo.`
 }
@@ -634,6 +638,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
   const studioMode = Boolean(w.studio) && !swapPdf && !studioRuch
   // Wstawianie / podmiana obiektu z DRUGIEGO zdjęcia: prompt „generuj od zera w scenie” (jak wersja, która dobrze trzymała skalę z dystansu)
   const studioCross = Boolean(studioMode && ['addition', 'object_transfer', 'object_swap'].includes(op.id) && zrodlo && cel && zrodlo.obraz !== cel.obraz)
+  const relacyjnie = UMIEJSCOWIENIE_RELACYJNE && studioCross && ['addition', 'object_transfer'].includes(op.id) && Boolean(w.umiejscowienie?.trim())
   const sekcjaStudio = studioMode
     ? (() => {
         const baza = cel?.obraz ?? 1
@@ -665,6 +670,10 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
           pozycje.push(
             `Move (do not copy): the subject starts at ${nazwaP(zrodlo)}${slowa(zrodlo)} and ends at ${nazwaP(cel)}${slowa(cel)} of Image ${baza}. The middle of its footprint sits exactly on the destination point. At the old place nothing of it remains — fill it with the natural background; it appears exactly once.`,
           )
+        } else if (relacyjnie && cel) {
+          pozycje.push(
+            `Placement in Image ${baza}: ${w.umiejscowienie!.trim().replace(/[.\s]+$/, '')}. The marked spot${nazwaPinu(cel) ? ` (${nazwaPinu(cel)})` : ''} lies ${polozenieDokladne(cel.x, cel.y).split(' — ')[0]} — that is only the area; the relation to the named landmarks above decides the exact place. It appears exactly once.`,
+          )
         } else if (wstawianie && cel) {
           pozycje.push(
             `Position in Image ${baza}: ${nazwaP(cel)}${slowa(cel)}. The middle of the subject's footprint sits exactly on that point — do not move it toward the centre of the frame or to an easier spot.${op.id === 'object_swap' ? ` The subject replaces the ${nazwaPinu(cel) || 'object'} that stands there: remove that old object completely (nothing of it may remain anywhere), and put the new subject exactly in its place, on the same ground position, at the scale that fits there.` : ''}`,
@@ -686,9 +695,9 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
         return [
           polecenieBezWspolrzednych(w.polecenie.trim()),
           pozycje.join('\n'),
-          zSubiektem ? [brickSkali(baza), crossFoto && w.rozmiar?.trim() ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image ${baza} — follow it, never the size the subject has in its reference): ${liniaRozmiaruDodaj(w.rozmiar)}` : '', crossFoto && zrodlo?.szczegoly?.trim() ? `THE SUBJECT TO BRING (from Image ${zrodlo.obraz}, only this one thing — identity card, reproduce exactly): ${zrodlo.szczegoly.trim()}` : '', crossFoto && (cel?.miejsce || cel?.szczegoly) ? `THE DESTINATION SPOT (Pin ${cel?.numer}, Image ${baza}): ${[cel?.miejsce, cel?.szczegoly].filter(Boolean).join(' ')}` : '', crossFoto && w.ulozenie?.trim() ? `LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image ${baza}'s scene — follow it): ${w.ulozenie.trim()} Every contact point of the subject rests on that surface with a margin from its edges; it is placed the way such a thing is normally placed there (aligned with the lines of the surface, never at a random angle, never half on grass or kerb).` : '', crossFoto && w.widok?.trim() ? `HOW IT MUST APPEAR THERE (from Image ${baza}'s camera and the surface it stands on): ${w.widok.trim()}` : ''].filter(Boolean).join('\n') : '',
+          zSubiektem ? [brickSkali(baza), crossFoto && w.rozmiar?.trim() ? `THE SIZE AT THE DESTINATION (measured from objects of known size in Image ${baza} — follow it, never the size the subject has in its reference): ${liniaRozmiaruDodaj(w.rozmiar)}` : '', crossFoto && zrodlo?.szczegoly?.trim() ? `THE SUBJECT TO BRING (from Image ${zrodlo.obraz}, only this one thing — identity card, reproduce exactly): ${zrodlo.szczegoly.trim()}` : '', crossFoto && (cel?.miejsce || cel?.szczegoly) ? `THE DESTINATION SPOT (Pin ${cel?.numer}, Image ${baza}): ${[cel?.miejsce, cel?.szczegoly].filter(Boolean).join(' ')}` : '', crossFoto && !relacyjnie && w.ulozenie?.trim() ? `LOGICAL ARRANGEMENT AT THE DESTINATION (analysed from Image ${baza}'s scene — follow it): ${w.ulozenie.trim()} Every contact point of the subject rests on that surface with a margin from its edges; it is placed the way such a thing is normally placed there (aligned with the lines of the surface, never at a random angle, never half on grass or kerb).` : '', crossFoto && w.widok?.trim() ? `HOW IT MUST APPEAR THERE (from Image ${baza}'s camera and the surface it stands on): ${w.widok.trim()}` : ''].filter(Boolean).join('\n') : '',
           crossFoto
-            ? `GENERATE THE SUBJECT FROM ZERO inside Image ${baza}, standing exactly at the x / y point of the destination pin, with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once. ${op.id === 'object_swap' ? 'It replaces the object at that point; nothing of the old object remains.' : 'ADD, never replace: every object already in Image ' + baza + ' stays exactly where it is, including one that looks similar to the new object (another car, another chair); the new object is an extra one on the free spot.'} NEVER COPY THE REFERENCE PIXELS: do not cut, paste or reuse the reference picture of the object in any form (not its outline, viewing angle, lighting, blur or compression); draw it for Image ${baza}'s camera angle, light, sharpness, grain and colour. Colour cast and bounce light stay subtle and only on the subject itself: the surfaces around it keep their original colour — no glow, tint, smear or coloured patch on them, and wherever the old object was, the surface behind it is restored in its own natural colour and texture.${w.swiatlo?.trim() ? `\nTHE LIGHT OF IMAGE ${baza} (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}` : ''}`
+            ? `GENERATE THE SUBJECT FROM ZERO inside Image ${baza}, standing ${relacyjnie ? 'exactly where the Placement line says' : 'exactly at the x / y point of the destination pin'}, with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once. ${op.id === 'object_swap' ? 'It replaces the object at that point; nothing of the old object remains.' : 'ADD, never replace: every object already in Image ' + baza + ' stays exactly where it is, including one that looks similar to the new object (another car, another chair); the new object is an extra one on the free spot.'} NEVER COPY THE REFERENCE PIXELS: do not cut, paste or reuse the reference picture of the object in any form (not its outline, viewing angle, lighting, blur or compression); draw it for Image ${baza}'s camera angle, light, sharpness, grain and colour. Colour cast and bounce light stay subtle and only on the subject itself: the surfaces around it keep their original colour — no glow, tint, smear or coloured patch on them, and wherever the old object was, the surface behind it is restored in its own natural colour and texture.${w.swiatlo?.trim() ? `\nTHE LIGHT OF IMAGE ${baza} (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}` : ''}`
             : '',
           wstawianie ? STUDIO_ZACHOWAJ_UKLAD(baza) : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
