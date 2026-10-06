@@ -31,6 +31,8 @@ import {
   Clipboard,
   X,
   Zap,
+  Paintbrush,
+  ImagePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
@@ -112,6 +114,12 @@ const MODELE_OBRAZU = [
 ] as const
 
 /** Mały przycisk narzędzia — kształt i obwódka jak przyciski „Ustawienia” / „Aa” w górnym pasku nawigacji. */
+/** `dodaj_samochod_sportowy` → „Dodaj samochod sportowy” (nazwa wyniku jest sluzkiem; w czacie ma czytac sie jak tytul). */
+function nazwaCzytelna(n: string): string {
+  const t = n.replace(/[_-]+/g, ' ').trim()
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : n
+}
+
 const NARZEDZIE =
   'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] p-0 text-foreground/55 transition-all duration-200 hover:border-foreground/20 hover:text-foreground'
 
@@ -453,6 +461,36 @@ export function CzatCanvas({
 
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none">
+        {historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
+          <div className="flex h-full flex-col justify-center gap-4 px-1 pb-6">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <span className="grid h-11 w-11 place-items-center rounded-[14px] border border-primary/25 bg-[hsl(var(--primary)/0.10)] text-primary shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.12)]">
+                <Sparkles className="h-5 w-5" />
+              </span>
+              <p className="text-[14px] font-semibold text-foreground">Zacznij od zdjęcia</p>
+              <p className="max-w-[260px] text-[12px] leading-relaxed text-muted-foreground">
+                Wgraj zdjęcie na płótno, zaznacz miejsce i opisz, co ma się zmienić.
+              </p>
+            </div>
+            <ul className="space-y-1.5">
+              {[
+                { ikona: ImagePlus, tytul: 'Wgraj lub wklej zdjęcie', opis: 'Przeciągnij plik albo Ctrl+V' },
+                { ikona: Paintbrush, tytul: 'Inpaint i Eraser', opis: 'Zaznacz zdjęcie → pasek akcji nad nim' },
+                { ikona: Pin, tytul: 'Pinezka', opis: 'Ctrl+klik wskazuje obiekt lub miejsce' },
+              ].map(({ ikona: Ik, tytul, opis }) => (
+                <li key={tytul} className="flex items-center gap-3 rounded-xl border border-foreground/[0.08] bg-[color-mix(in_srgb,hsl(var(--card))_45%,transparent)] px-3 py-2.5">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px] border border-foreground/[0.10] bg-foreground/[0.05] text-foreground/70">
+                    <Ik className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[12.5px] font-medium text-foreground/90">{tytul}</span>
+                    <span className="block text-[11px] text-muted-foreground">{opis}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {historiaWiadomosci.map(msg => (
           <div
             key={msg.id}
@@ -463,7 +501,7 @@ export function CzatCanvas({
           >
             {/* Wiadomość użytkownika */}
             {msg.rola === 'uzytkownik' && (
-              <div className="max-w-[88%] rounded-xl border border-foreground/20 bg-[hsl(var(--foreground)/0.05)] px-4 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))]">
+              <div className="max-w-[88%] rounded-2xl rounded-br-md border border-primary/25 bg-[hsl(var(--primary)/0.10)] px-3.5 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))] shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.08)]">
                 <p className="leading-relaxed">{msg.tresc}</p>
                 {msg.pineskiSnap && msg.pineskiSnap.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1">
@@ -483,37 +521,37 @@ export function CzatCanvas({
 
             {/* Odpowiedź asystenta */}
             {msg.rola === 'asystent' && (
-              <div className="w-full space-y-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[13.5px] text-[hsl(var(--foreground))]">
-                {msg.tresc && <p className="text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
+              <div className="w-full space-y-2 rounded-2xl border border-foreground/[0.10] bg-[color-mix(in_srgb,hsl(var(--card))_55%,transparent)] p-1.5 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.10),0_8px_24px_-12px_hsl(0_0%_0%/0.35)]">
+                {msg.tresc && <p className="px-2 pt-1 text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
 
                 {/* Wygenerowany obraz z opcjami */}
                 {msg.obrazUrl && (
-                  <div className="mt-1 space-y-2">
-                    {msg.model && (
-                      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{msg.model}</p>
-                    )}
-                    <div className="relative w-full overflow-hidden rounded-lg border border-foreground/[0.12] bg-foreground/[0.05]">
-                      <img
-                        src={msg.obrazUrl}
-                        alt="Wynik generacji"
-                        className="mx-auto max-h-[240px] w-full object-contain"
-                      />
+                  <>
+                    {/* promień 10px = 16px karty − 6px paddingu (współśrodkowość); tło z rozmytej kopii obrazu zamiast pustych pasów */}
+                    <div className="relative overflow-hidden rounded-[10px] border border-foreground/[0.08] bg-foreground/[0.04]">
+                      <img src={msg.obrazUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl" />
+                      <img src={msg.obrazUrl} alt="Wynik generacji" className="relative mx-auto max-h-[260px] w-full object-contain" />
+                      {msg.model && (
+                        <span className="absolute left-2 top-2 rounded-md border border-foreground/[0.10] bg-[hsl(var(--background)/0.62)] px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-foreground/80 backdrop-blur-md">
+                          {msg.model}
+                        </span>
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between text-[10.5px]">
-                      <span className="max-w-[170px] truncate font-mono text-[10.5px] text-foreground/80">
-                        {msg.nazwaWyniku || 'Wygenerowany obraz'}
+                    <div className="flex items-center justify-between gap-2 px-2">
+                      <span className="min-w-0 truncate text-[12.5px] font-medium text-foreground/90" title={msg.nazwaWyniku}>
+                        {nazwaCzytelna(msg.nazwaWyniku || 'Wygenerowany obraz')}
                       </span>
                       {msg.ocena && (
                         <span
                           className={cn(
-                            'font-medium flex items-center gap-1',
-                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'nb-tekst-sukcesu' : 'nb-tekst-bledu',
+                            'flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] font-medium',
+                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'nb-tekst-sukcesu nb-ramka-sukcesu' : 'nb-tekst-bledu nb-ramka-bledu',
                           )}
                         >
                           {msg.ocena.wykonane && !msg.ocena.znaczniki ? (
                             <>
-                              <Check className="h-3 w-3" /> Zadanie wykonane
+                              <Check className="h-3 w-3" /> Wykonane
                             </>
                           ) : (
                             <>
@@ -524,10 +562,10 @@ export function CzatCanvas({
                       )}
                     </div>
                     {msg.ocena && msg.ocena.tekst && (
-                      <p className="text-[10.5px] leading-snug text-muted-foreground">{msg.ocena.tekst}</p>
+                      <p className="px-2 text-[10.5px] leading-snug text-muted-foreground">{msg.ocena.tekst}</p>
                     )}
 
-                    <div className="flex items-center gap-1.5 pt-1">
+                    <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => onWstawNaPlotno(msg.obrazUrl!, msg.nazwaWyniku || 'Wynik AI')}
                         className="nb-cta nb-refleks-krawedzi flex h-9 flex-1 items-center justify-center gap-2 rounded-xl text-[12px] font-semibold"
@@ -544,7 +582,7 @@ export function CzatCanvas({
                         <ExternalLink className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
