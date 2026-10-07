@@ -444,11 +444,13 @@ export function agentProxy(): Plugin {
       let powod = ''
       for (let proba = 0; proba < 2 && !plan; proba++) {
         const konfig = proba === 0
-          ? { temperature: 0.2, maxOutputTokens: 6144, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 1024 } }
+          ? { temperature: 0, maxOutputTokens: 6144, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 2048 } }
           : { temperature: 0.4, maxOutputTokens: 8192, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } }
         const wynik = await zapytajAgenta(INSTRUKCJA_AGENTA, tresci, MODEL_REZYSERA, konfig)
         if (wynik.blad) return { status: 502, cialo: { blad: wynik.blad } }
         powod = wynik.powod ?? powod
+        const rozumienie = (wynik.json as Record<string, unknown> | null | undefined)?.rozumienie
+        if (typeof rozumienie === 'string') console.info('[canvas] agent rozumienie:', rozumienie)
         plan = odczytajPlanAgenta(wynik.json, z.obrazy.length)
         if (!plan) console.warn(`[canvas] agent: nieczytelny plan, próba ${proba + 1}/2`)
       }
