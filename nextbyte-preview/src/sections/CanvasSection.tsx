@@ -29,8 +29,10 @@ import {
   Scissors,
   X,
   ImagePlus,
+  Type,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PasekAkcji, type AkcjaPaska } from '@/sections/canvas/PasekAkcji'
 import { Prompter } from '@/sections/canvas/Prompter'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
 import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
@@ -564,6 +566,8 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
 
   /* ── Szybkie akcje AI na zdjęciu (pływający pasek nad zdjęciem) ── */
   const [akcjaAI, setAkcjaAI] = useState<string | null>(null)
+  // Edit text: prompter nad zdjęciem („co zmienić w napisie?”)
+  const [edycjaTekstu, setEdycjaTekstu] = useState<string | null>(null)
   const AKCJE_AI = useMemo(
     () => [
       { id: 'enhance', etykieta: 'Enhance', ikona: Wand2, skala: 1, prompt: 'Enhance this photograph: improve clarity, fine detail, dynamic range, contrast and colour so it looks like a higher-end camera took it. Keep every object, person, position, framing and the lighting direction exactly the same. Natural, photographic — no over-sharpening, no HDR look, no plastic skin.' },
@@ -571,6 +575,27 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       { id: 'beztla', etykieta: 'Usuń tło', ikona: Scissors, skala: 1, prompt: 'Remove the background of this photograph: keep the main subject(s) exactly as they are — same shape, colours, detail and sharpness — with clean, precise cut-out edges (fine hair, glass, thin parts included, no halo or fringe) and place them on a plain pure white background with a soft natural contact shadow. Change nothing about the subject itself.' },
     ],
     [],
+  )
+  const uruchomEdycjeTekstu = useCallback(
+    async (warstwaId: string, instrukcja: string) => {
+      const w = projekt.warstwy.find(x => x.id === warstwaId)
+      if (!w || !instrukcja.trim() || akcjaAI) return
+      setEdycjaTekstu(null)
+      setAkcjaAI('tekst')
+      startDucha(w, 'Edit text…')
+      try {
+        const polecenie = `Edit the text in this image as instructed: ${instrukcja.trim()}. Change ONLY that text. Match the original lettering exactly — same font style, weight, size, colour, kerning, perspective, surface, lighting, blur and grain — and keep every other pixel of the picture identical: same objects, people, layout, framing and colours. If the request is ambiguous, change the most prominent text. Spell the new text exactly as written, with correct letters and diacritics.`
+        const wynik = await generuj({ polecenie, obrazy: [await konwertujNaDataUrl(w.src)], szerokosc: w.naturalWidth, wysokosc: w.naturalHeight })
+        const src = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
+        dodajZeZrodla(src, `${w.name}_tekst`, 'wynik', w)
+      } catch (e) {
+        window.alert(e instanceof Error ? e.message : 'Nie udało się zmienić tekstu.')
+      } finally {
+        usunDucha()
+        setAkcjaAI(null)
+      }
+    },
+    [projekt.warstwy, akcjaAI, dodajZeZrodla, startDucha, usunDucha],
   )
   const uruchomAkcjeAI = useCallback(
     async (warstwaId: string, akcjaId: string) => {
@@ -922,8 +947,19 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         setWybranaPineska(null)
         setMenuDodawania(false)
         setMenuGeneratora(false)
+        setEdycjaTekstu(null)
         zakonczInpaint()
         return
+      }
+      // Tab = Quick edit (zamalowanie i opis zmiany) na zaznaczonym zdjęciu, jak w pasku akcji
+      if (e.key === 'Tab' && wybranaWarstwa && !wieluAktywne) {
+        const w = projekt.warstwy.find(x => x.id === wybranaWarstwa)
+        if (w && w.type === 'image' && !w.generator) {
+          e.preventDefault()
+          setTrybPedzla('inpaint')
+          setNarzedzie('pedzel')
+          return
+        }
       }
       const skroty: Record<string, Narzedzie> = { v: 'wybor', p: 'pineska', h: 'reka', b: 'pedzel' }
       const n = skroty[e.key.toLowerCase()]
@@ -1913,81 +1949,85 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           )
         })()}
 
-      {(menuWarstwy || akcjaAI || wybranaWarstwa) && !warstwaInpaint && !wieluAktywne &&
+      {(menuWarstwy || akcjaAI || wybranaWarstwa) && !warstwaInpaint && !wieluAktywne && !edycjaTekstu &&
         (() => {
           const id = menuWarstwy?.id ?? wybranaWarstwa
           const w = projekt.warstwy.find(x => x.id === id)
           if (!w || w.type !== 'image' || w.generator || warstwaInpaint || wieluAktywne) return null
           const lewo = widok.x + w.x * widok.zoom
           const gora = widok.y + w.y * widok.zoom
+          const wybierz = () => {
+            setMenuWarstwy(null)
+            setWybranaWarstwa(w.id)
+            setWybranaPineska(null)
+          }
+          const akcjeAI = Object.fromEntries(AKCJE_AI.map(a => [a.id, a]))
+          const zAI = (aid: string, extra: Partial<AkcjaPaska> = {}): AkcjaPaska => ({
+            id: aid,
+            etykieta: akcjeAI[aid].etykieta,
+            ikona: akcjeAI[aid].ikona,
+            trwa: akcjaAI === aid,
+            onClick: () => uruchomAkcjeAI(w.id, aid),
+            ...extra,
+          })
           return (
-            <div
-              role="toolbar"
-              aria-label="Szybkie akcje AI"
-              onPointerDown={e => e.stopPropagation()}
-              onContextMenu={e => e.preventDefault()}
-              className="absolute z-50"
+            <PasekAkcji
+              etykieta="Szybkie akcje AI"
+              zablokowane={Boolean(akcjaAI)}
               style={{
-                // wyśrodkowany nad zdjęciem (pasek ≈ 540 px), ale w całości na ekranie i przed panelem czatu
-                left: Math.max(16 + 280, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 280)),
+                // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
+                left: Math.max(16 + 385, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 385)),
                 transform: 'translateX(-50%)',
                 maxWidth: 'calc(100vw - 440px)',
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
-            >
-            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border border-foreground/[0.12] p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
-              <button
-                type="button"
-                disabled={Boolean(akcjaAI)}
-                onClick={() => {
-                  setMenuWarstwy(null)
-                  setWybranaWarstwa(w.id)
-                  setWybranaPineska(null)
-                  setTrybPedzla('inpaint')
-                  setNarzedzie('pedzel')
-                }}
-                title="Inpaint — zamaluj miejsce na zdjęciu i opisz zmianę"
-                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-[12px] font-medium text-foreground/70 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40"
-              >
-                <Paintbrush className="h-3.5 w-3.5" />
-                Inpaint
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(akcjaAI)}
-                onClick={() => {
-                  setMenuWarstwy(null)
-                  setWybranaWarstwa(w.id)
-                  setWybranaPineska(null)
-                  setTrybPedzla('eraser')
-                  setNarzedzie('pedzel')
-                }}
-                title="Eraser — zamaluj obiekt do usunięcia"
-                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-[12px] font-medium text-foreground/70 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40"
-              >
-                <Eraser className="h-3.5 w-3.5" />
-                Eraser
-              </button>
-              {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
-                <button
-                  key={aid}
-                  type="button"
-                  disabled={Boolean(akcjaAI)}
-                  onClick={() => uruchomAkcjeAI(w.id, aid)}
-                  className={cn(
-                    'flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-1.5 text-[12px] font-medium transition-all duration-150',
-                    akcjaAI === aid
-                      ? 'border-primary/40 bg-primary/20 text-primary shadow-sm shadow-primary/10'
-                      : 'border-transparent text-foreground/70 hover:bg-foreground/[0.06] hover:text-foreground',
-                    akcjaAI && akcjaAI !== aid && 'opacity-40',
-                  )}
-                >
-                  {akcjaAI === aid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ikona className="h-3.5 w-3.5" />}
-                  {etykieta}
-                </button>
-              ))}
-            </div>
-            </div>
+              akcje={[
+                {
+                  id: 'quick',
+                  etykieta: 'Quick edit',
+                  ikona: Paintbrush,
+                  skrot: 'Tab',
+                  tytul: 'Quick edit — zamaluj miejsce na zdjęciu i opisz zmianę',
+                  onClick: () => {
+                    wybierz()
+                    setTrybPedzla('inpaint')
+                    setNarzedzie('pedzel')
+                  },
+                },
+                zAI('upscale', { separator: true }),
+                zAI('beztla', { etykieta: 'Remove BG' }),
+                {
+                  id: 'eraser',
+                  etykieta: 'Eraser',
+                  ikona: Eraser,
+                  tytul: 'Eraser — zamaluj obiekt do usunięcia',
+                  onClick: () => {
+                    wybierz()
+                    setTrybPedzla('eraser')
+                    setNarzedzie('pedzel')
+                  },
+                },
+                zAI('enhance'),
+                {
+                  id: 'tekst',
+                  etykieta: 'Edit text',
+                  ikona: Type,
+                  tytul: 'Edit text — zmień napis na zdjęciu',
+                  onClick: () => {
+                    wybierz()
+                    setEdycjaTekstu(w.id)
+                  },
+                },
+                {
+                  id: 'pobierz',
+                  etykieta: 'Pobierz',
+                  ikona: Download,
+                  tylkoIkona: true,
+                  separator: true,
+                  onClick: () => akcjaWarstwy(w.id, 'pobierz'),
+                },
+              ]}
+            />
           )
         })()}
 
@@ -2123,6 +2163,25 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           }}
         />
       )}
+      {edycjaTekstu &&
+        (() => {
+          const w = projekt.warstwy.find(x => x.id === edycjaTekstu)
+          if (!w) return null
+          return (
+            <Prompter
+              key={`tekst-${w.id}`}
+              etykieta="Edit text"
+              placeholder="Co zmienić w napisie? np. „SALE” → „-50%”"
+              trwa={Boolean(akcjaAI)}
+              onWyslij={t => uruchomEdycjeTekstu(w.id, t)}
+              onAnuluj={() => setEdycjaTekstu(null)}
+              style={{
+                left: Math.max(16, Math.min(widok.x + (w.x + w.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
+                top: Math.max(72, widok.y + w.y * widok.zoom - 62),
+              }}
+            />
+          )
+        })()}
       {!warstwaInpaint && warstwaGeneratora && (
         <Prompter
           key={`gen-${warstwaGeneratora.id}`}

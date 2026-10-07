@@ -50,7 +50,7 @@ export function Prompter({
       className="absolute z-50 w-[min(560px,calc(100vw-120px))]"
       style={style}
     >
-      <div className="nb-szklo nb-szklo-plynne nb-powierzchnia flex items-center gap-2 rounded-2xl border border-foreground/[0.12] p-1.5 shadow-2xl" style={{ backgroundColor: 'hsl(var(--card) / 0.86)' }}>
+      <div className="flex items-center gap-2 rounded-xl border border-foreground/[0.1] bg-card p-1.5 shadow-[0_10px_32px_-8px_rgba(0,0,0,0.55)]">
         <span className="shrink-0 rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] px-2.5 py-1.5 text-[11px] font-medium text-foreground/70">{etykieta}</span>
         <input
           ref={ref}
