@@ -1,0 +1,256 @@
+/*
+ * ════════════════════════════════════════════════════════════════════════════
+ *  CANVAS — PRZYTULNY STYL (cozy)
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * Warstwa ograniczona do `.nb-cozy` (korzeń Canvasa); reszta platformy nie jest
+ * ruszana. Cel: miękki, spokojny edytor, w którym chce się siedzieć — jak Lovart,
+ * ale w języku NextByte (szkło, tokeny HSL, znak marki).
+ *
+ * Jak to działa:
+ *  1. Tokeny motywu są przesuwane w stronę ciepła tylko wewnątrz Canvasa:
+ *     jasny (`future-theme`) = ciepły papier, ciemny (`dark-theme`) = głęboki
+ *     atrament zamiast czystej czerni. Dalej wszystko czerpie z `hsl(var(--…))`.
+ *  2. Tło jest płaskie i jednolite — bez gradientów i poświat.
+ *  3. Szkło, karty i przycisk CTA: większe zaokrąglenia, jeden subtelny cień,
+ *     jednolite wypełnienia (bez gradientów).
+ *  4. Zaokrąglenia współśrodkowe: 28 → 16 (padding 12), 22 → 14 (padding 8).
+ */
+
+/* ── Tokeny: jasny (domyślny w Canvasie) ─────────────────────────────────── */
+[data-theme='future-theme'] .nb-cozy {
+  --background: 40 20% 96%;
+  --card: 0 0% 100%;
+  --card-foreground: 24 20% 13%;
+  --foreground: 24 20% 13%;
+  --muted: 36 26% 91%;
+  --muted-foreground: 24 9% 38%;
+  --border: 32 22% 86%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 24 20% 13%;
+
+  --cozy-cien: 24 45% 22%;
+  --cozy-swiatlo: hsl(0 0% 100% / 0.75);
+  --cozy-niecka: hsl(24 30% 30% / 0.06);
+}
+
+/* ── Tokeny: ciemny — natywne tokeny `dark-theme` (czerń + cyjan marki), bez nadpisań;
+   dokładamy tylko pomocnicze wartości cieni ──────────────────────────────── */
+[data-theme='dark-theme'] .nb-cozy {
+  --cozy-cien: 0 0% 0%;
+  --cozy-swiatlo: hsl(210 40% 100% / 0.07);
+  --cozy-niecka: hsl(0 0% 0% / 0.5);
+}
+
+/* ── Szkło paneli pływających: miękkie, bez twardej obwódki ──────────────── */
+.nb-cozy .p2-szklo {
+  border: 1px solid hsl(var(--foreground) / 0.08);
+  border-radius: 24px;
+  background: color-mix(in srgb, hsl(var(--card)) 92%, transparent);
+  box-shadow: 0 1px 2px hsl(var(--cozy-cien) / 0.06), 0 8px 24px -12px hsl(var(--cozy-cien) / 0.2);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+}
+
+.nb-cozy .p2-karta {
+  border-color: hsl(var(--foreground) / 0.08);
+  border-radius: 20px;
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent);
+  box-shadow: 0 1px 2px hsl(var(--cozy-cien) / 0.06), 0 8px 24px -12px hsl(var(--cozy-cien) / 0.2);
+}
+
+/* Szkło z filtrem refrakcji (karta pineski, dymki, menu): ta sama miękkość */
+.nb-cozy .nb-szklo.nb-powierzchnia {
+  border-color: hsl(var(--foreground) / 0.08);
+  box-shadow: 0 1px 2px hsl(var(--cozy-cien) / 0.06), 0 8px 24px -12px hsl(var(--cozy-cien) / 0.22);
+}
+
+/* Niecka: zagłębione pole wpisywania (poziom 2 szkła) */
+.nb-cozy-niecka {
+  border: 1px solid hsl(var(--foreground) / 0.06);
+  border-radius: 16px;
+  background: color-mix(in srgb, hsl(var(--background)) 62%, transparent);
+  box-shadow: inset 0 1px 3px 0 var(--cozy-niecka);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.nb-cozy-niecka:focus-within {
+  border-color: hsl(var(--primary) / 0.4);
+  background: color-mix(in srgb, hsl(var(--card)) 80%, transparent);
+  box-shadow: inset 0 1px 3px 0 var(--cozy-niecka), 0 0 0 4px hsl(var(--primary) / 0.1);
+}
+
+/* ── Przycisk wezwania (CTA): spokojna, wypełniona pigułka ───────────────── */
+[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta {
+  border: 0;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta::before {
+  display: none;
+}
+[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta:hover {
+  background: hsl(var(--primary) / 0.9);
+  transform: none;
+  box-shadow: none;
+}
+[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta:active {
+  transform: translateY(0) scale(0.98);
+}
+[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* ── Podpowiedzi przy ikonach (3 sekundy: ikona + krótkie słowo) ─────────── */
+.nb-cozy [data-podpowiedz] {
+  position: relative;
+}
+.nb-cozy [data-podpowiedz]:hover::after,
+.nb-cozy [data-podpowiedz]:focus-visible::after {
+  content: attr(data-podpowiedz);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: 6px 11px;
+  border-radius: 10px;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 20px -8px hsl(var(--cozy-cien) / 0.5);
+  animation: nb-cozy-wejscie 0.16s ease-out both;
+}
+
+/* Podpowiedź pod elementem (dla kontrolek przy górnej krawędzi) */
+.nb-cozy [data-podpowiedz][data-pozycja='dol']:hover::after,
+.nb-cozy [data-podpowiedz][data-pozycja='dol']:focus-visible::after {
+  bottom: auto;
+  top: calc(100% + 12px);
+}
+
+/* ── Wejścia i ruch ──────────────────────────────────────────────────────── */
+@keyframes nb-cozy-wejscie {
+  from { opacity: 0; transform: translateX(var(--nb-cozy-x, -50%)) translateY(6px); }
+  to { opacity: 1; transform: translateX(var(--nb-cozy-x, -50%)) translateY(0); }
+}
+.nb-cozy-unos {
+  /* `backwards`, nie `both`: po animacji nie trzymamy transform, więc hover (np. unoszenie strefy) działa */
+  animation: nb-cozy-unos 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--nb-cozy-opoznienie, 0s);
+}
+@keyframes nb-cozy-unos {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Strefa upuszczenia na ekranie startowym */
+.nb-cozy-strefa {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.nb-cozy-strefa:hover {
+  transform: translateY(-2px);
+}
+.nb-cozy-strefa:active {
+  transform: translateY(0) scale(0.995);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-cozy-unos,
+  .nb-cozy-strefa,
+  .nb-cozy [data-podpowiedz]:hover::after {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ═══ Ciemny: dusza NextByte — siatka techniczna, cyjanowa krawędź i poświata szkła ═══ */
+
+/* Siatka marki (jak w tle platformy): linie w kolorze primary, wygaszane ku brzegom.
+   W jasnym motywie zostają same kropki. */
+.nb-cozy-siatka { display: none; }
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-siatka {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, hsl(var(--primary) / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--primary) / 0.05) 1px, transparent 1px);
+  /* maska „latarnia" jak w tle platformy: siatka zanika ku brzegom */
+  -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 90%);
+  mask-image: radial-gradient(circle, #000 10%, transparent 90%);
+}
+/* Delikatna błękitna mgła w rogach — jak w panelu głównym */
+.nb-cozy-poswiata { display: none; }
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-poswiata {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 50% at 0% 0%, hsl(var(--primary) / 0.07), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 100% 100%, hsl(var(--primary) / 0.05), transparent 70%);
+}
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-kropki { display: none; }
+
+/* Szkło paneli: cyjanowy rant, górne światło i miękka poświata marki */
+[data-theme='dark-theme'] .nb-cozy .p2-szklo,
+[data-theme='dark-theme'] .nb-cozy .p2-karta {
+  border-color: hsl(var(--primary) / 0.16);
+  background: color-mix(in srgb, hsl(var(--card)) 78%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 var(--cozy-swiatlo),
+    0 0 40px -12px hsl(var(--primary) / 0.2),
+    0 14px 36px -16px hsl(0 0% 0% / 0.7);
+}
+[data-theme='dark-theme'] .nb-cozy .p2-szklo::before {
+  content: '';
+  position: absolute;
+  inset-inline: 12%;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.55), transparent);
+}
+[data-theme='dark-theme'] .nb-cozy .nb-szklo.nb-powierzchnia {
+  border-color: hsl(var(--primary) / 0.16);
+  box-shadow: inset 0 1px 0 0 var(--cozy-swiatlo), 0 0 36px -12px hsl(var(--primary) / 0.2), 0 14px 32px -16px hsl(0 0% 0% / 0.7);
+}
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-niecka {
+  background: hsl(var(--background) / 0.55);
+  border-color: hsl(var(--primary) / 0.12);
+}
+
+/* Strefa upuszczenia i znak: poświata marki zamiast szarej płyty */
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-strefa {
+  border-color: hsl(var(--primary) / 0.3);
+  /* w pełni kryjące: siatka tła nie może prześwitywać przez strefę */
+  background: color-mix(in srgb, hsl(var(--primary)) 4%, hsl(var(--card)));
+  box-shadow: 0 0 48px -16px hsl(var(--primary) / 0.28);
+}
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-strefa:hover {
+  border-color: hsl(var(--primary) / 0.55);
+  box-shadow: 0 0 56px -10px hsl(var(--primary) / 0.38);
+}
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-strefa[data-nad='true'] {
+  border-color: hsl(var(--primary) / 0.8);
+  background: color-mix(in srgb, hsl(var(--primary)) 9%, hsl(var(--card)));
+}
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-znak {
+  border-color: hsl(var(--primary) / 0.28);
+  box-shadow: 0 0 32px -6px hsl(var(--primary) / 0.4);
+}
+
+/* Paski nad zdjęciem (akcje, prompter): ten sam cyjanowy rant co panele */
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-plyta {
+  border-color: hsl(var(--primary) / 0.18);
+  box-shadow: inset 0 1px 0 0 var(--cozy-swiatlo), 0 0 36px -12px hsl(var(--primary) / 0.22), 0 14px 32px -16px hsl(0 0% 0% / 0.7);
+}
