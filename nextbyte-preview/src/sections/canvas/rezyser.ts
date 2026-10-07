@@ -24,7 +24,7 @@ import { INTENCJE, type Intencja } from './tryby-edycji'
  */
 export const MODEL_REZYSERA = 'gemini-2.5-flash'
 export const KONFIG_REZYSERA = {
-  temperature: 0.1,
+  temperature: 0,
   maxOutputTokens: 8192,
   responseMimeType: 'application/json',
   thinkingConfig: { thinkingBudget: 512 },
