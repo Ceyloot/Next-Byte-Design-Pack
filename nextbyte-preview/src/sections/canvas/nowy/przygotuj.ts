@@ -105,7 +105,11 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   if (plan.skala) dopiski.push(zdanieOSkali(plan.skala))
   zbliz.forEach((z, k) => dopiski.push(`Image ${referencje.length + 2 + k} is a close-up of the face of the person in Image ${z.zdjecie} — the identity reference: reproduce exactly this face, feature by feature.`))
   if (!/blur/i.test(plan.prompt)) dopiski.push('Keep everything sharp — no blur or softening.')
-  const prompt = [plan.prompt, ...dopiski].join('\n\n')
+  // Numery obrazów nadaje kod, nie agent: [BASE] = Image 1, [REF1] = Image 2 … (kolejność jak w tablicy obrazów wysyłanej do modelu)
+  const poNumerach = plan.prompt
+    .replace(/\[BASE\]/g, 'Image 1')
+    .replace(/\[REF(\d+)\]/g, (_m, n: string) => `Image ${Number(n) + 1}`)
+  const prompt = [poNumerach, ...dopiski].join('\n\n')
 
   return { typ: 'gotowe', baza, obrazy, prompt, opis: plan.plan || `Zadanie: ${plan.zadanie}.`, zrodlo: 'agent' }
 }
