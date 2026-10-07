@@ -147,12 +147,9 @@ export function tekstPytania(p: PytanieAgenta): string {
  * Zdanie o rozmiarze. Rozmiar liczy KOD, nie agent: agent wskazuje tylko kotwicę (ciasna ramka rzeczy o znanym wymiarze, stojącej na tej samej
  * głębokości co miejsce) i podaje prawdziwe wymiary kotwicy i obiektu w metrach; piksele i procenty wynikają z proporcji.
  */
-export function zdanieOSkali(skala: NonNullable<PlanAgenta['skala']>, szerPx: number, wysPx: number): string {
-  const [ymin, xmin, ymax, xmax] = skala.kotwica.box
-  const kotwicaPx = skala.kotwica.os === 'wys' ? ((ymax - ymin) / 1000) * wysPx : ((xmax - xmin) / 1000) * szerPx
+export function zdanieOSkali(skala: NonNullable<PlanAgenta['skala']>): string {
   const stosunek = skala.obiekt.metry / skala.kotwica.metry
-  const dlugoscPx = kotwicaPx * stosunek
-  const procent = Math.max(1, Math.round((dlugoscPx / szerPx) * 100))
   const razy = stosunek >= 10 ? Math.round(stosunek) : Math.round(stosunek * 10) / 10
-  return `SIZE: measured in Image 1, the longest visible side of the finished subject is about ${procent}% of the image width — about ${razy}× the ${skala.kotwica.os === 'wys' ? 'height' : 'width'} of ${skala.kotwica.opis || 'the reference object'} that stands at the same distance from the camera. It is exactly that big because of its distance from the camera — never take its size from the reference photo.`
+  const wymiar = skala.kotwica.os === 'wys' ? 'height' : 'width'
+  return `SIZE: scale the subject proportionally to its surroundings, as a real one standing at that spot would look from this camera — about ${razy}× the ${wymiar} of ${skala.kotwica.opis || 'the nearby reference object'} that stands at the same distance (the subject is about ${skala.obiekt.metry} m long in reality). Never take its size from the reference photo.`
 }
