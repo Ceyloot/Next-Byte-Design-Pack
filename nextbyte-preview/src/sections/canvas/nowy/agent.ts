@@ -135,11 +135,16 @@ export function tekstPytania(p: PytanieAgenta): string {
 }
 
 /** Zdanie o rozmiarze z ramki skali: liczby z agenta zamienione na słowa dla modelu obrazu. */
-export function zdanieOSkali(skala: { box: Ramka; uzasadnienie: string }): string {
+export function zdanieOSkali(skala: { box: Ramka; uzasadnienie: string }, proporcjeZdjecia = 1): string {
   const [ymin, xmin, ymax, xmax] = skala.box
   const szer = Math.round((xmax - xmin) / 10)
   const wys = Math.round((ymax - ymin) / 10)
   const x = ((xmin + xmax) / 2000).toFixed(2)
   const y = (ymax / 1000).toFixed(2)
-  return `SIZE: in Image 1 the finished subject spans about ${szer}% of the image width and ${wys}% of its height, its lowest point touching the ground at about x=${x} y=${y}. It is exactly that big because of its distance from the camera — never take its size from the reference photo.`
+  // Ramka 0–1000 jest liczona osobno na każdej osi: proporcje w pikselach = (szer / wys) · (szerokość zdjęcia / wysokość zdjęcia).
+  // Rzecz o skrajnych proporcjach (np. auto 8% × 20% na zdjęciu pionowym) to prawie na pewno pomyłka — wtedy podajemy tylko szerokość.
+  const proporcje = wys > 0 ? (szer / wys) * proporcjeZdjecia : 1
+  const wiarygodne = proporcje >= 0.3 && proporcje <= 3.5
+  const rozmiar = wiarygodne ? `about ${szer}% of the image width and ${wys}% of its height` : `about ${szer}% of the image width (keep its natural real-world proportions)`
+  return `SIZE: in Image 1 the finished subject spans ${rozmiar}, its lowest point touching the ground at about x=${x} y=${y}. It is exactly that big because of its distance from the camera — never take its size from the reference photo.`
 }

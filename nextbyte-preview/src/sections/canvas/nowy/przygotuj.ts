@@ -58,7 +58,7 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   const obrazyAgenta = await Promise.all(
     zdjecia.map(async (l, i) => ({
       nr: i + 1,
-      nazwa: l.name,
+      nazwa: `${l.name} — ${l.naturalWidth}×${l.naturalHeight} px`,
       dane: (await narysujMapeMiejsc(l, w.pineski)) || (await zmniejszDoAnalizy(l.src)) || l.src,
     })),
   )
@@ -102,7 +102,7 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
 
   // Prompt agenta + to, co deterministyczne: liczby ze skali, opis zbliżeń, zabezpieczenie przed rozmyciem
   const dopiski: string[] = []
-  if (plan.skala) dopiski.push(zdanieOSkali(plan.skala))
+  if (plan.skala) dopiski.push(zdanieOSkali(plan.skala, baza.naturalWidth / baza.naturalHeight))
   zbliz.forEach((z, k) => dopiski.push(`Image ${referencje.length + 2 + k} is a close-up of the face of the person in Image ${z.zdjecie} — the identity reference: reproduce exactly this face, feature by feature.`))
   if (!/blur/i.test(plan.prompt)) dopiski.push('Keep everything sharp — no blur or softening.')
   // Numery obrazów nadaje kod, nie agent: [BASE] = Image 1, [REF1] = Image 2 … (kolejność jak w tablicy obrazów wysyłanej do modelu)
