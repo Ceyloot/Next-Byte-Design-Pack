@@ -1,5 +1,5 @@
 import { ZABLOKOWANY_MODEL_POSTACI } from './prompty/zablokowane/character-swap'
-import { dopasujWymiary, dopasujWymiaryGpt } from './formaty-modelu'
+import { dopasujWymiary } from './formaty-modelu'
 /**
  * Proxy do Runware jako wtyczka Vite.
  *
@@ -113,11 +113,13 @@ export function runwareProxy(): Plugin {
         zadanie.obrazy ??= []
 
         const gpt = zadanie.model === 'gptimage2'
-        const { width, height } = (gpt ? dopasujWymiaryGpt : dopasujWymiary)(zadanie.szerokosc, zadanie.wysokosc)
         // Operacje na ludziach — Gemini 3.1. Character swap: ZABLOKOWANY_MODEL_POSTACI (zablokowane/character-swap.ts), nie zmieniać.
         const modelZadania =
           gpt ? MODEL_GPT_IMAGE : zadanie.model === 'pro' ? 'google:4@2' : zadanie.model === 'nb2' ? 'google:4@3' : zadanie.model === 'lite' ? model : zadanie.klasa === 'postac' ? ZABLOKOWANY_MODEL_POSTACI : zadanie.klasa === 'gemini31' ? 'google:4@3' : model
-        console.info(`[canvas] generacja modelem ${modelZadania}`)
+        // Wymiary z listy obsługiwanej przez TEN model (listy różnią się: Pro nie przyjmuje skrajnych formatów, żaden nie przyjmuje 672×1584)
+        const typWymiarow = gpt ? 'gpt' : modelZadania === 'google:4@2' ? 'pro' : modelZadania === 'google:4@3' ? 'nb2' : 'lite'
+        const { width, height } = dopasujWymiary(zadanie.szerokosc, zadanie.wysokosc, typWymiarow)
+        console.info(`[canvas] generacja modelem ${modelZadania}, ${width}×${height}`)
 
         // Rola i temperatura idą w `settings`, tak jak w edge functions Studia Zdjęć.
         const settings: Record<string, unknown> = {}

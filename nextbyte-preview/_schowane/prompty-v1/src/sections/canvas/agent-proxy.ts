@@ -29,8 +29,6 @@ import {
   type PomiarSkali,
   type Prostokat,
 } from './rezyser'
-import { INSTRUKCJA_AGENTA, trescZapytaniaAgenta } from './nowy/agent-instrukcja'
-import { odczytajPlanAgenta, type ZapytanieDoAgenta } from './nowy/agent'
 
 const ENDPOINT_CZAT = 'https://api.runware.ai/v1/chat/completions'
 
@@ -428,34 +426,6 @@ export function agentProxy(): Plugin {
         }
       })
     }
-
-    // NOWY SYSTEM: jedno wywołanie agenta z obrazami — rozumie polecenie, dopytuje albo pisze krótki prompt, podaje ramki i skalę.
-    odpowiedzNa('/api/canvas/agent', async dane => {
-      const z = JSON.parse(dane) as ZapytanieDoAgenta
-      if (!z.tekst?.trim() || !z.obrazy?.length) return { status: 400, cialo: { blad: 'Brak polecenia albo zdjęć' } }
-      const tresci: unknown[] = []
-      for (const o of z.obrazy) {
-        tresci.push({ type: 'text', text: `[Image ${o.nr}: "${o.nazwa}", pins drawn]` })
-        tresci.push({ type: 'image_url', image_url: { url: o.dane } })
-      }
-      tresci.push({ type: 'text', text: trescZapytaniaAgenta(z) })
-      // Jedna ponowna próba (koszt!): druga z wyższą temperaturą i bez „myślenia”, gdy pierwsza odpowiedź jest nieczytelna
-      let plan: ReturnType<typeof odczytajPlanAgenta> = null
-      let powod = ''
-      for (let proba = 0; proba < 2 && !plan; proba++) {
-        const konfig = proba === 0
-          ? { temperature: 0.2, maxOutputTokens: 6144, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 1024 } }
-          : { temperature: 0.4, maxOutputTokens: 8192, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } }
-        const wynik = await zapytajAgenta(INSTRUKCJA_AGENTA, tresci, MODEL_REZYSERA, konfig)
-        if (wynik.blad) return { status: 502, cialo: { blad: wynik.blad } }
-        powod = wynik.powod ?? powod
-        plan = odczytajPlanAgenta(wynik.json, z.obrazy.length)
-        if (!plan) console.warn(`[canvas] agent: nieczytelny plan, próba ${proba + 1}/2`)
-      }
-      if (!plan) return { status: 502, cialo: { blad: `Agent nie zwrócił użytecznego planu${powod ? ` — ${powod}` : ''}` } }
-      console.info('[canvas] agent:', plan.pytanie ? `PYTANIE: ${plan.pytanie.tresc}` : `${plan.zadanie}, baza ${plan.baza}, refs ${plan.referencje.map(r => r.nr).join(',') || '—'}, skala ${plan.skala ? 'tak' : 'nie'}`)
-      return { status: 200, cialo: plan }
-    })
 
     odpowiedzNa('/api/canvas/planuj', async dane => {
       const z = JSON.parse(dane) as ZadaniePlanu

@@ -75,7 +75,6 @@ import {
 } from '@/sections/canvas/polecenia'
 import { SYSTEM_POPRAWKI, promptPoprawki } from '@/sections/canvas/prompty/operacje/character-swap-studio'
 import { trybPromptuPostaci } from '@/sections/canvas/prompty/postac-pdf'
-import { przygotujZAgentem } from '@/sections/canvas/nowy'
 import { narysujMapeMiejsc, narysujObszary, zlozWklejke } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
@@ -1108,71 +1107,9 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     }
   }, [projekt.tekst, wielu, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
 
-  /**
-   * NOWY SYSTEM PROMPTOWANIA (domyślny): agent z oczami (jedno wywołanie Gemini) rozumie polecenie i pinezki, dopytuje ludzkim językiem
-   * albo pisze krótki prompt pod model obrazu; kod wycina referencje (osoba, twarz, rzecz), dopisuje liczby ze skali i wysyła.
-   * Odpowiedź na pytanie agenta wpisujesz w czacie — następne „Wyślij” jest wtedy odpowiedzią (póki pinezki się nie zmienią).
-   * Warstwy i zasady: `canvas/nowy/README.md`. Stary system: `_schowane/prompty-v1`, tag git `prompty-v1`.
-   */
-  const rozmowaAgenta = useRef<{ zadanie: string; pytanie: string; historia: { pytanie: string; odpowiedz: string }[]; odcisk: string } | null>(null)
-  const uruchomNowySystem = useCallback(async () => {
-    if (refGeneruje.current) return
-    const tekst = projekt.tekst.trim()
-    if (!tekst) return
-    const obrazyNaPlotnie = projekt.warstwy.filter(w => w.type === 'image' && !w.generator && w.src)
-    const odcisk = odciskPinesek(projekt.pineski)
-    const rozmowa = rozmowaAgenta.current?.odcisk === odcisk ? rozmowaAgenta.current : null
-    const tekstZadania = rozmowa ? rozmowa.zadanie : tekst
-    const historia = rozmowa ? [...rozmowa.historia, { pytanie: rozmowa.pytanie, odpowiedz: tekst }] : []
-    refGeneruje.current = true
-    setStanGeneracji({ faza: 'planuje' })
-    try {
-      const p = await przygotujZAgentem({
-        tekst: tekstZadania,
-        pineski: projekt.pineski,
-        warstwy: obrazyNaPlotnie,
-        zaznaczone: wielu.map(w => w.id),
-        wybrana: wybranaWarstwa,
-        historia,
-      })
-      if (p.typ === 'pytanie') {
-        rozmowaAgenta.current = { zadanie: tekstZadania, pytanie: p.pytanie.tresc, historia, odcisk }
-        setStanGeneracji({ faza: 'pyta', pytanie: { tresc: p.tekst, opcje: [], odcisk } })
-        return
-      }
-      if (p.typ === 'blad') {
-        setStanGeneracji({ faza: 'blad', tresc: p.blad })
-        return
-      }
-      rozmowaAgenta.current = null
-      setStanGeneracji({ faza: 'trwa', plan: p.opis, tryb: 'referencje' })
-      startDucha(p.baza, 'Generuję…')
-      setOstatniPrompt(p.prompt)
-      const wynik = await generuj({
-        polecenie: p.prompt,
-        obrazy: p.obrazy,
-        szerokosc: p.baza.naturalWidth,
-        wysokosc: p.baza.naturalHeight,
-        model: modelObrazu === 'auto' ? 'nb2' : modelObrazu,
-        studio: true,
-      })
-      const src = await dopasujFormatDoObrazu(wynik.obrazUrl, p.baza.naturalWidth, p.baza.naturalHeight)
-      const nazwa = nazwijWynik(tekstZadania, projekt.pineski)
-      dodajZeZrodla(src, nazwa, 'wynik', p.baza)
-      setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `${p.opis} (${p.zrodlo === 'agent' ? 'prompt od agenta' : 'szablon'})` } })
-    } catch (e) {
-      setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
-    } finally {
-      usunDucha()
-      refGeneruje.current = false
-    }
-  }, [projekt.tekst, projekt.warstwy, projekt.pineski, wielu, wybranaWarstwa, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
-
   const uruchomGeneracje = useCallback(async () => {
     if (refGeneruje.current) return
     if (trybReferencji) return uruchomZReferencjami()
-    // domyślnie nowy system promptowania (gdy jest zdjęcie do edycji); stary kod poniżej zostaje nieużywany do czasu usunięcia
-    if (warstwaZrodlowa) return uruchomNowySystem()
     if (!warstwaZrodlowa) {
       // Brak zdjęcia: czysta generacja z opisu (text-to-image)
       const opis = projekt.tekst.trim()
@@ -1873,7 +1810,6 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     }
   }, [
     trybReferencji,
-    uruchomNowySystem,
     uruchomZReferencjami,
     startDucha,
     usunDucha,

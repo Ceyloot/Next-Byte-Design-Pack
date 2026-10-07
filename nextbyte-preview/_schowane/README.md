@@ -4,6 +4,10 @@ Kod odpięty z aplikacji, ale zachowany. Leży poza `src/`, więc Vite i
 TypeScript go nie widzą — nic nie kompiluje się na próżno i nic nie zaśmieca
 interfejsu.
 
+## prompty-v1/
+
+Archiwum starego systemu promptowania Canvasa i logiki pinesek (migawka z 7.10.2026, tag git `prompty-v1`). Opis i sposób powrotu: `prompty-v1/README.md`.
+
 ## edytor/ + EdytorSection.tsx
 
 Edytor designerski: kanwa wektorowa, parametryczne wypełnienia i cienie,
