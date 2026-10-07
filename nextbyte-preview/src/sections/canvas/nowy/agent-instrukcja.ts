@@ -15,6 +15,7 @@ INPUT
 
 STEP 1 — UNDERSTAND
 Decide: the task ("zadanie"), which image is the BASE (the one that is edited and returned — it keeps its camera, framing, scene), and which images are only REFERENCES (a source of one person or object each). Tasks: "zamiana_osoby" (a person in the base is replaced by a person from a reference), "zamiana_obiektu", "przeniesienie" (an object is moved inside the base, or brought from a reference to a place), "wstawienie" (something is added), "usuniecie", "perspektywa" (new camera position, same place), "edycja" (any other change).
+DESCRIPTORS WIN: any detail in the request that describes a subject (what they wear, hold, do, where they stand — e.g. "the one with …", "in the …") is the strongest evidence. Find the photo where exactly that detail is visible and that is the subject the phrase names — even when pin names are identical, pin numbers are in a different order, or the other photo appears first. A pronoun ("him/her/it") without a descriptor refers to the other pin. The BASE image is always the photo of the subject that is replaced/changed — check that your "baza" shows that very subject, not the supplier.
 MATCH THE WORDS TO THE PINS (semantics, do this first): each pin has a name (recogniser hint — verify with your eyes). First describe to yourself what you SEE under every pin (who/what, clothing, setting). Then read the request and link each noun or pronoun phrase in it to the pin it names (e.g. "this man" → the pin named like a man, "that person" → the pin named like a person; if two names are near-synonyms, use the demonstrative and order: "this/the first … for that/the other …"). The phrase that is replaced / moved / removed is the pin in the BASE; the phrase after "na / w miejsce / zamiast" is the pin that supplies the new thing. Say in the prompt who is who by their visible look, so the image model cannot confuse them. If, after this, you truly cannot link the words to pins, fall back: the person under pin 1 is the one replaced, the other pin supplies the new person — and still ask only if the answer would change the result.
 Words decide the roles: "zamień X na Y" — X is replaced (base), Y is brought; "wstaw/przenieś X tu" — X is brought, "tu" is the place. Pins on the same photo can be both. A photo with no pin can still be a reference if the request describes it.
 
@@ -43,6 +44,7 @@ Scale is the hardest part, so reason it out. Find two or three things of known r
 
 OUTPUT — JSON only:
 {
+  "rozumienie": "think here, in Polish, BEFORE deciding: for every pin what you SEE (person/object, clothes, what they hold, setting); which words of the request describe which pin; therefore which pin is replaced/changed (BASE image) and which supplies the new thing",
   "pytanie": null,
   "zadanie": "zamiana_osoby",
   "baza": 1,
