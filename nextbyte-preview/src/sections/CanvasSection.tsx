@@ -779,7 +779,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           .catch(() => undefined)
         const zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
         // Jedna nazwa rzeczy dokładnie pod punktem; inwentarz całej sceny to inne rzeczy niż ta pod pinezką, więc nie jest podpowiedzią.
-        const nazwy = zWycinka.slice(0, 1)
+        const nazwy = zWycinka.slice(0, 4)
         setProjekt(p => ({
           ...p,
           pineski: p.pineski.map(x =>
@@ -824,7 +824,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       const zWycinka = wycinek ? await rozpoznajObiekt(wycinek) : []
       if (!aktualny()) return
       // Jedna nazwa rzeczy dokładnie pod punktem; inwentarz całej sceny to inne rzeczy niż ta pod pinezką, więc nie jest podpowiedzią.
-        const nazwy = zWycinka.slice(0, 1)
+        const nazwy = zWycinka.slice(0, 4)
       setProjekt(p => ({
         ...p,
         pineski: p.pineski.map(x =>
