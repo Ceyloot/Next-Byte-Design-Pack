@@ -40,7 +40,6 @@ import { GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIc
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { BYTE_ZA_OBRAZ } from './dostawca'
-import { KLUCZ_PROMPTU_POSTACI, trybPromptuPostaci, type TrybPromptuPostaci } from './prompty/postac-pdf'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
 import type { OpcjaRol } from './role-z-polecenia'
@@ -204,12 +203,6 @@ export function CzatCanvas({
   // Jedno menu naraz: plus (dodawanie), modele
   const [menu, setMenu] = useState<null | 'plus' | 'modele'>(null)
   const [odswiez, setOdswiez] = useState(0)
-  // TEST: długość promptu przy zmianach postaci — krótki (jak Lovart) albo pełny z PDF Studia; czytany przy generacji z localStorage
-  const [promptPostaci, setPromptPostaci] = useState<TrybPromptuPostaci>(() => trybPromptuPostaci())
-  const zmienPromptPostaci = (t: TrybPromptuPostaci) => {
-    setPromptPostaci(t)
-    try { localStorage.setItem(KLUCZ_PROMPTU_POSTACI, t) } catch { /* bez pamięci wybór działa do odświeżenia */ }
-  }
   const [nagrywa, setNagrywa] = useState(false)
   const rozpoznawanie = useRef<{ stop: () => void } | null>(null)
   const przelaczNagrywanie = () => {
@@ -601,7 +594,7 @@ export function CzatCanvas({
           <div className="rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[11.5px] text-foreground">
             <div className="mb-2 flex items-start gap-2">
               <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span className="font-semibold leading-snug">{stanGeneracji.pytanie.tresc}</span>
+              <span className="whitespace-pre-line font-semibold leading-snug">{stanGeneracji.pytanie.tresc}</span>
             </div>
             <div className="flex flex-col gap-1.5">
               {stanGeneracji.pytanie.opcje.map(opcja => (
@@ -689,21 +682,6 @@ export function CzatCanvas({
                 else setOdswiez(n => n + 1)
               }}
             />
-          </div>
-          {/* TEST: długość promptu przy zamianie postaci i twarzy — krótki (jak Lovart) albo pełny z PDF Studia */}
-          <div className="mb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground" title="Test: jak długi prompt idzie do modelu przy zamianie postaci i twarzy">
-            <span>Prompt postaci</span>
-            {([['krotki', 'Krótki'], ['pdf', 'Pełny (PDF)']] as const).map(([id, et]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => zmienPromptPostaci(id)}
-                aria-pressed={promptPostaci === id}
-                className={cn('rounded-lg px-2 py-0.5 font-medium transition-colors', promptPostaci === id ? 'bg-primary/[0.12] text-primary' : 'hover:bg-foreground/[0.07] hover:text-foreground')}
-              >
-                {et}
-              </button>
-            ))}
           </div>
           {/* W odniesieniu do czego jest polecenie: zaznaczone zdjęcie i pinezki — każda z miniaturą swojego zdjęcia */}
           {(zaznaczona || pineski.length > 0 || zaznaczoneWarstwy.length >= 2) && (

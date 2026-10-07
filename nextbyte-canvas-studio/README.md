@@ -2,6 +2,10 @@
 
 Kompletny edytor zdjęć AI z pinezkami (Canvas) wyjęty z platformy NextByte: kod, prompty, serwery pośredniczące, style Liquid Glass, konfiguracja i lista zależności w jednym folderze. Uruchamia się samodzielnie i da się go przenieść do platformy 1:1.
 
+## Uwaga: nowy system promptowania jest domyślny
+
+Generacja ze zdjęcia idzie teraz przez **agenta** (jedno wywołanie Gemini: dopytuje po ludzku albo pisze krótki prompt, podaje ramki i skalę) i przygotowanie zdjęć w kodzie — opis w `src/sections/canvas/nowy/README.md`. Poniższy opis przepływu dotyczy starego systemu (archiwum: tag git `prompty-v1`, folder `_schowane/prompty-v1` w repozytorium platformy).
+
 ## Szybki start
 
 ```bash
