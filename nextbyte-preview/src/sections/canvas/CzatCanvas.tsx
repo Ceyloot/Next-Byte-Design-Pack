@@ -31,6 +31,8 @@ import {
   Clipboard,
   X,
   Zap,
+  Paintbrush,
+  ImagePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
@@ -66,6 +68,11 @@ export interface WiadomoscCzatu {
 interface Props {
   pineski: Pineska[]
   warstwy: Warstwa[]
+  /** zaznaczone zdjęcie na płótnie — pokazujemy je w kompozytorze jako „w odniesieniu do” */
+  wybranaWarstwa: string | null
+  /** wiele zaznaczonych zdjęć (≥2) = referencje generacji bez pinesek */
+  zaznaczoneWarstwy: Warstwa[]
+  onOdznaczWarstwe: () => void
   tekst: string
   onTekst: (t: string) => void
   onWybierzPineske: (id: string | null) => void
@@ -80,7 +87,6 @@ interface Props {
   intencja: Intencja
   uwagi: Uwaga[]
   podgladPolecenia: string
-  onWstawNaPlotno: (url: string, nazwa: string) => void
   /** odpowiedź na pytanie o role pinesek (poziom 4) — od razu uruchamia generację */
   onOdpowiedzRol: (opcja: OpcjaRol) => void
   modelObrazu: ModelObrazu
@@ -112,6 +118,15 @@ const MODELE_OBRAZU = [
 ] as const
 
 /** Mały przycisk narzędzia — kształt i obwódka jak przyciski „Ustawienia” / „Aa” w górnym pasku nawigacji. */
+/** Mała miniatura zdjęcia w chipie odniesienia (promień 4px = 8px chipa − 4px). */
+function Miniatura({ src }: { src: string }) {
+  return src ? (
+    <img src={src} alt="" className="h-5 w-5 shrink-0 rounded-[4px] object-cover ring-1 ring-foreground/15" />
+  ) : (
+    <span className="h-5 w-5 shrink-0 rounded-[4px] bg-foreground/10" />
+  )
+}
+
 const NARZEDZIE =
   'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] p-0 text-foreground/55 transition-all duration-200 hover:border-foreground/20 hover:text-foreground'
 
@@ -160,6 +175,9 @@ const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
 export function CzatCanvas({
   pineski,
   warstwy,
+  wybranaWarstwa,
+  zaznaczoneWarstwy,
+  onOdznaczWarstwe,
   tekst,
   onTekst,
   onWybierzPineske,
@@ -173,7 +191,6 @@ export function CzatCanvas({
   trwa,
   intencja,
   uwagi,
-  onWstawNaPlotno,
   onOdpowiedzRol,
   modelObrazu,
   onModelObrazu,
@@ -183,6 +200,7 @@ export function CzatCanvas({
   onWklejZeSchowka,
   onDodajZAdresu,
 }: Props) {
+  const zaznaczona = warstwy.find(w => w.id === wybranaWarstwa && w.type === 'image' && !w.generator && w.src) ?? null
   // Jedno menu naraz: plus (dodawanie), modele
   const [menu, setMenu] = useState<null | 'plus' | 'modele'>(null)
   const [odswiez, setOdswiez] = useState(0)
@@ -329,11 +347,14 @@ export function CzatCanvas({
   const wyslij = () => {
     if (trwa || !tekst.trim() || powodBlokady) return
     const aktualnyTekst = tekst.trim()
-    const pinySnap = pineski.map((p, idx) => ({
-      id: p.id,
-      label: etykietaPineski(p, idx + 1),
-      numer: idx + 1,
-    }))
+    const pinySnap =
+      pineski.length === 0 && zaznaczoneWarstwy.length >= 2
+        ? zaznaczoneWarstwy.map((w, idx) => ({ id: w.id, label: w.name, numer: idx + 1 }))
+        : pineski.map((p, idx) => ({
+            id: p.id,
+            label: etykietaPineski(p, idx + 1),
+            numer: idx + 1,
+          }))
 
     setHistoriaWiadomosci(prev => [
       ...prev,
@@ -453,6 +474,36 @@ export function CzatCanvas({
 
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none">
+        {historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
+          <div className="flex h-full flex-col justify-center gap-4 px-1 pb-6">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <span className="grid h-11 w-11 place-items-center rounded-[14px] border border-primary/25 bg-[hsl(var(--primary)/0.10)] text-primary shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.12)]">
+                <Sparkles className="h-5 w-5" />
+              </span>
+              <p className="text-[14px] font-semibold text-foreground">Zacznij od zdjęcia</p>
+              <p className="max-w-[260px] text-[12px] leading-relaxed text-muted-foreground">
+                Wgraj zdjęcie na płótno, zaznacz miejsce i opisz, co ma się zmienić.
+              </p>
+            </div>
+            <ul className="space-y-1.5">
+              {[
+                { ikona: ImagePlus, tytul: 'Wgraj lub wklej zdjęcie', opis: 'Przeciągnij plik albo Ctrl+V' },
+                { ikona: Paintbrush, tytul: 'Inpaint i Eraser', opis: 'Zaznacz zdjęcie → pasek akcji nad nim' },
+                { ikona: Pin, tytul: 'Pinezka', opis: 'Ctrl+klik wskazuje obiekt lub miejsce' },
+              ].map(({ ikona: Ik, tytul, opis }) => (
+                <li key={tytul} className="flex items-center gap-3 rounded-xl border border-foreground/[0.08] bg-[color-mix(in_srgb,hsl(var(--card))_45%,transparent)] px-3 py-2.5">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px] border border-foreground/[0.10] bg-foreground/[0.05] text-foreground/70">
+                    <Ik className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[12.5px] font-medium text-foreground/90">{tytul}</span>
+                    <span className="block text-[11px] text-muted-foreground">{opis}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {historiaWiadomosci.map(msg => (
           <div
             key={msg.id}
@@ -463,7 +514,7 @@ export function CzatCanvas({
           >
             {/* Wiadomość użytkownika */}
             {msg.rola === 'uzytkownik' && (
-              <div className="max-w-[88%] rounded-xl border border-foreground/20 bg-[hsl(var(--foreground)/0.05)] px-4 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))]">
+              <div className="max-w-[88%] rounded-2xl rounded-br-md border border-primary/25 bg-[hsl(var(--primary)/0.10)] px-3.5 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))] shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.08)]">
                 <p className="leading-relaxed">{msg.tresc}</p>
                 {msg.pineskiSnap && msg.pineskiSnap.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1">
@@ -481,69 +532,23 @@ export function CzatCanvas({
               </div>
             )}
 
-            {/* Odpowiedź asystenta */}
+            {/* Odpowiedź asystenta: sam obraz (wynik sam ląduje na płótnie) + zapis po najechaniu */}
             {msg.rola === 'asystent' && (
-              <div className="w-full space-y-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[13.5px] text-[hsl(var(--foreground))]">
-                {msg.tresc && <p className="text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
-
-                {/* Wygenerowany obraz z opcjami */}
+              <div className="w-full space-y-2">
+                {msg.tresc && <p className="px-1 text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
                 {msg.obrazUrl && (
-                  <div className="mt-1 space-y-2">
-                    {msg.model && (
-                      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{msg.model}</p>
-                    )}
-                    <div className="relative w-full overflow-hidden rounded-lg border border-foreground/[0.12] bg-foreground/[0.05]">
-                      <img
-                        src={msg.obrazUrl}
-                        alt="Wynik generacji"
-                        className="mx-auto max-h-[240px] w-full object-contain"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10.5px]">
-                      <span className="max-w-[170px] truncate font-mono text-[10.5px] text-foreground/80">
-                        {msg.nazwaWyniku || 'Wygenerowany obraz'}
-                      </span>
-                      {msg.ocena && (
-                        <span
-                          className={cn(
-                            'font-medium flex items-center gap-1',
-                            msg.ocena.wykonane && !msg.ocena.znaczniki ? 'text-emerald-500' : 'nb-tekst-bledu',
-                          )}
-                        >
-                          {msg.ocena.wykonane && !msg.ocena.znaczniki ? (
-                            <>
-                              <Check className="h-3 w-3" /> Zadanie wykonane
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle className="h-3 w-3" /> Do poprawy
-                            </>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    {msg.ocena && msg.ocena.tekst && (
-                      <p className="text-[10.5px] leading-snug text-muted-foreground">{msg.ocena.tekst}</p>
-                    )}
-
-                    <div className="flex items-center gap-1.5 pt-1">
-                      <button
-                        onClick={() => onWstawNaPlotno(msg.obrazUrl!, msg.nazwaWyniku || 'Wynik AI')}
-                        className="nb-cta nb-refleks-krawedzi flex h-9 flex-1 items-center justify-center gap-2 rounded-xl text-[12px] font-semibold"
-                      >
-                        <Layers className="h-3.5 w-3.5 text-primary" />
-                        Wstaw na płótno
-                      </button>
-                      <button
-                        onClick={() => window.open(msg.obrazUrl, '_blank')}
-                        className={NARZEDZIE + ' h-9 w-9'}
-                        title="Otwórz pełny obraz"
-                        aria-label="Otwórz pełny obraz"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                  <div className="group relative overflow-hidden rounded-2xl border border-foreground/[0.10] bg-foreground/[0.04] shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.10),0_8px_24px_-12px_hsl(0_0%_0%/0.35)]">
+                    <img src={msg.obrazUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl" />
+                    <img src={msg.obrazUrl} alt="Wynik generacji" className="nb-obraz-wejscie relative mx-auto max-h-[300px] w-full object-contain" />
+                    <a
+                      href={msg.obrazUrl}
+                      download={`${(msg.nazwaWyniku || 'nextbyte').replace(/[^\w.-]+/g, '_')}.jpg`}
+                      title="Zapisz obraz"
+                      aria-label="Zapisz obraz"
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-[10px] border border-foreground/[0.12] bg-[hsl(var(--background)/0.62)] text-foreground/80 opacity-0 backdrop-blur-md transition-all duration-150 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
                   </div>
                 )}
               </div>
@@ -553,21 +558,31 @@ export function CzatCanvas({
 
         {/* Trwający proces generacji / stan */}
         {trwa && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[12px] text-foreground">
+          <div role="status" aria-live="polite" className="flex items-start gap-2.5 rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[12px] text-foreground">
             <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <p className="font-semibold text-[11.5px]">
                 {stanGeneracji.faza === 'planuje' && 'Asystent analizuje scenę i mapę miejsc...'}
-                {stanGeneracji.faza === 'trwa' && 'Runware generuje obraz z zachowaniem skali...'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting' && 'Maluję zaznaczony obszar…'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator' && 'Generuję obraz z opisu…'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'referencje' && (stanGeneracji.plan ?? 'Generuję z referencji…')}
+                {stanGeneracji.faza === 'trwa' && !stanGeneracji.tryb && 'Runware generuje obraz z zachowaniem skali...'}
                 {stanGeneracji.faza === 'sprawdza' && 'Weryfikacja spójności kadru i oświetlenia...'}
                 {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
                 {stanGeneracji.faza === 'koryguje' && `Poprawiam rozmiar i miejsce: ${stanGeneracji.powod}`}
               </p>
               <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
-                {stanGeneracji.faza === 'trwa' && stanGeneracji.role
-                  ? stanGeneracji.role
-                  : 'Nie ruszam nieoznaczonych elementów sceny.'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting'
+                  ? 'Model pracuje na fragmencie wokół zaznaczenia — reszta zdjęcia zostaje bez zmian.'
+                  : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'referencje'
+                    ? 'Wszystkie zaznaczone zdjęcia idą do modelu jako referencje.'
+                    : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator'
+                    ? 'Tworzę nowe zdjęcie od zera, wyłącznie z Twojego opisu.'
+                    : stanGeneracji.faza === 'trwa' && stanGeneracji.role
+                      ? stanGeneracji.role
+                      : 'Nie ruszam nieoznaczonych elementów sceny.'}
               </p>
+              <div className="nb-pasek-pracy mt-2.5" aria-hidden />
             </div>
           </div>
         )}
@@ -596,11 +611,11 @@ export function CzatCanvas({
 
         {/* Błąd generacji */}
         {stanGeneracji.faza === 'blad' && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-[11.5px] text-foreground">
+          <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-[11.5px] text-foreground">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 nb-tekst-bledu" />
-            <div className="flex-1">
-              <span className="font-semibold block">Błąd generacji:</span>
-              <span className="text-[10.5px] text-muted-foreground leading-relaxed">
+            <div className="min-w-0 flex-1">
+              <span className="block font-semibold">Błąd generacji</span>
+              <span className="mt-0.5 block break-words text-[10.5px] leading-relaxed text-muted-foreground">
                 {stanGeneracji.tresc}
               </span>
             </div>
@@ -666,32 +681,64 @@ export function CzatCanvas({
               }}
             />
           </div>
-          {pineski.length > 0 && (
-            <div className="mb-2 flex flex-wrap items-center gap-1">
-              {pineski.map((p, idx) => (
-                <span
-                  key={p.id}
-                  className="p2-kontrolka group flex items-center overflow-hidden text-[11px] font-medium p2-cichy"
-                >
+          {/* W odniesieniu do czego jest polecenie: zaznaczone zdjęcie i pinezki — każda z miniaturą swojego zdjęcia */}
+          {(zaznaczona || pineski.length > 0 || zaznaczoneWarstwy.length >= 2) && (
+            <div className="mb-2 flex flex-wrap items-center gap-1" aria-label="Polecenie dotyczy">
+              {pineski.length === 0 &&
+                zaznaczoneWarstwy.map((w, idx) => (
+                  <span key={w.id} className="p2-kontrolka flex items-center gap-1.5 py-0.5 pl-1 pr-2 text-[11px] font-medium text-foreground/85" title={`Referencja ${idx + 1}: ${w.name}`}>
+                    <Miniatura src={w.src} />
+                    <NumerPinezki n={idx + 1} />
+                    <span className="max-w-[110px] truncate">{w.name}</span>
+                  </span>
+                ))}
+              {pineski.length === 0 && zaznaczoneWarstwy.length >= 2 && (
+                <button type="button" onClick={onOdznaczWarstwe} className="grid h-6 w-6 place-items-center rounded-lg text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground" title="Odznacz wszystkie" aria-label="Odznacz wszystkie">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+              {zaznaczona && zaznaczoneWarstwy.length < 2 && !pineski.some(p => p.layerId === zaznaczona.id) && (
+                <span className="p2-kontrolka flex items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                  <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-2">
+                    <Miniatura src={zaznaczona.src} />
+                    <span className="max-w-[150px] truncate">{zaznaczona.name}</span>
+                  </span>
                   <button
                     type="button"
-                    onClick={() => wstawChip(p, idx + 1)}
-                    className="flex items-center gap-1 py-0.5 pl-2 pr-1 transition-colors hover:text-[hsl(var(--foreground))]"
-                    title="Wstaw nazwę obiektu do polecenia"
-                  >
-                    <NumerPinezki n={idx + 1} />@{etykietaPineski(p, idx + 1)}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onUsunPineske(p.id)}
-                    className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-[hsl(var(--destructive)/0.15)] hover:text-[hsl(var(--destructive))]"
-                    title="Usuń pinezkę"
-                    aria-label={`Usuń pinezkę ${idx + 1}`}
+                    onClick={onOdznaczWarstwe}
+                    className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+                    title="Odznacz zdjęcie"
+                    aria-label="Odznacz zdjęcie"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
-              ))}
+              )}
+              {pineski.map((p, idx) => {
+                const wz = warstwy.find(w => w.id === p.layerId)
+                return (
+                  <span key={p.id} className="p2-kontrolka group flex items-center overflow-hidden text-[11px] font-medium p2-cichy">
+                    <button
+                      type="button"
+                      onClick={() => wstawChip(p, idx + 1)}
+                      className="flex items-center gap-1.5 py-0.5 pl-1 pr-1 transition-colors hover:text-[hsl(var(--foreground))]"
+                      title={`Wstaw nazwę obiektu do polecenia${wz ? ` — zdjęcie: ${wz.name}` : ''}`}
+                    >
+                      {wz && <Miniatura src={wz.src} />}
+                      <NumerPinezki n={idx + 1} />@{etykietaPineski(p, idx + 1)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onUsunPineske(p.id)}
+                      className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-[hsl(var(--destructive)/0.15)] hover:text-[hsl(var(--destructive))]"
+                      title="Usuń pinezkę"
+                      aria-label={`Usuń pinezkę ${idx + 1}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )
+              })}
             </div>
           )}
           <textarea
@@ -710,7 +757,9 @@ export function CzatCanvas({
               }
             }}
             placeholder={
-              pineski.length === 0
+              pineski.length === 0 && zaznaczoneWarstwy.length >= 2
+                ? `${zaznaczoneWarstwy.length} referencji — opisz wynik, np. „postać ze zdjęcia 1 w scenie ze zdjęcia 2”`
+                : pineski.length === 0
                 ? 'Zacznij od pomysłu — wbij pinezkę i opisz zmianę'
                 : pineski.length === 1
                   ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?`

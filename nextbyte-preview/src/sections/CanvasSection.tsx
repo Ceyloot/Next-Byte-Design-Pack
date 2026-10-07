@@ -10,7 +10,6 @@ import {
   Pin,
   Maximize,
   MousePointer2,
-  Sparkles,
   Square,
   Trash2,
   Unlock,
@@ -18,10 +17,7 @@ import {
   Wand2,
   ZoomIn,
   ZoomOut,
-  Sun,
-  Aperture,
   Eraser,
-  Film,
   Loader2,
   Copy,
   ClipboardCopy,
@@ -29,12 +25,17 @@ import {
   ArrowUpToLine,
   ArrowDownToLine,
   Paintbrush,
+  ArrowLeft,
+  Scissors,
+  X,
   ImagePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Prompter } from '@/sections/canvas/Prompter'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
-import { zlozZMaskaMagenta, wklejWMaske, promptInpaintingu } from '@/sections/canvas/inpainting'
+import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
+import { wykonajGenerowanie } from '@/sections/canvas/generowanie'
+import { wykonajGeneracjeZReferencji } from '@/sections/canvas/referencje'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas, type ModelObrazu } from '@/sections/canvas/CzatCanvas'
@@ -188,7 +189,7 @@ function skalibrujObszarPineski(
   return { x0, y0, x1, y1 }
 }
 
-export function CanvasSection() {
+export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
   const [projekt, setProjekt] = useState<Projekt>(() => {
     try {
       const zapisany = localStorage.getItem(KLUCZ_ZAPISU)
@@ -230,6 +231,16 @@ export function CanvasSection() {
     } catch {}
     return null
   })
+  /** zaznaczenie wielu zdjęć (Shift+klik, ramka, Ctrl+A); pusta lista = zwykłe zaznaczenie jednego zdjęcia */
+  const [zaznaczone, setZaznaczone] = useState<string[]>([])
+  const wielu = useMemo(
+    () => projekt.warstwy.filter(w => zaznaczone.includes(w.id) && !w.generator && w.src),
+    [projekt.warstwy, zaznaczone],
+  )
+  const wieluAktywne = wielu.length >= 2
+  useEffect(() => {
+    if (zaznaczone.length && (!wybranaWarstwa || !zaznaczone.includes(wybranaWarstwa))) setZaznaczone([])
+  }, [wybranaWarstwa, zaznaczone])
   const [wybranaPineska, setWybranaPineska] = useState<string | null>(() => {
     try {
       const zapisany = localStorage.getItem(KLUCZ_ZAPISU)
@@ -305,7 +316,7 @@ export function CanvasSection() {
         if (zapisany) {
           const wczytany = wczytajProjekt(zapisany)
           if (wczytany.warstwy.length > 0) {
-            setProjekt({ ...wczytany, ramka: wczytany.ramka ?? null })
+            setProjekt({ ...wczytany, warstwy: wczytany.warstwy.filter(w => !w.duch).map(w => (w.generuje ? { ...w, generuje: false } : w)), ramka: wczytany.ramka ?? null })
             setWybranaWarstwa(wczytany.warstwy[0].id)
             setWybranaPineska(wczytany.pineski[0]?.id ?? null)
           }
@@ -335,12 +346,80 @@ export function CanvasSection() {
 
   /* ── Wczytywanie zdjęć ─────────────────────────────────────────── */
 
+  /**
+   * Placeholder generowania: format wyniku jest znany z góry, więc obok zdjęcia od razu pojawia się ramka z animacją,
+   * a gotowy wynik wypełnia ją w tym samym miejscu (zamiast dopiero wtedy wskakiwać nowa warstwa).
+   */
+  const duchId = useRef<string | null>(null)
+  const startDucha = useCallback((rozmiar: { width: number; height: number; y: number; naturalWidth: number; naturalHeight: number }, nazwa = 'Generuję…') => {
+    const id = nowyId('w')
+    duchId.current = id
+    setProjekt(p => {
+      const prawa = p.warstwy.reduce((m, x) => Math.max(m, x.x + x.width), 0)
+      return {
+        ...p,
+        warstwy: [
+          ...p.warstwy,
+          {
+            id,
+            type: 'image' as const,
+            src: '',
+            x: p.warstwy.length === 0 ? 60 : prawa + 48,
+            y: rozmiar.y,
+            width: rozmiar.width,
+            height: rozmiar.height,
+            naturalWidth: rozmiar.naturalWidth,
+            naturalHeight: rozmiar.naturalHeight,
+            rotation: 0,
+            name: nazwa,
+            visible: true,
+            locked: true,
+            zrodlo: 'wynik' as const,
+            generator: true,
+            generuje: true,
+            duch: true,
+          },
+        ],
+      }
+    })
+  }, [])
+  const usunDucha = useCallback(() => {
+    const id = duchId.current
+    duchId.current = null
+    if (id) setProjekt(p => ({ ...p, warstwy: p.warstwy.filter(w => w.id !== id) }))
+  }, [])
+
   const dodajZeZrodla = useCallback(
     (src: string, nazwa: string, zrodlo: ZrodloObrazu, wzorzec?: Warstwa) => {
       const obrazek = new Image()
       obrazek.crossOrigin = 'anonymous'
+      // pierwszy wynik po starcie generacji wypełnia placeholder (i tylko on)
+      const duch = zrodlo === 'wynik' ? duchId.current : null
+      if (duch) duchId.current = null
       obrazek.onload = () => {
         setProjekt(p => {
+          // jedna atomowa aktualizacja: placeholder istnieje → wypełniamy go w miejscu, w przeciwnym razie dodajemy nową warstwę
+          if (duch && p.warstwy.some(w => w.id === duch)) {
+            return {
+              ...p,
+              warstwy: p.warstwy.map(w =>
+                w.id === duch
+                  ? {
+                      ...w,
+                      src,
+                      name: nazwa,
+                      naturalWidth: obrazek.width,
+                      naturalHeight: obrazek.height,
+                      width: Math.round((obrazek.width / obrazek.height) * w.height),
+                      generator: false,
+                      generuje: false,
+                      duch: false,
+                      locked: false,
+                    }
+                  : w,
+              ),
+            }
+          }
           const skala = Math.min(1, 460 / obrazek.width)
           const prawaKrawedz = p.warstwy.reduce((maks, w) => Math.max(maks, w.x + w.width), 0)
           const x = p.warstwy.length === 0 ? 60 : prawaKrawedz + 48
@@ -381,6 +460,10 @@ export function CanvasSection() {
             }))
           })
         }
+      }
+      // wyniku nie da się wczytać → placeholder nie może zostać z animacją na zawsze
+      obrazek.onerror = () => {
+        if (duch) setProjekt(p => ({ ...p, warstwy: p.warstwy.filter(w => w.id !== duch) }))
       }
       obrazek.src = src
     },
@@ -452,6 +535,16 @@ export function CanvasSection() {
     setWybranaWarstwa(s => (s === id ? null : s))
   }, [])
 
+  const usunWarstwy = useCallback((ids: string[]) => {
+    setProjekt(p => ({
+      ...p,
+      warstwy: p.warstwy.filter(w => !ids.includes(w.id)),
+      pineski: p.pineski.filter(x => !ids.includes(x.layerId)),
+    }))
+    setWybranaWarstwa(s => (s && ids.includes(s) ? null : s))
+    setZaznaczone([])
+  }, [])
+
   /* ── Menu kontekstowe zdjęcia (prawy klik) ─────────────────────── */
 
   const [menuWarstwy, setMenuWarstwy] = useState<{ id: string; x: number; y: number } | null>(null)
@@ -475,10 +568,7 @@ export function CanvasSection() {
     () => [
       { id: 'enhance', etykieta: 'Enhance', ikona: Wand2, skala: 1, prompt: 'Enhance this photograph: improve clarity, fine detail, dynamic range, contrast and colour so it looks like a higher-end camera took it. Keep every object, person, position, framing and the lighting direction exactly the same. Natural, photographic — no over-sharpening, no HDR look, no plastic skin.' },
       { id: 'upscale', etykieta: 'Upscale 2×', ikona: ZoomIn, skala: 2, prompt: 'Upscale this photograph to twice its resolution. Reconstruct crisp, natural fine detail (textures, edges, text) while keeping the content, composition, colours and lighting identical. No new objects, no style change.' },
-      { id: 'swiatlo', etykieta: 'Złota godzina', ikona: Sun, skala: 1, prompt: 'Relight this photograph to warm golden-hour sunlight: low sun, long soft shadows, warm highlights and gentle haze. Keep every object, person, position and the framing exactly the same.' },
-      { id: 'bokeh', etykieta: 'Rozmyj tło', ikona: Aperture, skala: 1, prompt: 'Give this photograph a shallow depth of field like an f/1.8 portrait lens: keep the main subject in the foreground perfectly sharp and blur the background with natural optical bokeh. Keep composition, colours and lighting the same.' },
-      { id: 'czysc', etykieta: 'Usuń zakłócenia', ikona: Eraser, skala: 1, prompt: 'Clean up this photograph: remove small distractions — litter, stray cables, dust spots, sensor spots, watermarks and small unwanted passers-by in the background — and rebuild what was behind them naturally. Keep the main subjects, composition and lighting exactly the same.' },
-      { id: 'film', etykieta: 'Film analog', ikona: Film, skala: 1, prompt: 'Give this photograph the look of 35mm analog film (Kodak Portra 400): soft film grain, gentle highlight roll-off, natural film colour. Keep every object, person, position and the framing exactly the same.' },
+      { id: 'beztla', etykieta: 'Usuń tło', ikona: Scissors, skala: 1, prompt: 'Remove the background of this photograph: keep the main subject(s) exactly as they are — same shape, colours, detail and sharpness — with clean, precise cut-out edges (fine hair, glass, thin parts included, no halo or fringe) and place them on a plain pure white background with a soft natural contact shadow. Change nothing about the subject itself.' },
     ],
     [],
   )
@@ -489,6 +579,7 @@ export function CanvasSection() {
       if (!w || !a || akcjaAI) return
       setMenuWarstwy(null)
       setAkcjaAI(akcjaId)
+      startDucha(w, `${a.etykieta}…`)
       try {
         const maks = 2048
         const k = Math.min(a.skala, maks / Math.max(w.naturalWidth, w.naturalHeight))
@@ -500,10 +591,26 @@ export function CanvasSection() {
       } catch (e) {
         window.alert(e instanceof Error ? e.message : 'Nie udało się wykonać akcji.')
       } finally {
+        usunDucha()
         setAkcjaAI(null)
       }
     },
-    [projekt.warstwy, AKCJE_AI, akcjaAI, dodajZeZrodla],
+    [projekt.warstwy, AKCJE_AI, akcjaAI, dodajZeZrodla, startDucha, usunDucha],
+  )
+
+  /** Akcja AI na każdym zaznaczonym zdjęciu po kolei (każde dostaje własny placeholder i własny wynik). */
+  const [masowo, setMasowo] = useState(false)
+  const uruchomAkcjeMasowo = useCallback(
+    async (akcjaId: string) => {
+      if (masowo) return
+      setMasowo(true)
+      try {
+        for (const w of wielu) await uruchomAkcjeAI(w.id, akcjaId)
+      } finally {
+        setMasowo(false)
+      }
+    },
+    [masowo, wielu, uruchomAkcjeAI],
   )
 
   const akcjaWarstwy = useCallback(
@@ -681,43 +788,53 @@ export function CanvasSection() {
     () => (maska.length ? projekt.warstwy.find(w => w.id === maska[0].layerId) ?? null : null),
     [maska, projekt.warstwy],
   )
+  // Sesja inpaintingu: po kliknięciu „Inpaint” w górnym pasku (albo skrótem B) prompter jest od razu, pędzel działa na zaznaczonym zdjęciu.
+  const warstwaInpaint = useMemo(
+    () =>
+      warstwaMaski ??
+      (narzedzie === 'pedzel'
+        ? projekt.warstwy.find(w => w.id === wybranaWarstwa && w.type === 'image' && !w.generator && w.src) ?? null
+        : null),
+    [warstwaMaski, narzedzie, projekt.warstwy, wybranaWarstwa],
+  )
+  // tryb sesji pędzla: zwykły inpaint (z poleceniem) albo eraser (zamaluj, co usunąć — polecenie niepotrzebne)
+  const [trybPedzla, setTrybPedzla] = useState<'inpaint' | 'eraser'>('inpaint')
+  const zakonczInpaint = useCallback(() => {
+    setTrybPedzla('inpaint')
+    setMaska([])
+    setNarzedzie('wybor')
+  }, [])
   const warstwaGeneratora = useMemo(
-    () => projekt.warstwy.find(w => w.generator && w.id === wybranaWarstwa) ?? projekt.warstwy.find(w => w.generator) ?? null,
+    () => projekt.warstwy.find(w => w.generator && !w.duch && w.id === wybranaWarstwa) ?? projekt.warstwy.find(w => w.generator && !w.duch) ?? null,
     [projekt.warstwy, wybranaWarstwa],
   )
 
-  const anulujMaske = useCallback(() => setMaska([]), [])
 
   const uruchomInpainting = useCallback(
     async (tekst: string) => {
       const w = warstwaMaski
       if (!w || trwaPrompter) return
       setTrwaPrompter(true)
-      setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…' })
+      setStanGeneracji({ faza: 'trwa', plan: 'Maluję zaznaczony obszar…', tryb: 'inpainting' })
+      startDucha(w, 'Inpaint…')
       try {
-        const zrodlo = await konwertujNaDataUrl(w.src)
-        const zMaska = await zlozZMaskaMagenta(zrodlo, maska)
-        const wynik = await generuj({
-          polecenie: promptInpaintingu(tekst),
-          obrazy: [zMaska],
-          szerokosc: w.naturalWidth,
-          wysokosc: w.naturalHeight,
-          model: modelObrazu === 'auto' ? 'nb2' : modelObrazu,
-          studio: true,
-        })
-        const dopasowany = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
-        const koncowy = await wklejWMaske(zrodlo, dopasowany, maska)
-        const nazwa = nazwijWynik(tekst, [])
+        // Osobny moduł (canvas/inpainting.ts): wycinek wokół zaznaczenia → model → wynik tylko w masce.
+        const eraser = trybPedzla === 'eraser'
+        const polecenie = eraser ? promptErasera(tekst) : tekst
+        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst: polecenie, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        const koncowy = wynik.obrazUrl
+        const nazwa = eraser ? `${w.name}_bez_obiektu` : nazwijWynik(tekst, [])
         dodajZeZrodla(koncowy, nazwa, 'wynik', w)
-        setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: koncowy, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Inpainting: „${tekst}”.` } })
-        setMaska([])
+        setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: koncowy, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: eraser ? 'Eraser: usunięto zamalowany obiekt.' : `Inpainting: „${tekst}”.` } })
+        zakonczInpaint()
       } catch (e) {
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się namalować zaznaczonego obszaru.' })
       } finally {
+        usunDucha()
         setTrwaPrompter(false)
       }
     },
-    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla],
+    [warstwaMaski, maska, modelObrazu, trwaPrompter, dodajZeZrodla, zakonczInpaint, trybPedzla, startDucha, usunDucha],
   )
 
   const utworzRamkeGeneratora = useCallback((szer: number, wys: number) => {
@@ -758,26 +875,23 @@ export function CanvasSection() {
       const ramka = warstwaGeneratora
       if (!ramka || trwaPrompter) return
       setTrwaPrompter(true)
-      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…' })
+      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…', tryb: 'generator' })
+      setProjekt(p => ({ ...p, warstwy: p.warstwy.map(x => (x.id === ramka.id ? { ...x, generuje: true } : x)) }))
       try {
-        const w = await generuj({ polecenie: tekst, obrazy: [], szerokosc: ramka.naturalWidth, wysokosc: ramka.naturalHeight, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
-        const obraz = await new Promise<HTMLImageElement>((ok, err) => {
-          const o = new Image()
-          o.onload = () => ok(o)
-          o.onerror = () => err(new Error('Nie udało się wczytać wyniku'))
-          o.src = w.obrazUrl
-        })
+        // Osobny moduł (canvas/generowanie.ts): sam opis, bez zdjęć wejściowych i reguł.
+        const w = await wykonajGenerowanie(tekst, ramka.naturalWidth, ramka.naturalHeight, modelObrazu === 'auto' ? 'nb2' : modelObrazu)
         const nazwa = nazwijWynik(tekst, [])
         setProjekt(p => ({
           ...p,
           warstwy: p.warstwy.map(x =>
             x.id === ramka.id
-              ? { ...x, src: w.obrazUrl, generator: false, name: nazwa, naturalWidth: obraz.width, naturalHeight: obraz.height, height: Math.round((x.width * obraz.height) / obraz.width) }
+              ? { ...x, src: w.obrazUrl, generator: false, generuje: false, name: nazwa, naturalWidth: w.szerokosc, naturalHeight: w.wysokosc, height: Math.round((x.width * w.wysokosc) / w.szerokosc) }
               : x,
           ),
         }))
         setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: w.obrazUrl, kosztUSD: w.kosztUSD, model: w.model, nazwa, opis: `Polecenie: „${tekst}”.` } })
       } catch (e) {
+        setProjekt(p => ({ ...p, warstwy: p.warstwy.map(x => (x.id === ramka.id ? { ...x, generuje: false } : x)) }))
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
       } finally {
         setTrwaPrompter(false)
@@ -792,12 +906,23 @@ export function CanvasSection() {
     const naKlawisz = (e: KeyboardEvent) => {
       const cel = e.target as HTMLElement
       if (cel && ['INPUT', 'TEXTAREA', 'SELECT'].includes(cel.tagName)) return
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        // Ctrl+A: zaznacz wszystkie zdjęcia
+        e.preventDefault()
+        const ids = projekt.warstwy.filter(w => w.visible && !w.generator && w.src).map(w => w.id)
+        if (ids.length >= 2) {
+          setZaznaczone(ids)
+          setWybranaWarstwa(ids[0])
+        } else if (ids.length === 1) setWybranaWarstwa(ids[0])
+        return
+      }
       if (e.ctrlKey || e.metaKey) return
       if (e.key === 'Escape') {
+        setZaznaczone([])
         setWybranaPineska(null)
         setMenuDodawania(false)
         setMenuGeneratora(false)
-        setMaska([])
+        zakonczInpaint()
         return
       }
       const skroty: Record<string, Narzedzie> = { v: 'wybor', p: 'pineska', h: 'reka', b: 'pedzel' }
@@ -808,12 +933,13 @@ export function CanvasSection() {
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (wybranaPineska) usunPineske(wybranaPineska)
+        else if (wieluAktywne) usunWarstwy(wielu.map(w => w.id))
         else if (wybranaWarstwa) usunWarstwe(wybranaWarstwa)
       }
     }
     window.addEventListener('keydown', naKlawisz)
     return () => window.removeEventListener('keydown', naKlawisz)
-  }, [wybranaPineska, wybranaWarstwa, usunPineske, usunWarstwe])
+  }, [wybranaPineska, wybranaWarstwa, usunPineske, usunWarstwe, zakonczInpaint, projekt.warstwy, wieluAktywne, wielu, usunWarstwy])
 
   /* ── Przygotowanie generacji ───────────────────────────────────── */
 
@@ -851,18 +977,21 @@ export function CanvasSection() {
     [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja, studio, hybryda],
   )
 
+  // Wiele zaznaczonych zdjęć bez pinesek = generacja z referencjami: uwagi i blokady dotyczące pinesek nie mają zastosowania.
+  const trybReferencji = wieluAktywne && projekt.pineski.length === 0
   const uwagi = useMemo(
-    () => sprawdzPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja),
-    [projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
+    () => (trybReferencji ? [] : sprawdzPolecenie(projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja)),
+    [trybReferencji, projekt.tekst, projekt.pineski, obrazyWejsciowe, intencja],
   )
 
   const powodBlokady = useMemo(() => {
+    if (trybReferencji) return projekt.tekst.trim() ? null : `Opisz, co zrobić z ${wielu.length} zaznaczonymi zdjęciami`
     if (!warstwaZrodlowa) return projekt.tekst.trim() ? null : 'Opisz obraz, który mam wygenerować'
     const blokada = uwagi.find(u => u.waga === 'blokada')
     if (blokada) return blokada.tresc
     if (!projekt.tekst.trim()) return 'Wbij pinezkę i wpisz polecenie'
     return null
-  }, [warstwaZrodlowa, uwagi, projekt.tekst])
+  }, [trybReferencji, wielu.length, warstwaZrodlowa, uwagi, projekt.tekst])
 
   /** Odpowiedź użytkownika na pytanie o role (poziom 4) — ważna, dopóki pineski się nie zmienią. */
   const odpowiedzRol = useRef<{ odcisk: string; opcja: OpcjaRol } | null>(null)
@@ -870,14 +999,46 @@ export function CanvasSection() {
   /* Uruchomienie generacji z Nano-Banana */
   // Blokada: drugi klik / Enter w trakcie generacji nie odpala kolejnej
   const refGeneruje = useRef(false)
+
+  /** Generacja z wieloma referencjami (zaznaczone zdjęcia, bez pinesek): osobny moduł canvas/referencje.ts. */
+  const uruchomZReferencjami = useCallback(async () => {
+    const tekst = projekt.tekst.trim()
+    const pierwsze = wielu[0]
+    if (!tekst || !pierwsze || refGeneruje.current) return
+    refGeneruje.current = true
+    setStanGeneracji({ faza: 'trwa', plan: `Generuję z ${wielu.length} referencji…`, tryb: 'referencje' })
+    startDucha(pierwsze, 'Generuję…')
+    try {
+      const obrazy = await Promise.all(wielu.map(w => konwertujNaDataUrl(w.src)))
+      const wynik = await wykonajGeneracjeZReferencji({
+        obrazy,
+        tekst,
+        szerokosc: pierwsze.naturalWidth,
+        wysokosc: pierwsze.naturalHeight,
+        model: modelObrazu === 'auto' ? 'nb2' : modelObrazu,
+      })
+      const src = await dopasujFormatDoObrazu(wynik.obrazUrl, pierwsze.naturalWidth, pierwsze.naturalHeight)
+      const nazwa = nazwijWynik(tekst, [])
+      dodajZeZrodla(src, nazwa, 'wynik', pierwsze)
+      setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Referencje: ${wielu.length} zdjęć. Polecenie: „${tekst}”.` } })
+    } catch (e) {
+      setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu z referencji.' })
+    } finally {
+      usunDucha()
+      refGeneruje.current = false
+    }
+  }, [projekt.tekst, wielu, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
+
   const uruchomGeneracje = useCallback(async () => {
     if (refGeneruje.current) return
+    if (trybReferencji) return uruchomZReferencjami()
     if (!warstwaZrodlowa) {
       // Brak zdjęcia: czysta generacja z opisu (text-to-image)
       const opis = projekt.tekst.trim()
       if (!opis) return
       refGeneruje.current = true
-      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…' })
+      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…', tryb: 'generator' })
+      startDucha({ width: 460, height: 460, y: 60, naturalWidth: 1024, naturalHeight: 1024 }, 'Generuję…')
       try {
         const w = await generuj({ polecenie: opis, obrazy: [], szerokosc: 1024, wysokosc: 1024, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
         const nazwa = nazwijWynik(opis, [])
@@ -886,12 +1047,14 @@ export function CanvasSection() {
       } catch (e) {
         setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
       } finally {
+        usunDucha()
         refGeneruje.current = false
       }
       return
     }
     refGeneruje.current = true
     setStanGeneracji({ faza: 'planuje' })
+    startDucha(warstwaZrodlowa)
 
     try {
       // Kto jest obiektem, a kto miejscem — cztery poziomy od najpewniejszego
@@ -1539,9 +1702,14 @@ export function CanvasSection() {
         tresc: e instanceof Error ? e.message : 'Wystąpił błąd podczas generacji obrazu.',
       })
     } finally {
+      usunDucha()
       refGeneruje.current = false
     }
   }, [
+    trybReferencji,
+    uruchomZReferencjami,
+    startDucha,
+    usunDucha,
     warstwaZrodlowa,
     obrazyWejsciowe,
     polecenie,
@@ -1676,6 +1844,8 @@ export function CanvasSection() {
         widok={widok}
         onWidok={setWidok}
         onWybierzWarstwe={setWybranaWarstwa}
+        zaznaczone={zaznaczone}
+        onZaznaczone={setZaznaczone}
         onWybierzPineske={setWybranaPineska}
         onZmienWarstwe={zmienWarstwe}
         onPrzesunPineske={(id, x, y) => zmienPineske(id, { normalizedX: x, normalizedY: y, analiza: undefined })}
@@ -1694,11 +1864,60 @@ export function CanvasSection() {
 
       {/* ══ Menu kontekstowe zdjęcia (prawy klik) ══ */}
       {/* ══ Pływający pasek akcji AI nad zdjęciem (prawy klik) ══ */}
-      {(menuWarstwy || akcjaAI || wybranaWarstwa) &&
+      {/* ══ Pasek akcji dla zaznaczonej grupy zdjęć: usuń, odznacz, akcje AI na każdym ══ */}
+      {wieluAktywne && !warstwaInpaint &&
+        (() => {
+          const x0 = Math.min(...wielu.map(w => w.x))
+          const x1 = Math.max(...wielu.map(w => w.x + w.width))
+          const y0 = Math.min(...wielu.map(w => w.y))
+          const y1 = Math.max(...wielu.map(w => w.y + w.height))
+          const srodek = widok.x + ((x0 + x1) / 2) * widok.zoom
+          const gora = widok.y + y0 * widok.zoom
+          const dol = widok.y + y1 * widok.zoom
+          const przycisk =
+            'flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-[12px] font-medium text-foreground/70 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40'
+          return (
+            <div
+              role="toolbar"
+              aria-label="Akcje na zaznaczonych zdjęciach"
+              onPointerDown={e => e.stopPropagation()}
+              onContextMenu={e => e.preventDefault()}
+              className="absolute z-50"
+              style={{
+                left: Math.max(16 + 270, Math.min(srodek, window.innerWidth - 440 - 270)),
+                transform: 'translateX(-50%)',
+                top: gora - 56 >= 68 ? gora - 56 : Math.min(dol + 10, window.innerHeight - 64),
+              }}
+            >
+              <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border border-foreground/[0.12] p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
+                <span className="px-2.5 text-[12px] font-semibold text-foreground" title="Opisz w czacie, co z nimi zrobić — wszystkie trafią do modelu jako referencje">
+                  {wielu.length} zdjęć
+                </span>
+                <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-foreground/[0.12]" />
+                {AKCJE_AI.filter(a => ['enhance', 'upscale', 'beztla'].includes(a.id)).map(({ id: aid, etykieta, ikona: Ikona }) => (
+                  <button key={aid} type="button" disabled={masowo || Boolean(akcjaAI)} onClick={() => uruchomAkcjeMasowo(aid)} title={`${etykieta} — dla każdego zaznaczonego zdjęcia`} className={przycisk}>
+                    {masowo && akcjaAI === aid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ikona className="h-3.5 w-3.5" />}
+                    {etykieta}
+                  </button>
+                ))}
+                <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-foreground/[0.12]" />
+                <button type="button" disabled={masowo} onClick={() => usunWarstwy(wielu.map(w => w.id))} title="Usuń zaznaczone zdjęcia (Delete)" className={cn(przycisk, 'hover:!text-destructive')}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Usuń
+                </button>
+                <button type="button" onClick={() => { setZaznaczone([]); setWybranaWarstwa(null) }} title="Odznacz (Esc)" aria-label="Odznacz" className="grid h-8 w-8 place-items-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.06] hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )
+        })()}
+
+      {(menuWarstwy || akcjaAI || wybranaWarstwa) && !warstwaInpaint && !wieluAktywne &&
         (() => {
           const id = menuWarstwy?.id ?? wybranaWarstwa
           const w = projekt.warstwy.find(x => x.id === id)
-          if (!w || w.type !== 'image' || w.generator || maska.length > 0) return null
+          if (!w || w.type !== 'image' || w.generator || warstwaInpaint || wieluAktywne) return null
           const lewo = widok.x + w.x * widok.zoom
           const gora = widok.y + w.y * widok.zoom
           return (
@@ -1709,13 +1928,46 @@ export function CanvasSection() {
               onContextMenu={e => e.preventDefault()}
               className="absolute z-50"
               style={{
-                left: Math.max(380, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 420)),
+                // wyśrodkowany nad zdjęciem (pasek ≈ 540 px), ale w całości na ekranie i przed panelem czatu
+                left: Math.max(16 + 280, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 280)),
                 transform: 'translateX(-50%)',
                 maxWidth: 'calc(100vw - 440px)',
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
             >
-            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
+            <div className="nb-szklo nb-szklo-plynne nb-nav-nocontain flex items-center gap-1 overflow-x-auto rounded-2xl border border-foreground/[0.12] p-1.5 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ backgroundColor: 'hsl(var(--card) / 0.82)' }}>
+              <button
+                type="button"
+                disabled={Boolean(akcjaAI)}
+                onClick={() => {
+                  setMenuWarstwy(null)
+                  setWybranaWarstwa(w.id)
+                  setWybranaPineska(null)
+                  setTrybPedzla('inpaint')
+                  setNarzedzie('pedzel')
+                }}
+                title="Inpaint — zamaluj miejsce na zdjęciu i opisz zmianę"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-[12px] font-medium text-foreground/70 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40"
+              >
+                <Paintbrush className="h-3.5 w-3.5" />
+                Inpaint
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(akcjaAI)}
+                onClick={() => {
+                  setMenuWarstwy(null)
+                  setWybranaWarstwa(w.id)
+                  setWybranaPineska(null)
+                  setTrybPedzla('eraser')
+                  setNarzedzie('pedzel')
+                }}
+                title="Eraser — zamaluj obiekt do usunięcia"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-[12px] font-medium text-foreground/70 transition-all duration-150 hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+                Eraser
+              </button>
               {AKCJE_AI.map(({ id: aid, etykieta, ikona: Ikona }) => (
                 <button
                   key={aid}
@@ -1825,7 +2077,19 @@ export function CanvasSection() {
       )}
 
       {/* ══ Licznik Bajtów (lewy górny róg) — saldo demonstracyjne do czasu podpięcia portfela ══ */}
-      <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20">
+      <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20 flex items-center gap-2">
+        {onWyjdz && (
+          <button
+            type="button"
+            onClick={onWyjdz}
+            title="Wyjdź z Canvasa — projekt zapisuje się automatycznie"
+            aria-label="Wyjdź z Canvasa"
+            className="p2-szklo pointer-events-auto flex h-10 items-center gap-1.5 !rounded-xl px-3 text-[12.5px] font-semibold text-foreground/80 transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Wyjdź
+          </button>
+        )}
         <div className="p2-szklo pointer-events-auto flex h-10 items-center gap-2 !rounded-xl px-3.5" title="Saldo Bajtów">
           <span className="text-[14px] font-bold tabular-nums text-foreground">7</span>
           <span className="text-[14px] font-semibold text-primary">⟠</span>
@@ -1833,23 +2097,33 @@ export function CanvasSection() {
       </div>
 
       {/* ══ Prompter: inpainting (po zamalowaniu) i generator (pod pustą ramką) ══ */}
-      {warstwaMaski && (
+      {warstwaInpaint && (
         <Prompter
-          key={`maska-${warstwaMaski.id}`}
-          etykieta="Zaznaczony obszar"
-          placeholder="Co zrobić w tym miejscu?"
+          key={`inpaint-${warstwaInpaint.id}`}
+          etykieta={trybPedzla === 'eraser' ? 'Eraser' : 'Inpaint'}
+          placeholder={
+            trybPedzla === 'eraser'
+              ? maska.length ? 'Enter — usuń zamalowane' : 'Zamaluj, co usunąć'
+              : maska.length ? 'Co zrobić w tym miejscu?' : 'Zamaluj miejsce i opisz zmianę'
+          }
+          bezTekstu={trybPedzla === 'eraser'}
           trwa={trwaPrompter}
+          blokada={!warstwaMaski}
           onWyslij={uruchomInpainting}
-          onAnuluj={anulujMaske}
+          onAnuluj={zakonczInpaint}
           srednica={srednicaPedzla}
           onSrednica={setSrednicaPedzla}
+          // dokładnie w slocie paska szybkich akcji (ten sam wzór pozycji) — pasek „zamienia się” w prompter
           style={{
-            left: Math.max(16, Math.min(widok.x + (warstwaMaski.x + warstwaMaski.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
-            top: Math.max(16, widok.y + warstwaMaski.y * widok.zoom - 64),
+            left: Math.max(16, Math.min(widok.x + (warstwaInpaint.x + warstwaInpaint.width / 2) * widok.zoom - 280, window.innerWidth - 440 - 560)),
+            top:
+              widok.y + warstwaInpaint.y * widok.zoom - 56 >= 68
+                ? widok.y + warstwaInpaint.y * widok.zoom - 56
+                : Math.min(window.innerHeight - 64, widok.y + (warstwaInpaint.y + warstwaInpaint.height) * widok.zoom + 10),
           }}
         />
       )}
-      {!warstwaMaski && warstwaGeneratora && (
+      {!warstwaInpaint && warstwaGeneratora && (
         <Prompter
           key={`gen-${warstwaGeneratora.id}`}
           etykieta={`${warstwaGeneratora.naturalWidth} × ${warstwaGeneratora.naturalHeight}`}
@@ -1913,16 +2187,6 @@ export function CanvasSection() {
             }}
           >
             <IkonaObrazu className="h-4 w-4" />
-          </Narzedzie>
-
-          {/* Pędzel (B) — inpainting: zamaluj obszar i opisz zmianę */}
-          <Narzedzie
-            tytul="Pędzel (B) — zamaluj obszar i opisz zmianę"
-            aktywne={narzedzie === 'pedzel'}
-            onClick={() => setNarzedzie('pedzel')}
-            odznaka={maska.length || undefined}
-          >
-            <Paintbrush className="h-4 w-4" />
           </Narzedzie>
 
           {/* Generuj zdjęcie — pusta ramka z prompterem */}
@@ -1997,6 +2261,12 @@ export function CanvasSection() {
         onUsunPineske={usunPineske}
         onZmienNazwePineski={(id, label) => zmienPineske(id, { label })}
         onWlaczNarzędziePineska={() => setNarzedzie('pineska')}
+        wybranaWarstwa={wybranaWarstwa}
+        zaznaczoneWarstwy={wieluAktywne ? wielu : []}
+        onOdznaczWarstwe={() => {
+          setWybranaWarstwa(null)
+          setZaznaczone([])
+        }}
         onGeneruj={uruchomGeneracje}
         modelObrazu={modelObrazu}
         onModelObrazu={zmienModelObrazu}
@@ -2015,7 +2285,6 @@ export function CanvasSection() {
         intencja={intencja}
         uwagi={uwagi}
         podgladPolecenia={ostatniPrompt || `[PODGLĄD WSTĘPNY — bez danych reżysera (światło, rozmiar, zbliżenia) i bez trybu dwóch zadań. Prawdziwy prompt pojawi się tu po „Generuj”.]\n\n${polecenie}`}
-        onWstawNaPlotno={(url, nazwa) => dodajZeZrodla(url, nazwa, 'wynik', warstwaZrodlowa || undefined)}
       />
 
       {/* ══ Panel warstw (wysuwany) ══ */}

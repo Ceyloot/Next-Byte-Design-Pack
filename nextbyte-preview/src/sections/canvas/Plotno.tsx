@@ -21,6 +21,9 @@ interface Props {
   widok: Widok
   onWidok: (w: Widok) => void
   onWybierzWarstwe: (id: string | null) => void
+  /** zaznaczenie wielu zdjęć (Shift+klik, ramka, Ctrl+A) — pusta lista = zwykłe zaznaczenie pojedyncze */
+  zaznaczone?: string[]
+  onZaznaczone?: (ids: string[]) => void
   onWybierzPineske: (id: string | null) => void
   onZmienWarstwe: (id: string, zmiany: Partial<Warstwa>) => void
   onPrzesunPineske: (id: string, normalizedX: number, normalizedY: number) => void
@@ -44,12 +47,16 @@ interface Props {
 type Uchwyt = 'nw' | 'ne' | 'se' | 'sw'
 
 interface Operacja {
-  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel'
+  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel' | 'zaznaczanie'
   punkty?: [number, number][]
   startX: number
   startY: number
   uchwyt?: Uchwyt
   migawka?: Warstwa
+  /** przesuwanie grupy zaznaczonych zdjęć: pozycje wyjściowe */
+  grupa?: { id: string; x: number; y: number }[]
+  /** zaznaczanie ramką: zaznaczenie sprzed przeciągnięcia (dla Shift) */
+  bazowe?: string[]
   idPineski?: string
   startWidok?: Widok
   /** czy wskaźnik w ogóle drgnął — odróżnia klik od przeciągnięcia */
@@ -90,6 +97,8 @@ export function Plotno({
   widok,
   onWidok,
   onWybierzWarstwe,
+  zaznaczone = [],
+  onZaznaczone,
   onWybierzPineske,
   onZmienWarstwe,
   onPrzesunPineske,
@@ -112,6 +121,8 @@ export function Plotno({
   const [podKursorem, setPodKursorem] = useState<string | null>(null)
   /** pineska w ręce — łebek się unosi, cień odsuwa */
   const [przeciagana, setPrzeciagana] = useState<string | null>(null)
+  /** ramka zaznaczania w układzie sceny (do narysowania) */
+  const [ramkaZaznaczania, setRamkaZaznaczania] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null)
 
   const doSceny = useCallback(
     (e: { clientX: number; clientY: number }) => {
@@ -185,7 +196,20 @@ export function Plotno({
     if (narzedzie === 'ramka') {
       onZmienRamke?.(null)
     }
+    if (narzedzie === 'wybor' && e.button === 0 && !e.ctrlKey && !e.metaKey) {
+      // zaznaczanie ramką; z Shiftem dokładamy do dotychczasowego zaznaczenia
+      const p = doSceny(e)
+      const bazowe = e.shiftKey ? (zaznaczone.length ? zaznaczone : wybranaWarstwa ? [wybranaWarstwa] : []) : []
+      refOperacja.current = { rodzaj: 'zaznaczanie', startX: p.x, startY: p.y, bazowe }
+      if (!e.shiftKey) {
+        onWybierzWarstwe(null)
+        onZaznaczone?.([])
+      }
+      onWybierzPineske(null)
+      return
+    }
     onWybierzWarstwe(null)
+    onZaznaczone?.([])
     onWybierzPineske(null)
   }
 
@@ -245,7 +269,31 @@ export function Plotno({
       return
     }
 
+    // Shift+klik: dodaj / zdejmij zdjęcie z zaznaczenia
+    if (e.shiftKey && narzedzie === 'wybor') {
+      const baza = zaznaczone.length ? zaznaczone : wybranaWarstwa ? [wybranaWarstwa] : []
+      const wynik = baza.includes(warstwa.id) ? baza.filter(id => id !== warstwa.id) : [...baza, warstwa.id]
+      onZaznaczone?.(wynik.length >= 2 ? wynik : [])
+      onWybierzWarstwe(wynik.length ? (wynik.includes(warstwa.id) ? warstwa.id : wynik[0]) : null)
+      onWybierzPineske(null)
+      return
+    }
+
+    // klik w zdjęcie należące do zaznaczonej grupy: przeciągnięcie przesuwa całą grupę, sam klik zawęża do jednego
+    if (zaznaczone.length >= 2 && zaznaczone.includes(warstwa.id)) {
+      onWybierzPineske(null)
+      refOperacja.current = {
+        rodzaj: 'przesuwanie',
+        startX: p.x,
+        startY: p.y,
+        migawka: { ...warstwa },
+        grupa: warstwy.filter(w => zaznaczone.includes(w.id)).map(w => ({ id: w.id, x: w.x, y: w.y })),
+      }
+      return
+    }
+
     onWybierzWarstwe(warstwa.id)
+    onZaznaczone?.([])
     onWybierzPineske(null)
     refOperacja.current = { rodzaj: 'przesuwanie', startX: p.x, startY: p.y, migawka: { ...warstwa } }
   }
@@ -285,6 +333,11 @@ export function Plotno({
         x: op.startWidok.x + (e.clientX - op.startX),
         y: op.startWidok.y + (e.clientY - op.startY),
       })
+      return
+    }
+
+    if (op.rodzaj === 'zaznaczanie') {
+      setRamkaZaznaczania({ x0: op.startX, y0: op.startY, x1: p.x, y1: p.y })
       return
     }
 
@@ -332,6 +385,10 @@ export function Plotno({
     const s = op.migawka
 
     if (op.rodzaj === 'przesuwanie') {
+      if (op.grupa) {
+        for (const g of op.grupa) onZmienWarstwe(g.id, { x: Math.round(g.x + dx), y: Math.round(g.y + dy) })
+        return
+      }
       onZmienWarstwe(s.id, { x: Math.round(s.x + dx), y: Math.round(s.y + dy) })
       return
     }
@@ -357,6 +414,30 @@ export function Plotno({
     const op = refOperacja.current
     refOperacja.current = null
     setPrzeciagana(null)
+    if (op?.rodzaj === 'zaznaczanie') {
+      const r = ramkaZaznaczania
+      setRamkaZaznaczania(null)
+      // za mała ramka = zwykłe kliknięcie w tło (zaznaczenie już wyczyszczone)
+      if (r && Math.abs(r.x1 - r.x0) * widok.zoom > 4 && Math.abs(r.y1 - r.y0) * widok.zoom > 4) {
+        const x0 = Math.min(r.x0, r.x1)
+        const x1 = Math.max(r.x0, r.x1)
+        const y0 = Math.min(r.y0, r.y1)
+        const y1 = Math.max(r.y0, r.y1)
+        const trafione = warstwy
+          .filter(w => w.visible && !w.locked && !w.generator && w.x < x1 && w.x + w.width > x0 && w.y < y1 && w.y + w.height > y0)
+          .map(w => w.id)
+        const wynik = [...new Set([...(op.bazowe ?? []), ...trafione])]
+        onZaznaczone?.(wynik.length >= 2 ? wynik : [])
+        onWybierzWarstwe(wynik[0] ?? null)
+      }
+      return
+    }
+    if (op?.rodzaj === 'przesuwanie' && op.grupa && !op.ruszony && op.migawka) {
+      // klik bez przeciągnięcia w zdjęcie z grupy: zawężamy zaznaczenie do niego
+      onZaznaczone?.([])
+      onWybierzWarstwe(op.migawka.id)
+      return
+    }
     if (op?.rodzaj === 'pedzel' && op.migawka && op.punkty) {
       onPociagniecie?.({ layerId: op.migawka.id, punkty: op.punkty, srednica: srednicaPedzla })
       setZywe(null)
@@ -437,10 +518,11 @@ export function Plotno({
       >
         {warstwy.map(warstwa => {
           if (!warstwa.visible) return null
-          const zaznaczona = wybranaWarstwa === warstwa.id
+          const zaznaczona = wybranaWarstwa === warstwa.id || zaznaczone.includes(warstwa.id)
           return (
             <div
               key={warstwa.id}
+              className="nb-warstwa-wejscie"
               onPointerDown={e => {
                 if (e.button === 2) return
                 naWarstwieWDol(e, warstwa)
@@ -464,7 +546,14 @@ export function Plotno({
                 cursor: narzedzie === 'pineska' || narzedzie === 'ramka' || narzedzie === 'pedzel' ? 'crosshair' : 'move',
               }}
             >
-              {warstwa.generator ? (
+              {warstwa.generuje ? (
+                <div className="nb-generuje" role="status" aria-label="Generowanie obrazu">
+                  <div className="nb-generuje-znak">
+                    <svg viewBox="0 0 24 24" width={34 * odwrotna} height={34 * odwrotna} fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9L12 2.5zM18.5 15l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.6z" /></svg>
+                    <span style={{ fontSize: 12 * odwrotna, fontWeight: 600, letterSpacing: '0.02em' }}>Generuję…</span>
+                  </div>
+                </div>
+              ) : warstwa.generator ? (
                 <div style={{ width: '100%', height: '100%', background: 'hsl(var(--foreground) / 0.1)', display: 'grid', placeItems: 'center' }}>
                   <svg viewBox="0 0 24 24" width="22%" height="22%" fill="hsl(var(--foreground) / 0.18)" aria-hidden="true"><path d="M3 19 9.5 8l4 6.5 2.5-3.5L21 19H3Z" /><circle cx="17" cy="6.5" r="2" /></svg>
                 </div>
@@ -472,11 +561,13 @@ export function Plotno({
                 <img
                   src={warstwa.src}
                   alt={warstwa.name}
+                  key={warstwa.src.length + warstwa.src.slice(-24)}
+                  className="nb-obraz-wejscie"
                   draggable={false}
                   style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', userSelect: 'none' }}
                 />
               )}
-              {warstwa.generator && (
+              {warstwa.generator && !warstwa.generuje && (
                 <>
                   <span style={{ position: 'absolute', left: 0, top: -22 * odwrotna, fontSize: 12 * odwrotna, color: '#38bdf8', whiteSpace: 'nowrap' }}>Image Generator</span>
                   <span style={{ position: 'absolute', right: 0, top: -22 * odwrotna, fontSize: 12 * odwrotna, color: '#38bdf8', whiteSpace: 'nowrap' }}>{warstwa.naturalWidth} × {warstwa.naturalHeight}</span>
@@ -506,7 +597,7 @@ export function Plotno({
         })}
 
         {/* Uchwyty skalowania — tylko rogi, bo proporcja jest zablokowana */}
-        {wybranaWarstwa &&
+        {wybranaWarstwa && zaznaczone.length < 2 &&
           (() => {
             const w = warstwy.find(x => x.id === wybranaWarstwa)
             if (!w || !w.visible || w.locked) return null
@@ -518,7 +609,7 @@ export function Plotno({
               { id: 'sw', x: 0, y: w.height, kursor: 'nesw-resize' },
             ]
             return (
-              <div style={{ position: 'absolute', left: w.x, top: w.y, width: w.width, height: w.height }}>
+              <div style={{ position: 'absolute', left: w.x, top: w.y, width: w.width, height: w.height, pointerEvents: 'none' }}>
                 {rogi.map(r => (
                   <div
                     key={r.id}
@@ -533,12 +624,31 @@ export function Plotno({
                       border: `${2 * odwrotna}px solid #38bdf8`,
                       borderRadius: 3 * odwrotna,
                       cursor: r.kursor,
+                      pointerEvents: 'auto',
                     }}
                   />
                 ))}
               </div>
             )
           })()}
+
+        {/* Ramka zaznaczania wielu zdjęć */}
+        {ramkaZaznaczania && (
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: Math.min(ramkaZaznaczania.x0, ramkaZaznaczania.x1),
+              top: Math.min(ramkaZaznaczania.y0, ramkaZaznaczania.y1),
+              width: Math.abs(ramkaZaznaczania.x1 - ramkaZaznaczania.x0),
+              height: Math.abs(ramkaZaznaczania.y1 - ramkaZaznaczania.y0),
+              border: `${1.5 * odwrotna}px solid #38bdf8`,
+              background: 'rgba(56,189,248,0.10)',
+              borderRadius: 3 * odwrotna,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
 
         {/* Obszar roboczy ramki (Lovart Semi-transparent Magenta Inpainting Area) */}
         {ramka && (() => {

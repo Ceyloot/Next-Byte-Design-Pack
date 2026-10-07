@@ -476,7 +476,7 @@ interface PreviewSectionProps {
   onNavPositionChange?: (pos: NavPosition) => void
 }
 
-function renderSection(key: string): React.ReactNode {
+function renderSection(key: string, onWyjdzZCanvasa?: () => void): React.ReactNode {
   switch (key) {
     case 'karty':      return <KartySection />
     case 'akcje':      return <AkcjeSection />
@@ -486,7 +486,7 @@ function renderSection(key: string): React.ReactNode {
     case 'dane':       return <DaneSection />
     case 'stany':      return <StanySection />
     case 'paleta':     return <PaletaSection />
-    case 'canvas':     return <CanvasSection />
+    case 'canvas':     return <CanvasSection onWyjdz={onWyjdzZCanvasa} />
     case 'czat':       return <CzatSection />
     default:           return null
   }
@@ -1010,7 +1010,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       >
 
         {/* ── Non-preview section content ── */}
-        {activeTab !== 'preview' && renderSection(activeTab)}
+        {activeTab !== 'preview' && renderSection(activeTab, () => {
+          // Canvas jest pełnoekranowy (bez chrome'u podglądu) — wyjście wraca do podglądu; projekt zapisuje się sam.
+          onSelectTab?.('preview'); setActiveSection('preview'); setMenuWModule(false)
+        })}
 
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
         {activeTab === 'preview' && (

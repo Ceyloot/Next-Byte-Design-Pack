@@ -37,6 +37,10 @@ export interface Warstwa {
   zrodlo: ZrodloObrazu
   /** pusta ramka generatora („Image Generator”) — czeka na opis, nie jest zdjęciem do edycji */
   generator?: boolean
+  /** trwa generowanie obrazu w tej ramce — animowany placeholder zamiast zdjęcia */
+  generuje?: boolean
+  /** tymczasowy placeholder tworzony obok zdjęcia na czas generacji (znika po wyniku; nie jest zapisywany) */
+  duch?: boolean
   /**
    * Co widać na zdjęciu — rozpoznane w tle zaraz po wrzuceniu.
    * Służy za zapas nazw dla pinesek i za kontekst dla polecenia.
@@ -378,7 +382,7 @@ export type StanGeneracji =
   | { faza: 'bezczynny' }
   | { faza: 'planuje' }
   /** `role` — skąd wiadomo, co jest obiektem, a co miejscem (po polsku) */
-  | { faza: 'trwa'; plan?: string; role?: string }
+  | { faza: 'trwa'; plan?: string; role?: string; tryb?: 'inpainting' | 'generator' | 'referencje' }
   /** poziom 4: ani zdanie, ani wzrok nie rozstrzygnęły ról — pytamy jednym kliknięciem */
   | { faza: 'pyta'; pytanie: import('./role-z-polecenia').PytanieORole }
   | { faza: 'sprawdza'; wynik: import('./dostawca').Generacja }
