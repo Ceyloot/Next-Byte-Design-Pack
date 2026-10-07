@@ -32,7 +32,7 @@ export interface PlanAgenta {
   baza: number
   referencje: ReferencjaAgenta[]
   cel?: Ramka
-  skala?: { box: Ramka; uzasadnienie: string }
+  skala?: { kotwica: { opis: string; box: Ramka; os: 'szer' | 'wys'; metry: number }; obiekt: { opis: string; metry: number }; uzasadnienie: string }
   /** gotowy prompt dla modelu obrazu (EN) */
   prompt: string
   /** jedno zdanie po polsku: co zaraz zrobimy */
@@ -113,15 +113,24 @@ export function odczytajPlanAgenta(json: Record<string, unknown> | null | undefi
     }
   }
 
-  const sk = json.skala as { box?: unknown; uzasadnienie?: unknown } | null | undefined
-  const skalaBox = sk && typeof sk === 'object' ? odczytajRamke(sk.box) : undefined
+  const sk = json.skala as { kotwica?: Record<string, unknown>; obiekt?: Record<string, unknown>; uzasadnienie?: unknown } | null | undefined
+  const kBox = sk?.kotwica ? odczytajRamke(sk.kotwica.box) : undefined
+  const kMetry = Number(sk?.kotwica?.metry)
+  const oMetry = Number(sk?.obiekt?.metry)
+  const skalaOk = Boolean(kBox) && kMetry > 0 && oMetry > 0 && kMetry < 500 && oMetry < 500
 
   return {
     zadanie: ZADANIA.includes(json.zadanie as ZadanieAgenta) ? (json.zadanie as ZadanieAgenta) : 'edycja',
     baza,
     referencje,
     cel: odczytajRamke(json.cel),
-    skala: skalaBox ? { box: skalaBox, uzasadnienie: tekst(sk?.uzasadnienie) } : undefined,
+    skala: skalaOk
+      ? {
+          kotwica: { opis: tekst(sk!.kotwica!.opis), box: kBox!, os: sk!.kotwica!.os === 'wys' ? 'wys' : 'szer', metry: kMetry },
+          obiekt: { opis: tekst(sk!.obiekt!.opis), metry: oMetry },
+          uzasadnienie: tekst(sk?.uzasadnienie),
+        }
+      : undefined,
     prompt,
     plan: tekst(json.plan),
   }
@@ -134,17 +143,16 @@ export function tekstPytania(p: PytanieAgenta): string {
   return `${p.tresc}${zdjecia ? `\n\n${zdjecia}` : ''}${odp}`
 }
 
-/** Zdanie o rozmiarze z ramki skali: liczby z agenta zamienione na słowa dla modelu obrazu. */
-export function zdanieOSkali(skala: { box: Ramka; uzasadnienie: string }, proporcjeZdjecia = 1): string {
-  const [ymin, xmin, ymax, xmax] = skala.box
-  const szer = Math.round((xmax - xmin) / 10)
-  const wys = Math.round((ymax - ymin) / 10)
-  const x = ((xmin + xmax) / 2000).toFixed(2)
-  const y = (ymax / 1000).toFixed(2)
-  // Ramka 0–1000 jest liczona osobno na każdej osi: proporcje w pikselach = (szer / wys) · (szerokość zdjęcia / wysokość zdjęcia).
-  // Rzecz o skrajnych proporcjach (np. auto 8% × 20% na zdjęciu pionowym) to prawie na pewno pomyłka — wtedy podajemy tylko szerokość.
-  const proporcje = wys > 0 ? (szer / wys) * proporcjeZdjecia : 1
-  const wiarygodne = proporcje >= 0.3 && proporcje <= 3.5
-  const rozmiar = wiarygodne ? `about ${szer}% of the image width and ${wys}% of its height` : `about ${szer}% of the image width (keep its natural real-world proportions)`
-  return `SIZE: in Image 1 the finished subject spans ${rozmiar}, its lowest point touching the ground at about x=${x} y=${y}. It is exactly that big because of its distance from the camera — never take its size from the reference photo.`
+/**
+ * Zdanie o rozmiarze. Rozmiar liczy KOD, nie agent: agent wskazuje tylko kotwicę (ciasna ramka rzeczy o znanym wymiarze, stojącej na tej samej
+ * głębokości co miejsce) i podaje prawdziwe wymiary kotwicy i obiektu w metrach; piksele i procenty wynikają z proporcji.
+ */
+export function zdanieOSkali(skala: NonNullable<PlanAgenta['skala']>, szerPx: number, wysPx: number): string {
+  const [ymin, xmin, ymax, xmax] = skala.kotwica.box
+  const kotwicaPx = skala.kotwica.os === 'wys' ? ((ymax - ymin) / 1000) * wysPx : ((xmax - xmin) / 1000) * szerPx
+  const stosunek = skala.obiekt.metry / skala.kotwica.metry
+  const dlugoscPx = kotwicaPx * stosunek
+  const procent = Math.max(1, Math.round((dlugoscPx / szerPx) * 100))
+  const razy = stosunek >= 10 ? Math.round(stosunek) : Math.round(stosunek * 10) / 10
+  return `SIZE: measured in Image 1, the longest visible side of the finished subject is about ${procent}% of the image width — about ${razy}× the ${skala.kotwica.os === 'wys' ? 'height' : 'width'} of ${skala.kotwica.opis || 'the reference object'} that stands at the same distance from the camera. It is exactly that big because of its distance from the camera — never take its size from the reference photo.`
 }
