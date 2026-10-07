@@ -309,6 +309,10 @@ function liniaRozmiaruDodaj(rozmiar: string): string {
  * naturally in the environment's geometry”). Za skalę odpowiada MODEL; reżyser (Gemini) nie podaje już rozmiaru, skali, widoku ani ułożenia —
  * tylko co jest czym i gdzie. Jedno wspólne zdanie dla każdej wstawianej rzeczy lub osoby.
  */
+/** Całe zdjęcie od zera (jak w zamianie postaci): bez edycji, wklejania i podmiany fragmentów — scena i obiekt powstają razem. */
+export const BRICK_CALE_ZDJECIE = (baza: number) =>
+  `GENERATE THE WHOLE IMAGE FROM SCRATCH as one new photograph, every pixel rendered fresh in a single pass: scene and new object together. Do not edit, patch, inpaint, mask, blend, composite or paste anything onto Image ${baza}, and do not copy a patch of the reference photo into it — the object is not a layer placed on the scene, it is drawn into the same exposure, with the scene around it re-created identically (same layout, framing, camera angle, every existing object, light, shadows, grain and colour). A subject that looks like a separate picture placed on the background means the task failed: redo it so object and scene share edges, light, reflections, shadows and sharpness.`
+
 /** Kompletność obiektu: referencja pokazująca tylko fragment (głowa, przód, narożnik) nie może skończyć jako ucięty wycinek wklejony do sceny. */
 const refs2Count = (w: { obrazy: { rola?: string }[] }) => w.obrazy.filter((o) => o.rola === 'donor').length
 
@@ -722,6 +726,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
             brickSkali(baza),
             `It appears exactly once${op.id === 'object_swap' ? ', in place of the old object, which is removed completely' : `; ADD, never replace: every object already in Image ${baza} stays exactly where it is, including similar ones`}. NEVER COPY THE REFERENCE PIXELS: draw the object anew for Image ${baza}'s camera angle, light, sharpness, grain and colour, as if it had stood in the scene when the photo was taken.`,
             STUDIO_ZACHOWAJ_UKLAD(baza),
+            BRICK_CALE_ZDJECIE(baza),
             BRICK_KOMPLETNOSC,
             BRICK_MECHANIKI,
             STUDIO_JEDNO_ZDJECIE,
@@ -740,6 +745,7 @@ export function skladajPrompt(w: SkladajWejscie): SkladajWynik {
             ? `GENERATE THE SUBJECT FROM ZERO inside Image ${baza}, standing ${zRamka ? 'exactly inside the magenta rectangle' : relacyjnie ? 'exactly where the Placement line says' : 'exactly at the x / y point of the destination pin'}, with its real proportions, as if it had been in this scene when the photo was taken — never a copy of the reference picture. It appears exactly once. ${op.id === 'object_swap' ? 'It replaces the object at that point; nothing of the old object remains.' : 'ADD, never replace: every object already in Image ' + baza + ' stays exactly where it is, including one that looks similar to the new object (another car, another chair); the new object is an extra one on the free spot.'} NEVER COPY THE REFERENCE PIXELS: do not cut, paste or reuse the reference picture of the object in any form (not its outline, viewing angle, lighting, blur or compression); draw it for Image ${baza}'s camera angle, light, sharpness, grain and colour. Colour cast and bounce light stay subtle and only on the subject itself: the surfaces around it keep their original colour — no glow, tint, smear or coloured patch on them, and wherever the old object was, the surface behind it is restored in its own natural colour and texture.${w.swiatlo?.trim() ? `\nTHE LIGHT OF IMAGE ${baza} (measured — the subject must be lit exactly like this, not like its reference): ${w.swiatlo.trim()}` : ''}`
             : '',
           wstawianie ? STUDIO_ZACHOWAJ_UKLAD(baza) : '',
+          wstawianie ? BRICK_CALE_ZDJECIE(baza) : '',
           wstawianie ? BRICK_KOMPLETNOSC : '',
           wstawianie ? BRICK_MECHANIKI : '',
           donorzy.length || wstawianie ? STUDIO_JEDNO_ZDJECIE : '',
