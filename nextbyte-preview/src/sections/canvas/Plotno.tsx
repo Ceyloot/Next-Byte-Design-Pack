@@ -803,35 +803,34 @@ export function Plotno({
         })}
       </div>
 
-      {/* Ekran startowy: jedno zdanie, wgranie z dysku albo wklejenie */}
+      {/* Ekran startowy: płaska strefa upuszczenia — wgraj z dysku, upuść albo wklej */}
       {warstwy.length === 0 && (
-        <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center p-4">
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4">
           <div
+            onClick={onOtworzDodawanie}
+            role={onOtworzDodawanie ? 'button' : undefined}
             className={cn(
-              'nb-szklo nb-szklo-plynne nb-powierzchnia relative flex w-full max-w-sm flex-col items-center rounded-2xl border p-7 text-center',
-              nadPlotnem ? 'border-primary/60' : 'border-foreground/[0.12]',
+              'pointer-events-auto flex w-full max-w-md flex-col items-center rounded-xl border border-dashed bg-card/60 px-8 py-10 text-center transition-colors',
+              onOtworzDodawanie && 'cursor-pointer hover:bg-card/80',
+              nadPlotnem ? 'border-primary/70 bg-primary/5' : 'border-foreground/[0.18]',
             )}
           >
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-foreground/[0.12] bg-foreground/[0.05] text-foreground/70">
-              <Sparkles className="h-5 w-5" />
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-foreground/[0.07] text-foreground/80">
+              <Upload className="h-5 w-5" />
             </div>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">Canvas Studio AI</h2>
-            <p className="mt-1.5 whitespace-nowrap text-[13px] text-muted-foreground">Wgraj zdjęcie i oznacz obiekt pinezką.</p>
-
-            {onOtworzDodawanie && (
-              <button
-                type="button"
-                onClick={onOtworzDodawanie}
-                className="nb-cta nb-refleks-krawedzi mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-xl px-5 text-[13px] font-semibold"
-              >
-                <Upload className="h-4 w-4 text-primary" />
+            <h2 className="text-[17px] font-semibold tracking-tight text-foreground">Zacznij od zdjęcia</h2>
+            <p className="mt-1.5 text-[13px] text-muted-foreground">Przeciągnij plik tutaj, kliknij, żeby go wybrać, albo wklej obraz.</p>
+            <div className="mt-6 flex items-center gap-2">
+              <span className="flex h-9 items-center gap-2 rounded-lg bg-foreground px-4 text-[13px] font-semibold text-background">
+                <Upload className="h-4 w-4" />
                 Wgraj z dysku
-              </button>
-            )}
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              albo upuść zdjęcie tutaj lub wklej{' '}
-              <kbd className="rounded-md border border-foreground/[0.12] bg-foreground/[0.05] px-1.5 py-0.5 font-mono text-[10px]">Ctrl+V</kbd>
-            </p>
+              </span>
+              <span className="flex h-9 items-center gap-1.5 rounded-lg border border-foreground/[0.14] px-3 text-[12px] text-muted-foreground">
+                <kbd className="font-mono text-[11px] text-foreground/80">Ctrl+V</kbd>
+                wklej
+              </span>
+            </div>
+            <p className="mt-4 text-[11px] text-muted-foreground">Pinezka: Ctrl+klik na zdjęciu — wskaż obiekt albo miejsce.</p>
           </div>
         </div>
       )}

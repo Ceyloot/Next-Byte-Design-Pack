@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { odczytajAktualnyMotyw, przelaczNastepnyMotyw } from '@/sections/panel2/fundament/kolejka-motywow'
 import {
   Sparkles,
+  Sun,
+  Moon,
   Send,
   Loader2,
   Trash2,
@@ -236,6 +239,13 @@ export function CzatCanvas({
     }
   }, [menu])
   const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
+  // Przełącznik motywu (Ciemny <-> Przyszły) — bezpośrednio w czacie
+  const [jasnyMotyw, setJasnyMotyw] = useState(() => (typeof document !== 'undefined' ? odczytajAktualnyMotyw().jasny : false))
+  useEffect(() => {
+    const odswiez = () => setJasnyMotyw(odczytajAktualnyMotyw().jasny)
+    window.addEventListener('nb-theme-change', odswiez)
+    return () => window.removeEventListener('nb-theme-change', odswiez)
+  }, [])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
   useEffect(() => {
@@ -460,6 +470,14 @@ export function CzatCanvas({
               aria-label="Nowy czat"
             >
               <CirclePlus className="h-[18px] w-[18px]" />
+            </button>
+            <button
+              onClick={() => przelaczNastepnyMotyw()}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+              title={jasnyMotyw ? 'Motyw: Przyszły (jasny) — przełącz na ciemny' : 'Motyw: Ciemny — przełącz na Przyszły (jasny)'}
+              aria-label="Przełącz motyw"
+            >
+              {jasnyMotyw ? <Moon className="h-[18px] w-[18px]" /> : <Sun className="h-[18px] w-[18px]" />}
             </button>
             <button
               onClick={() => setZwiniety(true)}
