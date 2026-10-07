@@ -95,8 +95,8 @@ export function odczytajPlanAgenta(json: Record<string, unknown> | null | undefi
 
   const prompt = tekst(json.prompt)
   if (!prompt || prompt.length > MAKS_DLUGOSC_PROMPTU) return null
-  // Prompt bez „Image 1” nie mówi modelowi, co jest bazą — to nie jest użyteczny prompt
-  if (!/Image\s*1\b/.test(prompt)) return null
+  // Prompt bez [BASE] / „Image 1” nie mówi modelowi, co jest bazą — to nie jest użyteczny prompt
+  if (!/\[BASE\]|Image\s*1\b/.test(prompt)) return null
 
   const baza = poprawnyNr(json.baza) ? (json.baza as number) : 1
   const referencje: ReferencjaAgenta[] = []
