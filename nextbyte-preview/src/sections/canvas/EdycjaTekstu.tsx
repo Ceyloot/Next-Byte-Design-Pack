@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, Plus } from 'lucide-react'
+import { ArrowRight, Check, Loader2, Plus, ScanText, Type, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { wykryjTeksty, type WykrytyTekst } from './dostawca'
 
@@ -92,22 +92,28 @@ export function EdycjaTekstu({
         e.stopPropagation()
         if (e.key === 'Escape') onAnuluj()
       }}
-      className="absolute z-50 w-[min(320px,calc(100vw-120px))]"
+      className="absolute z-50 w-[min(300px,calc(100vw-120px))]"
       style={style}
     >
-      <div className="rounded-2xl border border-foreground/[0.1] bg-[hsl(var(--card))] p-3.5 shadow-[0_8px_24px_-8px_hsl(0_0%_0%/0.35)]">
-        <div className="mb-3 text-[14px] font-semibold text-foreground">Edit text</div>
+      <div className="rounded-2xl border border-[hsl(var(--primary)/0.22)] bg-[hsl(var(--card))] p-3 shadow-[0_0_32px_-10px_hsl(var(--primary)/0.4),0_10px_28px_-10px_hsl(0_0%_0%/0.5)]">
+        <div className="mb-2.5 flex items-center gap-2">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.1)] text-primary">
+            <Type className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1 text-[13px] font-semibold text-foreground">Edit text</span>
+          <button type="button" onClick={onAnuluj} aria-label="Zamknij" className="grid h-7 w-7 place-items-center rounded-[10px] text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
 
         {stan === 'wykrywam' ? (
-          <div className="flex items-center gap-2 rounded-[12px] bg-foreground/[0.05] px-3.5 py-3 text-[13px] text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Wykrywam tekst…
+          <div className="grid place-items-center rounded-[12px] bg-foreground/[0.04] py-5 text-primary">
+            <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : (
           <>
-            <div className="max-h-[320px] space-y-2 overflow-y-auto">
-              {wykryte.length === 0 && dodane.length === 0 && (
-                <p className="rounded-[12px] bg-foreground/[0.05] px-3.5 py-3 text-[12.5px] text-muted-foreground">Nie wykryłem tekstu. Dodaj napis ręcznie.</p>
-              )}
+            <div className="max-h-[300px] space-y-1.5 overflow-y-auto">
+              {wykryte.length === 0 && dodane.length === 0 && <div className="grid place-items-center rounded-[12px] bg-foreground/[0.04] py-4 text-muted-foreground"><ScanText className="h-5 w-5" /></div>}
               {wykryte.map(t => (
                 <input
                   key={t.id}
@@ -121,42 +127,44 @@ export function EdycjaTekstu({
                     }
                   }}
                   className={cn(
-                    'w-full rounded-[12px] border bg-foreground/[0.05] px-3.5 py-2.5 text-[13.5px] text-foreground outline-none transition-colors focus:border-primary/50',
-                    (wartosci[t.id] ?? t.tekst).trim() !== t.tekst ? 'border-primary/40' : 'border-transparent',
+                    'w-full rounded-[12px] border bg-foreground/[0.05] px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary/50',
+                    (wartosci[t.id] ?? t.tekst).trim() !== t.tekst ? 'border-primary/40 bg-primary/[0.06]' : 'border-transparent',
                   )}
                 />
               ))}
               {dodane.map(d => (
-                <div key={d.id} className="space-y-1.5">
+                <div key={d.id} className="flex items-center gap-1.5">
                   <input
                     value={d.stary}
-                    placeholder="Napis na zdjęciu"
                     onChange={e => setDodane(l => l.map(x => (x.id === d.id ? { ...x, stary: e.target.value } : x)))}
-                    className="w-full rounded-[12px] border border-transparent bg-foreground/[0.05] px-3.5 py-2.5 text-[13.5px] text-foreground outline-none focus:border-primary/50"
+                    className="min-w-0 flex-1 rounded-[12px] border border-transparent bg-foreground/[0.05] px-3 py-2 text-[13px] text-foreground outline-none focus:border-primary/50"
                   />
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <input
                     value={d.nowy}
-                    placeholder="Zmień na…"
                     onChange={e => setDodane(l => l.map(x => (x.id === d.id ? { ...x, nowy: e.target.value } : x)))}
-                    className="w-full rounded-[12px] border border-primary/30 bg-foreground/[0.05] px-3.5 py-2.5 text-[13.5px] text-foreground outline-none focus:border-primary/50"
+                    className="min-w-0 flex-1 rounded-[12px] border border-primary/30 bg-primary/[0.06] px-3 py-2 text-[13px] text-foreground outline-none focus:border-primary/50"
                   />
                 </div>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={() => setDodane(l => [...l, { id: `d${l.length}`, stary: '', nowy: '' }])}
-              className="mt-2 flex items-center gap-1.5 rounded-[10px] px-1.5 py-1 text-[11.5px] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Plus className="h-3.5 w-3.5" /> Dodaj napis
-            </button>
 
-            <label className="mt-2 flex items-center gap-2 text-[12px] text-muted-foreground">
-              Czcionka
+            <div className="mt-2 flex items-center gap-1.5">
+              <button
+                type="button"
+                title="Dodaj napis"
+                aria-label="Dodaj napis"
+                onClick={() => setDodane(l => [...l, { id: `d${l.length}`, stary: '', nowy: '' }])}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-foreground/[0.09] bg-foreground/[0.04] text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
               <select
+                aria-label="Czcionka"
+                title="Czcionka"
                 value={czcionkaId}
                 onChange={e => setCzcionkaId(e.target.value)}
-                className="min-w-0 flex-1 rounded-[10px] border border-transparent bg-foreground/[0.05] px-2.5 py-1.5 text-[12.5px] text-foreground outline-none focus:border-primary/50"
+                className="h-8 min-w-0 flex-1 rounded-[10px] border border-foreground/[0.09] bg-foreground/[0.04] px-2.5 text-[12.5px] text-foreground outline-none focus:border-primary/50"
               >
                 {CZCIONKI.map(c => (
                   <option key={c.id} value={c.id}>
@@ -164,23 +172,16 @@ export function EdycjaTekstu({
                   </option>
                 ))}
               </select>
-            </label>
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={onAnuluj}
-                className="rounded-[12px] border border-foreground/[0.14] px-3 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-foreground/[0.06]"
-              >
-                Cancel
-              </button>
               <button
                 type="button"
                 disabled={trwa || zmiany.length === 0}
                 onClick={zatwierdz}
-                className="flex items-center justify-center gap-1.5 rounded-[12px] bg-primary px-3 py-2 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-foreground/[0.08] disabled:text-muted-foreground disabled:opacity-100"
+                aria-label="Uruchom"
+                title="Uruchom (Enter)"
+                className="flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary)/0.14)] px-3 text-[12.5px] font-semibold text-foreground shadow-[0_0_18px_-6px_hsl(var(--primary)/0.6)] transition-colors hover:bg-[hsl(var(--primary)/0.22)] disabled:cursor-not-allowed disabled:border-foreground/[0.09] disabled:bg-foreground/[0.04] disabled:text-muted-foreground disabled:shadow-none"
               >
-                {trwa ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} Run <span className="text-[11.5px] opacity-70">· 4</span>
+                {trwa ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                <span className="text-[11.5px] opacity-70">4</span>
               </button>
             </div>
           </>
