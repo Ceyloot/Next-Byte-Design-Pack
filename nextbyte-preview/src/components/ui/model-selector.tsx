@@ -287,15 +287,18 @@ function MetricBar({
   value,
   info,
   invert = false,
+  accent = false,
   animationKey,
 }: {
   label: string;
   value: number;
   info?: string;
   invert?: boolean;
+  /** jeden kolor akcentu motywu zamiast skali zielony–czerwony (styl NextByte) */
+  accent?: boolean;
   animationKey: string;
 }) {
-  const color = metricColor(value, invert);
+  const color = accent ? "hsl(var(--primary))" : metricColor(value, invert);
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <div className="flex items-center justify-between gap-1">
@@ -844,7 +847,7 @@ function PickerItem({
       value={model}
     >
       <PreviewCard.Trigger
-        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-foreground/[0.06] group-data-[selected]:bg-foreground/[0.07]"
+        className="flex w-full items-center gap-2 rounded-[12px] border border-transparent px-3 py-2 transition-colors hover:bg-foreground/[0.06] group-data-[selected]:border-[hsl(var(--primary)/0.35)] group-data-[selected]:bg-[hsl(var(--primary)/0.08)]"
         closeDelay={180}
         delay={80}
         handle={previewHandle}
@@ -852,11 +855,11 @@ function PickerItem({
         render={<div />}
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-[15px] leading-tight">{model.label}</span>
-          <ProviderLabel className="text-[12.5px] text-muted-foreground" provider={model.provider} />
+          <span className="truncate text-[14.5px] font-semibold leading-tight group-data-[selected]:text-primary">{model.label}</span>
+          <ProviderLabel className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground" provider={model.provider} />
         </div>
         {model.cost !== undefined ? (
-          <span className="shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 font-mono text-[11.5px] font-semibold tabular-nums text-muted-foreground">
+          <span className="shrink-0 rounded-full border border-foreground/[0.1] bg-foreground/[0.05] px-2 py-0.5 font-mono text-[11.5px] font-semibold tabular-nums text-muted-foreground group-data-[selected]:border-[hsl(var(--primary)/0.35)] group-data-[selected]:text-primary">
             ⟠ {model.cost}
           </span>
         ) : null}
@@ -925,21 +928,23 @@ export function ModelPicker({
         <Combobox.Positioner align="start" alignOffset={alignOffset} className="z-[70]" side={popupSide} sideOffset={8}>
           <Combobox.Popup
             aria-label="Wybierz model"
-            className="rounded-2xl border border-border bg-card shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none"
+            className="rounded-2xl border border-[hsl(var(--primary)/0.22)] bg-card shadow-[0_0_32px_-10px_hsl(var(--primary)/0.4),0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none"
             style={{ width: popupWidth }}
           >
             <PreviewCard.Root<PickerModel> handle={previewHandle}>
               {({ payload }) => (
                 <>
                   {searchable ? (
-                    <Combobox.InputGroup className="flex items-center gap-1.5 rounded-none border-0 border-b border-border bg-transparent px-3">
-                      <Combobox.Input
-                        className="w-full bg-transparent px-0 py-3 text-[15px] outline-none placeholder:text-muted-foreground"
-                        onFocus={closePreview}
-                        placeholder="Szukaj modeli…"
-                      />
-                      <MagnifyingGlassIcon aria-hidden="true" className="shrink-0 text-muted-foreground" size={16} weight="bold" />
-                    </Combobox.InputGroup>
+                    <div className="p-2 pb-1">
+                      <Combobox.InputGroup className="flex items-center gap-2 rounded-[12px] border border-foreground/[0.08] bg-foreground/[0.05] px-3 focus-within:border-[hsl(var(--primary)/0.5)]">
+                        <MagnifyingGlassIcon aria-hidden="true" className="shrink-0 text-muted-foreground" size={15} weight="bold" />
+                        <Combobox.Input
+                          className="w-full bg-transparent px-0 py-2.5 text-[14px] outline-none placeholder:text-muted-foreground"
+                          onFocus={closePreview}
+                          placeholder="Szukaj modeli…"
+                        />
+                      </Combobox.InputGroup>
+                    </div>
                   ) : null}
                   <Combobox.Empty>
                     <div className="px-3 py-3 text-center text-xs text-muted-foreground">Brak modeli</div>
@@ -951,23 +956,30 @@ export function ModelPicker({
                   </ModelListWithScrollFade>
                   <PreviewCard.Portal keepMounted>
                     <PreviewCard.Positioner align="start" className="z-[80]" side={previewSide} sideOffset={10}>
-                      <PreviewCard.Popup className="w-72 overflow-hidden rounded-xl border border-border bg-card shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none">
+                      <PreviewCard.Popup className="w-72 overflow-hidden rounded-2xl border border-[hsl(var(--primary)/0.22)] bg-card shadow-[0_0_32px_-10px_hsl(var(--primary)/0.4),0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none">
                         {payload ? (
                           <div className="flex w-full flex-col gap-3 p-4">
-                            <div className="flex flex-col gap-1">
-                              <p className="text-[15px] font-medium text-foreground">{payload.label}</p>
-                              <ProviderLabel className="text-[13px] text-muted-foreground" provider={payload.provider} />
+                            <div className="flex items-center gap-3">
+                              {payload.icon ? (
+                                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] border border-[hsl(var(--primary)/0.28)] bg-[hsl(var(--primary)/0.1)] text-primary shadow-[0_0_20px_-8px_hsl(var(--primary)/0.55)]">
+                                  {payload.icon}
+                                </span>
+                              ) : null}
+                              <div className="flex min-w-0 flex-col gap-0.5">
+                                <p className="truncate text-[15px] font-semibold text-foreground">{payload.label}</p>
+                                <ProviderLabel className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground" provider={payload.provider} />
+                              </div>
                             </div>
                             <p className="text-pretty text-[13px] leading-snug text-muted-foreground">{payload.description}</p>
                             {payload.metrics?.length ? (
                               <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-1">
                                 {payload.metrics.map((m) => (
-                                  <MetricBar animationKey={payload.value} key={m.label} label={m.label} value={m.value} />
+                                  <MetricBar accent animationKey={payload.value} key={m.label} label={m.label} value={m.value} />
                                 ))}
                               </div>
                             ) : null}
                             {payload.cost !== undefined ? (
-                              <div className="flex items-center justify-between rounded-lg bg-foreground/[0.05] px-3 py-2">
+                              <div className="flex items-center justify-between rounded-[12px] border border-[hsl(var(--primary)/0.22)] bg-[hsl(var(--primary)/0.06)] px-3 py-2">
                                 <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Koszt</span>
                                 <span className="font-mono text-[13px] font-semibold tabular-nums text-primary">⟠ {payload.cost}</span>
                               </div>
