@@ -359,3 +359,36 @@ export async function zmierzObiekt(
     return null
   }
 }
+
+export interface WykrytyTekst {
+  id: string
+  /** tekst dokładnie jak na obrazie */
+  tekst: string
+  /** [ymin, xmin, ymax, xmax] 0–1000 */
+  box?: [number, number, number, number]
+  /** krótki opis liternictwa (EN) */
+  styl?: string
+}
+
+/** OCR całego zdjęcia: osobne bloki tekstu z ramkami i opisem liternictwa. Pusta lista, gdy nic nie znaleziono albo analiza zawiodła. */
+export async function wykryjTeksty(zdjecie: string): Promise<WykrytyTekst[]> {
+  try {
+    // 1600 px: drobny druk trzeba zobaczyć; blob / zewnętrzny adres zamieniamy na data URL
+    const dane = (await zmniejszDoAnalizy(zdjecie, 1600)) || zdjecie
+    const odp = await fetch('/api/canvas/rozpoznaj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wycinek: dane, tryb: 'tekst' }),
+    })
+    if (!odp.ok) return []
+    const tresc = (await odp.json()) as { teksty?: { tekst: string; box?: number[]; styl?: string }[] }
+    return (tresc.teksty ?? []).map((t, i) => ({
+      id: `t${i}`,
+      tekst: t.tekst,
+      box: t.box && t.box.length === 4 ? [t.box[0], t.box[1], t.box[2], t.box[3]] : undefined,
+      styl: t.styl,
+    }))
+  } catch {
+    return []
+  }
+}

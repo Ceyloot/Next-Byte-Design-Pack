@@ -57,7 +57,7 @@ export interface ZadanieRozpoznania {
    * `scena` robi inwentarz: co w ogóle jest na zdjęciu.
    * `opis` — wyczerpujący opis wizualny jednego obiektu w centrum wycinka (EN), do przeniesienia w kadrze.
    */
-  tryb?: 'obiekt' | 'scena' | 'opis' | 'osoba' | 'poza'
+  tryb?: 'obiekt' | 'scena' | 'opis' | 'osoba' | 'poza' | 'tekst'
 }
 
 /** Odpowiedź rozpoznania — krótkie nazwy po polsku */
@@ -299,6 +299,46 @@ export function runwareProxy(): Plugin {
             }
           }
           return odpowiedz(200, { opis: '', nazwy: [] })
+        }
+
+        // Tryb „tekst”: OCR całego obrazu — każdy widoczny napis osobno (tekst dokładnie jak w obrazie, ramka, krótki opis liternictwa).
+        if (tryb === 'tekst') {
+          const d = wycinek.match(/^data:([^;]+);base64,(.+)$/)
+          const tResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${kluczGemini}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { inlineData: { mimeType: d ? d[1] : 'image/jpeg', data: d ? d[2] : wycinek } },
+                      {
+                        text: 'Read ALL visible text in this image: titles, captions, labels, numbers, logos with words, signs, watermarks, small print. Group lines that belong to one block (one headline, one label) into ONE entry; keep separate blocks separate. For each entry return: "tekst" — the text EXACTLY as written (same language, spelling, diacritics, capitalisation, line breaks as spaces); "box" — tight [ymin,xmin,ymax,xmax] on a 0-1000 scale; "styl" — a short English description of the lettering (typeface style, weight, colour, any outline / shadow / highlight box behind it). Order: top to bottom, then left to right. Do not invent text; skip illegible fragments. Reply ONLY JSON: {"teksty":[{"tekst":"…","box":[0,0,0,0],"styl":"…"}]}',
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: { temperature: 0, maxOutputTokens: 4096, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } },
+              }),
+            },
+          )
+          if (tResp.ok) {
+            const tJson = await tResp.json()
+            const tTxt = tJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+            try {
+              const o = JSON.parse(tTxt) as { teksty?: { tekst?: string; box?: number[]; styl?: string }[] }
+              const teksty = (o.teksty ?? [])
+                .filter(t => typeof t.tekst === 'string' && t.tekst.trim())
+                .slice(0, 30)
+                .map(t => ({ tekst: String(t.tekst).trim(), box: Array.isArray(t.box) && t.box.length === 4 ? t.box.map(Number) : undefined, styl: typeof t.styl === 'string' ? t.styl.trim() : undefined }))
+              return odpowiedz(200, { teksty, nazwy: [] })
+            } catch {
+              // nieczytelna odpowiedź — panel pokaże puste pole do ręcznego wpisu
+            }
+          }
+          return odpowiedz(200, { teksty: [], nazwy: [] })
         }
 
         // Tryb „opis”: pełny Gemini 2.5 Flash (bez myślenia) — wyczerpujący opis jednego obiektu z wycinka.

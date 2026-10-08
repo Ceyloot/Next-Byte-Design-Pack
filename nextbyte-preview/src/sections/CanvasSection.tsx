@@ -79,6 +79,7 @@ import { przygotujZAgentem } from '@/sections/canvas/nowy'
 import { narysujMapeMiejsc, narysujObszary, zlozWklejke } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
+import { EdycjaTekstu, type Czcionka, type ZmianaTekstu } from './canvas/EdycjaTekstu'
 import { ramkaRzeczyPodPinem, referencjaWokolRzeczy, zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
 import { wczytajZPamieci, zapiszWPamieci } from './canvas/pamiec'
 import { porownanieZKotwica, rozmiarZPomiaru } from './canvas/rezyser'
@@ -589,15 +590,35 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     [],
   )
   const uruchomEdycjeTekstu = useCallback(
-    async (warstwaId: string, instrukcja: string) => {
+    async (warstwaId: string, zmiany: ZmianaTekstu[], czcionka: Czcionka) => {
       const w = projekt.warstwy.find(x => x.id === warstwaId)
-      if (!w || !instrukcja.trim() || akcjaAI) return
+      if (!w || zmiany.length === 0 || akcjaAI) return
       setEdycjaTekstu(null)
       setAkcjaAI('tekst')
       startDucha(w, 'Edit text…')
       try {
-        const polecenie = `Edit the text in this image as instructed: ${instrukcja.trim()}. Change ONLY that text. Match the original lettering exactly — same font style, weight, size, colour, kerning, perspective, surface, lighting, blur and grain — and keep every other pixel of the picture identical: same objects, people, layout, framing and colours. If the request is ambiguous, change the most prominent text. Spell the new text exactly as written, with correct letters and diacritics.`
-        const wynik = await generuj({ polecenie, obrazy: [await konwertujNaDataUrl(w.src)], szerokosc: w.naturalWidth, wysokosc: w.naturalHeight })
+        const strefa = (b?: [number, number, number, number]) => {
+          if (!b) return ''
+          const cx = (b[1] + b[3]) / 2000
+          const cy = (b[0] + b[2]) / 2000
+          const poziom = cx < 0.34 ? 'left' : cx > 0.66 ? 'right' : 'centre'
+          const pion = cy < 0.34 ? 'top' : cy > 0.66 ? 'bottom' : 'middle'
+          return ` (located ${pion} ${poziom} of the picture, at about x=${cx.toFixed(2)}, y=${cy.toFixed(2)})`
+        }
+        const lista = zmiany
+          .map((z, i) => `${i + 1}. Replace the text "${z.stary}"${strefa(z.box)}${z.styl ? ` — current lettering: ${z.styl}` : ''} with exactly "${z.nowy}".`)
+          .join('\n')
+        const litery = czcionka.opis
+          ? `Render each NEW text in ${czcionka.opis}; keep its size, position, colour, outline / shadow and any box or highlight behind it as in the original, unless the new letterforms need a little more or less width.`
+          : `Match the ORIGINAL lettering of each replaced text exactly — same typeface, weight, size, colour, outline / shadow, kerning, perspective, surface, lighting, blur and grain — as if the new words were printed with the same font.`
+        const polecenie = `Edit the text in this image. Change ONLY these texts:\n${lista}\n${litery}\nEvery other text and every other pixel of the picture stays identical: same objects, people, layout, framing and colours. Spell each new text exactly as written, letter by letter, with correct diacritics; do not add, drop or translate any word.`
+        const wynik = await generuj({
+          polecenie,
+          obrazy: [await konwertujNaDataUrl(w.src)],
+          szerokosc: w.naturalWidth,
+          wysokosc: w.naturalHeight,
+          model: modelObrazu === 'auto' ? undefined : modelObrazu,
+        })
         const src = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
         dodajZeZrodla(src, `${w.name}_tekst`, 'wynik', w)
       } catch (e) {
@@ -607,7 +628,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         setAkcjaAI(null)
       }
     },
-    [projekt.warstwy, akcjaAI, dodajZeZrodla, startDucha, usunDucha],
+    [projekt.warstwy, akcjaAI, modelObrazu, dodajZeZrodla, startDucha, usunDucha],
   )
   /**
    * Quick edit: sam opis zmiany + zdjęcie jako referencja — bez maski i bez zamalowywania (do tego służy osobny „Inpaint”).
@@ -2342,15 +2363,14 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           const w = projekt.warstwy.find(x => x.id === edycjaTekstu)
           if (!w) return null
           return (
-            <Prompter
+            <EdycjaTekstu
               key={`tekst-${w.id}`}
-              etykieta="Edit text"
-              placeholder="Co zmienić w napisie? np. „SALE” → „-50%”"
+              zdjecie={w.src}
               trwa={Boolean(akcjaAI)}
-              onWyslij={t => uruchomEdycjeTekstu(w.id, t)}
+              onZastosuj={(zmiany, czcionka) => uruchomEdycjeTekstu(w.id, zmiany, czcionka)}
               onAnuluj={() => setEdycjaTekstu(null)}
               style={{
-                left: Math.max(16, Math.min(widok.x + (w.x + w.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
+                left: Math.max(16, Math.min(widok.x + (w.x + w.width / 2) * widok.zoom - 210, window.innerWidth - 640)),
                 top: Math.max(72, widok.y + w.y * widok.zoom - 62),
               }}
             />
