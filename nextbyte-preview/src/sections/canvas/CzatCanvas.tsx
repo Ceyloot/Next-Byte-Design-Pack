@@ -235,7 +235,9 @@ export function CzatCanvas({
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
     document.documentElement.style.setProperty('--nb-czat-szer', zwiniety ? '0px' : '380px')
-    return () => document.documentElement.style.removeProperty('--nb-czat-szer')
+    return () => {
+      document.documentElement.style.removeProperty('--nb-czat-szer')
+    }
   }, [zwiniety])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
