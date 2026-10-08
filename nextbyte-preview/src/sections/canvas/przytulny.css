@@ -199,7 +199,8 @@
     radial-gradient(ellipse 55% 50% at 0% 0%, hsl(var(--primary) / 0.07), transparent 70%),
     radial-gradient(ellipse 50% 45% at 100% 100%, hsl(var(--primary) / 0.05), transparent 70%);
 }
-[data-theme='dark-theme'] .nb-cozy .nb-cozy-kropki { display: none; }
+/* Ciemny: tło w kropki jak w jasnym motywie (siatka liniowa wyłączona) */
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-siatka { display: none; }
 
 /* Szkło paneli: cyjanowy rant, górne światło i miękka poświata marki */
 [data-theme='dark-theme'] .nb-cozy .p2-szklo,
