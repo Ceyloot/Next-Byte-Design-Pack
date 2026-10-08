@@ -1114,14 +1114,17 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
    * Odpowiedź na pytanie agenta wpisujesz w czacie — następne „Wyślij” jest wtedy odpowiedzią (póki pinezki się nie zmienią).
    * Warstwy i zasady: `canvas/nowy/README.md`. Stary system: `_schowane/prompty-v1`, tag git `prompty-v1`.
    */
-  const rozmowaAgenta = useRef<{ zadanie: string; pytanie: string; historia: { pytanie: string; odpowiedz: string }[]; odcisk: string } | null>(null)
+  const rozmowaAgenta = useRef<{ zadanie: string; pytanie: string; historia: { pytanie: string; odpowiedz: string }[]; odcisk: string; pineski: Pineska[] } | null>(null)
   const uruchomNowySystem = useCallback(async () => {
     if (refGeneruje.current) return
     const tekst = projekt.tekst.trim()
     if (!tekst) return
     const obrazyNaPlotnie = projekt.warstwy.filter(w => w.type === 'image' && !w.generator && w.src)
     const odcisk = odciskPinesek(projekt.pineski)
-    const rozmowa = rozmowaAgenta.current?.odcisk === odcisk ? rozmowaAgenta.current : null
+    // Odpowiedź na pytanie agenta należy do rozmowy także wtedy, gdy pinesek już nie ma na płótnie (po wysłaniu bywają zużyte) —
+    // wtedy używamy ich zapisanej kopii, a odpowiedź nie zostaje potraktowana jako nowe, samotne polecenie.
+    const rozmowa = rozmowaAgenta.current && (rozmowaAgenta.current.odcisk === odcisk || projekt.pineski.length === 0) ? rozmowaAgenta.current : null
+    const pineskiZadania = rozmowa ? rozmowa.pineski : projekt.pineski
     const tekstZadania = rozmowa ? rozmowa.zadanie : tekst
     const historia = rozmowa ? [...rozmowa.historia, { pytanie: rozmowa.pytanie, odpowiedz: tekst }] : []
     refGeneruje.current = true
@@ -1129,14 +1132,14 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     try {
       const p = await przygotujZAgentem({
         tekst: tekstZadania,
-        pineski: projekt.pineski,
+        pineski: pineskiZadania,
         warstwy: obrazyNaPlotnie,
         zaznaczone: wielu.map(w => w.id),
         wybrana: wybranaWarstwa,
         historia,
       })
       if (p.typ === 'pytanie') {
-        rozmowaAgenta.current = { zadanie: tekstZadania, pytanie: p.pytanie.tresc, historia, odcisk }
+        rozmowaAgenta.current = { zadanie: tekstZadania, pytanie: p.pytanie.tresc, historia, odcisk, pineski: pineskiZadania }
         setStanGeneracji({ faza: 'pyta', pytanie: { tresc: p.tekst, opcje: [], odcisk } })
         return
       }
