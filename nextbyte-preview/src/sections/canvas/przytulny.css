@@ -182,8 +182,8 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, hsl(var(--primary) / 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, hsl(var(--primary) / 0.05) 1px, transparent 1px);
+    linear-gradient(to right, hsl(var(--primary) / 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--primary) / 0.02) 1px, transparent 1px);
   /* maska „latarnia" jak w tle platformy: siatka zanika ku brzegom */
   -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 90%);
   mask-image: radial-gradient(circle, #000 10%, transparent 90%);

@@ -503,7 +503,7 @@ export function Plotno({
       <div
         aria-hidden
         className="nb-cozy-siatka"
-        style={{ backgroundSize: `${krokSiatki * 3}px ${krokSiatki * 3}px`, backgroundPosition: `${widok.x}px ${widok.y}px` }}
+        style={{ backgroundSize: `${krokSiatki * 6}px ${krokSiatki * 6}px`, backgroundPosition: `${widok.x}px ${widok.y}px` }}
       />
       <div
         className="nb-cozy-kropki pointer-events-none absolute inset-0"
