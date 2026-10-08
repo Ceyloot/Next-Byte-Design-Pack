@@ -3,7 +3,7 @@ import { etykietaPinezki } from './role'
 import { konwertujNaDataUrl, wytnijOkolice, zmniejszDoAnalizy, type Pineska, type Warstwa } from '../typy'
 import { odczytajPlanAgenta, srednicaZeSkali, tekstPytania, zdanieOSkali, type PlanAgenta, type PytanieAgenta, type ZapytanieDoAgenta } from './agent'
 import { przygotujNowySystem } from './szablon'
-import { narysujPrzewodnik, narysujPrzewodnikPrzesuniecia, wytnijRamke } from './obrazy'
+import { narysujMaskeUkladu, wytnijRamke } from './obrazy'
 
 /**
  * NOWY SYSTEM — przygotowanie jednej generacji. Warstwy:
@@ -122,7 +122,7 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
       const bokCelu = plan.cel ? Math.max(((plan.cel[3] - plan.cel[1]) / 1000) * baza.naturalWidth, ((plan.cel[2] - plan.cel[0]) / 1000) * baza.naturalHeight) : 0
       const srZrodlo = bokCelu > 8 ? bokCelu : 0.06 * baza.naturalWidth
       const srCel = plan.skala ? srednicaZeSkali(plan.skala, baza.naturalWidth, baza.naturalHeight) : srZrodlo
-      const przewodnik = await narysujPrzewodnikPrzesuniecia(baza.src, { x: z.x, y: z.y, srednicaPx: srZrodlo }, { x: d.x, y: d.y, srednicaPx: srCel })
+      const przewodnik = await narysujMaskeUkladu(baza.src, { x: d.x, y: d.y, srednicaPx: srCel }, { x: z.x, y: z.y, srednicaPx: srZrodlo })
       if (przewodnik) {
         obrazy.push(przewodnik)
         przesuniecieNr = obrazy.length
@@ -135,7 +135,7 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   const pinyNaBazie = pinezkiAgenta.filter(p => p.obraz === plan.baza)
   if (PRZEWODNIK_MIEJSCA && plan.skala && referencje.length > 0 && pinyNaBazie.length === 1 && plan.zadanie !== 'zamiana_osoby') {
     const sred = srednicaZeSkali(plan.skala, baza.naturalWidth, baza.naturalHeight)
-    const przewodnik = await narysujPrzewodnik(baza.src, pinyNaBazie[0].x, pinyNaBazie[0].y, sred)
+    const przewodnik = await narysujMaskeUkladu(baza.src, { x: pinyNaBazie[0].x, y: pinyNaBazie[0].y, srednicaPx: sred })
     if (przewodnik) {
       obrazy.push(przewodnik)
       przewodnikNr = obrazy.length
@@ -146,8 +146,8 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   const dopiski: string[] = []
   if (plan.skala) dopiski.push(zdanieOSkali(plan.skala))
   zbliz.forEach((z, k) => dopiski.push(`Image ${referencje.length + 2 + k} is a close-up of the face of the person in Image ${z.zdjecie} — the identity reference: reproduce exactly this face, feature by feature.`))
-  if (przesuniecieNr) dopiski.push(`Image ${przesuniecieNr} is a MOVE GUIDE only: a copy of Image 1 with two thin rings. RED ring = where the object is now — after the move this spot must show only the rebuilt background, no trace of the object. GREEN ring = where the object must end up, its diameter is the object's longest side there. Exactly one instance of the object must exist in the result, inside the green ring. The result is Image 1 edited; no ring or guide mark may appear in it.`)
-  if (przewodnikNr) dopiski.push(`Image ${przewodnikNr} is a PLACEMENT GUIDE only: a copy of Image 1 with a thin red ring. The ring's centre is the exact spot where the new object touches the ground / surface, and the ring's diameter is the length of the object's longest side as it appears in Image 1. Place the object centred on that spot, filling about that size — not larger, not smaller. The result is Image 1 edited; no ring, cross or guide mark may appear in it.`)
+  if (przesuniecieNr) dopiski.push(`Image ${przesuniecieNr} is a LAYOUT MASK, not a photograph: a black image of the same format as Image 1. The WHITE disc marks where the object must end up — centre it on the disc's centre, its longest side about the disc's diameter. The GREY disc marks where the object is now — after the move that spot must show only the rebuilt background. Exactly one instance of the object must exist in the result. Use the mask only for position and size: nothing from it (no disc, no black, no grey) may appear in the result, which is Image 1 edited.`)
+  if (przewodnikNr) dopiski.push(`Image ${przewodnikNr} is a LAYOUT MASK, not a photograph: a black image of the same format as Image 1. The WHITE disc marks the exact spot where the new object touches the ground / surface (the disc's centre) and its diameter is the length of the object's longest side as it appears in Image 1. Place the object centred on that disc, filling about that size — not larger, not smaller. Use the mask only for position and size: nothing from it (no disc, no black) may appear in the result, which is Image 1 edited.`)
   if (!/no blur|sharp/i.test(plan.prompt)) dopiski.push('Keep everything sharp — no blur or softening.')
   // Numery obrazów nadaje kod, nie agent: [BASE] = Image 1, [REF1] = Image 2 … (kolejność jak w tablicy obrazów wysyłanej do modelu)
   // Model obrazu nie widzi pinesek — gdyby agent mimo zakazu napisał „pin N”, podmieniamy to na współrzędne

@@ -52,68 +52,33 @@ export async function wytnijRamke(src: string, ramka: Ramka, margines: number, c
 }
 
 /**
- * PRZEWODNIK MIEJSCA: kopia zdjęcia bazowego z cienkim czerwonym pierścieniem w miejscu wstawienia.
- * Środek pierścienia = punkt styku obiektu z podłożem, średnica = najdłuższy bok obiektu (z obliczonej skali).
- * Badania nad kontrolą rozmiaru i położenia (ramki / maski) pokazują, że wskazanie wizualne działa dużo pewniej niż współrzędne w tekście.
+ * MASKA UKŁADU (nie zdjęcie): czarne tło tego samego formatu co baza, biały dysk = miejsce, w którym ma stanąć obiekt
+ * (środek = punkt styku z podłożem, średnica = najdłuższy bok obiektu z obliczonej skali). Szary dysk (przesunięcie) = skąd rzecz znika.
+ * Wcześniejszy pierścień rysowany na kopii zdjęcia bywał kopiowany do wyniku (Lite) — maska nie jest fotografią, więc nie ma czego przenieść.
  */
-export async function narysujPrzewodnik(src: string, x: number, y: number, srednicaPx: number): Promise<string | null> {
-  const o = await wczytaj(src)
-  if (!o) return null
-  const k = Math.min(1, 1600 / Math.max(o.naturalWidth, o.naturalHeight))
-  const c = document.createElement('canvas')
-  c.width = Math.round(o.naturalWidth * k)
-  c.height = Math.round(o.naturalHeight * k)
-  const g = c.getContext('2d')
-  if (!g) return null
-  g.drawImage(o, 0, 0, c.width, c.height)
-  const cx = x * c.width
-  const cy = y * c.height
-  const r = Math.max(12, (srednicaPx * k) / 2)
-  g.lineWidth = Math.max(3, c.width / 300)
-  g.strokeStyle = '#ff1a1a'
-  g.beginPath()
-  g.arc(cx, cy, r, 0, Math.PI * 2)
-  g.stroke()
-  g.beginPath()
-  g.moveTo(cx - 8, cy)
-  g.lineTo(cx + 8, cy)
-  g.moveTo(cx, cy - 8)
-  g.lineTo(cx, cy + 8)
-  g.stroke()
-  try {
-    return c.toDataURL('image/png')
-  } catch {
-    return null
-  }
-}
-
-/**
- * PRZEWODNIK PRZESUNIĘCIA (jedno zdjęcie): czerwony pierścień = skąd rzecz znika (ma zostać puste miejsce z odbudowanym tłem),
- * zielony = dokąd trafia (średnica = jej widoczna wielkość w nowym miejscu).
- */
-export async function narysujPrzewodnikPrzesuniecia(
+export async function narysujMaskeUkladu(
   src: string,
-  zrodlo: { x: number; y: number; srednicaPx: number },
   cel: { x: number; y: number; srednicaPx: number },
+  zrodlo?: { x: number; y: number; srednicaPx: number },
 ): Promise<string | null> {
   const o = await wczytaj(src)
   if (!o) return null
-  const k = Math.min(1, 1600 / Math.max(o.naturalWidth, o.naturalHeight))
+  const k = Math.min(1, 1024 / Math.max(o.naturalWidth, o.naturalHeight))
   const c = document.createElement('canvas')
   c.width = Math.round(o.naturalWidth * k)
   c.height = Math.round(o.naturalHeight * k)
   const g = c.getContext('2d')
   if (!g) return null
-  g.drawImage(o, 0, 0, c.width, c.height)
-  g.lineWidth = Math.max(3, c.width / 300)
-  const pierscien = (p: { x: number; y: number; srednicaPx: number }, kolor: string) => {
-    g.strokeStyle = kolor
+  g.fillStyle = '#000'
+  g.fillRect(0, 0, c.width, c.height)
+  const dysk = (p: { x: number; y: number; srednicaPx: number }, kolor: string) => {
+    g.fillStyle = kolor
     g.beginPath()
-    g.arc(p.x * c.width, p.y * c.height, Math.max(12, (p.srednicaPx * k) / 2), 0, Math.PI * 2)
-    g.stroke()
+    g.arc(p.x * c.width, p.y * c.height, Math.max(8, (p.srednicaPx * k) / 2), 0, Math.PI * 2)
+    g.fill()
   }
-  pierscien(zrodlo, '#ff1a1a')
-  pierscien(cel, '#17c93a')
+  if (zrodlo) dysk(zrodlo, '#808080')
+  dysk(cel, '#ffffff')
   try {
     return c.toDataURL('image/png')
   } catch {
