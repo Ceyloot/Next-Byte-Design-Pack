@@ -32,7 +32,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
+import { ModelPicker, type PickerModel } from '@/components/ui/model-selector'
 import { GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIcon } from '@/grafiki/znaki-marek'
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
@@ -149,22 +149,19 @@ function NumerPinezki({ n }: { n: number }) {
   )
 }
 
-/** Model w formacie wyszukiwarki z biblioteki (GlassModelSearch); znak dostawcy z biblioteki znaków marek. */
-const metryki = (jakosc: number, szybkosc: number) => [
-  { label: 'Jakość', value: jakosc },
-  { label: 'Szybkość', value: szybkosc },
-]
-const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
-  .filter(m => m.dostepny) // w wyszukiwarce tylko modele, które Canvas naprawdę obsługuje
+/** Modele w formacie wyboru (ModelPicker): lista w górę, karta z opisem po lewej; znak dostawcy z biblioteki znaków marek. */
+const MODELE_PICKER: PickerModel[] = [...MODELE_OBRAZU]
+  .filter(m => m.dostepny) // tylko modele, które Canvas naprawdę obsługuje
   .sort((x, y) => (x.id === 'nb2' ? -1 : y.id === 'nb2' ? 1 : 0))
-  .map((m): Model => {
+  .map((m): PickerModel => {
     const Z = znakModelu(m.id)
     return {
-      id: m.id, name: m.nazwa, provider: m.id === 'gptimage2' ? 'OpenAI' : m.dostepny ? 'Google Gemini' : 'Wkrótce', badge: m.id === 'gptimage2' ? 'OPENAI' : m.dostepny ? 'GEMINI' : 'WKRÓTCE',
-      group: m.dostepny ? 'NEXTBYTE' : 'INNE MODELE', description: m.opis, tags: ['obraz', m.krotko.toLowerCase()],
-      cost: m.dostepny ? BYTE_ZA_OBRAZ : undefined, speed: 'balanced', icon: <Z className="h-4 w-4" />,
-      metrics: metryki(m.id === 'pro' ? 10 : m.id === 'gptimage2' ? 9 : m.id === 'nb2' ? 8 : 6, m.id === 'lite' ? 9 : m.id === 'nb2' ? 6 : m.id === 'gptimage2' ? 3 : 4),
-      messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
+      value: m.id,
+      label: m.nazwa,
+      provider: m.id === 'gptimage2' ? 'OpenAI' : 'Google Gemini',
+      description: m.opis,
+      icon: <Z className="h-4 w-4" />,
+      cost: BYTE_ZA_OBRAZ,
     }
   })
 
@@ -636,17 +633,15 @@ export function CzatCanvas({
 
         <div ref={refPasek} className="nb-cozy-niecka p-3">
           <div className="mb-2">
-            <GlassModelSearch
-              key={`${modelObrazu}-${odswiez}`}
-              models={MODELE_DO_WYSZUKIWARKI}
-              selectedId={modelObrazu}
-              placement="top"
-              align="left"
-              compact
-              onSelect={mo => {
-                const model = MODELE_OBRAZU.find(x => x.id === mo.id)
-                if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)
-                else setOdswiez(n => n + 1)
+            <ModelPicker
+              models={MODELE_PICKER}
+              value={modelObrazu}
+              popupSide="top"
+              previewSide="left"
+              searchable={false}
+              onValueChange={m => {
+                const model = MODELE_OBRAZU.find(x => x.id === m.value)
+                if (model?.dostepny) onModelObrazu(m.value as ModelObrazu)
               }}
             />
           </div>
