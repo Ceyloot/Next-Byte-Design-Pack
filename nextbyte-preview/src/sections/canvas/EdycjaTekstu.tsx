@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Loader2, Plus, Type, X } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { wykryjTeksty, type WykrytyTekst } from './dostawca'
 
@@ -92,67 +92,53 @@ export function EdycjaTekstu({
         e.stopPropagation()
         if (e.key === 'Escape') onAnuluj()
       }}
-      className="absolute z-50 w-[min(420px,calc(100vw-120px))]"
+      className="absolute z-50 w-[min(320px,calc(100vw-120px))]"
       style={style}
     >
-      <div className="rounded-2xl border border-foreground/[0.1] bg-[hsl(var(--card))] p-3 shadow-[0_8px_24px_-8px_hsl(0_0%_0%/0.35)]">
-        <div className="mb-2.5 flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-[10px] bg-primary/[0.1] text-primary">
-            <Type className="h-3.5 w-3.5" />
-          </span>
-          <div className="min-w-0 flex-1 text-[13px] font-semibold text-foreground">Edit text</div>
-          <button type="button" onClick={onAnuluj} aria-label="Zamknij" className="rounded-[10px] p-1.5 text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground">
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
+      <div className="rounded-2xl border border-foreground/[0.1] bg-[hsl(var(--card))] p-3.5 shadow-[0_8px_24px_-8px_hsl(0_0%_0%/0.35)]">
+        <div className="mb-3 text-[14px] font-semibold text-foreground">Edit text</div>
 
         {stan === 'wykrywam' ? (
-          <div className="flex items-center gap-2 rounded-[10px] bg-foreground/[0.04] px-3 py-3 text-[12.5px] text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Wykrywam tekst na zdjęciu…
+          <div className="flex items-center gap-2 rounded-[12px] bg-foreground/[0.05] px-3.5 py-3 text-[13px] text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Wykrywam tekst…
           </div>
         ) : (
           <>
-            <div className="max-h-[260px] space-y-1.5 overflow-y-auto pr-0.5">
+            <div className="max-h-[320px] space-y-2 overflow-y-auto">
               {wykryte.length === 0 && dodane.length === 0 && (
-                <p className="rounded-[10px] bg-foreground/[0.04] px-3 py-2.5 text-[12px] text-muted-foreground">Nie wykryłem tekstu. Dodaj napis ręcznie: wpisz, co jest na zdjęciu, i na co zmienić.</p>
+                <p className="rounded-[12px] bg-foreground/[0.05] px-3.5 py-3 text-[12.5px] text-muted-foreground">Nie wykryłem tekstu. Dodaj napis ręcznie.</p>
               )}
-              {wykryte.map(t => {
-                const zmieniony = (wartosci[t.id] ?? t.tekst).trim() !== t.tekst
-                return (
-                  <label key={t.id} className="block">
-                    <span className="mb-0.5 block truncate px-1 text-[10.5px] text-muted-foreground/80" title={t.styl}>
-                      {t.styl ? t.styl : 'napis'}
-                    </span>
-                    <input
-                      value={wartosci[t.id] ?? t.tekst}
-                      onChange={e => setWartosci(v => ({ ...v, [t.id]: e.target.value }))}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          zatwierdz()
-                        }
-                      }}
-                      className={cn(
-                        'w-full rounded-[10px] border bg-foreground/[0.045] px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary/50',
-                        zmieniony ? 'border-primary/40' : 'border-foreground/[0.07]',
-                      )}
-                    />
-                  </label>
-                )
-              })}
+              {wykryte.map(t => (
+                <input
+                  key={t.id}
+                  value={wartosci[t.id] ?? t.tekst}
+                  title={t.styl}
+                  onChange={e => setWartosci(v => ({ ...v, [t.id]: e.target.value }))}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      zatwierdz()
+                    }
+                  }}
+                  className={cn(
+                    'w-full rounded-[12px] border bg-foreground/[0.05] px-3.5 py-2.5 text-[13.5px] text-foreground outline-none transition-colors focus:border-primary/50',
+                    (wartosci[t.id] ?? t.tekst).trim() !== t.tekst ? 'border-primary/40' : 'border-transparent',
+                  )}
+                />
+              ))}
               {dodane.map(d => (
-                <div key={d.id} className="grid grid-cols-2 gap-1.5">
+                <div key={d.id} className="space-y-1.5">
                   <input
                     value={d.stary}
-                    placeholder="Co jest na zdjęciu"
+                    placeholder="Napis na zdjęciu"
                     onChange={e => setDodane(l => l.map(x => (x.id === d.id ? { ...x, stary: e.target.value } : x)))}
-                    className="rounded-[10px] border border-foreground/[0.07] bg-foreground/[0.045] px-3 py-2 text-[13px] text-foreground outline-none focus:border-primary/50"
+                    className="w-full rounded-[12px] border border-transparent bg-foreground/[0.05] px-3.5 py-2.5 text-[13.5px] text-foreground outline-none focus:border-primary/50"
                   />
                   <input
                     value={d.nowy}
-                    placeholder="Zmień na"
+                    placeholder="Zmień na…"
                     onChange={e => setDodane(l => l.map(x => (x.id === d.id ? { ...x, nowy: e.target.value } : x)))}
-                    className="rounded-[10px] border border-foreground/[0.07] bg-foreground/[0.045] px-3 py-2 text-[13px] text-foreground outline-none focus:border-primary/50"
+                    className="w-full rounded-[12px] border border-primary/30 bg-foreground/[0.05] px-3.5 py-2.5 text-[13.5px] text-foreground outline-none focus:border-primary/50"
                   />
                 </div>
               ))}
@@ -160,39 +146,41 @@ export function EdycjaTekstu({
             <button
               type="button"
               onClick={() => setDodane(l => [...l, { id: `d${l.length}`, stary: '', nowy: '' }])}
-              className="mt-1.5 flex items-center gap-1.5 rounded-[10px] px-2 py-1.5 text-[11.5px] text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+              className="mt-2 flex items-center gap-1.5 rounded-[10px] px-1.5 py-1 text-[11.5px] text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Plus className="h-3.5 w-3.5" /> Dodaj napis ręcznie
+              <Plus className="h-3.5 w-3.5" /> Dodaj napis
             </button>
 
-            <div className="mt-2.5 border-t border-foreground/[0.08] pt-2.5">
-              <div className="mb-1.5 px-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/80">Czcionka</div>
-              <div className="flex flex-wrap gap-1">
+            <label className="mt-2 flex items-center gap-2 text-[12px] text-muted-foreground">
+              Czcionka
+              <select
+                value={czcionkaId}
+                onChange={e => setCzcionkaId(e.target.value)}
+                className="min-w-0 flex-1 rounded-[10px] border border-transparent bg-foreground/[0.05] px-2.5 py-1.5 text-[12.5px] text-foreground outline-none focus:border-primary/50"
+              >
                 {CZCIONKI.map(c => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setCzcionkaId(c.id)}
-                    className={cn(
-                      'rounded-[10px] border px-2.5 py-1 text-[11.5px] transition-colors',
-                      czcionkaId === c.id ? 'border-primary/40 bg-primary/10 font-medium text-primary' : 'border-foreground/[0.09] bg-foreground/[0.04] text-foreground/75 hover:text-foreground',
-                    )}
-                  >
+                  <option key={c.id} value={c.id}>
                     {c.nazwa}
-                  </button>
+                  </option>
                 ))}
-              </div>
-            </div>
+              </select>
+            </label>
 
-            <div className="mt-3 flex items-center justify-between">
-              <span className="px-1 text-[11px] text-muted-foreground/80">{zmiany.length ? `Zmian: ${zmiany.length}` : 'Edytuj napis, żeby zatwierdzić'}</span>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onAnuluj}
+                className="rounded-[12px] border border-foreground/[0.14] px-3 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-foreground/[0.06]"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 disabled={trwa || zmiany.length === 0}
                 onClick={zatwierdz}
-                className="flex items-center gap-1.5 rounded-[10px] border border-primary/40 bg-primary/10 px-3.5 py-1.5 text-[12px] font-semibold text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex items-center justify-center gap-1.5 rounded-[12px] bg-primary px-3 py-2 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-foreground/[0.08] disabled:text-muted-foreground disabled:opacity-100"
               >
-                {trwa ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Zatwierdź
+                {trwa ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} Run <span className="text-[11.5px] opacity-70">· 4</span>
               </button>
             </div>
           </>

@@ -2370,8 +2370,12 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
               onZastosuj={(zmiany, czcionka) => uruchomEdycjeTekstu(w.id, zmiany, czcionka)}
               onAnuluj={() => setEdycjaTekstu(null)}
               style={{
-                left: Math.max(16, Math.min(widok.x + (w.x + w.width / 2) * widok.zoom - 210, window.innerWidth - 640)),
-                top: Math.max(72, widok.y + w.y * widok.zoom - 62),
+                // obok zdjęcia (po prawej; gdy brakuje miejsca — po lewej), góra panelu równo z górą zdjęcia
+                left: (() => {
+                  const prawa = widok.x + (w.x + w.width) * widok.zoom + 16
+                  return prawa + 330 <= window.innerWidth - 400 ? prawa : Math.max(16, widok.x + w.x * widok.zoom - 336)
+                })(),
+                top: Math.max(72, widok.y + w.y * widok.zoom),
               }}
             />
           )
