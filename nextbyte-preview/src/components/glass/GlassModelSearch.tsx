@@ -243,11 +243,11 @@ function MetricBars({ value, max = 10 }: { value: number; max?: number }) {
 function MiniWskaznik({ etykieta, value }: { etykieta: string; value: number }) {
   const pelne = Math.round(value / 2)
   return (
-    <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground/80" title={`${etykieta}: ${pelne}/5`}>
+    <span className="flex items-center gap-1.5 text-[11.5px] font-medium text-foreground/70" title={`${etykieta}: ${pelne}/5`}>
       {etykieta}
       <span className="flex gap-[2px]" aria-hidden>
         {Array.from({ length: 5 }).map((_, i) => (
-          <span key={i} className={cn('h-[5px] w-[9px] rounded-[2px]', i < pelne ? 'bg-primary' : 'bg-foreground/[0.1]')} />
+          <span key={i} className={cn('h-[6px] w-[7px] rounded-[2px]', i < pelne ? 'bg-primary' : 'bg-foreground/[0.14]')} />
         ))}
       </span>
     </span>
@@ -348,7 +348,7 @@ export function GlassModelSearch({
         isGlass
           ? 'nb-szklo nb-szklo-plynne border-border/60 bg-background/95 shadow-primary/10'
           : 'bg-card border-border/80 text-card-foreground',
-        mode === 'dropdown' && (compact ? 'w-[340px] max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
+        mode === 'dropdown' && (compact ? 'w-[372px] max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
       )}
       style={compact ? { backgroundColor: 'hsl(var(--card) / 0.97)' } : undefined}
     >
@@ -388,7 +388,8 @@ export function GlassModelSearch({
                       onMouseEnter={() => setHoveredModelId(model.id)}
                       onMouseLeave={() => setHoveredModelId(null)}
                       className={cn(
-                        'group relative flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all duration-150 border',
+                        'group relative flex w-full items-center rounded-xl text-left transition-all duration-150 border',
+                        compact ? 'gap-3 px-3 py-3' : 'gap-2.5 px-2.5 py-2',
                         isActive
                           ? 'border-primary/40 bg-primary/[0.08] shadow-[0_0_12px_-4px_hsl(var(--primary)/0.3)]'
                           : isHovered
@@ -404,7 +405,8 @@ export function GlassModelSearch({
                       {/* Ikona */}
                       <span
                         className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors',
+                          'flex shrink-0 items-center justify-center rounded-lg transition-colors',
+                          compact ? 'h-9 w-9' : 'h-7 w-7',
                           isActive
                             ? 'bg-primary/20 text-primary'
                             : 'bg-muted/50 text-muted-foreground group-hover:text-foreground',
@@ -418,7 +420,7 @@ export function GlassModelSearch({
                         <div className="flex items-center gap-1.5">
                           <span
                             className={cn(
-                              'text-xs font-semibold leading-tight',
+                              compact ? 'text-[14px] font-semibold leading-tight' : 'text-xs font-semibold leading-tight',
                               isActive ? 'text-primary' : 'text-foreground',
                             )}
                           >
@@ -430,11 +432,11 @@ export function GlassModelSearch({
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground/80 leading-none">
+                        <p className={cn(compact ? 'mt-1 text-[12.5px] leading-snug text-foreground/65' : 'mt-0.5 truncate text-[11px] text-muted-foreground/80 leading-none')}>
                           {model.description}
                         </p>
                         {compact && (
-                          <div className="mt-1.5 flex items-center gap-3">
+                          <div className="mt-2 grid grid-cols-2 items-center gap-x-3">
                             {['Jakość', 'Szybkość'].map((et) => {
                               const m = model.metrics.find((x) => x.label === et)
                               return m ? <MiniWskaznik key={et} etykieta={et} value={m.value} /> : null
@@ -447,7 +449,7 @@ export function GlassModelSearch({
                       {model.cost !== undefined && (
                         <span
                           className={cn(
-                            'shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium tabular-nums',
+                            compact ? 'shrink-0 self-start rounded-full px-2.5 py-1 font-mono text-[12px] font-semibold tabular-nums' : 'shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium tabular-nums',
                             isActive
                               ? 'bg-primary/20 text-primary'
                               : 'bg-muted/40 text-muted-foreground',
