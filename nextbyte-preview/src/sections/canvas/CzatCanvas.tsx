@@ -8,16 +8,15 @@ import {
   ArrowRight,
   Shield,
   Layers,
-  ChevronRight,
   CirclePlus,
   Paperclip,
   Mic,
   PanelRightClose,
+  PanelRightOpen,
   ArrowUp,
   Maximize2,
   Wand2,
   Check,
-  Pin,
   RefreshCw,
   Info,
   ExternalLink,
@@ -31,8 +30,6 @@ import {
   Clipboard,
   X,
   Zap,
-  Paintbrush,
-  ImagePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
@@ -235,6 +232,11 @@ export function CzatCanvas({
     }
   }, [menu])
   const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
+  // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
+  useEffect(() => {
+    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety ? '0px' : '380px')
+    return () => document.documentElement.style.removeProperty('--nb-czat-szer')
+  }, [zwiniety])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
   useEffect(() => {
@@ -410,33 +412,18 @@ export function CzatCanvas({
   /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
   if (zwiniety) {
     return (
-      <div className="pointer-events-auto absolute right-4 top-[var(--nb-canvas-gora,16px)] z-30">
+      <div className="pointer-events-auto absolute right-3 top-[var(--nb-canvas-gora,16px)] z-30">
         <button
           onClick={() => setZwiniety(false)}
-          className={cn(
-            'group relative flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5',
-            'nb-szklo nb-szklo-plynne nb-powierzchnia',
-            'border border-foreground/[0.08] backdrop-blur-2xl transition-all duration-200',
-            'hover:border-primary/40 active:scale-95',
-          )}
-          style={{ backgroundColor: 'hsl(var(--card) / 0.8)' }}
-          title="Rozwiń Chat Canvas"
+          className="group relative grid h-11 w-11 place-items-center rounded-2xl border border-foreground/[0.08] text-primary backdrop-blur-2xl transition-all duration-200 hover:border-primary/40 active:scale-95"
+          style={{ backgroundColor: 'hsl(var(--card) / 0.85)' }}
+          title="Canvas"
+          aria-label="Rozwiń czat"
         >
-          <div className="relative flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Sparkles className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col text-left">
-            <span className="text-[12px] font-bold text-foreground flex items-center gap-1.5">
-              Canvas AI
-              {pineski.length > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/20 px-1 text-[9px] font-extrabold text-primary">
-                  {pineski.length}
-                </span>
-              )}
-            </span>
-            <span className="text-[10px] text-foreground/45">Kliknij, aby otworzyć chat</span>
-          </div>
-          <ChevronRight className="h-4 w-4 text-foreground/40 group-hover:translate-x-0.5 transition-transform" />
+          <PanelRightOpen className="h-[18px] w-[18px]" />
+          {pineski.length > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-extrabold text-primary-foreground">{pineski.length}</span>
+          )}
         </button>
       </div>
     )
@@ -444,8 +431,8 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-canvas-dol,16px)] right-4 top-[var(--nb-canvas-gora,16px)] z-30 flex w-[380px] max-w-[calc(100vw-32px)] flex-col">
-      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-[28px] p-3 animate-in slide-in-from-right-4 duration-300">
+    <div className="p2 !bg-transparent pointer-events-none absolute inset-y-0 right-0 z-30 flex w-[380px] max-w-[100vw] flex-col">
+      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
           <span className="flex items-center gap-2.5 pl-1 text-[15px] font-semibold tracking-tight text-[hsl(var(--foreground))]">
@@ -477,33 +464,11 @@ export function CzatCanvas({
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
-          <div className="flex h-full flex-col justify-center gap-4 px-1 pb-6">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/[0.12] text-primary">
-                <Sparkles className="h-5 w-5" />
-              </span>
-              <p className="text-[16px] font-semibold text-foreground">Cześć! Zacznijmy od zdjęcia</p>
-              <p className="max-w-[270px] text-[13px] leading-relaxed text-muted-foreground">
-                Wgraj je na płótno, wbij pinezkę i opisz zmianę. Resztą zajmę się ja.
-              </p>
-            </div>
-            <ul className="space-y-1.5">
-              {[
-                { ikona: ImagePlus, tytul: 'Wgraj lub wklej zdjęcie', opis: 'Przeciągnij plik albo Ctrl+V' },
-                { ikona: Paintbrush, tytul: 'Inpaint i Eraser', opis: 'Zaznacz zdjęcie → pasek akcji nad nim' },
-                { ikona: Pin, tytul: 'Pinezka', opis: 'Ctrl+klik wskazuje obiekt lub miejsce' },
-              ].map(({ ikona: Ik, tytul, opis }) => (
-                <li key={tytul} className="flex items-center gap-3 rounded-2xl bg-foreground/[0.04] px-3 py-2.5 transition-colors hover:bg-foreground/[0.065]">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-card text-foreground/75">
-                    <Ik className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[12.5px] font-medium text-foreground/90">{tytul}</span>
-                    <span className="block text-[11px] text-muted-foreground">{opis}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-1 pb-6 text-center">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl border border-[hsl(var(--primary)/0.22)] bg-primary/[0.1] text-primary shadow-[0_0_28px_-10px_hsl(var(--primary)/0.5)]">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <p className="text-[13px] text-muted-foreground">Wgraj zdjęcie · wskaż · opisz</p>
           </div>
         )}
         {historiaWiadomosci.map(msg => (
@@ -760,12 +725,12 @@ export function CzatCanvas({
             }}
             placeholder={
               pineski.length === 0 && zaznaczoneWarstwy.length >= 2
-                ? `${zaznaczoneWarstwy.length} referencji — opisz wynik, np. „postać ze zdjęcia 1 w scenie ze zdjęcia 2”`
+                ? `${zaznaczoneWarstwy.length} zdjęć — opisz wynik`
                 : pineski.length === 0
-                ? 'Zacznij od pomysłu — wbij pinezkę i opisz zmianę'
+                ? 'Opisz zmianę…'
                 : pineski.length === 1
                   ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?`
-                  : 'np. przenieś obiekt 1 na miejsce 2'
+                  : 'Opisz zmianę…'
             }
             aria-label="Polecenie"
             className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"

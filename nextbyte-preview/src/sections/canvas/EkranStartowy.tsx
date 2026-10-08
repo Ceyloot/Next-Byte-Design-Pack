@@ -23,7 +23,7 @@ const KROKI = [
  */
 export function EkranStartowy({ nadPlotnem, onOtworz }: { nadPlotnem: boolean; onOtworz?: () => void }) {
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-y-auto px-6 pb-24 pt-20 [scrollbar-width:none]">
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-y-auto px-6 pb-24 pt-20 transition-[padding] duration-300 [scrollbar-width:none]" style={{ paddingRight: 'calc(var(--nb-czat-szer, 0px) + 24px)' }}>
       <div className="pointer-events-auto flex w-full max-w-[560px] flex-col items-center text-center">
         <span
           className="nb-cozy-unos nb-cozy-znak grid h-16 w-16 place-items-center rounded-[22px] border border-foreground/[0.08] bg-card text-foreground"
