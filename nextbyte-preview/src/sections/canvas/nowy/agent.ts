@@ -49,7 +49,7 @@ export interface ZapytanieDoAgenta {
 
 const ZADANIA: ZadanieAgenta[] = ['zamiana_osoby', 'zamiana_twarzy', 'zmiana_tla', 'zamiana_obiektu', 'przeniesienie', 'wstawienie', 'usuniecie', 'perspektywa', 'edycja']
 /** Najdłuższy prompt, jaki przyjmujemy od agenta (znaki). Dłuższy znaczy, że agent „pisze esej” — wtedy szablon. */
-export const MAKS_DLUGOSC_PROMPTU = 1600
+export const MAKS_DLUGOSC_PROMPTU = 2400
 
 const tekst = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
 
