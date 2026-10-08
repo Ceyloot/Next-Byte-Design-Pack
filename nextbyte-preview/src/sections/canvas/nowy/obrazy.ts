@@ -50,3 +50,39 @@ export async function wytnijRamke(src: string, ramka: Ramka, margines: number, c
     return null
   }
 }
+
+/**
+ * PRZEWODNIK MIEJSCA: kopia zdjęcia bazowego z cienkim czerwonym pierścieniem w miejscu wstawienia.
+ * Środek pierścienia = punkt styku obiektu z podłożem, średnica = najdłuższy bok obiektu (z obliczonej skali).
+ * Badania nad kontrolą rozmiaru i położenia (ramki / maski) pokazują, że wskazanie wizualne działa dużo pewniej niż współrzędne w tekście.
+ */
+export async function narysujPrzewodnik(src: string, x: number, y: number, srednicaPx: number): Promise<string | null> {
+  const o = await wczytaj(src)
+  if (!o) return null
+  const k = Math.min(1, 1600 / Math.max(o.naturalWidth, o.naturalHeight))
+  const c = document.createElement('canvas')
+  c.width = Math.round(o.naturalWidth * k)
+  c.height = Math.round(o.naturalHeight * k)
+  const g = c.getContext('2d')
+  if (!g) return null
+  g.drawImage(o, 0, 0, c.width, c.height)
+  const cx = x * c.width
+  const cy = y * c.height
+  const r = Math.max(12, (srednicaPx * k) / 2)
+  g.lineWidth = Math.max(3, c.width / 300)
+  g.strokeStyle = '#ff1a1a'
+  g.beginPath()
+  g.arc(cx, cy, r, 0, Math.PI * 2)
+  g.stroke()
+  g.beginPath()
+  g.moveTo(cx - 8, cy)
+  g.lineTo(cx + 8, cy)
+  g.moveTo(cx, cy - 8)
+  g.lineTo(cx, cy + 8)
+  g.stroke()
+  try {
+    return c.toDataURL('image/jpeg', 0.92)
+  } catch {
+    return null
+  }
+}

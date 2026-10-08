@@ -1,9 +1,9 @@
 import { narysujMapeMiejsc } from '../mapa-miejsc'
 import { etykietaPinezki } from './role'
 import { konwertujNaDataUrl, zmniejszDoAnalizy, type Pineska, type Warstwa } from '../typy'
-import { odczytajPlanAgenta, tekstPytania, zdanieOSkali, type PlanAgenta, type PytanieAgenta, type ZapytanieDoAgenta } from './agent'
+import { odczytajPlanAgenta, srednicaZeSkali, tekstPytania, zdanieOSkali, type PlanAgenta, type PytanieAgenta, type ZapytanieDoAgenta } from './agent'
 import { przygotujNowySystem } from './szablon'
-import { wytnijRamke } from './obrazy'
+import { narysujPrzewodnik, wytnijRamke } from './obrazy'
 
 /**
  * NOWY SYSTEM — przygotowanie jednej generacji. Warstwy:
@@ -49,6 +49,8 @@ async function zapytajAgenta(z: ZapytanieDoAgenta): Promise<{ plan: PlanAgenta }
     return { blad: e instanceof Error ? e.message : 'Agent nie odpowiada' }
   }
 }
+
+const PRZEWODNIK_MIEJSCA = true
 
 export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygotowania> {
   const zdjecia = zdjeciaDlaAgenta(w)
@@ -100,10 +102,23 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   }
   for (const z of zbliz) obrazy.push(z.src)
 
+  // Przewodnik miejsca: wstawianie / zamiana rzeczy z referencji w jedno miejsce bazy — pierścień o średnicy = najdłuższy bok obiektu
+  let przewodnikNr = 0
+  const pinyNaBazie = pinezkiAgenta.filter(p => p.obraz === plan.baza)
+  if (PRZEWODNIK_MIEJSCA && plan.skala && referencje.length > 0 && pinyNaBazie.length === 1 && plan.zadanie !== 'zamiana_osoby') {
+    const sred = srednicaZeSkali(plan.skala, baza.naturalWidth, baza.naturalHeight)
+    const przewodnik = await narysujPrzewodnik(baza.src, pinyNaBazie[0].x, pinyNaBazie[0].y, sred)
+    if (przewodnik) {
+      obrazy.push(przewodnik)
+      przewodnikNr = obrazy.length
+    }
+  }
+
   // Prompt agenta + to, co deterministyczne: liczby ze skali, opis zbliżeń, zabezpieczenie przed rozmyciem
   const dopiski: string[] = []
   if (plan.skala) dopiski.push(zdanieOSkali(plan.skala))
   zbliz.forEach((z, k) => dopiski.push(`Image ${referencje.length + 2 + k} is a close-up of the face of the person in Image ${z.zdjecie} — the identity reference: reproduce exactly this face, feature by feature.`))
+  if (przewodnikNr) dopiski.push(`Image ${przewodnikNr} is a PLACEMENT GUIDE only: a copy of Image 1 with a thin red ring. The ring's centre is the exact spot where the new object touches the ground / surface, and the ring's diameter is the length of the object's longest side as it appears in Image 1. Place the object centred on that spot, filling about that size — not larger, not smaller. The result is Image 1 edited; no ring, cross or guide mark may appear in it.`)
   if (!/no blur|sharp/i.test(plan.prompt)) dopiski.push('Keep everything sharp — no blur or softening.')
   // Numery obrazów nadaje kod, nie agent: [BASE] = Image 1, [REF1] = Image 2 … (kolejność jak w tablicy obrazów wysyłanej do modelu)
   // Model obrazu nie widzi pinesek — gdyby agent mimo zakazu napisał „pin N”, podmieniamy to na współrzędne

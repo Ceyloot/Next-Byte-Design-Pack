@@ -153,3 +153,10 @@ export function zdanieOSkali(skala: NonNullable<PlanAgenta['skala']>): string {
   const wymiar = skala.kotwica.os === 'wys' ? 'height' : 'width'
   return `SIZE: scale the subject proportionally to its surroundings, as a real one standing at that spot would look from this camera — about ${razy}× the ${wymiar} of ${skala.kotwica.opis || 'the nearby reference object'} that stands at the same distance (the subject is about ${skala.obiekt.metry} m long in reality). Never take its size from the reference photo.`
 }
+
+/** Najdłuższy bok obiektu w pikselach zdjęcia bazowego (z kotwicy i stosunku metrów) — średnica pierścienia przewodnika miejsca. */
+export function srednicaZeSkali(skala: NonNullable<PlanAgenta['skala']>, szerPx: number, wysPx: number): number {
+  const [ymin, xmin, ymax, xmax] = skala.kotwica.box
+  const kotwicaPx = skala.kotwica.os === 'wys' ? ((ymax - ymin) / 1000) * wysPx : ((xmax - xmin) / 1000) * szerPx
+  return kotwicaPx * (skala.obiekt.metry / skala.kotwica.metry)
+}
