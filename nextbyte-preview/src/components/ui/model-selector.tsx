@@ -239,7 +239,7 @@ function ModelConfigurationBadge({
       ) : null}
       {showFast ? (
         <span className={badgeClassName}>
-          <LightningIcon className="text-warning" size={11} weight="fill" />
+          <LightningIcon className="text-[hsl(var(--nb-ostrzezenie))]" size={11} weight="fill" />
           Fast
         </span>
       ) : null}
@@ -251,13 +251,13 @@ function ModelConfigurationBadge({
 function metricColor(value: number, invert: boolean) {
   const score = invert ? 11 - value : value;
   if (score >= 8) {
-    return "hsl(var(--success))";
+    return "hsl(var(--nb-sukces))";
   }
   if (score >= 6) {
-    return "hsl(var(--success) / 0.75)";
+    return "hsl(var(--nb-sukces) / 0.75)";
   }
   if (score >= 4) {
-    return "hsl(var(--warning))";
+    return "hsl(var(--nb-ostrzezenie))";
   }
   return "hsl(var(--destructive))";
 }
@@ -297,7 +297,7 @@ function MetricBar({
 }) {
   const color = metricColor(value, invert);
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <div className="flex items-center justify-between gap-1">
         <span className="font-mono font-medium text-[10px] text-muted-foreground uppercase leading-none">
           {label}
@@ -313,7 +313,7 @@ function MetricBar({
       </div>
       <div
         aria-label={`${label}: ${value} out of 10`}
-        className="grid grid-cols-10 gap-1"
+        className="grid grid-cols-10 gap-[3px]"
         key={animationKey}
         role="img"
       >
@@ -808,6 +808,8 @@ export type PickerModel = {
   icon?: ReactNode;
   /** koszt wyświetlany przy pozycji i na przycisku */
   cost?: string | number;
+  /** paski w karcie opisu (skala 1–10), np. Jakość i Szybkość */
+  metrics?: { label: string; value: number }[];
   disabled?: boolean;
 };
 
@@ -821,6 +823,10 @@ export type ModelPickerProps = {
   /** strona, na której pojawia się karta z opisem */
   previewSide?: "left" | "right";
   searchable?: boolean;
+  /** szerokość listy (px) */
+  popupWidth?: number;
+  /** przesunięcie listy względem przycisku (px), np. -12 gdy przycisk ma padding w ramce */
+  alignOffset?: number;
   value: string;
 };
 
@@ -838,19 +844,17 @@ function PickerItem({
       value={model}
     >
       <PreviewCard.Trigger
-        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-foreground/[0.06] group-data-[selected]:bg-primary/[0.1]"
+        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-foreground/[0.06] group-data-[selected]:bg-foreground/[0.07]"
         closeDelay={180}
         delay={80}
         handle={previewHandle}
         payload={model}
         render={<div />}
       >
-        {model.icon ? (
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-foreground/[0.06] text-foreground group-data-[selected]:bg-primary/[0.18] group-data-[selected]:text-primary">
-            {model.icon}
-          </span>
-        ) : null}
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">{model.label}</span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-[15px] leading-tight">{model.label}</span>
+          <ProviderLabel className="text-[12.5px] text-muted-foreground" provider={model.provider} />
+        </div>
         {model.cost !== undefined ? (
           <span className="shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 font-mono text-[11.5px] font-semibold tabular-nums text-muted-foreground">
             ⟠ {model.cost}
@@ -869,6 +873,8 @@ export function ModelPicker({
   popupSide = "top",
   previewSide = "left",
   searchable = true,
+  popupWidth = 340,
+  alignOffset = 0,
   value,
 }: ModelPickerProps) {
   const selected = models.find((m) => m.value === value) ?? models[0];
@@ -916,22 +922,23 @@ export function ModelPicker({
         </Combobox.Icon>
       </Combobox.Trigger>
       <Combobox.Portal>
-        <Combobox.Positioner align="start" className="z-[70]" side={popupSide} sideOffset={8}>
+        <Combobox.Positioner align="start" alignOffset={alignOffset} className="z-[70]" side={popupSide} sideOffset={8}>
           <Combobox.Popup
             aria-label="Wybierz model"
-            className="w-64 rounded-2xl border border-border bg-card shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none"
+            className="rounded-2xl border border-border bg-card shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none"
+            style={{ width: popupWidth }}
           >
             <PreviewCard.Root<PickerModel> handle={previewHandle}>
               {({ payload }) => (
                 <>
                   {searchable ? (
                     <Combobox.InputGroup className="flex items-center gap-1.5 rounded-none border-0 border-b border-border bg-transparent px-3">
-                      <MagnifyingGlassIcon aria-hidden="true" className="shrink-0 text-muted-foreground" size={14} weight="bold" />
                       <Combobox.Input
-                        className="w-full bg-transparent px-0 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+                        className="w-full bg-transparent px-0 py-3 text-[15px] outline-none placeholder:text-muted-foreground"
                         onFocus={closePreview}
-                        placeholder="Szukaj…"
+                        placeholder="Szukaj modeli…"
                       />
+                      <MagnifyingGlassIcon aria-hidden="true" className="shrink-0 text-muted-foreground" size={16} weight="bold" />
                     </Combobox.InputGroup>
                   ) : null}
                   <Combobox.Empty>
@@ -943,20 +950,28 @@ export function ModelPicker({
                     )}
                   </ModelListWithScrollFade>
                   <PreviewCard.Portal keepMounted>
-                    <PreviewCard.Positioner align="end" className="z-[80]" side={previewSide} sideOffset={10}>
-                      <PreviewCard.Popup className="w-60 overflow-hidden rounded-xl border border-border bg-card shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none">
+                    <PreviewCard.Positioner align="start" className="z-[80]" side={previewSide} sideOffset={10}>
+                      <PreviewCard.Popup className="w-72 overflow-hidden rounded-xl border border-border bg-card shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)] outline-none">
                         {payload ? (
-                          <div className="flex flex-col gap-2 p-3.5">
-                            <div className="flex items-center gap-2">
-                              {payload.icon ? (
-                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/[0.12] text-primary">{payload.icon}</span>
-                              ) : null}
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-foreground">{payload.label}</p>
-                                <p className="truncate text-xs text-muted-foreground">{payload.provider}</p>
-                              </div>
+                          <div className="flex w-full flex-col gap-3 p-4">
+                            <div className="flex flex-col gap-1">
+                              <p className="text-[15px] font-medium text-foreground">{payload.label}</p>
+                              <ProviderLabel className="text-[13px] text-muted-foreground" provider={payload.provider} />
                             </div>
-                            <p className="text-pretty text-[12.5px] leading-snug text-foreground/75">{payload.description}</p>
+                            <p className="text-pretty text-[13px] leading-snug text-muted-foreground">{payload.description}</p>
+                            {payload.metrics?.length ? (
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-1">
+                                {payload.metrics.map((m) => (
+                                  <MetricBar animationKey={payload.value} key={m.label} label={m.label} value={m.value} />
+                                ))}
+                              </div>
+                            ) : null}
+                            {payload.cost !== undefined ? (
+                              <div className="flex items-center justify-between rounded-lg bg-foreground/[0.05] px-3 py-2">
+                                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Koszt</span>
+                                <span className="font-mono text-[13px] font-semibold tabular-nums text-primary">⟠ {payload.cost}</span>
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
                       </PreviewCard.Popup>

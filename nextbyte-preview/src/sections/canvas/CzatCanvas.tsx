@@ -162,6 +162,10 @@ const MODELE_PICKER: PickerModel[] = [...MODELE_OBRAZU]
       description: m.opis,
       icon: <Z className="h-4 w-4" />,
       cost: BYTE_ZA_OBRAZ,
+      metrics: [
+        { label: 'Jakość', value: m.id === 'pro' ? 10 : m.id === 'gptimage2' ? 9 : m.id === 'nb2' ? 8 : 6 },
+        { label: 'Szybkość', value: m.id === 'lite' ? 9 : m.id === 'nb2' ? 6 : m.id === 'gptimage2' ? 3 : 4 },
+      ],
     }
   })
 
@@ -638,7 +642,8 @@ export function CzatCanvas({
               value={modelObrazu}
               popupSide="top"
               previewSide="left"
-              searchable={false}
+              popupWidth={340}
+              alignOffset={-12}
               onValueChange={m => {
                 const model = MODELE_OBRAZU.find(x => x.id === m.value)
                 if (model?.dostepny) onModelObrazu(m.value as ModelObrazu)
