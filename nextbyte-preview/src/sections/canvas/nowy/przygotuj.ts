@@ -1,6 +1,6 @@
 import { narysujMapeMiejsc } from '../mapa-miejsc'
 import { etykietaPinezki } from './role'
-import { konwertujNaDataUrl, zmniejszDoAnalizy, type Pineska, type Warstwa } from '../typy'
+import { konwertujNaDataUrl, wytnijOkolice, zmniejszDoAnalizy, type Pineska, type Warstwa } from '../typy'
 import { odczytajPlanAgenta, srednicaZeSkali, tekstPytania, zdanieOSkali, type PlanAgenta, type PytanieAgenta, type ZapytanieDoAgenta } from './agent'
 import { przygotujNowySystem } from './szablon'
 import { narysujPrzewodnik, narysujPrzewodnikPrzesuniecia, wytnijRamke } from './obrazy'
@@ -69,7 +69,18 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
     .filter(x => !x.p.chroniona && x.obraz > 0)
     .map(x => ({ numer: x.numer, obraz: x.obraz, x: x.p.normalizedX, y: x.p.normalizedY, nazwa: etykietaPinezki(x.p, x.numer) }))
 
-  const odpowiedz = await zapytajAgenta({ tekst: w.tekst, obrazy: obrazyAgenta, pineski: pinezkiAgenta, historia: w.historia })
+  // Zbliżenie wokół każdej pinezki: pinowana rzecz leży w centrum (okno ~22% krótszego boku); bez tego mały obiekt przy sąsiedzie bywa mylony
+  const zblizenia = (
+    await Promise.all(
+      pinezkiAgenta.map(async p => {
+        const l = zdjecia[p.obraz - 1]
+        if (!l) return null
+        const dane = await wytnijOkolice(l.src, p.x, p.y, 512, 0.22).catch(() => '')
+        return dane ? { numer: p.numer, nazwa: p.nazwa, dane } : null
+      }),
+    )
+  ).filter((z): z is { numer: number; nazwa: string; dane: string } => Boolean(z))
+  const odpowiedz = await zapytajAgenta({ tekst: w.tekst, obrazy: obrazyAgenta, pineski: pinezkiAgenta, zblizenia, historia: w.historia })
 
   // Agent zawiódł → prosty szablon (bez dodatkowego kosztu)
   if ('blad' in odpowiedz) {

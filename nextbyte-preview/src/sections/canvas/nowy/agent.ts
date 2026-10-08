@@ -44,6 +44,8 @@ export interface ZapytanieDoAgenta {
   tekst: string
   obrazy: { nr: number; nazwa: string; dane: string }[]
   pineski: { numer: number; obraz: number; x: number; y: number; nazwa: string }[]
+  /** zbliżenia wokół pinesek (pinowana rzecz w centrum) — mała rzecz na pełnym kadrze ginie albo ją łatwo pomylić z sąsiadem */
+  zblizenia?: { numer: number; nazwa: string; dane: string }[]
   historia: { pytanie: string; odpowiedz: string }[]
 }
 

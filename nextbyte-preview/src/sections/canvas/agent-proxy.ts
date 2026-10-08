@@ -439,6 +439,10 @@ export function agentProxy(): Plugin {
         tresci.push({ type: 'text', text: `[Image ${o.nr}: "${o.nazwa}", pins drawn]` })
         tresci.push({ type: 'image_url', image_url: { url: o.dane } })
       }
+      for (const zb of z.zblizenia ?? []) {
+        tresci.push({ type: 'text', text: `[CLOSE-UP of Pin ${zb.numer} (name hint "${zb.nazwa}") — a tight crop centred exactly on the spot the pin points at. THE PINNED THING IS WHAT SITS AT THE CENTRE of this crop, not a bigger or more striking neighbour: identify and describe exactly that thing. This crop is not an extra photo.]` })
+        tresci.push({ type: 'image_url', image_url: { url: zb.dane } })
+      }
       tresci.push({ type: 'text', text: trescZapytaniaAgenta(z) })
       // KROK 1 — logiczne przypisanie ról (bez pisania promptu): które zdjęcie jest docelowe, a które referencją.
       // Krok 2 (poniżej) dostaje to jako rozstrzygnięte i dba już tylko o szczegóły promptu.
