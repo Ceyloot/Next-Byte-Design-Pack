@@ -498,7 +498,8 @@ export function konwertujNaDataUrl(src: string): Promise<string> {
       const g = plotno.getContext('2d')
       if (!g) return resolve(src)
       g.drawImage(obrazek, 0, 0)
-      resolve(plotno.toDataURL('image/jpeg', 0.98))
+      // PNG bez strat (JPEG psuje jakość referencji); bardzo duże obrazy (>12 Mpx) zostają w JPEG 0.98, żeby payload się mieścił
+      resolve(plotno.width * plotno.height > 12_000_000 ? plotno.toDataURL('image/jpeg', 0.98) : plotno.toDataURL('image/png'))
     }
     obrazek.onerror = () => resolve(src)
     obrazek.src = src

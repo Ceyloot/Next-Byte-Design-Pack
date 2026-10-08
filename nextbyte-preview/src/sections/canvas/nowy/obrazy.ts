@@ -45,7 +45,7 @@ export async function wytnijRamke(src: string, ramka: Ramka, margines: number, c
   g.imageSmoothingQuality = 'high'
   g.drawImage(o, x0, y0, sw, sh, 0, 0, c.width, c.height)
   try {
-    return c.toDataURL('image/jpeg', 0.95)
+    return c.toDataURL('image/png')
   } catch {
     return null
   }
@@ -81,7 +81,41 @@ export async function narysujPrzewodnik(src: string, x: number, y: number, sredn
   g.lineTo(cx, cy + 8)
   g.stroke()
   try {
-    return c.toDataURL('image/jpeg', 0.92)
+    return c.toDataURL('image/png')
+  } catch {
+    return null
+  }
+}
+
+/**
+ * PRZEWODNIK PRZESUNIĘCIA (jedno zdjęcie): czerwony pierścień = skąd rzecz znika (ma zostać puste miejsce z odbudowanym tłem),
+ * zielony = dokąd trafia (średnica = jej widoczna wielkość w nowym miejscu).
+ */
+export async function narysujPrzewodnikPrzesuniecia(
+  src: string,
+  zrodlo: { x: number; y: number; srednicaPx: number },
+  cel: { x: number; y: number; srednicaPx: number },
+): Promise<string | null> {
+  const o = await wczytaj(src)
+  if (!o) return null
+  const k = Math.min(1, 1600 / Math.max(o.naturalWidth, o.naturalHeight))
+  const c = document.createElement('canvas')
+  c.width = Math.round(o.naturalWidth * k)
+  c.height = Math.round(o.naturalHeight * k)
+  const g = c.getContext('2d')
+  if (!g) return null
+  g.drawImage(o, 0, 0, c.width, c.height)
+  g.lineWidth = Math.max(3, c.width / 300)
+  const pierscien = (p: { x: number; y: number; srednicaPx: number }, kolor: string) => {
+    g.strokeStyle = kolor
+    g.beginPath()
+    g.arc(p.x * c.width, p.y * c.height, Math.max(12, (p.srednicaPx * k) / 2), 0, Math.PI * 2)
+    g.stroke()
+  }
+  pierscien(zrodlo, '#ff1a1a')
+  pierscien(cel, '#17c93a')
+  try {
+    return c.toDataURL('image/png')
   } catch {
     return null
   }

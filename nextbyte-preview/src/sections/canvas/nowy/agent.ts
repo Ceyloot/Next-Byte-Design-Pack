@@ -32,6 +32,7 @@ export interface PlanAgenta {
   baza: number
   referencje: ReferencjaAgenta[]
   cel?: Ramka
+  ruch?: { zrodlo: number; cel: number }
   skala?: { kotwica: { opis: string; box: Ramka; os: 'szer' | 'wys'; metry: number }; obiekt: { opis: string; metry: number; wysokosc?: number }; kotwicaWys?: { opis: string; metry: number }; uzasadnienie: string }
   /** gotowy prompt dla modelu obrazu (EN) */
   prompt: string
@@ -127,6 +128,12 @@ export function odczytajPlanAgenta(json: Record<string, unknown> | null | undefi
     baza,
     referencje,
     cel: odczytajRamke(json.cel),
+    ruch: (() => {
+      const r = json.ruch as { z_pinezki?: unknown; do_pinezki?: unknown } | null | undefined
+      const a = Number(r?.z_pinezki)
+      const b = Number(r?.do_pinezki)
+      return Number.isInteger(a) && Number.isInteger(b) && a !== b && a > 0 && b > 0 ? { zrodlo: a, cel: b } : undefined
+    })(),
     skala: skalaOk
       ? {
           kotwica: { opis: tekst(sk!.kotwica!.opis), box: kBox!, os: sk!.kotwica!.os === 'wys' ? 'wys' : 'szer', metry: kMetry },
