@@ -32,7 +32,7 @@ export interface PlanAgenta {
   baza: number
   referencje: ReferencjaAgenta[]
   cel?: Ramka
-  skala?: { kotwica: { opis: string; box: Ramka; os: 'szer' | 'wys'; metry: number }; obiekt: { opis: string; metry: number }; uzasadnienie: string }
+  skala?: { kotwica: { opis: string; box: Ramka; os: 'szer' | 'wys'; metry: number }; obiekt: { opis: string; metry: number; wysokosc?: number }; kotwicaWys?: { opis: string; metry: number }; uzasadnienie: string }
   /** gotowy prompt dla modelu obrazu (EN) */
   prompt: string
   /** jedno zdanie po polsku: co zaraz zrobimy */
@@ -117,6 +117,9 @@ export function odczytajPlanAgenta(json: Record<string, unknown> | null | undefi
   const kBox = sk?.kotwica ? odczytajRamke(sk.kotwica.box) : undefined
   const kMetry = Number(sk?.kotwica?.metry)
   const oMetry = Number(sk?.obiekt?.metry)
+  const oWys = Number(sk?.obiekt?.wysokosc_m)
+  const kw = (json.skala as { kotwica_wys?: Record<string, unknown> } | null | undefined)?.kotwica_wys
+  const kwM = Number(kw?.metry)
   const skalaOk = Boolean(kBox) && kMetry > 0 && oMetry > 0 && kMetry < 500 && oMetry < 500
 
   return {
@@ -127,7 +130,8 @@ export function odczytajPlanAgenta(json: Record<string, unknown> | null | undefi
     skala: skalaOk
       ? {
           kotwica: { opis: tekst(sk!.kotwica!.opis), box: kBox!, os: sk!.kotwica!.os === 'wys' ? 'wys' : 'szer', metry: kMetry },
-          obiekt: { opis: tekst(sk!.obiekt!.opis), metry: oMetry },
+          obiekt: { opis: tekst(sk!.obiekt!.opis), metry: oMetry, wysokosc: oWys > 0 && oWys < 100 ? oWys : undefined },
+          kotwicaWys: kw && kwM > 0 && kwM < 100 ? { opis: tekst(kw.opis), metry: kwM } : undefined,
           uzasadnienie: tekst(sk?.uzasadnienie),
         }
       : undefined,
@@ -151,7 +155,13 @@ export function zdanieOSkali(skala: NonNullable<PlanAgenta['skala']>): string {
   const stosunek = skala.obiekt.metry / skala.kotwica.metry
   const razy = stosunek >= 10 ? Math.round(stosunek) : Math.round(stosunek * 10) / 10
   const wymiar = skala.kotwica.os === 'wys' ? 'height' : 'width'
-  return `SIZE: scale the subject proportionally to its surroundings, as a real one standing at that spot would look from this camera — about ${razy}× the ${wymiar} of ${skala.kotwica.opis || 'the nearby reference object'} that stands at the same distance (the subject is about ${skala.obiekt.metry} m long in reality). Never take its size from the reference photo.`
+  const wys = skala.obiekt.wysokosc
+  const kw = skala.kotwicaWys
+  const kontrola =
+    wys && kw
+      ? ` Vertical cross-check: in reality it is only about ${wys} m tall, about ${Math.round((wys / kw.metry) * 100)}% of the height of ${kw.opis || 'a reference object'} (≈ ${kw.metry} m) — so its top edge must look ${wys < kw.metry ? 'clearly lower than' : 'about as high as'} that object's top edge at the same distance.`
+      : ''
+  return `SIZE: scale the subject proportionally to its surroundings, as a real one standing at that spot would look from this camera — about ${razy}× the ${wymiar} of ${skala.kotwica.opis || 'the nearby reference object'} that stands at the same distance (the subject is about ${skala.obiekt.metry} m long in reality). Never take its size from the reference photo.${kontrola}`
 }
 
 /** Najdłuższy bok obiektu w pikselach zdjęcia bazowego (z kotwicy i stosunku metrów) — średnica pierścienia przewodnika miejsca. */
