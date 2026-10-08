@@ -2402,33 +2402,36 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
       <div className="p2 !bg-transparent pointer-events-none absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
-        <div className="p2-szklo pointer-events-auto relative flex flex-row items-center gap-1 !rounded-[22px] p-2">
+        <div className="pointer-events-auto relative flex flex-row items-center gap-1 rounded-[22px] border border-foreground/[0.1] bg-[hsl(var(--card))] p-2 shadow-[0_8px_24px_-10px_rgba(0,0,0,0.5)]">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
             tytul="Wybór (V)"
+            skrot="V"
             aktywne={narzedzie === 'wybor'}
             onClick={() => setNarzedzie('wybor')}
           >
-            <MousePointer2 className="h-4 w-4" />
+            <MousePointer2 className="h-5 w-5" strokeWidth={2.2} />
           </Narzedzie>
 
           {/* Pineska (P) — zaznacz obiekt (do 10 pinesek) */}
           <Narzedzie
             tytul="Pinezka (P)"
+            skrot="P"
             aktywne={narzedzie === 'pineska'}
             onClick={() => setNarzedzie('pineska')}
             odznaka={projekt.pineski.length || undefined}
           >
-            <Pin className="h-4 w-4" />
+            <Pin className="h-5 w-5" strokeWidth={2.2} />
           </Narzedzie>
 
           {/* Przesuwanie widoku (H) */}
           <Narzedzie
             tytul="Ręka (H)"
+            skrot="H"
             aktywne={narzedzie === 'reka'}
             onClick={() => setNarzedzie('reka')}
           >
-            <Hand className="h-4 w-4" />
+            <Hand className="h-5 w-5" strokeWidth={2.2} />
           </Narzedzie>
 
           <span aria-hidden className="mx-1 h-5 w-px bg-foreground/[0.1]" />
@@ -2443,7 +2446,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
               setMenuDodawania(v => !v)
             }}
           >
-            <IkonaObrazu className="h-4 w-4" />
+            <IkonaObrazu className="h-5 w-5" strokeWidth={2.2} />
           </Narzedzie>
 
           {/* Generuj zdjęcie — pusta ramka z prompterem */}
@@ -2456,7 +2459,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
               setMenuGeneratora(v => !v)
             }}
           >
-            <ImagePlus className="h-4 w-4" />
+            <ImagePlus className="h-5 w-5" strokeWidth={2.2} />
           </Narzedzie>
 
           {/* Lista zdjęć / warstw */}
@@ -2469,7 +2472,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
             }}
             odznaka={projekt.warstwy.length || undefined}
           >
-            <Layers className="h-4 w-4" />
+            <Layers className="h-5 w-5" strokeWidth={2.2} />
           </Narzedzie>
 
         </div>
@@ -2622,12 +2625,15 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
 function Narzedzie({
   children,
   tytul,
+  skrot,
   aktywne,
   odznaka,
   onClick,
 }: {
   children: React.ReactNode
   tytul: string
+  /** skrót klawiszowy — mały indeks dolny przy ikonie */
+  skrot?: string
   aktywne?: boolean
   odznaka?: number
   onClick: () => void
@@ -2639,13 +2645,14 @@ function Narzedzie({
       aria-pressed={aktywne}
       onClick={onClick}
       className={cn(
-        'relative flex h-10 w-10 items-center justify-center rounded-[14px] transition-all duration-200 active:scale-95',
+        'relative flex h-11 w-11 items-center justify-center rounded-[14px] transition-all duration-200 active:scale-95',
         aktywne
-          ? 'bg-primary/[0.13] text-primary shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.18)]'
-          : 'p2-cichy hover:-translate-y-px hover:bg-[hsl(var(--foreground)/0.07)] hover:text-[hsl(var(--foreground))]',
+          ? 'bg-primary/[0.2] text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]'
+          : 'text-foreground/80 hover:-translate-y-px hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',
       )}
     >
       {children}
+      {skrot && <span aria-hidden className="pointer-events-none absolute bottom-[3px] right-[5px] font-mono text-[9px] font-semibold leading-none opacity-55">{skrot}</span>}
       {odznaka !== undefined && (
         <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground shadow-sm">
           {odznaka}

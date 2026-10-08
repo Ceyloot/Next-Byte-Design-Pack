@@ -450,7 +450,7 @@ export function CzatCanvas({
               title="Nowy czat"
               aria-label="Nowy czat"
             >
-              <CirclePlus className="h-[18px] w-[18px]" />
+              <CirclePlus className="h-5 w-5" strokeWidth={2.2} />
             </button>
             <button
               onClick={() => setZwiniety(true)}
@@ -458,7 +458,7 @@ export function CzatCanvas({
               title="Zwiń"
               aria-label="Zwiń panel"
             >
-              <PanelRightClose className="h-[18px] w-[18px]" />
+              <PanelRightClose className="h-5 w-5" strokeWidth={2.2} />
             </button>
           </div>
         </div>
@@ -755,7 +755,7 @@ export function CzatCanvas({
                 </button>
                 {menu === 'plus' && (
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[230px]">
-                    <div role="menu" className="nb-szklo nb-szklo-plynne nb-powierzchnia overflow-hidden rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+                    <div role="menu" className="overflow-hidden rounded-2xl border border-foreground/[0.12] bg-[hsl(var(--card))] p-1.5 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.5)]">
                       {[
                         { ikona: Upload, nazwa: 'Dodaj plik', akcja: onDodajPlik },
                         { ikona: Clipboard, nazwa: 'Wklej ze schowka', akcja: onWklejZeSchowka },
