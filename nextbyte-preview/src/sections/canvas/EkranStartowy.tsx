@@ -1,85 +1,75 @@
-import { MessageSquareText, Pin, Sparkles, Upload } from 'lucide-react'
+import { MessageSquareText, Pin, Upload } from 'lucide-react'
+import '../panel2/fundament/powierzchnie.css'
+import { Karta, Kontrolka, Sekcja } from '../panel2/fundament/Powierzchnia'
 import { NextByteMarkIcon } from '@/grafiki/znaki-marek'
 import { cn } from '@/lib/utils'
 
-/** Powitanie zależne od pory dnia — drobiazg, który robi z narzędzia miejsce. */
-function powitanie(godzina: number) {
-  if (godzina < 5) return 'Nocna zmiana? Miło Cię widzieć'
-  if (godzina < 12) return 'Dzień dobry'
-  if (godzina < 18) return 'Miłego popołudnia'
-  return 'Dobry wieczór'
-}
-
 const KROKI = [
-  { ikona: Upload, nazwa: 'Wgraj' },
-  { ikona: Pin, nazwa: 'Wskaż' },
-  { ikona: MessageSquareText, nazwa: 'Opisz' },
+  { ikona: Upload, nazwa: 'Wgraj', klawisz: 'Ctrl V' },
+  { ikona: Pin, nazwa: 'Wskaż', klawisz: 'P' },
+  { ikona: MessageSquareText, nazwa: 'Opisz', klawisz: 'Enter' },
 ] as const
 
 /**
- * Ekran startowy pustego płótna. Jedna duża, przyjazna rzecz do zrobienia
- * (wrzuć zdjęcie), trzy ikony z kolejnością działań i dużo powietrza.
- * Płasko i jednolicie: jedna ramka, jedno wypełnienie, jeden kolor akcentu.
+ * Ekran startowy pustego płótna — w języku Panelu Głównego i ekranów logowania:
+ * jedna karta (poziom 1) z zagłębioną strefą upuszczania (poziom 2), pod nią trzy kafelki kroków
+ * w stylu „Szybkiej podróży” (poziom 3). Etykiety małą, rozstrzeloną czcionką; jeden akcent z poświatą.
  */
 export function EkranStartowy({ nadPlotnem, onOtworz }: { nadPlotnem: boolean; onOtworz?: () => void }) {
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-y-auto px-6 pb-24 pt-20 transition-[padding] duration-300 [scrollbar-width:none]" style={{ paddingRight: 'calc(var(--nb-czat-szer, 0px) + 24px)' }}>
-      <div className="pointer-events-auto flex w-full max-w-[560px] flex-col items-center text-center">
-        <span
-          className="nb-cozy-unos nb-cozy-znak grid h-16 w-16 place-items-center rounded-[22px] border border-foreground/[0.08] bg-card text-foreground"
-        >
-          <NextByteMarkIcon className="h-7 w-7" />
-        </span>
+    <div
+      className="p2 !bg-transparent pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-y-auto px-6 py-16 transition-[padding] duration-300 [scrollbar-width:none]"
+      style={{ paddingRight: 'calc(var(--nb-czat-szer, 0px) + 24px)' }}
+    >
+      <div className="pointer-events-auto flex w-full max-w-[520px] flex-col gap-3">
+        <Karta className="nb-cozy-unos p-3.5">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="nb-cozy-znak grid h-11 w-11 shrink-0 place-items-center rounded-[14px] border border-[hsl(var(--primary)/0.28)] bg-[hsl(var(--primary)/0.08)] text-foreground shadow-[0_0_24px_-8px_hsl(var(--primary)/0.55)]">
+              <NextByteMarkIcon className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="p2-etykieta text-[10.5px] font-semibold uppercase tracking-[0.18em]">Canvas</p>
+              <h1 className="text-[22px] font-semibold leading-tight tracking-tight text-foreground">Co dziś tworzymy?</h1>
+            </div>
+          </div>
 
-        <p className="nb-cozy-unos mt-6 flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground" style={{ ['--nb-cozy-opoznienie' as string]: '0.06s' }}>
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          {powitanie(new Date().getHours())}
-        </p>
-        <h1 className="nb-cozy-unos mt-1.5 text-[36px] font-semibold leading-[1.1] tracking-tight text-foreground" style={{ ['--nb-cozy-opoznienie' as string]: '0.1s' }}>
-          Co dziś tworzymy?
-        </h1>
-        <p className="nb-cozy-unos mt-3 max-w-[400px] text-[15px] leading-relaxed text-muted-foreground" style={{ ['--nb-cozy-opoznienie' as string]: '0.14s' }}>
-          Wrzuć zdjęcie, wskaż pinezką, co ma się zmienić. Resztą zajmę się ja.
-        </p>
-
-        <button
-          type="button"
-          onClick={onOtworz}
-          disabled={!onOtworz}
-          data-nad={nadPlotnem}
-          aria-label="Wgraj zdjęcie z dysku"
-          className={cn(
-            'nb-cozy-strefa nb-cozy-unos group mt-9 flex w-full flex-col items-center gap-4 rounded-[24px] border-2 border-dashed bg-card px-6 py-10',
-            nadPlotnem ? 'border-primary/60' : 'border-foreground/[0.14] hover:border-primary/45',
-          )}
-          style={{ ['--nb-cozy-opoznienie' as string]: '0.2s' }}
-        >
-          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/[0.1] text-primary">
-            <Upload className="h-6 w-6" />
-          </span>
-          <span className="text-[16px] font-semibold text-foreground">
-            {nadPlotnem ? 'Puść, a ułożę zdjęcie na płótnie' : 'Przeciągnij tu zdjęcie'}
-          </span>
-          <span className="nb-cta flex h-11 items-center gap-2 rounded-[14px] px-6 text-[14px] font-semibold">
-            <Upload className="h-4 w-4" />
-            Wgraj z dysku
-          </span>
-          <span className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
-            albo wklej ze schowka
-            <kbd className="rounded-lg bg-foreground/[0.06] px-2 py-0.5 font-mono text-[11px] text-foreground/80">Ctrl + V</kbd>
-          </span>
-        </button>
-
-        <ol className="nb-cozy-unos mt-7 hidden items-center gap-2 text-[13px] text-muted-foreground [@media(min-height:780px)]:flex items-center gap-2 text-[13px] text-muted-foreground" style={{ ['--nb-cozy-opoznienie' as string]: '0.28s' }} aria-label="Jak to działa">
-          {KROKI.map(({ ikona: Ikona, nazwa }, i) => (
-            <li key={nazwa} className="flex items-center gap-2">
-              {i > 0 && <span aria-hidden className="h-px w-5 bg-foreground/[0.14]" />}
-              <span className="flex items-center gap-2 rounded-full border border-foreground/[0.08] bg-card py-1.5 pl-2 pr-3.5">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-foreground/[0.07] text-foreground/80">
-                  <Ikona className="h-3.5 w-3.5" />
-                </span>
-                {nazwa}
+          <Sekcja className="p-2">
+            <button
+              type="button"
+              onClick={onOtworz}
+              disabled={!onOtworz}
+              data-nad={nadPlotnem}
+              aria-label="Wgraj zdjęcie z dysku"
+              className={cn(
+                'nb-cozy-strefa group flex w-full flex-col items-center gap-3.5 rounded-[14px] border border-dashed px-6 py-9 transition-colors',
+                nadPlotnem ? 'border-primary/70 bg-primary/[0.06]' : 'border-foreground/[0.16] hover:border-primary/50',
+              )}
+            >
+              <span className="grid h-12 w-12 place-items-center rounded-[14px] border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.1)] text-primary">
+                <Upload className="h-5 w-5" />
               </span>
+              <span className="text-[14px] font-medium text-foreground">{nadPlotnem ? 'Puść' : 'Przeciągnij tu zdjęcie'}</span>
+              <span className="nb-cta flex h-10 items-center gap-2 rounded-[12px] px-5 text-[13px] font-semibold">
+                <Upload className="h-4 w-4" />
+                Wgraj z dysku
+              </span>
+              <kbd className="rounded-lg bg-foreground/[0.06] px-2 py-0.5 font-mono text-[11px] text-foreground/70">Ctrl + V</kbd>
+            </button>
+          </Sekcja>
+        </Karta>
+
+        <ol className="nb-cozy-unos grid grid-cols-3 gap-2.5 [@media(max-height:620px)]:hidden" style={{ ['--nb-cozy-opoznienie' as string]: '0.12s' }} aria-label="Kroki">
+          {KROKI.map(({ ikona: Ikona, nazwa, klawisz }) => (
+            <li key={nazwa}>
+              <Kontrolka className="flex items-center gap-2.5 px-3 py-2.5">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-[hsl(var(--primary)/0.22)] bg-[hsl(var(--primary)/0.08)] text-primary">
+                  <Ikona className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[12.5px] font-medium leading-tight text-foreground">{nazwa}</span>
+                  <span className="block font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground">{klawisz}</span>
+                </span>
+              </Kontrolka>
             </li>
           ))}
         </ol>

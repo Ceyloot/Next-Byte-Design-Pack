@@ -437,8 +437,8 @@ export function CzatCanvas({
       <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
-          <span className="flex items-center gap-2.5 pl-1 text-[15px] font-semibold tracking-tight text-[hsl(var(--foreground))]">
-            <span className="grid h-8 w-8 place-items-center rounded-[11px] bg-foreground/[0.06] text-foreground">
+          <span className="flex items-center gap-2.5 pl-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--muted-foreground))]">
+            <span className="grid h-8 w-8 place-items-center rounded-[11px] border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.08)] text-foreground">
               <NextByteMarkIcon className="h-[15px] w-[15px]" />
             </span>
             Canvas
