@@ -2252,6 +2252,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
             warstwa={kartaPozycja.warstwa}
             onNazwa={label => zmienPineske(kartaPozycja.pineska.id, { label })}
             onUsun={() => usunPineske(kartaPozycja.pineska.id)}
+            onRamka={ramka => zmienPineske(kartaPozycja.pineska.id, { ramka })}
             onZamknij={() => setWybranaPineska(null)}
           />
         </div>

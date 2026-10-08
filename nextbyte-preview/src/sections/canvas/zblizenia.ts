@@ -79,10 +79,11 @@ async function znajdzRamkeRzeczy(
   o: HTMLImageElement,
   x: number,
   y: number,
+  nazwa?: string,
 ): Promise<{ r: { x0: number; y0: number; x1: number; y1: number }; wypelnienie: number } | null> {
   const okno = oknoKwadratowe(o, x, y, 0.5)
   if (!okno) return null
-  const { box } = await opiszRzeczZRamka(okno.src)
+  const { box } = await opiszRzeczZRamka(okno.src, nazwa)
   if (!box) return null
   let r = naPiksele(okno, box)
   let wypelnienie = Math.max(r.x1 - r.x0, r.y1 - r.y0) / okno.bok
@@ -90,8 +91,9 @@ async function znajdzRamkeRzeczy(
   // Pinezka musi leżeć wewnątrz (lub tuż przy) ramki — inaczej Gemini wskazał sąsiedni obiekt
   const px = x * o.naturalWidth
   const py = y * o.naturalHeight
-  const luzx = Math.max(6, (r.x1 - r.x0) * 0.08)
-  const luzy = Math.max(6, (r.y1 - r.y0) * 0.08)
+  const luzPin = nazwa?.trim() ? 0.5 : 0.08 // nazwana rzecz może leżeć obok pinu — wtedy pin nie musi być wewnątrz ramki
+  const luzx = Math.max(6, (r.x1 - r.x0) * luzPin)
+  const luzy = Math.max(6, (r.y1 - r.y0) * luzPin)
   const wRamce = (b: { x0: number; y0: number; x1: number; y1: number }) => px >= b.x0 - luzx && px <= b.x1 + luzx && py >= b.y0 - luzy && py <= b.y1 + luzy
   if (!wRamce(r)) return null
   // Mała rzecz w dużym oknie (np. odległy domek): ramka bywa nieprecyzyjna i łapie sąsiada — drugie, ciaśniejsze
@@ -102,7 +104,7 @@ async function znajdzRamkeRzeczy(
     const bok2 = Math.max(96, 4 * Math.max(r.x1 - r.x0, r.y1 - r.y0))
     const okno2 = oknoKwadratowe(o, cx / o.naturalWidth, cy / o.naturalHeight, Math.min(1, bok2 / Math.min(o.naturalWidth, o.naturalHeight)))
     if (okno2) {
-      const drugie = await opiszRzeczZRamka(okno2.src)
+      const drugie = await opiszRzeczZRamka(okno2.src, nazwa)
       if (drugie.box) {
         const r2 = naPiksele(okno2, drugie.box)
         const w2 = Math.max(r2.x1 - r2.x0, r2.y1 - r2.y0) / okno2.bok
@@ -131,10 +133,10 @@ export async function zblizenieRzeczy(src: string, x: number, y: number): Promis
  * Pineska bywa wbita w skrawek (maska auta), a podgląd ma pokazać cały obiekt, nie ten skrawek.
  * Zwraca null, gdy ramki nie da się ustalić — wtedy podgląd zostaje szerokim kadrem wokół pinu.
  */
-export async function ramkaRzeczyPodPinem(src: string, x: number, y: number): Promise<RamkaObiektu | null> {
+export async function ramkaRzeczyPodPinem(src: string, x: number, y: number, nazwa?: string): Promise<RamkaObiektu | null> {
   const o = await wczytaj(src)
   if (!o) return null
-  const znaleziona = await znajdzRamkeRzeczy(o, x, y)
+  const znaleziona = await znajdzRamkeRzeczy(o, x, y, nazwa)
   if (!znaleziona) return null
   const { r } = znaleziona
   return {

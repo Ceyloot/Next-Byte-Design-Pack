@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, Loader2, Trash2 } from 'lucide-react'
 import '../panel2/fundament/powierzchnie.css'
 import { cn } from '@/lib/utils'
+import { ramkaRzeczyPodPinem } from './zblizenia'
 import { wytnijPodgladPineski, type Pineska, type Warstwa } from './typy'
 
 /**
@@ -19,6 +20,8 @@ interface Props {
   warstwa: Warstwa
   onNazwa: (label: string) => void
   onUsun: () => void
+  /** nowa ramka rzeczy po zmianie nazwy przez użytkownika (podgląd przybliża to, co nazwał) */
+  onRamka?: (ramka: NonNullable<Pineska['ramka']>) => void
   onZamknij: () => void
   /** polecenie wspólne z czatem — można je wpisać prosto na zdjęciu */
   polecenie?: string
@@ -26,7 +29,7 @@ interface Props {
   onWyslij?: () => void
 }
 
-export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamknij, polecenie, onPolecenie, onWyslij }: Props) {
+export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onRamka, onZamknij, polecenie, onPolecenie, onWyslij }: Props) {
   const [wycinek, setWycinek] = useState<string>('')
   const refPole = useRef<HTMLInputElement>(null)
 
@@ -39,6 +42,20 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onZamkn
       aktualne = false
     }
   }, [warstwa.src, pineska.normalizedX, pineska.normalizedY, pineska.ramka])
+
+  // Nazwa zmieniona ręcznie → po chwili szukamy WŁAŚNIE tej rzeczy (np. „domek hobbitów” zamiast „skarpa”) i przybliżamy podgląd na nią
+  const ostatniaNazwa = useRef(pineska.label)
+  useEffect(() => {
+    const nazwa = pineska.label.trim()
+    if (!onRamka || nazwa.length < 3 || nazwa === ostatniaNazwa.current) return
+    const t = setTimeout(() => {
+      ostatniaNazwa.current = nazwa
+      void ramkaRzeczyPodPinem(warstwa.src, pineska.normalizedX, pineska.normalizedY, nazwa)
+        .then(r => r && onRamka(r))
+        .catch(() => undefined)
+    }, 800)
+    return () => clearTimeout(t)
+  }, [pineska.label, pineska.normalizedX, pineska.normalizedY, warstwa.src, onRamka])
 
   // Kursor od razu w polu nazwy — po wbiciu pineski następny ruch to
   // zawsze nazwanie obiektu, więc nie każemy w to jeszcze klikać.

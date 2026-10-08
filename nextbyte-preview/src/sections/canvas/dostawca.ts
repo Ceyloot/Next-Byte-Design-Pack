@@ -126,12 +126,12 @@ export async function opiszObiektSzczegolowo(wycinek: string): Promise<string> {
 }
 
 /** Opis rzeczy pod pineską + ciasna ramka [ymin,xmin,ymax,xmax] 0–1000 w wycinku (do inteligentnego zbliżenia). */
-export async function opiszRzeczZRamka(wycinek: string): Promise<{ opis: string; box?: [number, number, number, number] }> {
+export async function opiszRzeczZRamka(wycinek: string, nazwa?: string): Promise<{ opis: string; box?: [number, number, number, number] }> {
   try {
     const odp = await fetch('/api/canvas/rozpoznaj', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wycinek, tryb: 'opis' }),
+      body: JSON.stringify({ wycinek, tryb: 'opis', nazwa }),
     })
     if (!odp.ok) return { opis: '' }
     const tresc = (await odp.json()) as { opis?: string; box?: number[] }

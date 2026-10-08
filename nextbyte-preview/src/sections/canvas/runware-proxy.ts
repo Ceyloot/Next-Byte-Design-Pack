@@ -48,6 +48,8 @@ export interface ZadanieGeneracji {
 
 /** Żądanie rozpoznania obiektu pod pineską */
 export interface ZadanieRozpoznania {
+  /** nazwa nadana przez użytkownika — w trybie `opis` wskazuje, KTÓRĄ rzecz opisać i obramować (może leżeć obok środka) */
+  nazwa?: string
   /** wycinek wokół pineski albo całe zdjęcie — zależnie od trybu */
   wycinek: string
   /**
@@ -214,7 +216,7 @@ export function runwareProxy(): Plugin {
       if (!kluczGemini) return odpowiedz(503, { blad: 'Brak GEMINI_API_KEY w .env.local' })
 
       try {
-        const { wycinek, tryb = 'obiekt' } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
+        const { wycinek, tryb = 'obiekt', nazwa } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
         if (!wycinek) return odpowiedz(400, { blad: 'Brak wycinka' })
 
         // Tryb „osoba”: karta tożsamości osoby (twarz cecha po cesze, włosy, budowa, ubiór) + ramka twarzy do zbliżenia.
@@ -313,7 +315,7 @@ export function runwareProxy(): Plugin {
                     parts: [
                       { inlineData: { mimeType: d ? d[1] : 'image/jpeg', data: d ? d[2] : wycinek } },
                       {
-                        text: 'This crop is centred on ONE object (the one under the pin). Describe exactly THAT object in exhaustive visual detail, so that another artist who cannot see the image could redraw it identically: what it is; its overall shape and silhouette; every distinctive part and feature with its position on the object, shape, colour and material; surface textures, edges and wear; its size relative to what is around it; what it stands on or against. 4–6 sentences, plain English, facts you SEE only. Describe only the object — nothing of the background. Also give the tight bounding box of that object (all of it, nothing else) as "box": [ymin, xmin, ymax, xmax], normalised 0–1000 within this crop. Answer only with JSON: {"opis": "...", "box": [0,0,0,0]}',
+                        text: (nazwa?.trim() ? `The user calls the thing under the pin "${nazwa.trim().slice(0, 80)}". Find THAT named thing nearest to the centre of the crop (it can sit slightly off-centre; do not pick a different object) and describe and box exactly it. ` : '') + 'This crop is centred on ONE object (the one under the pin). Describe exactly THAT object in exhaustive visual detail, so that another artist who cannot see the image could redraw it identically: what it is; its overall shape and silhouette; every distinctive part and feature with its position on the object, shape, colour and material; surface textures, edges and wear; its size relative to what is around it; what it stands on or against. 4–6 sentences, plain English, facts you SEE only. Describe only the object — nothing of the background. Also give the tight bounding box of that object (all of it, nothing else) as "box": [ymin, xmin, ymax, xmax], normalised 0–1000 within this crop. Answer only with JSON: {"opis": "...", "box": [0,0,0,0]}',
                       },
                     ],
                   },
