@@ -29,7 +29,8 @@ import {
   type PomiarSkali,
   type Prostokat,
 } from './rezyser'
-import { INSTRUKCJA_AGENTA, trescZapytaniaAgenta } from './nowy/agent-instrukcja'
+import { instrukcjaAgenta, trescZapytaniaAgenta } from './nowy/agent-instrukcja'
+import { RODZAJE_ZADAN } from './nowy/receptury'
 import { odczytajPlanAgenta, type ZapytanieDoAgenta } from './nowy/agent'
 
 const ENDPOINT_CZAT = 'https://api.runware.ai/v1/chat/completions'
@@ -448,8 +449,10 @@ First describe to yourself what you SEE under every pin (who/what, clothes, what
 - "zamień X na Y": X is replaced → the photo with X is the BASE (the edited, returned photo). Y supplies the new person/object → REFERENCE. "wstaw/przenieś X tu": X comes from the reference, the place is in the BASE. A pronoun without a descriptor ("niego", "ją", "to") refers to the other pin/photo.
 - The BASE is always the photo that contains the subject being replaced/changed/removed, or the place something is put. Double-check: does your base photo really show that subject?
 - If nothing links the words to pins, the subject under pin 1 is replaced and the other pin supplies the new thing.
-Reply ONLY JSON: {"rozumienie":"Polish, a few sentences: what is under each pin and how the words map to them","baza":<image number>,"referencje":[<image numbers>],"pewnosc":"wysoka|niska"}`
+The task kinds: zamiana_osoby (a whole person replaced by a person from a reference), zamiana_twarzy (only the face replaced), zamiana_obiektu (an object replaced by an object from a reference), wstawienie (something from a reference is added), przeniesienie (a thing moved inside the base photo), usuniecie, zmiana_tla, perspektywa, edycja.
+Reply ONLY JSON: {"rozumienie":"Polish, a few sentences: what is under each pin and how the words map to them","zadanie":"<one of the task kinds above>","baza":<image number>,"referencje":[<image numbers>],"pewnosc":"wysoka|niska"}`
       let rolePrzydzielone: { baza: number; referencje: number[] } | null = null
+      let zadanieKrok1: string | undefined
       {
         const krok1 = await zapytajAgenta(INSTRUKCJA_ROL, tresci, MODEL_REZYSERA, { temperature: 0, maxOutputTokens: 2048, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 2048 } })
         const j = krok1.json as Record<string, unknown> | null | undefined
@@ -457,8 +460,9 @@ Reply ONLY JSON: {"rozumienie":"Polish, a few sentences: what is under each pin 
         const baza1 = nr(j?.baza)
         if (j && baza1) {
           rolePrzydzielone = { baza: baza1, referencje: (Array.isArray(j.referencje) ? j.referencje : []).map(nr).filter((x): x is number => x !== null && x !== baza1) }
-          console.info('[canvas] agent krok 1 (role):', j.rozumienie, '→ baza', baza1, 'refs', rolePrzydzielone.referencje.join(','), j.pewnosc ?? '')
-          tresci.push({ type: 'text', text: `ROLES ALREADY DECIDED (final — do not change, do not ask about them): the BASE is Image ${baza1}; the reference image(s): ${rolePrzydzielone.referencje.map(n => `Image ${n}`).join(', ') || 'none'}. Reasoning behind it: ${String(j.rozumienie ?? '')}. Put "baza": ${baza1} in your reply and use these roles in "referencje".` })
+          zadanieKrok1 = RODZAJE_ZADAN.includes(String(j.zadanie) as never) ? String(j.zadanie) : undefined
+          console.info('[canvas] agent krok 1 (role), zadanie', zadanieKrok1, ':', j.rozumienie, '→ baza', baza1, 'refs', rolePrzydzielone.referencje.join(','), j.pewnosc ?? '')
+          tresci.push({ type: 'text', text: `ROLES ALREADY DECIDED (final — do not change, do not ask about them): the BASE is Image ${baza1}; the reference image(s): ${rolePrzydzielone.referencje.map(n => `Image ${n}`).join(', ') || 'none'}. Reasoning behind it: ${String(j.rozumienie ?? '')}. The task is ${zadanieKrok1 ?? 'to be decided by you'}. Put "baza": ${baza1} in your reply and use these roles in "referencje".` })
         }
       }
       // Jedna ponowna próba (koszt!): druga z wyższą temperaturą i bez „myślenia”, gdy pierwsza odpowiedź jest nieczytelna
@@ -468,11 +472,13 @@ Reply ONLY JSON: {"rozumienie":"Polish, a few sentences: what is under each pin 
         const konfig = proba === 0
           ? { temperature: 0, maxOutputTokens: 6144, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 2048 } }
           : { temperature: 0.4, maxOutputTokens: 8192, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } }
-        const wynik = await zapytajAgenta(INSTRUKCJA_AGENTA, tresci, MODEL_REZYSERA, konfig)
+        const wynik = await zapytajAgenta(instrukcjaAgenta(zadanieKrok1), tresci, MODEL_REZYSERA, konfig)
         if (wynik.blad) return { status: 502, cialo: { blad: wynik.blad } }
         powod = wynik.powod ?? powod
         const rozumienie = (wynik.json as Record<string, unknown> | null | undefined)?.rozumienie
         if (typeof rozumienie === 'string') console.info('[canvas] agent rozumienie:', rozumienie)
+        const karta = (wynik.json as Record<string, unknown> | null | undefined)?.karta
+        if (karta) console.info('[canvas] agent karta:', JSON.stringify(karta))
         plan = odczytajPlanAgenta(wynik.json, z.obrazy.length)
         if (!plan) console.warn(`[canvas] agent: nieczytelny plan, próba ${proba + 1}/2`)
       }

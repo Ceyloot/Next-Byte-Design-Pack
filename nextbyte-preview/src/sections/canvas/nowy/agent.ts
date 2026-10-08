@@ -4,7 +4,7 @@
  * (wtedy system schodzi do szablonu z `prompt.ts`, żeby użytkownik nie został z niczym).
  */
 
-export type ZadanieAgenta = 'zamiana_osoby' | 'zamiana_obiektu' | 'przeniesienie' | 'wstawienie' | 'usuniecie' | 'perspektywa' | 'edycja'
+export type ZadanieAgenta = 'zamiana_osoby' | 'zamiana_twarzy' | 'zmiana_tla' | 'zamiana_obiektu' | 'przeniesienie' | 'wstawienie' | 'usuniecie' | 'perspektywa' | 'edycja'
 
 /** [ymin, xmin, ymax, xmax] w skali 0–1000. */
 export type Ramka = [number, number, number, number]
@@ -47,7 +47,7 @@ export interface ZapytanieDoAgenta {
   historia: { pytanie: string; odpowiedz: string }[]
 }
 
-const ZADANIA: ZadanieAgenta[] = ['zamiana_osoby', 'zamiana_obiektu', 'przeniesienie', 'wstawienie', 'usuniecie', 'perspektywa', 'edycja']
+const ZADANIA: ZadanieAgenta[] = ['zamiana_osoby', 'zamiana_twarzy', 'zmiana_tla', 'zamiana_obiektu', 'przeniesienie', 'wstawienie', 'usuniecie', 'perspektywa', 'edycja']
 /** Najdłuższy prompt, jaki przyjmujemy od agenta (znaki). Dłuższy znaczy, że agent „pisze esej” — wtedy szablon. */
 export const MAKS_DLUGOSC_PROMPTU = 1600
 
