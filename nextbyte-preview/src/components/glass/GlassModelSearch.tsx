@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Sparkles, Star, Zap, Brain, Image as ImageIcon, ChevronDown, Search, Server, Rocket, Crown, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGlass } from '@/lib/glass-context'
@@ -304,6 +305,11 @@ export function GlassModelSearch({
   })
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const przyciskRef = useRef<HTMLButtonElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
+  // `odwroc`: popup idzie do <body> (portal) — rodzic z backdrop-filter (panel czatu) jest „backdrop root”
+  // i odcinałby rozmycie od zdjęcia pod spodem; pozycja liczona z przycisku.
+  const [polozenie, setPolozenie] = useState<{ left: number; bottom: number; width: number } | null>(null)
 
   useEffect(() => {
     setActiveModelId(selectedId)
@@ -313,7 +319,8 @@ export function GlassModelSearch({
     if (mode !== 'dropdown') return
 
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const cel = event.target as Node
+      if (containerRef.current && !containerRef.current.contains(cel) && !popupRef.current?.contains(cel)) {
         setOpen(false)
       }
     }
@@ -598,6 +605,21 @@ export function GlassModelSearch({
     panel
   )
 
+  useLayoutEffect(() => {
+    if (!odwroc || !open) return
+    const licz = () => {
+      const r = przyciskRef.current?.getBoundingClientRect()
+      if (r) setPolozenie({ left: r.left, bottom: window.innerHeight - r.top + 8, width: r.width })
+    }
+    licz()
+    window.addEventListener('resize', licz)
+    window.addEventListener('scroll', licz, true)
+    return () => {
+      window.removeEventListener('resize', licz)
+      window.removeEventListener('scroll', licz, true)
+    }
+  }, [odwroc, open])
+
   if (mode === 'inline') {
     return <div className={cn('w-full', className)}>{popoverContent}</div>
   }
@@ -606,6 +628,7 @@ export function GlassModelSearch({
     <div ref={containerRef} className={cn('relative inline-block text-left', className)}>
       {/* Przycisk wyzwalający dropdown */}
       <button
+        ref={przyciskRef}
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
@@ -628,7 +651,17 @@ export function GlassModelSearch({
       </button>
 
       {/* Popover */}
-      {open && (
+      {open && odwroc && polozenie && createPortal(
+        <div
+          ref={popupRef}
+          className="fixed z-[90] animate-in fade-in zoom-in-95 duration-150"
+          style={{ left: polozenie.left, bottom: polozenie.bottom, width: polozenie.width }}
+        >
+          {popoverContent}
+        </div>,
+        document.body,
+      )}
+      {open && !odwroc && (
         <div
           className={cn(
             'absolute z-50 animate-in fade-in zoom-in-95 duration-150',
