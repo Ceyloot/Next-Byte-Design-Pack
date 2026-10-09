@@ -28,6 +28,7 @@ import {
   Upload,
   Link2,
   Clipboard,
+  FileText,
   X,
   Zap,
 } from 'lucide-react'
@@ -37,6 +38,7 @@ import { GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIc
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { BYTE_ZA_OBRAZ } from './dostawca'
+import type { Zalacznik } from './zalaczniki'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
 import type { OpcjaRol } from './role-z-polecenia'
@@ -93,6 +95,10 @@ interface Props {
   onTrybPromptow: (t: 'studio' | 'hybryda' | 'nasz') => void
   /** menu „+”: dodawanie zdjęć na płótno */
   onDodajPlik: () => void
+  /** załączniki czatu: zdjęcia-referencje i instrukcje tekstowe (poza płótnem) */
+  zalaczniki: Zalacznik[]
+  onZalacz: () => void
+  onUsunZalacznik: (id: string) => void
   onWklejZeSchowka: () => void
   onDodajZAdresu: () => void
 }
@@ -193,6 +199,9 @@ export function CzatCanvas({
   trybPromptow,
   onTrybPromptow,
   onDodajPlik,
+  zalaczniki,
+  onZalacz,
+  onUsunZalacznik,
   onWklejZeSchowka,
   onDodajZAdresu,
 }: Props) {
@@ -652,7 +661,7 @@ export function CzatCanvas({
             />
           </div>
           {/* W odniesieniu do czego jest polecenie: zaznaczone zdjęcie i pinezki — każda z miniaturą swojego zdjęcia */}
-          {(zaznaczona || pineski.length > 0 || zaznaczoneWarstwy.length >= 2) && (
+          {(zaznaczona || pineski.length > 0 || zaznaczoneWarstwy.length >= 2 || zalaczniki.length > 0) && (
             <div className="mb-2 flex flex-wrap items-center gap-1" aria-label="Polecenie dotyczy">
               {pineski.length === 0 &&
                 zaznaczoneWarstwy.map((w, idx) => (
@@ -684,6 +693,17 @@ export function CzatCanvas({
                   </button>
                 </span>
               )}
+              {zalaczniki.map(z => (
+                <span key={z.id} className="p2-kontrolka flex items-center overflow-hidden text-[11px] font-medium text-foreground/85" title={z.rodzaj === 'obraz' ? `Referencja: ${z.nazwa}` : `Instrukcja z pliku: ${z.nazwa}`}>
+                  <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-2">
+                    {z.rodzaj === 'obraz' ? <Miniatura src={z.src ?? ''} /> : <FileText className="ml-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}
+                    <span className="max-w-[120px] truncate">{z.nazwa}</span>
+                  </span>
+                  <button type="button" onClick={() => onUsunZalacznik(z.id)} className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground" title="Usuń załącznik" aria-label={`Usuń załącznik ${z.nazwa}`}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
               {pineski.map((p, idx) => {
                 const wz = warstwy.find(w => w.id === p.layerId)
                 return (
@@ -758,7 +778,8 @@ export function CzatCanvas({
                   <div className="absolute bottom-full left-0 z-40 mb-2 w-[230px]">
                     <div role="menu" className="overflow-hidden rounded-2xl border border-foreground/[0.12] bg-[hsl(var(--card))] p-1.5 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.5)]">
                       {[
-                        { ikona: Upload, nazwa: 'Dodaj plik', akcja: onDodajPlik },
+                        { ikona: Paperclip, nazwa: 'Załącz jako referencję', akcja: onZalacz },
+                        { ikona: Upload, nazwa: 'Wstaw na płótno', akcja: onDodajPlik },
                         { ikona: Clipboard, nazwa: 'Wklej ze schowka', akcja: onWklejZeSchowka },
                         { ikona: Link2, nazwa: 'Z adresu URL', akcja: onDodajZAdresu },
                       ].map(({ ikona: Ik, nazwa, akcja }) => (

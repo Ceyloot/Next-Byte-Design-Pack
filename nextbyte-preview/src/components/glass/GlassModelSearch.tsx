@@ -366,6 +366,7 @@ export function GlassModelSearch({
     WebkitBackdropFilter: 'blur(26px) saturate(150%)',
     borderColor: 'hsl(var(--foreground) / 0.12)',
     boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.4), 0 18px 48px -16px hsl(var(--foreground) / 0.35)',
+    backgroundImage: 'linear-gradient(155deg, hsl(0 0% 100% / 0.16) 0%, hsl(0 0% 100% / 0.03) 40%, hsl(0 0% 100% / 0) 62%)',
   }
 
   // Karta szczegółów modelu (metryki, koszt, konfiguracja)
@@ -478,6 +479,7 @@ export function GlassModelSearch({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            size={8}
             placeholder="Szukaj modelu AI..."
             className="w-full h-8 pl-8 pr-3 text-xs bg-muted/40 border border-border/50 rounded-xl placeholder:text-muted-foreground/60 text-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
           />
@@ -537,7 +539,7 @@ export function GlassModelSearch({
                         <div className="flex items-center gap-1.5">
                           <span
                             className={cn(
-                              compact ? 'text-[14px] font-semibold leading-tight' : 'truncate text-xs font-semibold leading-tight',
+                              compact ? 'text-[14px] font-semibold leading-tight' : 'whitespace-nowrap text-xs font-semibold leading-tight',
                               isActive ? 'text-primary' : 'text-foreground',
                             )}
                           >
@@ -632,13 +634,24 @@ export function GlassModelSearch({
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'group inline-flex items-center gap-2 border border-border bg-background/40 h-11 px-3 text-[14px] text-card-foreground transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
-          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'min-w-[256px] rounded-xl' : 'rounded-full',
+          'group inline-flex items-center border border-border bg-background/40 h-11 text-[14px] text-card-foreground transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
+          odwroc ? 'gap-1.5 px-2.5' : 'gap-2 px-3',
+          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'rounded-xl' : 'rounded-full',
           open && 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]',
         )}
       >
-        <span className="text-primary">{selectedModel.icon}</span>
-        <span className="min-w-0 flex-1 truncate text-left">{selectedModel.name}</span>
+        {!odwroc && <span className="text-primary">{selectedModel.icon}</span>}
+        {odwroc ? (
+          // Szerokość przycisku = najdłuższa nazwa modelu (niewidoczne kopie w tej samej komórce) — zero luki przy krótkich
+          <span className="grid min-w-0 flex-1 text-left">
+            <span className="col-start-1 row-start-1 whitespace-nowrap">{selectedModel.name}</span>
+            {models.map(m => (
+              <span key={m.id} aria-hidden className="invisible col-start-1 row-start-1 h-0 overflow-hidden whitespace-nowrap">{m.name}</span>
+            ))}
+          </span>
+        ) : (
+          <span className="min-w-0 flex-1 truncate text-left">{selectedModel.name}</span>
+        )}
         {selectedModel.cost !== undefined && (
           <span className="shrink-0 tabular-nums text-primary/80 font-mono">⟠ {selectedModel.cost}</span>
         )}
@@ -655,7 +668,7 @@ export function GlassModelSearch({
         <div
           ref={popupRef}
           className="fixed z-[90] animate-in fade-in zoom-in-95 duration-150"
-          style={{ left: polozenie.left, bottom: polozenie.bottom, width: polozenie.width }}
+          style={{ left: polozenie.left, bottom: polozenie.bottom, minWidth: polozenie.width, width: 'max-content', maxWidth: 'calc(100vw - 16px)' }}
         >
           {popoverContent}
         </div>,

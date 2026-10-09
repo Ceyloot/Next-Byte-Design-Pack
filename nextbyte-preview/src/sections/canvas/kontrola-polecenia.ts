@@ -39,8 +39,9 @@ export function sprawdzPolecenie(
   if (wskazan > 0 && uchwyty.length === 0 && intencja !== 'perspektywa') {
     uwagi.push({
       id: 'wskazanie-bez-pineski',
-      waga: 'blokada',
-      tresc: 'Polecenie wskazuje palcem („to”, „tutaj”), ale nie ma żadnej pineski. Ctrl+klik na zdjęciu wbija pineskę.',
+      // Tylko ostrzeżenie: „zrób z tego zimę” bez pinesek znaczy całe zdjęcie, a gdy agent nie wie, o co chodzi, sam dopyta.
+      waga: 'ostrzezenie',
+      tresc: 'Polecenie wskazuje palcem („to”, „tutaj”), a nie ma pineski — potraktuję je jako dotyczące całego zdjęcia. Ctrl+klik wbija pineskę.',
     })
   } else if (wskazan >= 2 && uchwyty.length === 1) {
     uwagi.push({

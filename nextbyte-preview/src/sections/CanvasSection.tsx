@@ -78,6 +78,7 @@ import { trybPromptuPostaci } from '@/sections/canvas/prompty/postac-pdf'
 import { przygotujZAgentem } from '@/sections/canvas/nowy'
 import { narysujMapeMiejsc, narysujObszary, zlozWklejke } from '@/sections/canvas/mapa-miejsc'
 import { narysujKropki } from './canvas/kropki'
+import { formatZOpisu, tekstZZalacznikami, wczytajZalaczniki, zalacznikJakoWarstwa, type Zalacznik } from './canvas/zalaczniki'
 import { wytnijZblizenieTwarzy } from './canvas/wytnij-twarz'
 import { EdycjaTekstu, type Czcionka, type ZmianaTekstu } from './canvas/EdycjaTekstu'
 import { ramkaRzeczyPodPinem, referencjaWokolRzeczy, zbudujZblizenia, type Zblizenie } from './canvas/zblizenia'
@@ -304,6 +305,13 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
   const [ostatniPrompt, setOstatniPrompt] = useState<string | null>(null)
   const [panelWarstw, setPanelWarstw] = useState(false)
   const refPlik = useRef<HTMLInputElement>(null)
+  /** Załączniki czatu (referencje i instrukcje tekstowe) — poza płótnem */
+  const refZalacznik = useRef<HTMLInputElement>(null)
+  const [zalaczniki, setZalaczniki] = useState<Zalacznik[]>([])
+  const dodajZalaczniki = useCallback(async (pliki: File[]) => {
+    const nowe = await wczytajZalaczniki(pliki)
+    if (nowe.length) setZalaczniki(z => [...z, ...nowe].slice(0, 6))
+  }, [])
   const refRoot = useRef<HTMLDivElement>(null)
   const [rozmiar, setRozmiar] = useState({ szer: 0, wys: 0 })
 
@@ -1102,14 +1110,14 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
 
   /** Generacja z wieloma referencjami (zaznaczone zdjęcia, bez pinesek): osobny moduł canvas/referencje.ts. */
   const uruchomZReferencjami = useCallback(async () => {
-    const tekst = projekt.tekst.trim()
+    const tekst = tekstZZalacznikami(projekt.tekst.trim(), zalaczniki)
     const pierwsze = wielu[0]
-    if (!tekst || !pierwsze || refGeneruje.current) return
+    if (!projekt.tekst.trim() || !pierwsze || refGeneruje.current) return
     refGeneruje.current = true
     setStanGeneracji({ faza: 'trwa', plan: `Generuję z ${wielu.length} referencji…`, tryb: 'referencje' })
     startDucha(pierwsze, 'Generuję…')
     try {
-      const obrazy = await Promise.all(wielu.map(w => konwertujNaDataUrl(w.src)))
+      const obrazy = await Promise.all([...wielu, ...zalaczniki.filter(z => z.rodzaj === 'obraz').map(z => zalacznikJakoWarstwa(z))].map(w => konwertujNaDataUrl(w.src)))
       const wynik = await wykonajGeneracjeZReferencji({
         obrazy,
         tekst,
@@ -1127,7 +1135,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       usunDucha()
       refGeneruje.current = false
     }
-  }, [projekt.tekst, wielu, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
+  }, [projekt.tekst, wielu, zalaczniki, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
 
   /**
    * NOWY SYSTEM PROMPTOWANIA (domyślny): agent z oczami (jedno wywołanie Gemini) rozumie polecenie i pinezki, dopytuje ludzkim językiem
@@ -1146,7 +1154,8 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     // wtedy używamy ich zapisanej kopii, a odpowiedź nie zostaje potraktowana jako nowe, samotne polecenie.
     const rozmowa = rozmowaAgenta.current && (rozmowaAgenta.current.odcisk === odcisk || projekt.pineski.length === 0) ? rozmowaAgenta.current : null
     const pineskiZadania = rozmowa ? rozmowa.pineski : projekt.pineski
-    const tekstZadania = rozmowa ? rozmowa.zadanie : tekst
+    const tekstZadania = rozmowa ? rozmowa.zadanie : tekstZZalacznikami(tekst, zalaczniki)
+    const zalObrazy = zalaczniki.filter(z => z.rodzaj === 'obraz')
     const historia = rozmowa ? [...rozmowa.historia, { pytanie: rozmowa.pytanie, odpowiedz: tekst }] : []
     refGeneruje.current = true
     setStanGeneracji({ faza: 'planuje' })
@@ -1154,8 +1163,8 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       const p = await przygotujZAgentem({
         tekst: tekstZadania,
         pineski: pineskiZadania,
-        warstwy: obrazyNaPlotnie,
-        zaznaczone: wielu.map(w => w.id),
+        warstwy: [...obrazyNaPlotnie, ...zalObrazy.map(z => zalacznikJakoWarstwa(z, obrazyNaPlotnie[0]))],
+        zaznaczone: [...wielu.map(w => w.id), ...zalObrazy.map(z => z.id)],
         wybrana: wybranaWarstwa,
         historia,
       })
@@ -1181,7 +1190,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         studio: true,
       })
       const src = await dopasujFormatDoObrazu(wynik.obrazUrl, p.baza.naturalWidth, p.baza.naturalHeight)
-      const nazwa = nazwijWynik(tekstZadania, projekt.pineski)
+      const nazwa = nazwijWynik(rozmowa ? rozmowa.zadanie : tekst, projekt.pineski)
       dodajZeZrodla(src, nazwa, 'wynik', p.baza)
       setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `${p.opis} (${p.zrodlo === 'agent' ? 'prompt od agenta' : 'szablon'})` } })
     } catch (e) {
@@ -1190,7 +1199,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
       usunDucha()
       refGeneruje.current = false
     }
-  }, [projekt.tekst, projekt.warstwy, projekt.pineski, wielu, wybranaWarstwa, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
+  }, [projekt.tekst, projekt.warstwy, projekt.pineski, wielu, zalaczniki, wybranaWarstwa, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
 
   const uruchomGeneracje = useCallback(async () => {
     if (refGeneruje.current) return
@@ -1198,14 +1207,24 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     // domyślnie nowy system promptowania (gdy jest zdjęcie do edycji); stary kod poniżej zostaje nieużywany do czasu usunięcia
     if (warstwaZrodlowa) return uruchomNowySystem()
     if (!warstwaZrodlowa) {
-      // Brak zdjęcia: czysta generacja z opisu (text-to-image)
+      // Brak zdjęcia na płótnie: generacja z opisu, z załączonymi zdjęciami jako zwykłymi referencjami; format dobierany z opisu
       const opis = projekt.tekst.trim()
       if (!opis) return
+      const zalObrazy = zalaczniki.filter(z => z.rodzaj === 'obraz')
+      const polecenieZal = tekstZZalacznikami(opis, zalaczniki)
+      // Przy referencji proporcje bierzemy z pierwszej, chyba że opis mówi wprost inaczej
+      const zOpisu = formatZOpisu(opis)
+      const jawnyFormat = /\b\d{1,2}\s?:\s?\d{1,2}\b|pionow|poziom|baner|banner|kwadrat|story|reels|plakat/i.test(opis)
+      const ref0 = zalObrazy[0]
+      const rozmiar = ref0 && !jawnyFormat ? { szerokosc: ref0.naturalWidth ?? 1024, wysokosc: ref0.naturalHeight ?? 1024 } : zOpisu
       refGeneruje.current = true
-      setStanGeneracji({ faza: 'trwa', plan: 'Generuję obraz z opisu…', tryb: 'generator' })
-      startDucha({ width: 460, height: 460, y: 60, naturalWidth: 1024, naturalHeight: 1024 }, 'Generuję…')
+      setStanGeneracji({ faza: 'trwa', plan: zalObrazy.length ? `Generuję z ${zalObrazy.length} referencji…` : 'Generuję obraz z opisu…', tryb: zalObrazy.length ? 'referencje' : 'generator' })
+      startDucha({ width: 460, height: Math.round((460 * rozmiar.wysokosc) / rozmiar.szerokosc), y: 60, naturalWidth: rozmiar.szerokosc, naturalHeight: rozmiar.wysokosc }, 'Generuję…')
       try {
-        const w = await generuj({ polecenie: opis, obrazy: [], szerokosc: 1024, wysokosc: 1024, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        const model = modelObrazu === 'auto' ? 'nb2' : modelObrazu
+        const w = zalObrazy.length
+          ? await wykonajGeneracjeZReferencji({ obrazy: await Promise.all(zalObrazy.map(z => konwertujNaDataUrl(z.src ?? ''))), tekst: polecenieZal, szerokosc: rozmiar.szerokosc, wysokosc: rozmiar.wysokosc, model })
+          : await generuj({ polecenie: polecenieZal, obrazy: [], szerokosc: rozmiar.szerokosc, wysokosc: rozmiar.wysokosc, model })
         const nazwa = nazwijWynik(opis, [])
         dodajZeZrodla(w.obrazUrl, nazwa, 'wynik')
         setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: w.obrazUrl, kosztUSD: w.kosztUSD, model: w.model, nazwa, opis: `Polecenie: „${opis}”.` } })
@@ -1912,6 +1931,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     studio,
     hybryda,
     modelObrazu,
+    zalaczniki,
   ])
 
   /**
@@ -2012,6 +2032,17 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
 
   return (
     <div ref={refRoot} className="nb-cozy absolute inset-0 w-full h-full min-h-0 max-h-full overflow-hidden select-none text-foreground">
+      <input
+        ref={refZalacznik}
+        type="file"
+        accept="image/*,.txt,.md,text/plain,text/markdown"
+        multiple
+        className="hidden"
+        onChange={e => {
+          void dodajZalaczniki([...(e.target.files ?? [])])
+          e.target.value = ''
+        }}
+      />
       <input
         ref={refPlik}
         type="file"
@@ -2533,6 +2564,9 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         trybPromptow={trybPromptow}
         onTrybPromptow={zmienTrybPromptow}
         onDodajPlik={() => refPlik.current?.click()}
+        zalaczniki={zalaczniki}
+        onZalacz={() => refZalacznik.current?.click()}
+        onUsunZalacznik={id => setZalaczniki(z => z.filter(x => x.id !== id))}
         onWklejZeSchowka={wstawZeSchowka}
         onDodajZAdresu={wstawZAdresu}
         onOdpowiedzRol={opcja => {
