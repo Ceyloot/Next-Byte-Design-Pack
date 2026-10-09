@@ -644,8 +644,6 @@ export function CzatCanvas({
               align="left"
               odwroc
               szklo
-              szerokosc={354}
-              przesuniecieX={-13}
               onSelect={mo => {
                 const model = MODELE_OBRAZU.find(x => x.id === mo.id)
                 if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)

@@ -449,12 +449,12 @@ export function GlassModelSearch({
   const panel = (
     <div
       className={cn(
-        'flex flex-col gap-3 p-3 rounded-2xl border shadow-2xl transition-all duration-200 backdrop-blur-xl',
-        odwroc ? '' : 'md:flex-row',
+        'flex flex-col rounded-2xl border shadow-2xl transition-all duration-200 backdrop-blur-xl',
+        odwroc ? 'gap-2 p-2' : 'gap-3 p-3 md:flex-row',
         isGlass
           ? 'nb-szklo nb-szklo-plynne border-border/60 bg-background/95 shadow-primary/10'
           : 'bg-card border-border/80 text-card-foreground',
-        mode === 'dropdown' && (compact ? 'w-[372px] max-w-[95vw]' : (szerokosc || odwroc) ? 'w-full max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
+        mode === 'dropdown' && (compact ? 'w-[372px] max-w-[95vw]' : odwroc ? 'w-full' : szerokosc ? 'w-full max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
       )}
       style={{
         ...(compact ? { backgroundColor: 'hsl(var(--card) / 0.97)' } : null),
@@ -530,7 +530,7 @@ export function GlassModelSearch({
                         <div className="flex items-center gap-1.5">
                           <span
                             className={cn(
-                              compact ? 'text-[14px] font-semibold leading-tight' : 'text-xs font-semibold leading-tight',
+                              compact ? 'text-[14px] font-semibold leading-tight' : 'truncate text-xs font-semibold leading-tight',
                               isActive ? 'text-primary' : 'text-foreground',
                             )}
                           >
@@ -542,9 +542,9 @@ export function GlassModelSearch({
                             </span>
                           )}
                         </div>
-                        <p className={cn(compact ? 'mt-1 text-[12.5px] leading-snug text-foreground/65' : 'mt-0.5 truncate text-[11px] text-muted-foreground/80 leading-none')}>
+                        {!odwroc && <p className={cn(compact ? 'mt-1 text-[12.5px] leading-snug text-foreground/65' : 'mt-0.5 truncate text-[11px] text-muted-foreground/80 leading-none')}>
                           {model.description}
-                        </p>
+                        </p>}
                         {compact && (
                           <div className="mt-2 grid grid-cols-2 items-center gap-x-3">
                             {['Jakość', 'Szybkość'].map((et) => {
@@ -590,7 +590,7 @@ export function GlassModelSearch({
   // `odwroc`: sama lista przy kompozytorze, a karta szczegółów wyjeżdża w lewo dopiero po najechaniu na model.
   // Karta jest rodzeństwem szklanego panelu, a nie jego dzieckiem — szkło przycina (contain: paint) wszystko, co wystaje.
   const popoverContent = odwroc ? (
-    <div className="relative" style={{ width: szerokosc ?? 360 }}>
+    <div className="relative w-full">
       {panel}
       {hoveredModelId && <div className="absolute right-full top-0 mr-2">{kartaSzczegolow}</div>}
     </div>
@@ -610,7 +610,7 @@ export function GlassModelSearch({
         onClick={() => setOpen(!open)}
         className={cn(
           'group inline-flex items-center gap-2 border border-border bg-background/40 h-11 px-3 text-[14px] text-card-foreground transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
-          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'rounded-xl' : 'rounded-full',
+          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'min-w-[280px] rounded-xl' : 'rounded-full',
           open && 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]',
         )}
       >
@@ -632,7 +632,7 @@ export function GlassModelSearch({
         <div
           className={cn(
             'absolute z-50 animate-in fade-in zoom-in-95 duration-150',
-            align === 'right' ? 'right-0' : 'left-0',
+            odwroc ? 'inset-x-0' : align === 'right' ? 'right-0' : 'left-0',
             placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
           )}
           style={przesuniecieX ? { marginLeft: przesuniecieX } : undefined}
