@@ -271,6 +271,8 @@ export interface GlassModelSearchProps {
   szerokosc?: number
   /** mocniejsze szkło: półprzezroczyste tło z rozmyciem */
   szklo?: boolean
+  /** przesunięcie okna w poziomie (px) względem przycisku — np. aby lista leżała równo z ramką kompozytora */
+  przesuniecieX?: number
   defaultOpen?: boolean
 }
 
@@ -286,6 +288,7 @@ export function GlassModelSearch({
   odwroc = false,
   szerokosc,
   szklo = false,
+  przesuniecieX = 0,
   defaultOpen = false,
 }: GlassModelSearchProps) {
   const { isGlass } = useGlass()
@@ -350,28 +353,113 @@ export function GlassModelSearch({
 
   const activeReasoningLevel = reasoningLevelsState[peekedModel.id] || peekedModel.reasoningLevels[0] || 'Średni'
 
-  const popoverContent = (
+  const szkloStyle: React.CSSProperties = {
+    backgroundColor: 'hsl(var(--background) / 0.5)',
+    backdropFilter: 'blur(26px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(26px) saturate(150%)',
+    borderColor: 'hsl(var(--foreground) / 0.14)',
+    boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.1), 0 18px 48px -16px rgba(0,0,0,0.6)',
+  }
+
+  // Karta szczegółów modelu (metryki, koszt, konfiguracja)
+  const kartaSzczegolow = !compact ? (
+<div className={cn('w-full shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between', szerokosc ? 'md:w-[236px]' : 'md:w-[320px]', odwroc && 'md:w-[236px]')} style={odwroc && szklo ? szkloStyle : undefined}>
+        <div>
+          {/* Nagłówek: nazwa + dostawca */}
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-base font-bold leading-none text-foreground">
+              {peekedModel.name}
+            </span>
+            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+              {peekedModel.badge || peekedModel.provider}
+            </span>
+          </div>
+
+          {/* Opis */}
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            {peekedModel.fullDescription || peekedModel.description}
+          </p>
+
+          {/* Kontekst */}
+          {peekedModel.contextLabel && (
+            <p className="mt-1 text-[11px] font-mono text-muted-foreground/70">
+              {peekedModel.contextLabel}
+            </p>
+          )}
+
+          {/* Metryki 2x2 */}
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+            {peekedModel.metrics.map((m) => (
+              <div key={m.label}>
+                <p className="mb-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {m.label}
+                </p>
+                <MetricBars value={m.value} />
+              </div>
+            ))}
+          </div>
+
+          {/* Box kosztu wiadomości */}
+          <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2">
+            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+              KOSZT WIADOMOŚCI
+            </span>
+            <span className="text-sm font-bold text-primary tabular-nums">
+              {peekedModel.messageCost} Byte
+            </span>
+          </div>
+        </div>
+
+        {/* Konfiguracja — poziom rozumowania */}
+        {peekedModel.reasoningLevels.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-border/40">
+            <p className="mb-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              KONFIGURACJA
+            </p>
+            <p className="mb-2 text-xs font-medium text-foreground">
+              Poziom rozumowania
+            </p>
+            <div className="flex gap-1 rounded-xl bg-muted/40 p-1">
+              {peekedModel.reasoningLevels.map((lvl) => (
+                <button
+                  key={lvl}
+                  type="button"
+                  onClick={() =>
+                    setReasoningLevelsState((prev) => ({
+                      ...prev,
+                      [peekedModel.id]: lvl,
+                    }))
+                  }
+                  className={cn(
+                    'flex h-7 flex-1 items-center justify-center rounded-lg text-xs font-medium transition-all duration-150',
+                    lvl === activeReasoningLevel
+                      ? 'bg-primary/20 text-primary font-semibold shadow-xs border border-primary/30'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {lvl}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+  ) : null
+
+  const panel = (
     <div
       className={cn(
         'flex flex-col gap-3 p-3 rounded-2xl border shadow-2xl transition-all duration-200 backdrop-blur-xl',
-        odwroc ? 'md:flex-row-reverse' : 'md:flex-row',
+        odwroc ? '' : 'md:flex-row',
         isGlass
           ? 'nb-szklo nb-szklo-plynne border-border/60 bg-background/95 shadow-primary/10'
           : 'bg-card border-border/80 text-card-foreground',
-        mode === 'dropdown' && (compact ? 'w-[372px] max-w-[95vw]' : szerokosc ? 'w-full max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
+        mode === 'dropdown' && (compact ? 'w-[372px] max-w-[95vw]' : (szerokosc || odwroc) ? 'w-full max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
       )}
       style={{
         ...(compact ? { backgroundColor: 'hsl(var(--card) / 0.97)' } : null),
-        ...(szklo
-          ? {
-              backgroundColor: 'hsl(var(--background) / 0.52)',
-              backdropFilter: 'blur(26px) saturate(150%)',
-              WebkitBackdropFilter: 'blur(26px) saturate(150%)',
-              borderColor: 'hsl(var(--foreground) / 0.14)',
-              boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.1), 0 18px 48px -16px rgba(0,0,0,0.6)',
-            }
-          : null),
-        ...(!compact && szerokosc && mode === 'dropdown' ? { width: szerokosc } : null),
+        ...(szklo ? szkloStyle : null),
+        ...(!compact && szerokosc && !odwroc && mode === 'dropdown' ? { width: szerokosc } : null),
       }}
     >
       {/* LEWY PANEL — WYSZUKIWARKA I LISTA MODELI */}
@@ -495,89 +583,19 @@ export function GlassModelSearch({
         </div>
       </div>
 
-      {/* KARTA SZCZEGÓŁÓW (HOVER CARD) — po prawej, a z `odwroc` po lewej */}
-      {!compact && <div className={cn('w-full shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between', szerokosc ? 'md:w-[236px]' : 'md:w-[320px]')}>
-        <div>
-          {/* Nagłówek: nazwa + dostawca */}
-          <div className="flex items-start justify-between gap-2">
-            <span className="text-base font-bold leading-none text-foreground">
-              {peekedModel.name}
-            </span>
-            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.18em] text-primary/80">
-              {peekedModel.badge || peekedModel.provider}
-            </span>
-          </div>
-
-          {/* Opis */}
-          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            {peekedModel.fullDescription || peekedModel.description}
-          </p>
-
-          {/* Kontekst */}
-          {peekedModel.contextLabel && (
-            <p className="mt-1 text-[11px] font-mono text-muted-foreground/70">
-              {peekedModel.contextLabel}
-            </p>
-          )}
-
-          {/* Metryki 2x2 */}
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
-            {peekedModel.metrics.map((m) => (
-              <div key={m.label}>
-                <p className="mb-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  {m.label}
-                </p>
-                <MetricBars value={m.value} />
-              </div>
-            ))}
-          </div>
-
-          {/* Box kosztu wiadomości */}
-          <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2">
-            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-              KOSZT WIADOMOŚCI
-            </span>
-            <span className="text-sm font-bold text-primary tabular-nums">
-              {peekedModel.messageCost} Byte
-            </span>
-          </div>
-        </div>
-
-        {/* Konfiguracja — poziom rozumowania */}
-        {peekedModel.reasoningLevels.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-border/40">
-            <p className="mb-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-              KONFIGURACJA
-            </p>
-            <p className="mb-2 text-xs font-medium text-foreground">
-              Poziom rozumowania
-            </p>
-            <div className="flex gap-1 rounded-xl bg-muted/40 p-1">
-              {peekedModel.reasoningLevels.map((lvl) => (
-                <button
-                  key={lvl}
-                  type="button"
-                  onClick={() =>
-                    setReasoningLevelsState((prev) => ({
-                      ...prev,
-                      [peekedModel.id]: lvl,
-                    }))
-                  }
-                  className={cn(
-                    'flex h-7 flex-1 items-center justify-center rounded-lg text-xs font-medium transition-all duration-150',
-                    lvl === activeReasoningLevel
-                      ? 'bg-primary/20 text-primary font-semibold shadow-xs border border-primary/30'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {lvl}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>}
+      {!compact && !odwroc && kartaSzczegolow}
     </div>
+  )
+
+  // `odwroc`: sama lista przy kompozytorze, a karta szczegółów wyjeżdża w lewo dopiero po najechaniu na model.
+  // Karta jest rodzeństwem szklanego panelu, a nie jego dzieckiem — szkło przycina (contain: paint) wszystko, co wystaje.
+  const popoverContent = odwroc ? (
+    <div className="relative" style={{ width: szerokosc ?? 360 }}>
+      {panel}
+      {hoveredModelId && <div className="absolute right-full top-0 mr-2">{kartaSzczegolow}</div>}
+    </div>
+  ) : (
+    panel
   )
 
   if (mode === 'inline') {
@@ -592,7 +610,7 @@ export function GlassModelSearch({
         onClick={() => setOpen(!open)}
         className={cn(
           'group inline-flex items-center gap-2 border border-border bg-background/40 h-11 px-3 text-[14px] text-card-foreground transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
-          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : 'rounded-full',
+          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'rounded-xl' : 'rounded-full',
           open && 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]',
         )}
       >
@@ -617,6 +635,7 @@ export function GlassModelSearch({
             align === 'right' ? 'right-0' : 'left-0',
             placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
           )}
+          style={przesuniecieX ? { marginLeft: przesuniecieX } : undefined}
         >
           {popoverContent}
         </div>

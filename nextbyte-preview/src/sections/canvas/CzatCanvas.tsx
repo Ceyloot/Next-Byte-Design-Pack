@@ -641,10 +641,11 @@ export function CzatCanvas({
               models={MODELE_DO_WYSZUKIWARKI}
               selectedId={modelObrazu}
               placement="top"
-              align="right"
+              align="left"
               odwroc
               szklo
-              szerokosc={540}
+              szerokosc={354}
+              przesuniecieX={-13}
               onSelect={mo => {
                 const model = MODELE_OBRAZU.find(x => x.id === mo.id)
                 if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)
