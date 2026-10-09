@@ -265,6 +265,12 @@ export interface GlassModelSearchProps {
   align?: 'left' | 'right'
   /** sama lista modeli — bez karty szczegółów, węższe okno, kanciastsze kształty */
   compact?: boolean
+  /** karta szczegółów po lewej, lista modeli po prawej (panel przy prawej krawędzi ekranu) */
+  odwroc?: boolean
+  /** szerokość okna w px (domyślnie 700) — wąski wariant skraca też kartę szczegółów */
+  szerokosc?: number
+  /** mocniejsze szkło: półprzezroczyste tło z rozmyciem */
+  szklo?: boolean
   defaultOpen?: boolean
 }
 
@@ -277,6 +283,9 @@ export function GlassModelSearch({
   placement = 'top',
   align = 'left',
   compact = false,
+  odwroc = false,
+  szerokosc,
+  szklo = false,
   defaultOpen = false,
 }: GlassModelSearchProps) {
   const { isGlass } = useGlass()
@@ -344,13 +353,26 @@ export function GlassModelSearch({
   const popoverContent = (
     <div
       className={cn(
-        'flex flex-col md:flex-row gap-3 p-3 rounded-2xl border shadow-2xl transition-all duration-200 backdrop-blur-xl',
+        'flex flex-col gap-3 p-3 rounded-2xl border shadow-2xl transition-all duration-200 backdrop-blur-xl',
+        odwroc ? 'md:flex-row-reverse' : 'md:flex-row',
         isGlass
           ? 'nb-szklo nb-szklo-plynne border-border/60 bg-background/95 shadow-primary/10'
           : 'bg-card border-border/80 text-card-foreground',
-        mode === 'dropdown' && (compact ? 'w-[372px] max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
+        mode === 'dropdown' && (compact ? 'w-[372px] max-w-[95vw]' : szerokosc ? 'w-full max-w-[95vw]' : 'w-full md:w-[700px] max-w-[95vw]'),
       )}
-      style={compact ? { backgroundColor: 'hsl(var(--card) / 0.97)' } : undefined}
+      style={{
+        ...(compact ? { backgroundColor: 'hsl(var(--card) / 0.97)' } : null),
+        ...(szklo
+          ? {
+              backgroundColor: 'hsl(var(--background) / 0.52)',
+              backdropFilter: 'blur(26px) saturate(150%)',
+              WebkitBackdropFilter: 'blur(26px) saturate(150%)',
+              borderColor: 'hsl(var(--foreground) / 0.14)',
+              boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.1), 0 18px 48px -16px rgba(0,0,0,0.6)',
+            }
+          : null),
+        ...(!compact && szerokosc && mode === 'dropdown' ? { width: szerokosc } : null),
+      }}
     >
       {/* LEWY PANEL — WYSZUKIWARKA I LISTA MODELI */}
       <div className="flex-1 min-w-0 flex flex-col gap-2">
@@ -473,8 +495,8 @@ export function GlassModelSearch({
         </div>
       </div>
 
-      {/* PRAWY PANEL — KARTA SZCZEGÓŁÓW (HOVER CARD) */}
-      {!compact && <div className="w-full md:w-[320px] shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between">
+      {/* KARTA SZCZEGÓŁÓW (HOVER CARD) — po prawej, a z `odwroc` po lewej */}
+      {!compact && <div className={cn('w-full shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between', szerokosc ? 'md:w-[236px]' : 'md:w-[320px]')}>
         <div>
           {/* Nagłówek: nazwa + dostawca */}
           <div className="flex items-start justify-between gap-2">
