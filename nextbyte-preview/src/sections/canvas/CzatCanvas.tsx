@@ -234,7 +234,7 @@ export function CzatCanvas({
   const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
-    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety ? '0px' : '380px')
+    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety ? '0px' : '340px')
     return () => {
       document.documentElement.style.removeProperty('--nb-czat-szer')
     }
@@ -433,7 +433,7 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className="p2 !bg-transparent pointer-events-none absolute inset-y-0 right-0 z-30 flex w-[380px] max-w-[100vw] flex-col">
+    <div className="p2 !bg-transparent pointer-events-none absolute inset-y-0 right-0 z-30 flex w-[340px] max-w-[100vw] flex-col">
       <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">

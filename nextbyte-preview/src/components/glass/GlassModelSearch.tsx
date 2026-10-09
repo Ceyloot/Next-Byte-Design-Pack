@@ -354,16 +354,16 @@ export function GlassModelSearch({
   const activeReasoningLevel = reasoningLevelsState[peekedModel.id] || peekedModel.reasoningLevels[0] || 'Średni'
 
   const szkloStyle: React.CSSProperties = {
-    backgroundColor: 'hsl(var(--background) / 0.5)',
+    backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 52%, transparent)',
     backdropFilter: 'blur(26px) saturate(150%)',
     WebkitBackdropFilter: 'blur(26px) saturate(150%)',
-    borderColor: 'hsl(var(--foreground) / 0.14)',
-    boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.1), 0 18px 48px -16px rgba(0,0,0,0.6)',
+    borderColor: 'hsl(var(--foreground) / 0.12)',
+    boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.4), 0 18px 48px -16px hsl(var(--foreground) / 0.35)',
   }
 
   // Karta szczegółów modelu (metryki, koszt, konfiguracja)
   const kartaSzczegolow = !compact ? (
-<div className={cn('w-full shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between', szerokosc ? 'md:w-[236px]' : 'md:w-[320px]', odwroc && 'md:w-[236px]')} style={odwroc && szklo ? szkloStyle : undefined}>
+<div className={cn('w-full shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between', szerokosc ? 'md:w-[236px]' : 'md:w-[320px]', odwroc && 'md:w-[220px]')} style={odwroc && szklo ? szkloStyle : undefined}>
         <div>
           {/* Nagłówek: nazwa + dostawca */}
           <div className="flex items-start justify-between gap-2">
@@ -402,7 +402,7 @@ export function GlassModelSearch({
           {/* Box kosztu wiadomości */}
           <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2">
             <span className="font-mono text-[9.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-              KOSZT WIADOMOŚCI
+              {odwroc ? 'KOSZT' : 'KOSZT WIADOMOŚCI'}
             </span>
             <span className="text-sm font-bold text-primary tabular-nums">
               {peekedModel.messageCost} Byte
@@ -516,7 +516,7 @@ export function GlassModelSearch({
                       <span
                         className={cn(
                           'flex shrink-0 items-center justify-center rounded-lg transition-colors',
-                          compact ? 'h-9 w-9' : 'h-7 w-7',
+                          compact ? 'h-9 w-9' : odwroc ? 'h-6 w-6' : 'h-7 w-7',
                           isActive
                             ? 'bg-primary/20 text-primary'
                             : 'bg-muted/50 text-muted-foreground group-hover:text-foreground',
@@ -610,7 +610,7 @@ export function GlassModelSearch({
         onClick={() => setOpen(!open)}
         className={cn(
           'group inline-flex items-center gap-2 border border-border bg-background/40 h-11 px-3 text-[14px] text-card-foreground transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
-          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'min-w-[280px] rounded-xl' : 'rounded-full',
+          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'min-w-[256px] rounded-xl' : 'rounded-full',
           open && 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]',
         )}
       >
