@@ -130,7 +130,7 @@ async function zlozWynik(zdjecie: HTMLImageElement, wygenerowany: HTMLImageEleme
   g.drawImage(wygenerowany, 0, 0, u.W, u.H)
 
   const { ow, oh } = u
-  const f = Math.max(2, Math.round(Math.min(ow, oh) * 0.006))
+  const f = Math.max(3, Math.round(Math.min(ow, oh) * 0.015))
   // oryginał na osobnej warstwie z maską: pełna kryjność, a od strony nowych obszarów — krótkie zanikanie
   const w2 = document.createElement('canvas')
   w2.width = u.W
@@ -179,6 +179,8 @@ function poleceniePoOpisie(u: UkladRozszerzenia, z: ZadanieRozszerzenia): string
     'Outpaint this picture: extend the scene beyond its original borders.',
     `The original photograph sits ${gdzie}. Every flat mid-grey area is EMPTY canvas that you must fill with new picture content.`,
     'Continue the existing scene naturally into the grey area: same place, perspective and horizon, same lighting direction, colour grading, grain, depth of field and level of detail — the join with the original must be invisible. Objects cut by the original border continue naturally; add only what plausibly belongs there.',
+    'THE ORIGINAL PHOTOGRAPH APPEARS EXACTLY ONCE. Never copy, duplicate, mirror, flip, tile or repeat the original (or any part of it) into the grey areas — the new areas contain NEW, continuing content: for example more sky and clouds above the horizon, more ground / water / foreground below it, more of the same landscape or room to the sides, with the horizon staying at the same height as in the original.',
+    'Match the brightness, colour and exposure of the original right at the join (no lighter or darker band next to it); any change of tone happens gradually, far from the edge.',
     'Do NOT change, move, rescale, crop, re-light or repaint the original photograph — it must stay pixel-identical. No grey, no bars, no frame, no border, no text, no watermark in the result.',
     'Return the complete frame (the original plus the filled areas) at the same aspect ratio.',
     z.opis?.trim() ? `What should appear in the new areas: ${z.opis.trim()}.` : '',
