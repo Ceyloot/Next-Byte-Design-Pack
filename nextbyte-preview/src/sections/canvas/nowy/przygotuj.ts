@@ -62,7 +62,7 @@ function zdanieOZastapieniu(cel: [number, number, number, number]): string {
   const wys = Math.round(((cel[2] - cel[0]) / 1000) * 100)
   const cx = ((cel[1] + cel[3]) / 2000).toFixed(2)
   const cy = ((cel[0] + cel[2]) / 2000).toFixed(2)
-  return `SIZE AND MASS: the object that is replaced fills about ${szer}% of the width and ${wys}% of the height of Image 1, centred near x=${cx}, y=${cy}. The new object takes over exactly that footprint — the same visible width, height, bulk and mass, in the same place; it is NOT shrunk to its real-world size and NOT scaled to its reference photo. Keep the transparency, softness and haze of the replaced object as stated above.`
+  return `SIZE AND MASS: the object that is replaced fills about ${szer}% of the width and ${wys}% of the height of Image 1, centred near x=${cx}, y=${cy}. The new object takes over exactly that footprint — the same visible width, height, bulk and mass, in the same place; it is NOT shrunk to its real-world size and NOT scaled to its reference photo. Keep the transparency, softness and haze of the replaced object as stated above. THE OLD OBJECT IS REPLACED, NOT OVERLAID: delete it completely first and rebuild the clean background where it stood — nothing of it (outline, eyes, mouth, skin pattern, texture, ghost) may remain visible anywhere, not even through the new object's transparency; whatever shows through the new object is only the rebuilt background.`
 }
 
 export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygotowania> {
