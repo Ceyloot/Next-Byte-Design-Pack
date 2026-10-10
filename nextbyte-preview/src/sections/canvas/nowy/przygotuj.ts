@@ -33,6 +33,9 @@ const MAKS_ZDJEC_DLA_AGENTA = 4
 /** Zdjęcia, które widzi agent: te z pinezkami, zaznaczone i wybrane — w kolejności z płótna. */
 function zdjeciaDlaAgenta(w: WejscieAgenta): Warstwa[] {
   const ids = new Set<string>([...w.pineski.filter(p => !p.chroniona).map(p => p.layerId), ...w.zaznaczone, ...(w.wybrana ? [w.wybrana] : [])])
+  // Załączniki czatu (id `zal-…`) są tylko referencjami: gdy nic z płótna nie jest wskazane, bazą kandydatem zostaje pierwsze zdjęcie z płótna
+  const zPlotna = w.warstwy.filter(l => !l.id.startsWith('zal-'))
+  if (zPlotna.length > 0 && !zPlotna.some(l => ids.has(l.id))) ids.add(zPlotna[0].id)
   let wybrane = w.warstwy.filter(l => ids.has(l.id))
   if (wybrane.length === 0 && w.warstwy[0]) wybrane = [w.warstwy[0]]
   return wybrane.slice(0, MAKS_ZDJEC_DLA_AGENTA)
@@ -73,7 +76,7 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   const obrazyAgenta = await Promise.all(
     zdjecia.map(async (l, i) => ({
       nr: i + 1,
-      nazwa: `${l.name} — ${l.naturalWidth}×${l.naturalHeight} px`,
+      nazwa: `${l.name}${l.id.startsWith('zal-') ? ' (ATTACHED REFERENCE)' : ''} — ${l.naturalWidth}×${l.naturalHeight} px`,
       dane: (await narysujMapeMiejsc(l, w.pineski)) || (await zmniejszDoAnalizy(l.src)) || l.src,
     })),
   )

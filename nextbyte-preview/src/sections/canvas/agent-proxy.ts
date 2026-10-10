@@ -454,6 +454,7 @@ First describe to yourself what you SEE under every pin (who/what, clothes, what
 - "zamień X na Y": X is replaced → the photo with X is the BASE (the edited, returned photo). Y supplies the new person/object → REFERENCE. "wstaw/przenieś X tu": X comes from the reference, the place is in the BASE. A pronoun without a descriptor ("niego", "ją", "to") refers to the other pin/photo.
 - The BASE is always the photo that contains the subject being replaced/changed/removed, or the place something is put. Double-check: does your base photo really show that subject?
 - If nothing links the words to pins, the subject under pin 1 is replaced and the other pin supplies the new thing.
+- An image whose name contains "ATTACHED REFERENCE" was attached in the chat (not placed on the canvas): it is a REFERENCE — a source of style, look, an object or a person. It is NEVER the BASE while another image exists. "w stylu z załączonego" / "jak na załączonym" means: the base is the other (canvas) photo, the attachment gives the style.
 The task kinds: zamiana_osoby (a whole person replaced by a person from a reference), zamiana_twarzy (only the face replaced), zamiana_obiektu (an object replaced by an object from a reference), wstawienie (something from a reference is added), przeniesienie (a thing moved inside the base photo), usuniecie, zmiana_tla, perspektywa, edycja.
 Reply ONLY JSON: {"rozumienie":"Polish, a few sentences: what is under each pin and how the words map to them","zadanie":"<one of the task kinds above>","baza":<image number>,"referencje":[<image numbers>],"pewnosc":"wysoka|niska"}`
       let rolePrzydzielone: { baza: number; referencje: number[] } | null = null
@@ -462,7 +463,17 @@ Reply ONLY JSON: {"rozumienie":"Polish, a few sentences: what is under each pin 
         const krok1 = await zapytajAgenta(INSTRUKCJA_ROL, tresci, MODEL_REZYSERA, { temperature: 0, maxOutputTokens: 2048, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 2048 } })
         const j = krok1.json as Record<string, unknown> | null | undefined
         const nr = (n: unknown) => (Number.isInteger(n) && (n as number) >= 1 && (n as number) <= z.obrazy.length ? (n as number) : null)
-        const baza1 = nr(j?.baza)
+        const jestZal = (n: number) => /ATTACHED REFERENCE/.test(z.obrazy[n - 1]?.nazwa ?? '')
+        let baza1 = nr(j?.baza)
+        // Załącznik czatu nigdy nie jest bazą, gdy jest jakiekolwiek inne zdjęcie (agent bywa tu mylny: wynikiem był sam obrazek stylu)
+        if (baza1 && jestZal(baza1)) {
+          const inna = z.obrazy.map((_o, i) => i + 1).find(n => !jestZal(n))
+          if (inna) {
+            console.warn('[canvas] agent krok 1: baza była załącznikiem, zmieniam na zdjęcie', inna)
+            if (j) j.referencje = [baza1, ...(Array.isArray(j.referencje) ? j.referencje : [])]
+            baza1 = inna
+          }
+        }
         if (j && baza1) {
           rolePrzydzielone = { baza: baza1, referencje: (Array.isArray(j.referencje) ? j.referencje : []).map(nr).filter((x): x is number => x !== null && x !== baza1) }
           zadanieKrok1 = RODZAJE_ZADAN.includes(String(j.zadanie) as never) ? String(j.zadanie) : undefined
