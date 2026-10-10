@@ -3,7 +3,7 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Expand, Loader2, Maximize2, 
 import '../panel2/fundament/powierzchnie.css'
 import { cn } from '@/lib/utils'
 import { BYTE_ZA_OBRAZ } from './dostawca'
-import { PROPORCJE_OUTPAINT, typWymiarow, ukladRozszerzenia, type Kotwica, type ZadanieRozszerzenia } from './outpaint'
+import { PROPORCJE_OUTPAINT, typWymiarow, ukladRozszerzenia, type Kotwica, type ZadanieRozszerzenia } from './rozszerzanie-kadru'
 
 /**
  * Outpaint: rozszerzenie kadru poza zdjęcie. Wybór proporcji, strony, z której przybywa treść, i (opcjonalnie) opisu nowych miejsc.
