@@ -25,6 +25,7 @@ import {
   ArrowUpToLine,
   ArrowDownToLine,
   Paintbrush,
+  Expand,
   ArrowLeft,
   Scissors,
   X,
@@ -39,6 +40,8 @@ import '@/sections/canvas/przytulny.css'
 import { useMotywCanvasa } from '@/sections/canvas/motyw-canvasa'
 import { PasekAkcji, type AkcjaPaska } from '@/sections/canvas/PasekAkcji'
 import { Prompter } from '@/sections/canvas/Prompter'
+import { Outpaint } from '@/sections/canvas/Outpaint'
+import { rozpoznajRozszerzenie, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/outpaint'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
 import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
 import { wykonajGenerowanie } from '@/sections/canvas/generowanie'
@@ -589,6 +592,8 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
   const [edycjaTekstu, setEdycjaTekstu] = useState<string | null>(null)
   /** Quick edit: id zdjęcia, nad którym otwarty jest prompter (opis zmiany bez zamalowywania) */
   const [quickEdit, setQuickEdit] = useState<string | null>(null)
+  /** Outpaint: id zdjęcia, przy którym otwarty jest panel rozszerzania kadru */
+  const [outpaint, setOutpaint] = useState<string | null>(null)
   const AKCJE_AI = useMemo(
     () => [
       { id: 'enhance', etykieta: 'Enhance', ikona: Wand2, skala: 1, prompt: 'Enhance this photograph: improve clarity, fine detail, dynamic range, contrast and colour so it looks like a higher-end camera took it. Keep every object, person, position, framing and the lighting direction exactly the same. Natural, photographic — no over-sharpening, no HDR look, no plastic skin.' },
@@ -662,6 +667,26 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         dodajZeZrodla(src, `${w.name}_edit`, 'wynik', w)
       } catch (e) {
         window.alert(e instanceof Error ? e.message : 'Nie udało się wykonać Quick edit.')
+      } finally {
+        usunDucha()
+        setAkcjaAI(null)
+      }
+    },
+    [projekt.warstwy, akcjaAI, modelObrazu, dodajZeZrodla, startDucha, usunDucha],
+  )
+  /** Outpaint z paska/panelu: rozszerza kadr zdjęcia (nowe zdjęcie obok, oryginał zostaje). */
+  const uruchomOutpaint = useCallback(
+    async (warstwaId: string, zadanie: ZadanieRozszerzenia) => {
+      const w = projekt.warstwy.find(x => x.id === warstwaId)
+      if (!w || akcjaAI) return
+      setAkcjaAI('outpaint')
+      startDucha(w, 'Outpaint…')
+      try {
+        const wynik = await wykonajRozszerzenie(w.src, zadanie, modelObrazu === 'auto' ? undefined : modelObrazu)
+        dodajZeZrodla(wynik.src, `${w.name}_outpaint`, 'wynik', w)
+        setOutpaint(null)
+      } catch (e) {
+        window.alert(e instanceof Error ? e.message : 'Nie udało się rozszerzyć kadru.')
       } finally {
         usunDucha()
         setAkcjaAI(null)
@@ -1021,6 +1046,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
         setMenuGeneratora(false)
         setEdycjaTekstu(null)
         setQuickEdit(null)
+        setOutpaint(null)
         zakonczInpaint()
         return
       }
@@ -1204,6 +1230,28 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
   const uruchomGeneracje = useCallback(async () => {
     if (refGeneruje.current) return
     if (trybReferencji) return uruchomZReferencjami()
+    // „Zmień wymiary na 16:9”, „rozszerz w prawo” (bez pinesek, jedno zdjęcie) → outpainting, nie zwykła edycja (ta przycinałaby wynik do starych proporcji)
+    if (warstwaZrodlowa && projekt.pineski.length === 0 && zalaczniki.length === 0) {
+      const zad = rozpoznajRozszerzenie(projekt.tekst, warstwaZrodlowa.naturalWidth, warstwaZrodlowa.naturalHeight)
+      if (zad) {
+        const w = warstwaZrodlowa
+        refGeneruje.current = true
+        setStanGeneracji({ faza: 'trwa', plan: 'Rozszerzam kadr (outpaint)…', tryb: 'generator' })
+        startDucha(w, 'Outpaint…')
+        try {
+          const wynik = await wykonajRozszerzenie(w.src, zad, modelObrazu === 'auto' ? undefined : modelObrazu)
+          const nazwa = `${w.name}_outpaint`
+          dodajZeZrodla(wynik.src, nazwa, 'wynik', w)
+          setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: wynik.src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Rozszerzenie kadru: „${projekt.tekst.trim()}”. Oryginał wklejony z powrotem bez zmian.` } })
+        } catch (e) {
+          setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się rozszerzyć kadru.' })
+        } finally {
+          usunDucha()
+          refGeneruje.current = false
+        }
+        return
+      }
+    }
     // domyślnie nowy system promptowania (gdy jest zdjęcie do edycji); stary kod poniżej zostaje nieużywany do czasu usunięcia
     if (warstwaZrodlowa) return uruchomNowySystem()
     if (!warstwaZrodlowa) {
@@ -2135,7 +2183,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           )
         })()}
 
-      {(menuWarstwy || akcjaAI || wybranaWarstwa) && !warstwaInpaint && !wieluAktywne && !edycjaTekstu && !quickEdit &&
+      {(menuWarstwy || akcjaAI || wybranaWarstwa) && !warstwaInpaint && !wieluAktywne && !edycjaTekstu && !quickEdit && !outpaint &&
         (() => {
           const id = menuWarstwy?.id ?? wybranaWarstwa
           const w = projekt.warstwy.find(x => x.id === id)
@@ -2162,7 +2210,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
               zablokowane={Boolean(akcjaAI)}
               style={{
                 // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
-                left: Math.max(16 + 385, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 385)),
+                left: Math.max(16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
                 transform: 'translateX(-50%)',
                 maxWidth: 'calc(100vw - 440px)',
                 top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
@@ -2188,6 +2236,17 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
                     wybierz()
                     setTrybPedzla('inpaint')
                     setNarzedzie('pedzel')
+                  },
+                },
+                {
+                  id: 'outpaint',
+                  etykieta: 'Outpaint',
+                  ikona: Expand,
+                  tytul: 'Outpaint — rozszerz kadr / zmień proporcje bez przycinania',
+                  trwa: akcjaAI === 'outpaint',
+                  onClick: () => {
+                    wybierz()
+                    setOutpaint(w.id)
                   },
                 },
                 zAI('upscale', { separator: true }),
@@ -2385,6 +2444,30 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
               style={{
                 left: Math.max(16, Math.min(widok.x + (w.x + w.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
                 top: Math.max(72, widok.y + w.y * widok.zoom - 62),
+              }}
+            />
+          )
+        })()}
+      {outpaint &&
+        (() => {
+          const w = projekt.warstwy.find(x => x.id === outpaint)
+          if (!w) return null
+          return (
+            <Outpaint
+              key={`outpaint-${w.id}`}
+              src={w.src}
+              szerokosc={w.naturalWidth}
+              wysokosc={w.naturalHeight}
+              model={modelObrazu === 'auto' ? undefined : modelObrazu}
+              trwa={Boolean(akcjaAI)}
+              onRozszerz={z => uruchomOutpaint(w.id, z)}
+              onAnuluj={() => setOutpaint(null)}
+              style={{
+                left: (() => {
+                  const prawa = widok.x + (w.x + w.width) * widok.zoom + 16
+                  return prawa + 300 <= window.innerWidth - 400 ? prawa : Math.max(16, widok.x + w.x * widok.zoom - 308)
+                })(),
+                top: Math.max(72, widok.y + w.y * widok.zoom),
               }}
             />
           )

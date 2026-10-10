@@ -53,3 +53,10 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Bardzo długie polecenie (>800 znaków) + duży plik .txt (jest przycinany do 6000 znaków).
 - [ ] Plik o nieobsługiwanym typie w „Załącz" — pomijany bez błędu.
 - [ ] Brak sieci / brak klucza — czytelny komunikat zamiast zawieszenia.
+
+## 7. Outpaint / zmiana wymiarów (nowe)
+- [ ] Pasek nad zdjęciem → Outpaint → 16:9, „Wokół": oryginał na środku, nowe boki dopasowane; środek bez utraty ostrości.
+- [ ] Outpaint → tylko „W prawo" / „W górę"; szew niewidoczny.
+- [ ] Czat: „zmień wymiary na 9:16", „rozszerz w lewo do 21:9", „zmień rozmiar na 1920x1080", „rozszerz dookoła".
+- [ ] Zdjęcie, które już ma wybrane proporcje — komunikat zamiast zbędnej generacji.
+- [ ] Zamiana obiektu (np. półprzezroczysta żaba → foka): nowa rzecz ma ten sam rozmiar/masę w kadrze i ten sam stopień półprzezroczystości.

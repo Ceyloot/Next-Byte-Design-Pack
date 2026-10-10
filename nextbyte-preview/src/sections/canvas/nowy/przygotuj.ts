@@ -52,6 +52,19 @@ async function zapytajAgenta(z: ZapytanieDoAgenta): Promise<{ plan: PlanAgenta }
 
 const PRZEWODNIK_MIEJSCA = true
 
+/** Najdłuższy bok ramki `cel` ([ymin, xmin, ymax, xmax], 0–1000) w pikselach bazy. */
+const bokCeluPx = (cel: [number, number, number, number], baza: Warstwa) =>
+  Math.max(((cel[3] - cel[1]) / 1000) * baza.naturalWidth, ((cel[2] - cel[0]) / 1000) * baza.naturalHeight)
+
+/** Zamiana obiektu: nowa rzecz zajmuje to samo miejsce w kadrze i ma tę samą widoczną wielkość i masę co zastępowana (liczby z ramki agenta). */
+function zdanieOZastapieniu(cel: [number, number, number, number]): string {
+  const szer = Math.round(((cel[3] - cel[1]) / 1000) * 100)
+  const wys = Math.round(((cel[2] - cel[0]) / 1000) * 100)
+  const cx = ((cel[1] + cel[3]) / 2000).toFixed(2)
+  const cy = ((cel[0] + cel[2]) / 2000).toFixed(2)
+  return `SIZE AND MASS: the object that is replaced fills about ${szer}% of the width and ${wys}% of the height of Image 1, centred near x=${cx}, y=${cy}. The new object takes over exactly that footprint — the same visible width, height, bulk and mass, in the same place; it is NOT shrunk to its real-world size and NOT scaled to its reference photo. Keep the transparency, softness and haze of the replaced object as stated above.`
+}
+
 export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygotowania> {
   const zdjecia = zdjeciaDlaAgenta(w)
   if (zdjecia.length === 0) return { typ: 'blad', blad: 'Nie ma zdjęcia do edycji — wgraj zdjęcie albo zaznacz je na płótnie.' }
@@ -133,8 +146,10 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   // Przewodnik miejsca: wstawianie / zamiana rzeczy z referencji w jedno miejsce bazy — pierścień o średnicy = najdłuższy bok obiektu
   let przewodnikNr = 0
   const pinyNaBazie = pinezkiAgenta.filter(p => p.obraz === plan.baza)
-  if (PRZEWODNIK_MIEJSCA && plan.skala && referencje.length > 0 && pinyNaBazie.length === 1 && plan.zadanie !== 'zamiana_osoby') {
-    const sred = srednicaZeSkali(plan.skala, baza.naturalWidth, baza.naturalHeight)
+  // Zamiana obiektu: rozmiar bierzemy z ZASTĘPOWANEJ rzeczy (ramka `cel`), nie z jej „prawdziwych” wymiarów — nowa rzecz ma tę samą masę i miejsce w kadrze
+  const zamianaObiektu = plan.zadanie === 'zamiana_obiektu' && Boolean(plan.cel)
+  if (PRZEWODNIK_MIEJSCA && (plan.skala || zamianaObiektu) && referencje.length > 0 && pinyNaBazie.length === 1 && plan.zadanie !== 'zamiana_osoby') {
+    const sred = zamianaObiektu && plan.cel ? bokCeluPx(plan.cel, baza) : srednicaZeSkali(plan.skala, baza.naturalWidth, baza.naturalHeight)
     const przewodnik = await narysujMaskeUkladu(baza.src, { x: pinyNaBazie[0].x, y: pinyNaBazie[0].y, srednicaPx: sred })
     if (przewodnik) {
       obrazy.push(przewodnik)
@@ -144,7 +159,8 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
 
   // Prompt agenta + to, co deterministyczne: liczby ze skali, opis zbliżeń, zabezpieczenie przed rozmyciem
   const dopiski: string[] = []
-  if (plan.skala) dopiski.push(zdanieOSkali(plan.skala))
+  if (zamianaObiektu && plan.cel) dopiski.push(zdanieOZastapieniu(plan.cel))
+  else if (plan.skala) dopiski.push(zdanieOSkali(plan.skala))
   zbliz.forEach((z, k) => dopiski.push(`Image ${referencje.length + 2 + k} is a close-up of the face of the person in Image ${z.zdjecie} — the identity reference: reproduce exactly this face, feature by feature.`))
   if (przesuniecieNr) dopiski.push(`Image ${przesuniecieNr} is a LAYOUT MASK, not a photograph: a black image of the same format as Image 1. The WHITE disc marks where the object must end up — centre it on the disc's centre, its longest side about the disc's diameter. The GREY disc marks where the object is now — after the move that spot must show only the rebuilt background. Exactly one instance of the object must exist in the result. Use the mask only for position and size: nothing from it (no disc, no black, no grey) may appear in the result, which is Image 1 edited.`)
   if (przewodnikNr) dopiski.push(`Image ${przewodnikNr} is a LAYOUT MASK, not a photograph: a black image of the same format as Image 1. The WHITE disc marks the exact spot where the new object touches the ground / surface (the disc's centre) and its diameter is the length of the object's longest side as it appears in Image 1. Place the object centred on that disc, filling about that size — not larger, not smaller. Use the mask only for position and size: nothing from it (no disc, no black) may appear in the result, which is Image 1 edited.`)
