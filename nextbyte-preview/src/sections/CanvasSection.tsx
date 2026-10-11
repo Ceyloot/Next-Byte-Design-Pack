@@ -2528,7 +2528,7 @@ export function CanvasSection() {
             aktywne={narzedzie === 'wybor'}
             onClick={() => setNarzedzie('wybor')}
           >
-            <MousePointer2 className="h-5 w-5" strokeWidth={2.2} />
+            <MousePointer2 className="h-5 w-5" strokeWidth={1.6} />
           </Narzedzie>
 
           {/* Pineska (P) — zaznacz obiekt (do 10 pinesek) */}
@@ -2539,7 +2539,7 @@ export function CanvasSection() {
             onClick={() => setNarzedzie('pineska')}
             odznaka={projekt.pineski.length || undefined}
           >
-            <Pin className="h-5 w-5" strokeWidth={2.2} />
+            <Pin className="h-5 w-5" strokeWidth={1.6} />
           </Narzedzie>
 
           {/* Przesuwanie widoku (H) */}
@@ -2549,7 +2549,7 @@ export function CanvasSection() {
             aktywne={narzedzie === 'reka'}
             onClick={() => setNarzedzie('reka')}
           >
-            <Hand className="h-5 w-5" strokeWidth={2.2} />
+            <Hand className="h-5 w-5" strokeWidth={1.6} />
           </Narzedzie>
 
           <span aria-hidden className="mx-1 h-5 w-px bg-foreground/[0.1]" />
@@ -2564,7 +2564,7 @@ export function CanvasSection() {
               setMenuDodawania(v => !v)
             }}
           >
-            <IkonaObrazu className="h-5 w-5" strokeWidth={2.2} />
+            <IkonaObrazu className="h-5 w-5" strokeWidth={1.6} />
           </Narzedzie>
 
           {/* Generuj zdjęcie — pusta ramka z prompterem */}
@@ -2577,7 +2577,7 @@ export function CanvasSection() {
               setMenuGeneratora(v => !v)
             }}
           >
-            <ImagePlus className="h-5 w-5" strokeWidth={2.2} />
+            <ImagePlus className="h-5 w-5" strokeWidth={1.6} />
           </Narzedzie>
 
           {/* Lista zdjęć / warstw */}
@@ -2590,13 +2590,13 @@ export function CanvasSection() {
             }}
             odznaka={projekt.warstwy.length || undefined}
           >
-            <Layers className="h-5 w-5" strokeWidth={2.2} />
+            <Layers className="h-5 w-5" strokeWidth={1.6} />
           </Narzedzie>
 
           {/* Telefon: bez paska zoomu — dopasowanie widoku do zdjęć jest w doku (szczypanie przybliża) */}
           {mobilny && (
             <Narzedzie tytul="Dopasuj widok" onClick={dopasujWidok}>
-              <Maximize className="h-5 w-5" strokeWidth={2.2} />
+              <Maximize className="h-5 w-5" strokeWidth={1.6} />
             </Narzedzie>
           )}
         </div>
@@ -2774,12 +2774,11 @@ function Narzedzie({
       className={cn(
         'relative flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-95',
         aktywne
-          ? 'bg-primary/[0.2] text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]'
-          : 'text-foreground/80 hover:-translate-y-px hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',
+          ? 'bg-foreground text-background'
+          : 'text-foreground/70 hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',
       )}
     >
       {children}
-      {skrot && <span aria-hidden className="pointer-events-none absolute bottom-[3px] right-[5px] font-mono text-[9px] font-semibold leading-none opacity-55">{skrot}</span>}
       {odznaka !== undefined && (
         <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground shadow-sm">
           {odznaka}

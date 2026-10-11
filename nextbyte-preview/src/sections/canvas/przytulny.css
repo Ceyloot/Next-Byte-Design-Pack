@@ -357,3 +357,21 @@
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-niecka:focus-within {
   box-shadow: none;
 }
+
+/* Ikony: cienka, równa kreska (jak w narzędziach projektowych) */
+.nb-cozy svg[class*='lucide'] { stroke-width: 1.6px; }
+
+/* Tło płótna: jasny — token tła; ciemny — grafit zamiast czerni, żeby szkło miało na czym się odróżnić (warstwy: tło → szkło → kontrolki) */
+.nb-cozy-tlo { background: hsl(var(--background)); }
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-tlo { background: hsl(0 0% 8%); }
+
+/* Ciemne szkło: jaśniejsza przezroczysta tafla (biel ~6%) zamiast czarnej na czarnym */
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-plyta {
+  background: hsl(0 0% 100% / 0.06);
+  border-color: hsl(0 0% 100% / 0.11);
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-niecka {
+  background-color: hsl(0 0% 100% / 0.045);
+  border-color: hsl(0 0% 100% / 0.1);
+}

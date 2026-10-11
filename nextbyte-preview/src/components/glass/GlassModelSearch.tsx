@@ -361,7 +361,7 @@ export function GlassModelSearch({
   const activeReasoningLevel = reasoningLevelsState[peekedModel.id] || peekedModel.reasoningLevels[0] || 'Średni'
 
   const szkloStyle: React.CSSProperties = {
-    backgroundColor: 'color-mix(in srgb, hsl(var(--card)) 52%, transparent)',
+    backgroundColor: 'color-mix(in srgb, hsl(var(--muted-foreground)) 14%, hsl(var(--card)) 78%)',
     backdropFilter: 'blur(26px) saturate(150%)',
     WebkitBackdropFilter: 'blur(26px) saturate(150%)',
     borderColor: 'hsl(var(--foreground) / 0.12)',

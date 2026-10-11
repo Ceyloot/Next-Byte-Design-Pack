@@ -513,7 +513,7 @@ export function Plotno({
         setNadPlotnem(false)
         onUpuscPliki([...e.dataTransfer.files])
       }}
-      className="absolute inset-0 h-full w-full overflow-hidden"
+      className="nb-cozy-tlo absolute inset-0 h-full w-full overflow-hidden"
       style={{
         cursor:
           narzedzie === 'reka'
@@ -521,7 +521,6 @@ export function Plotno({
             : narzedzie === 'pineska' || ctrlWcisniety || narzedzie === 'ramka'
             ? 'crosshair'
             : 'default',
-        background: 'hsl(var(--background))',
         touchAction: 'none',
       }}
     >
