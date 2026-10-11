@@ -10,6 +10,7 @@ import {
   ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Activity, LogIn, BookOpen,
   PenTool, Sun, Moon,
 } from 'lucide-react'
+import { useMobilny } from '@/sections/canvas/mobilny'
 import { odczytajAktualnyMotyw, przelaczNastepnyMotyw } from '@/sections/panel2/fundament/kolejka-motywow'
 import type { NavPosition } from '@/App'
 import { cn } from '@/lib/utils'
@@ -518,7 +519,10 @@ function renderSection(key: string, onWyjdzZCanvasa?: () => void): React.ReactNo
   }
 }
 
-export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
+export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition: navPositionProp = 'top', onNavPositionChange }: PreviewSectionProps) {
+  // Telefon: nawigacja zawsze u góry (boczny pasek i dokowanie nie mają tam sensu)
+  const mobilny = useMobilny()
+  const navPosition: NavPosition = mobilny ? 'top' : navPositionProp
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
   const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'notebook'>('strona-glowna')
@@ -556,6 +560,11 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
     setPreviewSubView('strona-glowna')
   }
   const [openMenu, setOpenMenu] = useState<string | null>(null)
+  // Telefon: wąski pasek przewija się poziomo — aktywna zakładka ma być w widoku
+  useEffect(() => {
+    if (!mobilny) return
+    tabRefs.current[activeTab]?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [mobilny, activeTab])
   const [flyoutY, setFlyoutY] = useState(0)
   const [navCompact, setNavCompact] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -743,7 +752,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         onClick={() => setNavCompact(!navCompact)}
         title={navCompact ? 'Pokaż etykiety' : 'Ukryj etykiety'}
         className={cn(
-          'flex items-center gap-1 px-2 h-7 rounded-lg border text-[12px] font-semibold transition-all duration-200',
+          'max-md:hidden flex items-center gap-1 px-2 h-7 rounded-lg border text-[12px] font-semibold transition-all duration-200',
           navCompact ? 'border-primary/40 bg-primary/[0.15] text-primary' : 'border-foreground/12 bg-foreground/[0.05] text-foreground/45 hover:text-foreground hover:border-foreground/20',
         )}
       >
@@ -751,10 +760,10 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         {!navCompact && (showContent ? <span>Aa</span> : <div className="h-1.5 w-3 bg-foreground/25 rounded-full" />)}
       </button>
       <PrzelacznikMotywu />
-      <button className="w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:border-foreground/20 transition-all duration-200">
+      <button className="max-md:hidden w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:border-foreground/20 transition-all duration-200">
         <Search className="w-3.5 h-3.5 text-primary" />
       </button>
-      <button className="relative w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:bg-foreground/[0.08] transition-all duration-200">
+      <button className="max-md:hidden relative w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:bg-foreground/[0.08] transition-all duration-200">
         <Bell className="w-3.5 h-3.5 text-primary" />
         <span className="absolute top-[5px] right-[5px] w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" />
       </button>
@@ -781,7 +790,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         )}
         style={{ contain: 'none', overflow: 'visible' }}
       >
-        <div className="flex items-center gap-1.5 shrink-0 pr-2">
+        <div className="flex items-center gap-1.5 shrink-0 pr-2 max-md:hidden">
           <button
             type="button"
             onPointerDown={handleDragStart}
@@ -792,7 +801,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           </button>
         </div>
 
-        <nav className="flex-1 flex items-center justify-center gap-0.5 h-full">
+        <nav className="flex-1 flex items-center justify-center gap-0.5 h-full max-md:justify-start max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden">
           {DESIGN_TABS.map((tab) => {
             const isActive = activeTab === tab.key
             const isOpen = openMenu === tab.key

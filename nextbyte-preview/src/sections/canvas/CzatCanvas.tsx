@@ -12,6 +12,7 @@ import {
   Paperclip,
   Mic,
   PanelRightClose,
+  ChevronDown,
   PanelRightOpen,
   ArrowUp,
   Maximize2,
@@ -39,6 +40,7 @@ import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { BYTE_ZA_OBRAZ } from './dostawca'
 import type { Zalacznik } from './zalaczniki'
+import { useMobilny } from './mobilny'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
 import type { OpcjaRol } from './role-z-polecenia'
@@ -240,14 +242,24 @@ export function CzatCanvas({
       document.removeEventListener('keydown', naEsc)
     }
   }, [menu])
+  const mobilny = useMobilny()
   const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
+  // Skrót C (z Canvasa): rozwiń panel i ustaw kursor w polu polecenia
+  useEffect(() => {
+    const naCzat = () => {
+      setZwiniety(false)
+      window.setTimeout(() => refTextarea.current?.focus(), 60)
+    }
+    window.addEventListener('nb-canvas-czat', naCzat)
+    return () => window.removeEventListener('nb-canvas-czat', naCzat)
+  }, [])
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
-    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety ? '0px' : '340px')
+    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety || mobilny ? '0px' : '340px')
     return () => {
       document.documentElement.style.removeProperty('--nb-czat-szer')
     }
-  }, [zwiniety])
+  }, [zwiniety, mobilny])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
   useEffect(() => {
@@ -421,6 +433,24 @@ export function CzatCanvas({
   }
 
   /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
+  if (zwiniety && mobilny) {
+    return (
+      <div className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30">
+        <button
+          type="button"
+          onClick={() => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus(), 60) }}
+          className="p2-szklo pointer-events-auto flex h-12 w-full items-center gap-2 !rounded-2xl px-4 text-left text-[14px] text-muted-foreground"
+          aria-label="Otwórz czat"
+        >
+          <span className="min-w-0 flex-1 truncate">{tekst.trim() || 'Opisz zmianę…'}</span>
+          {pineski.length > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{pineski.length}</span>
+          )}
+          <Send className="h-4 w-4 shrink-0 text-foreground/50" />
+        </button>
+      </div>
+    )
+  }
   if (zwiniety) {
     return (
       <div className="pointer-events-auto absolute right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[var(--nb-canvas-gora,16px)] z-30">
@@ -442,8 +472,8 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-nav-dol,0px)] right-[var(--nb-nav-prawo,0px)] top-[var(--nb-nav-gora,0px)] z-30 flex w-[340px] max-w-[100vw] flex-col">
-      <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
+    <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 h-[66vh]' : 'bottom-[var(--nb-nav-dol,0px)] right-[var(--nb-nav-prawo,0px)] top-[var(--nb-nav-gora,0px)] w-[340px] max-w-[100vw]')}>
+      <div className={cn('p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !border-x-0 !border-b-0 !bg-[hsl(var(--card)/0.95)] slide-in-from-bottom-4' : '!rounded-none !border-y-0 !border-r-0 slide-in-from-right-4')}>
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
           <span className="flex items-center gap-2.5 pl-1 text-[13px] font-semibold text-foreground">
@@ -467,7 +497,7 @@ export function CzatCanvas({
               title="Zwiń"
               aria-label="Zwiń panel"
             >
-              <PanelRightClose className="h-5 w-5" strokeWidth={2.2} />
+              {mobilny ? <ChevronDown className="h-5 w-5" strokeWidth={2.2} /> : <PanelRightClose className="h-5 w-5" strokeWidth={2.2} />}
             </button>
           </div>
         </div>

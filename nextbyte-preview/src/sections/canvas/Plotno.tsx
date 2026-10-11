@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { PodpowiedzStartowa } from './PodpowiedzStartowa'
 import { Lock } from 'lucide-react'
 import { PRZESUNIECIE_LEBKA, STYL_PINEZKI, ZnacznikPineski } from './ZnacznikPineski'
 import { etykietaPineski, pozycjaPineski, type Pociagniecie, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
@@ -157,14 +158,40 @@ export function Plotno({
     return () => el.removeEventListener('wheel', naKolko)
   }, [widok, onWidok])
 
-  /* Krok kropek w pikselach ekranu. Przy oddaleniu mnożymy odstęp w scenie,
-     żeby kropki nie zlały się w szarą mgłę; przy zbliżeniu — odwrotnie. */
-  const krokSiatki = (() => {
-    let krok = 28 * widok.zoom
-    while (krok < 14) krok *= 2
-    while (krok > 56) krok /= 2
-    return krok
-  })()
+  /* Dotyk: dwa palce = przybliżanie i przesuwanie (pinch), jeden palec na pustym tle = przesuwanie widoku. */
+  const dotyki = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ dist: number; zoom: number; wx: number; wy: number } | null>(null)
+  const srodekDotykow = () => {
+    const pts = [...dotyki.current.values()]
+    const r = refKontener.current?.getBoundingClientRect()
+    const cx = (pts[0].x + pts[1].x) / 2 - (r?.left ?? 0)
+    const cy = (pts[0].y + pts[1].y) / 2 - (r?.top ?? 0)
+    return { cx, cy, dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) }
+  }
+  function dotykWDol(e: React.PointerEvent) {
+    if (e.pointerType !== 'touch') return
+    dotyki.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (dotyki.current.size === 2) {
+      refOperacja.current = null
+      const { cx, cy, dist } = srodekDotykow()
+      pinch.current = { dist: Math.max(1, dist), zoom: widok.zoom, wx: (cx - widok.x) / widok.zoom, wy: (cy - widok.y) / widok.zoom }
+    }
+  }
+  function dotykRuch(e: React.PointerEvent) {
+    if (e.pointerType !== 'touch' || !dotyki.current.has(e.pointerId)) return
+    dotyki.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pinch.current && dotyki.current.size >= 2) {
+      e.stopPropagation()
+      const { cx, cy, dist } = srodekDotykow()
+      const zoom = Math.min(6, Math.max(0.05, pinch.current.zoom * (dist / pinch.current.dist)))
+      onWidok({ x: cx - pinch.current.wx * zoom, y: cy - pinch.current.wy * zoom, zoom })
+    }
+  }
+  function dotykGora(e: React.PointerEvent) {
+    if (e.pointerType !== 'touch') return
+    dotyki.current.delete(e.pointerId)
+    if (dotyki.current.size < 2) pinch.current = null
+  }
 
   /* Trzymany Ctrl zmienia kursor na krzyżyk, żeby tryb pineski był widoczny
      zanim użytkownik kliknie — inaczej skrót jest niewidzialny. */
@@ -188,7 +215,7 @@ export function Plotno({
 
   function naTleWDol(e: React.PointerEvent) {
     przechwyc(e.target as Element, e.pointerId)
-    if (narzedzie === 'reka' || e.button === 1 || e.altKey) {
+    if (narzedzie === 'reka' || e.button === 1 || e.altKey || (e.pointerType === 'touch' && narzedzie === 'wybor')) {
       refOperacja.current = { rodzaj: 'panorama', startX: e.clientX, startY: e.clientY, startWidok: { ...widok } }
       return
     }
@@ -469,6 +496,10 @@ export function Plotno({
   return (
     <div
       ref={refKontener}
+      onPointerDownCapture={dotykWDol}
+      onPointerMoveCapture={dotykRuch}
+      onPointerUpCapture={dotykGora}
+      onPointerCancelCapture={dotykGora}
       onPointerDown={naTleWDol}
       onPointerMove={naRuchu}
       onPointerUp={naGorze}
@@ -494,24 +525,8 @@ export function Plotno({
         touchAction: 'none',
       }}
     >
-      {/* Kropki tła — dają poczucie skali przy zoomie i nie rysują ramek
-          wokół niczego, w przeciwieństwie do siatki liniowej. Poniżej
-          pewnego zoomu robią się kaszą, więc wtedy gęstnieją co drugi raz. */}
-      {/* Ciemny motyw: techniczna siatka marki NextByte (w jasnym ukryta, zostają kropki) */}
-      <div aria-hidden className="nb-cozy-poswiata" />
-      <div
-        aria-hidden
-        className="nb-cozy-siatka"
-        style={{ backgroundSize: `${krokSiatki * 6}px ${krokSiatki * 6}px`, backgroundPosition: `${widok.x}px ${widok.y}px` }}
-      />
-      <div
-        className="nb-cozy-kropki pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: 'radial-gradient(circle, hsl(var(--foreground) / 0.07) 1px, transparent 1px)',
-          backgroundSize: `${krokSiatki}px ${krokSiatki}px`,
-          backgroundPosition: `${widok.x}px ${widok.y}px`,
-        }}
-      />
+      {/* Tło płaskie, bez kropek i siatki — jak na pustym płótnie w narzędziach projektowych */}
+      {warstwy.length === 0 && <PodpowiedzStartowa />}
 
       <div
         style={{

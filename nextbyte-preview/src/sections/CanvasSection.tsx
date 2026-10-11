@@ -38,6 +38,7 @@ import { useMotywCanvasa } from '@/sections/canvas/motyw-canvasa'
 import { PasekAkcji, type AkcjaPaska } from '@/sections/canvas/PasekAkcji'
 import { Prompter } from '@/sections/canvas/Prompter'
 import { Outpaint } from '@/sections/canvas/Outpaint'
+import { useMobilny } from '@/sections/canvas/mobilny'
 import { rozpoznajRozszerzenie, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
 import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
@@ -266,6 +267,7 @@ export function CanvasSection() {
     } catch {}
     return null
   })
+  const mobilny = useMobilny()
   const [widok, setWidok] = useState<Widok>({ x: 50, y: 60, zoom: 0.72 })
   const [menuDodawania, setMenuDodawania] = useState(false)
   /** Miejsce zajęte przez nawigację platformy leżącą na płótnie (zmienne --nb-nav-* z PreviewSection) */
@@ -294,15 +296,26 @@ export function CanvasSection() {
     const y0 = Math.min(...widoczne.map(w => w.y))
     const x1 = Math.max(...widoczne.map(w => w.x + w.width))
     const y1 = Math.max(...widoczne.map(w => w.y + w.height))
-    const dostepnaSzer = window.innerWidth - 380 - 120 - od.l - od.r
-    const dostepnaWys = window.innerHeight - 180 - od.t - od.b
+    // telefon: zdjęcia mają całą szerokość, a od dołu zostaje miejsce na dok i pasek czatu
+    const dostepnaSzer = mobilny ? window.innerWidth - 32 : window.innerWidth - 380 - 120 - od.l - od.r
+    const dostepnaWys = mobilny ? window.innerHeight - od.t - 230 : window.innerHeight - 180 - od.t - od.b
     const zoom = Math.min(1, Math.max(0.05, Math.min(dostepnaSzer / (x1 - x0), dostepnaWys / (y1 - y0))))
     setWidok({
-      x: 80 + od.l + (dostepnaSzer - (x1 - x0) * zoom) / 2 - x0 * zoom,
-      y: 90 + od.t + (dostepnaWys - (y1 - y0) * zoom) / 2 - y0 * zoom,
+      x: (mobilny ? 16 : 80 + od.l) + (dostepnaSzer - (x1 - x0) * zoom) / 2 - x0 * zoom,
+      y: (mobilny ? 16 : 90) + od.t + (dostepnaWys - (y1 - y0) * zoom) / 2 - y0 * zoom,
       zoom,
     })
   }
+
+  // Telefon: po pojawieniu się zdjęcia (pierwszego albo nowego wyniku) widok od razu je obejmuje — bez szukania poza ekranem
+  const liczbaZdjec = projekt.warstwy.filter(w => w.visible && !w.generator && w.src).length
+  const poprzedniaLiczba = useRef(liczbaZdjec)
+  useEffect(() => {
+    if (mobilny && liczbaZdjec > poprzedniaLiczba.current) setTimeout(() => dopasujWidokRef.current(), 80)
+    poprzedniaLiczba.current = liczbaZdjec
+  }, [liczbaZdjec, mobilny])
+  const dopasujWidokRef = useRef<() => void>(() => undefined)
+  dopasujWidokRef.current = dopasujWidok
 
   const [stanGeneracji, setStanGeneracji] = useState<StanGeneracji>({ faza: 'bezczynny' })
   // Inpainting pędzlem i generator (pusta ramka „Image Generator”)
@@ -321,6 +334,8 @@ export function CanvasSection() {
     if (nowe.length) setZalaczniki(z => [...z, ...nowe].slice(0, 6))
   }, [])
   const refRoot = useRef<HTMLDivElement>(null)
+  /** Telefon: okna robocze (prompter, outpaint, edycja tekstu, karta obiektu) siedzą u dołu ekranu, nad paskiem czatu */
+  const stylMobilny: React.CSSProperties = { left: 8, right: 8, top: 'auto', bottom: 'calc(var(--nb-nav-dol, 0px) + 76px)', width: 'auto', maxWidth: 'none' }
   // Pierwsze ustawienie widoku: pod nawigacją platformy leżącą na płótnie nic nie ląduje
   useEffect(() => {
     const od = odsuniecia()
@@ -1050,6 +1065,12 @@ export function CanvasSection() {
         return
       }
       if (e.ctrlKey || e.metaKey) return
+      // C = pisz na czacie (rozwija panel i ustawia kursor w polu)
+      if ((e.key === 'c' || e.key === 'C') && !e.altKey) {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('nb-canvas-czat'))
+        return
+      }
       if (e.key === 'Escape') {
         setZaznaczone([])
         setWybranaPineska(null)
@@ -2221,9 +2242,9 @@ export function CanvasSection() {
               zablokowane={Boolean(akcjaAI)}
               style={{
                 // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
-                left: Math.max(odsuniecia().l + 16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
+                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
                 transform: 'translateX(-50%)',
-                maxWidth: 'calc(100vw - 440px)',
+                maxWidth: mobilny ? 'calc(100vw - 16px)' : 'calc(100vw - 440px)',
                 top: gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
               akcje={[
@@ -2352,18 +2373,20 @@ export function CanvasSection() {
         <div
           key={kartaPozycja.pineska.id}
           className="absolute z-30 animate-in fade-in zoom-in-95 duration-150"
-          style={{
-            left: kartaPozycja.left,
-            top: kartaPozycja.top,
-            transformOrigin: kartaPozycja.naLewo ? 'right top' : 'left top',
-          }}
+          style={mobilny
+            ? { left: '50%', bottom: 'calc(var(--nb-nav-dol, 0px) + 76px)', transform: 'translateX(-50%)' }
+            : {
+                left: kartaPozycja.left,
+                top: kartaPozycja.top,
+                transformOrigin: kartaPozycja.naLewo ? 'right top' : 'left top',
+              }}
           onPointerDown={e => e.stopPropagation()}
         >
           {/* Ogonek wskazujący łebek pinezki — poza szkłem, bo szkło przycina
               wszystko, co wystaje poza jego obrys (contain: paint). */}
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute h-3.5 w-3.5 rotate-45 rounded-[4px] border border-border/60"
+            className="pointer-events-none absolute h-3.5 w-3.5 rotate-45 rounded-[4px] border border-border/60 max-md:hidden"
             style={{
               top: kartaPozycja.ogonY - 7,
               [kartaPozycja.naLewo ? 'right' : 'left']: -7,
@@ -2401,7 +2424,7 @@ export function CanvasSection() {
           srednica={srednicaPedzla}
           onSrednica={setSrednicaPedzla}
           // dokładnie w slocie paska szybkich akcji (ten sam wzór pozycji) — pasek „zamienia się” w prompter
-          style={{
+          style={mobilny ? stylMobilny : {
             left: Math.max(16, Math.min(widok.x + (warstwaInpaint.x + warstwaInpaint.width / 2) * widok.zoom - 280, window.innerWidth - 440 - 560)),
             top:
               widok.y + warstwaInpaint.y * widok.zoom - 56 >= 68
@@ -2422,7 +2445,7 @@ export function CanvasSection() {
               trwa={Boolean(akcjaAI)}
               onWyslij={t => uruchomQuickEdit(w.id, t)}
               onAnuluj={() => setQuickEdit(null)}
-              style={{
+              style={mobilny ? stylMobilny : {
                 left: Math.max(16, Math.min(widok.x + (w.x + w.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
                 top: Math.max(odsuniecia().t + 72, widok.y + w.y * widok.zoom - 62),
               }}
@@ -2443,7 +2466,7 @@ export function CanvasSection() {
               trwa={Boolean(akcjaAI)}
               onRozszerz={z => uruchomOutpaint(w.id, z)}
               onAnuluj={() => setOutpaint(null)}
-              style={{
+              style={mobilny ? stylMobilny : {
                 left: (() => {
                   const prawa = widok.x + (w.x + w.width) * widok.zoom + 16
                   return prawa + 300 <= window.innerWidth - 400 ? prawa : Math.max(16, widok.x + w.x * widok.zoom - 308)
@@ -2464,7 +2487,7 @@ export function CanvasSection() {
               trwa={Boolean(akcjaAI)}
               onZastosuj={(zmiany, czcionka) => uruchomEdycjeTekstu(w.id, zmiany, czcionka)}
               onAnuluj={() => setEdycjaTekstu(null)}
-              style={{
+              style={mobilny ? stylMobilny : {
                 // obok zdjęcia (po prawej; gdy brakuje miejsca — po lewej), góra panelu równo z górą zdjęcia
                 left: (() => {
                   const prawa = widok.x + (w.x + w.width) * widok.zoom + 16
@@ -2483,7 +2506,7 @@ export function CanvasSection() {
           trwa={trwaPrompter}
           onWyslij={uruchomGenerator}
           onAnuluj={() => setProjekt(p => ({ ...p, warstwy: p.warstwy.filter(x => x.id !== warstwaGeneratora.id) }))}
-          style={{
+          style={mobilny ? stylMobilny : {
             left: Math.max(16, Math.min(widok.x + (warstwaGeneratora.x + warstwaGeneratora.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
             top: Math.min(window.innerHeight - 90, widok.y + (warstwaGeneratora.y + warstwaGeneratora.height) * widok.zoom + 14),
           }}
@@ -2496,7 +2519,7 @@ export function CanvasSection() {
       )}
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 flex -translate-x-1/2 flex-col items-center gap-2">
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+76px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 md:bottom-[calc(var(--nb-nav-dol,0px)+16px)] flex -translate-x-1/2 flex-col items-center gap-2">
         <div className="nb-cozy-plyta pointer-events-auto relative flex h-12 flex-row items-center gap-1 rounded-2xl border p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
@@ -2570,6 +2593,12 @@ export function CanvasSection() {
             <Layers className="h-5 w-5" strokeWidth={2.2} />
           </Narzedzie>
 
+          {/* Telefon: bez paska zoomu — dopasowanie widoku do zdjęć jest w doku (szczypanie przybliża) */}
+          {mobilny && (
+            <Narzedzie tytul="Dopasuj widok" onClick={dopasujWidok}>
+              <Maximize className="h-5 w-5" strokeWidth={2.2} />
+            </Narzedzie>
+          )}
         </div>
 
         {/* Menu dodawania źródeł — obok docka, nie w nim: szkło docka przycina
@@ -2647,7 +2676,7 @@ export function CanvasSection() {
 
       {/* ══ Panel warstw (wysuwany) ══ */}
       {panelWarstw && (
-        <div className="p2 !bg-transparent absolute left-[calc(var(--nb-nav-lewo,0px)+80px)] top-[var(--nb-canvas-gora,16px)] z-20 w-64">
+        <div className="p2 !bg-transparent absolute left-[calc(var(--nb-nav-lewo,0px)+80px)] top-[var(--nb-canvas-gora,16px)] z-20 w-64 max-md:left-3 max-md:w-[calc(100vw-24px)]">
           <div className="p2-szklo overflow-hidden animate-in fade-in slide-in-from-left-2 duration-150">
             <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-foreground/45 flex items-center justify-between">
               <span>Zdjęcia na płótnie ({projekt.warstwy.length})</span>
@@ -2705,7 +2734,7 @@ export function CanvasSection() {
       )}
 
       {/* ══ Zoom (lewy dolny róg, jak w Lovart) ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-[calc(var(--nb-nav-lewo,0px)+16px)] z-20">
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-[calc(var(--nb-nav-lewo,0px)+16px)] z-20 max-md:hidden">
         <div className="p2-szklo pointer-events-auto flex h-12 items-center gap-0.5 !rounded-2xl px-2">
           <button type="button" title="Oddal (−)" aria-label="Oddal" onClick={() => zmienZoom(0.8)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomOut className="h-4 w-4" /></button>
           <span className="w-10 text-center font-mono text-[11px] tabular-nums text-foreground/70">{Math.round(widok.zoom * 100)}%</span>

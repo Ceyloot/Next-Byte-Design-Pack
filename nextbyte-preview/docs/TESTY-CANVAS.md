@@ -60,3 +60,12 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Czat: „zmień wymiary na 9:16", „rozszerz w lewo do 21:9", „zmień rozmiar na 1920x1080", „rozszerz dookoła".
 - [ ] Zdjęcie, które już ma wybrane proporcje — komunikat zamiast zbędnej generacji.
 - [ ] Zamiana obiektu (np. półprzezroczysta żaba → foka): nowa rzecz ma ten sam rozmiar/masę w kadrze i ten sam stopień półprzezroczystości.
+
+## 8. Telefon (szerokość < 768 px)
+- [ ] Pusty Canvas: płaskie tło bez kropek, jedna linia podpowiedzi; dolny dok + pasek „Opisz zmianę…".
+- [ ] Wgranie zdjęcia: widok sam obejmuje zdjęcie; „Dopasuj widok" w doku.
+- [ ] Jeden palec na tle przesuwa widok, dwa palce przybliżają (pinch); pinezka nadal wbija się dotknięciem w trybie pinezki.
+- [ ] Pasek czatu → arkusz od dołu (66% wysokości); strzałka w dół zamyka; wysyłanie, załączniki, wybór modelu.
+- [ ] Okna (Quick edit, Inpaint, Outpaint, Edit text, karta pinezki) siedzą u dołu nad paskiem czatu, nie wychodzą poza ekran.
+- [ ] Górny pasek platformy przewija się poziomo i pokazuje aktywną zakładkę; motyw i ustawienia dostępne.
+- [ ] Skrót C na komputerze: rozwija czat i ustawia kursor w polu.
