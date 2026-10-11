@@ -8,8 +8,9 @@ import {
   MonitorPlay, LayoutGrid, Navigation as NavIcon, BarChart2, Loader, Palette, Tag,
   PanelTop, PanelLeft, PanelBottom, PanelRight, Settings, GripVertical, GripHorizontal, Move,
   ToggleLeft, SlidersHorizontal, Database, BarChart, AlertCircle, Activity, LogIn, BookOpen,
-  PenTool,
+  PenTool, Sun, Moon,
 } from 'lucide-react'
+import { odczytajAktualnyMotyw, przelaczNastepnyMotyw } from '@/sections/panel2/fundament/kolejka-motywow'
 import type { NavPosition } from '@/App'
 import { cn } from '@/lib/utils'
 import { NbGlassFilters } from '@/grafiki/filtry-szkla'
@@ -476,7 +477,32 @@ interface PreviewSectionProps {
   onNavPositionChange?: (pos: NavPosition) => void
 }
 
-function renderSection(key: string, onWyjdzZCanvasa?: () => void, przelacznikNawigacji?: React.ReactNode): React.ReactNode {
+/** Przełącznik motywu (jasny ↔ ciemny) w górnym pasku — para „Przyszły / Ciemny” z kolejki motywów. */
+function PrzelacznikMotywu() {
+  const [jasny, setJasny] = useState(() => odczytajAktualnyMotyw().jasny)
+  useEffect(() => {
+    const odswiez = () => setJasny(odczytajAktualnyMotyw().jasny)
+    window.addEventListener('themeChanged', odswiez)
+    window.addEventListener('nb-theme-change', odswiez)
+    return () => {
+      window.removeEventListener('themeChanged', odswiez)
+      window.removeEventListener('nb-theme-change', odswiez)
+    }
+  }, [])
+  return (
+    <button
+      type="button"
+      onClick={() => { setJasny(przelaczNastepnyMotyw().jasny) }}
+      title={jasny ? 'Ciemny motyw' : 'Jasny motyw'}
+      aria-label={jasny ? 'Przełącz na ciemny motyw' : 'Przełącz na jasny motyw'}
+      className="w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:bg-foreground/[0.08] transition-all duration-200"
+    >
+      {jasny ? <Moon className="w-3.5 h-3.5 text-primary" /> : <Sun className="w-3.5 h-3.5 text-primary" />}
+    </button>
+  )
+}
+
+function renderSection(key: string, onWyjdzZCanvasa?: () => void): React.ReactNode {
   switch (key) {
     case 'karty':      return <KartySection />
     case 'akcje':      return <AkcjeSection />
@@ -486,7 +512,7 @@ function renderSection(key: string, onWyjdzZCanvasa?: () => void, przelacznikNaw
     case 'dane':       return <DaneSection />
     case 'stany':      return <StanySection />
     case 'paleta':     return <PaletaSection />
-    case 'canvas':     return <CanvasSection onWyjdz={onWyjdzZCanvasa} przelacznikNawigacji={przelacznikNawigacji} />
+    case 'canvas':     return <CanvasSection />
     case 'czat':       return <CzatSection />
     default:           return null
   }
@@ -724,6 +750,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
         <Type className="w-3 h-3 shrink-0" />
         {!navCompact && (showContent ? <span>Aa</span> : <div className="h-1.5 w-3 bg-foreground/25 rounded-full" />)}
       </button>
+      <PrzelacznikMotywu />
       <button className="w-7 h-7 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/[0.04] hover:border-foreground/20 transition-all duration-200">
         <Search className="w-3.5 h-3.5 text-primary" />
       </button>
@@ -1022,31 +1049,9 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       >
 
         {/* ── Non-preview section content ── */}
-        {activeTab !== 'preview' && renderSection(
-          activeTab,
-          // Canvas siedzi w platformie (z jej nawigacją), więc własnego „Wyjdź” nie ma — przełącznik nawigacji zajmuje to miejsce
-          undefined,
-          activeTab === 'canvas' ? (
-            <div role="group" aria-label="Pozycja nawigacji platformy" className="p2-szklo pointer-events-auto flex h-12 items-center gap-0.5 !rounded-2xl px-1.5">
-              {([['top', PanelTop, 'Nawigacja u góry'], ['left', PanelLeft, 'Nawigacja z lewej']] as const).map(([pos, Ikona, tytul]) => (
-                <button
-                  key={pos}
-                  type="button"
-                  title={tytul}
-                  aria-label={tytul}
-                  aria-pressed={navPosition === pos}
-                  onClick={() => onNavPositionChange?.(pos)}
-                  className={cn(
-                    'grid h-8 w-8 place-items-center rounded-lg transition-colors',
-                    navPosition === pos ? 'bg-foreground/[0.1] text-foreground' : 'text-foreground/50 hover:bg-foreground/[0.06] hover:text-foreground',
-                  )}
-                >
-                  <Ikona className="h-4 w-4" />
-                </button>
-              ))}
-            </div>
-          ) : undefined,
-        )}
+        {activeTab !== 'preview' && renderSection(activeTab, () => {
+          onSelectTab?.('preview'); setActiveSection('preview'); setMenuWModule(false)
+        })}
 
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
         {activeTab === 'preview' && (

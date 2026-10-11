@@ -152,8 +152,8 @@ export async function przygotujZAgentem(w: WejscieAgenta): Promise<WynikPrzygoto
   // Zamiana obiektu: rozmiar bierzemy z ZASTĘPOWANEJ rzeczy (ramka `cel`), nie z jej „prawdziwych” wymiarów — nowa rzecz ma tę samą masę i miejsce w kadrze
   const zamianaObiektu = plan.zadanie === 'zamiana_obiektu' && Boolean(plan.cel)
   if (PRZEWODNIK_MIEJSCA && (plan.skala || zamianaObiektu) && referencje.length > 0 && pinyNaBazie.length === 1 && plan.zadanie !== 'zamiana_osoby') {
-    const sred = zamianaObiektu && plan.cel ? bokCeluPx(plan.cel, baza) : srednicaZeSkali(plan.skala, baza.naturalWidth, baza.naturalHeight)
-    const przewodnik = await narysujMaskeUkladu(baza.src, { x: pinyNaBazie[0].x, y: pinyNaBazie[0].y, srednicaPx: sred })
+    const sred = zamianaObiektu && plan.cel ? bokCeluPx(plan.cel, baza) : plan.skala ? srednicaZeSkali(plan.skala, baza.naturalWidth, baza.naturalHeight) : 0
+    const przewodnik = sred > 0 ? await narysujMaskeUkladu(baza.src, { x: pinyNaBazie[0].x, y: pinyNaBazie[0].y, srednicaPx: sred }) : null
     if (przewodnik) {
       obrazy.push(przewodnik)
       przewodnikNr = obrazy.length

@@ -26,13 +26,10 @@ import {
   ArrowDownToLine,
   Paintbrush,
   Expand,
-  ArrowLeft,
   Scissors,
   X,
   ImagePlus,
   Type,
-  Sun,
-  Moon,
   Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -205,8 +202,9 @@ function skalibrujObszarPineski(
   return { x0, y0, x1, y1 }
 }
 
-export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () => void; przelacznikNawigacji?: React.ReactNode } = {}) {
-  const { jasny: jasnyMotyw, przelacz: przelaczMotyw } = useMotywCanvasa()
+export function CanvasSection() {
+  // motyw Canvasa (domyślnie jasny; wyjście oddaje platformie jej motyw) — przełącznik jest w górnym pasku platformy
+  useMotywCanvasa()
   const [projekt, setProjekt] = useState<Projekt>(() => {
     try {
       const zapisany = localStorage.getItem(KLUCZ_ZAPISU)
@@ -2384,37 +2382,6 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
           />
         </div>
       )}
-
-      {/* ══ Licznik Bajtów (lewy górny róg) — saldo demonstracyjne do czasu podpięcia portfela ══ */}
-      <div className="pointer-events-none absolute left-[calc(var(--nb-nav-lewo,0px)+16px)] top-[var(--nb-canvas-gora,16px)] z-20 flex items-center gap-2">
-        {przelacznikNawigacji}
-        {onWyjdz && (
-          <button
-            type="button"
-            onClick={onWyjdz}
-            title="Wyjdź z Canvasa — projekt zapisuje się automatycznie"
-            aria-label="Wyjdź z Canvasa"
-            className="p2-szklo pointer-events-auto flex h-12 items-center gap-1.5 !rounded-2xl px-3.5 text-[13px] font-semibold text-foreground/80 transition-[color,transform] duration-200 hover:-translate-y-px hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Wyjdź
-          </button>
-        )}
-        <div className="p2-szklo pointer-events-auto flex h-12 items-center gap-2 !rounded-2xl px-4" title="Saldo Bajtów">
-          <span className="text-[15px] font-bold tabular-nums text-foreground">7</span>
-          <span className="text-[15px] font-semibold text-primary">⟠</span>
-        </div>
-        <button
-          type="button"
-          onClick={przelaczMotyw}
-          data-podpowiedz={jasnyMotyw ? 'Ciemny motyw' : 'Jasny motyw'}
-          data-pozycja="dol"
-          aria-label={jasnyMotyw ? 'Przełącz na ciemny motyw' : 'Przełącz na jasny motyw'}
-          className="p2-szklo pointer-events-auto grid h-12 w-12 place-items-center !rounded-2xl text-foreground/70 transition-[color,transform] duration-200 hover:-translate-y-px hover:text-foreground"
-        >
-          {jasnyMotyw ? <Moon className="h-[18px] w-[18px]" /> : <Sun className="h-[18px] w-[18px]" />}
-        </button>
-      </div>
 
       {/* ══ Prompter: inpainting (po zamalowaniu) i generator (pod pustą ramką) ══ */}
       {warstwaInpaint && (
