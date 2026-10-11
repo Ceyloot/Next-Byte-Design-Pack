@@ -41,7 +41,7 @@ export function PasekAkcji({
       className="absolute z-50"
       style={style}
     >
-      <div className="nb-cozy-plyta flex items-center gap-0.5 overflow-x-auto rounded-[18px] border border-foreground/[0.07] bg-card p-1.5 shadow-[0_1px_2px_hsl(var(--cozy-cien)/0.06),0_8px_24px_-12px_hsl(var(--cozy-cien)/0.25)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="nb-cozy-plyta flex h-12 items-center gap-0.5 overflow-x-auto rounded-2xl border p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {akcje.map(a => (
           <div key={a.id} className="flex items-center">
             {a.separator && <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.1]" />}
@@ -52,7 +52,7 @@ export function PasekAkcji({
               title={a.tytul ?? a.etykieta}
               aria-label={a.etykieta}
               className={cn(
-                'flex h-9 items-center gap-2 whitespace-nowrap rounded-xl text-[13px] font-medium text-foreground/80 transition-all duration-200',
+                'flex h-9 items-center gap-2 whitespace-nowrap rounded-[10px] text-[13px] font-medium text-foreground/80 transition-all duration-200',
                 a.tylkoIkona ? 'w-9 justify-center' : 'px-3',
                 a.trwa ? 'bg-primary/15 text-primary' : 'hover:bg-foreground/[0.06] hover:text-foreground active:scale-95',
                 zablokowane && !a.trwa && 'opacity-40',

@@ -2232,10 +2232,10 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
               zablokowane={Boolean(akcjaAI)}
               style={{
                 // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
-                left: Math.max(16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
+                left: Math.max(odsuniecia().l + 16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
                 transform: 'translateX(-50%)',
                 maxWidth: 'calc(100vw - 440px)',
-                top: gora - 56 >= 68 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
+                top: gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
               }}
               akcje={[
                 {
@@ -2403,13 +2403,13 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
             onClick={onWyjdz}
             title="Wyjdź z Canvasa — projekt zapisuje się automatycznie"
             aria-label="Wyjdź z Canvasa"
-            className="p2-szklo pointer-events-auto flex h-11 items-center gap-1.5 !rounded-[16px] px-3.5 text-[13px] font-semibold text-foreground/80 transition-[color,transform] duration-200 hover:-translate-y-px hover:text-foreground"
+            className="p2-szklo pointer-events-auto flex h-12 items-center gap-1.5 !rounded-2xl px-3.5 text-[13px] font-semibold text-foreground/80 transition-[color,transform] duration-200 hover:-translate-y-px hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Wyjdź
           </button>
         )}
-        <div className="p2-szklo pointer-events-auto flex h-11 items-center gap-2 !rounded-[16px] px-4" title="Saldo Bajtów">
+        <div className="p2-szklo pointer-events-auto flex h-12 items-center gap-2 !rounded-2xl px-4" title="Saldo Bajtów">
           <span className="text-[15px] font-bold tabular-nums text-foreground">7</span>
           <span className="text-[15px] font-semibold text-primary">⟠</span>
         </div>
@@ -2419,7 +2419,7 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
           data-podpowiedz={jasnyMotyw ? 'Ciemny motyw' : 'Jasny motyw'}
           data-pozycja="dol"
           aria-label={jasnyMotyw ? 'Przełącz na ciemny motyw' : 'Przełącz na jasny motyw'}
-          className="p2-szklo pointer-events-auto grid h-11 w-11 place-items-center !rounded-[16px] text-foreground/70 transition-[color,transform] duration-200 hover:-translate-y-px hover:text-foreground"
+          className="p2-szklo pointer-events-auto grid h-12 w-12 place-items-center !rounded-2xl text-foreground/70 transition-[color,transform] duration-200 hover:-translate-y-px hover:text-foreground"
         >
           {jasnyMotyw ? <Moon className="h-[18px] w-[18px]" /> : <Sun className="h-[18px] w-[18px]" />}
         </button>
@@ -2466,7 +2466,7 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
               onAnuluj={() => setQuickEdit(null)}
               style={{
                 left: Math.max(16, Math.min(widok.x + (w.x + w.width / 2) * widok.zoom - 280, window.innerWidth - 640)),
-                top: Math.max(72, widok.y + w.y * widok.zoom - 62),
+                top: Math.max(odsuniecia().t + 72, widok.y + w.y * widok.zoom - 62),
               }}
             />
           )
@@ -2490,7 +2490,7 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
                   const prawa = widok.x + (w.x + w.width) * widok.zoom + 16
                   return prawa + 300 <= window.innerWidth - 400 ? prawa : Math.max(16, widok.x + w.x * widok.zoom - 308)
                 })(),
-                top: Math.max(72, widok.y + w.y * widok.zoom),
+                top: Math.max(odsuniecia().t + 72, widok.y + w.y * widok.zoom),
               }}
             />
           )
@@ -2512,7 +2512,7 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
                   const prawa = widok.x + (w.x + w.width) * widok.zoom + 16
                   return prawa + 330 <= window.innerWidth - 400 ? prawa : Math.max(16, widok.x + w.x * widok.zoom - 336)
                 })(),
-                top: Math.max(72, widok.y + w.y * widok.zoom),
+                top: Math.max(odsuniecia().t + 72, widok.y + w.y * widok.zoom),
               }}
             />
           )
@@ -2539,7 +2539,7 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
       <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
-        <div className="pointer-events-auto relative flex flex-row items-center gap-1 rounded-[22px] border border-foreground/[0.1] bg-[hsl(var(--card))] p-2 shadow-[0_8px_24px_-10px_rgba(0,0,0,0.5)]">
+        <div className="nb-cozy-plyta pointer-events-auto relative flex h-12 flex-row items-center gap-1 rounded-2xl border p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
             tytul="Wybór (V)"
@@ -2748,7 +2748,7 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
 
       {/* ══ Zoom (lewy dolny róg, jak w Lovart) ══ */}
       <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-[calc(var(--nb-nav-lewo,0px)+16px)] z-20">
-        <div className="p2-szklo pointer-events-auto flex h-11 items-center gap-0.5 !rounded-[16px] px-2">
+        <div className="p2-szklo pointer-events-auto flex h-12 items-center gap-0.5 !rounded-2xl px-2">
           <button type="button" title="Oddal (−)" aria-label="Oddal" onClick={() => zmienZoom(0.8)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomOut className="h-4 w-4" /></button>
           <span className="w-10 text-center font-mono text-[11px] tabular-nums text-foreground/70">{Math.round(widok.zoom * 100)}%</span>
           <button type="button" title="Przybliż (+)" aria-label="Przybliż" onClick={() => zmienZoom(1.25)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomIn className="h-4 w-4" /></button>
@@ -2791,7 +2791,7 @@ function Narzedzie({
       aria-pressed={aktywne}
       onClick={onClick}
       className={cn(
-        'relative flex h-11 w-11 items-center justify-center rounded-[14px] transition-all duration-200 active:scale-95',
+        'relative flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-95',
         aktywne
           ? 'bg-primary/[0.2] text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]'
           : 'text-foreground/80 hover:-translate-y-px hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',

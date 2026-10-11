@@ -1027,7 +1027,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           // Canvas siedzi w platformie (z jej nawigacją), więc własnego „Wyjdź” nie ma — przełącznik nawigacji zajmuje to miejsce
           undefined,
           activeTab === 'canvas' ? (
-            <div role="group" aria-label="Pozycja nawigacji platformy" className="p2-szklo pointer-events-auto flex h-11 items-center gap-0.5 !rounded-[16px] px-1.5">
+            <div role="group" aria-label="Pozycja nawigacji platformy" className="p2-szklo pointer-events-auto flex h-12 items-center gap-0.5 !rounded-2xl px-1.5">
               {([['top', PanelTop, 'Nawigacja u góry'], ['left', PanelLeft, 'Nawigacja z lewej']] as const).map(([pos, Ikona, tytul]) => (
                 <button
                   key={pos}

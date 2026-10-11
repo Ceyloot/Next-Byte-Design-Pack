@@ -50,7 +50,7 @@ export function Prompter({
       className="absolute z-50 w-[min(560px,calc(100vw-120px))]"
       style={style}
     >
-      <div className="nb-cozy-plyta flex items-center gap-2 rounded-[20px] border border-foreground/[0.07] bg-card p-2 shadow-[0_1px_2px_hsl(var(--cozy-cien)/0.06),0_8px_24px_-12px_hsl(var(--cozy-cien)/0.25)]">
+      <div className="nb-cozy-plyta flex items-center gap-2 rounded-2xl border p-2">
         <span className="shrink-0 rounded-xl bg-primary/[0.1] px-3 py-1.5 text-[11.5px] font-semibold text-primary">{etykieta}</span>
         <input
           ref={ref}

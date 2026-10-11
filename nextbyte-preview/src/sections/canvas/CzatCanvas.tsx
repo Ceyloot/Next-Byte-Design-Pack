@@ -426,7 +426,7 @@ export function CzatCanvas({
       <div className="pointer-events-auto absolute right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[var(--nb-canvas-gora,16px)] z-30">
         <button
           onClick={() => setZwiniety(false)}
-          className="group relative grid h-11 w-11 place-items-center rounded-2xl border border-foreground/[0.08] text-primary backdrop-blur-2xl transition-all duration-200 hover:border-primary/40 active:scale-95"
+          className="group relative grid h-12 w-12 place-items-center rounded-2xl border border-foreground/[0.08] text-primary backdrop-blur-2xl transition-all duration-200 hover:border-primary/40 active:scale-95"
           style={{ backgroundColor: 'hsl(var(--card) / 0.85)' }}
           title="Canvas"
           aria-label="Rozwiń czat"
