@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 /**
  * Ekran startowy pustego płótna: jedna rzecz do zrobienia — wgraj zdjęcie.
- * Szklana karta (rozmywa kropki tła), jeden akcent na przycisku. Centruje się między lewą krawędzią a panelem czatu.
+ * Bez karty i popupu: sam przycisk i podpowiedź skrótu, wyśrodkowane w wolnym polu (między nawigacją a panelem czatu).
  */
 export function EkranStartowy({ nadPlotnem, onOtworz }: { nadPlotnem: boolean; onOtworz?: () => void }) {
   return (
@@ -17,16 +17,13 @@ export function EkranStartowy({ nadPlotnem, onOtworz }: { nadPlotnem: boolean; o
         disabled={!onOtworz}
         data-nad={nadPlotnem}
         aria-label="Wgraj zdjęcie"
-        className={cn(
-          'nb-cozy-startowa pointer-events-auto flex w-full max-w-[380px] flex-col items-center gap-3.5 rounded-[24px] border border-dashed px-6 py-10 transition-[border-color,background-color]',
-          nadPlotnem ? 'border-primary/70' : 'border-foreground/[0.2] hover:border-primary/50',
-        )}
+        className="pointer-events-auto flex flex-col items-center gap-2.5"
       >
-        <span className="grid h-11 w-11 place-items-center rounded-[14px] border border-[hsl(var(--primary)/0.22)] bg-[hsl(var(--primary)/0.08)] text-primary">
-          <Upload className="h-[18px] w-[18px]" />
+        <span className={cn('nb-cta flex h-10 items-center gap-2 rounded-xl px-5 text-[13.5px] font-semibold transition-shadow', nadPlotnem && 'ring-4 ring-primary/30')}>
+          <Upload className="h-4 w-4" />
+          Wgraj zdjęcie
         </span>
-        <span className="nb-cta flex h-10 items-center gap-2 rounded-[12px] px-5 text-[13.5px] font-semibold">Wgraj zdjęcie</span>
-        <kbd className="rounded-lg bg-foreground/[0.06] px-2 py-0.5 font-mono text-[11px] text-foreground/70">Ctrl + V</kbd>
+        <kbd className="font-mono text-[11px] text-muted-foreground/70">Ctrl + V</kbd>
       </button>
     </div>
   )
