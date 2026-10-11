@@ -786,7 +786,7 @@ export function CzatCanvas({
             enterKeyHint="send"
             className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] max-md:text-[16px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
           />
-          <div className="mx-0.5 my-2 h-px bg-foreground/[0.08]" />
+          <div className="mx-0.5 my-2 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5">
               {/* Załącz plik — plik, schowek albo adres */}
