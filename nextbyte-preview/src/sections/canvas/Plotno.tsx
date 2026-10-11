@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Lock } from 'lucide-react'
 import { PRZESUNIECIE_LEBKA, STYL_PINEZKI, ZnacznikPineski } from './ZnacznikPineski'
-import { EkranStartowy } from './EkranStartowy'
 import { etykietaPineski, pozycjaPineski, type Pociagniecie, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
 
 /**
@@ -811,7 +810,6 @@ export function Plotno({
       </div>
 
       {/* Ekran startowy: przyjazne powitanie i jedna strefa upuszczenia */}
-      {warstwy.length === 0 && <EkranStartowy nadPlotnem={nadPlotnem} onOtworz={onOtworzDodawanie} />}
 
       {nadPlotnem && warstwy.length > 0 && (
         <div className="pointer-events-none absolute inset-3 rounded-[28px] border-2 border-dashed border-primary/50 bg-primary/[0.05]" />
