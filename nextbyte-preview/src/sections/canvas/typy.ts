@@ -7,7 +7,16 @@
  * struktur — a to jest ważniejsze niż spójność słownika w jednym folderze.
  */
 
-export type Narzedzie = 'wybor' | 'pineska' | 'reka' | 'ramka' | 'pedzel'
+export type Narzedzie = 'wybor' | 'pineska' | 'reka' | 'ramka' | 'pedzel' | 'olowek'
+
+/** Pociągnięcie ołówka na płótnie (współrzędne sceny) — szkic, który można zaznaczyć i zamienić w obraz */
+export interface Rysunek {
+  id: string
+  punkty: [number, number][]
+  kolor: string
+  /** grubość w jednostkach sceny */
+  grubosc: number
+}
 
 /** Pociągnięcie pędzla do inpaintingu: punkty (0–1 względem zdjęcia) i średnica jako ułamek szerokości zdjęcia. */
 export interface Pociagniecie {

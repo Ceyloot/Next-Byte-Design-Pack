@@ -378,8 +378,8 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(hsl(var(--primary) / 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--primary) / 0.075) 1px, transparent 1px);
+    linear-gradient(hsl(var(--primary) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--primary) / 0.04) 1px, transparent 1px);
   background-size: var(--nb-wk, 96px) var(--nb-wk, 96px);
   background-position: var(--nb-wx, 0) var(--nb-wy, 0);
   -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 20%, transparent 85%);
@@ -387,7 +387,6 @@
 }
 /* Jasny: ledwie wyczuwalna ciepła mgła, bez siatki i kropek */
 .nb-cozy .nb-cozy-tlo { background-image: radial-gradient(ellipse 60% 45% at 12% 8%, hsl(var(--primary) / 0.05), transparent 70%); }
-[data-theme='dark-theme'] .nb-cozy .nb-cozy-tlo { background-color: transparent; }
 
 /* Ciemne szkło: jaśniejsza przezroczysta tafla (biel ~6%) zamiast czarnej na czarnym */
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo,

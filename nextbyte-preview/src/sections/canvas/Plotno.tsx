@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { PodpowiedzStartowa } from './PodpowiedzStartowa'
 import { Lock } from 'lucide-react'
 import { PRZESUNIECIE_LEBKA, STYL_PINEZKI, ZnacznikPineski } from './ZnacznikPineski'
-import { etykietaPineski, pozycjaPineski, type Pociagniecie, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru } from './typy'
+import { etykietaPineski, pozycjaPineski, type Pociagniecie, type Narzedzie, type Pineska, type Warstwa, type Widok, type RamkaObszaru, type Rysunek } from './typy'
 
 /**
  * Płótno: zdjęcia referencyjne i pineski.
@@ -42,12 +42,20 @@ interface Props {
   maska?: Pociagniecie[]
   srednicaPedzla?: number
   onPociagniecie?: (p: Pociagniecie) => void
+  /** ołówek: pociągnięcia na płótnie, ich zaznaczenie i menu prawego przycisku */
+  rysunki?: Rysunek[]
+  zaznaczoneRysunki?: string[]
+  kolorOlowka?: string
+  gruboscOlowka?: number
+  onRysunek?: (r: Rysunek) => void
+  onZaznaczRysunki?: (ids: string[]) => void
+  onMenuRysunku?: (x: number, y: number) => void
 }
 
 type Uchwyt = 'nw' | 'ne' | 'se' | 'sw'
 
 interface Operacja {
-  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel' | 'zaznaczanie'
+  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel' | 'zaznaczanie' | 'rysowanie'
   punkty?: [number, number][]
   startX: number
   startY: number
@@ -114,6 +122,13 @@ export function Plotno({
   srednicaPedzla = 0.05,
   onPociagniecie,
   onMenuWarstwy,
+  rysunki = [],
+  zaznaczoneRysunki = [],
+  kolorOlowka = '#111111',
+  gruboscOlowka = 5,
+  onRysunek,
+  onZaznaczRysunki,
+  onMenuRysunku,
 }: Props) {
   const refKontener = useRef<HTMLDivElement>(null)
   const refOperacja = useRef<Operacja | null>(null)
@@ -212,11 +227,19 @@ export function Plotno({
   /* ── Wskaźnik ─────────────────────────────────────────────────── */
 
   const [zywe, setZywe] = useState<Pociagniecie | null>(null)
+  /** pociągnięcie ołówka w trakcie rysowania */
+  const [zywyRysunek, setZywyRysunek] = useState<[number, number][] | null>(null)
 
   function naTleWDol(e: React.PointerEvent) {
     przechwyc(e.target as Element, e.pointerId)
     if (narzedzie === 'reka' || e.button === 1 || e.altKey || (e.pointerType === 'touch' && narzedzie === 'wybor')) {
       refOperacja.current = { rodzaj: 'panorama', startX: e.clientX, startY: e.clientY, startWidok: { ...widok } }
+      return
+    }
+    if (narzedzie === 'olowek' && e.button === 0) {
+      const p = doSceny(e)
+      refOperacja.current = { rodzaj: 'rysowanie', startX: p.x, startY: p.y, punkty: [[p.x, p.y]] }
+      setZywyRysunek([[p.x, p.y]])
       return
     }
     if (narzedzie === 'ramka') {
@@ -230,6 +253,7 @@ export function Plotno({
       if (!e.shiftKey) {
         onWybierzWarstwe(null)
         onZaznaczone?.([])
+        onZaznaczRysunki?.([])
       }
       onWybierzPineske(null)
       return
@@ -237,6 +261,7 @@ export function Plotno({
     onWybierzWarstwe(null)
     onZaznaczone?.([])
     onWybierzPineske(null)
+    if (!e.shiftKey && e.button !== 2) onZaznaczRysunki?.([])
   }
 
   function naWarstwieWDol(e: React.PointerEvent, warstwa: Warstwa) {
@@ -244,6 +269,12 @@ export function Plotno({
     e.stopPropagation()
     przechwyc(e.currentTarget as Element, e.pointerId)
     const p = doSceny(e)
+
+    if (narzedzie === 'olowek') {
+      refOperacja.current = { rodzaj: 'rysowanie', startX: p.x, startY: p.y, punkty: [[p.x, p.y]] }
+      setZywyRysunek([[p.x, p.y]])
+      return
+    }
 
     if (narzedzie === 'pedzel' && !warstwa.generator) {
       const punkt: [number, number] = [
@@ -362,6 +393,15 @@ export function Plotno({
       return
     }
 
+    if (op.rodzaj === 'rysowanie' && op.punkty) {
+      const ost = op.punkty[op.punkty.length - 1]
+      // pomijamy punkty bliżej niż ~1,5 px ekranu — gładsza i lżejsza linia
+      if (Math.hypot(p.x - ost[0], p.y - ost[1]) * widok.zoom < 1.5) return
+      op.punkty.push([p.x, p.y])
+      setZywyRysunek([...op.punkty])
+      return
+    }
+
     if (op.rodzaj === 'zaznaczanie') {
       setRamkaZaznaczania({ x0: op.startX, y0: op.startY, x1: p.x, y1: p.y })
       return
@@ -440,6 +480,12 @@ export function Plotno({
     const op = refOperacja.current
     refOperacja.current = null
     setPrzeciagana(null)
+    if (op?.rodzaj === 'rysowanie' && op.punkty) {
+      setZywyRysunek(null)
+      const pkt = op.punkty.length === 1 ? [op.punkty[0], [op.punkty[0][0] + 0.01, op.punkty[0][1]] as [number, number]] : op.punkty
+      onRysunek?.({ id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: pkt, kolor: kolorOlowka, grubosc: gruboscOlowka })
+      return
+    }
     if (op?.rodzaj === 'zaznaczanie') {
       const r = ramkaZaznaczania
       setRamkaZaznaczania(null)
@@ -455,6 +501,14 @@ export function Plotno({
         const wynik = [...new Set([...(op.bazowe ?? []), ...trafione])]
         onZaznaczone?.(wynik.length >= 2 ? wynik : [])
         onWybierzWarstwe(wynik[0] ?? null)
+        const trafioneRys = rysunki
+          .filter(ry => {
+            const xs = ry.punkty.map(q => q[0])
+            const ys = ry.punkty.map(q => q[1])
+            return Math.min(...xs) < x1 && Math.max(...xs) > x0 && Math.min(...ys) < y1 && Math.max(...ys) > y0
+          })
+          .map(ry => ry.id)
+        onZaznaczRysunki?.(op.bazowe && op.bazowe.length ? [...new Set([...zaznaczoneRysunki, ...trafioneRys])] : trafioneRys)
       }
       return
     }
@@ -496,6 +550,20 @@ export function Plotno({
   return (
     <div
       ref={refKontener}
+      onContextMenu={e => {
+        // prawy przycisk wewnątrz ramki zaznaczonych szkiców → menu „Zamień w obraz” (a nie menu inspekcji platformy)
+        const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))
+        if (wyb.length === 0 || !onMenuRysunku) return
+        const p = doSceny(e)
+        const xs = wyb.flatMap(ry => ry.punkty.map(q => q[0]))
+        const ys = wyb.flatMap(ry => ry.punkty.map(q => q[1]))
+        const pad = 10 / widok.zoom
+        if (p.x >= Math.min(...xs) - pad && p.x <= Math.max(...xs) + pad && p.y >= Math.min(...ys) - pad && p.y <= Math.max(...ys) + pad) {
+          e.preventDefault()
+          e.stopPropagation()
+          onMenuRysunku(e.clientX, e.clientY)
+        }
+      }}
       onPointerDownCapture={dotykWDol}
       onPointerMoveCapture={dotykRuch}
       onPointerUpCapture={dotykGora}
@@ -518,7 +586,7 @@ export function Plotno({
         cursor:
           narzedzie === 'reka'
             ? 'grab'
-            : narzedzie === 'pineska' || ctrlWcisniety || narzedzie === 'ramka'
+            : narzedzie === 'pineska' || ctrlWcisniety || narzedzie === 'ramka' || narzedzie === 'olowek'
             ? 'crosshair'
             : 'default',
         touchAction: 'none',
@@ -529,7 +597,7 @@ export function Plotno({
       }}
     >
       {/* Tło płaskie, bez kropek i siatki — jak na pustym płótnie w narzędziach projektowych */}
-      {warstwy.length === 0 && <PodpowiedzStartowa />}
+      {warstwy.length === 0 && rysunki.length === 0 && narzedzie !== 'olowek' && <PodpowiedzStartowa />}
 
       <div
         style={{
@@ -655,6 +723,66 @@ export function Plotno({
               </div>
             )
           })()}
+
+        {/* Ołówek: szkice na płótnie (nad zdjęciami). Tylko ścieżki łapią kliknięcia i tylko w trybie wyboru. */}
+        {(rysunki.length > 0 || zywyRysunek) && (
+          <svg aria-hidden={false} style={{ position: 'absolute', left: 0, top: 0, width: 1, height: 1, overflow: 'visible', pointerEvents: 'none' }}>
+            {rysunki.map(ry => {
+              const d = 'M' + ry.punkty.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')
+              const wybrany = zaznaczoneRysunki.includes(ry.id)
+              return (
+                <g
+                  key={ry.id}
+                  style={{ pointerEvents: narzedzie === 'wybor' ? 'visibleStroke' : 'none', cursor: 'pointer' }}
+                  onPointerDown={e => {
+                    if (narzedzie !== 'wybor' || e.button === 2) return
+                    e.stopPropagation()
+                    onWybierzWarstwe(null)
+                    onZaznaczone?.([])
+                    onWybierzPineske(null)
+                    onZaznaczRysunki?.(e.shiftKey ? (wybrany ? zaznaczoneRysunki.filter(i => i !== ry.id) : [...zaznaczoneRysunki, ry.id]) : [ry.id])
+                  }}
+                  onContextMenu={e => {
+                    if (narzedzie !== 'wybor') return
+                    e.preventDefault()
+                    e.stopPropagation()
+                    if (!wybrany) onZaznaczRysunki?.([ry.id])
+                    onMenuRysunku?.(e.clientX, e.clientY)
+                  }}
+                >
+                  {ry.kolor === '#111111' && <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={ry.grubosc + 3 * odwrotna} strokeLinecap="round" strokeLinejoin="round" />}
+                  <path d={d} fill="none" stroke={ry.kolor} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
+                  {/* szersza, niewidoczna ścieżka — łatwiej trafić palcem */}
+                  <path d={d} fill="none" stroke="transparent" strokeWidth={Math.max(ry.grubosc, 14 * odwrotna)} strokeLinecap="round" strokeLinejoin="round" />
+                </g>
+              )
+            })}
+            {zywyRysunek && (
+              <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka} strokeWidth={gruboscOlowka} strokeLinecap="round" strokeLinejoin="round" />
+            )}
+            {(() => {
+              const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))
+              if (wyb.length === 0) return null
+              const xs = wyb.flatMap(ry => ry.punkty.map(q => q[0]))
+              const ys = wyb.flatMap(ry => ry.punkty.map(q => q[1]))
+              const pad = 8 * odwrotna + Math.max(...wyb.map(ry => ry.grubosc)) / 2
+              return (
+                <rect
+                  x={Math.min(...xs) - pad}
+                  y={Math.min(...ys) - pad}
+                  width={Math.max(...xs) - Math.min(...xs) + pad * 2}
+                  height={Math.max(...ys) - Math.min(...ys) + pad * 2}
+                  fill="rgba(56,189,248,0.06)"
+                  stroke="#38bdf8"
+                  strokeWidth={1.5 * odwrotna}
+                  strokeDasharray={`${6 * odwrotna} ${4 * odwrotna}`}
+                  rx={3 * odwrotna}
+                  style={{ pointerEvents: 'none' }}
+                />
+              )
+            })()}
+          </svg>
+        )}
 
         {/* Ramka zaznaczania wielu zdjęć */}
         {ramkaZaznaczania && (

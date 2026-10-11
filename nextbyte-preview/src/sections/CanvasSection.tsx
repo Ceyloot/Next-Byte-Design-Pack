@@ -3,6 +3,8 @@ import {
   Eye,
   EyeOff,
   Hand,
+  Pencil,
+  Undo2,
   Image as IkonaObrazu,
   Layers,
   Link2,
@@ -38,6 +40,9 @@ import { useMotywCanvasa } from '@/sections/canvas/motyw-canvasa'
 import { PasekAkcji, type AkcjaPaska } from '@/sections/canvas/PasekAkcji'
 import { Prompter } from '@/sections/canvas/Prompter'
 import { Outpaint } from '@/sections/canvas/Outpaint'
+import { dopasujWymiary } from '@/sections/canvas/formaty-modelu'
+import { typWymiarow } from '@/sections/canvas/rozszerzanie-kadru'
+import type { Rysunek } from '@/sections/canvas/typy'
 import { useMobilny } from '@/sections/canvas/mobilny'
 import { rozpoznajRozszerzenie, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
@@ -220,6 +225,8 @@ export function CanvasSection() {
   })
 
   const [narzedzie, setNarzedzie] = useState<Narzedzie>('wybor')
+  const narzedzieRef = useRef(narzedzie)
+  narzedzieRef.current = narzedzie
   // Model zwykłych edycji — pamiętany między sesjami. Tryby zablokowane (postać, Gemini 3.1) mają własny.
   const [modelObrazu, setModelObrazu] = useState<ModelObrazu>(() => {
     try {
@@ -268,6 +275,12 @@ export function CanvasSection() {
     return null
   })
   const mobilny = useMobilny()
+  /** Ołówek: szkice na płótnie, zaznaczone szkice i menu prawego przycisku */
+  const [rysunki, setRysunki] = useState<Rysunek[]>([])
+  const [zaznaczoneRysunki, setZaznaczoneRysunki] = useState<string[]>([])
+  const [kolorOlowka, setKolorOlowka] = useState('#111111')
+  const [gruboscOlowka, setGruboscOlowka] = useState(5)
+  const [menuRysunku, setMenuRysunku] = useState<{ x: number; y: number } | null>(null)
   const [widok, setWidok] = useState<Widok>({ x: 50, y: 60, zoom: 0.72 })
   const [menuDodawania, setMenuDodawania] = useState(false)
   /** Miejsce zajęte przez nawigację platformy leżącą na płótnie (zmienne --nb-nav-* z PreviewSection) */
@@ -720,6 +733,68 @@ export function CanvasSection() {
     },
     [projekt.warstwy, akcjaAI, modelObrazu, dodajZeZrodla, startDucha, usunDucha],
   )
+  /**
+   * Szkice → obraz: zaznaczone pociągnięcia ołówka oddajemy na białym tle w formacie obsługiwanym przez model
+   * i generujemy z nich gotowy obraz. Opis z czatu i zaznaczone zdjęcia (np. osoba) idą jako dodatkowe wskazówki / referencje.
+   */
+  const zamienSzkicWObraz = useCallback(async () => {
+    const wyb = rysunki.filter(r => zaznaczoneRysunki.includes(r.id))
+    if (wyb.length === 0 || refGeneruje.current) return
+    setMenuRysunku(null)
+    refGeneruje.current = true
+    const opis = projekt.tekst.trim()
+    const referencje = (wieluAktywne ? wielu : wybranaWarstwa ? projekt.warstwy.filter(w => w.id === wybranaWarstwa && !w.generator) : []).filter(w => w.src)
+    const model = modelObrazu === 'auto' ? 'nb2' : modelObrazu
+    try {
+      const xs = wyb.flatMap(r => r.punkty.map(q => q[0]))
+      const ys = wyb.flatMap(r => r.punkty.map(q => q[1]))
+      const gr = Math.max(...wyb.map(r => r.grubosc))
+      const x0 = Math.min(...xs) - gr, x1 = Math.max(...xs) + gr, y0 = Math.min(...ys) - gr, y1 = Math.max(...ys) + gr
+      const bw = Math.max(1, x1 - x0), bh = Math.max(1, y1 - y0)
+      const { width: fw, height: fh } = dopasujWymiary(bw, bh, typWymiarow(model))
+      // szkic wpisany w kadr o formacie modelu, z marginesem 8% — wynik od razu ma właściwe proporcje
+      const marg = 0.08
+      const k = Math.min((fw * (1 - 2 * marg)) / bw, (fh * (1 - 2 * marg)) / bh)
+      const ox = (fw - bw * k) / 2 - (x0 - 0) * k
+      const oy = (fh - bh * k) / 2 - (y0 - 0) * k
+      const plotno = document.createElement('canvas')
+      plotno.width = fw
+      plotno.height = fh
+      const g = plotno.getContext('2d')
+      if (!g) throw new Error('Brak kontekstu rysowania')
+      g.fillStyle = '#ffffff'
+      g.fillRect(0, 0, fw, fh)
+      g.lineCap = 'round'
+      g.lineJoin = 'round'
+      for (const r of wyb) {
+        g.strokeStyle = r.kolor
+        g.lineWidth = Math.max(2, r.grubosc * k)
+        g.beginPath()
+        r.punkty.forEach((q, i) => (i === 0 ? g.moveTo(q[0] * k + ox, q[1] * k + oy) : g.lineTo(q[0] * k + ox, q[1] * k + oy)))
+        g.stroke()
+      }
+      const szkic = plotno.toDataURL('image/png')
+      const refs = await Promise.all(referencje.slice(0, 3).map(w => konwertujNaDataUrl(w.src)))
+      const polecenie = [
+        'Turn this hand-drawn sketch (Image 1: lines on a plain white background) into a finished, high-quality image.',
+        'Follow the sketch exactly: composition, shapes, proportions, positions and colours. Interpret every line as the real thing it depicts. The result fills the whole frame — no white paper, no sketch lines, no outlines left over.',
+        refs.length ? `Image 2${refs.length > 1 ? ` and the following images are` : ' is a'} reference photo${refs.length > 1 ? 's' : ''}: whatever the sketch shows of that kind (a person, an object) must look exactly like the reference — same identity, face, hair, clothing, colours and details — posed and framed as drawn in the sketch.` : '',
+        opis ? `What the user wants: ${opis}.` : '',
+      ].filter(Boolean).join('\n')
+      setStanGeneracji({ faza: 'trwa', plan: 'Zamieniam szkic w obraz…', tryb: 'generator' })
+      startDucha({ width: 460, height: Math.round((460 * fh) / fw), y: Math.round(y0), naturalWidth: fw, naturalHeight: fh }, 'Szkic → obraz…')
+      const wynik = await generuj({ polecenie, obrazy: [szkic, ...refs], szerokosc: fw, wysokosc: fh, model })
+      const nazwa = nazwijWynik(opis || 'szkic', [])
+      dodajZeZrodla(wynik.obrazUrl, nazwa, 'wynik')
+      setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: wynik.obrazUrl, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Szkic zamieniony w obraz${opis ? `: „${opis}”` : ''}.` } })
+    } catch (e) {
+      setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się zamienić szkicu w obraz.' })
+    } finally {
+      usunDucha()
+      refGeneruje.current = false
+    }
+  }, [rysunki, zaznaczoneRysunki, projekt.tekst, projekt.warstwy, wieluAktywne, wielu, wybranaWarstwa, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
+
   const uruchomAkcjeAI = useCallback(
     async (warstwaId: string, akcjaId: string) => {
       const w = projekt.warstwy.find(x => x.id === warstwaId)
@@ -1064,6 +1139,12 @@ export function CanvasSection() {
         } else if (ids.length === 1) setWybranaWarstwa(ids[0])
         return
       }
+      // Ctrl+Z przy ołówku: cofnij ostatnie pociągnięcie
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && narzedzieRef.current === 'olowek') {
+        e.preventDefault()
+        setRysunki(r => r.slice(0, -1))
+        return
+      }
       if (e.ctrlKey || e.metaKey) return
       // C = pisz na czacie (rozwija panel i ustawia kursor w polu)
       if ((e.key === 'c' || e.key === 'C') && !e.altKey) {
@@ -1091,13 +1172,18 @@ export function CanvasSection() {
           return
         }
       }
-      const skroty: Record<string, Narzedzie> = { v: 'wybor', p: 'pineska', h: 'reka', b: 'pedzel' }
+      const skroty: Record<string, Narzedzie> = { v: 'wybor', p: 'pineska', h: 'reka', b: 'pedzel', d: 'olowek' }
       const n = skroty[e.key.toLowerCase()]
       if (n) {
         setNarzedzie(n)
         return
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (zaznaczoneRysunki.length) {
+          setRysunki(r => r.filter(x => !zaznaczoneRysunki.includes(x.id)))
+          setZaznaczoneRysunki([])
+          return
+        }
         if (wybranaPineska) usunPineske(wybranaPineska)
         else if (wieluAktywne) usunWarstwy(wielu.map(w => w.id))
         else if (wybranaWarstwa) usunWarstwe(wybranaWarstwa)
@@ -1105,7 +1191,7 @@ export function CanvasSection() {
     }
     window.addEventListener('keydown', naKlawisz)
     return () => window.removeEventListener('keydown', naKlawisz)
-  }, [wybranaPineska, wybranaWarstwa, usunPineske, usunWarstwe, zakonczInpaint, projekt.warstwy, wieluAktywne, wielu, usunWarstwy])
+  }, [wybranaPineska, wybranaWarstwa, usunPineske, usunWarstwe, zakonczInpaint, projekt.warstwy, wieluAktywne, wielu, usunWarstwy, zaznaczoneRysunki])
 
   /* ── Przygotowanie generacji ───────────────────────────────────── */
 
@@ -2138,6 +2224,13 @@ export function CanvasSection() {
 
       {/* ══ PŁÓTNO ══ */}
       <Plotno
+        rysunki={rysunki}
+        zaznaczoneRysunki={zaznaczoneRysunki}
+        kolorOlowka={kolorOlowka}
+        gruboscOlowka={gruboscOlowka}
+        onRysunek={r => setRysunki(prev => [...prev, r])}
+        onZaznaczRysunki={setZaznaczoneRysunki}
+        onMenuRysunku={(x, y) => setMenuRysunku({ x, y })}
         warstwy={projekt.warstwy}
         pineski={projekt.pineski}
         wybranaWarstwa={wybranaWarstwa}
@@ -2406,6 +2499,71 @@ export function CanvasSection() {
         </div>
       )}
 
+      {/* ══ Ołówek: kolor, grubość, cofnij ══ */}
+      {narzedzie === 'olowek' && (
+        <div className="p2 !bg-transparent nb-dok-mob pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 -translate-x-1/2 md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]">
+          <div role="toolbar" aria-label="Ołówek" className="nb-cozy-plyta pointer-events-auto flex h-12 items-center gap-1 rounded-2xl border px-2">
+            {['#111111', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'].map(k => (
+              <button
+                key={k}
+                type="button"
+                aria-label={`Kolor ${k}`}
+                aria-pressed={kolorOlowka === k}
+                onClick={() => setKolorOlowka(k)}
+                className={cn('grid h-7 w-7 place-items-center rounded-full transition-transform', kolorOlowka === k ? 'ring-2 ring-primary ring-offset-2 ring-offset-transparent' : 'hover:scale-110')}
+              >
+                <span className="h-4 w-4 rounded-full border border-foreground/20" style={{ background: k }} />
+              </button>
+            ))}
+            <span aria-hidden className="mx-1 h-5 w-px bg-foreground/[0.12]" />
+            {[3, 6, 12].map(gr => (
+              <button
+                key={gr}
+                type="button"
+                aria-label={`Grubość ${gr}`}
+                aria-pressed={gruboscOlowka === gr}
+                onClick={() => setGruboscOlowka(gr)}
+                className={cn('grid h-8 w-8 place-items-center rounded-[10px] border transition-colors', gruboscOlowka === gr ? 'border-primary/40 bg-primary/20' : 'border-transparent hover:bg-foreground/[0.08]')}
+              >
+                <span className="rounded-full bg-foreground/80" style={{ width: gr + 3, height: gr + 3 }} />
+              </button>
+            ))}
+            <span aria-hidden className="mx-1 h-5 w-px bg-foreground/[0.12]" />
+            <button type="button" title="Cofnij ostatnie (Ctrl+Z)" aria-label="Cofnij" disabled={rysunki.length === 0} onClick={() => setRysunki(r => r.slice(0, -1))} className="grid h-8 w-8 place-items-center rounded-[10px] text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button type="button" title="Wyczyść szkice" aria-label="Wyczyść szkice" disabled={rysunki.length === 0} onClick={() => { setRysunki([]); setZaznaczoneRysunki([]) }} className="grid h-8 w-8 place-items-center rounded-[10px] text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Menu prawego przycisku na zaznaczonych szkicach ══ */}
+      {menuRysunku && zaznaczoneRysunki.length > 0 && (
+        <div
+          className="fixed inset-0 z-[65]"
+          onPointerDown={() => setMenuRysunku(null)}
+          onContextMenu={e => { e.preventDefault(); setMenuRysunku(null) }}
+        >
+          <div
+            role="menu"
+            onPointerDown={e => e.stopPropagation()}
+            className="p2-szklo absolute w-[210px] overflow-hidden !rounded-2xl p-1.5"
+            style={{ left: Math.min(menuRysunku.x, window.innerWidth - 226), top: Math.min(menuRysunku.y, window.innerHeight - 120) }}
+          >
+            <button role="menuitem" type="button" onClick={() => void zamienSzkicWObraz()} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-foreground/[0.08]">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Zamień w obraz
+            </button>
+            <button role="menuitem" type="button" onClick={() => { setRysunki(r => r.filter(x => !zaznaczoneRysunki.includes(x.id))); setZaznaczoneRysunki([]); setMenuRysunku(null) }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10">
+              <Trash2 className="h-4 w-4" />
+              Usuń szkic
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ══ Prompter: inpainting (po zamalowaniu) i generator (pod pustą ramką) ══ */}
       {warstwaInpaint && (
         <Prompter
@@ -2550,6 +2708,15 @@ export function CanvasSection() {
             onClick={() => setNarzedzie('reka')}
           >
             <Hand className="h-5 w-5" strokeWidth={1.6} />
+          </Narzedzie>
+
+          {/* Ołówek (D) — szkicuj na płótnie; zaznaczone szkice → prawy przycisk → „Zamień w obraz” */}
+          <Narzedzie
+            tytul="Ołówek (D)"
+            aktywne={narzedzie === 'olowek'}
+            onClick={() => setNarzedzie('olowek')}
+          >
+            <Pencil className="h-5 w-5" strokeWidth={1.6} />
           </Narzedzie>
 
           <span aria-hidden className="mx-1 h-5 w-px bg-foreground/[0.1]" />
@@ -2735,12 +2902,12 @@ export function CanvasSection() {
 
       {/* ══ Zoom (lewy dolny róg, jak w Lovart) ══ */}
       <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-[calc(var(--nb-nav-lewo,0px)+16px)] z-20 max-md:hidden">
-        <div className="p2-szklo pointer-events-auto flex h-12 items-center gap-0.5 !rounded-2xl px-2">
-          <button type="button" title="Oddal (−)" aria-label="Oddal" onClick={() => zmienZoom(0.8)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomOut className="h-4 w-4" /></button>
-          <span className="w-10 text-center font-mono text-[11px] tabular-nums text-foreground/70">{Math.round(widok.zoom * 100)}%</span>
-          <button type="button" title="Przybliż (+)" aria-label="Przybliż" onClick={() => zmienZoom(1.25)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomIn className="h-4 w-4" /></button>
-          <span className="mx-0.5 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
-          <button type="button" title="Dopasuj widok do zdjęć" aria-label="Dopasuj widok" onClick={dopasujWidok} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><Maximize className="h-4 w-4" /></button>
+        <div className="p2-szklo pointer-events-auto flex h-9 items-center gap-0 !rounded-xl px-1">
+          <button type="button" title="Oddal (−)" aria-label="Oddal" onClick={() => zmienZoom(0.8)} className="grid h-7 w-7 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomOut className="h-3.5 w-3.5" /></button>
+          <span className="w-9 text-center font-mono text-[10px] tabular-nums text-foreground/70">{Math.round(widok.zoom * 100)}%</span>
+          <button type="button" title="Przybliż (+)" aria-label="Przybliż" onClick={() => zmienZoom(1.25)} className="grid h-7 w-7 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomIn className="h-3.5 w-3.5" /></button>
+          <span className="mx-0.5 h-4 w-px bg-[hsl(var(--foreground)/0.12)]" />
+          <button type="button" title="Dopasuj widok do zdjęć" aria-label="Dopasuj widok" onClick={dopasujWidok} className="grid h-7 w-7 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><Maximize className="h-3.5 w-3.5" /></button>
         </div>
       </div>
     </div>

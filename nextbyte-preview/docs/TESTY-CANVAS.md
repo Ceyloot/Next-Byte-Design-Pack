@@ -69,3 +69,9 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Okna (Quick edit, Inpaint, Outpaint, Edit text, karta pinezki) siedzą u dołu nad paskiem czatu, nie wychodzą poza ekran.
 - [ ] Górny pasek platformy przewija się poziomo i pokazuje aktywną zakładkę; motyw i ustawienia dostępne.
 - [ ] Skrót C na komputerze: rozwija czat i ustawia kursor w polu.
+
+## 9. Ołówek i szkice (nowe)
+- [ ] D = ołówek: rysowanie myszą i palcem, kolory, trzy grubości, Ctrl+Z cofa ostatnie pociągnięcie, kosz czyści.
+- [ ] Narzędzie wyboru: klik w szkic lub ramka zaznacza (Shift dokłada); Delete usuwa; prawy przycisk w ramce → „Zamień w obraz" / „Usuń szkic".
+- [ ] „Zamień w obraz": szkic idzie na białym tle w formacie modelu; opis z czatu dopisuje się do polecenia; zaznaczone zdjęcie (np. osoba) idzie jako referencja tożsamości.
+- [ ] Szkic z kilku kolorów (kolor = podpowiedź, co jest czym); szkic wokół zdjęcia na płótnie.
