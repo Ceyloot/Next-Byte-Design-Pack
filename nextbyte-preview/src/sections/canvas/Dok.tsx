@@ -23,7 +23,7 @@ export function Dok({ k }: { k: KontekstDoku }) {
         // `.is-glass .nb-szklo` ustawia `position: relative` i ma wyższą
         // wagę niż klasa `absolute`, więc panel ze szkłem nie może sam
         // być kotwiczony.
-        'pointer-events-auto absolute right-3 top-[calc(var(--nb-canvas-gora,16px)-4px)] bottom-3 z-30 transition-[width] duration-200',
+        'pointer-events-auto absolute right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-canvas-gora,16px)-4px)] bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30 transition-[width] duration-200',
         zwiniety ? 'w-11' : 'w-[264px]',
       )}
     >

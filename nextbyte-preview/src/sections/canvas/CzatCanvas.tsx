@@ -423,7 +423,7 @@ export function CzatCanvas({
   /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
   if (zwiniety) {
     return (
-      <div className="pointer-events-auto absolute right-3 top-[var(--nb-canvas-gora,16px)] z-30">
+      <div className="pointer-events-auto absolute right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[var(--nb-canvas-gora,16px)] z-30">
         <button
           onClick={() => setZwiniety(false)}
           className="group relative grid h-11 w-11 place-items-center rounded-2xl border border-foreground/[0.08] text-primary backdrop-blur-2xl transition-all duration-200 hover:border-primary/40 active:scale-95"
@@ -442,7 +442,7 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className="p2 !bg-transparent pointer-events-none absolute inset-y-0 right-0 z-30 flex w-[340px] max-w-[100vw] flex-col">
+    <div className="p2 !bg-transparent pointer-events-none absolute bottom-[var(--nb-nav-dol,0px)] right-[var(--nb-nav-prawo,0px)] top-[var(--nb-nav-gora,0px)] z-30 flex w-[340px] max-w-[100vw] flex-col">
       <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">

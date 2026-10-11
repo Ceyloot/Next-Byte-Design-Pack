@@ -498,6 +498,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'notebook'>('strona-glowna')
   /** W module z własnym paskiem (Next Scribe) „‹ MENU” podmienia treść paska na menu podglądu. */
   const [menuWModule, setMenuWModule] = useState(false)
+  /** Boczny pasek zwinięty do szyny — Canvas odsuwa swoje elementy o jego szerokość */
+  const [navZwiniety, setNavZwiniety] = useState(false)
   /** Aktywna podstrona publicznej witryny w podglądzie „Strona główna" */
   const [stronaPage, setStronaPage] = useState<HomePageId>('home')
   /** Aktywny ekran w podglądzie „Logowanie" */
@@ -740,6 +742,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       className={cn(
         'relative z-[500] px-3 sm:px-4 w-full shrink-0',
         navPosition === 'bottom' ? 'pt-2 pb-3' : 'pt-3 pb-2',
+        // Canvas: pasek pływa NAD płótnem (płótno zostaje pełnego rozmiaru, bez odcięć); elementy Canvasa odsuwają się zmiennymi --nb-nav-*
+        activeTab === 'canvas' && (navPosition === 'bottom' ? 'absolute bottom-0 left-0' : 'absolute left-0 top-0'),
       )}
       onMouseLeave={scheduleClose}
     >
@@ -898,6 +902,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
 
   const SidebarNav = () => (
     <NawigacjaBoczna
+      onZwin={() => setNavZwiniety(v => !v)}
       strona={navPosition === 'right' ? 'prawo' : 'lewo'}
       onUchwyt={handleDragStart}
       sekcje={sekcjePodgladu}
@@ -925,7 +930,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       <NbGlassFilters />
 
       {/* ── Navbar — w Next Scribe platformowa nawigacja znika (Next Scribe ma własną) ── */}
-      {pelnyEkran || (wModule && !menuWModule) ? null : (isSidebar || (wModule && menuWModule)) ? <SidebarNav /> : navPosition === 'bottom'
+      {pelnyEkran || (wModule && !menuWModule) ? null : (isSidebar || (wModule && menuWModule)) ? (
+        activeTab === 'canvas' ? (
+          // Canvas: pasek boczny leży na płótnie (nie zabiera mu miejsca), da się zwinąć do szyny
+          <div className={cn('pointer-events-none absolute inset-y-0 z-[60] [&>*]:pointer-events-auto', navPosition === 'right' ? 'right-0' : 'left-0')}>{SidebarNav()}</div>
+        ) : SidebarNav()
+      ) : navPosition === 'bottom'
         ? null  /* bottom: renderowany po <main> */
         : <HorizontalNav />
       }
@@ -1000,8 +1010,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           ? { paddingTop: '48px' }
           : activeTab === 'canvas'
             ? ({
-                '--nb-canvas-gora': '16px',
-                '--nb-canvas-dol': '16px',
+                '--nb-canvas-gora': navPosition === 'top' ? '84px' : '16px',
+                '--nb-canvas-dol': navPosition === 'bottom' ? '80px' : '16px',
+                '--nb-nav-gora': navPosition === 'top' ? '68px' : '0px',
+                '--nb-nav-dol': navPosition === 'bottom' ? '64px' : '0px',
+                '--nb-nav-lewo': navPosition === 'left' ? (navZwiniety ? '92px' : '288px') : '0px',
+                '--nb-nav-prawo': navPosition === 'right' ? (navZwiniety ? '92px' : '288px') : '0px',
               } as React.CSSProperties)
             : {}
       )}
