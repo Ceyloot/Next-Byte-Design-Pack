@@ -323,20 +323,11 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
     if (nowe.length) setZalaczniki(z => [...z, ...nowe].slice(0, 6))
   }, [])
   const refRoot = useRef<HTMLDivElement>(null)
-  /** Prawdziwy rozmiar pola roboczego Canvasa w platformie (px) — widać, ile miejsca zostaje obok nawigacji */
-  const [wymiaryPola, setWymiaryPola] = useState<{ w: number; h: number } | null>(null)
   // Pierwsze ustawienie widoku: pod nawigacją platformy leżącą na płótnie nic nie ląduje
   useEffect(() => {
     const od = odsuniecia()
     setWidok(w => (w.x === 50 && w.y === 60 ? { ...w, x: w.x + od.l, y: w.y + od.t } : w))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  useEffect(() => {
-    const el = refRoot.current
-    if (!el || typeof ResizeObserver === 'undefined') return
-    const o = new ResizeObserver(() => setWymiaryPola({ w: Math.round(el.clientWidth), h: Math.round(el.clientHeight) }))
-    o.observe(el)
-    return () => o.disconnect()
   }, [])
   const [rozmiar, setRozmiar] = useState({ szer: 0, wys: 0 })
 
@@ -2538,7 +2529,7 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
       )}
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
+      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+16px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 flex -translate-x-1/2 flex-col items-center gap-2">
         <div className="nb-cozy-plyta pointer-events-auto relative flex h-12 flex-row items-center gap-1 rounded-2xl border p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie
@@ -2754,12 +2745,6 @@ export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () 
           <button type="button" title="Przybliż (+)" aria-label="Przybliż" onClick={() => zmienZoom(1.25)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomIn className="h-4 w-4" /></button>
           <span className="mx-0.5 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
           <button type="button" title="Dopasuj widok do zdjęć" aria-label="Dopasuj widok" onClick={dopasujWidok} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><Maximize className="h-4 w-4" /></button>
-          {wymiaryPola && (
-            <>
-              <span className="mx-0.5 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
-              <span title="Rozmiar pola roboczego Canvasa w platformie" className="px-1.5 font-mono text-[11px] tabular-nums text-foreground/55">{wymiaryPola.w}×{wymiaryPola.h}</span>
-            </>
-          )}
         </div>
       </div>
     </div>
