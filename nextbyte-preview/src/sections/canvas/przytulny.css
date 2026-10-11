@@ -380,26 +380,34 @@
 /* Telefon: otwarty arkusz czatu zasłaniałby dok narzędzi — na czas pisania go chowamy */
 html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
 
-/* Czat: ciemniejsza, lita tafla bez obramowania; pole pisania bez ramki, tylko lekko jaśniejsze wypełnienie */
+/* Czat: bez własnej „czarnej” tafli — panel ma kolor płótna (nie ma ramki ani cienia), a jedynym kształtem jest karta pola pisania z cienką ramką */
 .nb-cozy.nb-cozy .nb-cozy-czat {
   border: 0;
-  background: hsl(var(--card) / 0.94);
-  box-shadow: 0 12px 32px -14px hsl(var(--cozy-cien) / 0.25);
+  background: hsl(var(--background));
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat {
   border: 0;
-  background: hsl(0 0% 4%);
+  background: hsl(0 0% 8%);
   box-shadow: none;
 }
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
-  border-color: transparent;
-  background-color: hsl(var(--foreground) / 0.045);
+  border: 1px solid hsl(var(--foreground) / 0.1);
+  background-color: hsl(var(--card));
   box-shadow: none;
+}
+.nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
+  border-color: hsl(var(--foreground) / 0.2);
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
-  border-color: transparent;
-  background-color: hsl(0 0% 100% / 0.05);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  background-color: hsl(0 0% 11%);
   box-shadow: none;
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
+  border-color: hsl(0 0% 100% / 0.22);
 }
