@@ -40,7 +40,7 @@ import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
 import { BYTE_ZA_OBRAZ } from './dostawca'
 import type { Zalacznik } from './zalaczniki'
-import { useMobilny } from './mobilny'
+import { useKlawiatura, useMobilny } from './mobilny'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { Uwaga } from './kontrola-polecenia'
 import type { OpcjaRol } from './role-z-polecenia'
@@ -243,6 +243,7 @@ export function CzatCanvas({
     }
   }, [menu])
   const mobilny = useMobilny()
+  const klawiatura = useKlawiatura()
   const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
   // Skrót C (z Canvasa): rozwiń panel i ustaw kursor w polu polecenia
   useEffect(() => {
@@ -256,8 +257,12 @@ export function CzatCanvas({
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
     document.documentElement.style.setProperty('--nb-czat-szer', zwiniety || mobilny ? '0px' : '364px')
+    // telefon: otwarty arkusz czatu chowa dok narzędzi (nie ma na nim miejsca)
+    if (mobilny && !zwiniety) document.documentElement.setAttribute('data-nb-czat-mob', 'otwarty')
+    else document.documentElement.removeAttribute('data-nb-czat-mob')
     return () => {
       document.documentElement.style.removeProperty('--nb-czat-szer')
+      document.documentElement.removeAttribute('data-nb-czat-mob')
     }
   }, [zwiniety, mobilny])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
@@ -435,7 +440,7 @@ export function CzatCanvas({
   /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
   if (zwiniety && mobilny) {
     return (
-      <div className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30">
+      <div className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
         <button
           type="button"
           onClick={() => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus(), 60) }}
@@ -472,7 +477,7 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 h-[66vh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')}>
+    <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 max-h-[72dvh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny && klawiatura ? { transform: `translateY(-${klawiatura}px)` } : undefined}>
       <div className={cn('p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !border-x-0 !border-b-0 !bg-[hsl(var(--card)/0.95)] slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
@@ -504,7 +509,7 @@ export function CzatCanvas({
 
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
+        {!mobilny && historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
           <div className="flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
             <p className="max-w-[220px] text-[13px] leading-relaxed text-muted-foreground/80">Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.</p>
           </div>
@@ -783,7 +788,8 @@ export function CzatCanvas({
                   : 'Opisz zmianę…'
             }
             aria-label="Polecenie"
-            className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
+            enterKeyHint="send"
+            className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] max-md:text-[16px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
           />
           <div className="mx-0.5 my-2 h-px bg-foreground/[0.08]" />
           <div className="flex items-center justify-between gap-2">

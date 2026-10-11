@@ -2519,7 +2519,7 @@ export function CanvasSection() {
       )}
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className="p2 !bg-transparent pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+76px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 md:bottom-[calc(var(--nb-nav-dol,0px)+16px)] flex -translate-x-1/2 flex-col items-center gap-2">
+      <div className="p2 !bg-transparent nb-dok-mob pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+76px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 md:bottom-[calc(var(--nb-nav-dol,0px)+16px)] flex -translate-x-1/2 flex-col items-center gap-2">
         <div className="nb-cozy-plyta pointer-events-auto relative flex h-12 flex-row items-center gap-1 rounded-2xl border p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie

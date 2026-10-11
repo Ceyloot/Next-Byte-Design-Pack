@@ -375,3 +375,6 @@
   background-color: hsl(0 0% 100% / 0.045);
   border-color: hsl(0 0% 100% / 0.1);
 }
+
+/* Telefon: otwarty arkusz czatu zasłaniałby dok narzędzi — na czas pisania go chowamy */
+html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
