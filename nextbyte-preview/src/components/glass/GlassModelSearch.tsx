@@ -224,7 +224,14 @@ export const DEFAULT_MODELS: Model[] = [
   },
 ]
 
-function MetricBars({ value, max = 10 }: { value: number; max?: number }) {
+function MetricBars({ value, max = 10, gladki = false }: { value: number; max?: number; gladki?: boolean }) {
+  if (gladki) {
+    return (
+      <div className="h-1.5 overflow-hidden rounded-full bg-foreground/[0.1]">
+        <div className="h-full rounded-full bg-gradient-to-r from-primary/50 to-primary shadow-[0_0_10px_hsl(var(--primary)/0.45)]" style={{ width: `${Math.round((value / max) * 100)}%` }} />
+      </div>
+    )
+  }
   return (
     <div className="flex gap-[3px]">
       {Array.from({ length: max }).map((_, i) => (
@@ -364,20 +371,22 @@ export function GlassModelSearch({
     backgroundColor: 'color-mix(in srgb, hsl(var(--muted-foreground)) 14%, hsl(var(--card)) 78%)',
     backdropFilter: 'blur(26px) saturate(150%)',
     WebkitBackdropFilter: 'blur(26px) saturate(150%)',
-    borderColor: 'hsl(var(--foreground) / 0.12)',
-    boxShadow: '0 18px 48px -16px hsl(var(--foreground) / 0.35)',
+    borderColor: 'hsl(var(--primary) / 0.22)',
+    backgroundImage: 'linear-gradient(180deg, hsl(var(--primary) / 0.12), transparent 45%)',
+    boxShadow: '0 18px 48px -16px hsl(var(--foreground) / 0.35), 0 0 44px -18px hsl(var(--primary) / 0.45)',
   }
 
   // Karta szczegółów modelu (metryki, koszt, konfiguracja)
   const kartaSzczegolow = !compact ? (
-<div className={cn('w-full shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between', szerokosc ? 'md:w-[236px]' : 'md:w-[320px]', odwroc && 'md:w-[220px]')} style={odwroc && szklo ? szkloStyle : undefined}>
+<div className={cn('relative w-full shrink-0 rounded-xl border border-border/50 bg-foreground/[0.02] p-4 flex flex-col justify-between', szerokosc ? 'md:w-[236px]' : 'md:w-[320px]', odwroc && 'md:w-[248px]')} style={odwroc && szklo ? szkloStyle : undefined}>
         <div>
+          {odwroc && <div aria-hidden className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />}
           {/* Nagłówek: nazwa + dostawca */}
           <div className="flex items-start justify-between gap-2">
-            <span className="text-base font-bold leading-none text-foreground">
+            <span className={cn('font-bold leading-none text-foreground whitespace-nowrap', odwroc ? 'text-[15px]' : 'text-base')}>
               {peekedModel.name}
             </span>
-            <span className="text-[11px] font-medium text-muted-foreground">
+            <span className={cn('text-[11px] font-medium text-muted-foreground', odwroc && 'rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-primary')}>
               {peekedModel.badge || peekedModel.provider}
             </span>
           </div>
@@ -401,13 +410,13 @@ export function GlassModelSearch({
                 <p className="mb-1 text-[11px] font-medium text-muted-foreground/80">
                   {m.label}
                 </p>
-                <MetricBars value={m.value} />
+                <MetricBars value={m.value} gladki={odwroc} />
               </div>
             ))}
           </div>
 
           {/* Box kosztu wiadomości */}
-          <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2">
+          <div className={cn('mt-4 flex items-center justify-between gap-2 rounded-xl border px-3 py-2', odwroc ? 'border-primary/25 bg-gradient-to-r from-primary/15 to-primary/[0.03]' : 'border-border/40 bg-muted/20')}>
             <span className="text-[11.5px] font-medium text-muted-foreground">
               {odwroc ? 'Koszt' : 'Koszt wiadomości'}
             </span>
@@ -513,6 +522,8 @@ export function GlassModelSearch({
                           : isHovered
                           ? 'border-border/60 bg-foreground/[0.04]'
                           : 'border-transparent hover:bg-foreground/[0.03]',
+                        odwroc && isActive && 'bg-gradient-to-r from-primary/25 to-primary/[0.04] shadow-[0_0_22px_-6px_hsl(var(--primary)/0.55)]',
+                        odwroc && !isActive && isHovered && 'border-foreground/10 bg-gradient-to-r from-foreground/[0.09] to-transparent',
                       )}
                     >
                       {/* Pasek aktywnego wyboru */}

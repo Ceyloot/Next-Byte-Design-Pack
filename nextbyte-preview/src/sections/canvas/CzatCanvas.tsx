@@ -479,8 +479,9 @@ export function CzatCanvas({
   return (
     <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 max-h-[72dvh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny && klawiatura ? { transform: `translateY(-${klawiatura}px)` } : undefined}>
       <div className={cn('p2-szklo nb-cozy-czat pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
-        {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
-        <div className="flex shrink-0 items-center justify-end">
+        {/* Nagłówek: akcje + gradientowa kreska jak w pasku bocznym platformy */}
+        <div className="relative flex shrink-0 items-center justify-end pb-2">
+          <div aria-hidden className="pointer-events-none absolute inset-x-1 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => { setHistoriaWiadomosci([]); onTekst('') }}
@@ -504,8 +505,20 @@ export function CzatCanvas({
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {!mobilny && historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
-          <div className="flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
-            <p className="max-w-[220px] text-[13px] leading-relaxed text-muted-foreground/80">Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.</p>
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-3 pb-4 text-center">
+            <p className="max-w-[230px] text-[13px] leading-relaxed text-muted-foreground/80">Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.</p>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {['Usuń tło', 'Popraw jakość', 'Zmień oświetlenie', 'Zamień na zimę', 'Dodaj obiekt'].map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { onTekst(t); refTextarea.current?.focus() }}
+                  className="rounded-full border border-foreground/[0.1] bg-foreground/[0.04] px-3 py-1.5 text-[12px] text-foreground/75 transition-colors hover:border-primary/40 hover:bg-primary/[0.08] hover:text-foreground"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {historiaWiadomosci.map(msg => (
@@ -518,7 +531,7 @@ export function CzatCanvas({
           >
             {/* Wiadomość użytkownika */}
             {msg.rola === 'uzytkownik' && (
-              <div className="max-w-[88%] rounded-[20px] rounded-br-md bg-[hsl(var(--primary)/0.12)] px-4 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))]">
+              <div className="max-w-[88%] rounded-[20px] rounded-br-md border border-primary/30 bg-gradient-to-br from-primary/[0.18] to-primary/[0.06] px-4 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))]">
                 <p className="leading-relaxed">{msg.tresc}</p>
                 {msg.pineskiSnap && msg.pineskiSnap.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1">
