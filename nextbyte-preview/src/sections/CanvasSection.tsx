@@ -2774,8 +2774,8 @@ function Narzedzie({
       className={cn(
         'relative flex h-9 w-9 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-95',
         aktywne
-          ? 'bg-foreground text-background'
-          : 'text-foreground/70 hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',
+          ? 'border border-primary/40 bg-primary/20 text-primary'
+          : 'border border-transparent text-foreground/70 hover:bg-[hsl(var(--foreground)/0.08)] hover:text-[hsl(var(--foreground))]',
       )}
     >
       {children}

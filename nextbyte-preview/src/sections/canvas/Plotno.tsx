@@ -522,6 +522,10 @@ export function Plotno({
             ? 'crosshair'
             : 'default',
         touchAction: 'none',
+        // siatka tła podąża za widokiem (przesuwanie i zoom)
+        ['--nb-wx' as string]: `${widok.x}px`,
+        ['--nb-wy' as string]: `${widok.y}px`,
+        ['--nb-wk' as string]: `${Math.max(48, Math.min(160, 96 * widok.zoom))}px`,
       }}
     >
       {/* Tło płaskie, bez kropek i siatki — jak na pustym płótnie w narzędziach projektowych */}

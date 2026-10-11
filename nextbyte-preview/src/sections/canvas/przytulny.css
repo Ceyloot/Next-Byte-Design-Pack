@@ -79,23 +79,23 @@
   box-shadow: inset 0 1px 3px 0 var(--cozy-niecka), 0 0 0 4px hsl(var(--primary) / 0.1);
 }
 
-/* ── Przycisk wezwania (CTA): jak główny przycisk w Cenniku — szkło barwione akcentem, rant akcentu, miękka poświata ── */
+/* ── Przycisk wezwania (CTA): jak „Rozpocznij za darmo” na stronie głównej — ciemne tło, niebieska ramka, miękka poświata ── */
 .nb-cozy.nb-cozy .nb-cta {
-  border: 1px solid hsl(var(--primary) / 0.6);
-  background: hsl(var(--primary) / 0.2);
+  border: 1px solid hsl(var(--primary) / 0.55);
+  background: color-mix(in srgb, hsl(var(--primary)) 14%, hsl(var(--card)));
   color: hsl(var(--foreground));
-  box-shadow: 0 0 20px -4px hsl(var(--primary) / 0.4);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  box-shadow: 0 0 22px -6px hsl(var(--primary) / 0.5);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 .nb-cozy.nb-cozy .nb-cta::before {
   display: none;
 }
 .nb-cozy.nb-cozy .nb-cta:hover {
-  background: hsl(var(--primary) / 0.3);
-  border-color: hsl(var(--primary));
+  background: color-mix(in srgb, hsl(var(--primary)) 22%, hsl(var(--card)));
+  border-color: hsl(var(--primary) / 0.9);
   transform: none;
-  box-shadow: 0 0 28px -4px hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 30px -4px hsl(var(--primary) / 0.6);
 }
 .nb-cozy.nb-cozy .nb-cta:active {
   transform: translateY(0) scale(0.98);
@@ -364,13 +364,39 @@
 
 /* Tło płótna: jasny — token tła; ciemny — grafit zamiast czerni, żeby szkło miało na czym się odróżnić (warstwy: tło → szkło → kontrolki) */
 .nb-cozy-tlo { background: hsl(var(--background)); }
-[data-theme='dark-theme'] .nb-cozy .nb-cozy-tlo { background: hsl(0 0% 8%); }
+/* Ciemny: tło jak na stronie głównej NextByte — głęboka czerń, zimne mgły (aury marki) i techniczna siatka z „latarnią” */
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-tlo {
+  background:
+    radial-gradient(ellipse 60% 45% at 12% 8%, hsl(var(--primary) / 0.13), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 88% 92%, hsl(var(--primary) / 0.1), transparent 70%),
+    radial-gradient(ellipse 70% 35% at 50% 55%, hsl(210 14% 100% / 0.045), transparent 75%),
+    hsl(0 0% 2.5%);
+}
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-tlo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(hsl(var(--primary) / 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--primary) / 0.075) 1px, transparent 1px);
+  background-size: var(--nb-wk, 96px) var(--nb-wk, 96px);
+  background-position: var(--nb-wx, 0) var(--nb-wy, 0);
+  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 20%, transparent 85%);
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 20%, transparent 85%);
+}
+/* Jasny: ledwie wyczuwalna ciepła mgła, bez siatki i kropek */
+.nb-cozy .nb-cozy-tlo { background-image: radial-gradient(ellipse 60% 45% at 12% 8%, hsl(var(--primary) / 0.05), transparent 70%); }
+[data-theme='dark-theme'] .nb-cozy .nb-cozy-tlo { background-color: transparent; }
 
 /* Ciemne szkło: jaśniejsza przezroczysta tafla (biel ~6%) zamiast czarnej na czarnym */
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo,
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-plyta {
-  background: hsl(0 0% 100% / 0.06);
-  border-color: hsl(0 0% 100% / 0.11);
+  background: hsl(var(--card) / 0.72);
+  border-color: hsl(0 0% 100% / 0.12);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.06), 0 10px 30px -12px rgba(0, 0, 0, 0.7);
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-niecka {
   background-color: hsl(0 0% 100% / 0.045);
@@ -392,9 +418,9 @@ html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
   backdrop-filter: saturate(130%) blur(8.8px);
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat {
-  border: 1px solid hsl(0 0% 100% / 0.12);
-  background: hsl(0 0% 4% / 0.78);
-  box-shadow: none;
+  border: 1px solid hsl(var(--primary) / 0.18);
+  background: hsl(var(--card) / 0.78);
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.06), 0 16px 40px -16px rgba(0, 0, 0, 0.7);
 }
 .nb-cozy.nb-cozy .nb-cozy-czat::before,
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat::before {
@@ -417,7 +443,7 @@ html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat { background: hsl(0 0% 8%); }
+  [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat { background: hsl(0 0% 3.5%); }
   .nb-cozy.nb-cozy .nb-cozy-czat::before { display: none; }
 }
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
