@@ -380,18 +380,45 @@
 /* Telefon: otwarty arkusz czatu zasłaniałby dok narzędzi — na czas pisania go chowamy */
 html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
 
-/* Czat: bez własnej „czarnej” tafli — panel ma kolor płótna (nie ma ramki ani cienia), a jedynym kształtem jest karta pola pisania z cienką ramką */
+/* Czat (komputer): wyraźnie odcięta tafla w stylu NextByte — ta sama co pasek boczny platformy: rant, półprzezroczyste wypełnienie karty
+   i delikatna poświata marki od góry i od dołu. Karta pola pisania jest jedyną „kartą” wewnątrz. */
 .nb-cozy.nb-cozy .nb-cozy-czat {
-  border: 0;
-  background: hsl(var(--background));
+  position: relative;
+  isolation: isolate;
+  border: 1px solid hsl(var(--foreground) / 0.14);
+  background: hsl(var(--card) / 0.72);
   box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  -webkit-backdrop-filter: saturate(130%) blur(8.8px);
+  backdrop-filter: saturate(130%) blur(8.8px);
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat {
-  border: 0;
-  background: hsl(0 0% 8%);
+  border: 1px solid hsl(0 0% 100% / 0.12);
+  background: hsl(0 0% 4% / 0.78);
   box-shadow: none;
+}
+.nb-cozy.nb-cozy .nb-cozy-czat::before,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat::before {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  height: auto;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(to bottom, hsl(var(--primary) / 0.06), transparent 50%, hsl(var(--primary) / 0.08));
+}
+/* Telefon: arkusz bez tafli — kolor płótna, bez ramki (czarny blok zasłaniał zdjęcie) */
+@media (max-width: 767px) {
+  .nb-cozy.nb-cozy .nb-cozy-czat,
+  [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat {
+    border: 0;
+    background: hsl(var(--background));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat { background: hsl(0 0% 8%); }
+  .nb-cozy.nb-cozy .nb-cozy-czat::before { display: none; }
 }
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
