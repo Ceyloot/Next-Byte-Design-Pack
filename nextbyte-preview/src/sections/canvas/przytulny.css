@@ -79,28 +79,29 @@
   box-shadow: inset 0 1px 3px 0 var(--cozy-niecka), 0 0 0 4px hsl(var(--primary) / 0.1);
 }
 
-/* ── Przycisk wezwania (CTA): spokojna, wypełniona pigułka ───────────────── */
+/* ── Przycisk wezwania (CTA): jak główny przycisk w Cenniku — szkło barwione akcentem, rant akcentu, miękka poświata ── */
 .nb-cozy.nb-cozy .nb-cta {
-  border: 0;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  border: 1px solid hsl(var(--primary) / 0.6);
+  background: hsl(var(--primary) / 0.2);
+  color: hsl(var(--foreground));
+  box-shadow: 0 0 20px -4px hsl(var(--primary) / 0.4);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 .nb-cozy.nb-cozy .nb-cta::before {
   display: none;
 }
 .nb-cozy.nb-cozy .nb-cta:hover {
-  background: hsl(var(--primary) / 0.9);
+  background: hsl(var(--primary) / 0.3);
+  border-color: hsl(var(--primary));
   transform: none;
-  box-shadow: none;
+  box-shadow: 0 0 28px -4px hsl(var(--primary) / 0.5);
 }
 .nb-cozy.nb-cozy .nb-cta:active {
   transform: translateY(0) scale(0.98);
 }
 .nb-cozy.nb-cozy .nb-cta:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   box-shadow: none;
 }
 
@@ -378,3 +379,27 @@
 
 /* Telefon: otwarty arkusz czatu zasłaniałby dok narzędzi — na czas pisania go chowamy */
 html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
+
+/* Czat: ciemniejsza, lita tafla bez obramowania; pole pisania bez ramki, tylko lekko jaśniejsze wypełnienie */
+.nb-cozy.nb-cozy .nb-cozy-czat {
+  border: 0;
+  background: hsl(var(--card) / 0.94);
+  box-shadow: 0 12px 32px -14px hsl(var(--cozy-cien) / 0.25);
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat {
+  border: 0;
+  background: hsl(0 0% 4%);
+  box-shadow: none;
+}
+.nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
+.nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
+  border-color: transparent;
+  background-color: hsl(var(--foreground) / 0.045);
+  box-shadow: none;
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
+  border-color: transparent;
+  background-color: hsl(0 0% 100% / 0.05);
+  box-shadow: none;
+}

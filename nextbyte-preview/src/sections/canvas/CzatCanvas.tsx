@@ -478,15 +478,9 @@ export function CzatCanvas({
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
     <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 max-h-[72dvh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny && klawiatura ? { transform: `translateY(-${klawiatura}px)` } : undefined}>
-      <div className={cn('p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !border-x-0 !border-b-0 !bg-[hsl(var(--card)/0.95)] slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
+      <div className={cn('p2-szklo nb-cozy-czat pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
-        <div className="flex shrink-0 items-center justify-between">
-          <span className="flex items-center gap-2.5 pl-1 text-[13px] font-semibold text-foreground">
-            <span className="grid h-8 w-8 place-items-center rounded-[11px] border border-foreground/10 bg-foreground/[0.04] text-foreground">
-              <NextByteMarkIcon className="h-[15px] w-[15px]" />
-            </span>
-            Canvas
-          </span>
+        <div className="flex shrink-0 items-center justify-end">
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => { setHistoriaWiadomosci([]); onTekst('') }}
