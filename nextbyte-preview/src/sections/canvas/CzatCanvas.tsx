@@ -505,20 +505,8 @@ export function CzatCanvas({
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {!mobilny && historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
-          <div className="flex h-full flex-col items-center justify-center gap-4 px-3 pb-4 text-center">
+          <div className="flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
             <p className="max-w-[230px] text-[13px] leading-relaxed text-muted-foreground/80">Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.</p>
-            <div className="flex flex-wrap justify-center gap-1.5">
-              {['Usuń tło', 'Popraw jakość', 'Zmień oświetlenie', 'Zamień na zimę', 'Dodaj obiekt'].map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => { onTekst(t); refTextarea.current?.focus() }}
-                  className="rounded-full border border-foreground/[0.1] bg-foreground/[0.04] px-3 py-1.5 text-[12px] text-foreground/75 transition-colors hover:border-primary/40 hover:bg-primary/[0.08] hover:text-foreground"
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
           </div>
         )}
         {historiaWiadomosci.map(msg => (
