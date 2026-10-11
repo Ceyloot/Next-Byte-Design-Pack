@@ -205,7 +205,7 @@ function skalibrujObszarPineski(
   return { x0, y0, x1, y1 }
 }
 
-export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
+export function CanvasSection({ onWyjdz, przelacznikNawigacji }: { onWyjdz?: () => void; przelacznikNawigacji?: React.ReactNode } = {}) {
   const { jasny: jasnyMotyw, przelacz: przelaczMotyw } = useMotywCanvasa()
   const [projekt, setProjekt] = useState<Projekt>(() => {
     try {
@@ -316,6 +316,15 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
     if (nowe.length) setZalaczniki(z => [...z, ...nowe].slice(0, 6))
   }, [])
   const refRoot = useRef<HTMLDivElement>(null)
+  /** Prawdziwy rozmiar pola roboczego Canvasa w platformie (px) — widać, ile miejsca zostaje obok nawigacji */
+  const [wymiaryPola, setWymiaryPola] = useState<{ w: number; h: number } | null>(null)
+  useEffect(() => {
+    const el = refRoot.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const o = new ResizeObserver(() => setWymiaryPola({ w: Math.round(el.clientWidth), h: Math.round(el.clientHeight) }))
+    o.observe(el)
+    return () => o.disconnect()
+  }, [])
   const [rozmiar, setRozmiar] = useState({ szer: 0, wys: 0 })
 
   useEffect(() => {
@@ -2374,6 +2383,7 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
 
       {/* ══ Licznik Bajtów (lewy górny róg) — saldo demonstracyjne do czasu podpięcia portfela ══ */}
       <div className="pointer-events-none absolute left-4 top-[var(--nb-canvas-gora,16px)] z-20 flex items-center gap-2">
+        {przelacznikNawigacji}
         {onWyjdz && (
           <button
             type="button"
@@ -2731,6 +2741,12 @@ export function CanvasSection({ onWyjdz }: { onWyjdz?: () => void } = {}) {
           <button type="button" title="Przybliż (+)" aria-label="Przybliż" onClick={() => zmienZoom(1.25)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><ZoomIn className="h-4 w-4" /></button>
           <span className="mx-0.5 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
           <button type="button" title="Dopasuj widok do zdjęć" aria-label="Dopasuj widok" onClick={dopasujWidok} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"><Maximize className="h-4 w-4" /></button>
+          {wymiaryPola && (
+            <>
+              <span className="mx-0.5 h-5 w-px bg-[hsl(var(--foreground)/0.12)]" />
+              <span title="Rozmiar pola roboczego Canvasa w platformie" className="px-1.5 font-mono text-[11px] tabular-nums text-foreground/55">{wymiaryPola.w}×{wymiaryPola.h}</span>
+            </>
+          )}
         </div>
       </div>
     </div>

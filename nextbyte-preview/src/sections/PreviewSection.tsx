@@ -476,7 +476,7 @@ interface PreviewSectionProps {
   onNavPositionChange?: (pos: NavPosition) => void
 }
 
-function renderSection(key: string, onWyjdzZCanvasa?: () => void): React.ReactNode {
+function renderSection(key: string, onWyjdzZCanvasa?: () => void, przelacznikNawigacji?: React.ReactNode): React.ReactNode {
   switch (key) {
     case 'karty':      return <KartySection />
     case 'akcje':      return <AkcjeSection />
@@ -486,7 +486,7 @@ function renderSection(key: string, onWyjdzZCanvasa?: () => void): React.ReactNo
     case 'dane':       return <DaneSection />
     case 'stany':      return <StanySection />
     case 'paleta':     return <PaletaSection />
-    case 'canvas':     return <CanvasSection onWyjdz={onWyjdzZCanvasa} />
+    case 'canvas':     return <CanvasSection onWyjdz={onWyjdzZCanvasa} przelacznikNawigacji={przelacznikNawigacji} />
     case 'czat':       return <CzatSection />
     default:           return null
   }
@@ -508,7 +508,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
      firm, Historia) i na ekranach auth, które inaczej nie mają jak wrócić. */
   /** Panel 2.0 zajmuje cały ekran — chrome podglądu (górny/boczny pasek)
    *  znika, a powrót prowadzi przez „Wyjdź" w jego własnej nawigacji. */
-  const pelnyEkran = (activeTab === 'preview' && previewSubView === 'dashboard2') || activeTab === 'canvas'
+  const pelnyEkran = activeTab === 'preview' && previewSubView === 'dashboard2'
 
   const podNawigacja =
     activeTab !== 'preview' ? []
@@ -740,8 +740,6 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       className={cn(
         'relative z-[500] px-3 sm:px-4 w-full shrink-0',
         navPosition === 'bottom' ? 'pt-2 pb-3' : 'pt-3 pb-2',
-        // Canvas: pasek pływa nad płótnem, żeby przesunięte pod niego zdjęcia prześwitywały przez szkło
-        activeTab === 'canvas' && (navPosition === 'bottom' ? 'absolute bottom-0 left-0' : 'absolute left-0 top-0'),
       )}
       onMouseLeave={scheduleClose}
     >
@@ -1010,10 +1008,31 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       >
 
         {/* ── Non-preview section content ── */}
-        {activeTab !== 'preview' && renderSection(activeTab, () => {
-          // Canvas jest pełnoekranowy (bez chrome'u podglądu) — wyjście wraca do podglądu; projekt zapisuje się sam.
-          onSelectTab?.('preview'); setActiveSection('preview'); setMenuWModule(false)
-        })}
+        {activeTab !== 'preview' && renderSection(
+          activeTab,
+          // Canvas siedzi w platformie (z jej nawigacją), więc własnego „Wyjdź” nie ma — przełącznik nawigacji zajmuje to miejsce
+          undefined,
+          activeTab === 'canvas' ? (
+            <div role="group" aria-label="Pozycja nawigacji platformy" className="p2-szklo pointer-events-auto flex h-11 items-center gap-0.5 !rounded-[16px] px-1.5">
+              {([['top', PanelTop, 'Nawigacja u góry'], ['left', PanelLeft, 'Nawigacja z lewej']] as const).map(([pos, Ikona, tytul]) => (
+                <button
+                  key={pos}
+                  type="button"
+                  title={tytul}
+                  aria-label={tytul}
+                  aria-pressed={navPosition === pos}
+                  onClick={() => onNavPositionChange?.(pos)}
+                  className={cn(
+                    'grid h-8 w-8 place-items-center rounded-lg transition-colors',
+                    navPosition === pos ? 'bg-foreground/[0.1] text-foreground' : 'text-foreground/50 hover:bg-foreground/[0.06] hover:text-foreground',
+                  )}
+                >
+                  <Ikona className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
+          ) : undefined,
+        )}
 
         {/* ══ TOP BANNER: UNIFIED SINGLE TILE & SUBVIEWS ══ */}
         {activeTab === 'preview' && (

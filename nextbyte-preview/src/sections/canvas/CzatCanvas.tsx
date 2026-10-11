@@ -166,7 +166,7 @@ const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
   .map((m): Model => {
     const Z = znakModelu(m.id)
     return {
-      id: m.id, name: m.nazwa, provider: m.id === 'gptimage2' ? 'OpenAI' : 'Google Gemini', badge: m.id === 'gptimage2' ? 'OPENAI' : 'GEMINI',
+      id: m.id, name: m.nazwa, provider: m.id === 'gptimage2' ? 'OpenAI' : 'Google Gemini', badge: m.id === 'gptimage2' ? 'OpenAI' : 'Google',
       group: 'NEXTBYTE', description: m.opis, tags: ['obraz', m.krotko.toLowerCase()],
       cost: BYTE_ZA_OBRAZ, speed: 'balanced', icon: <Z className="h-4 w-4" />,
       metrics: metryki(m.id === 'pro' ? 10 : m.id === 'gptimage2' ? 9 : m.id === 'nb2' ? 8 : 6, m.id === 'lite' ? 9 : m.id === 'nb2' ? 6 : m.id === 'gptimage2' ? 3 : 4),
@@ -446,8 +446,8 @@ export function CzatCanvas({
       <div className="p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 !rounded-none !border-y-0 !border-r-0 p-3 animate-in slide-in-from-right-4 duration-300">
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
-          <span className="flex items-center gap-2.5 pl-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--muted-foreground))]">
-            <span className="grid h-8 w-8 place-items-center rounded-[11px] border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.08)] text-foreground">
+          <span className="flex items-center gap-2.5 pl-1 text-[13px] font-semibold text-foreground">
+            <span className="grid h-8 w-8 place-items-center rounded-[11px] border border-foreground/10 bg-foreground/[0.04] text-foreground">
               <NextByteMarkIcon className="h-[15px] w-[15px]" />
             </span>
             Canvas
@@ -475,11 +475,8 @@ export function CzatCanvas({
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
-          <div className="flex h-full flex-col items-center justify-center gap-3 px-1 pb-6 text-center">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl border border-[hsl(var(--primary)/0.22)] bg-primary/[0.1] text-primary shadow-[0_0_28px_-10px_hsl(var(--primary)/0.5)]">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <p className="text-[13px] text-muted-foreground">Wgraj zdjęcie · wskaż · opisz</p>
+          <div className="flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
+            <p className="max-w-[220px] text-[13px] leading-relaxed text-muted-foreground/80">Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.</p>
           </div>
         )}
         {historiaWiadomosci.map(msg => (

@@ -378,7 +378,7 @@ export function GlassModelSearch({
             <span className="text-base font-bold leading-none text-foreground">
               {peekedModel.name}
             </span>
-            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+            <span className="text-[11px] font-medium text-muted-foreground">
               {peekedModel.badge || peekedModel.provider}
             </span>
           </div>
@@ -399,7 +399,7 @@ export function GlassModelSearch({
           <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
             {peekedModel.metrics.map((m) => (
               <div key={m.label}>
-                <p className="mb-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                <p className="mb-1 text-[11px] font-medium text-muted-foreground/80">
                   {m.label}
                 </p>
                 <MetricBars value={m.value} />
@@ -409,8 +409,8 @@ export function GlassModelSearch({
 
           {/* Box kosztu wiadomości */}
           <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2">
-            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {odwroc ? 'KOSZT' : 'KOSZT WIADOMOŚCI'}
+            <span className="text-[11.5px] font-medium text-muted-foreground">
+              {odwroc ? 'Koszt' : 'Koszt wiadomości'}
             </span>
             <span className="text-sm font-bold text-primary tabular-nums">
               {peekedModel.messageCost} Byte
@@ -421,7 +421,7 @@ export function GlassModelSearch({
         {/* Konfiguracja — poziom rozumowania */}
         {peekedModel.reasoningLevels.length > 0 && (
           <div className="mt-4 pt-3 border-t border-border/40">
-            <p className="mb-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            <p className="mb-0.5 text-[11px] font-medium text-muted-foreground/80">
               KONFIGURACJA
             </p>
             <p className="mb-2 text-xs font-medium text-foreground">
@@ -491,8 +491,8 @@ export function GlassModelSearch({
             if (group.items.length === 0) return null
             return (
               <div key={group.label} className="space-y-1">
-                <p className="px-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60">
-                  {group.label}
+                <p className="px-2 text-[11px] font-medium text-muted-foreground/70">
+                  {group.label === 'NEXTBYTE' ? 'NextByte' : 'Inne modele'}
                 </p>
 
                 {group.items.map((model) => {

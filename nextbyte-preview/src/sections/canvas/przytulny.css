@@ -80,7 +80,7 @@
 }
 
 /* ── Przycisk wezwania (CTA): spokojna, wypełniona pigułka ───────────────── */
-[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta {
+.nb-cozy.nb-cozy .nb-cta {
   border: 0;
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
@@ -88,18 +88,18 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta::before {
+.nb-cozy.nb-cozy .nb-cta::before {
   display: none;
 }
-[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta:hover {
+.nb-cozy.nb-cozy .nb-cta:hover {
   background: hsl(var(--primary) / 0.9);
   transform: none;
   box-shadow: none;
 }
-[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta:active {
+.nb-cozy.nb-cozy .nb-cta:active {
   transform: translateY(0) scale(0.98);
 }
-[data-theme='future-theme'] .nb-cozy.nb-cozy .nb-cta:disabled {
+.nb-cozy.nb-cozy .nb-cta:disabled {
   opacity: 0.45;
   box-shadow: none;
 }
@@ -283,13 +283,13 @@
 .nb-cozy.nb-cozy .p2-szklo,
 .nb-cozy.nb-cozy .nb-cozy-plyta {
   background-image:
-    linear-gradient(155deg, hsl(0 0% 100% / 0.22) 0%, hsl(0 0% 100% / 0.04) 38%, hsl(0 0% 100% / 0) 62%),
+    linear-gradient(155deg, hsl(0 0% 100% / 0.12) 0%, hsl(0 0% 100% / 0) 50%),
     linear-gradient(0deg, hsl(var(--foreground) / 0.025), transparent 30%);
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo,
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-plyta {
   background-image:
-    linear-gradient(155deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.025) 38%, hsl(0 0% 100% / 0) 62%);
+    linear-gradient(155deg, hsl(0 0% 100% / 0.05) 0%, hsl(0 0% 100% / 0) 50%);
 }
 
 /* Kompozytor czatu: niecka też jest szkłem (rozmycie + połysk + światło na górnej krawędzi) */
@@ -329,9 +329,25 @@
   background-color: color-mix(in srgb, hsl(var(--primary)) 10%, transparent);
 }
 .nb-cozy.nb-cozy .nb-cozy-startowa .nb-cta {
-  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.25), 0 6px 16px -8px hsl(var(--primary) / 0.5);
+  box-shadow: none;
 }
 .nb-cozy.nb-cozy .nb-cozy-startowa kbd {
   background: hsl(var(--foreground) / 0.06);
   border: 1px solid hsl(var(--foreground) / 0.08);
 }
+
+/* Mniej „efektów”: w ciemnym motywie neutralny rant i zwykły cień zamiast cyjanowej poświaty i świecącej kreski u góry */
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-karta,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-plyta,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-szklo.nb-powierzchnia,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-startowa {
+  border-color: hsl(var(--foreground) / 0.11);
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.07), 0 12px 32px -14px rgba(0, 0, 0, 0.6);
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo::before { display: none; }
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-niecka:focus-within {
+  border-color: hsl(var(--foreground) / 0.28);
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.1);
+}
+.nb-cozy.nb-cozy .nb-cozy-niecka:focus-within { box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.25); }
