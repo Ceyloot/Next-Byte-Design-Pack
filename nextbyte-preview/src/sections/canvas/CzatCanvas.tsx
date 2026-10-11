@@ -255,7 +255,7 @@ export function CzatCanvas({
   }, [])
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
-    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety || mobilny ? '0px' : '340px')
+    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety || mobilny ? '0px' : '364px')
     return () => {
       document.documentElement.style.removeProperty('--nb-czat-szer')
     }
@@ -472,8 +472,8 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 h-[66vh]' : 'bottom-[var(--nb-nav-dol,0px)] right-[var(--nb-nav-prawo,0px)] top-[var(--nb-nav-gora,0px)] w-[340px] max-w-[100vw]')}>
-      <div className={cn('p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !border-x-0 !border-b-0 !bg-[hsl(var(--card)/0.95)] slide-in-from-bottom-4' : '!rounded-none !border-y-0 !border-r-0 slide-in-from-right-4')}>
+    <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 h-[66vh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')}>
+      <div className={cn('p2-szklo pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !border-x-0 !border-b-0 !bg-[hsl(var(--card)/0.95)] slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
         {/* Nagłówek: nazwa, wersja (diagnostyka), zwiń */}
         <div className="flex shrink-0 items-center justify-between">
           <span className="flex items-center gap-2.5 pl-1 text-[13px] font-semibold text-foreground">

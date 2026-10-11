@@ -365,8 +365,7 @@ export function GlassModelSearch({
     backdropFilter: 'blur(26px) saturate(150%)',
     WebkitBackdropFilter: 'blur(26px) saturate(150%)',
     borderColor: 'hsl(var(--foreground) / 0.12)',
-    boxShadow: 'inset 0 1px 0 0 hsl(0 0% 100% / 0.4), 0 18px 48px -16px hsl(var(--foreground) / 0.35)',
-    backgroundImage: 'linear-gradient(155deg, hsl(0 0% 100% / 0.16) 0%, hsl(0 0% 100% / 0.03) 40%, hsl(0 0% 100% / 0) 62%)',
+    boxShadow: '0 18px 48px -16px hsl(var(--foreground) / 0.35)',
   }
 
   // Karta szczegółów modelu (metryki, koszt, konfiguracja)

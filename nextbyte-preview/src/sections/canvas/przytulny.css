@@ -326,3 +326,34 @@
   box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.1);
 }
 .nb-cozy.nb-cozy .nb-cozy-niecka:focus-within { box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.25); }
+
+/* Bez „jasnego cienia” na szkle: żadnego połysku (gradientu) ani jasnej kreski u góry — sam rant, rozmycie i zwykły cień */
+.nb-cozy.nb-cozy .p2-szklo,
+.nb-cozy.nb-cozy .p2-karta,
+.nb-cozy.nb-cozy .nb-cozy-plyta,
+.nb-cozy.nb-cozy .nb-cozy-niecka {
+  background-image: none;
+}
+.nb-cozy.nb-cozy .p2-szklo,
+.nb-cozy.nb-cozy .nb-cozy-plyta {
+  box-shadow: 0 10px 28px -14px hsl(var(--cozy-cien) / 0.28);
+}
+.nb-cozy.nb-cozy .nb-cozy-niecka,
+.nb-cozy.nb-cozy .nb-cozy-niecka:focus-within {
+  box-shadow: none;
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-karta,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-plyta,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-niecka {
+  background-image: none;
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-szklo,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .p2-karta,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-plyta {
+  box-shadow: 0 12px 32px -14px rgba(0, 0, 0, 0.6);
+}
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-niecka,
+[data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-niecka:focus-within {
+  box-shadow: none;
+}
