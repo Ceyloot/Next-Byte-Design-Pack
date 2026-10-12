@@ -370,6 +370,12 @@ export function CanvasSection() {
   }, [liczbaZdjec, mobilny])
   const dopasujWidokRef = useRef<() => void>(() => undefined)
   dopasujWidokRef.current = () => dopasujWidok()
+  /** dopasowanie widoku do wybranych warstw (np. oryginał + wynik), a nie do wszystkich — rozrzucone zdjęcia nie oddalają widoku do 12% */
+  const dopasujCeleRef = useRef<(ids: string[]) => void>(() => undefined)
+  dopasujCeleRef.current = ids => {
+    const cele = projekt.warstwy.filter(w => w.visible && ids.includes(w.id))
+    if (cele.length) dopasujWidok(cele, 1)
+  }
   // Telefon: widok zawsze obejmuje zdjęcia po przejściu z czatu na płótno i po zmianie rozmiaru / obrotu ekranu
   useEffect(() => {
     if (!mobilny) return
@@ -1065,8 +1071,13 @@ export function CanvasSection() {
     setTrybOlowka('linia')
     setNarzedzie('wybor')
     setZaznaczoneRysunki([])
+    const zdjecie = trybAdnRef.current
     if (przywroc && widokPrzedAdn.current) setWidok(widokPrzedAdn.current)
-    else setTimeout(() => dopasujWidokRef.current(), 60)
+    else {
+      // po wykonaniu widok obejmuje oryginał i miejsce na wynik, nie wszystkie zdjęcia na płótnie
+      const ids = [zdjecie, duchId.current].filter(Boolean) as string[]
+      setTimeout(() => (ids.length ? dopasujCeleRef.current(ids) : dopasujWidokRef.current()), 80)
+    }
     widokPrzedAdn.current = null
   }
   const trybAdnRef = useRef<string | null>(null)

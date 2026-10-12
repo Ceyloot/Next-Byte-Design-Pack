@@ -102,3 +102,4 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Ctrl+V i wgranie z „Dodaj zdjęcie" kładą zdjęcie na środku aktualnego widoku (po przesunięciu płótna też tam, gdzie patrzysz), a nie na prawo od wszystkich; nie nachodzą na istniejące zdjęcia.
 - [ ] Przeciągnięcie plików z komputera na Canvas — także nad kartą czatu i paskami — kładzie zdjęcie dokładnie pod kursorem; kilka plików naraz leży obok siebie.
 - [ ] Przeciągnięcie obrazu ze strony www, z innej karty albo z czatu (adres lub data:) też działa; gdy serwer zdjęcia nie pozwala na pobranie, obraz ładuje się wprost z adresu.
+- [ ] Po „Wykonaj” w trybie adnotacji widok obejmuje oryginał i miejsce na wynik (zoom do 100%), a nie wszystkie zdjęcia na płótnie — rozrzucone zdjęcia nie oddalają widoku do kilkunastu procent.
