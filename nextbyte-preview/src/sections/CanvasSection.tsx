@@ -47,7 +47,7 @@ import { Outpaint } from '@/sections/canvas/Outpaint'
 import { dopasujWymiary } from '@/sections/canvas/formaty-modelu'
 import { typWymiarow } from '@/sections/canvas/rozszerzanie-kadru'
 import type { Rysunek } from '@/sections/canvas/typy'
-import { celAdnotacji, przygotujAdnotacje, rysujRysunki, szerokoscNapisu, zadaniaZAdnotacji } from '@/sections/canvas/adnotacje'
+import { celAdnotacji, przygotujAdnotacje, rysujRysunki, zadaniaZAdnotacji } from '@/sections/canvas/adnotacje'
 import { byteZaObraz } from '@/sections/canvas/dostawca'
 import { useMobilny } from '@/sections/canvas/mobilny'
 import { rozpoznajRozszerzenie, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
@@ -898,16 +898,15 @@ export function CanvasSection() {
     if (n) {
       const t = n.tekst.trim()
       if (t) {
-        const szer = szerokoscNapisu(t, n.rozmiar)
-        let x = n.srodek ? n.x - szer / 2 : n.x
+        // pinezka: szpic dokładnie w punkcie zaznaczenia (przycięty do zdjęcia)
+        let x = n.x
         let y = n.y
         const r = ramkaRef.current
         if (r) {
-          const pad = n.rozmiar * 0.7
-          x = Math.min(r.x + r.width - szer - pad, Math.max(r.x + pad, x))
-          y = Math.min(r.y + r.height - n.rozmiar, Math.max(r.y + n.rozmiar, y))
+          x = Math.min(r.x + r.width - n.rozmiar, Math.max(r.x + n.rozmiar, x))
+          y = Math.min(r.y + r.height, Math.max(r.y + n.rozmiar * 3, y))
         }
-        const punkty: [number, number][] = [[x, y], [x + szer, y]]
+        const punkty: [number, number][] = [[x, y], [x + 0.01, y]]
         if (n.edytuje) setRysunki(rs => rs.map(q => (q.id === n.edytuje ? { ...q, tekst: t, punkty } : q)))
         else setRysunki(rs => [...rs, { id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty, kolor: kolorOlowka === 'auto' ? '#ef4444' : kolorOlowka, grubosc: n.rozmiar, tekst: t }])
       }
@@ -984,11 +983,19 @@ export function CanvasSection() {
     return () => document.documentElement.removeAttribute('data-nb-adn')
   }, [trybAdn])
   /** Numery zadań na zdjęciu — te same, które dostaje model */
+  const zadaniaAdn = useMemo(() => (trybAdn && celAdn ? zadaniaZAdnotacji(celAdn.rysunki, celAdn.warstwa) : []), [trybAdn, celAdn])
+  /** Numer zadania dla każdej pinezki z opisem — ten sam, który dostaje model */
+  const numeryNapisow = useMemo(() => {
+    const m: Record<string, number> = {}
+    for (const z of zadaniaAdn) for (const id of z.napisyId) m[id] = z.numer
+    return m
+  }, [zadaniaAdn])
+  /** Zaznaczone miejsca bez opisu — znacznik pośrodku, żeby było widać, że brakuje opisu */
   const znacznikiZadan = useMemo(() => {
-    if (!trybAdn || !celAdn) return []
+    if (!celAdn) return []
     const w = celAdn.warstwa
-    return zadaniaZAdnotacji(celAdn.rysunki, w).map(z => ({ numer: z.numer, x: w.x + z.ramka.x0 * w.width, y: w.y + z.ramka.y0 * w.height }))
-  }, [trybAdn, celAdn])
+    return zadaniaAdn.filter(z => z.napisy.length === 0).map(z => ({ numer: z.numer, x: w.x + ((z.ramka.x0 + z.ramka.x1) / 2) * w.width, y: w.y + ((z.ramka.y0 + z.ramka.y1) / 2) * w.height }))
+  }, [zadaniaAdn, celAdn])
   const ramkaRysowania = useMemo(() => {
     const w = trybAdn ? projekt.warstwy.find(x => x.id === trybAdn) : null
     return w ? { id: w.id, x: w.x, y: w.y, width: w.width, height: w.height } : null
@@ -2454,13 +2461,14 @@ export function CanvasSection() {
         grubosciEkranowe={Boolean(trybAdn)}
         ramkaRysowania={ramkaRysowania}
         znacznikiZadan={znacznikiZadan}
+        numeryNapisow={numeryNapisow}
         onPrzesunRysunki={przesunRysunki}
         onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, srodek: false, ax: x, ay: y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom), utworzony: Date.now() }) }}
         onEdytujNapis={id => {
           const r = rysunki.find(q => q.id === id)
           if (!r?.tekst) return
           zatwierdzNapis()
-          setNapis({ x: r.punkty[0][0], y: r.punkty[0][1], srodek: false, ax: r.punkty[1][0], ay: r.punkty[0][1], tekst: r.tekst, rozmiar: r.grubosc, utworzony: Date.now(), edytuje: id })
+          setNapis({ x: r.punkty[0][0], y: r.punkty[0][1], srodek: false, ax: r.punkty[0][0], ay: r.punkty[0][1] - 30 / Math.max(0.05, widok.zoom), tekst: r.tekst, rozmiar: r.grubosc, utworzony: Date.now(), edytuje: id })
         }}
         onRysunek={r0 => {
           // adnotacja na zdjęciu ma być wyraźna: kolor „domyślny” (biały / ciemny wg motywu) zamieniamy na czerwony
@@ -2782,11 +2790,11 @@ export function CanvasSection() {
                 <span
                   className={cn(
                     'flex h-9 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[12px] font-medium',
-                    znacznikiZadan.length === 0 ? 'border-foreground/[0.1] text-muted-foreground' : maOpis ? 'border-primary/30 bg-primary/10 text-foreground' : 'border-warning/40 bg-warning/10 text-foreground',
+                    zadaniaAdn.length === 0 ? 'border-foreground/[0.1] text-muted-foreground' : maOpis ? 'border-primary/30 bg-primary/10 text-foreground' : 'border-warning/40 bg-warning/10 text-foreground',
                   )}
                 >
                   <PencilRuler className="h-3.5 w-3.5 text-primary" />
-                  {znacznikiZadan.length === 0 ? 'Zaznacz miejsce' : !maOpis ? 'Dopisz, co zmienić' : `${znacznikiZadan.length} ${znacznikiZadan.length === 1 ? 'zadanie' : znacznikiZadan.length < 5 ? 'zadania' : 'zadań'}`}
+                  {zadaniaAdn.length === 0 ? 'Zaznacz miejsce' : !maOpis ? 'Dopisz, co zmienić' : `${zadaniaAdn.length} ${zadaniaAdn.length === 1 ? 'zadanie' : zadaniaAdn.length < 5 ? 'zadania' : 'zadań'}`}
                 </span>
                 <input
                   value={projekt.tekst}

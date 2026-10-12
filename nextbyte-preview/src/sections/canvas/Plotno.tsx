@@ -53,6 +53,8 @@ interface Props {
   ramkaRysowania?: { id: string; x: number; y: number; width: number; height: number } | null
   /** numery zadań (obszarów) pokazywane na zdjęciu w trybie adnotacji */
   znacznikiZadan?: { x: number; y: number; numer: number }[]
+  /** numer zadania dla każdego napisu (pinezki z opisem) */
+  numeryNapisow?: Record<string, number>
   /** grubości kresek liczone w pikselach ekranu (tryb adnotacji: widok bywa mocno przybliżony) */
   grubosciEkranowe?: boolean
   onNapis?: (x: number, y: number) => void
@@ -72,6 +74,10 @@ interface Operacja {
   rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel' | 'zaznaczanie' | 'rysowanie' | 'przesuwanieRysunkow'
   /** przesuwanie szkiców / napisów: które */
   ids?: string[]
+  /** przesuwanie szkiców / napisów: czy wskaźnik odszedł od punktu chwytu na tyle, żeby to było przeciągnięcie, a nie klik */
+  przeciagniety?: boolean
+  /** punkt chwytu w pikselach ekranu */
+  pocz?: [number, number]
   punkty?: [number, number][]
   startX: number
   startY: number
@@ -147,6 +153,7 @@ export function Plotno({
   grubosciEkranowe = false,
   ramkaRysowania = null,
   znacznikiZadan = [],
+  numeryNapisow = {},
   onPrzesunRysunki,
   gruboscOlowka = 5,
   onRysunek,
@@ -443,6 +450,8 @@ export function Plotno({
     }
 
     if (op.rodzaj === 'przesuwanieRysunkow' && op.ids) {
+      if (!op.przeciagniety && Math.hypot(e.clientX - (op.pocz?.[0] ?? e.clientX), e.clientY - (op.pocz?.[1] ?? e.clientY)) < 4) return
+      op.przeciagniety = true
       onPrzesunRysunki?.(op.ids, p.x - op.startX, p.y - op.startY)
       op.startX = p.x
       op.startY = p.y
@@ -539,6 +548,11 @@ export function Plotno({
       setZywyRysunek(null)
       const pkt = op.punkty.length === 1 ? [op.punkty[0], [op.punkty[0][0] + 0.01, op.punkty[0][1]] as [number, number]] : op.punkty
       onRysunek?.({ id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: pkt, kolor: kolorOlowka, grubosc, ...(trybOlowka === 'zakres' ? { zakres: true } : {}) })
+      return
+    }
+    if (op?.rodzaj === 'przesuwanieRysunkow' && !op.przeciagniety && op.ids?.length === 1) {
+      const r = rysunki.find(q => q.id === op.ids?.[0])
+      if (r?.tekst) onEdytujNapis?.(r.id)
       return
     }
     if (op?.rodzaj === 'zaznaczanie') {
@@ -802,7 +816,7 @@ export function Plotno({
                     if (nowe.includes(ry.id)) {
                       przechwyc(e.currentTarget as Element, e.pointerId)
                       const p = doSceny(e)
-                      refOperacja.current = { rodzaj: 'przesuwanieRysunkow', startX: p.x, startY: p.y, ids: nowe }
+                      refOperacja.current = { rodzaj: 'przesuwanieRysunkow', startX: p.x, startY: p.y, ids: nowe, pocz: [e.clientX, e.clientY] }
                     }
                   }}
                   onDoubleClick={e => {
@@ -821,35 +835,29 @@ export function Plotno({
                   {ry.kolor === '#111111' && !ry.tekst && !ry.zakres && <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={ry.grubosc + 3 * odwrotna} strokeLinecap="round" strokeLinejoin="round" />}
                   {ry.tekst ? (
                     (() => {
-                      const w = Math.max(ry.grubosc, ry.tekst.length * ry.grubosc * 0.58)
-                      const pad = ry.grubosc * 0.55
-                      const h = ry.grubosc * 1.7
-                      const kolor = ry.kolor === 'auto' ? 'hsl(var(--foreground))' : ry.kolor
+                      // opis jako pinezka: główka z numerem zadania, szpic dokładnie w miejscu zaznaczenia; sam tekst w podpowiedzi i na karcie
+                      const r = 12 * odwrotna
+                      const x = ry.punkty[0][0]
+                      const y = ry.punkty[0][1]
+                      const cy = y - 2.1 * r
+                      const num = numeryNapisow[ry.id]
                       return (
                         <>
-                          <rect
-                            x={ry.punkty[0][0] - pad}
-                            y={ry.punkty[0][1] - h / 2}
-                            width={w + pad * 2}
-                            height={h}
-                            rx={h / 2}
-                            fill="hsl(var(--card) / 0.94)"
-                            stroke={kolor}
-                            strokeWidth={Math.max(1, ry.grubosc / 9)}
-                            style={{ filter: 'drop-shadow(0 2px 6px hsl(0 0% 0% / 0.35))' }}
+                          <title>{ry.tekst}</title>
+                          {wybrany && <circle cx={x} cy={cy} r={r * 1.45} fill="none" stroke="hsl(var(--primary))" strokeWidth={1.5 * odwrotna} strokeDasharray={`${4 * odwrotna} ${3 * odwrotna}`} />}
+                          <path
+                            d={`M ${x} ${y} L ${x - r * 0.72} ${cy + r * 0.7} L ${x + r * 0.72} ${cy + r * 0.7} Z`}
+                            fill="hsl(var(--primary))"
+                            stroke="hsl(var(--background))"
+                            strokeWidth={1.5 * odwrotna}
+                            strokeLinejoin="round"
+                            style={{ filter: 'drop-shadow(0 2px 4px hsl(0 0% 0% / 0.4))' }}
                           />
-                          <text
-                            x={ry.punkty[0][0]}
-                            y={ry.punkty[0][1]}
-                            dominantBaseline="central"
-                            fontSize={ry.grubosc}
-                            fontWeight={600}
-                            fontFamily="Inter, system-ui, sans-serif"
-                            fill="hsl(var(--foreground))"
-                            style={{ userSelect: 'none' }}
-                          >
-                            {ry.tekst}
+                          <circle cx={x} cy={cy} r={r} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={2 * odwrotna} />
+                          <text x={x} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={r * 1.05} fontWeight={700} fontFamily="Inter, system-ui, sans-serif" fill="hsl(var(--primary-foreground))" style={{ userSelect: 'none' }}>
+                            {num ?? '•'}
                           </text>
+                          <circle cx={x} cy={cy + r * 0.5} r={r * 1.5} fill="transparent" stroke="transparent" strokeWidth={r * 0.6} />
                         </>
                       )
                     })()
@@ -857,14 +865,15 @@ export function Plotno({
                     <path d={d} fill="none" stroke={ry.kolor === 'auto' ? undefined : ry.kolor} style={ry.kolor === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={ry.zakres ? 0.45 : 1} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
                   )}
                   {/* szersza, niewidoczna ścieżka — łatwiej trafić palcem */}
-                  <path d={d} fill="none" stroke="transparent" strokeWidth={Math.max(ry.grubosc, 14 * odwrotna)} strokeLinecap="round" strokeLinejoin="round" />
+                  {!ry.tekst && <path d={d} fill="none" stroke="transparent" strokeWidth={Math.max(ry.grubosc, 14 * odwrotna)} strokeLinecap="round" strokeLinejoin="round" />}
                 </g>
               )
             })}
             {znacznikiZadan.map(z => (
               <g key={`zn-${z.numer}`} style={{ pointerEvents: 'none' }}>
-                <circle cx={z.x} cy={z.y} r={12 * odwrotna} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={2 * odwrotna} />
-                <text x={z.x} y={z.y} textAnchor="middle" dominantBaseline="central" fontSize={12 * odwrotna} fontWeight={700} fontFamily="Inter, system-ui, sans-serif" fill="hsl(var(--primary-foreground))">
+                <title>Dopisz, co tu zmienić</title>
+                <circle cx={z.x} cy={z.y} r={11 * odwrotna} fill="hsl(var(--background) / 0.9)" stroke="hsl(var(--primary))" strokeWidth={1.5 * odwrotna} strokeDasharray={`${3 * odwrotna} ${2.5 * odwrotna}`} />
+                <text x={z.x} y={z.y} textAnchor="middle" dominantBaseline="central" fontSize={11 * odwrotna} fontWeight={700} fontFamily="Inter, system-ui, sans-serif" fill="hsl(var(--primary))">
                   {z.numer}
                 </text>
               </g>
@@ -874,7 +883,7 @@ export function Plotno({
             )}
             {(() => {
               const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))
-              if (wyb.length === 0 || (ramkaRysowania && narzedzie !== 'wybor')) return null
+              if (wyb.length === 0 || wyb.every(ry => ry.tekst) || (ramkaRysowania && narzedzie !== 'wybor')) return null
               const xs = wyb.flatMap(ry => ry.punkty.map(q => q[0]))
               const ys = wyb.flatMap(ry => ry.punkty.map(q => q[1]))
               const pad = 8 * odwrotna + Math.max(...wyb.map(ry => ry.grubosc)) / 2

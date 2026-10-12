@@ -96,6 +96,8 @@ export interface ZadanieAdnotacji {
   /** obszar w ułamkach zdjęcia (0–1) */
   ramka: Ramka
   napisy: string[]
+  /** id rysunków-napisów (pinezek) przypisanych do tego zadania, w tej samej kolejności co `napisy` */
+  napisyId: string[]
 }
 
 const sumuj = (a: Ramka, b: Ramka): Ramka => ({ x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) })
@@ -125,7 +127,7 @@ export function zadaniaZAdnotacji(rysunki: Rysunek[], w: Pick<Warstwa, 'x' | 'y'
       obszary.push({ ramka: polaczona, kolor })
     } else obszary.push({ ramka, kolor })
   }
-  const zadania: { ramka: Ramka; napisy: string[] }[] = obszary.map(o => ({ ramka: o.ramka, napisy: [] }))
+  const zadania: { ramka: Ramka; napisy: string[]; napisyId: string[] }[] = obszary.map(o => ({ ramka: o.ramka, napisy: [], napisyId: [] }))
   for (const r of rysunki.filter(x => x.tekst)) {
     const rt = ramkaRysunku(r)
     const sx = (rt.x0 + rt.x1) / 2
@@ -136,8 +138,10 @@ export function zadaniaZAdnotacji(rysunki: Rysunek[], w: Pick<Warstwa, 'x' | 'y'
       const d = odlegloscDoRamki(sx, sy, z.ramka)
       if (d < odl) { odl = d; naj = i }
     })
-    if (naj >= 0) zadania[naj].napisy.push(r.tekst as string)
-    else zadania.push({ ramka: { x0: rt.x0, y0: Math.max(0, rt.y0 - 0.04), x1: rt.x1, y1: Math.min(1, rt.y1 + 0.04) }, napisy: [r.tekst as string] })
+    if (naj >= 0) {
+      zadania[naj].napisy.push(r.tekst as string)
+      zadania[naj].napisyId.push(r.id)
+    } else zadania.push({ ramka: { x0: Math.max(0, rt.x0 - 0.03), y0: Math.max(0, rt.y0 - 0.04), x1: Math.min(1, rt.x0 + 0.03), y1: Math.min(1, rt.y1 + 0.04) }, napisy: [r.tekst as string], napisyId: [r.id] })
   }
   return zadania
     .sort((a, b) => a.ramka.y0 - b.ramka.y0 || a.ramka.x0 - b.ramka.x0)
