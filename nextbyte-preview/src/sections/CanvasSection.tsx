@@ -3400,7 +3400,6 @@ export function CanvasSection() {
         powodBlokady={powodBlokady}
         trwa={['planuje', 'trwa', 'sprawdza', 'poprawia', 'koryguje'].includes(stanGeneracji.faza)}
         intencja={intencja}
-        uwagi={uwagi}
         podgladPolecenia={ostatniPrompt || `[PODGLĄD WSTĘPNY — bez danych reżysera (światło, rozmiar, zbliżenia) i bez trybu dwóch zadań. Prawdziwy prompt pojawi się tu po „Generuj”.]\n\n${polecenie}`}
       />
 

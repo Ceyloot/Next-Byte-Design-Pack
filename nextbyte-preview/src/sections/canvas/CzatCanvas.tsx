@@ -19,7 +19,6 @@ import {
   Wand2,
   Check,
   RefreshCw,
-  Info,
   ExternalLink,
   Download,
   AlertCircle,
@@ -43,7 +42,6 @@ import { byteZaObraz } from './dostawca'
 import type { Zalacznik } from './zalaczniki'
 import { useKlawiatura, useMobilny } from './mobilny'
 import { INTENCJE, type Intencja } from './tryby-edycji'
-import type { Uwaga } from './kontrola-polecenia'
 import type { OpcjaRol } from './role-z-polecenia'
 
 const godzina = (d: Date) => d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -87,7 +85,6 @@ interface Props {
   powodBlokady: string | null
   trwa: boolean
   intencja: Intencja
-  uwagi: Uwaga[]
   podgladPolecenia: string
   /** odpowiedź na pytanie o role pinesek (poziom 4) — od razu uruchamia generację */
   onOdpowiedzRol: (opcja: OpcjaRol) => void
@@ -215,7 +212,6 @@ export function CzatCanvas({
   powodBlokady,
   trwa,
   intencja,
-  uwagi,
   onOdpowiedzRol,
   modelObrazu,
   onModelObrazu,
@@ -703,27 +699,8 @@ export function CzatCanvas({
         <div ref={refKoniecWiadomosci} />
       </div>
 
-      {/* Kompozytor: podgląd (na żądanie), uwagi, podpowiedzi, chipy pinesek, jedno pole i jeden przycisk */}
+      {/* Kompozytor: podgląd (na żądanie), podpowiedzi, chipy pinesek, jedno pole i jeden przycisk */}
       <div className="relative z-20 shrink-0 space-y-2">
-        {uwagi.length > 0 && (
-          <div className="space-y-1">
-            {uwagi.map(u => (
-              <div
-                key={u.id}
-                className={cn(
-                  'flex items-start gap-2 rounded-xl border px-3 py-2 text-[11.5px] leading-snug',
-                  u.waga === 'blokada'
-                    ? 'border-[hsl(var(--destructive)/0.22)] bg-[hsl(var(--destructive)/0.07)] text-[hsl(var(--foreground)/0.85)]'
-                    : 'border-foreground/[0.08] bg-[hsl(var(--foreground)/0.04)] text-[hsl(var(--foreground)/0.8)]',
-                )}
-              >
-                <Info className={cn('mt-px h-3 w-3 shrink-0', u.waga === 'blokada' && 'text-[hsl(var(--destructive)/0.8)]')} />
-                <span>{u.tresc}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
         {podpowiedzi.length > 0 && (
           <div className="flex flex-wrap items-center gap-1">
             <span className="mr-0.5 text-[11px] p2-cichy">„{fragment}…" →</span>
