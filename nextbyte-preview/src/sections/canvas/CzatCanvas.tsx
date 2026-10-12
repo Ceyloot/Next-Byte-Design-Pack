@@ -30,6 +30,7 @@ import {
   Link2,
   Clipboard,
   FileText,
+  MessageSquare,
   X,
   Zap,
 } from 'lucide-react'
@@ -260,12 +261,13 @@ export function CzatCanvas({
     document.documentElement.style.setProperty('--nb-czat-szer', '0px')
     // telefon: otwarty arkusz czatu chowa dok narzędzi (nie ma na nim miejsca)
     if (mobilny && !zwiniety) document.documentElement.setAttribute('data-nb-czat-mob', 'otwarty')
+    else if (mobilny && (pineski.length > 0 || zalaczniki.length > 0 || zaznaczona || zaznaczoneWarstwy.length > 0)) document.documentElement.setAttribute('data-nb-czat-mob', 'chipy')
     else document.documentElement.removeAttribute('data-nb-czat-mob')
     return () => {
       document.documentElement.style.removeProperty('--nb-czat-szer')
       document.documentElement.removeAttribute('data-nb-czat-mob')
     }
-  }, [zwiniety, mobilny])
+  }, [zwiniety, mobilny, pineski.length, zalaczniki.length, zaznaczona, zaznaczoneWarstwy.length])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
   useEffect(() => {
@@ -440,20 +442,53 @@ export function CzatCanvas({
 
   /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
   if (zwiniety && mobilny) {
+    const otworz = () => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus(), 60) }
     return (
       <div className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
-        <button
-          type="button"
-          onClick={() => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus(), 60) }}
-          className="p2-szklo pointer-events-auto flex h-12 w-full items-center gap-2 !rounded-2xl px-4 text-left text-[14px] text-muted-foreground"
-          aria-label="Otwórz czat"
-        >
-          <span className="min-w-0 flex-1 truncate">{tekst.trim() || 'Opisz zmianę…'}</span>
-          {pineski.length > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{pineski.length}</span>
-          )}
-          <Send className="h-4 w-4 shrink-0 text-foreground/50" />
-        </button>
+        {/* Chipy zaznaczenia: pinezki i załączniki — jeden przewijany rząd nad polem */}
+        {(pineski.length > 0 || zalaczniki.length > 0 || zaznaczona || zaznaczoneWarstwy.length > 0) && (
+          <div className="pointer-events-auto mb-1.5 flex gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {(zaznaczoneWarstwy.length > 0 ? zaznaczoneWarstwy : zaznaczona ? [zaznaczona] : []).map(w => (
+              <span key={w.id} className="p2-kontrolka flex shrink-0 items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-1.5"><Miniatura src={w.src} /><span className="max-w-[90px] truncate">{w.name}</span></span>
+                <button type="button" onClick={onOdznaczWarstwe} aria-label="Odznacz zdjęcie" className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+            {pineski.map((p, idx) => (
+              <span key={p.id} className="p2-kontrolka flex shrink-0 items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                <span className="flex items-center gap-1.5 py-0.5 pl-1.5 pr-1"><NumerPinezki n={idx + 1} />{etykietaPineski(p, idx + 1)}</span>
+                <button type="button" onClick={() => onUsunPineske(p.id)} aria-label={`Usuń pinezkę ${idx + 1}`} className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+            {zalaczniki.map(z => (
+              <span key={z.id} className="p2-kontrolka flex shrink-0 items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-1.5">{z.rodzaj === 'obraz' ? <Miniatura src={z.src ?? ''} /> : <FileText className="ml-0.5 h-4 w-4 text-muted-foreground" />}<span className="max-w-[90px] truncate">{z.nazwa}</span></span>
+                <button type="button" onClick={() => onUsunZalacznik(z.id)} aria-label={`Usuń załącznik ${z.nazwa}`} className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="p2-szklo pointer-events-auto flex min-h-12 items-end gap-1 !rounded-2xl p-1.5">
+          {/* Dedykowany przycisk otwierający pełny czat (historia, modele, załączniki) */}
+          <button type="button" onClick={otworz} aria-label="Otwórz czat" title="Otwórz czat" className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 active:bg-foreground/[0.08]">
+            <MessageSquare className="h-5 w-5" strokeWidth={1.6} />
+            {historiaWiadomosci.length > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />}
+          </button>
+          <textarea
+            ref={refTextarea}
+            value={tekst}
+            rows={1}
+            onChange={e => onTekst(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wyslij() } }}
+            placeholder={pineski.length === 1 ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?` : 'Opisz zmianę…'}
+            aria-label="Polecenie"
+            enterKeyHint="send"
+            className="max-h-[96px] min-h-9 min-w-0 flex-1 resize-none bg-transparent px-1 py-[7px] text-[16px] leading-snug text-foreground outline-none placeholder:text-muted-foreground/70"
+          />
+          <button type="button" onClick={wyslij} disabled={trwa || !tekst.trim() || !!powodBlokady} aria-label="Wyślij" title={powodBlokady ?? `Wyślij · ${BYTE_ZA_OBRAZ} Byte`} className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40">
+            {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2} />}
+          </button>
+        </div>
       </div>
     )
   }

@@ -510,3 +510,13 @@ html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
   }
   .nb-czat-hist { min-height: 150px; }
 }
+
+/* Telefon: gdy otwarty jest pełny czat, pływające paski płótna (akcje, okna robocze, ołówek, karta pinezki) są schowane */
+html[data-nb-czat-mob='otwarty'] .nb-cozy [role='toolbar'],
+html[data-nb-czat-mob='otwarty'] .nb-cozy [role='dialog'],
+html[data-nb-czat-mob='otwarty'] .nb-cozy .nb-karta-pin,
+html[data-nb-czat-mob='otwarty'] .nb-cozy .nb-prompter { display: none !important; }
+/* Telefon: rząd chipów (pinezki, załączniki) nad polem pisania podnosi dok narzędzi */
+@media (max-width: 767px) {
+  html[data-nb-czat-mob='chipy'] .nb-dok-mob { bottom: calc(var(--nb-nav-dol, 0px) + 108px) !important; }
+}

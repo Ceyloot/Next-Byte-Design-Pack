@@ -2482,7 +2482,7 @@ export function CanvasSection() {
       {kartaPozycja && (
         <div
           key={kartaPozycja.pineska.id}
-          className="absolute z-30 animate-in fade-in zoom-in-95 duration-150"
+          className="nb-karta-pin absolute z-30 animate-in fade-in zoom-in-95 duration-150"
           style={mobilny
             ? { left: '50%', bottom: 'calc(var(--nb-nav-dol, 0px) + 76px)', transform: 'translateX(-50%)' }
             : {

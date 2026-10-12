@@ -43,11 +43,11 @@ export function Prompter({
   }
   return (
     <div
-      role="group"
+      role="group" data-prompter
       aria-label={etykieta}
       onPointerDown={e => e.stopPropagation()}
       onContextMenu={e => e.preventDefault()}
-      className="absolute z-50 w-[min(560px,calc(100vw-120px))]"
+      className="nb-prompter absolute z-50 w-[min(560px,calc(100vw-120px))]"
       style={style}
     >
       <div className="nb-cozy-plyta flex items-center gap-2 rounded-2xl border p-2">

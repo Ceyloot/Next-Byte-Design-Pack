@@ -476,10 +476,18 @@ export function Plotno({
     }
   }
 
-  function naGorze() {
+  function naGorze(e?: React.PointerEvent) {
     const op = refOperacja.current
     refOperacja.current = null
     setPrzeciagana(null)
+    // Dotyk: krótkie dotknięcie pustego tła odznacza (zdjęcia, pinezkę, szkice), przeciągnięcie przesunęło widok
+    if (op?.rodzaj === 'panorama' && e?.pointerType === 'touch' && Math.hypot(e.clientX - op.startX, e.clientY - op.startY) < 8) {
+      onWybierzWarstwe(null)
+      onZaznaczone?.([])
+      onWybierzPineske(null)
+      onZaznaczRysunki?.([])
+      return
+    }
     if (op?.rodzaj === 'rysowanie' && op.punkty) {
       setZywyRysunek(null)
       const pkt = op.punkty.length === 1 ? [op.punkty[0], [op.punkty[0][0] + 0.01, op.punkty[0][1]] as [number, number]] : op.punkty
