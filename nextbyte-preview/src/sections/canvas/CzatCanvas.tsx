@@ -493,7 +493,7 @@ export function CzatCanvas({
               <CirclePlus className="h-5 w-5" strokeWidth={2.2} />
             </button>
             <button
-              onClick={() => setZwiniety(true)}
+              onClick={() => { setZwiniety(true); if (mobilny) window.setTimeout(() => window.dispatchEvent(new CustomEvent('nb-canvas-dopasuj')), 120) }}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
               title={mobilny ? "Pokaż płótno" : "Zwiń"}
               aria-label={mobilny ? "Pokaż płótno" : "Zwiń panel"}

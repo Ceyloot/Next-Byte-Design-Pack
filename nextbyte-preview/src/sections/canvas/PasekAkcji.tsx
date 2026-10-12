@@ -53,14 +53,14 @@ export function PasekAkcji({
               aria-label={a.etykieta}
               className={cn(
                 'flex h-9 items-center gap-2 whitespace-nowrap rounded-[10px] text-[13px] font-medium text-foreground/80 transition-all duration-200',
-                a.tylkoIkona ? 'w-9 justify-center' : 'px-3',
+                a.tylkoIkona ? 'w-9 justify-center' : 'px-3 max-md:w-9 max-md:justify-center max-md:px-0',
                 a.trwa ? 'bg-primary/15 text-primary' : 'hover:bg-foreground/[0.06] hover:text-foreground active:scale-95',
                 zablokowane && !a.trwa && 'opacity-40',
               )}
             >
               {a.trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <a.ikona className="h-4 w-4" />}
-              {!a.tylkoIkona && a.etykieta}
-              {a.skrot && <span className="text-[12px] font-normal text-muted-foreground">{a.skrot}</span>}
+              {!a.tylkoIkona && <span className="max-md:sr-only">{a.etykieta}</span>}
+              {a.skrot && <span className="text-[12px] font-normal text-muted-foreground max-md:hidden">{a.skrot}</span>}
             </button>
           </div>
         ))}

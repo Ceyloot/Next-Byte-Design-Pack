@@ -329,6 +329,23 @@ export function CanvasSection() {
   }, [liczbaZdjec, mobilny])
   const dopasujWidokRef = useRef<() => void>(() => undefined)
   dopasujWidokRef.current = dopasujWidok
+  // Telefon: widok zawsze obejmuje zdjęcia po przejściu z czatu na płótno i po zmianie rozmiaru / obrotu ekranu
+  useEffect(() => {
+    if (!mobilny) return
+    const dopasuj = () => dopasujWidokRef.current()
+    let t: number | undefined
+    const naResize = () => { window.clearTimeout(t); t = window.setTimeout(dopasuj, 150) }
+    window.addEventListener('nb-canvas-dopasuj', dopasuj)
+    window.addEventListener('resize', naResize)
+    window.addEventListener('orientationchange', naResize)
+    return () => {
+      window.clearTimeout(t)
+      window.removeEventListener('nb-canvas-dopasuj', dopasuj)
+      window.removeEventListener('resize', naResize)
+      window.removeEventListener('orientationchange', naResize)
+    }
+  }, [mobilny])
+  useEffect(() => { if (mobilny) setTimeout(() => dopasujWidokRef.current(), 100) }, [mobilny])
 
   const [stanGeneracji, setStanGeneracji] = useState<StanGeneracji>({ faza: 'bezczynny' })
   // Inpainting pędzlem i generator (pusta ramka „Image Generator”)
