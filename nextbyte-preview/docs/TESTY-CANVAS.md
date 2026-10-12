@@ -77,11 +77,11 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Szkic z kilku kolorów (kolor = podpowiedź, co jest czym); szkic wokół zdjęcia na płótnie.
 
 ## 10. Adnotacje → edycja (nowe)
-- [ ] Zaznacz zdjęcie → pasek nad nim ma: Quick edit, Adnotacje, Upscale, Remove BG, Edit text, „…" i Pobierz. Inpaint, Outpaint, Eraser, Enhance siedzą pod „…" (menu zamyka się Esc / kliknięciem obok, otwiera w górę przy dole ekranu).
-- [ ] „Adnotacje" włącza ołówek w trybie Zakres (czerwony) i pokazuje podpowiedź; w pasku ołówka: Linia / Zakres / Napis.
-- [ ] Zakres: gruby półprzezroczysty pisak (grubość ×5); Napis: klik na zdjęciu, wpis, Enter (lub ✓) dodaje napis; Esc rezygnuje; pusty napis nic nie dodaje.
-- [ ] Gdy adnotacje leżą na zdjęciu, nad paskiem ołówka pojawia się „Wykonaj adnotacje · N ⟠" (to samo w menu prawego przycisku na zaznaczonych szkicach).
-- [ ] Do modelu idą dwa obrazy: czyste zdjęcie (Image 1) i zdjęcie z adnotacjami (Image 2); napisy z klawiatury trafiają do polecenia z położeniem (np. „top-left"); tekst z czatu dopisuje się jako dodatkowe instrukcje.
-- [ ] Wynik ma rozmiar zdjęcia, leży obok oryginału, bez śladów kresek; adnotacje zostają na oryginale (można poprawić i puścić jeszcze raz).
-- [ ] „Zamień w obraz" nadal działa: szkic na białym tle, napisy rysowane ciemnym kolorem.
-- [ ] Jasny i ciemny motyw: paski, pole napisu i podpowiedź czytelne.
+- [ ] Zaznacz zdjęcie → pasek nad nim: Quick edit, Adnotacje, Upscale, Remove BG, Edit text, „…" (Inpaint, Outpaint, Eraser, Enhance) i Pobierz.
+- [ ] „Adnotacje" wchodzi w tryb skupienia: widok przybliża się do zdjęcia, znikają pasek szybkich akcji i dolny dok, zostaje jeden panel (na wierzchu, nic na nim nie nachodzi). Esc lub ✕ wraca do poprzedniego widoku.
+- [ ] Panel: Przesuń / Linia / Zakres / Napis, kolory, grubości (stałe na ekranie niezależnie od przybliżenia), cofnij, wyczyść; „Wykonaj · N ⟠" aktywne dopiero, gdy coś zaznaczono lub dopisano.
+- [ ] Napis: klik na zdjęciu, wpis, Enter / ✓ / klik gdziekolwiek zatwierdza; Esc rezygnuje. Napis i szkic można przeciągnąć (Przesuń, albo w trybie Napis chwytając istniejący napis).
+- [ ] Do modelu idą dwa obrazy: czyste zdjęcie i zdjęcie z adnotacjami z numerowanymi obszarami; polecenie ma ponumerowaną listę zadań (obszar w % kadru + napis), wszystkie obowiązkowe; tekst z czatu dopisuje się.
+- [ ] Po „Wykonaj" tryb się zamyka, widok obejmuje oryginał i wynik; adnotacje zostają na oryginale. Wynik ma rozmiar zdjęcia, bez śladów kresek.
+- [ ] Zwykły ołówek (D) bez trybu adnotacji: tylko cienka linia, kolory, grubości; prawy przycisk na zaznaczonych kreskach → „Wykonaj adnotacje" / „Zamień w obraz" / „Usuń szkic".
+- [ ] Jasny i ciemny motyw oraz telefon: panel czytelny, przewija się poziomo, nic na siebie nie nachodzi.

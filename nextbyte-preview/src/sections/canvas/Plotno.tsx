@@ -49,7 +49,11 @@ interface Props {
   /** pisak ołówka: cienka linia, gruby półprzezroczysty „zakres” albo napis z klawiatury */
   trybOlowka?: 'linia' | 'zakres' | 'tekst'
   /** kliknięcie w trybie napisu — miejsce w scenie, gdzie użytkownik chce dopisać tekst */
+  /** grubości kresek liczone w pikselach ekranu (tryb adnotacji: widok bywa mocno przybliżony) */
+  grubosciEkranowe?: boolean
   onNapis?: (x: number, y: number) => void
+  /** przeciąganie zaznaczonych szkiców i napisów (przesunięcie względem poprzedniego ruchu, w jednostkach sceny) */
+  onPrzesunRysunki?: (ids: string[], dx: number, dy: number) => void
   gruboscOlowka?: number
   onRysunek?: (r: Rysunek) => void
   onZaznaczRysunki?: (ids: string[]) => void
@@ -59,7 +63,9 @@ interface Props {
 type Uchwyt = 'nw' | 'ne' | 'se' | 'sw'
 
 interface Operacja {
-  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel' | 'zaznaczanie' | 'rysowanie'
+  rodzaj: 'przesuwanie' | 'skalowanie' | 'panorama' | 'pineska' | 'ramka' | 'pedzel' | 'zaznaczanie' | 'rysowanie' | 'przesuwanieRysunkow'
+  /** przesuwanie szkiców / napisów: które */
+  ids?: string[]
   punkty?: [number, number][]
   startX: number
   startY: number
@@ -131,6 +137,8 @@ export function Plotno({
   kolorOlowka = 'auto',
   trybOlowka = 'linia',
   onNapis,
+  grubosciEkranowe = false,
+  onPrzesunRysunki,
   gruboscOlowka = 5,
   onRysunek,
   onZaznaczRysunki,
@@ -234,6 +242,8 @@ export function Plotno({
 
   const [zywe, setZywe] = useState<Pociagniecie | null>(null)
   /** pociągnięcie ołówka w trakcie rysowania */
+  /** grubość kreski w jednostkach sceny; w trybie adnotacji stała na ekranie, niezależnie od przybliżenia */
+  const grubosc = (grubosciEkranowe ? (gruboscOlowka * 0.72) / Math.max(0.05, widok.zoom) : gruboscOlowka) * (trybOlowka === 'zakres' ? 5 : 1)
   const [zywyRysunek, setZywyRysunek] = useState<[number, number][] | null>(null)
 
   function naTleWDol(e: React.PointerEvent) {
@@ -416,6 +426,13 @@ export function Plotno({
       return
     }
 
+    if (op.rodzaj === 'przesuwanieRysunkow' && op.ids) {
+      onPrzesunRysunki?.(op.ids, p.x - op.startX, p.y - op.startY)
+      op.startX = p.x
+      op.startY = p.y
+      return
+    }
+
     if (op.rodzaj === 'zaznaczanie') {
       setRamkaZaznaczania({ x0: op.startX, y0: op.startY, x1: p.x, y1: p.y })
       return
@@ -505,7 +522,7 @@ export function Plotno({
     if (op?.rodzaj === 'rysowanie' && op.punkty) {
       setZywyRysunek(null)
       const pkt = op.punkty.length === 1 ? [op.punkty[0], [op.punkty[0][0] + 0.01, op.punkty[0][1]] as [number, number]] : op.punkty
-      onRysunek?.({ id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: pkt, kolor: kolorOlowka, grubosc: trybOlowka === 'zakres' ? gruboscOlowka * 5 : gruboscOlowka, ...(trybOlowka === 'zakres' ? { zakres: true } : {}) })
+      onRysunek?.({ id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: pkt, kolor: kolorOlowka, grubosc, ...(trybOlowka === 'zakres' ? { zakres: true } : {}) })
       return
     }
     if (op?.rodzaj === 'zaznaczanie') {
@@ -755,14 +772,22 @@ export function Plotno({
               return (
                 <g
                   key={ry.id}
-                  style={{ pointerEvents: narzedzie === 'wybor' ? 'visibleStroke' : 'none', cursor: 'pointer' }}
+                  style={{ pointerEvents: narzedzie === 'wybor' || (narzedzie === 'olowek' && trybOlowka === 'tekst' && ry.tekst) ? 'visibleStroke' : 'none', cursor: 'grab' }}
                   onPointerDown={e => {
-                    if (narzedzie !== 'wybor' || e.button === 2) return
+                    const mozna = narzedzie === 'wybor' || (narzedzie === 'olowek' && trybOlowka === 'tekst' && ry.tekst)
+                    if (!mozna || e.button === 2) return
                     e.stopPropagation()
                     onWybierzWarstwe(null)
                     onZaznaczone?.([])
                     onWybierzPineske(null)
-                    onZaznaczRysunki?.(e.shiftKey ? (wybrany ? zaznaczoneRysunki.filter(i => i !== ry.id) : [...zaznaczoneRysunki, ry.id]) : [ry.id])
+                    const nowe = e.shiftKey ? (wybrany ? zaznaczoneRysunki.filter(i => i !== ry.id) : [...zaznaczoneRysunki, ry.id]) : wybrany ? zaznaczoneRysunki : [ry.id]
+                    onZaznaczRysunki?.(nowe)
+                    // przeciągnięcie przesuwa zaznaczone szkice i napisy
+                    if (nowe.includes(ry.id)) {
+                      przechwyc(e.currentTarget as Element, e.pointerId)
+                      const p = doSceny(e)
+                      refOperacja.current = { rodzaj: 'przesuwanieRysunkow', startX: p.x, startY: p.y, ids: nowe }
+                    }
                   }}
                   onContextMenu={e => {
                     if (narzedzie !== 'wybor') return
@@ -798,7 +823,7 @@ export function Plotno({
               )
             })}
             {zywyRysunek && (
-              <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka === 'auto' ? undefined : kolorOlowka} style={kolorOlowka === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={trybOlowka === 'zakres' ? 0.45 : 1} strokeWidth={trybOlowka === 'zakres' ? gruboscOlowka * 5 : gruboscOlowka} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka === 'auto' ? undefined : kolorOlowka} style={kolorOlowka === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={trybOlowka === 'zakres' ? 0.45 : 1} strokeWidth={grubosc} strokeLinecap="round" strokeLinejoin="round" />
             )}
             {(() => {
               const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))
