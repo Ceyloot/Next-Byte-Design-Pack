@@ -939,16 +939,20 @@ export function CanvasSection() {
     setRysunki(r => r.map(x => (ids.includes(x.id) ? { ...x, punkty: x.punkty.map(q => [q[0] + dx, q[1] + dy] as [number, number]) } : x)))
   }, [])
   /** Wejście w tryb adnotacji: widok przybliża się do zdjęcia, pasek szybkich akcji i dok znikają, zostaje jeden panel. */
-  const wejdzAdnotacje = (w: { id: string; x: number; y: number; width: number; height: number }) => {
-    widokPrzedAdn.current = widok
+  const wejdzAdnotacje = (w: { id: string; x: number; y: number; width: number; height: number }, opcje?: { przybliz?: boolean }) => {
+    const przybliz = opcje?.przybliz !== false
+    if (przybliz) widokPrzedAdn.current = widok
     setMenuWarstwy(null)
     setWybranaWarstwa(w.id)
     setWybranaPineska(null)
     setZaznaczone([])
     setTrybAdn(w.id)
-    setTrybOlowka('zakres')
-    if (kolorOlowka === 'auto') setKolorOlowka('#ef4444')
+    if (przybliz) {
+      setTrybOlowka('zakres')
+      if (kolorOlowka === 'auto') setKolorOlowka('#ef4444')
+    }
     setNarzedzie('olowek')
+    if (!przybliz) return
     // zdjęcie w całości nad panelem, na środku ekranu (czat jest wtedy schowany, więc cała szerokość jest do dyspozycji)
     const od = odsuniecia()
     const szer = window.innerWidth - od.l - od.r - (mobilny ? 24 : 96)
@@ -2458,10 +2462,27 @@ export function CanvasSection() {
           zatwierdzNapis()
           setNapis({ x: r.punkty[0][0], y: r.punkty[0][1], srodek: false, ax: r.punkty[1][0], ay: r.punkty[0][1], tekst: r.tekst, rozmiar: r.grubosc, utworzony: Date.now(), edytuje: id })
         }}
-        onRysunek={r => {
+        onRysunek={r0 => {
+          // adnotacja na zdjęciu ma być wyraźna: kolor „domyślny” (biały / ciemny wg motywu) zamieniamy na czerwony
+          const r = trybAdn && r0.kolor === 'auto' ? { ...r0, kolor: '#ef4444' } : r0
           setRysunki(prev => [...prev, r])
-          // w trybie adnotacji po narysowaniu zakresu od razu pytamy, co tam zmienić
-          if (trybAdn && !r.tekst) {
+          if (r.tekst) return
+          // zwykły ołówek: kreska narysowana na zdjęciu od razu staje się adnotacją — wchodzimy w tryb adnotacji (bez przybliżania)
+          let aktywne = Boolean(trybAdn)
+          if (!aktywne) {
+            const p0 = r.punkty[0]
+            const foto = projekt.warstwy.find(w => w.type === 'image' && w.visible && !w.generator && w.src && p0[0] >= w.x && p0[0] <= w.x + w.width && p0[1] >= w.y && p0[1] <= w.y + w.height)
+            if (foto) {
+              wejdzAdnotacje(foto, { przybliz: false })
+              aktywne = true
+              if (r.kolor === 'auto') {
+                setRysunki(prev => prev.map(q => (q.id === r.id ? { ...q, kolor: '#ef4444' } : q)))
+                setKolorOlowka('#ef4444')
+              }
+            }
+          }
+          // w trybie adnotacji po narysowaniu od razu pytamy, co tam zmienić
+          if (aktywne) {
             const xs = r.punkty.map(q => q[0])
             const ys = r.punkty.map(q => q[1])
             const rozmiar = 16 / Math.max(0.05, widok.zoom)
@@ -2754,7 +2775,7 @@ export function CanvasSection() {
 
       {/* ══ Ołówek: kolor, grubość, cofnij — a w trybie adnotacji jeden panel na najwyższej warstwie ══ */}
       {narzedzie === 'olowek' || trybAdn ? (
-        <div className={cn('p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-[70] flex max-w-[calc(100vw-16px)] -translate-x-1/2 flex-col items-center md:bottom-[calc(var(--nb-nav-dol,0px)+24px)]')}>
+        <div className={cn('p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-[70] flex max-w-[calc(100vw-16px)] -translate-x-1/2 flex-col items-center', trybAdn ? 'md:bottom-[calc(var(--nb-nav-dol,0px)+24px)]' : 'md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]')}>
           <div role="toolbar" aria-label={trybAdn ? 'Adnotacje' : 'Ołówek'} className={cn('nb-cozy-plyta pointer-events-auto flex max-w-full flex-col gap-2 rounded-2xl border p-2', trybAdn && 'w-[min(760px,calc(100vw-16px))]')}>
             {trybAdn && (
               <div className="flex items-center gap-2">
