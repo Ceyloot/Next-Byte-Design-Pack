@@ -244,6 +244,28 @@ export function CzatCanvas({
   }, [menu])
   const mobilny = useMobilny()
   const klawiatura = useKlawiatura()
+  // Wariant wyglądu panelu do porównania: ?czat=a|b|c (zapamiętywany), Alt+1/2/3 przełącza, Alt+0 = domyślny
+  const [wariant, setWariant] = useState<string>(() => {
+    try {
+      const z = new URLSearchParams(window.location.search).get('czat') || localStorage.getItem('nb-czat-wariant') || ''
+      return ['a', 'b', 'c'].includes(z) ? z : ''
+    } catch { return '' }
+  })
+  useEffect(() => {
+    if (wariant) document.documentElement.setAttribute('data-nb-czat', wariant)
+    else document.documentElement.removeAttribute('data-nb-czat')
+    try { localStorage.setItem('nb-czat-wariant', wariant) } catch { /* brak pamięci */ }
+    return () => document.documentElement.removeAttribute('data-nb-czat')
+  }, [wariant])
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (!e.altKey) return
+      const m: Record<string, string> = { '1': 'a', '2': 'b', '3': 'c', '0': '' }
+      if (e.key in m) { e.preventDefault(); setWariant(m[e.key]) }
+    }
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [])
   const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
   // Skrót C (z Canvasa): rozwiń panel i ustaw kursor w polu polecenia
   useEffect(() => {
@@ -256,7 +278,7 @@ export function CzatCanvas({
   }, [])
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
-    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety || mobilny ? '0px' : '364px')
+    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety || mobilny ? '0px' : wariant === 'a' ? '360px' : wariant === 'b' || wariant === 'c' ? '0px' : '364px')
     // telefon: otwarty arkusz czatu chowa dok narzędzi (nie ma na nim miejsca)
     if (mobilny && !zwiniety) document.documentElement.setAttribute('data-nb-czat-mob', 'otwarty')
     else document.documentElement.removeAttribute('data-nb-czat-mob')
@@ -264,7 +286,7 @@ export function CzatCanvas({
       document.documentElement.style.removeProperty('--nb-czat-szer')
       document.documentElement.removeAttribute('data-nb-czat-mob')
     }
-  }, [zwiniety, mobilny])
+  }, [zwiniety, mobilny, wariant])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
   useEffect(() => {
@@ -477,10 +499,10 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className={cn('p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 max-h-[72dvh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny && klawiatura ? { transform: `translateY(-${klawiatura}px)` } : undefined}>
+    <div className={cn('nb-czat-root p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 max-h-[72dvh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny && klawiatura ? { transform: `translateY(-${klawiatura}px)` } : undefined}>
       <div className={cn('p2-szklo nb-cozy-czat pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
         {/* Nagłówek: akcje + gradientowa kreska jak w pasku bocznym platformy */}
-        <div className="relative flex shrink-0 items-center justify-end pb-2">
+        <div className="nb-czat-naglowek relative flex shrink-0 items-center justify-end pb-2">
           <div aria-hidden className="pointer-events-none absolute inset-x-1 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
           <div className="flex items-center gap-0.5">
             <button
@@ -503,9 +525,9 @@ export function CzatCanvas({
         </div>
 
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
-      <div className="relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="nb-czat-hist relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {!mobilny && historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
-          <div className="flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
+          <div className="nb-czat-pusty flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
             <p className="max-w-[230px] text-[13px] leading-relaxed text-muted-foreground/80">Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.</p>
           </div>
         )}

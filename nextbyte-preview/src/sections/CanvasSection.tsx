@@ -2335,7 +2335,7 @@ export function CanvasSection() {
               zablokowane={Boolean(akcjaAI)}
               style={{
                 // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
-                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
+                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 475 + (document.documentElement.getAttribute('data-nb-czat') === 'c' ? 64 : 0), Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
                 transform: 'translateX(-50%)',
                 maxWidth: mobilny ? 'calc(100vw - 16px)' : 'calc(100vw - 440px)',
                 top: gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
@@ -2501,7 +2501,7 @@ export function CanvasSection() {
 
       {/* ══ Ołówek: kolor, grubość, cofnij ══ */}
       {narzedzie === 'olowek' && (
-        <div className="p2 !bg-transparent nb-dok-mob pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 -translate-x-1/2 md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]">
+        <div className="p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 -translate-x-1/2 md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]">
           <div role="toolbar" aria-label="Ołówek" className="nb-cozy-plyta pointer-events-auto flex h-12 items-center gap-1 rounded-2xl border px-2">
             {['#111111', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'].map(k => (
               <button
