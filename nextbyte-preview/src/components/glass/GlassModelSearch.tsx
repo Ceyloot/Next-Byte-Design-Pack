@@ -404,7 +404,7 @@ export function GlassModelSearch({
           )}
 
           {/* Metryki 2x2 */}
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+          <div className={cn('mt-4 grid gap-x-4 gap-y-3', peekedModel.metrics.length === 3 ? 'grid-cols-3' : 'grid-cols-2')}>
             {peekedModel.metrics.map((m) => (
               <div key={m.label}>
                 <p className="mb-1 text-[11px] font-medium text-muted-foreground/80">
@@ -565,8 +565,8 @@ export function GlassModelSearch({
                           {model.description}
                         </p>}
                         {compact && (
-                          <div className="mt-2 grid grid-cols-2 items-center gap-x-3">
-                            {['Jakość', 'Szybkość'].map((et) => {
+                          <div className="mt-2 grid grid-cols-3 items-center gap-x-3">
+                            {['Jakość', 'Precyzja', 'Szybkość'].map((et) => {
                               const m = model.metrics.find((x) => x.label === et)
                               return m ? <MiniWskaznik key={et} etykieta={et} value={m.value} /> : null
                             })}

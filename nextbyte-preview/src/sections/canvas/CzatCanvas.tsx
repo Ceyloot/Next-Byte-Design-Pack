@@ -110,16 +110,16 @@ interface Props {
 export type ModelObrazu = 'auto' | 'lite' | 'nb2' | 'pro' | 'gptimage2'
 
 const MODELE_OBRAZU = [
-  { id: 'lite', nazwa: 'Nano Banana 2 Lite', krotko: 'Lite', ikona: Zap, opis: 'Szybki szkic, dobra jakość na co dzień', dostepny: true },
-  { id: 'nb2', nazwa: 'Nano Banana 2', krotko: 'NB 2', ikona: Sparkles, opis: 'Dokładne detale, światło i skala', dostepny: true },
-  { id: 'pro', nazwa: 'Nano Banana Pro', krotko: 'Pro', ikona: Gem, opis: 'Najwyższa jakość do 4K, wolniej', dostepny: true },
+  { id: 'lite', nazwa: 'Nano Banana 2 Lite', krotko: 'Lite', ikona: Zap, opis: 'Najszybszy i najtańszy — do szkiców i prostych zmian', dostepny: true },
+  { id: 'nb2', nazwa: 'Nano Banana 2', krotko: 'NB 2', ikona: Sparkles, opis: 'Złoty środek — dobry detal i światło, rozsądny czas', dostepny: true },
+  { id: 'pro', nazwa: 'Nano Banana Pro', krotko: 'Pro', ikona: Gem, opis: 'Najwierniejszy obiekt i detale, do 4K', dostepny: true },
   { id: 'flux2pro', nazwa: 'FLUX.2 Pro', krotko: 'FLUX', ikona: Layers, opis: 'Black Forest Labs — wkrótce w Canvas.', dostepny: false },
   { id: 'ideogram4', nazwa: 'Ideogram 4.0', krotko: 'Ideogram', ikona: Layers, opis: 'Ideogram — wkrótce w Canvas.', dostepny: false },
   { id: 'seedream5', nazwa: 'Seedream 5.0 Pro', krotko: 'Seedream', ikona: Layers, opis: 'ByteDance — wkrótce w Canvas.', dostepny: false },
   { id: 'qwen3', nazwa: 'Qwen Image 3.0 Pro', krotko: 'Qwen', ikona: Layers, opis: 'Alibaba — wkrótce w Canvas.', dostepny: false },
   { id: 'klingo3', nazwa: 'Kling Image O3', krotko: 'Kling', ikona: Layers, opis: 'Kling AI — wkrótce w Canvas.', dostepny: false },
   { id: 'grok', nazwa: 'Grok Imagine', krotko: 'Grok', ikona: Layers, opis: 'xAI — wkrótce w Canvas.', dostepny: false },
-  { id: 'gptimage2', nazwa: 'GPT Image 2', krotko: 'GPT', ikona: Layers, opis: 'Dokładne polecenia i napisy, najwolniejszy', dostepny: true },
+  { id: 'gptimage2', nazwa: 'GPT Image 2', krotko: 'GPT', ikona: Layers, opis: 'Najlepsza skala i perspektywa, napisy — najwolniejszy', dostepny: true },
   { id: 'zimage', nazwa: 'Z-Image Turbo', krotko: 'Z-Image', ikona: Layers, opis: 'Runware — wkrótce w Canvas.', dostepny: false },
 ] as const
 
@@ -159,10 +159,30 @@ function NumerPinezki({ n }: { n: number }) {
 }
 
 /** Model w formacie wyszukiwarki z biblioteki (GlassModelSearch); znak dostawcy z biblioteki znaków marek. */
-const metryki = (jakosc: number, szybkosc: number) => [
+const metryki = (jakosc: number, precyzja: number, szybkosc: number) => [
   { label: 'Jakość', value: jakosc },
+  { label: 'Precyzja', value: precyzja },
   { label: 'Szybkość', value: szybkosc },
 ]
+/** Oceny i opisy z jednego porównania (ten sam prompt: auto z Nürburgringu wstawione na zdjęcie z Le Mans; Runware: czas i koszt jednego obrazu). */
+const OCENY_MODELI: Record<string, { jakosc: number; precyzja: number; szybkosc: number; pelny: string }> = {
+  lite: {
+    jakosc: 5, precyzja: 4, szybkosc: 10,
+    pelny: 'Około 6 s i 0,035 $ za obraz — najszybszy i najtańszy. Dobry do szkiców i prostych zmian, ale przy przenoszeniu obiektu bywa za duży i zmienia kolor lub wygląd rzeczy.',
+  },
+  nb2: {
+    jakosc: 7, precyzja: 7, szybkosc: 8,
+    pelny: 'Około 12 s i 0,07 $ za obraz. Dobry kompromis: trzyma światło i detale, skala bywa trochę zawyżona. Na co dzień najrozsądniejszy wybór.',
+  },
+  pro: {
+    jakosc: 10, precyzja: 8, szybkosc: 6,
+    pelny: 'Około 19 s i 0,14 $ za obraz — najdroższy. Najlepiej oddaje wygląd i detale obiektu oraz rozdzielczość do 4K; skalę i odległość trzeba czasem poprawić.',
+  },
+  gptimage2: {
+    jakosc: 9, precyzja: 10, szybkosc: 2,
+    pelny: 'Około 48 s i 0,08 $ za obraz — najwolniejszy. Najlepiej trzyma skalę, perspektywę i dokładnie wykonuje polecenia, również z napisami; obiekt bywa mniej wierny oryginałowi.',
+  },
+}
 const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
   .filter(m => m.dostepny) // w wyszukiwarce tylko modele, które Canvas naprawdę obsługuje
   .sort((x, y) => (x.id === 'nb2' ? -1 : y.id === 'nb2' ? 1 : 0))
@@ -170,9 +190,9 @@ const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
     const Z = znakModelu(m.id)
     return {
       id: m.id, name: m.nazwa, provider: m.id === 'gptimage2' ? 'OpenAI' : 'Google Gemini', badge: m.id === 'gptimage2' ? 'OpenAI' : 'Google',
-      group: 'NEXTBYTE', description: m.opis, tags: ['obraz', m.krotko.toLowerCase()],
+      group: 'NEXTBYTE', description: m.opis, fullDescription: OCENY_MODELI[m.id]?.pelny, tags: ['obraz', m.krotko.toLowerCase()],
       cost: BYTE_ZA_OBRAZ, speed: 'balanced', icon: <Z className="h-4 w-4" />,
-      metrics: metryki(m.id === 'pro' ? 10 : m.id === 'gptimage2' ? 9 : m.id === 'nb2' ? 8 : 6, m.id === 'lite' ? 9 : m.id === 'nb2' ? 6 : m.id === 'gptimage2' ? 3 : 4),
+      metrics: metryki(OCENY_MODELI[m.id]?.jakosc ?? 6, OCENY_MODELI[m.id]?.precyzja ?? 6, OCENY_MODELI[m.id]?.szybkosc ?? 5),
       messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
     }
   })
