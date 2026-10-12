@@ -1043,7 +1043,6 @@ export function CanvasSection() {
     setTrybAdn(w.id)
     if (przybliz) {
       setTrybOlowka('zakres')
-      if (kolorOlowka === 'auto') setKolorOlowka('#ef4444')
     }
     setNarzedzie('olowek')
     if (!przybliz) return
@@ -2608,7 +2607,7 @@ export function CanvasSection() {
         }}
         onRysunek={r0 => {
           // adnotacja na zdjęciu ma być wyraźna: kolor „domyślny” (biały / ciemny wg motywu) zamieniamy na czerwony
-          const r = trybAdn && r0.kolor === 'auto' ? { ...r0, kolor: '#ef4444', warstwaId: trybAdn } : trybAdn ? { ...r0, warstwaId: trybAdn } : r0
+          const r = trybAdn ? { ...r0, warstwaId: trybAdn } : r0
           setRysunki(prev => [...prev, r])
           if (r.tekst) return
           // zwykły ołówek: kreska narysowana na zdjęciu od razu staje się adnotacją — wchodzimy w tryb adnotacji (bez przybliżania)
@@ -2619,8 +2618,7 @@ export function CanvasSection() {
             if (foto) {
               wejdzAdnotacje(foto, { przybliz: false })
               aktywne = true
-              setRysunki(prev => prev.map(q => (q.id === r.id ? { ...q, warstwaId: foto.id, ...(q.kolor === 'auto' ? { kolor: '#ef4444' } : {}) } : q)))
-              if (r.kolor === 'auto') setKolorOlowka('#ef4444')
+              setRysunki(prev => prev.map(q => (q.id === r.id ? { ...q, warstwaId: foto.id } : q)))
             }
           }
           // w trybie adnotacji po narysowaniu od razu pytamy, co tam zmienić
@@ -2977,7 +2975,6 @@ export function CanvasSection() {
                           if (id === 'przesun') { zatwierdzNapis(); setNarzedzie('wybor'); return }
                           setNarzedzie('olowek')
                           setTrybOlowka(id)
-                          if (id !== 'linia' && kolorOlowka === 'auto') setKolorOlowka('#ef4444')
                         }}
                         className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[12px] font-medium transition-all', aktywny ? 'bg-card text-foreground shadow-[0_1px_4px_hsl(0_0%_0%/0.25),inset_0_0_0_1px_hsl(var(--primary)/0.45)]' : 'text-foreground/65 hover:bg-foreground/[0.08] hover:text-foreground')}
                       >

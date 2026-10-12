@@ -87,7 +87,7 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Po „Wykonaj" tryb się zamyka, widok obejmuje oryginał i wynik; adnotacje zostają na oryginale. Wynik ma rozmiar zdjęcia, bez śladów kresek.
 - [ ] Zwykły ołówek (D) bez trybu adnotacji: tylko cienka linia, kolory, grubości; prawy przycisk na zaznaczonych kreskach → „Wykonaj adnotacje" / „Zamień w obraz" / „Usuń szkic".
 - [ ] Jasny i ciemny motyw oraz telefon: panel czytelny, przewija się poziomo, nic na siebie nie nachodzi.
-- [ ] Zwykły ołówek (D): pasek stoi nad dolnym dokiem, nic na siebie nie nachodzi. Kreska narysowana na zdjęciu od razu wchodzi w tryb adnotacji (bez przybliżania), kolor domyślny zmienia się na czerwony i obok pojawia się karta „Co tu zmienić?". Kreski poza zdjęciami (szkice do „Zamień w obraz") zostają zwykłymi szkicami.
+- [ ] Zwykły ołówek (D): pasek stoi nad dolnym dokiem, nic na siebie nie nachodzi. Kreska narysowana na zdjęciu od razu wchodzi w tryb adnotacji (bez przybliżania), kolor zostaje taki, jaki wybrałeś (biały też; nic nie zmienia go na czerwony), a obok pojawia się karta „Co tu zmienić?". Kreski poza zdjęciami (szkice do „Zamień w obraz") zostają zwykłymi szkicami.
 
 ## 11. Gumka w inpaintingu / eraserze (nowe)
 - [ ] W oknie Inpaint i Eraser obok suwaka jest przełącznik Pędzel / Gumka; gumka ściera zamalowane miejsce (kolejność pociągnięć ma znaczenie), suwak zmienia jej rozmiar.
