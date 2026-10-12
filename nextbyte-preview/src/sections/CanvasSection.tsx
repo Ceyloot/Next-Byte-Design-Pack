@@ -230,6 +230,9 @@ interface NapisStan {
   powiazany?: string
 }
 
+/** Model, którym zawsze działa Inpaint i Eraser (niezależnie od wyboru w czacie). */
+const MODEL_INPAINTINGU = 'pro' as const
+
 export function CanvasSection() {
   // motyw Canvasa (domyślnie jasny; wyjście oddaje platformie jej motyw) — przełącznik jest w górnym pasku platformy
   useMotywCanvasa()
@@ -1400,7 +1403,8 @@ export function CanvasSection() {
         // Osobny moduł (canvas/inpainting.ts): wycinek wokół zaznaczenia → model → wynik tylko w masce.
         const eraser = trybPedzla === 'eraser'
         const polecenie = eraser ? promptErasera(tekst) : tekst
-        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst: polecenie, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        // Inpainting i Eraser zawsze idą przez Nano Banana Pro — niezależnie od modelu wybranego w czacie (decyzja użytkownika)
+        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst: polecenie, model: MODEL_INPAINTINGU })
         const koncowy = wynik.obrazUrl
         const nazwa = eraser ? `${w.name}_bez_obiektu` : nazwijWynik(tekst, [])
         dodajZeZrodla(koncowy, nazwa, 'wynik', w)
@@ -3103,8 +3107,8 @@ export function CanvasSection() {
           etykieta={trybPedzla === 'eraser' ? 'Eraser' : 'Inpaint'}
           placeholder={
             trybPedzla === 'eraser'
-              ? maska.length ? 'Enter — usuń zamalowane' : 'Zamaluj, co usunąć'
-              : maska.length ? 'Co zrobić w tym miejscu?' : 'Zamaluj miejsce i opisz zmianę'
+              ? maska.length ? 'Enter — usuń zamalowane (Nano Banana Pro)' : 'Zamaluj, co usunąć'
+              : maska.length ? 'Co zrobić w tym miejscu? (Nano Banana Pro)' : 'Zamaluj miejsce i opisz zmianę'
           }
           bezTekstu={trybPedzla === 'eraser'}
           trwa={trwaPrompter}
