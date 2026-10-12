@@ -7,8 +7,22 @@ import type { WynikGeneracji, ZadanieGeneracji } from './runware-proxy'
 import type { Plan, Sprawdzenie, ZadaniePlanu, ZadanieSprawdzenia } from './agent-proxy'
 import { etykietaPineski, zmniejszDoAnalizy, type AnalizaPineski, type Pineska, type Warstwa } from './typy'
 
-/** Koszt pokazywany przed generacją — z cennika NextByte („4 ⟠ za obraz”). */
-export const BYTE_ZA_OBRAZ = 4
+/**
+ * Koszt obrazu w Byte per model. Reguła jak w panelu głównym (`byteCost.ts`):
+ * 1 Byte = 0,15 PLN, kurs 4,0 PLN/USD, docelowa marża 1,5× kosztu API, czyli
+ * Byte = koszt USD × 4,0 × 1,5 / 0,15 = koszt USD × 40, zaokrąglone w górę.
+ * Koszty API z porównania Runware: Lite 0,035 $, NB2 0,070 $, GPT Image 2 0,078 $, Pro 0,141 $.
+ * Przy zmianie cennika u dostawcy trzeba przeliczyć ponownie.
+ */
+export const BYTE_ZA_OBRAZ_MODELU: Record<string, number> = {
+  lite: 2,
+  nb2: 3,
+  gptimage2: 4,
+  pro: 6,
+}
+
+/** Koszt w Byte dla wybranego modelu; „auto” liczy się jak NB 2 (tak jest uruchamiany). */
+export const byteZaObraz = (model?: string): number => BYTE_ZA_OBRAZ_MODELU[model && model !== 'auto' ? model : 'nb2'] ?? 3
 
 export interface Generacja {
   obrazUrl: string

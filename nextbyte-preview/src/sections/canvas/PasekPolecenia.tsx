@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Loader2, Sparkles, Trash2, TriangleAlert, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa } from './typy'
-import { BYTE_ZA_OBRAZ } from './dostawca'
+import { byteZaObraz } from './dostawca'
 import { INTENCJE, type Intencja } from './polecenia'
 import type { Uwaga } from './kontrola-polecenia'
 
@@ -203,7 +203,7 @@ export function PasekPolecenia({
             {trwa ? 'Generuję…' : 'Generuj'}
             <span className="flex items-center gap-0.5 rounded bg-black/10 px-1 py-0.5 text-[9.5px] font-bold">
               <Zap className="h-2.5 w-2.5" />
-              {BYTE_ZA_OBRAZ}
+              {byteZaObraz()}
             </span>
           </button>
         </div>

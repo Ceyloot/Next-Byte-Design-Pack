@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Expand, Loader2, Maximize2, X } from 'lucide-react'
 import '../panel2/fundament/powierzchnie.css'
 import { cn } from '@/lib/utils'
-import { BYTE_ZA_OBRAZ } from './dostawca'
+import { byteZaObraz } from './dostawca'
 import { PROPORCJE_OUTPAINT, typWymiarow, ukladRozszerzenia, type Kotwica, type ZadanieRozszerzenia } from './rozszerzanie-kadru'
 
 /**
@@ -148,7 +148,7 @@ export function Outpaint({
         >
           {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Expand className="h-4 w-4" />}
           {trwa ? 'Rozszerzam…' : 'Rozszerz'}
-          {!trwa && <span className="font-mono text-[11px] tabular-nums opacity-75">· {BYTE_ZA_OBRAZ} ⟠</span>}
+          {!trwa && <span className="font-mono text-[11px] tabular-nums opacity-75">· {byteZaObraz(model)} ⟠</span>}
         </button>
       </div>
     </div>

@@ -39,7 +39,7 @@ import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearc
 import { GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIcon } from '@/grafiki/znaki-marek'
 import '../panel2/fundament/powierzchnie.css'
 import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
-import { BYTE_ZA_OBRAZ } from './dostawca'
+import { byteZaObraz } from './dostawca'
 import type { Zalacznik } from './zalaczniki'
 import { useKlawiatura, useMobilny } from './mobilny'
 import { INTENCJE, type Intencja } from './tryby-edycji'
@@ -168,19 +168,19 @@ const metryki = (jakosc: number, precyzja: number, szybkosc: number) => [
 const OCENY_MODELI: Record<string, { jakosc: number; precyzja: number; szybkosc: number; pelny: string }> = {
   lite: {
     jakosc: 5, precyzja: 4, szybkosc: 10,
-    pelny: 'Około 6 s i 0,035 $ za obraz — najszybszy i najtańszy. Dobry do szkiców i prostych zmian, ale przy przenoszeniu obiektu bywa za duży i zmienia kolor lub wygląd rzeczy.',
+    pelny: 'Około 6 s i 2 Byte za obraz — najszybszy i najtańszy. Dobry do szkiców i prostych zmian, ale przy przenoszeniu obiektu bywa za duży i zmienia kolor lub wygląd rzeczy.',
   },
   nb2: {
     jakosc: 7, precyzja: 7, szybkosc: 8,
-    pelny: 'Około 12 s i 0,07 $ za obraz. Dobry kompromis: trzyma światło i detale, skala bywa trochę zawyżona. Na co dzień najrozsądniejszy wybór.',
+    pelny: 'Około 12 s i 3 Byte za obraz. Dobry kompromis: trzyma światło i detale, skala bywa trochę zawyżona. Na co dzień najrozsądniejszy wybór.',
   },
   pro: {
     jakosc: 10, precyzja: 8, szybkosc: 6,
-    pelny: 'Około 19 s i 0,14 $ za obraz — najdroższy. Najlepiej oddaje wygląd i detale obiektu oraz rozdzielczość do 4K; skalę i odległość trzeba czasem poprawić.',
+    pelny: 'Około 19 s i 6 Byte za obraz — najdroższy. Najlepiej oddaje wygląd i detale obiektu oraz rozdzielczość do 4K; skalę i odległość trzeba czasem poprawić.',
   },
   gptimage2: {
     jakosc: 9, precyzja: 10, szybkosc: 2,
-    pelny: 'Około 48 s i 0,08 $ za obraz — najwolniejszy. Najlepiej trzyma skalę, perspektywę i dokładnie wykonuje polecenia, również z napisami; obiekt bywa mniej wierny oryginałowi.',
+    pelny: 'Około 48 s i 4 Byte za obraz — najwolniejszy. Najlepiej trzyma skalę, perspektywę i dokładnie wykonuje polecenia, również z napisami; obiekt bywa mniej wierny oryginałowi.',
   },
 }
 const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
@@ -191,9 +191,9 @@ const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
     return {
       id: m.id, name: m.nazwa, provider: m.id === 'gptimage2' ? 'OpenAI' : 'Google Gemini', badge: m.id === 'gptimage2' ? 'OpenAI' : 'Google',
       group: 'NEXTBYTE', description: m.opis, fullDescription: OCENY_MODELI[m.id]?.pelny, tags: ['obraz', m.krotko.toLowerCase()],
-      cost: BYTE_ZA_OBRAZ, speed: 'balanced', icon: <Z className="h-4 w-4" />,
+      cost: byteZaObraz(m.id), speed: 'balanced', icon: <Z className="h-4 w-4" />,
       metrics: metryki(OCENY_MODELI[m.id]?.jakosc ?? 6, OCENY_MODELI[m.id]?.precyzja ?? 6, OCENY_MODELI[m.id]?.szybkosc ?? 5),
-      messageCost: BYTE_ZA_OBRAZ, reasoningLevels: [],
+      messageCost: byteZaObraz(m.id), reasoningLevels: [],
     }
   })
 
@@ -522,7 +522,7 @@ export function CzatCanvas({
             enterKeyHint="send"
             className="max-h-[96px] min-h-9 min-w-0 flex-1 resize-none bg-transparent px-1 py-[7px] text-[16px] leading-snug text-foreground outline-none placeholder:text-muted-foreground/70"
           />
-          <button type="button" onClick={wyslij} disabled={trwa || !tekst.trim() || !!powodBlokady} aria-label="Wyślij" title={powodBlokady ?? `Wyślij · ${BYTE_ZA_OBRAZ} Byte`} className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40">
+          <button type="button" onClick={wyslij} disabled={trwa || !tekst.trim() || !!powodBlokady} aria-label="Wyślij" title={powodBlokady ?? `Wyślij · ${byteZaObraz(modelObrazu)} Byte`} className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40">
             {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2} />}
           </button>
         </div>
@@ -912,7 +912,7 @@ export function CzatCanvas({
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
-              title={powodBlokady ?? `Wyślij · ${BYTE_ZA_OBRAZ} Byte`}
+              title={powodBlokady ?? `Wyślij · ${byteZaObraz(modelObrazu)} Byte`}
               aria-label="Wyślij"
               className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40"
             >
