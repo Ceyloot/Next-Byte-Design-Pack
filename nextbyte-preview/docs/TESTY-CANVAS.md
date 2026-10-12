@@ -103,3 +103,4 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Przeciągnięcie plików z komputera na Canvas — także nad kartą czatu i paskami — kładzie zdjęcie dokładnie pod kursorem; kilka plików naraz leży obok siebie.
 - [ ] Przeciągnięcie obrazu ze strony www, z innej karty albo z czatu (adres lub data:) też działa; gdy serwer zdjęcia nie pozwala na pobranie, obraz ładuje się wprost z adresu.
 - [ ] Po „Wykonaj” w trybie adnotacji widok obejmuje oryginał i miejsce na wynik (zoom do 100%), a nie wszystkie zdjęcia na płótnie — rozrzucone zdjęcia nie oddalają widoku do kilkunastu procent.
+- [ ] Inpainting: do modelu idzie fragment z dużym kontekstem (min. połowa krótszego boku, ×3 wokół maski; przy większym — całe zdjęcie), tak by model widział scenę, a nie samą teksturę; wynik wraca tylko w maskę. Mała maska w trawie / liściach / tle nie kończy się „pustym” wynikiem bez obiektu.

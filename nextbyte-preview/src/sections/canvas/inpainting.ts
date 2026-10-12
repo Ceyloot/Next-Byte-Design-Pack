@@ -9,7 +9,9 @@ import type { ZadanieGeneracji } from './runware-proxy'
  *
  * Dlaczego wycinek, a nie cały kadr: gdy model dostaje całe zdjęcie z ledwo widocznym zaznaczeniem, rysuje obiekt
  * „gdzieś w scenie”, a maska potem przycina go do złego miejsca. Tu model dostaje FRAGMENT zdjęcia wokół
- * zaznaczenia (z kontekstem), w którym zamalowany obszar zajmuje sporą część kadru — nie ma gdzie się pomylić.
+ * zaznaczenia, w którym zamalowany obszar zajmuje sporą część kadru — nie ma gdzie się pomylić. Fragment ma za to
+ * DUŻY kontekst (min. połowa krótszego boku, ×3 wokół zaznaczenia; przy większym — całe zdjęcie): z samą teksturą
+ * (liście, trawa) model nie wie, co jest sceną, i zwraca tło bez obiektu.
  * Wycinek ma proporcje z listy formatów modelu, więc kadr wraca 1:1 i trafia dokładnie na swoje miejsce.
  *
  * Przepływ: wycinek wokół maski → model dostaje wycinek z magentą ORAZ osobny obraz-maskę → wynik wraca na oryginał
@@ -21,11 +23,11 @@ import type { ZadanieGeneracji } from './runware-proxy'
 /** Krycie magenty na wejściu: wyraźna maska, a pod spodem nadal widać oryginał (potrzebny przy „zmień / usuń”). */
 const KRYCIE_MAGENTY = 0.55
 /** Kontekst wokół zaznaczenia: tyle razy większy od niego (w każdej osi). */
-const KONTEKST = 2
+const KONTEKST = 3
 /** … ale nie mniejszy niż ten ułamek krótszego boku zdjęcia (małe plamki dostają sensowne otoczenie). */
-const MIN_KONTEKST = 0.28
+const MIN_KONTEKST = 0.5
 /** Wycinek zajmujący więcej niż ten ułamek zdjęcia = bierzemy całe zdjęcie. */
-const PROG_CALEGO = 0.8
+const PROG_CALEGO = 0.55
 /** Długi bok obrazu wysyłanego do modelu (małe wycinki powiększamy — model oddaje ok. 1 Mpx, więc detal się nie traci). */
 const BOK_MIN = 768
 const BOK_MAKS = 1536
@@ -231,6 +233,7 @@ export function promptInpaintingu(tekst: string): string {
 INPAINTING with a hard mask. Image 1 is a photograph with one region painted over in semi-transparent magenta. Image 2 is the mask of the same frame: WHITE = the only region you may change, BLACK = must stay identical.
 - Do the request above ONLY inside the white / magenta region: create the new content right there, filling that shape and sized to fit it. If the request is to remove something, fill the region with what would naturally be behind it. Never draw it anywhere else in the frame and never add copies of it elsewhere.
 - FIT: the new content must fit COMPLETELY inside the region — scale it so that every part of it, from one end to the other, lies within the painted shape with a small margin. Nothing may stick out past the edge of the region, be cut off by it or touch its border. The region is the maximum size.
+- If the request is to ADD, PLACE or CHANGE something, the result must clearly and visibly show it inside the region. Returning just the surrounding background, texture or an almost unchanged region is a failed result.
 - Everything in the black area stays exactly as it is, pixel for pixel: same objects, positions, colours, framing and composition. Anything you draw outside the region will be discarded.
 - Remove the magenta paint completely — no pink tint, outline or residue may remain.
 - Make the new content continue its surroundings seamlessly: same light direction and colour, perspective, sharpness, noise and grain, with natural contact shadows and reflections.
