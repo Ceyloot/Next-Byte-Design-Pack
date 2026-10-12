@@ -53,6 +53,7 @@ import { useMobilny } from '@/sections/canvas/mobilny'
 import { rozpoznajRozszerzenie, ukladRozszerzenia, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
 import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
+import { podzielMaske } from '@/sections/canvas/maska-grupy'
 import { wykonajGenerowanie } from '@/sections/canvas/generowanie'
 import { wykonajGeneracjeZReferencji } from '@/sections/canvas/referencje'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
@@ -1407,7 +1408,20 @@ export function CanvasSection() {
         const eraser = trybPedzla === 'eraser'
         const polecenie = eraser ? promptErasera(tekst) : tekst
         // Inpainting i Eraser zawsze idą przez Nano Banana Pro — niezależnie od modelu wybranego w czacie (decyzja użytkownika)
-        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst: polecenie, model: MODEL_INPAINTINGU })
+        // Eraser z kilkoma odległymi zaznaczeniami: jedno miejsce na przebieg (wynik poprzedniego jest zdjęciem dla następnego) —
+        // przy wszystkich naraz model usuwał tylko jedną rzecz. Inpaint z opisem idzie jak dotąd, jednym przebiegiem.
+        const miejsca = eraser ? podzielMaske(maska, w.naturalWidth / w.naturalHeight) : [maska]
+        let biezacy = w.src
+        let koszt = 0
+        let modelUzyty = ''
+        for (let i = 0; i < miejsca.length; i++) {
+          if (miejsca.length > 1) setStanGeneracji({ faza: 'trwa', plan: `Usuwam zaznaczone miejsce ${i + 1} z ${miejsca.length}…`, tryb: 'inpainting' })
+          const jedno = await wykonajInpainting({ src: biezacy, kreski: miejsca[i], tekst: polecenie, model: MODEL_INPAINTINGU })
+          biezacy = jedno.obrazUrl
+          koszt += jedno.kosztUSD
+          modelUzyty = jedno.model
+        }
+        const wynik = { obrazUrl: biezacy, kosztUSD: koszt, model: modelUzyty }
         const koncowy = wynik.obrazUrl
         const nazwa = eraser ? `${w.name}_bez_obiektu` : nazwijWynik(tekst, [])
         dodajZeZrodla(koncowy, nazwa, 'wynik', w)
