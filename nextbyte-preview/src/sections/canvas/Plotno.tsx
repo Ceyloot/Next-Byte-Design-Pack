@@ -56,6 +56,8 @@ interface Props {
   /** grubości kresek liczone w pikselach ekranu (tryb adnotacji: widok bywa mocno przybliżony) */
   grubosciEkranowe?: boolean
   onNapis?: (x: number, y: number) => void
+  /** podwójne kliknięcie napisu — zmiana opisu */
+  onEdytujNapis?: (id: string) => void
   /** przeciąganie zaznaczonych szkiców i napisów (przesunięcie względem poprzedniego ruchu, w jednostkach sceny) */
   onPrzesunRysunki?: (ids: string[], dx: number, dy: number) => void
   gruboscOlowka?: number
@@ -141,6 +143,7 @@ export function Plotno({
   kolorOlowka = 'auto',
   trybOlowka = 'linia',
   onNapis,
+  onEdytujNapis,
   grubosciEkranowe = false,
   ramkaRysowania = null,
   znacznikiZadan = [],
@@ -801,6 +804,11 @@ export function Plotno({
                       const p = doSceny(e)
                       refOperacja.current = { rodzaj: 'przesuwanieRysunkow', startX: p.x, startY: p.y, ids: nowe }
                     }
+                  }}
+                  onDoubleClick={e => {
+                    if (!ry.tekst) return
+                    e.stopPropagation()
+                    onEdytujNapis?.(ry.id)
                   }}
                   onContextMenu={e => {
                     if (narzedzie !== 'wybor') return

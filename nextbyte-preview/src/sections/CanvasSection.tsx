@@ -42,6 +42,7 @@ import '@/sections/canvas/przytulny.css'
 import { useMotywCanvasa } from '@/sections/canvas/motyw-canvasa'
 import { PasekAkcji, type AkcjaPaska } from '@/sections/canvas/PasekAkcji'
 import { Prompter } from '@/sections/canvas/Prompter'
+import { KartaAdnotacji } from '@/sections/canvas/KartaAdnotacji'
 import { Outpaint } from '@/sections/canvas/Outpaint'
 import { dopasujWymiary } from '@/sections/canvas/formaty-modelu'
 import { typWymiarow } from '@/sections/canvas/rozszerzanie-kadru'
@@ -213,6 +214,22 @@ function skalibrujObszarPineski(
   return { x0, y0, x1, y1 }
 }
 
+/** Opis adnotacji w trakcie wpisywania. `x`,`y` — miejsce napisu (środek, gdy `srodek`), `ax`,`ay` — punkt, przy którym stoi karta. */
+interface NapisStan {
+  x: number
+  y: number
+  srodek: boolean
+  ax: number
+  ay: number
+  tekst: string
+  rozmiar: number
+  utworzony: number
+  /** edytowany istniejący napis */
+  edytuje?: string
+  /** kreska narysowana przed chwilą, do usunięcia razem z opisem */
+  powiazany?: string
+}
+
 export function CanvasSection() {
   // motyw Canvasa (domyślnie jasny; wyjście oddaje platformie jej motyw) — przełącznik jest w górnym pasku platformy
   useMotywCanvasa()
@@ -288,7 +305,7 @@ export function CanvasSection() {
   /** pisak: linia, gruby „zakres” (adnotacje) albo napis z klawiatury */
   const [trybOlowka, setTrybOlowka] = useState<'linia' | 'zakres' | 'tekst'>('linia')
   /** napis w trakcie wpisywania: miejsce w scenie i treść */
-  const [napis, setNapisStan] = useState<{ x: number; y: number; tekst: string; rozmiar: number; utworzony: number } | null>(null)
+  const [napis, setNapisStan] = useState<NapisStan | null>(null)
   /** kopia napisu w refie — zatwierdzenie z kilku zdarzeń naraz (blur + klik) nie dubluje napisu */
   const napisRef = useRef<typeof napis>(null)
   const setNapis = useCallback((n: typeof napis | ((p: typeof napis) => typeof napis)) => {
@@ -875,14 +892,48 @@ export function CanvasSection() {
     }
   }, [rysunki, zaznaczoneRysunki, projekt.warstwy, projekt.tekst, wybranaWarstwa, akcjaAI, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
   /** Zatwierdza napis wpisany z klawiatury jako adnotację (puste pole = rezygnacja). */
+  const ramkaRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null)
   const zatwierdzNapis = useCallback(() => {
     const n = napisRef.current
-    if (n && n.tekst.trim()) {
+    if (n) {
       const t = n.tekst.trim()
-      setRysunki(r => [...r, { id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: [[n.x, n.y], [n.x + szerokoscNapisu(t, n.rozmiar), n.y]], kolor: kolorOlowka === 'auto' ? '#ef4444' : kolorOlowka, grubosc: n.rozmiar, tekst: t }])
+      if (t) {
+        const szer = szerokoscNapisu(t, n.rozmiar)
+        let x = n.srodek ? n.x - szer / 2 : n.x
+        let y = n.y
+        const r = ramkaRef.current
+        if (r) {
+          const pad = n.rozmiar * 0.7
+          x = Math.min(r.x + r.width - szer - pad, Math.max(r.x + pad, x))
+          y = Math.min(r.y + r.height - n.rozmiar, Math.max(r.y + n.rozmiar, y))
+        }
+        const punkty: [number, number][] = [[x, y], [x + szer, y]]
+        if (n.edytuje) setRysunki(rs => rs.map(q => (q.id === n.edytuje ? { ...q, tekst: t, punkty } : q)))
+        else setRysunki(rs => [...rs, { id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty, kolor: kolorOlowka === 'auto' ? '#ef4444' : kolorOlowka, grubosc: n.rozmiar, tekst: t }])
+      }
     }
     setNapis(null)
   }, [kolorOlowka, setNapis])
+  // klik poza kartą opisu zatwierdza opis (tak jak karta pinezki)
+  useEffect(() => {
+    if (!napis) return
+    const naKlik = (e: PointerEvent) => {
+      if (Date.now() - (napisRef.current?.utworzony ?? 0) < 250) return
+      if ((e.target as HTMLElement | null)?.closest?.('[data-karta-adn]')) return
+      zatwierdzNapis()
+    }
+    document.addEventListener('pointerdown', naKlik, true)
+    return () => document.removeEventListener('pointerdown', naKlik, true)
+  }, [napis, zatwierdzNapis])
+  /** Kosz na karcie: usuwa opis razem z kreską, przy której powstał (albo edytowany napis). */
+  const usunNapis = useCallback(() => {
+    const n = napisRef.current
+    if (n) {
+      const ids = [n.edytuje, n.powiazany].filter(Boolean) as string[]
+      if (ids.length) setRysunki(rs => rs.filter(q => !ids.includes(q.id)))
+    }
+    setNapis(null)
+  }, [setNapis])
   /** Przesuwanie zaznaczonych szkiców i napisów przeciągnięciem */
   const przesunRysunki = useCallback((ids: string[], dx: number, dy: number) => {
     setRysunki(r => r.map(x => (ids.includes(x.id) ? { ...x, punkty: x.punkty.map(q => [q[0] + dx, q[1] + dy] as [number, number]) } : x)))
@@ -938,6 +989,7 @@ export function CanvasSection() {
     const w = trybAdn ? projekt.warstwy.find(x => x.id === trybAdn) : null
     return w ? { id: w.id, x: w.x, y: w.y, width: w.width, height: w.height } : null
   }, [trybAdn, projekt.warstwy])
+  ramkaRef.current = ramkaRysowania
   const wyjdzAdnRef = useRef<(przywroc: boolean) => void>(() => undefined)
   wyjdzAdnRef.current = wyjdzAdnotacje
 
@@ -2347,6 +2399,20 @@ export function CanvasSection() {
       ogonY,
     }
   }, [wybranaPineska, projekt, widok, rozmiar])
+  /** Pozycja karty opisu adnotacji: z prawej strony zaznaczenia, a gdy brak miejsca — z lewej. */
+  const kartaNapisu = useMemo(() => {
+    if (!napis) return null
+    const sx = widok.x + napis.ax * widok.zoom
+    const sy = widok.y + napis.ay * widok.zoom
+    const SZER = 292
+    const WYS = 150
+    const ODSTEP = 22
+    const naLewo = rozmiar.szer - 24 - (sx + ODSTEP) < SZER && sx - ODSTEP - SZER > 24
+    const left = Math.max(12, naLewo ? sx - ODSTEP - SZER : Math.min(sx + ODSTEP, rozmiar.szer - SZER - 12))
+    const maksTop = Math.max(12, (rozmiar.wys || 800) - WYS - 150)
+    const top = Math.min(maksTop, Math.max(72, sy - 38))
+    return { left, top, naLewo, ogonY: Math.min(WYS - 24, Math.max(20, sy - top)) }
+  }, [napis, widok, rozmiar])
 
   return (
     <div ref={refRoot} className="nb-cozy absolute inset-0 w-full h-full min-h-0 max-h-full overflow-hidden select-none text-foreground">
@@ -2385,7 +2451,13 @@ export function CanvasSection() {
         ramkaRysowania={ramkaRysowania}
         znacznikiZadan={znacznikiZadan}
         onPrzesunRysunki={przesunRysunki}
-        onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom), utworzony: Date.now() }) }}
+        onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, srodek: false, ax: x, ay: y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom), utworzony: Date.now() }) }}
+        onEdytujNapis={id => {
+          const r = rysunki.find(q => q.id === id)
+          if (!r?.tekst) return
+          zatwierdzNapis()
+          setNapis({ x: r.punkty[0][0], y: r.punkty[0][1], srodek: false, ax: r.punkty[1][0], ay: r.punkty[0][1], tekst: r.tekst, rozmiar: r.grubosc, utworzony: Date.now(), edytuje: id })
+        }}
         onRysunek={r => {
           setRysunki(prev => [...prev, r])
           // w trybie adnotacji po narysowaniu zakresu od razu pytamy, co tam zmienić
@@ -2394,7 +2466,9 @@ export function CanvasSection() {
             const ys = r.punkty.map(q => q[1])
             const rozmiar = 16 / Math.max(0.05, widok.zoom)
             zatwierdzNapis()
-            setNapis({ x: Math.min(...xs), y: Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) / 2, tekst: '', rozmiar, utworzony: Date.now() })
+            const cx = (Math.min(...xs) + Math.max(...xs)) / 2
+            const cy = (Math.min(...ys) + Math.max(...ys)) / 2
+            setNapis({ x: cx, y: cy, srodek: true, ax: Math.max(...xs), ay: cy, tekst: '', rozmiar, utworzony: Date.now(), powiazany: r.id })
           }
         }}
         onZaznaczRysunki={setZaznaczoneRysunki}
@@ -2789,29 +2863,32 @@ export function CanvasSection() {
         </div>
       ) : null}
 
-      {/* ══ Napis z klawiatury: pole tekstowe w miejscu kliknięcia ══ */}
-      {napis && narzedzie === 'olowek' && (
-        <div className="absolute z-30 flex items-center gap-1" style={{ left: widok.x + napis.x * widok.zoom, top: widok.y + napis.y * widok.zoom - 18 }} onPointerDown={e => e.stopPropagation()}>
-          <input
-            ref={el => { if (el && document.activeElement !== el) { el.focus(); window.setTimeout(() => el.focus(), 60); requestAnimationFrame(() => el.focus()) } }}
-            value={napis.tekst}
-            onChange={e => setNapis(n => (n ? { ...n, tekst: e.target.value } : n))}
-            onBlur={e => {
-              // zaraz po kliknięciu przeglądarka potrafi odebrać fokus — wtedy pole zostaje i dostaje go z powrotem
-              if (Date.now() - napis.utworzony < 500) { const el = e.currentTarget; window.setTimeout(() => el.focus(), 0); return }
-              zatwierdzNapis()
+      {/* ══ Karta opisu adnotacji — jak karta pinezki: obok zaznaczonego miejsca, kursor od razu w polu ══ */}
+      {napis && kartaNapisu && (
+        <div
+          key={`adn-${napis.utworzony}`}
+          data-karta-adn=""
+          className="absolute z-[75] animate-in fade-in zoom-in-95 duration-150"
+          style={mobilny ? { left: '50%', bottom: 'calc(var(--nb-nav-dol, 0px) + 190px)', transform: 'translateX(-50%)' } : { left: kartaNapisu.left, top: kartaNapisu.top, transformOrigin: kartaNapisu.naLewo ? 'right top' : 'left top' }}
+          onPointerDown={e => e.stopPropagation()}
+        >
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute h-3.5 w-3.5 rotate-45 rounded-[4px] border border-border/60 max-md:hidden"
+            style={{
+              top: kartaNapisu.ogonY - 7,
+              [kartaNapisu.naLewo ? 'right' : 'left']: -7,
+              background: 'hsl(var(--card) / 0.9)',
+              clipPath: kartaNapisu.naLewo ? 'polygon(0 0, 100% 0, 100% 100%)' : 'polygon(0 0, 100% 100%, 0 100%)',
             }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') zatwierdzNapis()
-              if (e.key === 'Escape') { e.stopPropagation(); setNapis(null) }
-            }}
-            placeholder="Co tu zmienić…"
-            aria-label="Napis adnotacji"
-            className="h-9 min-w-[160px] rounded-xl border border-primary/50 bg-card/90 px-3 text-[14px] font-semibold text-foreground shadow-lg outline-none backdrop-blur placeholder:font-normal placeholder:text-muted-foreground"
           />
-          <button type="button" aria-label="Dodaj napis" onClick={zatwierdzNapis} className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-            <Check className="h-4 w-4" />
-          </button>
+          <KartaAdnotacji
+            tekst={napis.tekst}
+            onTekst={t => setNapis(n => (n ? { ...n, tekst: t } : n))}
+            onGotowe={zatwierdzNapis}
+            onUsun={usunNapis}
+            edycja={Boolean(napis.edytuje)}
+          />
         </div>
       )}
 
