@@ -319,6 +319,9 @@ export function CanvasSection() {
   const widokPrzedAdn = useRef<Widok | null>(null)
   const [menuRysunku, setMenuRysunku] = useState<{ x: number; y: number } | null>(null)
   const [widok, setWidok] = useState<Widok>({ x: 50, y: 60, zoom: 0.72 })
+  /** aktualny widok dla callbacków, które nie powinny się przeładowywać przy każdym ruchu (np. wstawianie zdjęć w środek widoku) */
+  const widokRef = useRef(widok)
+  widokRef.current = widok
   const [menuDodawania, setMenuDodawania] = useState(false)
   /** Miejsce zajęte przez nawigację platformy leżącą na płótnie (zmienne --nb-nav-* z PreviewSection) */
   const odsuniecia = () => {
@@ -518,7 +521,7 @@ export function CanvasSection() {
   }, [])
 
   const dodajZeZrodla = useCallback(
-    (src: string, nazwa: string, zrodlo: ZrodloObrazu, wzorzec?: Warstwa) => {
+    (src: string, nazwa: string, zrodlo: ZrodloObrazu, wzorzec?: Warstwa, punkt?: { x: number; y: number }) => {
       const obrazek = new Image()
       obrazek.crossOrigin = 'anonymous'
       // pierwszy wynik po starcie generacji wypełnia placeholder (i tylko on)
@@ -550,11 +553,23 @@ export function CanvasSection() {
           }
           const skala = Math.min(1, 460 / obrazek.width)
           const prawaKrawedz = p.warstwy.reduce((maks, w) => Math.max(maks, w.x + w.width), 0)
-          const x = p.warstwy.length === 0 ? 60 : prawaKrawedz + 48
           const wysokosc = wzorzec ? wzorzec.height : Math.round(obrazek.height * skala)
           const szerokosc = wzorzec
             ? Math.round((obrazek.width / obrazek.height) * wzorzec.height)
             : Math.round(obrazek.width * skala)
+          let x = p.warstwy.length === 0 ? 60 : prawaKrawedz + 48
+          let y = wzorzec ? wzorzec.y : 60
+          if (zrodlo !== 'wynik' && !wzorzec) {
+            // wgrane / wklejone / upuszczone zdjęcie ląduje tam, gdzie patrzysz: w punkcie upuszczenia albo na środku widoku
+            const korzen = refRoot.current?.getBoundingClientRect()
+            const v = widokRef.current
+            const c = punkt ?? (korzen ? { x: (korzen.width / 2 - v.x) / v.zoom, y: (korzen.height / 2 - v.y) / v.zoom } : { x: 60 + szerokosc / 2, y: 60 + wysokosc / 2 })
+            x = Math.round(c.x - szerokosc / 2)
+            y = Math.round(c.y - wysokosc / 2)
+            // wklejone / wgrane zdjęcie nie ląduje na innym — przesuwamy w prawo do wolnego miejsca (upuszczone trafia dokładnie pod kursor)
+            const zajete = (px: number) => p.warstwy.some(w => w.visible && px < w.x + w.width && px + szerokosc > w.x && y < w.y + w.height && y + wysokosc > w.y)
+            if (!punkt) for (let n = 0; n < 16 && zajete(x); n++) x += szerokosc + 32
+          }
           return {
             ...p,
             warstwy: [
@@ -564,7 +579,7 @@ export function CanvasSection() {
                 type: 'image' as const,
                 src,
                 x,
-                y: wzorzec ? wzorzec.y : 60,
+                y,
                 width: szerokosc,
                 height: wysokosc,
                 naturalWidth: obrazek.width,
@@ -599,16 +614,56 @@ export function CanvasSection() {
   )
 
   const wstawPliki = useCallback(
-    (pliki: File[], zrodlo: ZrodloObrazu) => {
+    (pliki: File[], zrodlo: ZrodloObrazu, punkt?: { x: number; y: number }) => {
       for (const plik of pliki) {
         if (!plik.type.startsWith('image/')) continue
         const czytnik = new FileReader()
         czytnik.onload = () =>
-          dodajZeZrodla(String(czytnik.result), plik.name.replace(/\.[^.]+$/, '') || 'Zdjęcie', zrodlo)
+          dodajZeZrodla(String(czytnik.result), plik.name.replace(/\.[^.]+$/, '') || 'Zdjęcie', zrodlo, undefined, punkt)
         czytnik.readAsDataURL(plik)
       }
     },
     [dodajZeZrodla],
+  )
+
+  /** Zdjęcie z adresu (przeciągnięte ze strony albo z innego miejsca): najpierw jako plik, a gdy serwer nie pozwala — bezpośrednio z adresu. */
+  const wstawZUrl = useCallback(
+    async (adres: string, punkt?: { x: number; y: number }) => {
+      const nazwa = adres.startsWith('data:') ? 'Zdjęcie' : adres.split('/').pop()?.split('?')[0]?.replace(/\.[^.]+$/, '') || 'Z adresu'
+      try {
+        const odp = await fetch(adres)
+        const blob = await odp.blob()
+        if (blob.type.startsWith('image/')) {
+          wstawPliki([new File([blob], nazwa, { type: blob.type })], 'upuszczenie', punkt)
+          return
+        }
+      } catch {
+        /* serwer bez CORS — poniżej ładujemy obraz wprost */
+      }
+      dodajZeZrodla(adres, nazwa, 'adres', undefined, punkt)
+    },
+    [wstawPliki, dodajZeZrodla],
+  )
+
+  /** Upuszczenie czegokolwiek z obrazem: pliki z komputera, obraz przeciągnięty ze strony www, z czatu albo z innej karty. */
+  const wstawZPrzeciagniecia = useCallback(
+    (dt: DataTransfer, klient: { x: number; y: number }) => {
+      const korzen = refRoot.current?.getBoundingClientRect()
+      const v = widokRef.current
+      const punkt = korzen ? { x: (klient.x - korzen.left - v.x) / v.zoom, y: (klient.y - korzen.top - v.y) / v.zoom } : undefined
+      const pliki = [...dt.files].filter(f => f.type.startsWith('image/'))
+      if (pliki.length) {
+        // kilka plików naraz — kolejne obok poprzednich (wolne miejsce znajduje wstawianie)
+        pliki.forEach(f => wstawPliki([f], 'upuszczenie', punkt))
+        return
+      }
+      const lista = dt.getData('text/uri-list').split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'))
+      const zHtml = /<img[^>]+src=["']([^"']+)["']/i.exec(dt.getData('text/html'))?.[1]
+      const tekst = dt.getData('text/plain').trim()
+      const adres = lista || zHtml || (/^(https?:\/\/|data:image\/)/.test(tekst) ? tekst : '')
+      if (adres) void wstawZUrl(adres, punkt)
+    },
+    [wstawPliki, wstawZUrl],
   )
 
   const wstawZAdresu = useCallback(() => {
@@ -636,10 +691,11 @@ export function CanvasSection() {
 
   useEffect(() => {
     const naWklejenie = (e: ClipboardEvent) => {
-      const pliki = [...(e.clipboardData?.items ?? [])]
+      const zElementow = [...(e.clipboardData?.items ?? [])]
         .filter(i => i.kind === 'file' && i.type.startsWith('image/'))
         .map(i => i.getAsFile())
         .filter((f): f is File => f !== null)
+      const pliki = zElementow.length ? zElementow : [...(e.clipboardData?.files ?? [])].filter(f => f.type.startsWith('image/'))
       if (pliki.length === 0) return
       e.preventDefault()
       wstawPliki(pliki, 'schowek')
@@ -647,6 +703,28 @@ export function CanvasSection() {
     window.addEventListener('paste', naWklejenie)
     return () => window.removeEventListener('paste', naWklejenie)
   }, [wstawPliki])
+
+  // Przeciąganie zdjęć na Canvas z dowolnego miejsca (komputer, strona www, czat) — także nad kartą czatu i paskami
+  useEffect(() => {
+    const maObraz = (dt: DataTransfer | null) =>
+      Boolean(dt && ([...dt.items].some(i => i.kind === 'file' ? i.type.startsWith('image/') || i.type === '' : false) || dt.types.includes('text/uri-list') || dt.types.includes('text/html')))
+    const naNadLeci = (e: DragEvent) => {
+      if (!refRoot.current?.contains(e.target as Node) || !maObraz(e.dataTransfer)) return
+      e.preventDefault()
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+    }
+    const naUpuszczenie = (e: DragEvent) => {
+      if (!refRoot.current?.contains(e.target as Node) || !e.dataTransfer || !maObraz(e.dataTransfer)) return
+      e.preventDefault()
+      wstawZPrzeciagniecia(e.dataTransfer, { x: e.clientX, y: e.clientY })
+    }
+    window.addEventListener('dragover', naNadLeci)
+    window.addEventListener('drop', naUpuszczenie)
+    return () => {
+      window.removeEventListener('dragover', naNadLeci)
+      window.removeEventListener('drop', naUpuszczenie)
+    }
+  }, [wstawZPrzeciagniecia])
 
   /* ── Warstwy ───────────────────────────────────────────────────── */
 
@@ -2573,7 +2651,7 @@ export function CanvasSection() {
         onPrzesunPineske={(id, x, y) => zmienPineske(id, { normalizedX: x, normalizedY: y, analiza: undefined })}
         onPineskaPrzesunieta={rozpoznajPineskePonownie}
         onWbijPineske={wbijPineske}
-        onUpuscPliki={pliki => wstawPliki(pliki, 'upuszczenie')}
+        onUpuscPliki={() => undefined /* upuszczanie obsługuje okno (także nad czatem i paskami) */}
         ramka={projekt.ramka}
         onZmienRamke={ramka => setProjekt(p => ({ ...p, ramka }))}
         intencja={intencja}
