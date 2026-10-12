@@ -244,28 +244,6 @@ export function CzatCanvas({
   }, [menu])
   const mobilny = useMobilny()
   const klawiatura = useKlawiatura()
-  // Wariant wyglądu panelu do porównania: ?czat=a|b|c (zapamiętywany), Alt+1/2/3 przełącza, Alt+0 = domyślny
-  const [wariant, setWariant] = useState<string>(() => {
-    try {
-      const z = new URLSearchParams(window.location.search).get('czat') || localStorage.getItem('nb-czat-wariant') || ''
-      return ['a', 'b', 'c'].includes(z) ? z : ''
-    } catch { return '' }
-  })
-  useEffect(() => {
-    if (wariant) document.documentElement.setAttribute('data-nb-czat', wariant)
-    else document.documentElement.removeAttribute('data-nb-czat')
-    try { localStorage.setItem('nb-czat-wariant', wariant) } catch { /* brak pamięci */ }
-    return () => document.documentElement.removeAttribute('data-nb-czat')
-  }, [wariant])
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => {
-      if (!e.altKey) return
-      const m: Record<string, string> = { '1': 'a', '2': 'b', '3': 'c', '0': '' }
-      if (e.key in m) { e.preventDefault(); setWariant(m[e.key]) }
-    }
-    window.addEventListener('keydown', k)
-    return () => window.removeEventListener('keydown', k)
-  }, [])
   const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
   // Skrót C (z Canvasa): rozwiń panel i ustaw kursor w polu polecenia
   useEffect(() => {
@@ -278,7 +256,7 @@ export function CzatCanvas({
   }, [])
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
-    document.documentElement.style.setProperty('--nb-czat-szer', zwiniety || mobilny ? '0px' : wariant === 'a' ? '360px' : wariant === 'b' || wariant === 'c' ? '0px' : '364px')
+    document.documentElement.style.setProperty('--nb-czat-szer', '0px')
     // telefon: otwarty arkusz czatu chowa dok narzędzi (nie ma na nim miejsca)
     if (mobilny && !zwiniety) document.documentElement.setAttribute('data-nb-czat-mob', 'otwarty')
     else document.documentElement.removeAttribute('data-nb-czat-mob')
@@ -286,7 +264,7 @@ export function CzatCanvas({
       document.documentElement.style.removeProperty('--nb-czat-szer')
       document.documentElement.removeAttribute('data-nb-czat-mob')
     }
-  }, [zwiniety, mobilny, wariant])
+  }, [zwiniety, mobilny])
   // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
   const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
   useEffect(() => {

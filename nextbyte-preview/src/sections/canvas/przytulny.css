@@ -489,70 +489,24 @@ html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
 }
 
-/* ═══ Warianty panelu czatu (komputer) — do porównania; ?czat=a|b|c lub Alt+1/2/3 ═══ */
+/* ═══ Panel czatu (komputer): karta w prawym dolnym rogu — zawsze widoczny czat z nagłówkiem, historią i kompozytorem ═══ */
 @media (min-width: 768px) {
-  /* A — dokowana kolumna: od paska nawigacji do dołu, przy prawej krawędzi, płaska, z gradientową krawędzią */
-  html[data-nb-czat='a'] .nb-czat-root { top: var(--nb-nav-gora, 0px); bottom: var(--nb-nav-dol, 0px); right: var(--nb-nav-prawo, 0px); width: 360px; }
-  html[data-nb-czat='a'] .nb-cozy.nb-cozy .nb-cozy-czat {
-    border-radius: 0 !important;
-    border: 0;
-    border-left: 1px solid hsl(var(--primary) / 0.22);
-    background: hsl(var(--card) / 0.6);
-    -webkit-backdrop-filter: blur(22px) saturate(140%);
-    backdrop-filter: blur(22px) saturate(140%);
-    box-shadow: -20px 0 50px -30px hsl(var(--primary) / 0.35);
+  .nb-czat-root {
+    top: auto !important;
+    bottom: calc(var(--nb-nav-dol, 0px) + 16px) !important;
+    right: calc(var(--nb-nav-prawo, 0px) + 16px) !important;
+    width: 400px !important;
+    max-height: min(640px, calc(100vh - var(--nb-nav-gora, 0px) - var(--nb-nav-dol, 0px) - 40px));
   }
-  html[data-nb-czat='a'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
-  html[data-nb-czat='a'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
-    background: transparent; border: 0; border-top: 1px solid hsl(var(--foreground) / 0.1); border-radius: 0; box-shadow: none;
-    margin: 0 -0.75rem -0.75rem; padding: 0.9rem 1rem 1rem;
-  }
-
-  /* B — wyspa: sam kompozytor jako mała pływająca karta w prawym dolnym rogu; historia wyrasta nad nim */
-  html[data-nb-czat='b'] .nb-czat-root { top: auto; bottom: calc(var(--nb-nav-dol, 0px) + 16px); right: calc(var(--nb-nav-prawo, 0px) + 16px); width: 400px; max-height: 76vh; }
-  /* C — pasek poleceń: szeroki kompozytor wyśrodkowany na dole (jak w narzędziach do generowania), dok narzędzi przechodzi na lewą krawędź */
-  html[data-nb-czat='c'] .nb-czat-root {
-    top: auto; bottom: calc(var(--nb-nav-dol, 0px) + 16px); right: auto; width: min(700px, calc(100vw - 280px)); max-height: 76vh;
-    left: calc(50% + (var(--nb-nav-lewo, 0px) - var(--nb-nav-prawo, 0px)) / 2); transform: translateX(-50%);
-  }
-  html[data-nb-czat='b'] .nb-cozy.nb-cozy .nb-cozy-czat,
-  html[data-nb-czat='c'] .nb-cozy.nb-cozy .nb-cozy-czat {
-    background: transparent; border: 0; box-shadow: none; padding: 0; gap: 0.5rem;
-    -webkit-backdrop-filter: none; backdrop-filter: none; height: auto; max-height: 76vh;
-  }
-  html[data-nb-czat='b'] .nb-cozy.nb-cozy .nb-cozy-czat::before,
-  html[data-nb-czat='c'] .nb-cozy.nb-cozy .nb-cozy-czat::before { display: none; }
-  html[data-nb-czat='b'] .nb-czat-hist:not(:has(> :not(:empty):not(.nb-czat-pusty))),
-  html[data-nb-czat='c'] .nb-czat-hist:not(:has(> :not(:empty):not(.nb-czat-pusty))) { display: none; }
-  html[data-nb-czat='b'] .nb-czat-naglowek, html[data-nb-czat='c'] .nb-czat-naglowek,
-  html[data-nb-czat='b'] .nb-czat-pusty, html[data-nb-czat='c'] .nb-czat-pusty { display: none; }
-  html[data-nb-czat='b'] .nb-czat-hist:has(> :not(:empty):not(.nb-czat-pusty)),
-  html[data-nb-czat='c'] .nb-czat-hist:has(> :not(:empty):not(.nb-czat-pusty)) {
-    padding: 0.75rem; border-radius: 20px; border: 1px solid hsl(var(--foreground) / 0.12);
-    background: hsl(var(--card) / 0.72); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
-    box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.6);
-  }
-  html[data-nb-czat='b'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
-  html[data-nb-czat='b'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within,
-  html[data-nb-czat='c'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
-  html[data-nb-czat='c'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
-    border-radius: 24px;
-    border: 1px solid hsl(var(--primary) / 0.3);
-    background: hsl(var(--card) / 0.78);
+  .nb-cozy.nb-cozy .nb-cozy-czat {
+    height: auto;
+    max-height: inherit;
+    border-radius: 22px !important;
+    border: 1px solid hsl(var(--primary) / 0.22);
+    background: hsl(var(--card) / 0.74);
     -webkit-backdrop-filter: blur(24px) saturate(150%);
     backdrop-filter: blur(24px) saturate(150%);
-    box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.65), 0 0 36px -16px hsl(var(--primary) / 0.5);
+    box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.65), 0 0 40px -20px hsl(var(--primary) / 0.45);
   }
-  html[data-nb-czat='b'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within,
-  html[data-nb-czat='c'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within { border-color: hsl(var(--primary) / 0.6); }
-  html[data-nb-czat='c'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka { padding: 0.9rem 1rem 0.7rem; }
-
-  /* C: dok narzędzi pionowo przy lewej krawędzi; pasek ołówka obok niego */
-  html[data-nb-czat='c'] .nb-dok-mob:not(.nb-pencil-bar) {
-    left: calc(var(--nb-nav-lewo, 0px) + 16px) !important; top: 50% !important; bottom: auto !important; transform: translateY(-50%) !important;
-  }
-  html[data-nb-czat='c'] .nb-dok-mob:not(.nb-pencil-bar) > div { flex-direction: column !important; height: auto !important; padding: 0.375rem; }
-  html[data-nb-czat='c'] .nb-dok-mob:not(.nb-pencil-bar) span[aria-hidden='true'] { width: 1.25rem; height: 1px; margin: 0.25rem 0; }
-  html[data-nb-czat='c'] .nb-pencil-bar { bottom: calc(var(--nb-nav-dol, 0px) + 150px) !important; }
-  html[data-nb-czat='b'] .nb-pencil-bar { bottom: calc(var(--nb-nav-dol, 0px) + 76px) !important; }
+  .nb-czat-hist { min-height: 150px; }
 }

@@ -2335,7 +2335,7 @@ export function CanvasSection() {
               zablokowane={Boolean(akcjaAI)}
               style={{
                 // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
-                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 475 + (document.documentElement.getAttribute('data-nb-czat') === 'c' ? 64 : 0), Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
+                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
                 transform: 'translateX(-50%)',
                 maxWidth: mobilny ? 'calc(100vw - 16px)' : 'calc(100vw - 440px)',
                 top: gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
