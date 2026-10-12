@@ -142,8 +142,6 @@ function zlozWejscie(o: HTMLImageElement, kreski: Pociagniecie[], wyc: Prostokat
   rysujMaske(maska.g, w, h, kreski, '#ff00ff', wyc.x, wyc.y) // jedna warstwa pełna — nakładające się kreski nie ciemnieją podwójnie
   const wej = nowePlotno(szer, wys)
   wej.g.drawImage(o, wyc.x, wyc.y, wyc.w, wyc.h, 0, 0, szer, wys)
-  // czysty wycinek (bez magenty) — dla modeli z prawdziwą maską (GPT Image: `maskImage`)
-  const czysty = wej.c.toDataURL('image/jpeg', 0.95)
   wej.g.globalAlpha = KRYCIE_MAGENTY
   wej.g.drawImage(maska.c, 0, 0, szer, wys)
   // osobna maska: czarne tło, białe zaznaczenie
@@ -153,7 +151,7 @@ function zlozWejscie(o: HTMLImageElement, kreski: Pociagniecie[], wyc: Prostokat
   const bialy = nowePlotno(wyc.w, wyc.h)
   rysujMaske(bialy.g, w, h, kreski, '#fff', wyc.x, wyc.y)
   bw.g.drawImage(bialy.c, 0, 0, szer, wys)
-  return { src: wej.c.toDataURL('image/jpeg', 0.95), czysty, maska: bw.c.toDataURL('image/png'), szer, wys }
+  return { src: wej.c.toDataURL('image/jpeg', 0.95), maska: bw.c.toDataURL('image/png'), szer, wys }
 }
 
 /** Średnie odchylenie (0–255) oryginału od wyniku i udział magenty — tylko wewnątrz maski, na zmniejszonej kopii. */
@@ -228,18 +226,6 @@ async function wklejWMaske(o: HTMLImageElement, wynik: string, kreski: Pociagnie
   return koncowe.c.toDataURL('image/jpeg', 0.95)
 }
 
-/**
- * Prompt dla modeli z prawdziwą maską (GPT Image: `inputs.maskImage`, biel = edytuj, czerń = zachowaj).
- * Obraz jest czysty, bez magenty — maska idzie osobnym polem, więc nie tłumaczymy jej w prompcie jako drugiego zdjęcia.
- */
-export function promptInpaintinguZMaska(tekst: string): string {
-  return `${tekst.trim()}
-
-Edit the photo using the mask: change ONLY the masked (white) area. Do the request above right there — create the new content inside that area, filling and fitting its shape, scaled so that all of it lies within the masked region. If the request is to remove something, fill the area with what would naturally be behind it.
-The result must clearly and visibly show the requested change inside the masked area. Returning just the surrounding background, texture or an almost unchanged area is a failed result.
-Everything outside the masked area stays exactly as it is. Make the new content continue its surroundings seamlessly: same light direction and colour, perspective, sharpness, noise and grain, with natural contact shadows and reflections. Return the full edited photo in the same framing and aspect ratio.`
-}
-
 /** Prompt inpaintingu — własny, niezależny od reszty Canvasa. */
 export function promptInpaintingu(tekst: string): string {
   return `${tekst.trim()}
@@ -280,12 +266,11 @@ export async function wykonajInpainting({ src, kreski, tekst, model }: ZadanieIn
   const o = await wczytaj(zrodlo)
   const wyc = policzWycinekMaski(o.naturalWidth, o.naturalHeight, kreski)
   const wejscie = zlozWejscie(o, kreski, wyc)
-  // GPT Image ma prawdziwą maskę (`maskImage`): czysty wycinek + maska w osobnym polu. Pozostałe modele dostają magentę i maskę jako drugi obraz.
-  const zMaska = model === 'gptimage2'
+  // Wszystkie modele (także GPT Image 2) dostają to samo: wycinek z magentą jako Image 1 i maskę jako Image 2, oba w `referenceImages`.
+  // `inputs.maskImage` w GPT Image 2 okazało się nie działać (wynik bez zmian) — dlatego maska idzie jako zwykły obraz referencyjny.
   const wynik = await generuj({
-    polecenie: zMaska ? promptInpaintinguZMaska(tekst) : promptInpaintingu(tekst),
-    obrazy: zMaska ? [wejscie.czysty] : [wejscie.src, wejscie.maska],
-    ...(zMaska ? { maska: wejscie.maska } : {}),
+    polecenie: promptInpaintingu(tekst),
+    obrazy: [wejscie.src, wejscie.maska],
     szerokosc: wejscie.szer,
     wysokosc: wejscie.wys,
     model,
