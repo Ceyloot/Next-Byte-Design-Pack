@@ -278,7 +278,7 @@ export function CanvasSection() {
   /** Ołówek: szkice na płótnie, zaznaczone szkice i menu prawego przycisku */
   const [rysunki, setRysunki] = useState<Rysunek[]>([])
   const [zaznaczoneRysunki, setZaznaczoneRysunki] = useState<string[]>([])
-  const [kolorOlowka, setKolorOlowka] = useState('#111111')
+  const [kolorOlowka, setKolorOlowka] = useState('auto') // „auto” = kolor tekstu motywu: biały na ciemnym, ciemny na jasnym
   const [gruboscOlowka, setGruboscOlowka] = useState(5)
   const [menuRysunku, setMenuRysunku] = useState<{ x: number; y: number } | null>(null)
   const [widok, setWidok] = useState<Widok>({ x: 50, y: 60, zoom: 0.72 })
@@ -793,7 +793,7 @@ export function CanvasSection() {
       g.lineCap = 'round'
       g.lineJoin = 'round'
       for (const r of wyb) {
-        g.strokeStyle = r.kolor
+        g.strokeStyle = r.kolor === 'auto' ? '#111111' : r.kolor // szkic idzie do modelu na białym tle
         g.lineWidth = Math.max(2, r.grubosc * k)
         g.beginPath()
         r.punkty.forEach((q, i) => (i === 0 ? g.moveTo(q[0] * k + ox, q[1] * k + oy) : g.lineTo(q[0] * k + ox, q[1] * k + oy)))
@@ -2530,16 +2530,16 @@ export function CanvasSection() {
       {narzedzie === 'olowek' && (
         <div className="p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 -translate-x-1/2 md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]">
           <div role="toolbar" aria-label="Ołówek" className="nb-cozy-plyta pointer-events-auto flex h-12 items-center gap-1 rounded-2xl border px-2">
-            {['#111111', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'].map(k => (
+            {['auto', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'].map(k => (
               <button
                 key={k}
                 type="button"
-                aria-label={`Kolor ${k}`}
+                aria-label={k === 'auto' ? 'Kolor domyślny (zgodny z motywem)' : `Kolor ${k}`}
                 aria-pressed={kolorOlowka === k}
                 onClick={() => setKolorOlowka(k)}
                 className={cn('grid h-7 w-7 place-items-center rounded-full transition-transform', kolorOlowka === k ? 'ring-2 ring-primary ring-offset-2 ring-offset-transparent' : 'hover:scale-110')}
               >
-                <span className="h-4 w-4 rounded-full border border-foreground/20" style={{ background: k }} />
+                <span className="h-4 w-4 rounded-full border border-foreground/20" style={{ background: k === 'auto' ? 'hsl(var(--foreground))' : k }} />
               </button>
             ))}
             <span aria-hidden className="mx-1 h-5 w-px bg-foreground/[0.12]" />

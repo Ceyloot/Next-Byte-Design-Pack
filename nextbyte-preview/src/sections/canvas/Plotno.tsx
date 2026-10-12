@@ -124,7 +124,7 @@ export function Plotno({
   onMenuWarstwy,
   rysunki = [],
   zaznaczoneRysunki = [],
-  kolorOlowka = '#111111',
+  kolorOlowka = 'auto',
   gruboscOlowka = 5,
   onRysunek,
   onZaznaczRysunki,
@@ -759,14 +759,14 @@ export function Plotno({
                   }}
                 >
                   {ry.kolor === '#111111' && <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={ry.grubosc + 3 * odwrotna} strokeLinecap="round" strokeLinejoin="round" />}
-                  <path d={d} fill="none" stroke={ry.kolor} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
+                  <path d={d} fill="none" stroke={ry.kolor === 'auto' ? undefined : ry.kolor} style={ry.kolor === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
                   {/* szersza, niewidoczna ścieżka — łatwiej trafić palcem */}
                   <path d={d} fill="none" stroke="transparent" strokeWidth={Math.max(ry.grubosc, 14 * odwrotna)} strokeLinecap="round" strokeLinejoin="round" />
                 </g>
               )
             })}
             {zywyRysunek && (
-              <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka} strokeWidth={gruboscOlowka} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka === 'auto' ? undefined : kolorOlowka} style={kolorOlowka === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeWidth={gruboscOlowka} strokeLinecap="round" strokeLinejoin="round" />
             )}
             {(() => {
               const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))
