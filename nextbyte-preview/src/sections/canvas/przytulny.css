@@ -464,28 +464,27 @@ html[data-nb-czat-mob='otwarty'] .nb-dok-mob { display: none; }
   border-color: hsl(0 0% 100% / 0.22);
 }
 
-/* Kompozytor czatu: szkło z barwą marki (gradient od akcentu), cienka ramka akcentu, świecąca na fokusie */
+/* Kompozytor czatu: jedna lekka powierzchnia — cienka ramka, półprzezroczyste wypełnienie, akcent dopiero na fokusie */
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
-  border: 1px solid hsl(var(--primary) / 0.22);
-  background-color: hsl(var(--card) / 0.6);
-  background-image: linear-gradient(160deg, hsl(var(--primary) / 0.16), hsl(var(--primary) / 0.03) 55%, transparent);
-  box-shadow: 0 0 28px -14px hsl(var(--primary) / 0.5);
+  border: 1px solid hsl(var(--foreground) / 0.12);
+  background-color: hsl(var(--card) / 0.55);
+  background-image: none;
+  box-shadow: none;
+  border-radius: 18px;
 }
 .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
   border-color: hsl(var(--primary) / 0.5);
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1), 0 0 32px -12px hsl(var(--primary) / 0.6);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka,
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
-  border: 1px solid hsl(var(--primary) / 0.26);
-  background-color: hsl(210 40% 100% / 0.03);
-  background-image: linear-gradient(160deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.04) 55%, transparent);
-  box-shadow: 0 0 28px -14px hsl(var(--primary) / 0.55);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  background-color: hsl(0 0% 100% / 0.04);
+  background-image: none;
+  box-shadow: none;
 }
 [data-theme='dark-theme'] .nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka:focus-within {
-  border-color: hsl(var(--primary) / 0.55);
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1), 0 0 32px -12px hsl(var(--primary) / 0.65);
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
 }
-.nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka hr,
-.nb-cozy.nb-cozy .nb-cozy-czat .nb-cozy-niecka > div[class*='h-px'] { background: hsl(var(--primary) / 0.18); }

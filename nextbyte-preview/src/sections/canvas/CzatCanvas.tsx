@@ -671,22 +671,6 @@ export function CzatCanvas({
 
 
         <div ref={refPasek} className="nb-cozy-niecka p-3">
-          <div className="mb-2">
-            <GlassModelSearch
-              key={`${modelObrazu}-${odswiez}`}
-              models={MODELE_DO_WYSZUKIWARKI}
-              selectedId={modelObrazu}
-              placement="top"
-              align="left"
-              odwroc
-              szklo
-              onSelect={mo => {
-                const model = MODELE_OBRAZU.find(x => x.id === mo.id)
-                if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)
-                else setOdswiez(n => n + 1)
-              }}
-            />
-          </div>
           {/* W odniesieniu do czego jest polecenie: zaznaczone zdjęcie i pinezki — każda z miniaturą swojego zdjęcia */}
           {(zaznaczona || pineski.length > 0 || zaznaczoneWarstwy.length >= 2 || zalaczniki.length > 0) && (
             <div className="mb-2 flex flex-wrap items-center gap-1" aria-label="Polecenie dotyczy">
@@ -786,7 +770,7 @@ export function CzatCanvas({
             enterKeyHint="send"
             className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] max-md:text-[16px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
           />
-          <div className="mx-0.5 my-2 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
+          <div className="mt-1" />
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5">
               {/* Załącz plik — plik, schowek albo adres */}
@@ -837,16 +821,31 @@ export function CzatCanvas({
                 <Mic className="h-4 w-4" />
               </button>
             </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+            <GlassModelSearch
+              key={`${modelObrazu}-${odswiez}`}
+              models={MODELE_DO_WYSZUKIWARKI}
+              selectedId={modelObrazu}
+              placement="top"
+              align="left"
+              odwroc
+              szklo
+              onSelect={mo => {
+                const model = MODELE_OBRAZU.find(x => x.id === mo.id)
+                if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)
+                else setOdswiez(n => n + 1)
+              }}
+            />
             <button
               onClick={wyslij}
               disabled={trwa || !tekst.trim() || !!powodBlokady}
-              title={powodBlokady ?? undefined}
-              className="nb-cta nb-refleks-krawedzi flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+              title={powodBlokady ?? `Wyślij · ${BYTE_ZA_OBRAZ} Byte`}
+              aria-label="Wyślij"
+              className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {trwa ? 'Pracuję…' : 'Wyślij'}
-              {!trwa && <span className="font-mono text-[11px] tabular-nums opacity-75">· {BYTE_ZA_OBRAZ} ⟠</span>}
+              {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2} />}
             </button>
+            </div>
           </div>
         </div>
 

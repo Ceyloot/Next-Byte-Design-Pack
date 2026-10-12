@@ -621,7 +621,7 @@ export function GlassModelSearch({
     if (!odwroc || !open) return
     const licz = () => {
       const r = przyciskRef.current?.getBoundingClientRect()
-      if (r) setPolozenie({ left: r.left, bottom: window.innerHeight - r.top + 8, width: r.width })
+      if (r) setPolozenie({ left: window.innerWidth - r.right, bottom: window.innerHeight - r.top + 8, width: r.width })
     }
     licz()
     window.addEventListener('resize', licz)
@@ -646,19 +646,14 @@ export function GlassModelSearch({
         className={cn(
           'group inline-flex items-center border border-border bg-background/40 h-11 text-[14px] text-card-foreground transition-all duration-200 hover:border-primary/40 focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-9 text-xs font-medium',
           odwroc ? 'gap-1.5 px-2.5' : 'gap-2 px-3',
-          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? 'rounded-xl' : 'rounded-full',
+          compact ? 'rounded-lg !h-10 w-full justify-between border-primary/40 bg-primary/[0.12] font-semibold shadow-[0_0_0_1px_hsl(var(--primary)/0.15),0_6px_20px_-8px_hsl(var(--primary)/0.5)]' : odwroc ? '!h-8 rounded-lg border-transparent bg-transparent px-2 text-foreground/80 hover:border-transparent hover:bg-foreground/[0.07] hover:text-foreground' : 'rounded-full',
           open && 'border-primary/50 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]',
         )}
       >
         {!odwroc && <span className="text-primary">{selectedModel.icon}</span>}
         {odwroc ? (
           // Szerokość przycisku = najdłuższa nazwa modelu (niewidoczne kopie w tej samej komórce) — zero luki przy krótkich
-          <span className="grid min-w-0 flex-1 text-left">
-            <span className="col-start-1 row-start-1 whitespace-nowrap">{selectedModel.name}</span>
-            {models.map(m => (
-              <span key={m.id} aria-hidden className="invisible col-start-1 row-start-1 h-0 overflow-hidden whitespace-nowrap">{m.name}</span>
-            ))}
-          </span>
+          <span className="min-w-0 flex-1 whitespace-nowrap text-left">{selectedModel.name}</span>
         ) : (
           <span className="min-w-0 flex-1 truncate text-left">{selectedModel.name}</span>
         )}
@@ -678,7 +673,7 @@ export function GlassModelSearch({
         <div
           ref={popupRef}
           className="fixed z-[90] animate-in fade-in zoom-in-95 duration-150"
-          style={{ left: polozenie.left, bottom: polozenie.bottom, minWidth: polozenie.width, width: 'max-content', maxWidth: 'calc(100vw - 16px)' }}
+          style={{ right: polozenie.left, bottom: polozenie.bottom, minWidth: Math.max(polozenie.width, 264), width: 'max-content', maxWidth: 'calc(100vw - 16px)' }}
         >
           {popoverContent}
         </div>,
