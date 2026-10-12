@@ -2778,11 +2778,22 @@ export function CanvasSection() {
               etykieta="Szybkie akcje AI"
               zablokowane={Boolean(akcjaAI)}
               style={{
-                // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
-                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 380, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 380)),
+                // zawsze bezpośrednio nad zdjęciem i wyśrodkowany na jego widocznej części (bez przyklejania do krawędzi ekranu);
+                // telefon: środek ekranu, bo pasek jest tam szerszy niż zdjęcie
+                left: mobilny
+                  ? window.innerWidth / 2
+                  : (() => {
+                      const prawo = lewo + w.width * widok.zoom
+                      const od = Math.max(lewo, 0)
+                      const doo = Math.min(prawo, window.innerWidth)
+                      const srodek = od < doo ? (od + doo) / 2 : lewo + (w.width * widok.zoom) / 2
+                      // pasek (ok. 720 px) nie wychodzi poza ekran, ale zostaje nad zdjęciem — przesuwa się tylko tyle, ile trzeba
+                      const pol = 370
+                      return window.innerWidth > 2 * pol + 16 ? Math.min(window.innerWidth - pol - 8, Math.max(pol + 8, srodek)) : srodek
+                    })(),
                 transform: 'translateX(-50%)',
-                maxWidth: mobilny ? 'calc(100vw - 16px)' : 'calc(100vw - 440px)',
-                top: gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
+                maxWidth: mobilny ? 'calc(100vw - 16px)' : undefined,
+                top: mobilny ? (gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64)) : gora - 56,
               }}
               akcje={[
                 {
