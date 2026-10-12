@@ -516,7 +516,8 @@ html[data-nb-czat-mob='otwarty'] .nb-cozy [role='toolbar'],
 html[data-nb-czat-mob='otwarty'] .nb-cozy [role='dialog'],
 html[data-nb-czat-mob='otwarty'] .nb-cozy .nb-karta-pin,
 html[data-nb-czat-mob='otwarty'] .nb-cozy .nb-prompter { display: none !important; }
-/* Telefon: rząd chipów (pinezki, załączniki) nad polem pisania podnosi dok narzędzi */
+/* Telefon: dok narzędzi i pasek ołówka leżą nad dolnym stosem (chipy + pole pisania) o zmierzonej wysokości */
 @media (max-width: 767px) {
-  html[data-nb-czat-mob='chipy'] .nb-dok-mob { bottom: calc(var(--nb-nav-dol, 0px) + 108px) !important; }
+  .nb-dok-mob:not(.nb-pencil-bar) { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + 20px) !important; }
+  .nb-dok-mob.nb-pencil-bar { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + 80px) !important; }
 }

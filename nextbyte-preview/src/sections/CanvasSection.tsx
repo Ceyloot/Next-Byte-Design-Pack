@@ -287,7 +287,7 @@ export function CanvasSection() {
   const odsuniecia = () => {
     const cs = refRoot.current ? getComputedStyle(refRoot.current) : null
     const n = (v: string) => parseFloat(cs?.getPropertyValue(v) ?? '') || 0
-    return { l: n('--nb-nav-lewo'), t: n('--nb-nav-gora'), r: n('--nb-nav-prawo'), b: n('--nb-nav-dol') }
+    return { l: n('--nb-nav-lewo'), t: n('--nb-nav-gora'), r: n('--nb-nav-prawo'), b: n('--nb-nav-dol'), stos: n('--nb-mob-stos') }
   }
   /** Zoom wokół środka płótna (okno minus prawy panel czatu), żeby widok „nie uciekał". */
   const zmienZoom = (czynnik: number) => {
@@ -311,7 +311,7 @@ export function CanvasSection() {
     const y1 = Math.max(...widoczne.map(w => w.y + w.height))
     // telefon: zdjęcia mają całą szerokość, a od dołu zostaje miejsce na dok i pasek czatu
     const dostepnaSzer = mobilny ? window.innerWidth - 32 : window.innerWidth - 380 - 120 - od.l - od.r
-    const dostepnaWys = mobilny ? window.innerHeight - od.t - 230 : window.innerHeight - 180 - od.t - od.b
+    const dostepnaWys = mobilny ? window.innerHeight - od.t - 170 - (od.stos || 60) : window.innerHeight - 180 - od.t - od.b
     const zoom = Math.min(1, Math.max(0.05, Math.min(dostepnaSzer / (x1 - x0), dostepnaWys / (y1 - y0))))
     setWidok({
       x: (mobilny ? 16 : 80 + od.l) + (dostepnaSzer - (x1 - x0) * zoom) / 2 - x0 * zoom,

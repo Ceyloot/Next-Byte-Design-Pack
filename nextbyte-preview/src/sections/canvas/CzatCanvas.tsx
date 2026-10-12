@@ -247,6 +247,18 @@ export function CzatCanvas({
   const klawiatura = useKlawiatura()
   // Telefon (jak w Lovarcie): domyślnie widać sam czat na całym ekranie; płótno otwiera się jednym dotknięciem
   const [zwiniety, setZwiniety] = useState(false)
+  // Telefon: wysokość dolnego stosu (chipy + pole pisania) mierzona na żywo — dok narzędzi i ołówek odsuwają się o tyle, ile trzeba
+  const refStos = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = refStos.current
+    if (!mobilny || !zwiniety || !el || typeof ResizeObserver === 'undefined') {
+      document.documentElement.style.removeProperty('--nb-mob-stos')
+      return
+    }
+    const o = new ResizeObserver(() => document.documentElement.style.setProperty('--nb-mob-stos', `${Math.round(el.getBoundingClientRect().height)}px`))
+    o.observe(el)
+    return () => { o.disconnect(); document.documentElement.style.removeProperty('--nb-mob-stos') }
+  }, [mobilny, zwiniety, pineski.length, zalaczniki.length, zaznaczona, zaznaczoneWarstwy.length])
   // Skrót C (z Canvasa): rozwiń panel i ustaw kursor w polu polecenia
   useEffect(() => {
     const naCzat = () => {
@@ -444,7 +456,7 @@ export function CzatCanvas({
   if (zwiniety && mobilny) {
     const otworz = () => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus(), 60) }
     return (
-      <div className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
+      <div ref={refStos} className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
         {/* Chipy zaznaczenia: pinezki i załączniki — jeden przewijany rząd nad polem */}
         {(pineski.length > 0 || zalaczniki.length > 0 || zaznaczona || zaznaczoneWarstwy.length > 0) && (
           <div className="pointer-events-auto mb-1.5 flex gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
