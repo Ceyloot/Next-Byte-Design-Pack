@@ -131,7 +131,7 @@ export function zadaniaZAdnotacji(rysunki: Rysunek[], w: Pick<Warstwa, 'x' | 'y'
     const sx = (rt.x0 + rt.x1) / 2
     const sy = rt.y0
     let naj = -1
-    let odl = 0.3
+    let odl = 0.12
     zadania.forEach((z, i) => {
       const d = odlegloscDoRamki(sx, sy, z.ramka)
       if (d < odl) { odl = d; naj = i }
@@ -154,7 +154,82 @@ export interface PrzygotowaneAdnotacje {
 
 const proc = (v: number) => `${Math.round(v * 100)}%`
 
-/** Składa plan zmian (zdjęcie + adnotacje z numerami obszarów) i polecenie dla modelu. */
+/** Kolory obszarów na mapie układu (numer → kolor). Mapa nie jest częścią zdjęcia, więc kolory nie muszą nic znaczyć. */
+const KOLORY_MAPY = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6', '#eab308']
+
+/**
+ * Mapa układu (Image 2): czarne tło i same obszary zadań — wypełnione, w kolorze i z numerem. Bez zdjęcia i bez tekstu:
+ * model dostaje WSKAZANIE miejsca, nie rysunek do przepisania, więc kresek i napisów nie przenosi na wynik.
+ */
+function narysujMapeUkladu(
+  w: Warstwa,
+  rysunki: Rysunek[],
+  zadania: ZadanieAdnotacji[],
+  pw: number,
+  ph: number,
+): string {
+  const plotno = document.createElement('canvas')
+  plotno.width = pw
+  plotno.height = ph
+  const g = plotno.getContext('2d')
+  if (!g) throw new Error('Brak kontekstu rysowania')
+  g.fillStyle = '#000000'
+  g.fillRect(0, 0, pw, ph)
+  const kx = pw / w.width
+  const ky = ph / w.height
+  const mapuj = (x: number, y: number): [number, number] => [(x - w.x) * kx, (y - w.y) * ky]
+  const promien = Math.max(12, Math.round(Math.min(pw, ph) * 0.028))
+
+  zadania.forEach((z, i) => {
+    const kolor = KOLORY_MAPY[i % KOLORY_MAPY.length]
+    // tło obszaru: prostokąt obejmujący zaznaczenie (miękko), żeby obrys z cienkiej kreski też wskazywał całe pole
+    g.fillStyle = kolor + '33'
+    g.fillRect(z.ramka.x0 * pw, z.ramka.y0 * ph, (z.ramka.x1 - z.ramka.x0) * pw, (z.ramka.y1 - z.ramka.y0) * ph)
+    // same kreski tego zadania: obrysy zamknięte wypełniamy, otwarte zostają liniami
+    for (const r of rysunki) {
+      if (r.tekst) continue
+      const xs = r.punkty.map(q => (q[0] - w.x) / w.width)
+      const ys = r.punkty.map(q => (q[1] - w.y) / w.height)
+      const sr = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2]
+      if (sr[0] < z.ramka.x0 - 0.001 || sr[0] > z.ramka.x1 + 0.001 || sr[1] < z.ramka.y0 - 0.001 || sr[1] > z.ramka.y1 + 0.001) continue
+      g.save()
+      g.lineCap = 'round'
+      g.lineJoin = 'round'
+      g.strokeStyle = kolor
+      g.fillStyle = kolor + '66'
+      g.lineWidth = Math.max(3, r.grubosc * Math.min(kx, ky))
+      g.beginPath()
+      r.punkty.forEach((q, j) => {
+        const [x, y] = mapuj(q[0], q[1])
+        if (j === 0) g.moveTo(x, y)
+        else g.lineTo(x, y)
+      })
+      const p0 = mapuj(r.punkty[0][0], r.punkty[0][1])
+      const pk = mapuj(r.punkty[r.punkty.length - 1][0], r.punkty[r.punkty.length - 1][1])
+      const rozpietosc = Math.hypot((Math.max(...xs) - Math.min(...xs)) * pw, (Math.max(...ys) - Math.min(...ys)) * ph)
+      if (Math.hypot(p0[0] - pk[0], p0[1] - pk[1]) < rozpietosc * 0.25) {
+        g.closePath()
+        g.fill()
+      }
+      g.stroke()
+      g.restore()
+    }
+    const cx = Math.min(pw - promien - 2, Math.max(promien + 2, z.ramka.x0 * pw))
+    const cy = Math.min(ph - promien - 2, Math.max(promien + 2, z.ramka.y0 * ph))
+    g.beginPath()
+    g.arc(cx, cy, promien, 0, Math.PI * 2)
+    g.fillStyle = '#ffffff'
+    g.fill()
+    g.fillStyle = '#000000'
+    g.font = `700 ${Math.round(promien * 1.2)}px Inter, system-ui, sans-serif`
+    g.textAlign = 'center'
+    g.textBaseline = 'middle'
+    g.fillText(String(z.numer), cx, cy)
+  })
+  return plotno.toDataURL('image/png')
+}
+
+/** Składa mapę układu i ponumerowaną listę zadań dla modelu. */
 export async function przygotujAdnotacje(opcje: {
   warstwa: Warstwa
   rysunki: Rysunek[]
@@ -165,65 +240,25 @@ export async function przygotujAdnotacje(opcje: {
   const baza = await konwertujNaDataUrl(w.src)
   const { width, height } = dopasujWymiary(w.naturalWidth, w.naturalHeight, model)
   const zadania = zadaniaZAdnotacji(rysunki, w)
-
-  // plan zmian w rozdzielczości, którą dostanie model (ale nie większej niż 1600 px, żeby nie puchły dane)
-  const skalaPlanu = Math.min(1, 1600 / Math.max(width, height))
-  const pw = Math.round(width * skalaPlanu)
-  const ph = Math.round(height * skalaPlanu)
-  const obraz = await new Promise<HTMLImageElement>((ok, err) => {
-    const i = new Image()
-    i.crossOrigin = 'anonymous'
-    i.onload = () => ok(i)
-    i.onerror = () => err(new Error('Nie udało się wczytać zdjęcia do adnotacji'))
-    i.src = baza
-  })
-  const plotno = document.createElement('canvas')
-  plotno.width = pw
-  plotno.height = ph
-  const g = plotno.getContext('2d')
-  if (!g) throw new Error('Brak kontekstu rysowania')
-  g.drawImage(obraz, 0, 0, pw, ph)
-  const kx = pw / w.width
-  const ky = ph / w.height
-  rysujRysunki(g, rysunki, (x, y) => [(x - w.x) * kx, (y - w.y) * ky], Math.min(kx, ky), '#ef4444')
-  // numery zadań w lewym górnym rogu każdego obszaru — model wie, który napis dotyczy którego miejsca
-  const promien = Math.max(12, Math.round(Math.min(pw, ph) * 0.028))
-  for (const z of zadania) {
-    const cx = Math.min(pw - promien - 2, Math.max(promien + 2, z.ramka.x0 * pw))
-    const cy = Math.min(ph - promien - 2, Math.max(promien + 2, z.ramka.y0 * ph))
-    g.beginPath()
-    g.arc(cx, cy, promien, 0, Math.PI * 2)
-    g.fillStyle = '#111111'
-    g.fill()
-    g.lineWidth = Math.max(2, promien / 6)
-    g.strokeStyle = '#ffffff'
-    g.stroke()
-    g.fillStyle = '#ffffff'
-    g.font = `700 ${Math.round(promien * 1.2)}px Inter, system-ui, sans-serif`
-    g.textAlign = 'center'
-    g.textBaseline = 'middle'
-    g.fillText(String(z.numer), cx, cy)
-  }
-  g.textAlign = 'start'
-  const plan = plotno.toDataURL('image/png')
+  // mapa w rozdzielczości, którą dostanie model (ale nie większej niż 1600 px, żeby nie puchły dane)
+  const skala = Math.min(1, 1600 / Math.max(width, height))
+  const plan = narysujMapeUkladu(w, rysunki, zadania, Math.round(width * skala), Math.round(height * skala))
 
   const lista = zadania.map(z => {
     const cx = (z.ramka.x0 + z.ramka.x1) / 2
     const cy = (z.ramka.y0 + z.ramka.y1) / 2
     const miejsce = `region ${proc(z.ramka.x0)}–${proc(z.ramka.x1)} from the left, ${proc(z.ramka.y0)}–${proc(z.ramka.y1)} from the top (${strefa(cx, cy)} of the frame)`
     const tresc = z.napisy.length
-      ? `designer's note: ${z.napisy.map(n => `"${n}"`).join(' and ')}`
-      : 'a marked area without a typed note — read the handwriting next to it, if any, or follow the extra instructions below'
-    return `${z.numer}. ${miejsce} — ${tresc}`
+      ? `the designer asks for: ${z.napisy.map(n => `"${n}"`).join(' and ')}`
+      : 'a marked area without a note — apply the extra instructions below to it'
+    return `${z.numer}. Region ${z.numer} — ${miejsce} — ${tresc}`
   })
 
   const polecenie = [
-    'Image 1 is the original photo. Image 2 is the same photo with the designer\'s markup drawn on top: coloured outlines, hatched or highlighted areas, arrows, notes, and numbered black circles that mark the regions.',
-    'The markup is a set of instructions. Outlined or highlighted areas show WHERE something must change; the notes say WHAT to do there. Notes may be in any language — understand them and turn each into a convincing visual change.',
-    zadania.length ? `TASK LIST — every item is mandatory; none may be skipped, merged or toned down until it is barely visible:\n${lista.join('\n')}` : '',
-    'Handwritten notes on Image 2, if any, are additional mandatory tasks for the place they are written in.',
+    'Image 1 is the original photo. Image 2 is a LAYOUT MAP, not a photo: a black background with coloured, numbered shapes at the same positions and proportions as in Image 1. Each shape marks the place on the photo where the task with the same number applies. The map only tells you WHERE; it is never part of the picture.',
+    zadania.length ? `TASK LIST — every item is mandatory; none may be skipped, merged or toned down until it is barely visible. The notes may be in any language — understand them and turn each into a convincing, clearly visible change inside its region:\n${lista.join('\n')}` : '',
     opis ? `Extra instructions from the designer: ${opis}` : '',
-    'Output Image 1 with ALL of these changes applied, each one clearly visible in its region. Before answering, check the finished image against the task list item by item. Keep everything the markup does not mention exactly as it is — the same people with the same identity, face, pose, clothing, framing and camera angle. The markup itself (lines, arrows, hatching, handwriting, circles, outlines) must not appear in the result at all; where it only pointed at something, leave that spot clean. The result is one finished, polished image with consistent light, sharpness and colour grade, no seams, halos or sticker look. Any text the notes ask for must be spelled exactly as written.',
+    'Output Image 1 with ALL of these changes applied, each one clearly visible in its region. Before answering, check the finished image against the task list item by item. Keep everything the tasks do not mention exactly as it is — the same people with the same identity, face, pose, clothing, framing and camera angle. NEVER copy anything from Image 2 into the result: no outlines, shapes, colours, numbers, arrows, lines, handwriting or labels, and do not write the notes onto the picture (unless a task explicitly asks for a text in the image — then spell it exactly). The result is one finished, polished photograph with consistent light, sharpness and colour grade, no seams, halos or sticker look.',
   ].filter(Boolean).join('\n')
 
   return { polecenie, obrazy: [baza, plan], szerokosc: w.naturalWidth, wysokosc: w.naturalHeight, zadania }

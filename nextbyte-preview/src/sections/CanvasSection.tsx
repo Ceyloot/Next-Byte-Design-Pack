@@ -288,7 +288,7 @@ export function CanvasSection() {
   /** pisak: linia, gruby „zakres” (adnotacje) albo napis z klawiatury */
   const [trybOlowka, setTrybOlowka] = useState<'linia' | 'zakres' | 'tekst'>('linia')
   /** napis w trakcie wpisywania: miejsce w scenie i treść */
-  const [napis, setNapisStan] = useState<{ x: number; y: number; tekst: string; rozmiar: number } | null>(null)
+  const [napis, setNapisStan] = useState<{ x: number; y: number; tekst: string; rozmiar: number; utworzony: number } | null>(null)
   /** kopia napisu w refie — zatwierdzenie z kilku zdarzeń naraz (blur + klik) nie dubluje napisu */
   const napisRef = useRef<typeof napis>(null)
   const setNapis = useCallback((n: typeof napis | ((p: typeof napis) => typeof napis)) => {
@@ -839,6 +839,8 @@ export function CanvasSection() {
     () => celAdnotacji(rysunki, trybAdn ? [] : zaznaczoneRysunki, projekt.warstwy, wybranaWarstwa),
     [rysunki, zaznaczoneRysunki, projekt.warstwy, wybranaWarstwa, trybAdn],
   )
+  /** Czy jest jakakolwiek instrukcja: napis na zdjęciu albo tekst z czatu (same kreski nie mówią modelowi, co robić). */
+  const maOpis = Boolean(celAdn?.rysunki.some(r => r.tekst) || projekt.tekst.trim())
   /**
    * Adnotacje → edycja: czyste zdjęcie + to samo zdjęcie z naniesionymi adnotacjami idą do modelu jako plan zmian.
    * Wynik ląduje obok oryginału, adnotacje zostają na zdjęciu (można je poprawić i puścić jeszcze raz).
@@ -2356,8 +2358,18 @@ export function CanvasSection() {
         trybOlowka={trybOlowka}
         grubosciEkranowe={Boolean(trybAdn)}
         onPrzesunRysunki={przesunRysunki}
-        onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom) }) }}
-        onRysunek={r => setRysunki(prev => [...prev, r])}
+        onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom), utworzony: Date.now() }) }}
+        onRysunek={r => {
+          setRysunki(prev => [...prev, r])
+          // w trybie adnotacji po narysowaniu zakresu od razu pytamy, co tam zmienić
+          if (trybAdn && !r.tekst) {
+            const xs = r.punkty.map(q => q[0])
+            const ys = r.punkty.map(q => q[1])
+            const rozmiar = 16 / Math.max(0.05, widok.zoom)
+            zatwierdzNapis()
+            setNapis({ x: Math.min(...xs), y: Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) / 2, tekst: '', rozmiar, utworzony: Date.now() })
+          }
+        }}
         onZaznaczRysunki={setZaznaczoneRysunki}
         onMenuRysunku={(x, y) => setMenuRysunku({ x, y })}
         warstwy={projekt.warstwy}
@@ -2648,15 +2660,15 @@ export function CanvasSection() {
                 <PencilRuler className="h-4 w-4 shrink-0 text-primary" />
                 <span className="min-w-0 flex-1 truncate text-[12.5px] text-muted-foreground">
                   {celAdn ? (
-                    <><b className="font-semibold text-foreground">{celAdn.rysunki.length}</b> {celAdn.rysunki.length === 1 ? 'adnotacja' : 'adnotacji'} — zaznacz kolejne miejsca albo wykonaj</>
+                    <><b className="font-semibold text-foreground">{celAdn.rysunki.length}</b> {celAdn.rysunki.length === 1 ? 'adnotacja' : 'adnotacji'} — {maOpis ? 'zaznacz kolejne miejsca albo wykonaj' : 'dopisz, co zmienić (Napis)'}</>
                   ) : (
                     <>Zaznacz <b className="font-semibold text-foreground">Zakresem</b> miejsce i dopisz <b className="font-semibold text-foreground">Napisem</b>, co tam zmienić</>
                   )}
                 </span>
                 <button
                   type="button"
-                  disabled={!celAdn || Boolean(akcjaAI)}
-                  title={celAdn ? 'Wyślij zdjęcie z adnotacjami do modelu' : 'Najpierw zaznacz miejsce lub dopisz napis'}
+                  disabled={!celAdn || !maOpis || Boolean(akcjaAI)}
+                  title={!celAdn ? 'Najpierw zaznacz miejsce lub dopisz napis' : !maOpis ? 'Dopisz, co zmienić (Napis), albo opisz zmianę na czacie' : 'Wyślij zdjęcie z adnotacjami do modelu'}
                   onClick={() => void wykonajAdnotacje()}
                   className="nb-cta flex h-9 shrink-0 items-center gap-2 rounded-xl px-3.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                 >
@@ -2743,13 +2755,17 @@ export function CanvasSection() {
       {napis && narzedzie === 'olowek' && (
         <div className="absolute z-30 flex items-center gap-1" style={{ left: widok.x + napis.x * widok.zoom, top: widok.y + napis.y * widok.zoom - 18 }} onPointerDown={e => e.stopPropagation()}>
           <input
-            ref={el => { if (el && document.activeElement !== el) { el.focus(); requestAnimationFrame(() => el.focus()) } }}
+            ref={el => { if (el && document.activeElement !== el) { el.focus(); window.setTimeout(() => el.focus(), 60); requestAnimationFrame(() => el.focus()) } }}
             value={napis.tekst}
             onChange={e => setNapis(n => (n ? { ...n, tekst: e.target.value } : n))}
-            onBlur={zatwierdzNapis}
+            onBlur={e => {
+              // zaraz po kliknięciu przeglądarka potrafi odebrać fokus — wtedy pole zostaje i dostaje go z powrotem
+              if (Date.now() - napis.utworzony < 500) { const el = e.currentTarget; window.setTimeout(() => el.focus(), 0); return }
+              zatwierdzNapis()
+            }}
             onKeyDown={e => {
               if (e.key === 'Enter') zatwierdzNapis()
-              if (e.key === 'Escape') setNapis(null)
+              if (e.key === 'Escape') { e.stopPropagation(); setNapis(null) }
             }}
             placeholder="Co tu zmienić…"
             aria-label="Napis adnotacji"

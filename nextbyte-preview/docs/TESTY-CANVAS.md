@@ -79,9 +79,9 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 ## 10. Adnotacje → edycja (nowe)
 - [ ] Zaznacz zdjęcie → pasek nad nim: Quick edit, Adnotacje, Upscale, Remove BG, Edit text, „…" (Inpaint, Outpaint, Eraser, Enhance) i Pobierz.
 - [ ] „Adnotacje" wchodzi w tryb skupienia: widok przybliża się do zdjęcia, znikają pasek szybkich akcji i dolny dok, zostaje jeden panel (na wierzchu, nic na nim nie nachodzi). Esc lub ✕ wraca do poprzedniego widoku.
-- [ ] Panel: Przesuń / Linia / Zakres / Napis, kolory, grubości (stałe na ekranie niezależnie od przybliżenia), cofnij, wyczyść; „Wykonaj · N ⟠" aktywne dopiero, gdy coś zaznaczono lub dopisano.
-- [ ] Napis: klik na zdjęciu, wpis, Enter / ✓ / klik gdziekolwiek zatwierdza; Esc rezygnuje. Napis i szkic można przeciągnąć (Przesuń, albo w trybie Napis chwytając istniejący napis).
-- [ ] Do modelu idą dwa obrazy: czyste zdjęcie i zdjęcie z adnotacjami z numerowanymi obszarami; polecenie ma ponumerowaną listę zadań (obszar w % kadru + napis), wszystkie obowiązkowe; tekst z czatu dopisuje się.
+- [ ] Panel: Przesuń / Linia / Zakres / Napis, kolory, grubości (stałe na ekranie niezależnie od przybliżenia), cofnij, wyczyść; „Wykonaj · N ⟠" aktywne dopiero, gdy jest zaznaczenie i jakikolwiek napis albo tekst z czatu.
+- [ ] Po narysowaniu zakresu / linii od razu pojawia się pole „Co tu zmienić…" (kursor w środku, wpis działa od razu); Enter / ✓ / klik obok zatwierdza, Esc lub puste pole rezygnuje. Napis można też dodać osobno (Napis → klik). Napis i szkic można przeciągnąć (Przesuń, albo w trybie Napis chwytając istniejący napis).
+- [ ] Do modelu idą dwa obrazy: czyste zdjęcie i mapa układu (czarne tło, kolorowe numerowane obszary — bez zdjęcia i bez tekstu, więc kresek ani napisów nie ma jak przepisać na wynik); polecenie ma ponumerowaną listę zadań (obszar w % kadru + napis), wszystkie obowiązkowe; tekst z czatu dopisuje się.
 - [ ] Po „Wykonaj" tryb się zamyka, widok obejmuje oryginał i wynik; adnotacje zostają na oryginale. Wynik ma rozmiar zdjęcia, bez śladów kresek.
 - [ ] Zwykły ołówek (D) bez trybu adnotacji: tylko cienka linia, kolory, grubości; prawy przycisk na zaznaczonych kreskach → „Wykonaj adnotacje" / „Zamień w obraz" / „Usuń szkic".
 - [ ] Jasny i ciemny motyw oraz telefon: panel czytelny, przewija się poziomo, nic na siebie nie nachodzi.
