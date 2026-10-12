@@ -1400,7 +1400,8 @@ export function CanvasSection() {
         // Osobny moduł (canvas/inpainting.ts): wycinek wokół zaznaczenia → model → wynik tylko w masce.
         const eraser = trybPedzla === 'eraser'
         const polecenie = eraser ? promptErasera(tekst) : tekst
-        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst: polecenie, model: modelObrazu === 'auto' ? 'nb2' : modelObrazu })
+        // GPT Image 2 nie radzi sobie z maską podaną jako obraz referencyjny (zwraca zdjęcie bez zmian) — inpainting i eraser idą wtedy przez Nano Banana 2
+        const wynik = await wykonajInpainting({ src: w.src, kreski: maska, tekst: polecenie, model: modelObrazu === 'auto' || modelObrazu === 'gptimage2' ? 'nb2' : modelObrazu })
         const koncowy = wynik.obrazUrl
         const nazwa = eraser ? `${w.name}_bez_obiektu` : nazwijWynik(tekst, [])
         dodajZeZrodla(koncowy, nazwa, 'wynik', w)
@@ -3104,7 +3105,7 @@ export function CanvasSection() {
           placeholder={
             trybPedzla === 'eraser'
               ? maska.length ? 'Enter — usuń zamalowane' : 'Zamaluj, co usunąć'
-              : maska.length ? 'Co zrobić w tym miejscu?' : 'Zamaluj miejsce i opisz zmianę'
+              : maska.length ? (modelObrazu === 'gptimage2' ? 'Co zrobić w tym miejscu? (Nano Banana 2)' : 'Co zrobić w tym miejscu?') : 'Zamaluj miejsce i opisz zmianę'
           }
           bezTekstu={trybPedzla === 'eraser'}
           trwa={trwaPrompter}
