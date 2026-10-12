@@ -142,6 +142,19 @@ export async function opiszKontynuacje(wycinek: string, strony: string): Promise
   }
 }
 
+/** Usunięcie tła dedykowanym modelem (Bria RMBG 2.0): PNG z przezroczystością, bez generowania obrazu na nowo. */
+export async function usunTlo(obraz: string): Promise<{ obrazUrl: string; kosztUSD: number; model: string }> {
+  const odp = await fetch('/api/canvas/usun-tlo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ obraz }),
+  })
+  const tresc = (await odp.json().catch(() => ({}))) as { obrazUrl?: string; kosztUSD?: number; model?: string; blad?: string }
+  if (!odp.ok) throw new Error(tresc.blad ?? `Usuwanie tła nie powiodło się (HTTP ${odp.status})`)
+  if (!tresc.obrazUrl) throw new Error('Model nie zwrócił obrazu')
+  return { obrazUrl: tresc.obrazUrl, kosztUSD: tresc.kosztUSD ?? 0, model: tresc.model ?? '' }
+}
+
 /** Krótki opis STYLU zdjęcia (ostrość i rozmycie, ziarno, światło, kolorystyka) — po angielsku; pusty, gdy się nie uda. */
 export async function opiszStylZdjecia(wycinek: string): Promise<string> {
   try {

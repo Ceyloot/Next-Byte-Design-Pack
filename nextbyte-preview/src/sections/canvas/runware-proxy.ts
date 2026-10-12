@@ -17,6 +17,9 @@ import { loadEnv } from 'vite'
 
 const SCIEZKA = '/api/canvas/generuj'
 const SCIEZKA_OPISU = '/api/canvas/rozpoznaj'
+const SCIEZKA_TLA = '/api/canvas/usun-tlo'
+/** Model usuwający tło (Bria RMBG 2.0) — prawdziwe wycięcie z kanałem alfa, nie generowanie obrazu. */
+const MODEL_USUWANIA_TLA = 'bria:2@1'
 const ENDPOINT = 'https://api.runware.ai/v1'
 /** GPT Image 2 w Runware (nazwa z listy modeli Studia Zdjęć: „GPT-Image-2.5 Sunburst”). Nie przyjmuje `settings` ani `providerSettings` Google — rola modelu idzie w treści promptu. */
 const MODEL_GPT_IMAGE = 'openai:gpt-image@2.5-sunburst'
@@ -211,6 +214,62 @@ export function runwareProxy(): Plugin {
           seed: wynik.seed,
         }
         odpowiedz(200, gotowe)
+      } catch (e) {
+        odpowiedz(500, { blad: e instanceof Error ? e.message : 'Nieznany błąd proxy' })
+      }
+    })
+  }
+
+  /** Usuwanie tła: dedykowany model Runware (wycięcie z przezroczystością), a nie model generujący obrazy. */
+  const obsluzUsuwanieTla = (server: ViteDevServer | PreviewServer) => {
+    server.middlewares.use(SCIEZKA_TLA, async (req, res) => {
+      const odpowiedz = (status: number, dane: unknown) => {
+        res.statusCode = status
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify(dane))
+      }
+      if (req.method !== 'POST') return odpowiedz(405, { blad: 'Tylko POST' })
+      if (!klucz) return odpowiedz(503, { blad: 'Brak RUNWARE_API_KEY w .env.local — dopisz klucz i zrestartuj serwer deweloperski.' })
+      try {
+        const { obraz } = JSON.parse(await czytajCialo(req)) as { obraz?: string }
+        if (!obraz) return odpowiedz(400, { blad: 'Brak obrazu' })
+        const odp = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${klucz}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify([
+            {
+              taskType: 'removeBackground',
+              taskUUID: crypto.randomUUID(),
+              model: MODEL_USUWANIA_TLA,
+              inputs: { image: obraz },
+              outputType: 'URL',
+              outputFormat: 'PNG', // tylko PNG / WEBP trzymają przezroczystość
+              deliveryMethod: 'sync',
+              includeCost: true,
+            },
+          ]),
+        })
+        const surowa = await odp.text()
+        let tresc: { data?: { imageURL?: string; cost?: number }[]; errors?: { message?: string }[] }
+        try {
+          tresc = JSON.parse(surowa)
+        } catch {
+          console.warn(`[canvas] usuwanie tła: Runware odpowiedział ${odp.status} nie-JSON-em: ${surowa.slice(0, 200)}`)
+          return odpowiedz(502, { blad: `Runware zwrócił stronę HTML zamiast wyniku (HTTP ${odp.status}) — spróbuj za chwilę.` })
+        }
+        const blad = tresc.errors?.[0]?.message
+        if (blad) return odpowiedz(502, { blad })
+        const wynik = tresc.data?.[0]
+        if (!wynik?.imageURL) return odpowiedz(502, { blad: 'Runware nie zwrócił obrazu' })
+        // data URI zamiast adresu Runware — bez CORS i z zachowanym kanałem alfa po stronie przeglądarki
+        let obrazUrl = wynik.imageURL
+        try {
+          const plik = await fetch(wynik.imageURL)
+          if (plik.ok) obrazUrl = `data:${plik.headers.get('content-type') || 'image/png'};base64,${Buffer.from(await plik.arrayBuffer()).toString('base64')}`
+        } catch {
+          /* zostaje adres */
+        }
+        odpowiedz(200, { obrazUrl, kosztUSD: wynik.cost ?? 0, model: MODEL_USUWANIA_TLA })
       } catch (e) {
         odpowiedz(500, { blad: e instanceof Error ? e.message : 'Nieznany błąd proxy' })
       }
@@ -543,10 +602,12 @@ export function runwareProxy(): Plugin {
     configureServer: server => {
       obsluz(server)
       obsluzRozpoznanie(server)
+      obsluzUsuwanieTla(server)
     },
     configurePreviewServer: server => {
       obsluz(server)
       obsluzRozpoznanie(server)
+      obsluzUsuwanieTla(server)
     },
   }
 }

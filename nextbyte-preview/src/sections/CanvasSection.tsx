@@ -61,6 +61,7 @@ import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas, type ModelObrazu } from '@/sections/canvas/CzatCanvas'
 import {
   generuj,
+  usunTlo,
   nazwijWynik,
   opiszZmiane,
   rozpoznajObiekt,
@@ -1162,13 +1163,19 @@ export function CanvasSection() {
       setAkcjaAI(akcjaId)
       startDucha(w, `${a.etykieta}…`)
       try {
-        const maks = 2048
-        const k = Math.min(a.skala, maks / Math.max(w.naturalWidth, w.naturalHeight))
-        const szer = Math.round(w.naturalWidth * Math.max(1, k))
-        const wys = Math.round(w.naturalHeight * Math.max(1, k))
-        const wynik = await generuj({ polecenie: a.prompt, obrazy: [await konwertujNaDataUrl(w.src)], szerokosc: szer, wysokosc: wys })
-        const src = await dopasujFormatDoObrazu(wynik.obrazUrl, szer, wys, { skaluj: true })
-        dodajZeZrodla(src, `${w.name}_${a.id}`, 'wynik', w)
+        if (a.id === 'beztla') {
+          // Usuwanie tła: dedykowany model (Bria RMBG 2.0) — prawdziwe wycięcie z przezroczystością, a nie model generujący obraz z białym tłem
+          const wynik = await usunTlo(await konwertujNaDataUrl(w.src))
+          dodajZeZrodla(wynik.obrazUrl, `${w.name}_bez_tla`, 'wynik', w)
+        } else {
+          const maks = 2048
+          const k = Math.min(a.skala, maks / Math.max(w.naturalWidth, w.naturalHeight))
+          const szer = Math.round(w.naturalWidth * Math.max(1, k))
+          const wys = Math.round(w.naturalHeight * Math.max(1, k))
+          const wynik = await generuj({ polecenie: a.prompt, obrazy: [await konwertujNaDataUrl(w.src)], szerokosc: szer, wysokosc: wys })
+          const src = await dopasujFormatDoObrazu(wynik.obrazUrl, szer, wys, { skaluj: true })
+          dodajZeZrodla(src, `${w.name}_${a.id}`, 'wynik', w)
+        }
       } catch (e) {
         window.alert(e instanceof Error ? e.message : 'Nie udało się wykonać akcji.')
       } finally {
