@@ -1,6 +1,6 @@
 import type { Pociagniecie } from './typy'
 import { konwertujNaDataUrl } from './typy'
-import { generuj } from './dostawca'
+import { generuj, opiszStylZdjecia } from './dostawca'
 import { DOZWOLONE_FORMATY } from './formaty-modelu'
 import type { ZadanieGeneracji } from './runware-proxy'
 
@@ -184,7 +184,7 @@ async function wstawWycinek(o: HTMLImageElement, wynik: string, wyc: Prostokat):
 }
 
 /** Prompt inpaintingu — własny, niezależny od reszty Canvasa. */
-export function promptInpaintingu(tekst: string): string {
+export function promptInpaintingu(tekst: string, styl = ''): string {
   return `${tekst.trim()}
 
 INPAINTING. Image 1 is a photograph with one region painted over in semi-transparent magenta. The magenta region marks WHERE the change goes and HOW BIG it is.
@@ -193,7 +193,7 @@ INPAINTING. Image 1 is a photograph with one region painted over in semi-transpa
 - Everything outside the magenta region stays exactly as it is: same objects, positions, colours, framing and composition.
 - Remove the magenta paint completely — no pink tint, outline or residue may remain.
 - Make the new content continue its surroundings seamlessly: same light direction and colour, perspective, sharpness, noise and grain, with natural contact shadows and reflections.
-- Return the full frame with the same framing and aspect ratio as Image 1.`
+${styl.trim() ? `- STYLE MATCH — the new content must look as if it was captured in the very same shot, in this style: ${styl.trim()} Give it the same level of focus / blur, grain and light as the surroundings at its distance from the camera, so it does not look pasted in.\n` : ''}- Return the full frame with the same framing and aspect ratio as Image 1.`
 }
 
 /** Eraser: usuń zamalowany obiekt i odbuduj to, co naturalnie za nim jest; `uwaga` — opcjonalna wskazówka użytkownika. */
@@ -222,8 +222,16 @@ export async function wykonajInpainting({ src, kreski, tekst, model }: ZadanieIn
   const o = await wczytaj(zrodlo)
   const wyc = policzWycinekMaski(o.naturalWidth, o.naturalHeight, kreski)
   const wejscie = zlozWejscie(o, kreski, wyc)
+  // Gemini opisuje STYL zdjęcia wokół zaznaczenia (rozmycie, ziarno, światło, kolorystyka), żeby nowy obiekt wyglądał jak z tego samego ujęcia.
+  // Czysty wycinek, bez magenty; błąd lub brak klucza = generujemy bez opisu stylu, tak jak dotąd.
+  const czysty = nowePlotno(Math.min(768, wyc.w), Math.round((Math.min(768, wyc.w) * wyc.h) / wyc.w))
+  czysty.g.drawImage(o, wyc.x, wyc.y, wyc.w, wyc.h, 0, 0, czysty.c.width, czysty.c.height)
+  const styl = await Promise.race([
+    opiszStylZdjecia(czysty.c.toDataURL('image/jpeg', 0.9)),
+    new Promise<string>(ok => setTimeout(() => ok(''), 15000)),
+  ])
   const wynik = await generuj({
-    polecenie: promptInpaintingu(tekst),
+    polecenie: promptInpaintingu(tekst, styl),
     obrazy: [wejscie.src],
     szerokosc: wejscie.szer,
     wysokosc: wejscie.wys,

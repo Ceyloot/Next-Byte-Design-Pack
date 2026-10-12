@@ -123,6 +123,22 @@ export async function rozpoznajObiekt(
   }
 }
 
+/** Krótki opis STYLU zdjęcia (ostrość i rozmycie, ziarno, światło, kolorystyka) — po angielsku; pusty, gdy się nie uda. */
+export async function opiszStylZdjecia(wycinek: string): Promise<string> {
+  try {
+    const odp = await fetch('/api/canvas/rozpoznaj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wycinek, tryb: 'styl' }),
+    })
+    if (!odp.ok) return ''
+    const tresc = (await odp.json()) as { opis?: string }
+    return tresc.opis?.trim() ?? ''
+  } catch {
+    return ''
+  }
+}
+
 /** Wyczerpujący opis wizualny jednego obiektu w centrum wycinka (po angielsku); pusty, gdy się nie uda. */
 export async function opiszObiektSzczegolowo(wycinek: string): Promise<string> {
   try {

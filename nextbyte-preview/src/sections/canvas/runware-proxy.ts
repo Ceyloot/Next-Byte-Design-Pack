@@ -56,8 +56,9 @@ export interface ZadanieRozpoznania {
    * `obiekt` (domyślnie) nazywa jedną rzecz w centrum kadru.
    * `scena` robi inwentarz: co w ogóle jest na zdjęciu.
    * `opis` — wyczerpujący opis wizualny jednego obiektu w centrum wycinka (EN), do przeniesienia w kadrze.
+   * `styl` — krótki opis STYLU zdjęcia (ostrość / rozmycie, ziarno, światło, kolorystyka) do dopasowania wstawianego obiektu.
    */
-  tryb?: 'obiekt' | 'scena' | 'opis' | 'osoba' | 'poza' | 'tekst'
+  tryb?: 'obiekt' | 'scena' | 'opis' | 'osoba' | 'poza' | 'tekst' | 'styl'
 }
 
 /** Odpowiedź rozpoznania — krótkie nazwy po polsku */
@@ -228,6 +229,47 @@ export function runwareProxy(): Plugin {
       try {
         const { wycinek, tryb = 'obiekt', nazwa } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
         if (!wycinek) return odpowiedz(400, { blad: 'Brak wycinka' })
+
+        // Tryb „styl”: jak „wygląda” zdjęcie (nie co na nim jest) — do wtopienia nowego obiektu w ten sam obraz.
+        if (tryb === 'styl') {
+          const d = wycinek.match(/^data:([^;]+);base64,(.+)$/)
+          const sResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${kluczGemini}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { inlineData: { mimeType: d ? d[1] : 'image/jpeg', data: d ? d[2] : wycinek } },
+                      {
+                        text: 'A new object will be inserted into this image and must look like it belongs in the very same shot. Describe the VISUAL STYLE of the image (NOT its content, subjects or objects) so an artist could match it exactly: medium (real photo / film / illustration / 3D render / painting); sharpness and DEPTH OF FIELD — how blurry the background and foreground are compared with the focus plane, and how much blur the objects at the centre of the crop should have; motion blur if any; grain / noise / compression; lighting (direction, hardness, colour temperature, shadows, highlights, rim light); colour grade (saturation, contrast, tint, haze); lens look (wide / telephoto, vignetting, distortion). 2–4 sentences, plain English, facts you SEE only, no names of the scene content. Answer only with JSON: {"styl": "..."}',
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 500,
+                  responseMimeType: 'application/json',
+                  thinkingConfig: { thinkingBudget: 0 },
+                },
+              }),
+            },
+          )
+          if (sResp.ok) {
+            const sJson = await sResp.json()
+            const sTxt = sJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+            try {
+              const o = JSON.parse(sTxt) as { styl?: string }
+              if (o.styl?.trim()) return odpowiedz(200, { opis: o.styl.trim(), nazwy: [] })
+            } catch {
+              // bez opisu stylu — generowanie idzie samym promptem
+            }
+          }
+          return odpowiedz(200, { opis: '', nazwy: [] })
+        }
 
         // Tryb „osoba”: karta tożsamości osoby (twarz cecha po cesze, włosy, budowa, ubiór) + ramka twarzy do zbliżenia.
         if (tryb === 'osoba') {
