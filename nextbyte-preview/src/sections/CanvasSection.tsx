@@ -345,7 +345,16 @@ export function CanvasSection() {
       window.removeEventListener('orientationchange', naResize)
     }
   }, [mobilny])
-  useEffect(() => { if (mobilny) setTimeout(() => dopasujWidokRef.current(), 100) }, [mobilny])
+  // Zmiana układu telefon ↔ komputer (zmiana rozmiaru okna, obrót): widok liczymy od nowa dla nowej geometrii
+  const poprzedniMobilny = useRef(mobilny)
+  useEffect(() => {
+    if (poprzedniMobilny.current === mobilny) { if (mobilny) setTimeout(() => dopasujWidokRef.current(), 100); return }
+    poprzedniMobilny.current = mobilny
+    // chwila na przeliczenie układu (zmienne --nb-nav-*, szerokość czatu) zanim zmierzymy dostępne pole
+    const t1 = setTimeout(() => dopasujWidokRef.current(), 150)
+    const t2 = setTimeout(() => dopasujWidokRef.current(), 450)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [mobilny])
 
   const [stanGeneracji, setStanGeneracji] = useState<StanGeneracji>({ faza: 'bezczynny' })
   // Inpainting pędzlem i generator (pusta ramka „Image Generator”)

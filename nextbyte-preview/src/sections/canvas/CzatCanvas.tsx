@@ -247,6 +247,11 @@ export function CzatCanvas({
   const klawiatura = useKlawiatura()
   // Telefon (jak w Lovarcie): domyślnie widać sam czat na całym ekranie; płótno otwiera się jednym dotknięciem
   const [zwiniety, setZwiniety] = useState(false)
+  // Zmiana układu telefon ↔ komputer: czat wraca rozwinięty (na komputerze karta, na telefonie czat na całym ekranie)
+  const poprzedniMobilny = useRef(mobilny)
+  useEffect(() => {
+    if (poprzedniMobilny.current !== mobilny) { poprzedniMobilny.current = mobilny; setZwiniety(false) }
+  }, [mobilny])
   // Telefon: wysokość dolnego stosu (chipy + pole pisania) mierzona na żywo — dok narzędzi i ołówek odsuwają się o tyle, ile trzeba
   const refStos = useRef<HTMLDivElement>(null)
   useEffect(() => {
