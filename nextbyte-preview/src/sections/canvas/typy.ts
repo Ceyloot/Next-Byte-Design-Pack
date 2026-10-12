@@ -27,6 +27,8 @@ export interface Pociagniecie {
   layerId: string
   punkty: [number, number][]
   srednica: number
+  /** gumka: to pociągnięcie ściera wcześniej zamalowane miejsce zamiast je zamalowywać */
+  gumka?: boolean
 }
 
 export type ZrodloObrazu = 'dysk' | 'schowek' | 'upuszczenie' | 'adres' | 'wynik'

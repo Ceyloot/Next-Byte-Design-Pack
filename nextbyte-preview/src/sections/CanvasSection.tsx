@@ -397,6 +397,8 @@ export function CanvasSection() {
   // Inpainting pędzlem i generator (pusta ramka „Image Generator”)
   const [maska, setMaska] = useState<Pociagniecie[]>([])
   const [srednicaPedzla, setSrednicaPedzla] = useState(0.05)
+  /** inpainting: pędzel jako gumka do ścierania maski */
+  const [gumkaMaski, setGumkaMaski] = useState(false)
   const [menuGeneratora, setMenuGeneratora] = useState(false)
   const [trwaPrompter, setTrwaPrompter] = useState(false)
   const [ostatniPrompt, setOstatniPrompt] = useState<string | null>(null)
@@ -1217,7 +1219,11 @@ export function CanvasSection() {
   /* ── Inpainting pędzlem i generator ────────────────────────────── */
 
   const warstwaMaski = useMemo(
-    () => (maska.length ? projekt.warstwy.find(w => w.id === maska[0].layerId) ?? null : null),
+    () => {
+      // warstwa maski wyznaczona przez pierwsze zamalowanie (samo ścieranie bez zamalowania nic nie znaczy)
+      const pierwsze = maska.find(k => !k.gumka)
+      return pierwsze ? projekt.warstwy.find(w => w.id === pierwsze.layerId) ?? null : null
+    },
     [maska, projekt.warstwy],
   )
   // Sesja inpaintingu: po kliknięciu „Inpaint” w górnym pasku (albo skrótem B) prompter jest od razu, pędzel działa na zaznaczonym zdjęciu.
@@ -1234,6 +1240,7 @@ export function CanvasSection() {
   const zakonczInpaint = useCallback(() => {
     setTrybPedzla('inpaint')
     setMaska([])
+    setGumkaMaski(false)
     setNarzedzie('wybor')
   }, [])
   const warstwaGeneratora = useMemo(
@@ -2525,6 +2532,7 @@ export function CanvasSection() {
         onMenuWarstwy={(id, x, y) => setMenuWarstwy({ id, x, y })}
         maska={maska}
         srednicaPedzla={srednicaPedzla}
+        gumkaMaski={gumkaMaski}
         onPociagniecie={k => setMaska(m => [...m, k])}
       />
 
@@ -2968,6 +2976,8 @@ export function CanvasSection() {
           onWyslij={uruchomInpainting}
           onAnuluj={zakonczInpaint}
           srednica={srednicaPedzla}
+          gumka={gumkaMaski}
+          onGumka={setGumkaMaski}
           onSrednica={setSrednicaPedzla}
           // dokładnie w slocie paska szybkich akcji (ten sam wzór pozycji) — pasek „zamienia się” w prompter
           style={mobilny ? stylMobilny : {

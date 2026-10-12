@@ -72,11 +72,14 @@ function rysujMaske(
   g.lineCap = 'round'
   g.lineJoin = 'round'
   for (const k of kreski) {
+    // gumka ściera wcześniej zamalowane miejsce (kolejność pociągnięć ma znaczenie)
+    g.globalCompositeOperation = k.gumka ? 'destination-out' : 'source-over'
     g.lineWidth = Math.max(2, k.srednica * w)
     g.beginPath()
     k.punkty.forEach(([x, y], i) => (i === 0 ? g.moveTo(x * w - dx, y * h - dy) : g.lineTo(x * w - dx, y * h - dy)))
     g.stroke()
   }
+  g.globalCompositeOperation = 'source-over'
 }
 
 /** Prostokąt obejmujący całą maskę (z promieniem pędzla), w pikselach zdjęcia. */
@@ -86,6 +89,7 @@ function obrysMaski(w: number, h: number, kreski: Pociagniecie[]) {
   let x1 = 0
   let y1 = 0
   for (const k of kreski) {
+    if (k.gumka) continue // gumka tylko zmniejsza maskę — obrys liczymy z zamalowanych pociągnięć
     const r = Math.max(2, k.srednica * w) / 2
     for (const [x, y] of k.punkty) {
       x0 = Math.min(x0, x * w - r)

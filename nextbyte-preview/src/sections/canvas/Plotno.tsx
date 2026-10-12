@@ -41,6 +41,8 @@ interface Props {
   /** inpainting: dotychczasowe pociągnięcia pędzla, rozmiar pędzla i zakończenie pociągnięcia */
   maska?: Pociagniecie[]
   srednicaPedzla?: number
+  /** inpainting: pędzel działa jak gumka i ściera zamalowaną maskę */
+  gumkaMaski?: boolean
   onPociagniecie?: (p: Pociagniecie) => void
   /** ołówek: pociągnięcia na płótnie, ich zaznaczenie i menu prawego przycisku */
   rysunki?: Rysunek[]
@@ -142,6 +144,7 @@ export function Plotno({
   onOtworzDodawanie,
   maska = [],
   srednicaPedzla = 0.05,
+  gumkaMaski = false,
   onPociagniecie,
   onMenuWarstwy,
   rysunki = [],
@@ -330,7 +333,7 @@ export function Plotno({
       refOperacja.current = { rodzaj: 'pedzel', startX: p.x, startY: p.y, migawka: warstwa, punkty: [punkt, punkt] }
       onWybierzWarstwe(warstwa.id)
       onWybierzPineske(null)
-      setZywe({ layerId: warstwa.id, punkty: [punkt, punkt], srednica: srednicaPedzla })
+      setZywe({ layerId: warstwa.id, punkty: [punkt, punkt], srednica: srednicaPedzla, gumka: gumkaMaski })
       return
     }
 
@@ -468,7 +471,7 @@ export function Plotno({
         Math.min(1, Math.max(0, (p.x - op.migawka.x) / op.migawka.width)),
         Math.min(1, Math.max(0, (p.y - op.migawka.y) / op.migawka.height)),
       ])
-      setZywe({ layerId: op.migawka.id, punkty: [...op.punkty], srednica: srednicaPedzla })
+      setZywe({ layerId: op.migawka.id, punkty: [...op.punkty], srednica: srednicaPedzla, gumka: gumkaMaski })
       return
     }
 
@@ -588,7 +591,7 @@ export function Plotno({
       return
     }
     if (op?.rodzaj === 'pedzel' && op.migawka && op.punkty) {
-      onPociagniecie?.({ layerId: op.migawka.id, punkty: op.punkty, srednica: srednicaPedzla })
+      onPociagniecie?.({ layerId: op.migawka.id, punkty: op.punkty, srednica: srednicaPedzla, gumka: gumkaMaski })
       setZywe(null)
     }
     // Kliknięcie pineski bez przeciągnięcia = otwarcie jej karty. Rozdzielamy
@@ -740,17 +743,24 @@ export function Plotno({
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
                   aria-hidden="true"
                 >
-                  <g opacity={0.5} stroke="#38bdf8" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                    {[...maska, ...(zywe ? [zywe] : [])]
-                      .filter(m => m.layerId === warstwa.id)
-                      .map((m, i) => (
-                        <polyline
-                          key={i}
-                          points={m.punkty.map(([x, y]) => `${x * warstwa.width},${y * warstwa.height}`).join(' ')}
-                          strokeWidth={m.srednica * warstwa.width}
-                        />
-                      ))}
-                  </g>
+                  <defs>
+                    {/* maska SVG: biel = zamalowane, czerń (gumka) ściera wcześniej zamalowane miejsce */}
+                    <mask id={`maska-${warstwa.id}`} maskUnits="userSpaceOnUse" x={0} y={0} width={warstwa.width} height={warstwa.height}>
+                      <g stroke="#fff" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                        {[...maska, ...(zywe ? [zywe] : [])]
+                          .filter(m => m.layerId === warstwa.id)
+                          .map((m, i) => (
+                            <polyline
+                              key={i}
+                              points={m.punkty.map(([x, y]) => `${x * warstwa.width},${y * warstwa.height}`).join(' ')}
+                              stroke={m.gumka ? '#000' : '#fff'}
+                              strokeWidth={m.srednica * warstwa.width}
+                            />
+                          ))}
+                      </g>
+                    </mask>
+                  </defs>
+                  <rect x={0} y={0} width={warstwa.width} height={warstwa.height} fill="#38bdf8" opacity={0.5} mask={`url(#maska-${warstwa.id})`} />
                 </svg>
               )}
             </div>

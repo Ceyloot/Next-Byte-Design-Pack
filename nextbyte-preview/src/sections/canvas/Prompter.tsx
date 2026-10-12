@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, Loader2, X } from 'lucide-react'
+import { ArrowUp, Eraser, Loader2, Paintbrush, X } from 'lucide-react'
 
 /**
  * Pływający prompter nad zdjęciem: po zamalowaniu pędzlem („co zrobić w tym obszarze?”)
@@ -15,6 +15,8 @@ export function Prompter({
   onAnuluj,
   srednica,
   onSrednica,
+  gumka,
+  onGumka,
   style,
 }: {
   etykieta: string
@@ -28,6 +30,9 @@ export function Prompter({
   onAnuluj: () => void
   srednica?: number
   onSrednica?: (v: number) => void
+  /** pędzel / gumka (ścieranie zamalowanej maski) */
+  gumka?: boolean
+  onGumka?: (v: boolean) => void
   style: React.CSSProperties
 }) {
   const [tekst, setTekst] = useState('')
@@ -68,9 +73,29 @@ export function Prompter({
           aria-label={placeholder}
           className="min-w-0 flex-1 bg-transparent px-1.5 text-[14px] text-foreground outline-none placeholder:text-muted-foreground/70"
         />
+        {onGumka && (
+          <div role="group" aria-label="Narzędzie maski" className="flex shrink-0 items-center gap-0.5 rounded-xl bg-foreground/[0.06] p-0.5">
+            {([
+              [false, 'Pędzel', Paintbrush, 'Zamalowuj miejsce zmiany'],
+              [true, 'Gumka', Eraser, 'Gumka — ścieraj zamalowane miejsce'],
+            ] as const).map(([wartosc, nazwa, Ik, tytul]) => (
+              <button
+                key={nazwa}
+                type="button"
+                title={tytul}
+                aria-label={nazwa}
+                aria-pressed={Boolean(gumka) === wartosc}
+                onClick={() => onGumka(wartosc)}
+                className={`grid h-7 w-7 place-items-center rounded-[9px] transition-all ${Boolean(gumka) === wartosc ? 'bg-card text-foreground shadow-[0_1px_4px_hsl(0_0%_0%/0.25),inset_0_0_0_1px_hsl(var(--primary)/0.45)]' : 'text-foreground/60 hover:bg-foreground/[0.08] hover:text-foreground'}`}
+              >
+                <Ik className="h-3.5 w-3.5" />
+              </button>
+            ))}
+          </div>
+        )}
         {onSrednica && srednica !== undefined && (
           <label className="flex shrink-0 items-center gap-1.5 text-[10.5px] text-muted-foreground" title="Rozmiar pędzla">
-            Pędzel
+            {gumka ? 'Gumka' : 'Pędzel'}
             <input
               type="range"
               min={1}
