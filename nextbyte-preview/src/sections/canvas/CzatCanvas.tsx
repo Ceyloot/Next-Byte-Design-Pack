@@ -107,16 +107,16 @@ interface Props {
 export type ModelObrazu = 'auto' | 'lite' | 'nb2' | 'pro' | 'gptimage2'
 
 const MODELE_OBRAZU = [
-  { id: 'lite', nazwa: 'Nano Banana 2 Lite', krotko: 'Lite', ikona: Zap, opis: 'Najszybszy i najtańszy — do szkiców i prostych zmian', dostepny: true },
-  { id: 'nb2', nazwa: 'Nano Banana 2', krotko: 'NB 2', ikona: Sparkles, opis: 'Złoty środek — dobry detal i światło, rozsądny czas', dostepny: true },
-  { id: 'pro', nazwa: 'Nano Banana Pro', krotko: 'Pro', ikona: Gem, opis: 'Najwierniejszy obiekt i detale, do 4K', dostepny: true },
+  { id: 'lite', nazwa: 'Nano Banana 2 Lite', krotko: 'Lite', ikona: Zap, opis: 'Szybkie szkice i proste zmiany', dostepny: true },
+  { id: 'nb2', nazwa: 'Nano Banana 2', krotko: 'NB 2', ikona: Sparkles, opis: 'Uniwersalny, na co dzień', dostepny: true },
+  { id: 'pro', nazwa: 'Nano Banana Pro', krotko: 'Pro', ikona: Gem, opis: 'Najlepszy detal i wierność obiektu', dostepny: true },
   { id: 'flux2pro', nazwa: 'FLUX.2 Pro', krotko: 'FLUX', ikona: Layers, opis: 'Black Forest Labs — wkrótce w Canvas.', dostepny: false },
   { id: 'ideogram4', nazwa: 'Ideogram 4.0', krotko: 'Ideogram', ikona: Layers, opis: 'Ideogram — wkrótce w Canvas.', dostepny: false },
   { id: 'seedream5', nazwa: 'Seedream 5.0 Pro', krotko: 'Seedream', ikona: Layers, opis: 'ByteDance — wkrótce w Canvas.', dostepny: false },
   { id: 'qwen3', nazwa: 'Qwen Image 3.0 Pro', krotko: 'Qwen', ikona: Layers, opis: 'Alibaba — wkrótce w Canvas.', dostepny: false },
   { id: 'klingo3', nazwa: 'Kling Image O3', krotko: 'Kling', ikona: Layers, opis: 'Kling AI — wkrótce w Canvas.', dostepny: false },
   { id: 'grok', nazwa: 'Grok Imagine', krotko: 'Grok', ikona: Layers, opis: 'xAI — wkrótce w Canvas.', dostepny: false },
-  { id: 'gptimage2', nazwa: 'GPT Image 2', krotko: 'GPT', ikona: Layers, opis: 'Najlepsza skala i perspektywa, napisy — najwolniejszy', dostepny: true },
+  { id: 'gptimage2', nazwa: 'GPT Image 2', krotko: 'GPT', ikona: Layers, opis: 'Skala, perspektywa i napisy', dostepny: true },
   { id: 'zimage', nazwa: 'Z-Image Turbo', krotko: 'Z-Image', ikona: Layers, opis: 'Runware — wkrótce w Canvas.', dostepny: false },
 ] as const
 
@@ -165,19 +165,19 @@ const metryki = (jakosc: number, precyzja: number, szybkosc: number) => [
 const OCENY_MODELI: Record<string, { jakosc: number; precyzja: number; szybkosc: number; pelny: string }> = {
   lite: {
     jakosc: 5, precyzja: 4, szybkosc: 10,
-    pelny: 'Około 6 s i 2 Byte za obraz — najszybszy i najtańszy. Dobry do szkiców i prostych zmian, ale przy przenoszeniu obiektu bywa za duży i zmienia kolor lub wygląd rzeczy.',
+    pelny: 'Najszybszy i najtańszy. Dobry do szkiców, szybkich prób i prostych zmian. Przy złożonych scenach częściej myli kolor i skalę wstawianego obiektu.',
   },
   nb2: {
     jakosc: 7, precyzja: 7, szybkosc: 8,
-    pelny: 'Około 12 s i 3 Byte za obraz. Dobry kompromis: trzyma światło i detale, skala bywa trochę zawyżona. Na co dzień najrozsądniejszy wybór.',
+    pelny: 'Dobry wybór na co dzień: trzyma światło i detale i sprawnie edytuje zdjęcia. Skalę wstawianych obiektów czasem lekko zawyża.',
   },
   pro: {
     jakosc: 10, precyzja: 8, szybkosc: 6,
-    pelny: 'Około 19 s i 6 Byte za obraz — najdroższy. Najlepiej oddaje wygląd i detale obiektu oraz rozdzielczość do 4K; skalę i odległość trzeba czasem poprawić.',
+    pelny: 'Najwierniejszy w detalach i fakturach obiektu — najlepszy tam, gdzie liczy się jakość i podobieństwo do oryginału, także w 4K. Dlatego działa w Inpaint i Eraser. Skalę i odległość wstawianych obiektów trzeba czasem poprawić.',
   },
   gptimage2: {
     jakosc: 9, precyzja: 10, szybkosc: 2,
-    pelny: 'Około 48 s i 4 Byte za obraz — najwolniejszy. Najlepiej trzyma skalę, perspektywę i dokładnie wykonuje polecenia, również z napisami; obiekt bywa mniej wierny oryginałowi.',
+    pelny: 'Najlepiej trzyma skalę, perspektywę i położenie obiektów, dokładnie wykonuje polecenia i radzi sobie z napisami. Domyślny model; używany też do Outpaintu. Obiekt bywa mniej wierny oryginałowi.',
   },
 }
 const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
