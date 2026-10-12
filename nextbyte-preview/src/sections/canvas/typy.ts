@@ -326,6 +326,7 @@ export function wytnijOkolice(
   normalizedY: number,
   bok = 96,
   udzial = 0.22,
+  znacznik = false,
 ): Promise<string> {
   return new Promise(resolve => {
     const obrazek = new Image()
@@ -340,6 +341,18 @@ export function wytnijOkolice(
       const g = plotno.getContext('2d')
       if (!g) return resolve('')
       g.drawImage(obrazek, sx, sy, zrodloBok, zrodloBok, 0, 0, bok, bok)
+      if (znacznik) {
+        // Pierścień dokładnie w punkcie pineski (w środku wycinka, chyba że punkt jest przy krawędzi) — model widzi, CO jest wskazane
+        const cx = ((obrazek.width * normalizedX - sx) / zrodloBok) * bok
+        const cy = ((obrazek.height * normalizedY - sy) / zrodloBok) * bok
+        const r = bok * 0.045
+        g.lineWidth = Math.max(3, bok * 0.012)
+        g.strokeStyle = 'rgba(0,0,0,0.85)'
+        g.beginPath(); g.arc(cx, cy, r + g.lineWidth * 0.8, 0, Math.PI * 2); g.stroke()
+        g.lineWidth = Math.max(2, bok * 0.008)
+        g.strokeStyle = '#ffffff'
+        g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke()
+      }
       resolve(plotno.toDataURL('image/png'))
     }
     obrazek.onerror = () => resolve('')
