@@ -244,7 +244,8 @@ export function CzatCanvas({
   }, [menu])
   const mobilny = useMobilny()
   const klawiatura = useKlawiatura()
-  const [zwiniety, setZwiniety] = useState(() => typeof window !== 'undefined' && window.innerWidth < 900)
+  // Telefon (jak w Lovarcie): domyślnie widać sam czat na całym ekranie; płótno otwiera się jednym dotknięciem
+  const [zwiniety, setZwiniety] = useState(false)
   // Skrót C (z Canvasa): rozwiń panel i ustaw kursor w polu polecenia
   useEffect(() => {
     const naCzat = () => {
@@ -477,8 +478,8 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className={cn('nb-czat-root p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 bottom-0 max-h-[72dvh]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny && klawiatura ? { transform: `translateY(-${klawiatura}px)` } : undefined}>
-      <div className={cn('p2-szklo nb-cozy-czat pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
+    <div className={cn('nb-czat-root p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 top-[calc(var(--nb-nav-gora,0px)+8px)]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny ? { bottom: klawiatura } : undefined}>
+      <div className={cn('p2-szklo nb-cozy-czat pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !bg-[hsl(var(--background))] slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
         {/* Nagłówek: akcje + gradientowa kreska jak w pasku bocznym platformy */}
         <div className="nb-czat-naglowek relative flex shrink-0 items-center justify-end pb-2">
           <div aria-hidden className="pointer-events-none absolute inset-x-1 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
@@ -494,19 +495,19 @@ export function CzatCanvas({
             <button
               onClick={() => setZwiniety(true)}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
-              title="Zwiń"
-              aria-label="Zwiń panel"
+              title={mobilny ? "Pokaż płótno" : "Zwiń"}
+              aria-label={mobilny ? "Pokaż płótno" : "Zwiń panel"}
             >
-              {mobilny ? <ChevronDown className="h-5 w-5" strokeWidth={2.2} /> : <PanelRightClose className="h-5 w-5" strokeWidth={2.2} />}
+              {mobilny ? <Layers className="h-5 w-5" strokeWidth={1.8} /> : <PanelRightClose className="h-5 w-5" strokeWidth={2.2} />}
             </button>
           </div>
         </div>
 
       {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
       <div className="nb-czat-hist relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {!mobilny && historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
+        {historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
           <div className="nb-czat-pusty flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
-            <p className="max-w-[230px] text-[13px] leading-relaxed text-muted-foreground/80">Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.</p>
+            <p className="max-w-[230px] text-[13px] leading-relaxed text-muted-foreground/80">{mobilny ? 'Opisz, co chcesz wygenerować, albo dodaj zdjęcie spinaczem.' : 'Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.'}</p>
           </div>
         )}
         {historiaWiadomosci.map(msg => (
@@ -550,7 +551,7 @@ export function CzatCanvas({
                       download={`${(msg.nazwaWyniku || 'nextbyte').replace(/[^\w.-]+/g, '_')}.jpg`}
                       title="Zapisz obraz"
                       aria-label="Zapisz obraz"
-                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-[10px] border border-foreground/[0.12] bg-[hsl(var(--background)/0.62)] text-foreground/80 opacity-0 backdrop-blur-md transition-all duration-150 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-[10px] border border-foreground/[0.12] bg-[hsl(var(--background)/0.62)] text-foreground/80 opacity-0 max-md:opacity-100 backdrop-blur-md transition-all duration-150 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
                     >
                       <Download className="h-4 w-4" />
                     </a>

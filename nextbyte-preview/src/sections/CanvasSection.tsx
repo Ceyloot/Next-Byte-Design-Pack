@@ -1388,9 +1388,9 @@ export function CanvasSection() {
       startDucha({ width: 460, height: Math.round((460 * rozmiar.wysokosc) / rozmiar.szerokosc), y: 60, naturalWidth: rozmiar.szerokosc, naturalHeight: rozmiar.wysokosc }, 'Generuję…')
       try {
         const model = modelObrazu === 'auto' ? 'nb2' : modelObrazu
-        const w = zalObrazy.length
+        const w = zalObrazy.length >= 2
           ? await wykonajGeneracjeZReferencji({ obrazy: await Promise.all(zalObrazy.map(z => konwertujNaDataUrl(z.src ?? ''))), tekst: polecenieZal, szerokosc: rozmiar.szerokosc, wysokosc: rozmiar.wysokosc, model })
-          : await generuj({ polecenie: polecenieZal, obrazy: [], szerokosc: rozmiar.szerokosc, wysokosc: rozmiar.wysokosc, model })
+          : await generuj({ polecenie: polecenieZal, obrazy: await Promise.all(zalObrazy.map(z => konwertujNaDataUrl(z.src ?? ''))), szerokosc: rozmiar.szerokosc, wysokosc: rozmiar.wysokosc, model })
         const nazwa = nazwijWynik(opis, [])
         dodajZeZrodla(w.obrazUrl, nazwa, 'wynik')
         setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: w.obrazUrl, kosztUSD: w.kosztUSD, model: w.model, nazwa, opis: `Polecenie: „${opis}”.` } })

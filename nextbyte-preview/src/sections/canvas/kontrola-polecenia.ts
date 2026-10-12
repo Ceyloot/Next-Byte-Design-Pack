@@ -36,7 +36,8 @@ export function sprawdzPolecenie(
 
   // „przenieś to tutaj” bez pinesek nie znaczy nic: model nie wie, co jest
   // „tym”, a co „tutaj”. To najczęstsza przyczyna wyniku obok tematu.
-  if (wskazan > 0 && uchwyty.length === 0 && intencja !== 'perspektywa') {
+  // Ostrzegamy tylko, gdy jest o co się pomylić: kilka zdjęć na płótnie, a żadnej pineski (przy jednym zdjęciu „to” znaczy całe zdjęcie)
+  if (wskazan > 0 && uchwyty.length === 0 && intencja !== 'perspektywa' && warstwy.length >= 2) {
     uwagi.push({
       id: 'wskazanie-bez-pineski',
       // Tylko ostrzeżenie: „zrób z tego zimę” bez pinesek znaczy całe zdjęcie, a gdy agent nie wie, o co chodzi, sam dopyta.
