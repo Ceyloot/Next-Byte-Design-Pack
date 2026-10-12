@@ -50,7 +50,7 @@ import type { Rysunek } from '@/sections/canvas/typy'
 import { celAdnotacji, przygotujAdnotacje, rysujRysunki, zadaniaZAdnotacji } from '@/sections/canvas/adnotacje'
 import { byteZaObraz } from '@/sections/canvas/dostawca'
 import { useMobilny } from '@/sections/canvas/mobilny'
-import { rozpoznajRozszerzenie, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
+import { rozpoznajRozszerzenie, ukladRozszerzenia, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
 import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
 import { wykonajGenerowanie } from '@/sections/canvas/generowanie'
@@ -778,13 +778,24 @@ export function CanvasSection() {
     },
     [projekt.warstwy, akcjaAI, modelObrazu, dodajZeZrodla, startDucha, usunDucha],
   )
+  /**
+   * Rozmiar „ducha” (animacji generowania) dla outpaintu: od razu w wybranym formacie. Oryginał zachowuje na płótnie swój rozmiar,
+   * a kadr rośnie o tyle, o ile rośnie przy rozszerzeniu — tak jak potem wypełni go wynik.
+   */
+  const rozmiarDuchaOutpaintu = (w: Warstwa, zad: ZadanieRozszerzenia, model: string | undefined) => {
+    const u = ukladRozszerzenia(w.naturalWidth, w.naturalHeight, zad, typWymiarow(model))
+    if (!u) return w
+    const wysokosc = Math.max(1, Math.round(w.height * (u.H / u.oh)))
+    const proporcja = zad.docelowe ? zad.docelowe.w / zad.docelowe.h : u.W / u.H
+    return { ...w, height: wysokosc, width: Math.round(wysokosc * proporcja) }
+  }
   /** Outpaint z paska/panelu: rozszerza kadr zdjęcia (nowe zdjęcie obok, oryginał zostaje). */
   const uruchomOutpaint = useCallback(
     async (warstwaId: string, zadanie: ZadanieRozszerzenia) => {
       const w = projekt.warstwy.find(x => x.id === warstwaId)
       if (!w || akcjaAI) return
       setAkcjaAI('outpaint')
-      startDucha(w, 'Outpaint…')
+      startDucha(rozmiarDuchaOutpaintu(w, zadanie, modelObrazu === 'auto' ? undefined : modelObrazu), 'Outpaint…')
       try {
         const wynik = await wykonajRozszerzenie(w.src, zadanie, modelObrazu === 'auto' ? undefined : modelObrazu)
         dodajZeZrodla(wynik.src, `${w.name}_outpaint`, 'wynik', w)
@@ -1577,7 +1588,7 @@ export function CanvasSection() {
         const w = warstwaZrodlowa
         refGeneruje.current = true
         setStanGeneracji({ faza: 'trwa', plan: 'Rozszerzam kadr (outpaint)…', tryb: 'generator' })
-        startDucha(w, 'Outpaint…')
+        startDucha(rozmiarDuchaOutpaintu(w, zad, modelObrazu === 'auto' ? undefined : modelObrazu), 'Outpaint…')
         try {
           const wynik = await wykonajRozszerzenie(w.src, zad, modelObrazu === 'auto' ? undefined : modelObrazu)
           const nazwa = `${w.name}_outpaint`

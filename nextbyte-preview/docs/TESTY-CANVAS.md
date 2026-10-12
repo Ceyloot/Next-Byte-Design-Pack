@@ -93,3 +93,4 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] W oknie Inpaint i Eraser obok suwaka jest przełącznik Pędzel / Gumka; gumka ściera zamalowane miejsce (kolejność pociągnięć ma znaczenie), suwak zmienia jej rozmiar.
 - [ ] Zamalowanie nakładających się kresek nie ciemnieje podwójnie; po starciu całej maski przycisk wysyłania pozostaje zablokowany.
 - [ ] Do modelu idzie maska już po wytarciu (obrys wycinka liczony z zamalowanych pociągnięć).
+- [ ] Outpaint: animacja „Generuję…" od razu ma wybrany format (np. 9:16 stoi pionowo od pierwszej klatki), oryginał zachowuje swój rozmiar, a wynik wypełnia ducha bez skoku rozmiaru — z panelu i z polecenia na czacie.
