@@ -392,9 +392,11 @@ export function GlassModelSearch({
           </div>
 
           {/* Opis */}
-          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            {peekedModel.fullDescription || peekedModel.description}
-          </p>
+          {(peekedModel.fullDescription || peekedModel.description) && (
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              {peekedModel.fullDescription || peekedModel.description}
+            </p>
+          )}
 
           {/* Kontekst */}
           {peekedModel.contextLabel && (
@@ -561,7 +563,7 @@ export function GlassModelSearch({
                             </span>
                           )}
                         </div>
-                        {!odwroc && <p className={cn(compact ? 'mt-1 text-[12.5px] leading-snug text-foreground/65' : 'mt-0.5 truncate text-[11px] text-muted-foreground/80 leading-none')}>
+                        {!odwroc && model.description && <p className={cn(compact ? 'mt-1 text-[12.5px] leading-snug text-foreground/65' : 'mt-0.5 truncate text-[11px] text-muted-foreground/80 leading-none')}>
                           {model.description}
                         </p>}
                         {compact && (

@@ -187,7 +187,8 @@ const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
     const Z = znakModelu(m.id)
     return {
       id: m.id, name: m.nazwa, provider: m.id === 'gptimage2' ? 'OpenAI' : 'Google Gemini', badge: m.id === 'gptimage2' ? 'OpenAI' : 'Google',
-      group: 'NEXTBYTE', description: m.opis, fullDescription: OCENY_MODELI[m.id]?.pelny, tags: ['obraz', m.krotko.toLowerCase()],
+      // bez opisów — karta modelu pokazuje tylko paski Jakość / Precyzja / Szybkość i koszt
+      group: 'NEXTBYTE', description: '', tags: ['obraz', m.krotko.toLowerCase()],
       cost: byteZaObraz(m.id), speed: 'balanced', icon: <Z className="h-4 w-4" />,
       metrics: metryki(OCENY_MODELI[m.id]?.jakosc ?? 6, OCENY_MODELI[m.id]?.precyzja ?? 6, OCENY_MODELI[m.id]?.szybkosc ?? 5),
       messageCost: byteZaObraz(m.id), reasoningLevels: [],
