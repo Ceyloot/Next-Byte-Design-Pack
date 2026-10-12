@@ -46,6 +46,10 @@ interface Props {
   rysunki?: Rysunek[]
   zaznaczoneRysunki?: string[]
   kolorOlowka?: string
+  /** pisak ołówka: cienka linia, gruby półprzezroczysty „zakres” albo napis z klawiatury */
+  trybOlowka?: 'linia' | 'zakres' | 'tekst'
+  /** kliknięcie w trybie napisu — miejsce w scenie, gdzie użytkownik chce dopisać tekst */
+  onNapis?: (x: number, y: number) => void
   gruboscOlowka?: number
   onRysunek?: (r: Rysunek) => void
   onZaznaczRysunki?: (ids: string[]) => void
@@ -125,6 +129,8 @@ export function Plotno({
   rysunki = [],
   zaznaczoneRysunki = [],
   kolorOlowka = 'auto',
+  trybOlowka = 'linia',
+  onNapis,
   gruboscOlowka = 5,
   onRysunek,
   onZaznaczRysunki,
@@ -238,6 +244,10 @@ export function Plotno({
     }
     if (narzedzie === 'olowek' && e.button === 0) {
       const p = doSceny(e)
+      if (trybOlowka === 'tekst') {
+        onNapis?.(p.x, p.y)
+        return
+      }
       refOperacja.current = { rodzaj: 'rysowanie', startX: p.x, startY: p.y, punkty: [[p.x, p.y]] }
       setZywyRysunek([[p.x, p.y]])
       return
@@ -271,6 +281,10 @@ export function Plotno({
     const p = doSceny(e)
 
     if (narzedzie === 'olowek') {
+      if (trybOlowka === 'tekst') {
+        onNapis?.(p.x, p.y)
+        return
+      }
       refOperacja.current = { rodzaj: 'rysowanie', startX: p.x, startY: p.y, punkty: [[p.x, p.y]] }
       setZywyRysunek([[p.x, p.y]])
       return
@@ -491,7 +505,7 @@ export function Plotno({
     if (op?.rodzaj === 'rysowanie' && op.punkty) {
       setZywyRysunek(null)
       const pkt = op.punkty.length === 1 ? [op.punkty[0], [op.punkty[0][0] + 0.01, op.punkty[0][1]] as [number, number]] : op.punkty
-      onRysunek?.({ id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: pkt, kolor: kolorOlowka, grubosc: gruboscOlowka })
+      onRysunek?.({ id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: pkt, kolor: kolorOlowka, grubosc: trybOlowka === 'zakres' ? gruboscOlowka * 5 : gruboscOlowka, ...(trybOlowka === 'zakres' ? { zakres: true } : {}) })
       return
     }
     if (op?.rodzaj === 'zaznaczanie') {
@@ -758,15 +772,33 @@ export function Plotno({
                     onMenuRysunku?.(e.clientX, e.clientY)
                   }}
                 >
-                  {ry.kolor === '#111111' && <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={ry.grubosc + 3 * odwrotna} strokeLinecap="round" strokeLinejoin="round" />}
-                  <path d={d} fill="none" stroke={ry.kolor === 'auto' ? undefined : ry.kolor} style={ry.kolor === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
+                  {ry.kolor === '#111111' && !ry.tekst && !ry.zakres && <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={ry.grubosc + 3 * odwrotna} strokeLinecap="round" strokeLinejoin="round" />}
+                  {ry.tekst ? (
+                    <text
+                      x={ry.punkty[0][0]}
+                      y={ry.punkty[0][1]}
+                      dominantBaseline="central"
+                      fontSize={ry.grubosc}
+                      fontWeight={700}
+                      fontFamily="Inter, system-ui, sans-serif"
+                      fill={ry.kolor === 'auto' ? 'hsl(var(--foreground))' : ry.kolor}
+                      stroke="hsl(var(--background) / 0.85)"
+                      strokeWidth={ry.grubosc / 6}
+                      paintOrder="stroke"
+                      style={{ userSelect: 'none' }}
+                    >
+                      {ry.tekst}
+                    </text>
+                  ) : (
+                    <path d={d} fill="none" stroke={ry.kolor === 'auto' ? undefined : ry.kolor} style={ry.kolor === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={ry.zakres ? 0.45 : 1} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
+                  )}
                   {/* szersza, niewidoczna ścieżka — łatwiej trafić palcem */}
                   <path d={d} fill="none" stroke="transparent" strokeWidth={Math.max(ry.grubosc, 14 * odwrotna)} strokeLinecap="round" strokeLinejoin="round" />
                 </g>
               )
             })}
             {zywyRysunek && (
-              <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka === 'auto' ? undefined : kolorOlowka} style={kolorOlowka === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeWidth={gruboscOlowka} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka === 'auto' ? undefined : kolorOlowka} style={kolorOlowka === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={trybOlowka === 'zakres' ? 0.45 : 1} strokeWidth={trybOlowka === 'zakres' ? gruboscOlowka * 5 : gruboscOlowka} strokeLinecap="round" strokeLinejoin="round" />
             )}
             {(() => {
               const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))

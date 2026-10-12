@@ -14,8 +14,12 @@ export interface Rysunek {
   id: string
   punkty: [number, number][]
   kolor: string
-  /** grubość w jednostkach sceny */
+  /** grubość w jednostkach sceny (dla napisu: wysokość liter) */
   grubosc: number
+  /** pisak „zakres”: gruby, półprzezroczysty — zaznacza miejsce, w którym ma się coś zmienić */
+  zakres?: boolean
+  /** napis wpisany z klawiatury; `punkty` to wtedy środek linii tekstu od lewej do prawej */
+  tekst?: string
 }
 
 /** Pociągnięcie pędzla do inpaintingu: punkty (0–1 względem zdjęcia) i średnica jako ułamek szerokości zdjęcia. */

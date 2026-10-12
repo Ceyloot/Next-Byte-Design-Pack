@@ -75,3 +75,13 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Narzędzie wyboru: klik w szkic lub ramka zaznacza (Shift dokłada); Delete usuwa; prawy przycisk w ramce → „Zamień w obraz" / „Usuń szkic".
 - [ ] „Zamień w obraz": szkic idzie na białym tle w formacie modelu; opis z czatu dopisuje się do polecenia; zaznaczone zdjęcie (np. osoba) idzie jako referencja tożsamości.
 - [ ] Szkic z kilku kolorów (kolor = podpowiedź, co jest czym); szkic wokół zdjęcia na płótnie.
+
+## 10. Adnotacje → edycja (nowe)
+- [ ] Zaznacz zdjęcie → pasek nad nim ma: Quick edit, Adnotacje, Upscale, Remove BG, Edit text, „…" i Pobierz. Inpaint, Outpaint, Eraser, Enhance siedzą pod „…" (menu zamyka się Esc / kliknięciem obok, otwiera w górę przy dole ekranu).
+- [ ] „Adnotacje" włącza ołówek w trybie Zakres (czerwony) i pokazuje podpowiedź; w pasku ołówka: Linia / Zakres / Napis.
+- [ ] Zakres: gruby półprzezroczysty pisak (grubość ×5); Napis: klik na zdjęciu, wpis, Enter (lub ✓) dodaje napis; Esc rezygnuje; pusty napis nic nie dodaje.
+- [ ] Gdy adnotacje leżą na zdjęciu, nad paskiem ołówka pojawia się „Wykonaj adnotacje · N ⟠" (to samo w menu prawego przycisku na zaznaczonych szkicach).
+- [ ] Do modelu idą dwa obrazy: czyste zdjęcie (Image 1) i zdjęcie z adnotacjami (Image 2); napisy z klawiatury trafiają do polecenia z położeniem (np. „top-left"); tekst z czatu dopisuje się jako dodatkowe instrukcje.
+- [ ] Wynik ma rozmiar zdjęcia, leży obok oryginału, bez śladów kresek; adnotacje zostają na oryginale (można poprawić i puścić jeszcze raz).
+- [ ] „Zamień w obraz" nadal działa: szkic na białym tle, napisy rysowane ciemnym kolorem.
+- [ ] Jasny i ciemny motyw: paski, pole napisu i podpowiedź czytelne.

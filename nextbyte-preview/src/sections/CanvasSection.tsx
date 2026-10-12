@@ -33,6 +33,9 @@ import {
   ImagePlus,
   Type,
   Sparkles,
+  Highlighter,
+  PencilRuler,
+  Check,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import '@/sections/canvas/przytulny.css'
@@ -43,6 +46,8 @@ import { Outpaint } from '@/sections/canvas/Outpaint'
 import { dopasujWymiary } from '@/sections/canvas/formaty-modelu'
 import { typWymiarow } from '@/sections/canvas/rozszerzanie-kadru'
 import type { Rysunek } from '@/sections/canvas/typy'
+import { celAdnotacji, przygotujAdnotacje, rysujRysunki, szerokoscNapisu } from '@/sections/canvas/adnotacje'
+import { byteZaObraz } from '@/sections/canvas/dostawca'
 import { useMobilny } from '@/sections/canvas/mobilny'
 import { rozpoznajRozszerzenie, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
@@ -280,6 +285,12 @@ export function CanvasSection() {
   const [zaznaczoneRysunki, setZaznaczoneRysunki] = useState<string[]>([])
   const [kolorOlowka, setKolorOlowka] = useState('auto') // „auto” = kolor tekstu motywu: biały na ciemnym, ciemny na jasnym
   const [gruboscOlowka, setGruboscOlowka] = useState(5)
+  /** pisak: linia, gruby „zakres” (adnotacje) albo napis z klawiatury */
+  const [trybOlowka, setTrybOlowka] = useState<'linia' | 'zakres' | 'tekst'>('linia')
+  /** napis w trakcie wpisywania: miejsce w scenie i treść */
+  const [napis, setNapis] = useState<{ x: number; y: number; tekst: string; rozmiar: number } | null>(null)
+  /** podpowiedź „jak robić adnotacje”, po wejściu w tryb z paska zdjęcia */
+  const [podpowiedzAdnotacji, setPodpowiedzAdnotacji] = useState(false)
   const [menuRysunku, setMenuRysunku] = useState<{ x: number; y: number } | null>(null)
   const [widok, setWidok] = useState<Widok>({ x: 50, y: 60, zoom: 0.72 })
   const [menuDodawania, setMenuDodawania] = useState(false)
@@ -790,15 +801,7 @@ export function CanvasSection() {
       if (!g) throw new Error('Brak kontekstu rysowania')
       g.fillStyle = '#ffffff'
       g.fillRect(0, 0, fw, fh)
-      g.lineCap = 'round'
-      g.lineJoin = 'round'
-      for (const r of wyb) {
-        g.strokeStyle = r.kolor === 'auto' ? '#111111' : r.kolor // szkic idzie do modelu na białym tle
-        g.lineWidth = Math.max(2, r.grubosc * k)
-        g.beginPath()
-        r.punkty.forEach((q, i) => (i === 0 ? g.moveTo(q[0] * k + ox, q[1] * k + oy) : g.lineTo(q[0] * k + ox, q[1] * k + oy)))
-        g.stroke()
-      }
+      rysujRysunki(g, wyb, (x, y) => [x * k + ox, y * k + oy], k, '#111111') // szkic idzie do modelu na białym tle
       const szkic = plotno.toDataURL('image/png')
       const refs = await Promise.all(referencje.slice(0, 3).map(w => konwertujNaDataUrl(w.src)))
       const polecenie = [
@@ -821,6 +824,50 @@ export function CanvasSection() {
       refGeneruje.current = false
     }
   }, [rysunki, zaznaczoneRysunki, projekt.tekst, projekt.warstwy, wieluAktywne, wielu, wybranaWarstwa, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
+
+  /** Zdjęcie i adnotacje, które „Wykonaj adnotacje” weźmie pod uwagę (zaznaczone szkice, a bez zaznaczenia — wszystkie leżące na zdjęciu). */
+  const celAdn = useMemo(
+    () => celAdnotacji(rysunki, zaznaczoneRysunki, projekt.warstwy, wybranaWarstwa),
+    [rysunki, zaznaczoneRysunki, projekt.warstwy, wybranaWarstwa],
+  )
+  /**
+   * Adnotacje → edycja: czyste zdjęcie + to samo zdjęcie z naniesionymi adnotacjami idą do modelu jako plan zmian.
+   * Wynik ląduje obok oryginału, adnotacje zostają na zdjęciu (można je poprawić i puścić jeszcze raz).
+   */
+  const wykonajAdnotacje = useCallback(async () => {
+    const cel = celAdnotacji(rysunki, zaznaczoneRysunki, projekt.warstwy, wybranaWarstwa)
+    if (!cel || akcjaAI || refGeneruje.current) return
+    const { warstwa: w, rysunki: adn } = cel
+    refGeneruje.current = true
+    setMenuRysunku(null)
+    setPodpowiedzAdnotacji(false)
+    setAkcjaAI('adnotacje')
+    const model = modelObrazu === 'auto' ? 'nb2' : modelObrazu
+    try {
+      startDucha(w, 'Adnotacje…')
+      setStanGeneracji({ faza: 'trwa', plan: 'Wykonuję adnotacje…', tryb: 'generator' })
+      const zad = await przygotujAdnotacje({ warstwa: w, rysunki: adn, opis: projekt.tekst.trim(), model: typWymiarow(model) })
+      const wynik = await generuj({ polecenie: zad.polecenie, obrazy: zad.obrazy, szerokosc: zad.szerokosc, wysokosc: zad.wysokosc, model })
+      const src = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
+      const nazwa = nazwijWynik(projekt.tekst.trim() || 'adnotacje', [])
+      dodajZeZrodla(src, nazwa, 'wynik', w)
+      setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: 'Zmiany z adnotacji wykonane na kopii zdjęcia.' } })
+    } catch (e) {
+      setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wykonać adnotacji.' })
+    } finally {
+      usunDucha()
+      setAkcjaAI(null)
+      refGeneruje.current = false
+    }
+  }, [rysunki, zaznaczoneRysunki, projekt.warstwy, projekt.tekst, wybranaWarstwa, akcjaAI, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
+  /** Zatwierdza napis wpisany z klawiatury jako adnotację (puste pole = rezygnacja). */
+  const zatwierdzNapis = useCallback(() => {
+    if (napis && napis.tekst.trim()) {
+      const t = napis.tekst.trim()
+      setRysunki(r => [...r, { id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty: [[napis.x, napis.y], [napis.x + szerokoscNapisu(t, napis.rozmiar), napis.y]], kolor: kolorOlowka === 'auto' ? '#ef4444' : kolorOlowka, grubosc: napis.rozmiar, tekst: t }])
+    }
+    setNapis(null)
+  }, [napis, kolorOlowka])
 
   const uruchomAkcjeAI = useCallback(
     async (warstwaId: string, akcjaId: string) => {
@@ -2255,6 +2302,8 @@ export function CanvasSection() {
         zaznaczoneRysunki={zaznaczoneRysunki}
         kolorOlowka={kolorOlowka}
         gruboscOlowka={gruboscOlowka}
+        trybOlowka={trybOlowka}
+        onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom) }) }}
         onRysunek={r => setRysunki(prev => [...prev, r])}
         onZaznaczRysunki={setZaznaczoneRysunki}
         onMenuRysunku={(x, y) => setMenuRysunku({ x, y })}
@@ -2362,7 +2411,7 @@ export function CanvasSection() {
               zablokowane={Boolean(akcjaAI)}
               style={{
                 // wyśrodkowany nad zdjęciem, w całości na ekranie i przed panelem czatu
-                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 475, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 475)),
+                left: mobilny ? window.innerWidth / 2 : Math.max(odsuniecia().l + 16 + 380, Math.min(lewo + (w.width * widok.zoom) / 2, window.innerWidth - 440 - 380)),
                 transform: 'translateX(-50%)',
                 maxWidth: mobilny ? 'calc(100vw - 16px)' : 'calc(100vw - 440px)',
                 top: gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64),
@@ -2380,10 +2429,37 @@ export function CanvasSection() {
                   },
                 },
                 {
+                  id: 'adnotacje',
+                  etykieta: 'Adnotacje',
+                  ikona: PencilRuler,
+                  tytul: 'Adnotacje — zaznacz na zdjęciu miejsca, dopisz co zmienić i model to wykona',
+                  trwa: akcjaAI === 'adnotacje',
+                  onClick: () => {
+                    wybierz()
+                    setTrybOlowka('zakres')
+                    if (kolorOlowka === 'auto') setKolorOlowka('#ef4444')
+                    setPodpowiedzAdnotacji(true)
+                    setNarzedzie('olowek')
+                  },
+                },
+                zAI('upscale', { separator: true }),
+                zAI('beztla', { etykieta: 'Remove BG' }),
+                {
+                  id: 'tekst',
+                  etykieta: 'Edit text',
+                  ikona: Type,
+                  tytul: 'Edit text — zmień napis na zdjęciu',
+                  onClick: () => {
+                    wybierz()
+                    setEdycjaTekstu(w.id)
+                  },
+                },
+                {
                   id: 'inpaint',
                   etykieta: 'Inpaint',
                   ikona: Paintbrush,
                   tytul: 'Inpaint — zamaluj miejsce na zdjęciu i opisz zmianę',
+                  wMenu: true,
                   onClick: () => {
                     wybierz()
                     setTrybPedzla('inpaint')
@@ -2396,35 +2472,25 @@ export function CanvasSection() {
                   ikona: Expand,
                   tytul: 'Outpaint — rozszerz kadr / zmień proporcje bez przycinania',
                   trwa: akcjaAI === 'outpaint',
+                  wMenu: true,
                   onClick: () => {
                     wybierz()
                     setOutpaint(w.id)
                   },
                 },
-                zAI('upscale', { separator: true }),
-                zAI('beztla', { etykieta: 'Remove BG' }),
                 {
                   id: 'eraser',
                   etykieta: 'Eraser',
                   ikona: Eraser,
                   tytul: 'Eraser — zamaluj obiekt do usunięcia',
+                  wMenu: true,
                   onClick: () => {
                     wybierz()
                     setTrybPedzla('eraser')
                     setNarzedzie('pedzel')
                   },
                 },
-                zAI('enhance'),
-                {
-                  id: 'tekst',
-                  etykieta: 'Edit text',
-                  ikona: Type,
-                  tytul: 'Edit text — zmień napis na zdjęciu',
-                  onClick: () => {
-                    wybierz()
-                    setEdycjaTekstu(w.id)
-                  },
-                },
+                zAI('enhance', { wMenu: true }),
                 {
                   id: 'pobierz',
                   etykieta: 'Pobierz',
@@ -2528,8 +2594,57 @@ export function CanvasSection() {
 
       {/* ══ Ołówek: kolor, grubość, cofnij ══ */}
       {narzedzie === 'olowek' && (
-        <div className="p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 -translate-x-1/2 md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]">
-          <div role="toolbar" aria-label="Ołówek" className="nb-cozy-plyta pointer-events-auto flex h-12 items-center gap-1 rounded-2xl border px-2">
+        <div className="p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 flex max-w-[calc(100vw-16px)] -translate-x-1/2 flex-col items-center gap-2 md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]">
+          {(celAdn || podpowiedzAdnotacji) && (
+            <div className="nb-cozy-plyta pointer-events-auto flex max-w-full items-center gap-2 rounded-2xl border py-1.5 pl-3.5 pr-1.5">
+              {celAdn ? (
+                <span className="text-[12px] text-muted-foreground max-sm:hidden">
+                  {celAdn.rysunki.length} {celAdn.rysunki.length === 1 ? 'adnotacja' : 'adnotacji'} na zdjęciu „{celAdn.warstwa.name}”
+                </span>
+              ) : (
+                <span className="text-[12px] leading-snug text-muted-foreground">
+                  <b className="font-semibold text-foreground">Jak to działa:</b> zaznacz <b className="font-semibold text-foreground">Zakresem</b> miejsce, dopisz <b className="font-semibold text-foreground">Aa</b> (lub odręcznie), co tam zmienić, i kliknij Wykonaj.
+                </span>
+              )}
+              {celAdn && (
+                <button
+                  type="button"
+                  disabled={Boolean(akcjaAI)}
+                  onClick={() => void wykonajAdnotacje()}
+                  className="nb-cta flex h-9 shrink-0 items-center gap-2 rounded-xl px-3.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {akcjaAI === 'adnotacje' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Wykonaj adnotacje
+                  <span className="font-mono text-[11px] opacity-75">· {byteZaObraz(modelObrazu)} ⟠</span>
+                </button>
+              )}
+              {!celAdn && (
+                <button type="button" aria-label="Zamknij podpowiedź" onClick={() => setPodpowiedzAdnotacji(false)} className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-foreground/50 hover:bg-foreground/[0.08] hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+          <div role="toolbar" aria-label="Ołówek" className="nb-cozy-plyta pointer-events-auto flex h-12 max-w-full items-center gap-1 overflow-x-auto rounded-2xl border px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {([
+              ['linia', 'Linia', Pencil, 'Cienka kreska'],
+              ['zakres', 'Zakres', Highlighter, 'Zakres — gruby pisak do zaznaczania miejsca zmiany'],
+              ['tekst', 'Napis', Type, 'Napis — kliknij na zdjęciu i wpisz, co tam zmienić'],
+            ] as const).map(([id, nazwa, Ik, tytul]) => (
+              <button
+                key={id}
+                type="button"
+                title={tytul}
+                aria-label={nazwa}
+                aria-pressed={trybOlowka === id}
+                onClick={() => { setTrybOlowka(id); if (id !== 'linia' && kolorOlowka === 'auto') setKolorOlowka('#ef4444') }}
+                className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border px-2 text-[12px] font-medium transition-colors', trybOlowka === id ? 'border-primary/40 bg-primary/20 text-foreground' : 'border-transparent text-foreground/70 hover:bg-foreground/[0.08]')}
+              >
+                <Ik className="h-4 w-4" />
+                <span className="max-sm:sr-only">{nazwa}</span>
+              </button>
+            ))}
+            <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.12]" />
             {['auto', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'].map(k => (
               <button
                 key={k}
@@ -2566,6 +2681,27 @@ export function CanvasSection() {
         </div>
       )}
 
+      {/* ══ Napis z klawiatury: pole tekstowe w miejscu kliknięcia ══ */}
+      {napis && narzedzie === 'olowek' && (
+        <div className="absolute z-30 flex items-center gap-1" style={{ left: widok.x + napis.x * widok.zoom, top: widok.y + napis.y * widok.zoom - 18 }} onPointerDown={e => e.stopPropagation()}>
+          <input
+            ref={el => { if (el) requestAnimationFrame(() => el.focus()) }}
+            value={napis.tekst}
+            onChange={e => setNapis(n => (n ? { ...n, tekst: e.target.value } : n))}
+            onKeyDown={e => {
+              if (e.key === 'Enter') zatwierdzNapis()
+              if (e.key === 'Escape') setNapis(null)
+            }}
+            placeholder="Co tu zmienić…"
+            aria-label="Napis adnotacji"
+            className="h-9 min-w-[160px] rounded-xl border border-primary/50 bg-card/90 px-3 text-[14px] font-semibold text-foreground shadow-lg outline-none backdrop-blur placeholder:font-normal placeholder:text-muted-foreground"
+          />
+          <button type="button" aria-label="Dodaj napis" onClick={zatwierdzNapis} className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg">
+            <Check className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* ══ Menu prawego przycisku na zaznaczonych szkicach ══ */}
       {menuRysunku && zaznaczoneRysunki.length > 0 && (
         <div
@@ -2577,8 +2713,14 @@ export function CanvasSection() {
             role="menu"
             onPointerDown={e => e.stopPropagation()}
             className="p2-szklo absolute w-[210px] overflow-hidden !rounded-2xl p-1.5"
-            style={{ left: Math.min(menuRysunku.x, window.innerWidth - 226), top: Math.min(menuRysunku.y, window.innerHeight - 120) }}
+            style={{ left: Math.min(menuRysunku.x, window.innerWidth - 226), top: Math.min(menuRysunku.y, window.innerHeight - 170) }}
           >
+            {celAdn && (
+              <button role="menuitem" type="button" onClick={() => void wykonajAdnotacje()} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-foreground/[0.08]">
+                <PencilRuler className="h-4 w-4 text-primary" />
+                Wykonaj adnotacje
+              </button>
+            )}
             <button role="menuitem" type="button" onClick={() => void zamienSzkicWObraz()} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-foreground/[0.08]">
               <Sparkles className="h-4 w-4 text-primary" />
               Zamień w obraz
