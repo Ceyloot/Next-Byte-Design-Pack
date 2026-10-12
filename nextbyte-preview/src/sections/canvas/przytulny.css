@@ -521,3 +521,8 @@ html[data-nb-czat-mob='otwarty'] .nb-cozy .nb-prompter { display: none !importan
   .nb-dok-mob:not(.nb-pencil-bar) { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + 20px) !important; }
   .nb-dok-mob.nb-pencil-bar { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + 80px) !important; }
 }
+
+/* Tryb adnotacji: czat schowany, całe pole dla zdjęcia i jednego panelu */
+html[data-nb-adn='1'] .nb-czat-root {
+  display: none !important;
+}

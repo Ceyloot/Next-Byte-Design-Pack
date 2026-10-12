@@ -46,7 +46,7 @@ import { Outpaint } from '@/sections/canvas/Outpaint'
 import { dopasujWymiary } from '@/sections/canvas/formaty-modelu'
 import { typWymiarow } from '@/sections/canvas/rozszerzanie-kadru'
 import type { Rysunek } from '@/sections/canvas/typy'
-import { celAdnotacji, przygotujAdnotacje, rysujRysunki, szerokoscNapisu } from '@/sections/canvas/adnotacje'
+import { celAdnotacji, przygotujAdnotacje, rysujRysunki, szerokoscNapisu, zadaniaZAdnotacji } from '@/sections/canvas/adnotacje'
 import { byteZaObraz } from '@/sections/canvas/dostawca'
 import { useMobilny } from '@/sections/canvas/mobilny'
 import { rozpoznajRozszerzenie, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
@@ -898,7 +898,16 @@ export function CanvasSection() {
     setTrybOlowka('zakres')
     if (kolorOlowka === 'auto') setKolorOlowka('#ef4444')
     setNarzedzie('olowek')
-    dopasujWidok([w], 2.5)
+    // zdjęcie w całości nad panelem, na środku ekranu (czat jest wtedy schowany, więc cała szerokość jest do dyspozycji)
+    const od = odsuniecia()
+    const szer = window.innerWidth - od.l - od.r - (mobilny ? 24 : 96)
+    const wys = window.innerHeight - od.t - (mobilny ? 250 : 210)
+    const zoom = Math.min(3, Math.max(0.05, Math.min(szer / w.width, wys / w.height)))
+    setWidok({
+      x: od.l + (window.innerWidth - od.l - od.r - w.width * zoom) / 2 - w.x * zoom,
+      y: od.t + 14 + (wys - w.height * zoom) / 2 - w.y * zoom,
+      zoom,
+    })
   }
   /** Wyjście z trybu adnotacji; `przywroc` wraca do widoku sprzed wejścia, inaczej widok obejmuje wszystkie zdjęcia. */
   const wyjdzAdnotacje = (przywroc: boolean) => {
@@ -913,6 +922,22 @@ export function CanvasSection() {
   }
   const trybAdnRef = useRef<string | null>(null)
   trybAdnRef.current = trybAdn
+  // w trybie adnotacji panel czatu jest schowany (CSS) — maksymalne skupienie na zdjęciu
+  useEffect(() => {
+    if (trybAdn) document.documentElement.setAttribute('data-nb-adn', '1')
+    else document.documentElement.removeAttribute('data-nb-adn')
+    return () => document.documentElement.removeAttribute('data-nb-adn')
+  }, [trybAdn])
+  /** Numery zadań na zdjęciu — te same, które dostaje model */
+  const znacznikiZadan = useMemo(() => {
+    if (!trybAdn || !celAdn) return []
+    const w = celAdn.warstwa
+    return zadaniaZAdnotacji(celAdn.rysunki, w).map(z => ({ numer: z.numer, x: w.x + z.ramka.x0 * w.width, y: w.y + z.ramka.y0 * w.height }))
+  }, [trybAdn, celAdn])
+  const ramkaRysowania = useMemo(() => {
+    const w = trybAdn ? projekt.warstwy.find(x => x.id === trybAdn) : null
+    return w ? { id: w.id, x: w.x, y: w.y, width: w.width, height: w.height } : null
+  }, [trybAdn, projekt.warstwy])
   const wyjdzAdnRef = useRef<(przywroc: boolean) => void>(() => undefined)
   wyjdzAdnRef.current = wyjdzAdnotacje
 
@@ -2357,6 +2382,8 @@ export function CanvasSection() {
         gruboscOlowka={gruboscOlowka}
         trybOlowka={trybOlowka}
         grubosciEkranowe={Boolean(trybAdn)}
+        ramkaRysowania={ramkaRysowania}
+        znacznikiZadan={znacznikiZadan}
         onPrzesunRysunki={przesunRysunki}
         onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom), utworzony: Date.now() }) }}
         onRysunek={r => {
@@ -2654,21 +2681,30 @@ export function CanvasSection() {
       {/* ══ Ołówek: kolor, grubość, cofnij — a w trybie adnotacji jeden panel na najwyższej warstwie ══ */}
       {narzedzie === 'olowek' || trybAdn ? (
         <div className={cn('p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-[70] flex max-w-[calc(100vw-16px)] -translate-x-1/2 flex-col items-center md:bottom-[calc(var(--nb-nav-dol,0px)+24px)]')}>
-          <div role="toolbar" aria-label={trybAdn ? 'Adnotacje' : 'Ołówek'} className="nb-cozy-plyta pointer-events-auto flex max-w-full flex-col gap-1.5 rounded-2xl border p-1.5">
+          <div role="toolbar" aria-label={trybAdn ? 'Adnotacje' : 'Ołówek'} className={cn('nb-cozy-plyta pointer-events-auto flex max-w-full flex-col gap-2 rounded-2xl border p-2', trybAdn && 'w-[min(760px,calc(100vw-16px))]')}>
             {trybAdn && (
-              <div className="flex items-center gap-2 pl-2">
-                <PencilRuler className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate text-[12.5px] text-muted-foreground">
-                  {celAdn ? (
-                    <><b className="font-semibold text-foreground">{celAdn.rysunki.length}</b> {celAdn.rysunki.length === 1 ? 'adnotacja' : 'adnotacji'} — {maOpis ? 'zaznacz kolejne miejsca albo wykonaj' : 'dopisz, co zmienić (Napis)'}</>
-                  ) : (
-                    <>Zaznacz <b className="font-semibold text-foreground">Zakresem</b> miejsce i dopisz <b className="font-semibold text-foreground">Napisem</b>, co tam zmienić</>
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'flex h-9 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[12px] font-medium',
+                    znacznikiZadan.length === 0 ? 'border-foreground/[0.1] text-muted-foreground' : maOpis ? 'border-primary/30 bg-primary/10 text-foreground' : 'border-warning/40 bg-warning/10 text-foreground',
                   )}
+                >
+                  <PencilRuler className="h-3.5 w-3.5 text-primary" />
+                  {znacznikiZadan.length === 0 ? 'Zaznacz miejsce' : !maOpis ? 'Dopisz, co zmienić' : `${znacznikiZadan.length} ${znacznikiZadan.length === 1 ? 'zadanie' : znacznikiZadan.length < 5 ? 'zadania' : 'zadań'}`}
                 </span>
+                <input
+                  value={projekt.tekst}
+                  onChange={e => setProjekt(p => ({ ...p, tekst: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter' && celAdn && maOpis && !akcjaAI) void wykonajAdnotacje() }}
+                  placeholder="Dodatkowy opis dla modelu (opcjonalnie)"
+                  aria-label="Dodatkowy opis dla modelu"
+                  className="h-9 min-w-0 flex-1 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] px-3 text-[13px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40"
+                />
                 <button
                   type="button"
                   disabled={!celAdn || !maOpis || Boolean(akcjaAI)}
-                  title={!celAdn ? 'Najpierw zaznacz miejsce lub dopisz napis' : !maOpis ? 'Dopisz, co zmienić (Napis), albo opisz zmianę na czacie' : 'Wyślij zdjęcie z adnotacjami do modelu'}
+                  title={!celAdn ? 'Najpierw zaznacz miejsce lub dopisz napis' : !maOpis ? 'Dopisz, co zmienić (Napis), albo wpisz opis obok' : 'Wyślij zdjęcie z adnotacjami do modelu'}
                   onClick={() => void wykonajAdnotacje()}
                   className="nb-cta flex h-9 shrink-0 items-center gap-2 rounded-xl px-3.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                 >
@@ -2684,6 +2720,7 @@ export function CanvasSection() {
             <div className="flex h-10 items-center gap-1 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {trybAdn && (
                 <>
+                  <div className="flex shrink-0 items-center gap-0.5 rounded-xl bg-foreground/[0.06] p-0.5">
                   {([
                     ['przesun', 'Przesuń', MousePointer2, 'Przesuń — przeciągnij napis lub szkic w inne miejsce (V)'],
                     ['linia', 'Linia', Pencil, 'Cienka kreska (D)'],
@@ -2704,13 +2741,14 @@ export function CanvasSection() {
                           setTrybOlowka(id)
                           if (id !== 'linia' && kolorOlowka === 'auto') setKolorOlowka('#ef4444')
                         }}
-                        className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border px-2 text-[12px] font-medium transition-colors', aktywny ? 'border-primary/40 bg-primary/20 text-foreground' : 'border-transparent text-foreground/70 hover:bg-foreground/[0.08]')}
+                        className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[12px] font-medium transition-all', aktywny ? 'bg-card text-foreground shadow-[0_1px_4px_hsl(0_0%_0%/0.25),inset_0_0_0_1px_hsl(var(--primary)/0.45)]' : 'text-foreground/65 hover:bg-foreground/[0.08] hover:text-foreground')}
                       >
                         <Ik className="h-4 w-4" />
                         <span className="max-sm:sr-only">{nazwa}</span>
                       </button>
                     )
                   })}
+                  </div>
                   <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.12]" />
                 </>
               )}

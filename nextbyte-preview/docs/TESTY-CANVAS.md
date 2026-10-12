@@ -79,6 +79,8 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 ## 10. Adnotacje → edycja (nowe)
 - [ ] Zaznacz zdjęcie → pasek nad nim: Quick edit, Adnotacje, Upscale, Remove BG, Edit text, „…" (Inpaint, Outpaint, Eraser, Enhance) i Pobierz.
 - [ ] „Adnotacje" wchodzi w tryb skupienia: widok przybliża się do zdjęcia, znikają pasek szybkich akcji i dolny dok, zostaje jeden panel (na wierzchu, nic na nim nie nachodzi). Esc lub ✕ wraca do poprzedniego widoku.
+- [ ] W trybie adnotacji czat jest schowany; zdjęcie leży w całości nad panelem, wyśrodkowane. Rysować można tylko po tym zdjęciu: start poza nim nic nie robi, kreska przeciągnięta poza krawędź zatrzymuje się na krawędzi.
+- [ ] Napisy to „pigułki" z obwódką w kolorze kreski; numery zadań (1, 2, …) na zdjęciu są tymi samymi, które dostaje model; pasek pokazuje „N zadań" / „Dopisz, co zmienić" / „Zaznacz miejsce"; pole „Dodatkowy opis" zastępuje czat.
 - [ ] Panel: Przesuń / Linia / Zakres / Napis, kolory, grubości (stałe na ekranie niezależnie od przybliżenia), cofnij, wyczyść; „Wykonaj · N ⟠" aktywne dopiero, gdy jest zaznaczenie i jakikolwiek napis albo tekst z czatu.
 - [ ] Po narysowaniu zakresu / linii od razu pojawia się pole „Co tu zmienić…" (kursor w środku, wpis działa od razu); Enter / ✓ / klik obok zatwierdza, Esc lub puste pole rezygnuje. Napis można też dodać osobno (Napis → klik). Napis i szkic można przeciągnąć (Przesuń, albo w trybie Napis chwytając istniejący napis).
 - [ ] Do modelu idą dwa obrazy: czyste zdjęcie i mapa układu (czarne tło, kolorowe numerowane obszary — bez zdjęcia i bez tekstu, więc kresek ani napisów nie ma jak przepisać na wynik); polecenie ma ponumerowaną listę zadań (obszar w % kadru + napis), wszystkie obowiązkowe; tekst z czatu dopisuje się.

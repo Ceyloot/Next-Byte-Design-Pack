@@ -49,6 +49,10 @@ interface Props {
   /** pisak ołówka: cienka linia, gruby półprzezroczysty „zakres” albo napis z klawiatury */
   trybOlowka?: 'linia' | 'zakres' | 'tekst'
   /** kliknięcie w trybie napisu — miejsce w scenie, gdzie użytkownik chce dopisać tekst */
+  /** tryb adnotacji: rysować wolno tylko po tym zdjęciu (punkty poza nim są przycinane do krawędzi) */
+  ramkaRysowania?: { id: string; x: number; y: number; width: number; height: number } | null
+  /** numery zadań (obszarów) pokazywane na zdjęciu w trybie adnotacji */
+  znacznikiZadan?: { x: number; y: number; numer: number }[]
   /** grubości kresek liczone w pikselach ekranu (tryb adnotacji: widok bywa mocno przybliżony) */
   grubosciEkranowe?: boolean
   onNapis?: (x: number, y: number) => void
@@ -138,6 +142,8 @@ export function Plotno({
   trybOlowka = 'linia',
   onNapis,
   grubosciEkranowe = false,
+  ramkaRysowania = null,
+  znacznikiZadan = [],
   onPrzesunRysunki,
   gruboscOlowka = 5,
   onRysunek,
@@ -244,6 +250,9 @@ export function Plotno({
   /** pociągnięcie ołówka w trakcie rysowania */
   /** grubość kreski w jednostkach sceny; w trybie adnotacji stała na ekranie, niezależnie od przybliżenia */
   const grubosc = (grubosciEkranowe ? (gruboscOlowka * 0.72) / Math.max(0.05, widok.zoom) : gruboscOlowka) * (trybOlowka === 'zakres' ? 5 : 1)
+  const wRamce = (x: number, y: number) => !ramkaRysowania || (x >= ramkaRysowania.x && x <= ramkaRysowania.x + ramkaRysowania.width && y >= ramkaRysowania.y && y <= ramkaRysowania.y + ramkaRysowania.height)
+  const doRamki = (p: { x: number; y: number }) =>
+    ramkaRysowania ? { x: Math.min(ramkaRysowania.x + ramkaRysowania.width, Math.max(ramkaRysowania.x, p.x)), y: Math.min(ramkaRysowania.y + ramkaRysowania.height, Math.max(ramkaRysowania.y, p.y)) } : p
   const [zywyRysunek, setZywyRysunek] = useState<[number, number][] | null>(null)
 
   function naTleWDol(e: React.PointerEvent) {
@@ -254,6 +263,7 @@ export function Plotno({
     }
     if (narzedzie === 'olowek' && e.button === 0) {
       const p = doSceny(e)
+      if (!wRamce(p.x, p.y)) return // tryb adnotacji: poza zdjęciem nie rysujemy
       if (trybOlowka === 'tekst') {
         onNapis?.(p.x, p.y)
         return
@@ -291,6 +301,8 @@ export function Plotno({
     const p = doSceny(e)
 
     if (narzedzie === 'olowek') {
+      if (ramkaRysowania && warstwa.id !== ramkaRysowania.id) return // adnotacje tylko na zdjęciu, nad którym pracujemy
+      if (!wRamce(p.x, p.y)) return
       if (trybOlowka === 'tekst') {
         onNapis?.(p.x, p.y)
         return
@@ -419,9 +431,10 @@ export function Plotno({
 
     if (op.rodzaj === 'rysowanie' && op.punkty) {
       const ost = op.punkty[op.punkty.length - 1]
+      const pk = doRamki(p)
       // pomijamy punkty bliżej niż ~1,5 px ekranu — gładsza i lżejsza linia
-      if (Math.hypot(p.x - ost[0], p.y - ost[1]) * widok.zoom < 1.5) return
-      op.punkty.push([p.x, p.y])
+      if (Math.hypot(pk.x - ost[0], pk.y - ost[1]) * widok.zoom < 1.5) return
+      op.punkty.push([pk.x, pk.y])
       setZywyRysunek([...op.punkty])
       return
     }
@@ -799,21 +812,39 @@ export function Plotno({
                 >
                   {ry.kolor === '#111111' && !ry.tekst && !ry.zakres && <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={ry.grubosc + 3 * odwrotna} strokeLinecap="round" strokeLinejoin="round" />}
                   {ry.tekst ? (
-                    <text
-                      x={ry.punkty[0][0]}
-                      y={ry.punkty[0][1]}
-                      dominantBaseline="central"
-                      fontSize={ry.grubosc}
-                      fontWeight={700}
-                      fontFamily="Inter, system-ui, sans-serif"
-                      fill={ry.kolor === 'auto' ? 'hsl(var(--foreground))' : ry.kolor}
-                      stroke="hsl(var(--background) / 0.85)"
-                      strokeWidth={ry.grubosc / 6}
-                      paintOrder="stroke"
-                      style={{ userSelect: 'none' }}
-                    >
-                      {ry.tekst}
-                    </text>
+                    (() => {
+                      const w = Math.max(ry.grubosc, ry.tekst.length * ry.grubosc * 0.58)
+                      const pad = ry.grubosc * 0.55
+                      const h = ry.grubosc * 1.7
+                      const kolor = ry.kolor === 'auto' ? 'hsl(var(--foreground))' : ry.kolor
+                      return (
+                        <>
+                          <rect
+                            x={ry.punkty[0][0] - pad}
+                            y={ry.punkty[0][1] - h / 2}
+                            width={w + pad * 2}
+                            height={h}
+                            rx={h / 2}
+                            fill="hsl(var(--card) / 0.94)"
+                            stroke={kolor}
+                            strokeWidth={Math.max(1, ry.grubosc / 9)}
+                            style={{ filter: 'drop-shadow(0 2px 6px hsl(0 0% 0% / 0.35))' }}
+                          />
+                          <text
+                            x={ry.punkty[0][0]}
+                            y={ry.punkty[0][1]}
+                            dominantBaseline="central"
+                            fontSize={ry.grubosc}
+                            fontWeight={600}
+                            fontFamily="Inter, system-ui, sans-serif"
+                            fill="hsl(var(--foreground))"
+                            style={{ userSelect: 'none' }}
+                          >
+                            {ry.tekst}
+                          </text>
+                        </>
+                      )
+                    })()
                   ) : (
                     <path d={d} fill="none" stroke={ry.kolor === 'auto' ? undefined : ry.kolor} style={ry.kolor === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={ry.zakres ? 0.45 : 1} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
                   )}
@@ -822,12 +853,20 @@ export function Plotno({
                 </g>
               )
             })}
+            {znacznikiZadan.map(z => (
+              <g key={`zn-${z.numer}`} style={{ pointerEvents: 'none' }}>
+                <circle cx={z.x} cy={z.y} r={12 * odwrotna} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={2 * odwrotna} />
+                <text x={z.x} y={z.y} textAnchor="middle" dominantBaseline="central" fontSize={12 * odwrotna} fontWeight={700} fontFamily="Inter, system-ui, sans-serif" fill="hsl(var(--primary-foreground))">
+                  {z.numer}
+                </text>
+              </g>
+            ))}
             {zywyRysunek && (
               <path d={'M' + zywyRysunek.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')} fill="none" stroke={kolorOlowka === 'auto' ? undefined : kolorOlowka} style={kolorOlowka === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={trybOlowka === 'zakres' ? 0.45 : 1} strokeWidth={grubosc} strokeLinecap="round" strokeLinejoin="round" />
             )}
             {(() => {
               const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))
-              if (wyb.length === 0) return null
+              if (wyb.length === 0 || (ramkaRysowania && narzedzie !== 'wybor')) return null
               const xs = wyb.flatMap(ry => ry.punkty.map(q => q[0]))
               const ys = wyb.flatMap(ry => ry.punkty.map(q => q[1]))
               const pad = 8 * odwrotna + Math.max(...wyb.map(ry => ry.grubosc)) / 2
