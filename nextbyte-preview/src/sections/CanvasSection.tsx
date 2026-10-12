@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   Eye,
   EyeOff,
@@ -895,6 +895,10 @@ export function CanvasSection() {
       const src = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
       const nazwa = nazwijWynik(projekt.tekst.trim() || 'adnotacje', [])
       dodajZeZrodla(src, nazwa, 'wynik', w)
+      // adnotacje spełniły swoją rolę — znikają po udanym wygenerowaniu (przy błędzie zostają, żeby można było spróbować jeszcze raz)
+      const zuzyte = new Set(adn.map(a => a.id))
+      setRysunki(rs => rs.filter(r => !zuzyte.has(r.id)))
+      setZaznaczoneRysunki([])
       setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: 'Zmiany z adnotacji wykonane na kopii zdjęcia.' } })
     } catch (e) {
       setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wykonać adnotacji.' })
@@ -905,7 +909,7 @@ export function CanvasSection() {
     }
   }, [rysunki, zaznaczoneRysunki, projekt.warstwy, projekt.tekst, wybranaWarstwa, akcjaAI, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
   /** Zatwierdza napis wpisany z klawiatury jako adnotację (puste pole = rezygnacja). */
-  const ramkaRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null)
+  const ramkaRef = useRef<{ id: string; x: number; y: number; width: number; height: number } | null>(null)
   const zatwierdzNapis = useCallback(() => {
     const n = napisRef.current
     if (n) {
@@ -921,7 +925,7 @@ export function CanvasSection() {
         }
         const punkty: [number, number][] = [[x, y], [x + 0.01, y]]
         if (n.edytuje) setRysunki(rs => rs.map(q => (q.id === n.edytuje ? { ...q, tekst: t, punkty } : q)))
-        else setRysunki(rs => [...rs, { id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, punkty, kolor: kolorOlowka === 'auto' ? '#ef4444' : kolorOlowka, grubosc: n.rozmiar, tekst: t }])
+        else setRysunki(rs => [...rs, { id: `ry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, warstwaId: ramkaRef.current?.id, punkty, kolor: kolorOlowka === 'auto' ? '#ef4444' : kolorOlowka, grubosc: n.rozmiar, tekst: t }])
       }
     }
     setNapis(null)
@@ -1014,6 +1018,42 @@ export function CanvasSection() {
     return w ? { id: w.id, x: w.x, y: w.y, width: w.width, height: w.height } : null
   }, [trybAdn, projekt.warstwy])
   ramkaRef.current = ramkaRysowania
+  // Adnotacje przypięte do zdjęcia ruszają się i skalują razem z nim; po usunięciu zdjęcia znikają
+  const poprzednieRamki = useRef<Record<string, { x: number; y: number; width: number; height: number }>>({})
+  useLayoutEffect(() => {
+    const nowe: Record<string, { x: number; y: number; width: number; height: number }> = {}
+    const zmiany: Record<string, { stara: { x: number; y: number; width: number; height: number }; nowa: { x: number; y: number; width: number; height: number } }> = {}
+    for (const w of projekt.warstwy) {
+      const nowa = { x: w.x, y: w.y, width: w.width, height: w.height }
+      nowe[w.id] = nowa
+      const stara = poprzednieRamki.current[w.id]
+      if (stara && (stara.x !== nowa.x || stara.y !== nowa.y || stara.width !== nowa.width || stara.height !== nowa.height)) zmiany[w.id] = { stara, nowa }
+    }
+    poprzednieRamki.current = nowe
+    setRysunki(rs => {
+      const istniejace = new Set(projekt.warstwy.map(w => w.id))
+      let zmieniono = false
+      const wynik = rs
+        .filter(r => {
+          const zostaje = !r.warstwaId || istniejace.has(r.warstwaId)
+          if (!zostaje) zmieniono = true
+          return zostaje
+        })
+        .map(r => {
+          const z = r.warstwaId ? zmiany[r.warstwaId] : undefined
+          if (!z) return r
+          zmieniono = true
+          const kx = z.nowa.width / Math.max(1, z.stara.width)
+          const ky = z.nowa.height / Math.max(1, z.stara.height)
+          return {
+            ...r,
+            punkty: r.punkty.map(q => [z.nowa.x + (q[0] - z.stara.x) * kx, z.nowa.y + (q[1] - z.stara.y) * ky] as [number, number]),
+            grubosc: r.tekst ? r.grubosc : r.grubosc * Math.sqrt(kx * ky),
+          }
+        })
+      return zmieniono ? wynik : rs
+    })
+  }, [projekt.warstwy])
   const wyjdzAdnRef = useRef<(przywroc: boolean) => void>(() => undefined)
   wyjdzAdnRef.current = wyjdzAdnotacje
 
@@ -2490,7 +2530,7 @@ export function CanvasSection() {
         }}
         onRysunek={r0 => {
           // adnotacja na zdjęciu ma być wyraźna: kolor „domyślny” (biały / ciemny wg motywu) zamieniamy na czerwony
-          const r = trybAdn && r0.kolor === 'auto' ? { ...r0, kolor: '#ef4444' } : r0
+          const r = trybAdn && r0.kolor === 'auto' ? { ...r0, kolor: '#ef4444', warstwaId: trybAdn } : trybAdn ? { ...r0, warstwaId: trybAdn } : r0
           setRysunki(prev => [...prev, r])
           if (r.tekst) return
           // zwykły ołówek: kreska narysowana na zdjęciu od razu staje się adnotacją — wchodzimy w tryb adnotacji (bez przybliżania)
@@ -2501,10 +2541,8 @@ export function CanvasSection() {
             if (foto) {
               wejdzAdnotacje(foto, { przybliz: false })
               aktywne = true
-              if (r.kolor === 'auto') {
-                setRysunki(prev => prev.map(q => (q.id === r.id ? { ...q, kolor: '#ef4444' } : q)))
-                setKolorOlowka('#ef4444')
-              }
+              setRysunki(prev => prev.map(q => (q.id === r.id ? { ...q, warstwaId: foto.id, ...(q.kolor === 'auto' ? { kolor: '#ef4444' } : {}) } : q)))
+              if (r.kolor === 'auto') setKolorOlowka('#ef4444')
             }
           }
           // w trybie adnotacji po narysowaniu od razu pytamy, co tam zmienić

@@ -268,6 +268,25 @@ export function Plotno({
     ramkaRysowania ? { x: Math.min(ramkaRysowania.x + ramkaRysowania.width, Math.max(ramkaRysowania.x, p.x)), y: Math.min(ramkaRysowania.y + ramkaRysowania.height, Math.max(ramkaRysowania.y, p.y)) } : p
   const [zywyRysunek, setZywyRysunek] = useState<[number, number][] | null>(null)
 
+  /** Kliknięcie szkicu lub pinezki opisu: zaznacza i zaczyna przeciąganie (krótki klik w pinezkę otwiera kartę opisu). */
+  function naRysunkuWDol(e: React.PointerEvent, ry: Rysunek) {
+    const mozna = narzedzie === 'wybor' || (narzedzie === 'olowek' && trybOlowka === 'tekst' && ry.tekst)
+    if (!mozna || e.button === 2) return
+    e.stopPropagation()
+    onWybierzWarstwe(null)
+    onZaznaczone?.([])
+    onWybierzPineske(null)
+    const wybrany = zaznaczoneRysunki.includes(ry.id)
+    const nowe = e.shiftKey ? (wybrany ? zaznaczoneRysunki.filter(i => i !== ry.id) : [...zaznaczoneRysunki, ry.id]) : wybrany ? zaznaczoneRysunki : [ry.id]
+    onZaznaczRysunki?.(nowe)
+    // przeciągnięcie przesuwa zaznaczone szkice i opisy
+    if (nowe.includes(ry.id)) {
+      przechwyc(e.currentTarget as Element, e.pointerId)
+      const p = doSceny(e)
+      refOperacja.current = { rodzaj: 'przesuwanieRysunkow', startX: p.x, startY: p.y, ids: nowe, pocz: [e.clientX, e.clientY] }
+    }
+  }
+
   function naTleWDol(e: React.PointerEvent) {
     przechwyc(e.target as Element, e.pointerId)
     if (narzedzie === 'reka' || e.button === 1 || e.altKey || (e.pointerType === 'touch' && narzedzie === 'wybor')) {
@@ -806,29 +825,14 @@ export function Plotno({
         {/* Ołówek: szkice na płótnie (nad zdjęciami). Tylko ścieżki łapią kliknięcia i tylko w trybie wyboru. */}
         {(rysunki.length > 0 || zywyRysunek) && (
           <svg aria-hidden={false} style={{ position: 'absolute', left: 0, top: 0, width: 1, height: 1, overflow: 'visible', pointerEvents: 'none' }}>
-            {rysunki.map(ry => {
+            {rysunki.filter(r => !r.tekst).map(ry => {
               const d = 'M' + ry.punkty.map(q => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L')
               const wybrany = zaznaczoneRysunki.includes(ry.id)
               return (
                 <g
                   key={ry.id}
                   style={{ pointerEvents: narzedzie === 'wybor' || (narzedzie === 'olowek' && trybOlowka === 'tekst' && ry.tekst) ? 'visibleStroke' : 'none', cursor: 'grab' }}
-                  onPointerDown={e => {
-                    const mozna = narzedzie === 'wybor' || (narzedzie === 'olowek' && trybOlowka === 'tekst' && ry.tekst)
-                    if (!mozna || e.button === 2) return
-                    e.stopPropagation()
-                    onWybierzWarstwe(null)
-                    onZaznaczone?.([])
-                    onWybierzPineske(null)
-                    const nowe = e.shiftKey ? (wybrany ? zaznaczoneRysunki.filter(i => i !== ry.id) : [...zaznaczoneRysunki, ry.id]) : wybrany ? zaznaczoneRysunki : [ry.id]
-                    onZaznaczRysunki?.(nowe)
-                    // przeciągnięcie przesuwa zaznaczone szkice i napisy
-                    if (nowe.includes(ry.id)) {
-                      przechwyc(e.currentTarget as Element, e.pointerId)
-                      const p = doSceny(e)
-                      refOperacja.current = { rodzaj: 'przesuwanieRysunkow', startX: p.x, startY: p.y, ids: nowe, pocz: [e.clientX, e.clientY] }
-                    }
-                  }}
+                  onPointerDown={e => naRysunkuWDol(e, ry)}
                   onDoubleClick={e => {
                     if (!ry.tekst) return
                     e.stopPropagation()
@@ -843,35 +847,7 @@ export function Plotno({
                   }}
                 >
                   {ry.kolor === '#111111' && !ry.tekst && !ry.zakres && <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={ry.grubosc + 3 * odwrotna} strokeLinecap="round" strokeLinejoin="round" />}
-                  {ry.tekst ? (
-                    (() => {
-                      // opis jako pinezka: główka z numerem zadania, szpic dokładnie w miejscu zaznaczenia; sam tekst w podpowiedzi i na karcie
-                      const r = 12 * odwrotna
-                      const x = ry.punkty[0][0]
-                      const y = ry.punkty[0][1]
-                      const cy = y - 2.1 * r
-                      const num = numeryNapisow[ry.id]
-                      return (
-                        <>
-                          <title>{ry.tekst}</title>
-                          {wybrany && <circle cx={x} cy={cy} r={r * 1.45} fill="none" stroke="hsl(var(--primary))" strokeWidth={1.5 * odwrotna} strokeDasharray={`${4 * odwrotna} ${3 * odwrotna}`} />}
-                          <path
-                            d={`M ${x} ${y} L ${x - r * 0.72} ${cy + r * 0.7} L ${x + r * 0.72} ${cy + r * 0.7} Z`}
-                            fill="hsl(var(--primary))"
-                            stroke="hsl(var(--background))"
-                            strokeWidth={1.5 * odwrotna}
-                            strokeLinejoin="round"
-                            style={{ filter: 'drop-shadow(0 2px 4px hsl(0 0% 0% / 0.4))' }}
-                          />
-                          <circle cx={x} cy={cy} r={r} fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth={2 * odwrotna} />
-                          <text x={x} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={r * 1.05} fontWeight={700} fontFamily="Inter, system-ui, sans-serif" fill="hsl(var(--primary-foreground))" style={{ userSelect: 'none' }}>
-                            {num ?? '•'}
-                          </text>
-                          <circle cx={x} cy={cy + r * 0.5} r={r * 1.5} fill="transparent" stroke="transparent" strokeWidth={r * 0.6} />
-                        </>
-                      )
-                    })()
-                  ) : (
+                  {ry.tekst ? null : (
                     <path d={d} fill="none" stroke={ry.kolor === 'auto' ? undefined : ry.kolor} style={ry.kolor === 'auto' ? { stroke: 'hsl(var(--foreground))' } : undefined} strokeOpacity={ry.zakres ? 0.45 : 1} strokeWidth={ry.grubosc} strokeLinecap="round" strokeLinejoin="round" />
                   )}
                   {/* szersza, niewidoczna ścieżka — łatwiej trafić palcem */}
@@ -991,6 +967,33 @@ export function Plotno({
         })()}
 
 
+
+        {/* Opisy adnotacji — takie same pinezki jak zwykłe, z numerem zadania; szpic w miejscu zaznaczenia */}
+        {rysunki.filter(r => r.tekst).map((ry, i) => {
+          const wybrany = zaznaczoneRysunki.includes(ry.id)
+          return (
+            <div
+              key={`adn-${ry.id}`}
+              title={ry.tekst}
+              onDoubleClick={e => {
+                e.stopPropagation()
+                onEdytujNapis?.(ry.id)
+              }}
+              style={{
+                position: 'absolute',
+                left: ry.punkty[0][0],
+                top: ry.punkty[0][1],
+                width: 0,
+                height: 0,
+                transform: `scale(${odwrotna})`,
+                transformOrigin: '0 0',
+                zIndex: wybrany ? 7 : 5,
+              }}
+            >
+              <ZnacznikPineski numer={numeryNapisow[ry.id] ?? i + 1} aktywna={wybrany} onPointerDown={e => naRysunkuWDol(e, ry)} />
+            </div>
+          )
+        })}
 
         {/* Pineski — pinezki wbite w zdjęcie; szpic igły to punkt pineski */}
         {pineski.map((p, i) => {

@@ -94,3 +94,6 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Zamalowanie nakładających się kresek nie ciemnieje podwójnie; po starciu całej maski przycisk wysyłania pozostaje zablokowany.
 - [ ] Do modelu idzie maska już po wytarciu (obrys wycinka liczony z zamalowanych pociągnięć).
 - [ ] Outpaint: animacja „Generuję…" od razu ma wybrany format (np. 9:16 stoi pionowo od pierwszej klatki), oryginał zachowuje swój rozmiar, a wynik wypełnia ducha bez skoku rozmiaru — z panelu i z polecenia na czacie.
+- [ ] Pinezki opisów adnotacji wyglądają tak samo jak zwykłe pinezki (biała kropla z numerem zadania, ten sam rozmiar i zachowanie).
+- [ ] Adnotacje są przypięte do zdjęcia: przesunięcie lub skalowanie zdjęcia przesuwa i skaluje kreski oraz pinezki razem z nim; usunięcie zdjęcia usuwa jego adnotacje.
+- [ ] Po udanym „Wykonaj” adnotacje na zdjęciu znikają (przy błędzie zostają, można spróbować jeszcze raz).

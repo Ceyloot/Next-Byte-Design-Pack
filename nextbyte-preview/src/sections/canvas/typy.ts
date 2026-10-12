@@ -18,8 +18,10 @@ export interface Rysunek {
   grubosc: number
   /** pisak „zakres”: gruby, półprzezroczysty — zaznacza miejsce, w którym ma się coś zmienić */
   zakres?: boolean
-  /** napis wpisany z klawiatury; `punkty` to wtedy środek linii tekstu od lewej do prawej */
+  /** opis wpisany z klawiatury — pinezka; `punkty[0]` to jej szpic */
   tekst?: string
+  /** adnotacja przypięta do zdjęcia: rusza się i skaluje razem z nim */
+  warstwaId?: string
 }
 
 /** Pociągnięcie pędzla do inpaintingu: punkty (0–1 względem zdjęcia) i średnica jako ułamek szerokości zdjęcia. */
