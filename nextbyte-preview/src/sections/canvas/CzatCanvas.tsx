@@ -185,7 +185,7 @@ const OCENY_MODELI: Record<string, { jakosc: number; precyzja: number; szybkosc:
 }
 const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
   .filter(m => m.dostepny) // w wyszukiwarce tylko modele, które Canvas naprawdę obsługuje
-  .sort((x, y) => (x.id === 'nb2' ? -1 : y.id === 'nb2' ? 1 : 0))
+  .sort((x, y) => (x.id === 'gptimage2' ? -1 : y.id === 'gptimage2' ? 1 : 0)) // domyślny model na górze listy
   .map((m): Model => {
     const Z = znakModelu(m.id)
     return {

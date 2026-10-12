@@ -252,9 +252,10 @@ export function CanvasSection() {
   // Model zwykłych edycji — pamiętany między sesjami. Tryby zablokowane (postać, Gemini 3.1) mają własny.
   const [modelObrazu, setModelObrazu] = useState<ModelObrazu>(() => {
     try {
-      const zapisany = localStorage.getItem('canvas-model-obrazu')
-      return zapisany === 'lite' || zapisany === 'nb2' || zapisany === 'pro' || zapisany === 'gptimage2' ? zapisany : 'nb2'
-    } catch { return 'nb2' }
+      // klucz „-v2”: domyślnym modelem jest GPT Image 2, więc stary zapis (z czasów, gdy domyślny był NB 2) go nie nadpisuje
+      const zapisany = localStorage.getItem('canvas-model-obrazu-v2')
+      return zapisany === 'lite' || zapisany === 'nb2' || zapisany === 'pro' || zapisany === 'gptimage2' ? zapisany : 'gptimage2'
+    } catch { return 'gptimage2' }
   })
   // Wersja promptów: 'studio' (zdanie użytkownika + bloki z PDF Studia Zdjęć) albo 'nasz' (prompty z pinezkami, rozmiarami i regułami). Domyślnie Studio — do porównania.
   // Zawsze logika Studia (opcja „Stara” usunięta).
@@ -264,7 +265,7 @@ export function CanvasSection() {
   const hybryda = studio // pomiar skali i osadzenia od Gemini działa w Studiu przy wstawianiu z drugiego zdjęcia
   const zmienModelObrazu = (m: ModelObrazu) => {
     setModelObrazu(m)
-    try { localStorage.setItem('canvas-model-obrazu', m) } catch { /* brak dostępu do pamięci — wybór działa do końca sesji */ }
+    try { localStorage.setItem('canvas-model-obrazu-v2', m) } catch { /* brak dostępu do pamięci — wybór działa do końca sesji */ }
   }
   const [wybranaWarstwa, setWybranaWarstwa] = useState<string | null>(() => {
     try {
