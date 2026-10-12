@@ -2778,19 +2778,9 @@ export function CanvasSection() {
               etykieta="Szybkie akcje AI"
               zablokowane={Boolean(akcjaAI)}
               style={{
-                // zawsze bezpośrednio nad zdjęciem i wyśrodkowany na jego widocznej części (bez przyklejania do krawędzi ekranu);
+                // przyklejony do zdjęcia: środek jego górnej krawędzi, bez żadnego przycinania do ekranu — gdy zdjęcie wyjedzie poza stronę, pasek jedzie razem z nim;
                 // telefon: środek ekranu, bo pasek jest tam szerszy niż zdjęcie
-                left: mobilny
-                  ? window.innerWidth / 2
-                  : (() => {
-                      const prawo = lewo + w.width * widok.zoom
-                      const od = Math.max(lewo, 0)
-                      const doo = Math.min(prawo, window.innerWidth)
-                      const srodek = od < doo ? (od + doo) / 2 : lewo + (w.width * widok.zoom) / 2
-                      // pasek (ok. 720 px) nie wychodzi poza ekran, ale zostaje nad zdjęciem — przesuwa się tylko tyle, ile trzeba
-                      const pol = 370
-                      return window.innerWidth > 2 * pol + 16 ? Math.min(window.innerWidth - pol - 8, Math.max(pol + 8, srodek)) : srodek
-                    })(),
+                left: mobilny ? window.innerWidth / 2 : lewo + (w.width * widok.zoom) / 2,
                 transform: 'translateX(-50%)',
                 maxWidth: mobilny ? 'calc(100vw - 16px)' : undefined,
                 top: mobilny ? (gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64)) : gora - 56,
