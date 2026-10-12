@@ -385,7 +385,14 @@ export function agentProxy(): Plugin {
         return { json: null, tokeny: 0, blad: `Gemini API error (${odp.status}): ${errText}` }
       }
 
-      const tresc = (await odp.json()) as any
+      const surowa = await odp.text()
+      let tresc: any
+      try {
+        tresc = JSON.parse(surowa)
+      } catch {
+        console.warn(`[canvas] ${model}: odpowiedź nie jest JSON-em: ${surowa.slice(0, 200)}`)
+        return { json: null, tokeny: 0, blad: `Gemini zwrócił ${/^\s*</.test(surowa) ? 'stronę HTML' : 'nieczytelną odpowiedź'} zamiast wyniku (HTTP ${odp.status}) — błąd po stronie Google lub sieci, spróbuj za chwilę` }
+      }
       // Model z myśleniem potrafi oddać odpowiedź w kilku częściach — skleja je.
       const tekst = ((tresc?.candidates?.[0]?.content?.parts ?? []) as { text?: string; thought?: boolean }[])
         .filter(p => !p.thought)

@@ -158,10 +158,20 @@ export function runwareProxy(): Plugin {
                 ...(zadanie.studio && zUstawieniami && !gpt ? { providerSettings: { google: { safetyTolerance: 'off' } } } : {}),
               },
             ]),
-          }).then(r => r.json() as Promise<{
-            data?: { imageURL?: string; cost?: number; seed?: number }[]
-            errors?: { message?: string }[]
-          }>)
+          }).then(async r => {
+            // Runware (albo pośrednik po drodze) potrafi oddać stronę HTML zamiast JSON-a — wtedy mówimy wprost, co się stało
+            const surowa = await r.text()
+            try {
+              return JSON.parse(surowa) as {
+                data?: { imageURL?: string; cost?: number; seed?: number }[]
+                errors?: { message?: string }[]
+              }
+            } catch {
+              const html = /^\s*</.test(surowa)
+              console.warn(`[canvas] Runware odpowiedział ${r.status} i nie-JSON-em: ${surowa.slice(0, 200)}`)
+              return { errors: [{ message: html ? `Runware zwrócił stronę HTML zamiast wyniku (HTTP ${r.status}) — to błąd po stronie Runware lub sieci (limit, saldo, klucz, chwilowa awaria). Spróbuj za chwilę; szczegóły w konsoli serwera.` : `Runware odpowiedział nieczytelnie (HTTP ${r.status}).` }] }
+            }
+          })
 
         let tresc = await wyslij(true)
         // Nie każdy model przyjmuje `settings` — wtedy jedna powtórka bez nich,
