@@ -1,6 +1,6 @@
 import { dopasujWymiary, type ModelDlaWymiarow } from './formaty-modelu'
 import { dopasujFormatDoObrazu, konwertujNaDataUrl } from './typy'
-import { generuj } from './dostawca'
+import { generuj, opiszKontynuacje } from './dostawca'
 
 /**
  * Outpainting: rozszerzenie kadru poza krawędzie zdjęcia (zmiana wymiarów / proporcji bez przycinania).
@@ -9,8 +9,9 @@ import { generuj } from './dostawca'
  *  1. kod wybiera format obsługiwany przez model, najbliższy żądanym proporcjom (`dopasujWymiary`),
  *  2. buduje klatkę o tym formacie: zdjęcie stoi w niej na wybranym miejscu, reszta to jednolita szara pustka,
  *  3. model dostaje klatkę + prośbę „wypełnij pustkę, nie ruszaj zdjęcia”,
- *  4. kod składa wynik w NATYWNEJ rozdzielczości: wygenerowane brzegi + oryginał wklejony z powrotem piksel w piksel
- *     (miękki szew tylko od strony nowych obszarów), więc środek zdjęcia nie traci ani piksela jakości.
+ *  4. wynik modelu ląduje na płótnie BEZPOŚREDNIO (przycięty tylko do żądanych proporcji) — oryginału nie wklejamy z powrotem:
+ *     nakładanie dwóch obrazów dawało widoczne szwy i ucięte wzory (pasy krawężników). Przed generacją Gemini opisuje
+ *     kontynuację brzegów (co przecina krawędź i jak biegnie dalej) oraz styl zdjęcia — opis idzie do promptu.
  */
 
 export interface Proporcja {
@@ -119,54 +120,17 @@ async function zlozKlatke(zdjecie: HTMLImageElement, u: UkladRozszerzenia): Prom
   return p.toDataURL('image/png')
 }
 
-/** Wynik: wygenerowana klatka rozciągnięta do W×H + oryginał z powrotem (miękki szew od strony nowych obszarów). */
-async function zlozWynik(zdjecie: HTMLImageElement, wygenerowany: HTMLImageElement, u: UkladRozszerzenia): Promise<string> {
-  const p = document.createElement('canvas')
-  p.width = u.W
-  p.height = u.H
-  const g = p.getContext('2d')
-  if (!g) throw new Error('Brak kontekstu rysowania')
-  g.imageSmoothingQuality = 'high'
-  g.drawImage(wygenerowany, 0, 0, u.W, u.H)
-
-  const { ow, oh } = u
-  const f = Math.max(3, Math.round(Math.min(ow, oh) * 0.015))
-  // oryginał na osobnej warstwie z maską: pełna kryjność, a od strony nowych obszarów — krótkie zanikanie
-  const w2 = document.createElement('canvas')
-  w2.width = u.W
-  w2.height = u.H
-  const g2 = w2.getContext('2d')
-  if (g2) {
-    g2.imageSmoothingQuality = 'high'
-    g2.drawImage(zdjecie, u.x, u.y, ow, oh)
-    const maska = document.createElement('canvas')
-    maska.width = u.W
-    maska.height = u.H
-    const gm = maska.getContext('2d')
-    if (gm) {
-      const lewo = u.x > 0 ? f : -2 * f
-      const gora = u.y > 0 ? f : -2 * f
-      const prawo = u.x + ow < u.W ? f : -2 * f
-      const dol = u.y + oh < u.H ? f : -2 * f
-      try {
-        gm.filter = `blur(${Math.max(1, Math.round(f / 2))}px)`
-      } catch {
-        /* brak ctx.filter — szew będzie ostry */
-      }
-      gm.fillStyle = '#000'
-      gm.fillRect(u.x + lewo, u.y + gora, ow - lewo - prawo, oh - gora - dol)
-      g2.globalCompositeOperation = 'destination-in'
-      g2.drawImage(maska, 0, 0)
-    }
-    g.drawImage(w2, 0, 0)
-  } else {
-    g.drawImage(zdjecie, u.x, u.y, ow, oh)
-  }
-  const duzy = u.W * u.H > 12_000_000
-  return duzy ? p.toDataURL('image/jpeg', 0.97) : p.toDataURL('image/png')
+/** Strony kadru, które się powiększają — dla Gemini i promptu (np. „left, bottom”). */
+function stronyRozszerzenia(u: UkladRozszerzenia): string[] {
+  const s: string[] = []
+  if (u.mx > 1) s.push('left')
+  if (u.mx + u.mw < u.fw - 1) s.push('right')
+  if (u.my > 1) s.push('top')
+  if (u.my + u.mh < u.fh - 1) s.push('bottom')
+  return s
 }
 
-function poleceniePoOpisie(u: UkladRozszerzenia, z: ZadanieRozszerzenia): string {
+function poleceniePoOpisie(u: UkladRozszerzenia, z: ZadanieRozszerzenia, notatki = ''): string {
   const strona: Record<Kotwica, string> = {
     srodek: 'in the middle of the frame, with empty grey bands around it',
     lewo: 'against the RIGHT edge of the frame, with the empty grey area on its left',
@@ -175,15 +139,20 @@ function poleceniePoOpisie(u: UkladRozszerzenia, z: ZadanieRozszerzenia): string
     dol: 'against the TOP edge of the frame, with the empty grey area below it',
   }
   const gdzie = u.mx + u.mw >= u.fw - 1 && u.mx <= 1 ? 'spanning the full width' : strona[z.kotwica]
+  const opis = z.opis?.trim()
   return [
     'Outpaint this picture: extend the scene beyond its original borders.',
     `The original photograph sits ${gdzie}. Every flat mid-grey area is EMPTY canvas that you must fill with new picture content.`,
     'Continue the existing scene naturally into the grey area: same place, perspective and horizon, same lighting direction, colour grading, grain, depth of field and level of detail — the join with the original must be invisible. Objects cut by the original border continue naturally; add only what plausibly belongs there.',
+    'Lines, edges and repeating patterns that cross the original border (road edges, kerbs and their stripes, barriers, fences, buildings, horizons, tiles, planks) must continue across the join with the same direction, perspective, width, spacing and pattern — never cut off, restarted, shifted or mirrored at the border.',
+    notatki ? `CONTINUITY NOTES from an analysis of the original photograph (follow them): ${notatki}` : '',
     'THE ORIGINAL PHOTOGRAPH APPEARS EXACTLY ONCE. Never copy, duplicate, mirror, flip, tile or repeat the original (or any part of it) into the grey areas — the new areas contain NEW, continuing content: for example more sky and clouds above the horizon, more ground / water / foreground below it, more of the same landscape or room to the sides, with the horizon staying at the same height as in the original.',
-    'Match the brightness, colour and exposure of the original right at the join (no lighter or darker band next to it); any change of tone happens gradually, far from the edge.',
-    'Do NOT change, move, rescale, crop, re-light or repaint the original photograph — it must stay pixel-identical. No grey, no bars, no frame, no border, no text, no watermark in the result.',
+    opis ? '' : 'Match the brightness, colour and exposure of the original right at the join (no lighter or darker band next to it); any change of tone happens gradually, far from the edge.',
+    'Keep the original photograph\'s content, composition and details — do not crop it, move it, rescale it or redraw its subjects. No grey, no bars, no frame, no border, no text, no watermark in the result.',
     'Return the complete frame (the original plus the filled areas) at the same aspect ratio.',
-    z.opis?.trim() ? `What should appear in the new areas: ${z.opis.trim()}.` : '',
+    opis
+      ? `The designer's instruction for this picture: ${opis}. Apply it to the new areas and — when it concerns the whole scene (time of day, weather, season, lighting, mood, style) — to the whole picture, original part included, so that everything reads as ONE consistent photograph with no visible join.`
+      : '',
   ]
     .filter(Boolean)
     .join('\n')
@@ -195,7 +164,7 @@ export interface WynikRozszerzenia {
   kosztUSD: number
 }
 
-/** Cały przebieg: klatka → model → złożenie w natywnej rozdzielczości (→ opcjonalnie dokładne piksele). */
+/** Cały przebieg: klatka → Gemini (notatki o kontynuacji) → model → wynik wprost z modelu (→ opcjonalnie dokładne piksele). */
 export async function wykonajRozszerzenie(
   srcZdjecia: string,
   z: ZadanieRozszerzenia,
@@ -207,16 +176,25 @@ export async function wykonajRozszerzenie(
   if (!u) throw new Error('Zdjęcie ma już takie proporcje — nie ma czego dorysować. Wybierz inne proporcje albo kierunek rozszerzenia.')
 
   const klatka = await zlozKlatke(zdjecie, u)
+  // Gemini: co przecina krawędzie oryginału i jak biegnie dalej + styl zdjęcia. Błąd / brak klucza / >15 s = generujemy bez notatek.
+  const maly = document.createElement('canvas')
+  const sk = Math.min(1, 1024 / Math.max(zdjecie.naturalWidth, zdjecie.naturalHeight))
+  maly.width = Math.max(1, Math.round(zdjecie.naturalWidth * sk))
+  maly.height = Math.max(1, Math.round(zdjecie.naturalHeight * sk))
+  maly.getContext('2d')?.drawImage(zdjecie, 0, 0, maly.width, maly.height)
+  const notatki = await Promise.race([
+    opiszKontynuacje(maly.toDataURL('image/jpeg', 0.9), stronyRozszerzenia(u).join(', ')),
+    new Promise<string>(ok => setTimeout(() => ok(''), 15000)),
+  ])
   const odp = await generuj({
-    polecenie: poleceniePoOpisie(u, z),
+    polecenie: poleceniePoOpisie(u, z, notatki),
     obrazy: [klatka],
     szerokosc: u.fw,
     wysokosc: u.fh,
     model: model === 'auto' ? undefined : (model as never),
   })
-  const dopasowany = await dopasujFormatDoObrazu(odp.obrazUrl, u.fw, u.fh)
-  const wygenerowany = await wczytaj(dopasowany)
-  let src = await zlozWynik(zdjecie, wygenerowany, u)
+  // wynik modelu bez nakładania oryginału: tylko dopasowanie do żądanych proporcji
+  let src = await dopasujFormatDoObrazu(odp.obrazUrl, u.fw, u.fh)
   if (z.docelowe) src = await dopasujFormatDoObrazu(src, z.docelowe.w, z.docelowe.h, { skaluj: true })
   return { src, model: odp.model, kosztUSD: odp.kosztUSD }
 }

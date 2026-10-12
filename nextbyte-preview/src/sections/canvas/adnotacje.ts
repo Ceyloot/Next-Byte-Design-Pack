@@ -160,6 +160,8 @@ const proc = (v: number) => `${Math.round(v * 100)}%`
 
 /** Kolory obszarów na mapie układu (numer → kolor). Mapa nie jest częścią zdjęcia, więc kolory nie muszą nic znaczyć. */
 const KOLORY_MAPY = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6', '#eab308']
+/** Nazwy kolorów z mapy — zadania wskazujemy kolorem, NIGDY cyfrą (cyfry z mapy model przepisywał na zdjęcie). */
+const NAZWY_KOLOROW = ['red', 'orange', 'green', 'blue', 'purple', 'pink', 'teal', 'yellow']
 
 /**
  * Mapa układu (Image 2): czarne tło i same obszary zadań — wypełnione, w kolorze i z numerem. Bez zdjęcia i bez tekstu:
@@ -182,13 +184,15 @@ function narysujMapeUkladu(
   const kx = pw / w.width
   const ky = ph / w.height
   const mapuj = (x: number, y: number): [number, number] => [(x - w.x) * kx, (y - w.y) * ky]
-  const promien = Math.max(12, Math.round(Math.min(pw, ph) * 0.028))
 
   zadania.forEach((z, i) => {
     const kolor = KOLORY_MAPY[i % KOLORY_MAPY.length]
     // tło obszaru: prostokąt obejmujący zaznaczenie (miękko), żeby obrys z cienkiej kreski też wskazywał całe pole
-    g.fillStyle = kolor + '33'
+    g.fillStyle = kolor + '44'
     g.fillRect(z.ramka.x0 * pw, z.ramka.y0 * ph, (z.ramka.x1 - z.ramka.x0) * pw, (z.ramka.y1 - z.ramka.y0) * ph)
+    g.strokeStyle = kolor
+    g.lineWidth = 3
+    g.strokeRect(z.ramka.x0 * pw, z.ramka.y0 * ph, (z.ramka.x1 - z.ramka.x0) * pw, (z.ramka.y1 - z.ramka.y0) * ph)
     // same kreski tego zadania: obrysy zamknięte wypełniamy, otwarte zostają liniami
     for (const r of rysunki) {
       if (r.tekst) continue
@@ -218,17 +222,6 @@ function narysujMapeUkladu(
       g.stroke()
       g.restore()
     }
-    const cx = Math.min(pw - promien - 2, Math.max(promien + 2, z.ramka.x0 * pw))
-    const cy = Math.min(ph - promien - 2, Math.max(promien + 2, z.ramka.y0 * ph))
-    g.beginPath()
-    g.arc(cx, cy, promien, 0, Math.PI * 2)
-    g.fillStyle = '#ffffff'
-    g.fill()
-    g.fillStyle = '#000000'
-    g.font = `700 ${Math.round(promien * 1.2)}px Inter, system-ui, sans-serif`
-    g.textAlign = 'center'
-    g.textBaseline = 'middle'
-    g.fillText(String(z.numer), cx, cy)
   })
   return plotno.toDataURL('image/png')
 }
@@ -248,21 +241,22 @@ export async function przygotujAdnotacje(opcje: {
   const skala = Math.min(1, 1600 / Math.max(width, height))
   const plan = narysujMapeUkladu(w, rysunki, zadania, Math.round(width * skala), Math.round(height * skala))
 
-  const lista = zadania.map(z => {
+  const lista = zadania.map((z, i) => {
     const cx = (z.ramka.x0 + z.ramka.x1) / 2
     const cy = (z.ramka.y0 + z.ramka.y1) / 2
+    const kolor = NAZWY_KOLOROW[i % NAZWY_KOLOROW.length].toUpperCase()
     const miejsce = `region ${proc(z.ramka.x0)}–${proc(z.ramka.x1)} from the left, ${proc(z.ramka.y0)}–${proc(z.ramka.y1)} from the top (${strefa(cx, cy)} of the frame)`
     const tresc = z.napisy.length
       ? `the designer asks for: ${z.napisy.map(n => `"${n}"`).join(' and ')}`
       : 'a marked area without a note — apply the extra instructions below to it'
-    return `${z.numer}. Region ${z.numer} — ${miejsce} — ${tresc}`
+    return `- The ${kolor} shape — ${miejsce} — ${tresc}`
   })
 
   const polecenie = [
-    'Image 1 is the original photo. Image 2 is a LAYOUT MAP, not a photo: a black background with coloured, numbered shapes at the same positions and proportions as in Image 1. Each shape marks the place on the photo where the task with the same number applies. The map only tells you WHERE; it is never part of the picture.',
+    'Image 1 is the original photo. Image 2 is a LAYOUT MAP, not a photo: a black background with coloured shapes at the same positions and proportions as in Image 1. Each coloured shape marks the place on the photo where the task for that colour applies. The map only tells you WHERE; it is never part of the picture.',
     zadania.length ? `TASK LIST — every item is mandatory; none may be skipped, merged or toned down until it is barely visible. The notes may be in any language — understand them and turn each into a convincing, clearly visible change inside its region:\n${lista.join('\n')}` : '',
     opis ? `Extra instructions from the designer: ${opis}` : '',
-    'Output Image 1 with ALL of these changes applied, each one clearly visible in its region. Before answering, check the finished image against the task list item by item. Keep everything the tasks do not mention exactly as it is — the same people with the same identity, face, pose, clothing, framing and camera angle. NEVER copy anything from Image 2 into the result: no outlines, shapes, colours, numbers, arrows, lines, handwriting or labels, and do not write the notes onto the picture (unless a task explicitly asks for a text in the image — then spell it exactly). The result is one finished, polished photograph with consistent light, sharpness and colour grade, no seams, halos or sticker look.',
+    'Output Image 1 with ALL of these changes applied, each one clearly visible in its region. Before answering, check the finished image against the task list item by item. Keep everything the tasks do not mention exactly as it is — the same people with the same identity, face, pose, clothing, framing and camera angle. NEVER copy anything from Image 2 into the result: no shapes, colours, outlines, numerals or digits, letters, arrows, lines, handwriting or labels anywhere in the picture, and do not write the notes onto the picture (unless a task explicitly asks for a text in the image — then spell it exactly). The result is one finished, polished photograph with consistent light, sharpness and colour grade, no seams, halos or sticker look.',
   ].filter(Boolean).join('\n')
 
   return { polecenie, obrazy: [baza, plan], szerokosc: w.naturalWidth, wysokosc: w.naturalHeight, zadania }

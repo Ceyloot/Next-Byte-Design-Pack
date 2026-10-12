@@ -123,6 +123,25 @@ export async function rozpoznajObiekt(
   }
 }
 
+/**
+ * Notatki o kontynuacji zdjęcia poza jego krawędzie (outpaint): co przecina brzegi i jak biegnie dalej, styl i światło.
+ * `strony` — które strony kadru się powiększają (np. „left, bottom”); pusty wynik, gdy się nie uda.
+ */
+export async function opiszKontynuacje(wycinek: string, strony: string): Promise<string> {
+  try {
+    const odp = await fetch('/api/canvas/rozpoznaj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wycinek, tryb: 'kontynuacja', nazwa: strony }),
+    })
+    if (!odp.ok) return ''
+    const tresc = (await odp.json()) as { opis?: string }
+    return tresc.opis?.trim() ?? ''
+  } catch {
+    return ''
+  }
+}
+
 /** Krótki opis STYLU zdjęcia (ostrość i rozmycie, ziarno, światło, kolorystyka) — po angielsku; pusty, gdy się nie uda. */
 export async function opiszStylZdjecia(wycinek: string): Promise<string> {
   try {

@@ -56,9 +56,10 @@ export interface ZadanieRozpoznania {
    * `obiekt` (domyślnie) nazywa jedną rzecz w centrum kadru.
    * `scena` robi inwentarz: co w ogóle jest na zdjęciu.
    * `opis` — wyczerpujący opis wizualny jednego obiektu w centrum wycinka (EN), do przeniesienia w kadrze.
+   * `kontynuacja` — notatki do outpaintu: co przecina krawędzie zdjęcia i jak biegnie dalej, styl i światło (`nazwa` = strony do rozszerzenia).
    * `styl` — krótki opis STYLU zdjęcia (ostrość / rozmycie, ziarno, światło, kolorystyka) do dopasowania wstawianego obiektu.
    */
-  tryb?: 'obiekt' | 'scena' | 'opis' | 'osoba' | 'poza' | 'tekst' | 'styl'
+  tryb?: 'obiekt' | 'scena' | 'opis' | 'osoba' | 'poza' | 'tekst' | 'styl' | 'kontynuacja'
 }
 
 /** Odpowiedź rozpoznania — krótkie nazwy po polsku */
@@ -229,6 +230,47 @@ export function runwareProxy(): Plugin {
       try {
         const { wycinek, tryb = 'obiekt', nazwa } = JSON.parse(await czytajCialo(req)) as ZadanieRozpoznania
         if (!wycinek) return odpowiedz(400, { blad: 'Brak wycinka' })
+
+        // Tryb „kontynuacja”: analiza oryginału przed outpaintem — jak zdjęcie ma biec dalej poza kadrem.
+        if (tryb === 'kontynuacja') {
+          const d = wycinek.match(/^data:([^;]+);base64,(.+)$/)
+          const kResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${kluczGemini}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { inlineData: { mimeType: d ? d[1] : 'image/jpeg', data: d ? d[2] : wycinek } },
+                      {
+                        text: `This photograph will be EXTENDED beyond its borders (outpainting) on these sides: ${nazwa || 'all sides'}. Write short CONTINUITY NOTES so an artist can continue the picture invisibly. Cover only facts you SEE: (1) for each extended side, every line, edge or repeating pattern that crosses that border (road edge, kerb with its stripe pattern and stripe length/spacing, barrier or guard rail, fence, wall, horizon, building edge, fence posts, tiles) — say exactly how it continues beyond the border (direction, perspective, width, pattern); (2) objects that are cut by that border and how the rest of them looks; (3) what plausibly lies beyond on that side (more of the same road / sky / grass / crowd…); (4) the visual style to keep: depth of field and blur level of the background, grain, light direction and colour temperature, colour grade, time of day and weather. 4–7 sentences, plain English, no numbering. Answer only with JSON: {"notatki": "..."}`,
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 700,
+                  responseMimeType: 'application/json',
+                  thinkingConfig: { thinkingBudget: 0 },
+                },
+              }),
+            },
+          )
+          if (kResp.ok) {
+            const kJson = await kResp.json()
+            const kTxt = kJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+            try {
+              const o = JSON.parse(kTxt) as { notatki?: string }
+              if (o.notatki?.trim()) return odpowiedz(200, { opis: o.notatki.trim(), nazwy: [] })
+            } catch {
+              // bez notatek — outpaint idzie samym promptem
+            }
+          }
+          return odpowiedz(200, { opis: '', nazwy: [] })
+        }
 
         // Tryb „styl”: jak „wygląda” zdjęcie (nie co na nim jest) — do wtopienia nowego obiektu w ten sam obraz.
         if (tryb === 'styl') {

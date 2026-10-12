@@ -5,6 +5,8 @@ import { DOZWOLONE_FORMATY } from './formaty-modelu'
 import type { ZadanieGeneracji } from './runware-proxy'
 
 /**
+ * ⛔ ZABLOKOWANE (CLAUDE.md §6): logika zatwierdzona przez użytkownika — nie zmieniać bez wyraźnej prośby.
+ *
  * Inpainting pędzlem — CAŁKOWICIE oddzielony od generowania i od pinesek (żadnych wspólnych bricków ani promptów).
  *
  * Dlaczego wycinek, a nie cały kadr: gdy model dostaje całe zdjęcie z ledwo widocznym zaznaczeniem, rysuje obiekt

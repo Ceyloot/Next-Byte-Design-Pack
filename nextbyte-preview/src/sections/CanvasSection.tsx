@@ -230,6 +230,9 @@ interface NapisStan {
   powiazany?: string
 }
 
+/** Model, którym działa Outpaint (GPT Image lepiej dorysowuje brzegi) — niezależnie od modelu wybranego w czacie. */
+const MODEL_OUTPAINTU = 'gptimage2' as const
+
 /** Model, którym zawsze działa Inpaint i Eraser (niezależnie od wyboru w czacie). */
 const MODEL_INPAINTINGU = 'pro' as const
 
@@ -883,9 +886,9 @@ export function CanvasSection() {
       const w = projekt.warstwy.find(x => x.id === warstwaId)
       if (!w || akcjaAI) return
       setAkcjaAI('outpaint')
-      startDucha(rozmiarDuchaOutpaintu(w, zadanie, modelObrazu === 'auto' ? undefined : modelObrazu), 'Outpaint…')
+      startDucha(rozmiarDuchaOutpaintu(w, zadanie, MODEL_OUTPAINTU), 'Outpaint…')
       try {
-        const wynik = await wykonajRozszerzenie(w.src, zadanie, modelObrazu === 'auto' ? undefined : modelObrazu)
+        const wynik = await wykonajRozszerzenie(w.src, zadanie, MODEL_OUTPAINTU)
         dodajZeZrodla(wynik.src, `${w.name}_outpaint`, 'wynik', w)
         setOutpaint(null)
       } catch (e) {
@@ -1721,9 +1724,9 @@ export function CanvasSection() {
         const w = warstwaZrodlowa
         refGeneruje.current = true
         setStanGeneracji({ faza: 'trwa', plan: 'Rozszerzam kadr (outpaint)…', tryb: 'generator' })
-        startDucha(rozmiarDuchaOutpaintu(w, zad, modelObrazu === 'auto' ? undefined : modelObrazu), 'Outpaint…')
+        startDucha(rozmiarDuchaOutpaintu(w, zad, MODEL_OUTPAINTU), 'Outpaint…')
         try {
-          const wynik = await wykonajRozszerzenie(w.src, zad, modelObrazu === 'auto' ? undefined : modelObrazu)
+          const wynik = await wykonajRozszerzenie(w.src, zad, MODEL_OUTPAINTU)
           const nazwa = `${w.name}_outpaint`
           dodajZeZrodla(wynik.src, nazwa, 'wynik', w)
           setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: wynik.src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `Rozszerzenie kadru: „${projekt.tekst.trim()}”. Oryginał wklejony z powrotem bez zmian.` } })
@@ -3158,7 +3161,7 @@ export function CanvasSection() {
               src={w.src}
               szerokosc={w.naturalWidth}
               wysokosc={w.naturalHeight}
-              model={modelObrazu === 'auto' ? undefined : modelObrazu}
+              model={MODEL_OUTPAINTU}
               trwa={Boolean(akcjaAI)}
               onRozszerz={z => uruchomOutpaint(w.id, z)}
               onAnuluj={() => setOutpaint(null)}
