@@ -42,8 +42,6 @@ export interface ZadanieGeneracji {
   klasa?: 'postac' | 'gemini31'
   /** Wybór użytkownika dla zwykłych edycji: 'lite' (domyślny, szybszy), 'nb2' (Nano Banana 2 / Gemini 3.1) albo 'pro' (Nano Banana Pro). Jawny wybór użytkownika (Lite / NB 2 / Pro) ma pierwszeństwo także w trybach osób i Gemini 3.1; przy „Auto” tryby używają własnego modelu. */
   model?: 'lite' | 'nb2' | 'pro' | 'gptimage2'
-  /** maska edycji (data URI; biel = zmieniaj, czerń = zachowaj) dla modeli, które ją przyjmują (GPT Image: `inputs.maskImage`) */
-  maska?: string
   /** tryb Studio (wstawianie z referencji): dostawca dostaje `providerSettings.google.safetyTolerance`, jak w Studiu Zdjęć */
   studio?: boolean
 }
@@ -147,7 +145,7 @@ export function runwareProxy(): Plugin {
                 positivePrompt: (!zUstawieniami || gpt) && zadanie.system?.trim() ? `${zadanie.system.trim()}\n\n${zadanie.polecenie}` : zadanie.polecenie,
                 // Edycja, nie generacja od zera: zdjęcie z płótna idzie jako
                 // referencja. API przyjmuje data URI, więc nie ma uploadu.
-                ...(zadanie.obrazy.length ? { inputs: { referenceImages: zadanie.obrazy, ...(gpt && zadanie.maska ? { maskImage: zadanie.maska } : {}) } } : {}),
+                ...(zadanie.obrazy.length ? { inputs: { referenceImages: zadanie.obrazy } } : {}),
                 width,
                 height,
                 numberResults: 1,
