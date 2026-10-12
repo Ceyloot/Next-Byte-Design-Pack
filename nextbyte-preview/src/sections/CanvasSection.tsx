@@ -440,7 +440,7 @@ export function CanvasSection() {
    * a gotowy wynik wypełnia ją w tym samym miejscu (zamiast dopiero wtedy wskakiwać nowa warstwa).
    */
   const duchId = useRef<string | null>(null)
-  const startDucha = useCallback((rozmiar: { width: number; height: number; y: number; naturalWidth: number; naturalHeight: number }, nazwa = 'Generuję…') => {
+  const startDucha = useCallback((rozmiar: { width: number; height: number; y: number; naturalWidth: number; naturalHeight: number; x?: number }, nazwa = 'Generuję…') => {
     const id = nowyId('w')
     duchId.current = id
     setProjekt(p => {
@@ -453,7 +453,7 @@ export function CanvasSection() {
             id,
             type: 'image' as const,
             src: '',
-            x: p.warstwy.length === 0 ? 60 : prawa + 48,
+            x: p.warstwy.length === 0 ? (rozmiar.x ?? 60) : Math.max(prawa + 48, rozmiar.x ?? -Infinity),
             y: rozmiar.y,
             width: rozmiar.width,
             height: rozmiar.height,
@@ -808,7 +808,8 @@ export function CanvasSection() {
         opis ? `What the user wants: ${opis}.` : '',
       ].filter(Boolean).join('\n')
       setStanGeneracji({ faza: 'trwa', plan: 'Zamieniam szkic w obraz…', tryb: 'generator' })
-      startDucha({ width: 460, height: Math.round((460 * fh) / fw), y: Math.round(y0), naturalWidth: fw, naturalHeight: fh }, 'Szkic → obraz…')
+      // wynik ma wielkość szkicu (kadr z marginesem = fw/k × fh/k), obok niego — nie mały podgląd 460 px przy rysunku na tysiące jednostek
+      startDucha({ width: Math.round(fw / k), height: Math.round(fh / k), x: Math.round(x1 + 48), y: Math.round(-oy / k), naturalWidth: fw, naturalHeight: fh }, 'Szkic → obraz…')
       const wynik = await generuj({ polecenie, obrazy: [szkic, ...refs], szerokosc: fw, wysokosc: fh, model })
       const nazwa = nazwijWynik(opis || 'szkic', [])
       dodajZeZrodla(wynik.obrazUrl, nazwa, 'wynik')
