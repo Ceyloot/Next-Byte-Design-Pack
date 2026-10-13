@@ -117,3 +117,5 @@ Zalecane modele do skali i położenia: **GPT Image 2** i **Nano Banana Pro** (L
 - [ ] Pasek akcji zdjęcia jest przyklejony do zdjęcia: stoi na środku jego górnej krawędzi i jedzie razem z nim przy przesuwaniu i zoomie, bez przycinania do ekranu — gdy zdjęcie wyjedzie poza stronę, pasek też. Telefon bez zmian.
 - [ ] Nad polem czatu nie wyświetlają się już żadne żółte / czerwone komunikaty-uwagi (np. „Podmiana potrzebuje pinezki na elemencie…”); powód blokady wysyłania widać tylko we wskazówce przycisku wyślij. Postęp generacji i błąd w historii czatu bez zmian.
 - [ ] Wybór modelu: karta modelu bez opisów — tylko nazwa, plakietka dostawcy, paski Jakość / Precyzja / Szybkość i koszt w Byte; lista modeli bez podpisów pod nazwami.
+
+- Preview → Formularz: trzykrokowy formularz „Umów bezpłatną rozmowę” (Dane → Potrzeba → Termin): walidacja pól po „Dalej”, wstecz, ekran podziękowania; tło z poświatami, obracającymi się pierścieniami, siatką i bocznymi panelami; sprawdź ciemny i jasny motyw oraz układ mobilny.

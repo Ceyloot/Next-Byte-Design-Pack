@@ -33,6 +33,7 @@ import { CzatSection } from '@/sections/CzatSection'
 import { StronaGlownaSection } from '@/sections/StronaGlownaSection'
 import type { HomePageId } from '@/sections/StronaGlownaSection'
 import { LogowanieSection } from '@/sections/LogowanieSection'
+import { FormularzSection } from '@/sections/FormularzSection'
 import { STRONY, STRONY_AUTH, jestEkranemAuth } from '@/sections/strona-glowna/types'
 import type { EkranAuth } from '@/sections/strona-glowna/types'
 import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
@@ -44,12 +45,13 @@ import { NawigacjaBoczna, type SekcjaNawigacji } from '@/components/NawigacjaBoc
 
 // ── Navigation Tabs with sub-items for dropdown demo ─────────────
 
-type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'notebook' }
+type SubItem = { name: string; icon: React.ComponentType<{ className?: string }>; badge?: string; scrollId?: string; subView?: 'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'formularz' | 'notebook' }
 
 const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: SubItem[] }[] = [
   { key: 'preview',    label: 'Preview',    icon: MonitorPlay,  items: [
     { name: 'Strona główna', icon: Sparkles, subView: 'strona-glowna' },
     { name: 'Logowanie',     icon: LogIn,      subView: 'logowanie' },
+    { name: 'Formularz',     icon: MessageSquare, subView: 'formularz' },
     { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
     { name: 'Dashboard 2.0', icon: Grid,       badge: 'NEW', subView: 'dashboard2' },
     { name: 'Next Scribe', icon: BookOpen,  badge: 'WIP', subView: 'notebook' },
@@ -525,7 +527,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   const navPosition: NavPosition = mobilny ? 'top' : navPositionProp
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
-  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'notebook'>('strona-glowna')
+  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'formularz' | 'notebook'>('strona-glowna')
   /** W module z własnym paskiem (Next Scribe) „‹ MENU” podmienia treść paska na menu podglądu. */
   const [menuWModule, setMenuWModule] = useState(false)
   /** Boczny pasek zwinięty do szyny — Canvas odsuwa swoje elementy o jego szerokość */
@@ -1037,7 +1039,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           ? ''
           : activeTab !== 'preview'
           ? 'p-6 w-full'
-          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'dashboard2' || previewSubView === 'notebook')
+          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'formularz' || previewSubView === 'dashboard2' || previewSubView === 'notebook')
             ? 'p-0 w-full'
             : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
       )}
@@ -1079,6 +1081,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               <StronaGlownaSection page={stronaPage} onPageChange={idzDoPodstrony} />
             ) : previewSubView === 'logowanie' ? (
               <LogowanieSection ekran={ekranAuth} />
+            ) : previewSubView === 'formularz' ? (
+              <FormularzSection />
             ) : (
               <div className="flex flex-col gap-3.5 flex-1 min-h-0">
 
