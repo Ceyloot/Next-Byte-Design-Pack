@@ -11,7 +11,11 @@ Stan: **faza B gotowa** — `OnboardingFlow.tsx` (7 kroków) + `OnboardingSceny.
 `KONFIG_OFERTY`), spięta z pytaniami w `Onboarding.tsx`. Podgląd: zakładka
 „Wejście na platformę”. Plany to karty `PlanCard` z `strona-glowna/CennikPage.tsx`
 1:1 (oba z suwakiem progów), z propem `oferta`; rabat roczny 40% / 45%, w nagłówku „do 55%”. Lewy panel fazy B: „film” ze zdjęć studia (odsłona, najazd kamery, licznik, toast).
-Faza A (ekran rejestracji w stylu wzoru) — do zrobienia.
+**Faza A gotowa** — `LogowaniePage.tsx`, tryb rejestracji: najpierw wybór metody
+(Google / Apple / Microsoft / e-mail), pasek bonusu +50 Byte za firmowy e-mail,
+jedna zgoda (regulamin, prywatność, 18+) odblokowuje metody. E-mail otwiera
+dotychczasowy formularz z hasłem; dostawcy idą od razu do onboardingu.
+Lewy panel fazy B to 7 animacji SVG (`OnboardingSceny.tsx`).
 
 ---
 
