@@ -24,7 +24,7 @@ import type { HomePage as HomePageId } from './types'
    rozliczeń produkcji — patrz AnimNum i PlanCard niżej.
    ═══════════════════════════════════════════════════════════════════════ */
 
-type Okres = 'miesiecznie' | 'rocznie'
+export type Okres = 'miesiecznie' | 'rocznie'
 
 /** Rok w produkcji kosztuje 10 miesięcy — dwa gratis, czyli płaskie ~17%.
  *  Kwotą wiodącą jest faktura roczna (27,90 → 279, 99 → 990, 349 → 3490),
@@ -67,7 +67,7 @@ function BlockHead({
 /* ═══════════════════════════════════════════════════════════════
    PRZEŁĄCZNIK OKRESU — pigułka przesuwana (mechanika 1:1 z produkcją)
    ═══════════════════════════════════════════════════════════════ */
-function OkresToggle({ okres, onChange }: { okres: Okres; onChange: (o: Okres) => void }) {
+export function OkresToggle({ okres, onChange, etykietaRabatu = 'do −17%' }: { okres: Okres; onChange: (o: Okres) => void; etykietaRabatu?: string }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const mRef = useRef<HTMLButtonElement>(null)
   const rRef = useRef<HTMLButtonElement>(null)
@@ -143,7 +143,7 @@ function OkresToggle({ okres, onChange }: { okres: Okres; onChange: (o: Okres) =
                 : 'border-foreground/15 bg-foreground/[0.05] text-muted-foreground',
             )}
           >
-            do −17%
+            {etykietaRabatu}
           </span>
         </button>
       </div>
@@ -179,7 +179,7 @@ function PlanFinderButton({ otwarty, onClick }: { otwarty: boolean; onClick: () 
    ANIMOWANA LICZBA — easing cubic 420ms, obsługuje miejsca dziesiętne
    (cena roczna pokazuje grosze dokładnie jak panel rozliczeń: 149,17 zł)
    ═══════════════════════════════════════════════════════════════ */
-function AnimNum({ value, decimals = 0 }: { value: number; decimals?: number }) {
+export function AnimNum({ value, decimals = 0 }: { value: number; decimals?: number }) {
   const [pokaz, setPokaz] = useState(value)
   const poprzedni = useRef(value)
   const mnoznik = 10 ** decimals
@@ -465,17 +465,33 @@ function PanelZuzycia({
 /* ═══════════════════════════════════════════════════════════════
    KARTA PLANU — SPÓJNA Z DESIGNEM NEXTBYTE (rounded-2xl, CTA pod ceną)
    ═══════════════════════════════════════════════════════════════ */
-function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Okres; podswietlony?: boolean }) {
+export interface OfertaPlanu {
+  /** Osobisty rabat (%) na rozliczenie roczne — zastępuje standardowe −17% */
+  rabat: number
+  /** Skrócona lista cech dla ekranu oferty w onboardingu */
+  naglowekCech: string
+  cechy: Cecha[]
+  widoczne: number
+}
+
+export function PlanCard({
+  plan, okres, podswietlony = false, oferta,
+}: { plan: Plan; okres: Okres; podswietlony?: boolean; oferta?: OfertaPlanu }) {
   const [prog, setProg] = useState(0)
   const [rozwiniete, setRozwiniete] = useState(false)
   // Wszystkie cechy widoczne — długość listy ma rosnąć z planem
-  const WIDOCZNE = 20
-  const ukryte = (plan.cechy?.length ?? 0) - WIDOCZNE
+  const WIDOCZNE = oferta?.widoczne ?? 20
+  const cechy = oferta?.cechy ?? plan.cechy
+  const ukryte = (cechy?.length ?? 0) - WIDOCZNE
 
   const konfiguracja = plan.progi?.[prog] ?? null
   const stalaCena = plan.cena
   const cenaBazowa = konfiguracja ? konfiguracja.miesiecznie : stalaCena ?? 0
-  const cena = cenaZaOkres(cenaBazowa, okres)
+  const rabatOferty = oferta && okres === 'rocznie' ? oferta.rabat : null
+  const cena = rabatOferty !== null
+    ? Math.floor(cenaBazowa * (100 - rabatOferty)) / 100
+    : cenaZaOkres(cenaBazowa, okres)
+  const fakturaOkresu = rabatOferty !== null ? Math.round(cena * 12) : fakturaRoczna(cenaBazowa)
   const darmowy = plan.cena === 0
   const wyroznione = plan.polecany || podswietlony
   const pulaByte = konfiguracja?.byte ?? plan.stalaPula
@@ -520,7 +536,7 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
             </h3>
             {!darmowy && okres === 'rocznie' && (
               <span className="shrink-0 rounded-md bg-primary/15 px-2 py-0.5 font-sans text-[11.5px] font-bold text-primary">
-                −{Math.round(RABAT_ROCZNY * 100)}%
+                −{rabatOferty ?? Math.round(RABAT_ROCZNY * 100)}%
               </span>
             )}
           </div>
@@ -556,10 +572,11 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
             {!darmowy && okres === 'rocznie' ? (
               <>
                 <p className="text-muted-foreground font-light leading-tight">
-                  Rozliczane rocznie — faktura <AnimNum value={fakturaRoczna(cenaBazowa)} /> PLN
+                  {rabatOferty !== null ? 'Rozliczane rocznie, faktura ' : 'Rozliczane rocznie — faktura '}
+                  <AnimNum value={fakturaOkresu} /> PLN
                 </p>
                 <p className="font-medium text-primary leading-tight">
-                  Oszczędzasz <AnimNum value={cenaBazowa * 12 - fakturaRoczna(cenaBazowa)} /> zł rocznie
+                  Oszczędzasz <AnimNum value={Math.round(cenaBazowa * 12 - fakturaOkresu)} /> zł rocznie
                 </p>
               </>
             ) : darmowy ? (
@@ -616,15 +633,15 @@ function PlanCard({ plan, okres, podswietlony = false }: { plan: Plan; okres: Ok
         {/* Lista cech — Premium/Ultimate pokazują tylko NOWE pozycje względem
             niższego planu (nagłówek dziedziczenia), zamiast fałszywie
             sugerować, że mają mniej albo powtarzać to co już wiadomo. */}
-        {plan.cechy && plan.cechy.length > 0 && (
+        {cechy && cechy.length > 0 && (
           <div className="space-y-2 pt-3 border-t border-foreground/[0.08]">
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50 pb-1">
-              {plan.dziedziczyZ ? `Wszystko z ${plan.dziedziczyZ}, plus:` : 'W pakiecie:'}
+              {oferta?.naglowekCech ?? (plan.dziedziczyZ ? `Wszystko z ${plan.dziedziczyZ}, plus:` : 'W pakiecie:')}
             </p>
-            {plan.cechy.slice(0, WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} wartosci={wartosci} />)}
+            {cechy.slice(0, WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} wartosci={wartosci} />)}
             {ukryte > 0 && (
               <Rozwijane otwarte={rozwiniete}>
-                {plan.cechy.slice(WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} />)}
+                {cechy.slice(WIDOCZNE).map(c => <CechaWiersz key={c.t} cecha={c} wartosci={wartosci} />)}
               </Rozwijane>
             )}
             {ukryte > 0 && (
@@ -1567,8 +1584,8 @@ function useElementScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
 // pióra, każda krawędź narysowana dokładnie raz (ścieżka Eulera na tym grafie:
 // prawy i lewy mają nieparzysty stopień, więc to jedyne poprawne krańce).
 const BYTE_EDGE = Math.hypot(55, 100)
-const BYTE_PATH_LEN = BYTE_EDGE * 4 + 110
-const BYTE_PATH_D = 'M 55,0 L 0,-100 L -55,0 L 0,100 L 55,0 L -55,0'
+export const BYTE_PATH_LEN = BYTE_EDGE * 4 + 110
+export const BYTE_PATH_D = 'M 55,0 L 0,-100 L -55,0 L 0,100 L 55,0 L -55,0'
 
 function ByteGeneratingGlyph() {
   const containerRef = useRef<HTMLDivElement>(null)

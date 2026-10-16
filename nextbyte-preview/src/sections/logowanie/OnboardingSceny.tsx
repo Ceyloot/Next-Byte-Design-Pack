@@ -1,10 +1,17 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   MessageSquare, Image as ImageIcon, Video, Spline, NotebookPen, GraduationCap,
   User, Users, Sparkles, ArrowRight, Check, Wand2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NextByteMarkIcon } from '@/grafiki/znaki-marek'
+import zdjAnimal from '@/assets/studio/animal.jpg'
+import zdjCar from '@/assets/studio/car.jpg'
+import zdjInterior from '@/assets/studio/interior.jpg'
+import zdjLandscape from '@/assets/studio/landscape.jpg'
+
+/** Takt „filmu” w lewym panelu — co tyle pojawia się nowa grafika */
+const FILM_TAKT_MS = 2800
 
 /* Lewy panel onboardingu. U Higgsfielda w tym miejscu leci wideo, które
    zmienia się z każdym krokiem — u nas zamiast wideo żywa kompozycja
@@ -27,19 +34,39 @@ export function StyleScen() {
       @keyframes nbScenaBlysk { 0% { transform: translateX(-120%) } 60%,100% { transform: translateX(220%) } }
       @keyframes nbScenaTasma { to { transform: translateY(-50%) } }
       @keyframes nbScenaFala  { 0%,100% { transform: scaleY(.35) } 50% { transform: scaleY(1) } }
-      .nb-scena-plama  { animation: nbScenaPlama 14s ease-in-out infinite }
-      .nb-scena-unos   { animation: nbScenaUnos 6s ease-in-out infinite }
-      .nb-scena-orbita { animation: nbScenaOrbita 36s linear infinite }
-      .nb-scena-orbita-wstecz { animation: nbScenaOrbitaWstecz 36s linear infinite }
-      .nb-scena-puls   { animation: nbScenaPuls 2.4s ease-in-out infinite }
-      .nb-scena-pisz   { animation: nbScenaPisz 4.5s steps(28) infinite }
-      .nb-scena-postep { animation: nbScenaPostep 4.5s cubic-bezier(.4,0,.2,1) infinite }
-      .nb-scena-blysk  { animation: nbScenaBlysk 2.8s ease-in-out infinite }
-      .nb-scena-tasma  { animation: nbScenaTasma 22s linear infinite }
-      .nb-scena-fala   { animation: nbScenaFala 1.1s ease-in-out infinite; transform-origin: bottom }
+      /* Film: zdjęcie „generuje się” odsłoną od góry z linią skanu, potem
+         powolny najazd kamery (Ken Burns), co ${FILM_TAKT_MS} ms kolejne. */
+      @keyframes nbFilmOdslona { from { clip-path: inset(0 0 100% 0) } to { clip-path: inset(0 0 0 0) } }
+      @keyframes nbFilmSkan { 0% { top: 0; opacity: 1 } 85% { opacity: 1 } 100% { top: 100%; opacity: 0 } }
+      @keyframes nbFilmNajazdA { from { transform: scale(1.04) translate(0,0) } to { transform: scale(1.2) translate(-3%,-2%) } }
+      @keyframes nbFilmNajazdB { from { transform: scale(1.2) translate(3%,2%) } to { transform: scale(1.05) translate(0,0) } }
+      @keyframes nbFilmToast { 0% { opacity: 0; transform: translateY(14px) scale(.96) } 12%,80% { opacity: 1; transform: none } 100% { opacity: 0; transform: translateY(-6px) } }
+      @keyframes nbScenaWejscie { from { opacity: 0; transform: translateY(18px) scale(.94) } }
+      @keyframes nbFilmCyfra { from { opacity: 0; transform: translateY(-60%) } }
+      .nb-film-odslona { animation: nbFilmOdslona 1000ms cubic-bezier(.6,0,.2,1) both }
+      .nb-film-skan    { animation: nbFilmSkan 1000ms cubic-bezier(.6,0,.2,1) both }
+      .nb-film-najazd-a { animation: nbFilmNajazdA ${FILM_TAKT_MS * 2}ms linear both }
+      .nb-film-najazd-b { animation: nbFilmNajazdB ${FILM_TAKT_MS * 2}ms linear both }
+      .nb-film-toast   { animation: nbFilmToast ${FILM_TAKT_MS - 200}ms ease-out 900ms both }
+      .nb-film-cyfra   { animation: nbFilmCyfra 300ms cubic-bezier(.2,.9,.25,1) }
+      .nb-scena-wejscie { animation: nbScenaWejscie 520ms cubic-bezier(.2,.9,.25,1.15) backwards }
+      @keyframes nbScenaGeneruj { 0% { clip-path: inset(0 0 100% 0); filter: blur(10px) } 70% { clip-path: inset(0 0 0 0); filter: blur(0) } 100% { clip-path: inset(0 0 0 0) } }
+      .nb-scena-generuj { animation: nbScenaGeneruj 2.6s cubic-bezier(.4,0,.2,1) infinite }
+      .nb-scena-plama  { animation: nbScenaPlama 7s ease-in-out infinite }
+      .nb-scena-unos   { animation: nbScenaUnos 3.2s ease-in-out infinite }
+      .nb-scena-orbita { animation: nbScenaOrbita 14s linear infinite }
+      .nb-scena-orbita-wstecz { animation: nbScenaOrbitaWstecz 14s linear infinite }
+      .nb-scena-puls   { animation: nbScenaPuls 1.3s ease-in-out infinite }
+      .nb-scena-pisz   { animation: nbScenaPisz 2.6s steps(28) infinite }
+      .nb-scena-postep { animation: nbScenaPostep 2.6s cubic-bezier(.4,0,.2,1) infinite }
+      .nb-scena-blysk  { animation: nbScenaBlysk 1.7s ease-in-out infinite }
+      .nb-scena-tasma  { animation: nbScenaTasma 10s linear infinite }
+      .nb-scena-fala   { animation: nbScenaFala .7s ease-in-out infinite; transform-origin: bottom }
       @media (prefers-reduced-motion: reduce) {
         .nb-scena-plama, .nb-scena-unos, .nb-scena-orbita, .nb-scena-orbita-wstecz, .nb-scena-puls,
-        .nb-scena-pisz, .nb-scena-postep, .nb-scena-blysk, .nb-scena-tasma, .nb-scena-fala { animation: none }
+        .nb-scena-pisz, .nb-scena-postep, .nb-scena-blysk, .nb-scena-tasma, .nb-scena-fala,
+        .nb-film-odslona, .nb-film-skan, .nb-film-najazd-a, .nb-film-najazd-b, .nb-film-toast,
+        .nb-film-cyfra, .nb-scena-wejscie, .nb-scena-generuj { animation: none }
       }
     `}</style>
   )
@@ -142,8 +169,8 @@ function ScenaCele() {
   const R = 118
   return (
     <div className="relative h-[300px] w-[300px]">
-      <div className="absolute inset-[30px] rounded-full ring-1 ring-[hsl(var(--foreground)/0.08)]" />
-      <div className="absolute inset-[78px] rounded-full border border-dashed border-[hsl(var(--foreground)/0.08)]" />
+      <div className="absolute inset-[30px] rounded-full ring-1 ring-white/25" />
+      <div className="absolute inset-[78px] rounded-full border border-dashed border-white/20" />
       <div className="nb-scena-orbita absolute inset-0">
         {MODULY_SCENY.map((m, i) => {
           const kat = (i / MODULY_SCENY.length) * Math.PI * 2
@@ -266,14 +293,8 @@ function ScenaFunkcje() {
   return (
     <Tafla className="w-[80%] p-3.5">
       <div className="relative aspect-[4/3] overflow-hidden rounded-[10px] bg-[hsl(var(--foreground)/0.05)]">
-        <div
-          className="nb-scena-plama absolute -left-1/4 -top-1/4 h-[90%] w-[90%] rounded-full blur-2xl"
-          style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.35), transparent 70%)' }}
-        />
-        <div
-          className="nb-scena-plama absolute -bottom-1/4 -right-1/4 h-[80%] w-[80%] rounded-full blur-2xl"
-          style={{ background: 'radial-gradient(circle, hsl(var(--foreground) / 0.12), transparent 70%)', animationDelay: '-7s' }}
-        />
+        {/* Grafika „rośnie” od góry w rytmie paska postępu pod spodem */}
+        <img src={zdjInterior} alt="" className="nb-scena-generuj absolute inset-0 h-full w-full object-cover" />
         <span className="nb-scena-blysk absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-[hsl(var(--foreground)/0.08)] to-transparent" />
         <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[hsl(var(--background)/0.6)] px-2 py-0.5 text-[9.5px] font-semibold text-foreground backdrop-blur-md">
           <Sparkles className="h-2.5 w-2.5 text-[hsl(var(--primary))]" /> Generuję · 4K
@@ -312,7 +333,7 @@ function ScenaZrodla({ wybrane, kanaly }: { wybrane: string[]; kanaly: { id: str
       style={{ maskImage: 'linear-gradient(to bottom, transparent, black 18%, black 82%, transparent)' }}
     >
       {kolumny.map((kol, k) => (
-        <div key={k} className="nb-scena-tasma flex flex-col gap-3" style={{ animationDuration: `${20 + k * 6}s`, animationDirection: k === 1 ? 'reverse' : 'normal' }}>
+        <div key={k} className="nb-scena-tasma flex flex-col gap-3" style={{ animationDuration: `${9 + k * 3}s`, animationDirection: k === 1 ? 'reverse' : 'normal' }}>
           {Array.from({ length: 8 }, () => kol).flat().map(({ id, nazwa }, i) => {
             const wl = zaznaczone.has(id)
             return (
@@ -367,7 +388,85 @@ function ScenaProblem({ wybrane }: { wybrane: string[] }) {
   )
 }
 
-/** Rama lewego panelu: tło z dryfującą poświatą akcentu + scena + podpis. */
+/* ── Film w tle panelu ────────────────────────────────────────────────
+   Zastępuje wideo ze wzoru: co takt na panelu „generuje się” nowe zdjęcie
+   (odsłona od góry z linią skanu), kamera powoli najeżdża, licznik
+   generacji rośnie, a w rogu wyskakuje potwierdzenie gotowej grafiki.
+   Elementy leżące bezpośrednio na zdjęciu mają stały biały tekst — to
+   kadr filmu, nie powierzchnia motywu, więc nie odwracają się w jasnym. */
+const ZDJECIA = [
+  { src: zdjLandscape, modul: 'Studio Zdjęć', opis: 'Krajobraz o świcie' },
+  { src: zdjCar, modul: 'Studio Wideo', opis: 'Hipersamochód, studio' },
+  { src: zdjInterior, modul: 'Canvas', opis: 'Salon, nowe meble' },
+  { src: zdjAnimal, modul: 'Studio Zdjęć', opis: 'Irbis w górach' },
+]
+const START_SCENY: Record<IdSceny, number> = {
+  przestrzen: 2, cele: 0, poziom: 3, moduly: 1, funkcje: 0, zrodla: 2, problem: 3,
+}
+
+function FilmTlo({ start }: { start: number }) {
+  const [takt, setTakt] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = window.setInterval(() => setTakt(t => t + 1), FILM_TAKT_MS)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const klatka = (n: number) => ZDJECIA[(((start + n) % ZDJECIA.length) + ZDJECIA.length) % ZDJECIA.length]
+  // Poprzednia klatka zostaje pod spodem z tym samym kluczem — jej najazd
+  // kamery trwa dalej, zamiast startować od nowa i szarpnąć.
+  const warstwy = takt === 0 ? [0] : [takt - 1, takt]
+  const biezaca = klatka(takt)
+
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-black">
+      {warstwy.map(n => (
+        <div key={n} className={cn('absolute inset-0 overflow-hidden', n === takt && n > 0 && 'nb-film-odslona')}>
+          <img
+            src={klatka(n).src}
+            alt=""
+            className={cn('absolute inset-0 h-full w-full object-cover', n % 2 ? 'nb-film-najazd-b' : 'nb-film-najazd-a')}
+          />
+        </div>
+      ))}
+      {takt > 0 && (
+        <span
+          key={`skan-${takt}`}
+          className="nb-film-skan absolute inset-x-0 h-[2px] bg-[hsl(var(--primary))] shadow-[0_0_24px_6px_hsl(var(--primary)/0.55)]"
+        />
+      )}
+      {/* Przyciemnienie pod szkło i podpis */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,hsl(0_0%_0%/0.35),hsl(0_0%_0%/0.18)_35%,hsl(0_0%_0%/0.30)_65%,hsl(0_0%_0%/0.78))]" />
+
+      {/* Licznik generacji na żywo */}
+      <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/35 px-3 py-1.5 backdrop-blur-md ring-1 ring-inset ring-white/15">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inset-0 animate-ping rounded-full bg-[hsl(var(--primary))] opacity-75" />
+          <span className="relative h-2 w-2 rounded-full bg-[hsl(var(--primary))]" />
+        </span>
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85">Na żywo</span>
+        <span className="overflow-hidden font-mono text-[11px] font-semibold tabular-nums text-white">
+          <span key={takt} className="nb-film-cyfra inline-block">{(48_213 + takt * 37).toLocaleString('pl')}</span>
+        </span>
+      </div>
+
+      {/* Potwierdzenie gotowej grafiki */}
+      {takt > 0 && (
+        <div key={`toast-${takt}`} className="nb-film-toast absolute bottom-14 right-4 flex items-center gap-2.5 rounded-xl bg-black/45 py-2 pl-2 pr-3.5 backdrop-blur-md ring-1 ring-inset ring-white/15">
+          <img src={biezaca.src} alt="" className="h-8 w-8 rounded-lg object-cover" />
+          <span className="leading-tight">
+            <span className="flex items-center gap-1 text-[11.5px] font-semibold text-white">
+              <Check className="h-3 w-3 text-[hsl(var(--primary))]" strokeWidth={3} /> Gotowe · 4K
+            </span>
+            <span className="block text-[10px] text-white/65">{biezaca.modul} · {biezaca.opis}</span>
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Rama lewego panelu: film w tle + scena interfejsu + podpis. */
 export function PanelSceny({
   scena, wybrane, podpis, kanaly,
 }: {
@@ -378,29 +477,10 @@ export function PanelSceny({
   kanaly: { id: string; nazwa: string }[]
 }) {
   return (
-    <div className="relative isolate flex h-full w-full flex-col overflow-hidden rounded-2xl bg-[hsl(var(--card))] ring-1 ring-inset ring-[hsl(var(--foreground)/0.10)]">
-      {/* Poświata — niska krycie akcentu, żeby w jasnym motywie nie robiła sinej plamy */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div
-          className="nb-scena-plama absolute -left-[20%] top-[8%] h-[60%] w-[90%] rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.16), transparent 70%)' }}
-        />
-        <div
-          className="nb-scena-plama absolute -right-[25%] bottom-[0%] h-[55%] w-[85%] rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.10), transparent 70%)', animationDelay: '-6s' }}
-        />
-        <div
-          className="absolute inset-0 opacity-[0.5]"
-          style={{
-            backgroundImage:
-              'linear-gradient(hsl(var(--foreground) / 0.035) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground) / 0.035) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-            maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
-          }}
-        />
-      </div>
+    <div className="relative isolate flex h-full w-full flex-col overflow-hidden rounded-2xl ring-1 ring-inset ring-[hsl(var(--foreground)/0.10)]">
+      <FilmTlo key={`film-${scena}`} start={START_SCENY[scena]} />
 
-      <div key={scena} className="nb-krok-wchodzi flex min-h-0 flex-1 items-center justify-center">
+      <div key={scena} className="nb-scena-wejscie flex min-h-0 flex-1 items-center justify-center pt-10">
         {scena === 'przestrzen' && <ScenaPrzestrzen wybrane={wybrane} />}
         {scena === 'cele' && <ScenaCele />}
         {scena === 'poziom' && <ScenaPoziom wybrane={wybrane} />}
@@ -411,8 +491,8 @@ export function PanelSceny({
       </div>
 
       <div className="flex items-center gap-2 px-5 pb-5">
-        <NextByteMarkIcon className="h-3.5 w-3.5 text-foreground/60" />
-        <p key={podpis} className="nb-krok-wchodzi text-[11.5px] text-muted-foreground">{podpis}</p>
+        <NextByteMarkIcon className="h-3.5 w-3.5 text-white/80" />
+        <p key={podpis} className="nb-krok-wchodzi text-[12px] font-medium text-white/85">{podpis}</p>
       </div>
     </div>
   )

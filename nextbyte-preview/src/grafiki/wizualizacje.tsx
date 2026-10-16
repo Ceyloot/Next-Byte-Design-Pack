@@ -1025,9 +1025,12 @@ export const PCB_MODS: PcbMod[] = [
   { t: 'ZADANIA I TABLICE', axis: 'v', dir: 1, pin: 34, elbow: 528, padX: 616, padY: 552, w: 196, at: 0.54 },
 ]
 
-export function WorkspaceVisual() {
+/** `postep` (0–1) nadpisuje postęp z przewijania — np. w modalu, gdzie
+ *  płytka składa się sama w czasie, a nie podczas scrollowania strony. */
+export function WorkspaceVisual({ postep }: { postep?: number } = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const p = useScrollProgress(containerRef, 0.82)
+  const pScroll = useScrollProgress(containerRef, 0.82)
+  const p = postep ?? pScroll
 
   /** Trasa ścieżki: nóżka → kolanko → przesunięcie → pole lutownicze.
       Rysowana częściowo, więc realnie „narasta". */
