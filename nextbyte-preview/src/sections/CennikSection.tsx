@@ -50,19 +50,19 @@ function AnimatedNumber({ value }: { value: number }) {
 }
 
 // ── Dynamic Byte Config (miesięcznie / rocznie -17%) ──────────────────
-const PREMIUM_STEPS = [
+export const PREMIUM_STEPS = [
   { byte: 495,  monthly: 99,  yearly: 82,  badge: null,           przelicznik: '5,00 Byte / zł', modelKosztow: '50% ceny w Byte' },
   { byte: 950,  monthly: 179, yearly: 149, badge: null,           przelicznik: '5,30 Byte / zł', modelKosztow: '53% ceny w Byte' },
   { byte: 1500, monthly: 269, yearly: 225, badge: 'ZBALANSOWANY', przelicznik: '5,58 Byte / zł', modelKosztow: '56% ceny w Byte' },
 ]
 
-const ULTIMATE_STEPS = [
+export const ULTIMATE_STEPS = [
   { byte: 2450, monthly: 349, yearly: 290, badge: 'TOP WYBÓR',       przelicznik: '7,02 Byte / zł', modelKosztow: '70% ceny w Byte' },
   { byte: 4150, monthly: 589, yearly: 490, badge: 'DLA ZESPOŁÓW',    przelicznik: '7,05 Byte / zł', modelKosztow: '70,5% ceny w Byte' },
   { byte: 6070, monthly: 849, yearly: 710, badge: 'MAX PAKIET',      przelicznik: '7,15 Byte / zł', modelKosztow: '71,5% ceny w Byte' },
 ]
 
-function byteToStats(byte: number) {
+export function byteToStats(byte: number) {
   return {
     obrazy: Math.round(byte / 3),
     wiadomosci: byte,

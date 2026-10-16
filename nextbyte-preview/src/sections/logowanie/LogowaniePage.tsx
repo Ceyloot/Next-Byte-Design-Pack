@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { Mail, Lock, Eye, EyeOff, Check, User, AlertCircle } from 'lucide-react'
 import { AnimStyles, GlowButton } from '@/sections/wspolne/shared'
 import { WeryfikacjaEmailModal } from './WeryfikacjaEmailModal'
-import { OnboardingFlow } from './OnboardingFlow'
+import { Onboarding } from './Onboarding'
 
 /* ═══════════════════════════════════════════════════════════════════════
    LOGOWANIE / REJESTRACJA — maksymalny minimalizm
@@ -245,13 +245,8 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
 
   if (aktywnyWidok === 'onboarding') {
     return (
-      <div className="relative h-full w-full font-landing text-foreground">
-        <OnboardingFlow
-          key={onboardingKrok}
-          poczatkowyKrok={onboardingKrok}
-          onWrocDoFormularza={() => setAktywnyWidok('formularz')}
-          onZakoncz={() => setAktywnyWidok('formularz')}
-        />
+      <div key={onboardingKrok} className="relative h-full w-full font-landing text-foreground">
+        <Onboarding onWrocDoFormularza={() => setAktywnyWidok('formularz')} />
       </div>
     )
   }

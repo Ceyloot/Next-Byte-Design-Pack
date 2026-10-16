@@ -7,7 +7,11 @@ promocyjną. Wzorujemy się 1:1 na **przepływie i układzie** Higgsfield, ale
 
 Stan: **faza B gotowa** — `OnboardingFlow.tsx` (7 kroków) + `OnboardingSceny.tsx`
 (sceny lewego panelu). Podgląd: Preview → Logowanie → zakładka „Onboarding”.
-`onZakoncz(odpowiedzi)` to punkt podpięcia fazy C. Fazy A i C — do zrobienia.
+**Faza C gotowa** — `WejscieNaPlatforme.tsx` (C1–C4, treść oferty w
+`KONFIG_OFERTY`), spięta z pytaniami w `Onboarding.tsx`. Podgląd: zakładka
+„Wejście na platformę”. Plany biorą dane z `CennikSection.tsx` (Premium stała
+pula, Ultimate suwak); rabat roczny 40% / 45%, w nagłówku „do 55%”.
+Faza A (ekran rejestracji w stylu wzoru) — do zrobienia.
 
 ---
 
