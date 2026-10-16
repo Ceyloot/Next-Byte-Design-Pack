@@ -245,19 +245,7 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
 
   if (aktywnyWidok === 'onboarding') {
     return (
-      <div className="relative flex min-h-full w-full items-center justify-center px-5 py-5 font-landing text-foreground">
-        <AnimStyles />
-        {/* Jedna szeroka poświata pod całą treścią — bez plam po rogach ani
-            halo na poszczególnych kafelkach, żeby czytała się jako jedno
-            źródło światła, a nie kilka osobnych. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse 100% 80% at 50% 45%, hsl(var(--primary)/0.05) 0%, hsl(var(--primary)/0.015) 45%, transparent 80%)',
-          }}
-        />
+      <div className="relative h-full w-full font-landing text-foreground">
         <OnboardingFlow
           key={onboardingKrok}
           poczatkowyKrok={onboardingKrok}
