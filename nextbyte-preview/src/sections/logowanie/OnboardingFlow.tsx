@@ -78,7 +78,7 @@ const KROKI: Krok[] = [
     scena: 'cele',
     tytul: ['Co chcesz osiągnąć', 'z NextByte?'],
     podpis: 'Dopasujemy funkcje i narzędzia AI do Twoich celów',
-    podpisSceny: 'Wszystkie moduły AI wokół jednego konta',
+    podpisSceny: 'Jeden prompt, każdy rodzaj rezultatu',
     uklad: 'kafelki',
     wielokrotny: false,
     opcje: [
@@ -148,7 +148,7 @@ const KROKI: Krok[] = [
     scena: 'zrodla',
     tytul: ['Skąd', 'o nas wiesz?'],
     podpis: 'To pomaga nam ulepszać produkt',
-    podpisSceny: 'Twórcy trafiają do nas z każdej strony',
+    podpisSceny: 'Twórcy trafiają do nas z całego świata',
     uklad: 'pigulki',
     wielokrotny: true,
     opcje: [
