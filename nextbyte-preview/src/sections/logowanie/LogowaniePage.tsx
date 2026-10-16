@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { Mail, Lock, Eye, EyeOff, Check, User, AlertCircle, ArrowLeft, ArrowRight, Building2 } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Check, User, AlertCircle } from 'lucide-react'
 import { AnimStyles, GlowButton } from '@/sections/wspolne/shared'
 import { WeryfikacjaEmailModal } from './WeryfikacjaEmailModal'
 import { Onboarding } from './Onboarding'
@@ -71,63 +71,6 @@ function GoogleMark({ className }: { className?: string }) {
       <path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.8-6.1z" />
       <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.7-3.7-13.6-9.8l-7.8 6.1C6.5 42.6 14.6 48 24 48z" />
     </svg>
-  )
-}
-
-function AppleMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
-    </svg>
-  )
-}
-
-function MicrosoftMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <rect x="1" y="1" width="10.5" height="10.5" fill="#F25022" />
-      <rect x="12.5" y="1" width="10.5" height="10.5" fill="#7FBA00" />
-      <rect x="1" y="12.5" width="10.5" height="10.5" fill="#00A4EF" />
-      <rect x="12.5" y="12.5" width="10.5" height="10.5" fill="#FFB900" />
-    </svg>
-  )
-}
-
-/** Przycisk metody rejestracji — ten sam obrys co „Kontynuuj z Google”. */
-function PrzyciskMetody({ ikona, tekst, onClick }: { ikona: React.ReactNode; tekst: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'group relative flex h-11 w-full items-center justify-center gap-2.5 rounded-xl',
-        'border border-foreground/[0.12] bg-foreground/[0.03] font-sans text-[14px] font-semibold text-foreground/85',
-        'transition-all duration-200 hover:border-foreground/25 hover:bg-foreground/[0.06] hover:text-foreground active:scale-[0.99] cursor-pointer',
-      )}
-    >
-      {ikona}
-      {tekst}
-      <ArrowRight className="absolute right-4 h-3.5 w-3.5 text-foreground/0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-foreground/50" />
-    </button>
-  )
-}
-
-/** Bonus za firmowy e-mail — znak Byte rysuje się w pętli, kwota w mono. */
-function BonusFirmowy() {
-  return (
-    <div className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-primary/30 bg-primary/[0.07] px-3.5 py-3">
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.6)] to-transparent" />
-      <svg viewBox="-70 -110 140 220" className="h-7 w-5 shrink-0 overflow-visible" fill="none" aria-hidden>
-        <path d="M 55,0 L 0,-100 L -55,0 L 0,100 L 55,0 L -55,0" stroke="hsl(var(--primary))" strokeWidth={12} strokeLinejoin="round" strokeLinecap="round"
-          strokeDasharray="570" style={{ animation: 'nbBonusRysuj 2.8s cubic-bezier(.4,0,.2,1) infinite' }} />
-      </svg>
-      <style>{`@keyframes nbBonusRysuj { 0% { stroke-dashoffset: 570 } 45%, 80% { stroke-dashoffset: 0 } 100% { stroke-dashoffset: -570 } }
-        @media (prefers-reduced-motion: reduce) { [style*="nbBonusRysuj"] { animation: none !important } }`}</style>
-      <p className="flex-1 font-sans text-[13px] leading-snug text-foreground/80">
-        Zarejestruj się <span className="font-semibold text-foreground">firmowym e-mailem</span>, a dostaniesz Byte na start.
-      </p>
-      <span className="shrink-0 font-mono text-[13px] font-bold text-primary">+50 ⟠</span>
-    </div>
   )
 }
 
@@ -290,31 +233,9 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
     emailPoprawny && daneOsobowePoprawne && hasloPoprawne && zgodneHasla &&
     zgody.regulamin && zgody.prywatnosc
 
-  /* Rejestracja zaczyna się od wyboru metody (Google / Apple / Microsoft /
-     e-mail). Formularz z hasłem pokazujemy dopiero po „Kontynuuj z e-mailem”.
-     Jedna zgoda nad metodami odblokowuje wszystkie — bez niej kliknięcie
-     metody tylko podświetla zgodę. */
-  const [krokRej, setKrokRej] = useState<'metody' | 'email'>('metody')
-  const [zgodaStart, setZgodaStart] = useState(false)
-  const [bladZgody, setBladZgody] = useState(false)
-  const pokazFormularz = logowanie || krokRej === 'email'
-
-  const wybierzMetode = (metoda: 'google' | 'apple' | 'microsoft' | 'email') => {
-    if (!zgodaStart) { setBladZgody(true); return }
-    setBladZgody(false)
-    if (metoda === 'email') {
-      setZgody(z => ({ ...z, regulamin: true, prywatnosc: true }))
-      setKrokRej('email')
-      return
-    }
-    // Konto od dostawcy ma już zweryfikowany e-mail — od razu personalizacja.
-    setAktywnyWidok('onboarding')
-    setOnboardingKrok(1)
-  }
-
   useEffect(() => { setTryb(initialTryb) }, [initialTryb])
 
-  const zmienTryb = (t: Tryb) => { setTryb(t); setPokazBladWalidacji(false); setKrokRej('metody'); setBladZgody(false) }
+  const zmienTryb = (t: Tryb) => { setTryb(t); setPokazBladWalidacji(false) }
 
   const obsluzUtworzKonto = () => {
     if (!wszystkieWarunkiSpelnione) { setPokazBladWalidacji(true); return }
@@ -355,86 +276,32 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
           <h1 className="font-heading text-[24px] font-bold leading-tight tracking-[-0.8px] text-foreground">
             {logowanie ? 'Zaloguj się' : 'Utwórz konto'}
           </h1>
-          <p className="pt-1.5 font-sans text-[13px] text-foreground/40">
-            {logowanie ? 'Wróć do swoich projektów w NextByte.' : krokRej === 'metody' ? 'Załóż konto i twórz za darmo.' : 'Ostatni krok: dane konta.'}
-          </p>
+          <Rozwijane otwarte={logowanie}>
+            <p className="pt-1.5 font-sans text-[13px] text-foreground/40">
+              Wróć do swoich projektów w NextByte.
+            </p>
+          </Rozwijane>
         </div>
 
-        {/* ══ REJESTRACJA, KROK 1: wybór metody ══ */}
-        <Rozwijane otwarte={!pokazFormularz}>
-          <div className="pt-5">
-            <BonusFirmowy />
+        {/* Google */}
+        <button
+          type="button"
+          className={cn(
+            'mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl',
+            'border border-foreground/[0.12] bg-foreground/[0.03] font-sans text-[14px] font-semibold text-foreground/85',
+            'transition-all duration-200 hover:border-foreground/25 hover:bg-foreground/[0.06] hover:text-foreground active:scale-[0.99] cursor-pointer',
+          )}
+        >
+          <GoogleMark className="h-4 w-4" />
+          Kontynuuj z Google
+        </button>
 
-            <div className="mt-4 space-y-2">
-              <PrzyciskMetody onClick={() => wybierzMetode('google')} ikona={<GoogleMark className="h-4 w-4" />} tekst="Kontynuuj z Google" />
-              <PrzyciskMetody onClick={() => wybierzMetode('apple')} ikona={<AppleMark className="h-4 w-4" />} tekst="Kontynuuj z Apple" />
-              <PrzyciskMetody onClick={() => wybierzMetode('microsoft')} ikona={<MicrosoftMark className="h-4 w-4" />} tekst="Kontynuuj z Microsoft" />
-            </div>
-
-            <div className="my-3 flex items-center gap-3">
-              <span className="h-px flex-1 bg-foreground/[0.08]" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/30">lub</span>
-              <span className="h-px flex-1 bg-foreground/[0.08]" />
-            </div>
-
-            <PrzyciskMetody onClick={() => wybierzMetode('email')} ikona={<Mail className="h-4 w-4 text-primary" />} tekst="Kontynuuj z e-mailem" />
-
-            {/* Jedna zgoda odblokowuje wszystkie metody */}
-            <div className={cn(
-              'mt-4 rounded-xl px-3 py-2.5 transition-all duration-300',
-              bladZgody && !zgodaStart ? 'bg-primary/[0.07] ring-1 ring-inset ring-primary/40' : 'ring-1 ring-inset ring-transparent',
-            )}>
-              <Zgoda
-                zaznaczona={zgodaStart}
-                onZmien={() => { setZgodaStart(v => !v); setBladZgody(false) }}
-                tekst={<>Akceptuję <span className="text-foreground/80 underline underline-offset-2">Regulamin</span> i <span className="text-foreground/80 underline underline-offset-2">Politykę prywatności</span> oraz potwierdzam, że mam ukończone 18 lat.</>}
-              />
-              <Rozwijane otwarte={bladZgody && !zgodaStart}>
-                <p className="flex items-center gap-1.5 pl-[26px] pt-1.5 font-sans text-[12px] text-primary">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Zaakceptuj regulamin, aby kontynuować.
-                </p>
-              </Rozwijane>
-            </div>
-
-            <p className="mt-5 flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/30">
-              <Building2 className="h-3.5 w-3.5" /> Logowanie SSO dla zespołów i firm
-            </p>
-          </div>
-        </Rozwijane>
-
-        {/* ══ REJESTRACJA, KROK 2 / LOGOWANIE: formularz ══ */}
-        <Rozwijane otwarte={pokazFormularz}>
-        <Rozwijane otwarte={!logowanie && krokRej === 'email'}>
-          <button
-            type="button"
-            onClick={() => setKrokRej('metody')}
-            className="mt-4 inline-flex items-center gap-1.5 font-sans text-[12.5px] text-foreground/45 transition-colors hover:text-foreground cursor-pointer"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Inne metody rejestracji
-          </button>
-        </Rozwijane>
-
-        {/* Google — przy logowaniu; w rejestracji jest w kroku metod */}
-        <Rozwijane otwarte={logowanie}>
-          <button
-            type="button"
-            className={cn(
-              'mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl',
-              'border border-foreground/[0.12] bg-foreground/[0.03] font-sans text-[14px] font-semibold text-foreground/85',
-              'transition-all duration-200 hover:border-foreground/25 hover:bg-foreground/[0.06] hover:text-foreground active:scale-[0.99] cursor-pointer',
-            )}
-          >
-            <GoogleMark className="h-4 w-4" />
-            Kontynuuj z Google
-          </button>
-
-          <div className="my-3 flex items-center gap-3">
-            <span className="h-px flex-1 bg-foreground/[0.08]" />
-            <span className="font-sans text-[11px] text-foreground/25">lub e-mailem</span>
-            <span className="h-px flex-1 bg-foreground/[0.08]" />
-          </div>
-        </Rozwijane>
-        <Rozwijane otwarte={!logowanie}><div className="h-3" /></Rozwijane>
+        {/* Separator */}
+        <div className="my-3 flex items-center gap-3">
+          <span className="h-px flex-1 bg-foreground/[0.08]" />
+          <span className="font-sans text-[11px] text-foreground/25">lub e-mailem</span>
+          <span className="h-px flex-1 bg-foreground/[0.08]" />
+        </div>
 
         {/* Pola */}
         {/* Odstępy siedzą wewnątrz zwijanych bloków (a nie w space-y na
@@ -659,7 +526,6 @@ export function LogowaniePage({ initialTryb = 'logowanie' }: { initialTryb?: Try
             {logowanie ? 'Zaloguj się' : 'Utwórz konto'}
           </GlowButton>
         </div>
-        </Rozwijane>
 
         {/* Linki prawne tylko przy logowaniu — w rejestracji Regulamin
             i Polityka są już linkami w zgodach tuż nad przyciskiem. */}
