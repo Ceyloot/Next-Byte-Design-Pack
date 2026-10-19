@@ -285,7 +285,7 @@ export function CzatCanvas({
   useEffect(() => {
     const naCzat = () => {
       setZwiniety(false)
-      window.setTimeout(() => refTextarea.current?.focus(), 60)
+      window.setTimeout(() => refTextarea.current?.focus({ preventScroll: true }), 60)
     }
     window.addEventListener('nb-canvas-czat', naCzat)
     return () => window.removeEventListener('nb-canvas-czat', naCzat)
@@ -396,9 +396,17 @@ export function CzatCanvas({
     }
   }, [stanGeneracji])
 
-  // Przewijanie do dołu przy nowej wiadomości
+  // Przewijanie do dołu przy nowej wiadomości — tylko samej listy wiadomości.
+  // scrollIntoView przewijał też wszystkich przodków (także korzeń Canvas
+  // z overflow-hidden), przez co cały widok potrafił odjechać w bok.
   useEffect(() => {
-    refKoniecWiadomosci.current?.scrollIntoView({ behavior: 'smooth' })
+    let el = refKoniecWiadomosci.current?.parentElement ?? null
+    let lista: HTMLElement | null = null
+    for (let i = 0; el && i < 5 && !lista; i++, el = el.parentElement) {
+      const oy = getComputedStyle(el).overflowY
+      if (oy === 'auto' || oy === 'scroll') lista = el
+    }
+    lista?.scrollTo({ top: lista.scrollHeight, behavior: 'smooth' })
   }, [historiaWiadomosci, stanGeneracji.faza])
 
   // Automatyczny rozmiar pola textarea
@@ -450,7 +458,7 @@ export function CzatCanvas({
     const nowy = `${przed}${spacja}${nazwa} ${po}`
     onTekst(nowy)
     requestAnimationFrame(() => {
-      el.focus()
+      el.focus({ preventScroll: true })
       const pozycja = (przed + spacja + nazwa + ' ').length
       el.setSelectionRange(pozycja, pozycja)
     })
@@ -469,14 +477,14 @@ export function CzatCanvas({
     const pozycja = (przedBezFragmentu + nazwa + ' ').length
     setPozKursora(pozycja)
     requestAnimationFrame(() => {
-      el?.focus()
+      el?.focus({ preventScroll: true })
       el?.setSelectionRange(pozycja, pozycja)
     })
   }
 
   /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
   if (zwiniety && mobilny) {
-    const otworz = () => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus(), 60) }
+    const otworz = () => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus({ preventScroll: true }), 60) }
     return (
       <div ref={refStos} className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
         {/* Chipy zaznaczenia: pinezki i załączniki — jeden przewijany rząd nad polem */}

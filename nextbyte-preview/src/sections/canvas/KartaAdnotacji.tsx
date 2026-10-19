@@ -21,8 +21,8 @@ export function KartaAdnotacji({
 }) {
   const pole = useRef<HTMLInputElement>(null)
   useEffect(() => {
-    pole.current?.focus()
-    const t = window.setTimeout(() => pole.current?.focus(), 60)
+    pole.current?.focus({ preventScroll: true })
+    const t = window.setTimeout(() => pole.current?.focus({ preventScroll: true }), 60)
     return () => window.clearTimeout(t)
   }, [])
 

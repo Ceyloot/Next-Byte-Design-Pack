@@ -60,7 +60,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onRamka
   // Kursor od razu w polu nazwy — po wbiciu pineski następny ruch to
   // zawsze nazwanie obiektu, więc nie każemy w to jeszcze klikać.
   useEffect(() => {
-    refPole.current?.focus()
+    refPole.current?.focus({ preventScroll: true })
     refPole.current?.select()
   }, [pineska.id])
 
@@ -121,7 +121,7 @@ export function KartaPineski({ pineska, numer, warstwa, onNazwa, onUsun, onRamka
                     key={`${s}-${sIdx}`}
                     onClick={() => {
                       onNazwa(s)
-                      refPole.current?.focus()
+                      refPole.current?.focus({ preventScroll: true })
                     }}
                     className={cn(
                       'rounded-xl border px-2.5 py-1 text-[11.5px] transition-colors',

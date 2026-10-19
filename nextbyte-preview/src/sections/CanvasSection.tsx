@@ -2600,8 +2600,12 @@ export function CanvasSection() {
     return { left, top, naLewo, ogonY: Math.min(WYS - 24, Math.max(20, sy - top)) }
   }, [napis, widok, rozmiar])
 
+  // overflow-clip, nie overflow-hidden: element z overflow-hidden da się
+  // przewinąć (fokus na polu przy krawędzi, scrollIntoView) i wtedy cały
+  // widok Canvas odjeżdżał w bok — ucięty pasek narzędzi, czat na środku,
+  // zdjęcie poza kadrem. Z clip korzenia nie da się przewinąć wcale.
   return (
-    <div ref={refRoot} className="nb-cozy absolute inset-0 w-full h-full min-h-0 max-h-full overflow-hidden select-none text-foreground">
+    <div ref={refRoot} className="nb-cozy absolute inset-0 w-full h-full min-h-0 max-h-full overflow-clip select-none text-foreground">
       <input
         ref={refZalacznik}
         type="file"

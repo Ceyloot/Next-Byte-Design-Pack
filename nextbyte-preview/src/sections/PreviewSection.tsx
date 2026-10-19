@@ -956,10 +956,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   const wModule = activeTab === 'preview' && previewSubView === 'notebook'
   const bokiem = isSidebar
 
+  // overflow-clip zamiast overflow-hidden: górny pasek bywa szerszy niż ekran,
+  // a element z overflow-hidden przeglądarka potrafi przewinąć w bok (fokus,
+  // scrollIntoView) — wtedy cała aplikacja odjeżdżała w lewo.
   return (
     <div
       className={cn(
-        'relative w-full h-screen font-sans antialiased overflow-hidden bg-transparent',
+        'relative w-full h-screen font-sans antialiased overflow-clip bg-transparent',
         (isSidebar || (wModule && menuWModule)) ? 'flex flex-row' : 'flex flex-col',
         (isSidebar || (wModule && menuWModule)) && navPosition === 'right' && 'flex-row-reverse',
       )}

@@ -37,10 +37,10 @@ export function Prompter({
 }) {
   const [tekst, setTekst] = useState('')
   const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => ref.current?.focus(), [])
+  useEffect(() => ref.current?.focus({ preventScroll: true }), [])
   // po zamalowaniu fokus wraca do pola — Enter od razu wysyła (eraser nie wymaga tekstu)
   useEffect(() => {
-    if (!blokada) ref.current?.focus()
+    if (!blokada) ref.current?.focus({ preventScroll: true })
   }, [blokada])
   const wyslij = () => {
     if (trwa || blokada || (!bezTekstu && !tekst.trim())) return

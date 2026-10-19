@@ -35,8 +35,8 @@ export const KROKI2: Krok2[] = [
     ],
   },
   {
-    id: 'cel', tytul: ['Co chcesz', 'osiągnąć?'], podpowiedz: 'Wybierz jeden kierunek',
-    wielokrotny: false, rdzen: false, tlo: 'deszcz',
+    id: 'cel', tytul: ['Co chcesz', 'osiągnąć?'], podpowiedz: 'Zaznacz wszystko, co Cię interesuje',
+    wielokrotny: true, rdzen: false, tlo: 'deszcz',
     odpowiedzi: [
       { id: 'automatyzacja', etyk: 'Automatyzacja', glif: 'M60 60 m-22 0 a22 22 0 1 0 44 0 a22 22 0 1 0 -44 0 M60 60 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 M60 30 v-10 M60 90 v10 M30 60 h-10 M90 60 h10 M39 39 l-7 -7 M81 81 l7 7 M81 39 l7 -7 M39 81 l-7 7' },
       { id: 'filmy', etyk: 'Filmy AI', glif: 'M22 52 h76 v44 h-76 z M22 52 l72 -18 l3 10 M38 47 l8 -11 M58 42 l8 -11 M78 37 l8 -11' },

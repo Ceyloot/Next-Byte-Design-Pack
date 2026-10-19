@@ -77,10 +77,10 @@ const KROKI: Krok[] = [
     id: 'cel',
     scena: 'cele',
     tytul: ['Co chcesz osiągnąć', 'z NextByte?'],
-    podpis: 'Dopasujemy funkcje i narzędzia AI do Twoich celów',
+    podpis: 'Zaznacz wszystko, co Cię interesuje, dopasujemy start do Twoich celów',
     podpisSceny: 'Jeden prompt, każdy rodzaj rezultatu',
     uklad: 'kafelki',
-    wielokrotny: false,
+    wielokrotny: true,
     opcje: [
       { id: 'automatyzacja', nazwa: 'Automatyzacja pracy z asystentem AI', ikona: Bot },
       { id: 'filmy', nazwa: 'Filmowe wizualizacje i filmy AI', ikona: Clapperboard },

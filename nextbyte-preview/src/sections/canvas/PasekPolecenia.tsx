@@ -77,7 +77,7 @@ export function PasekPolecenia({
     const nowy = `${przed}${spacja}${nazwa} ${po}`
     onTekst(nowy)
     requestAnimationFrame(() => {
-      el.focus()
+      el.focus({ preventScroll: true })
       const pozycja = (przed + spacja + nazwa + ' ').length
       el.setSelectionRange(pozycja, pozycja)
     })
