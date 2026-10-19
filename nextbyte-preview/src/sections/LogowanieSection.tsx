@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { LogowaniePage } from './logowanie/LogowaniePage'
 import { Onboarding } from './logowanie/Onboarding'
+import { Onboarding2 } from './logowanie/onboarding2/Onboarding2'
 import type { EkranAuth } from './strona-glowna/types'
 
 export type { EkranAuth }
@@ -28,9 +29,11 @@ export function LogowanieSection({ ekran = 'logowanie' }: LogowanieSectionProps)
      kontenera podglądu — min-h-screen (100vh) nie odejmuje pasków nad nim. */
   return (
     <div ref={rootRef} className="w-full h-full font-landing text-foreground">
-      {ekran === 'onboarding' || ekran === 'wejscie'
-        ? <Onboarding key={ekran} poczatkowyEtap={ekran === 'wejscie' ? 'platforma' : 'pytania'} />
-        : <LogowaniePage key={ekran} initialTryb={ekran} />}
+      {ekran === 'onboarding2'
+        ? <Onboarding2 key={ekran} />
+        : ekran === 'onboarding' || ekran === 'wejscie'
+          ? <Onboarding key={ekran} poczatkowyEtap={ekran === 'wejscie' ? 'platforma' : 'pytania'} />
+          : <LogowaniePage key={ekran} initialTryb={ekran} />}
     </div>
   )
 }

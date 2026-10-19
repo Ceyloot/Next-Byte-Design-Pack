@@ -50,7 +50,7 @@ interface Rozdzial {
   wejscie: Wejscie
 }
 
-type Tlo = 'wydmy' | 'deszcz' | 'podloga' | 'radar' | 'warp' | 'orbity' | 'przeplyw' | 'skan'
+export type Tlo = 'wydmy' | 'deszcz' | 'podloga' | 'radar' | 'warp' | 'orbity' | 'przeplyw' | 'skan'
 
 /** Deterministyczny „los” dla indeksu cząsteczki (0–1). */
 const los = (i: number) => {
@@ -313,7 +313,7 @@ function zbudujRozdzialy(): Rozdzial[] {
 }
 
 /* ══ Teren z pyłu ══════════════════════════════════════════════════════ */
-function teren(u: number, v: number, t: number): [number, number, number] {
+export function teren(u: number, v: number, t: number): [number, number, number] {
   const x = u * 1.25
   const z = 0.75 + v * 5.2
   const y = 0.32 * Math.sin(u * 3.1 + t * 0.55 + v * 3.6) + 0.18 * Math.sin(v * 7 - t * 0.7) + 0.1 * Math.sin(u * 9 + v * 2)
@@ -350,14 +350,14 @@ function wejdz(rodzaj: Wejscie, px: Float32Array, py: Float32Array, vx: Float32A
 }
 
 /* ══ Tła rozdziałów ════════════════════════════════════════════════════ */
-interface StanTla {
+export interface StanTla {
   gwiazdy: [number, number, number][]
   warp: { x: number; y: number; z: number }[]
   przeplyw: { x: number; y: number }[]
   krople: { x: number; y: number; v: number; ak: boolean }[]
 }
 
-function nowyStanTla(): StanTla {
+export function nowyStanTla(): StanTla {
   return {
     gwiazdy: Array.from({ length: 90 }, () => [Math.random() * W, Math.random() * 300, Math.random() * 6.28]),
     warp: Array.from({ length: 170 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() })),
@@ -366,7 +366,7 @@ function nowyStanTla(): StanTla {
   }
 }
 
-function rysujTlo(ctx: CanvasRenderingContext2D, tlo: Tlo, t: number, a: number, fg: string, pr: string, stan: StanTla) {
+export function rysujTlo(ctx: CanvasRenderingContext2D, tlo: Tlo, t: number, a: number, fg: string, pr: string, stan: StanTla) {
   if (a <= 0) return
   ctx.fillStyle = fg
   ctx.strokeStyle = fg

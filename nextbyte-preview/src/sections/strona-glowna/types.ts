@@ -2,10 +2,10 @@
  *  podglądzie (sections/logowanie), ale zostają w tym typie, bo CTA na
  *  stronie głównej wciąż na nie kierują. */
 export type HomePage =
-  | 'home' | 'cennik' | 'historia' | 'logowanie' | 'rejestracja' | 'onboarding' | 'wejscie'
+  | 'home' | 'cennik' | 'historia' | 'logowanie' | 'rejestracja' | 'onboarding' | 'wejscie' | 'onboarding2'
 
 /** Ekrany obsługiwane przez podgląd „Logowanie" */
-export const EKRANY_AUTH = ['logowanie', 'rejestracja', 'onboarding', 'wejscie'] as const
+export const EKRANY_AUTH = ['logowanie', 'rejestracja', 'onboarding', 'wejscie', 'onboarding2'] as const
 export type EkranAuth = (typeof EKRANY_AUTH)[number]
 
 export const jestEkranemAuth = (p: HomePage): p is EkranAuth =>
@@ -24,4 +24,5 @@ export const STRONY_AUTH: { id: EkranAuth; label: string }[] = [
   { id: 'rejestracja', label: 'Rejestracja' },
   { id: 'onboarding',  label: 'Onboarding' },
   { id: 'wejscie',     label: 'Wejście na platformę' },
+  { id: 'onboarding2', label: 'Onboarding 2' },
 ]
