@@ -359,6 +359,18 @@ function EkranPlanow({ konfig, czas, onZamknij }: { konfig: KonfiguracjaOferty; 
         <p className="mt-6 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-primary/85">
           Anulujesz w dowolnym momencie · Bez ukrytych opłat · Zniżka tylko na plan roczny
         </p>
+
+        {/* Decyzja na dole — po przewinięciu kart nikt nie musi wracać na górę do krzyżyka */}
+        <div className="mt-7 flex flex-col items-center justify-center gap-3 border-t border-foreground/[0.08] pt-7 sm:flex-row sm:gap-5">
+          <GlowButton onClick={onZamknij} className="min-w-[240px]">Kontynuuj ze zniżką</GlowButton>
+          <button
+            type="button"
+            onClick={onZamknij}
+            className="h-11 px-4 font-sans text-[13.5px] text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+          >
+            Nie, dziękuję
+          </button>
+        </div>
       </div>
     </Modal>
   )
@@ -368,9 +380,18 @@ function EkranPlanow({ konfig, czas, onZamknij }: { konfig: KonfiguracjaOferty; 
 function ModalFunkcja({ onDalej }: { onDalej: () => void }) {
   return (
     <Modal className="max-w-[620px]" onZamknij={onDalej}>
-      <div className="relative h-[260px] sm:h-[300px]">
-        <img src={zdjCar} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        <span className="absolute inset-0 bg-gradient-to-b from-transparent via-[hsl(var(--card)/0.2)] to-[hsl(var(--card))]" />
+      {/* Wnętrze z nakładką Canvas: zaznaczenie miejsca, pinezka i polecenie
+          dla agenta — od razu widać, co ta funkcja robi */}
+      <div className="relative h-[260px] overflow-hidden sm:h-[300px]">
+        <img src={zdjInterior} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <span className="absolute inset-0 bg-gradient-to-b from-transparent via-[hsl(var(--card)/0.15)] to-[hsl(var(--card))]" />
+        <div className="absolute left-[60%] top-[50%] h-[24%] w-[18%] rounded-lg border-2 border-dashed border-primary shadow-[0_0_0_9999px_hsl(0_0%_0%/0.18)]">
+          <span className="absolute -left-2.5 -top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-mono text-[10px] font-bold text-primary-foreground">1</span>
+        </div>
+        <div className="absolute left-[34%] top-[30%] flex items-center gap-2 rounded-xl border border-white/15 bg-black/55 px-3 py-2 backdrop-blur-md">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+          <span className="font-mono text-[11px] text-white/90">Wstaw tu fotel z referencji</span>
+        </div>
       </div>
       <div className="relative -mt-12 px-6 pb-9 text-center sm:px-12">
         <Etykieta>Nowość w NextByte</Etykieta>

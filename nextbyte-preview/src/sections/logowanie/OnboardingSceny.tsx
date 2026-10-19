@@ -50,7 +50,93 @@ interface Rozdzial {
   wejscie: Wejscie
 }
 
-type Tlo = 'wydmy' | 'deszcz' | 'podloga' | 'radar' | 'warp' | 'orbity' | 'przeplyw'
+type Tlo = 'wydmy' | 'deszcz' | 'podloga' | 'radar' | 'warp' | 'orbity' | 'przeplyw' | 'skan'
+
+/** Deterministyczny „los” dla indeksu cząsteczki (0–1). */
+const los = (i: number) => {
+  const x = Math.sin(i * 12.9898) * 43758.5453
+  return x - Math.floor(x)
+}
+
+/* Krok 5: funkcje jako jeden łańcuch pracy — węzły (obraz, upscale, wideo,
+   dźwięk, notatki, research) połączone strumieniami, które płyną od jednej
+   funkcji do kolejnej. */
+const WEZLY_FUNKCJI: [number, number][] = [[86, 150], [232, 118], [322, 232], [192, 292], [88, 404], [272, 436]]
+const LINKI_FUNKCJI: [number, number, boolean][] = [[0, 1, true], [1, 2, true], [2, 3, true], [3, 4, true], [4, 5, true], [0, 3, false], [2, 5, false]]
+const procPolaczone: Proc = (i, t) => {
+  if (i < 900) {
+    // węzeł: gęsty dysk z obracającym się pierścieniem akcentu
+    const k = i % 6, j = Math.floor(i / 6)
+    const [nx, ny] = WEZLY_FUNKCJI[k]
+    if (j > 115) {
+      const a = (j / 35) * Math.PI * 2 + t * (k % 2 ? 0.8 : -0.8)
+      return [nx + Math.cos(a) * 25, ny + Math.sin(a) * 25, true, 0.9]
+    }
+    const r = 17 * Math.sqrt(j / 115)
+    const a = j * 2.39996
+    return [nx + Math.cos(a) * r, ny + Math.sin(a) * r, false, 1]
+  }
+  // strumienie między węzłami
+  const [a, b, glowny] = LINKI_FUNKCJI[i % LINKI_FUNKCJI.length]
+  const [ax, ay] = WEZLY_FUNKCJI[a], [bx, by] = WEZLY_FUNKCJI[b]
+  const f = (t * 0.38 + i * 0.6180339) % 1
+  const mx = (ax + bx) / 2 - (by - ay) * 0.18, my = (ay + by) / 2 + (bx - ax) * 0.18
+  const x = (1 - f) * (1 - f) * ax + 2 * (1 - f) * f * mx + f * f * bx
+  const y = (1 - f) * (1 - f) * ay + 2 * (1 - f) * f * my + f * f * by
+  return [x, y, glowny, 0.35 + 0.65 * Math.sin(Math.PI * f)]
+}
+
+/* Krok 6: telefon z przewijanym feedem; z boków wpadają strumienie
+   z różnych kanałów (TikTok, YouTube, Google…), a feed jedzie w górę. */
+const TEL = { cx: 200, cy: 262, w: 150, h: 300 }
+const procTelefon: Proc = (i, t) => {
+  const gora = TEL.cy - TEL.h / 2, dol = TEL.cy + TEL.h / 2
+  if (i < 560) {
+    // obudowa: superelipsa ≈ prostokąt o zaokrąglonych rogach
+    const q = (i / 560) * Math.PI * 2
+    const c = Math.cos(q), s = Math.sin(q)
+    return [TEL.cx + Math.sign(c) * Math.pow(Math.abs(c), 0.16) * TEL.w / 2, TEL.cy + Math.sign(s) * Math.pow(Math.abs(s), 0.16) * TEL.h / 2, false, 1]
+  }
+  if (i < 600) return [TEL.cx - 18 + ((i - 560) / 40) * 36, gora + 14, false, 0.9]
+  if (i < 1560) {
+    // feed: 4 karty jadące w górę w pętli
+    const j = i - 600
+    const karta = j % 4, n = Math.floor(j / 4)
+    const yK = ((karta * 86 - t * 24) % 344 + 344) % 344 + gora + 30
+    const lx = TEL.cx - 59, ly = yK
+    const r = los(i)
+    let x: number, y: number, akc = false
+    if (n < 90) {
+      // obrys karty
+      const p = n / 90
+      const obw = 2 * (118 + 70)
+      const d = p * obw
+      if (d < 118) { x = lx + d; y = ly } else if (d < 188) { x = lx + 118; y = ly + d - 118 } else if (d < 306) { x = lx + 118 - (d - 188); y = ly + 70 } else { x = lx; y = ly + 70 - (d - 306) }
+    } else if (n < 120) {
+      // awatar kanału + linia tekstu
+      const a = (n / 30) * Math.PI * 2
+      x = lx + 12 + Math.cos(a) * 6; y = ly + 12 + Math.sin(a) * 6; akc = karta % 2 === 0
+    } else if (n < 140) {
+      x = lx + 24 + ((n - 120) / 20) * 60; y = ly + 12
+    } else {
+      // kadr posta — gęsto wypełniony prostokąt
+      x = lx + 8 + r * 102; y = ly + 26 + los(i * 3) * 38
+    }
+    const widoczny = y > gora + 26 && y < dol - 22
+    return [x, y, akc, widoczny ? 0.9 : -1]
+  }
+  // strumienie z kanałów wpadające z boków do telefonu
+  const z = i % 6
+  const lewa = z < 3
+  const sy = 140 + (z % 3) * 125
+  const sx = lewa ? 8 : 392
+  const ex = TEL.cx + (lewa ? -TEL.w / 2 : TEL.w / 2), ey = TEL.cy - 40 + (z % 3) * 40
+  const f = (t * 0.45 + i * 0.6180339) % 1
+  const mx = (sx + ex) / 2, my = sy - 30
+  const x = (1 - f) * (1 - f) * sx + 2 * (1 - f) * f * mx + f * f * ex
+  const y = (1 - f) * (1 - f) * sy + 2 * (1 - f) * f * my + f * f * ey
+  return [x, y, z % 2 === 0, 0.25 + 0.75 * f]
+}
 type Wejscie = 'wznies' | 'implozja' | 'zamiec' | 'wybuch' | 'wir' | 'orbita'
 
 /* Krok 2: prompt spływa wiązką do pryzmatu i rozchodzi się na 6 promieni.
@@ -200,28 +286,12 @@ function zbudujRozdzialy(): Rozdzial[] {
       }, 1800),
     },
     {
-      kod: 'SEQ_05 · GENERATION', podkod: 'VORTEX_RUN', ognisko: [200, 250], ile: 2100,
-      tlo: 'warp', wejscie: 'wir',
-      proc: (i, t) => {
-        const u = i / 2100
-        const r = 14 + Math.pow(u, 0.6) * 160
-        const ramie = i % 3
-        const kat = ramie * 2.094 + r * 0.03 + t * (0.35 + 26 / r)
-        return [200 + Math.cos(kat) * r, 250 + Math.sin(kat) * r * 0.42, i % 6 === 0, 1 - u * 0.6]
-      },
+      kod: 'SEQ_05 · FEATURE_CHAIN', podkod: 'LINKED_x6', ognisko: [190, 290], ile: 2100,
+      tlo: 'warp', wejscie: 'wir', proc: procPolaczone,
     },
     {
-      kod: 'SEQ_06 · GLOBAL_REACH', podkod: 'SYNC_12', ognisko: [200, 245], ile: 2100,
-      tlo: 'orbity', wejscie: 'orbita',
-      proc: (i, t) => {
-        const n = 2100
-        const yy = 1 - (2 * (i + 0.5)) / n
-        const rr = Math.sqrt(1 - yy * yy)
-        const phi = i * 2.39996 + t * 0.35
-        const x3 = Math.cos(phi) * rr, z3 = Math.sin(phi) * rr
-        const lad = Math.sin(i * 2.39996 * 3) + Math.cos(yy * 6) > 1.05
-        return [200 + x3 * 128, 245 + yy * 128 * 0.98 + z3 * 10, lad, 0.15 + 0.85 * ((z3 + 1) / 2)]
-      },
+      kod: 'SEQ_06 · SOURCE_FEED', podkod: 'FEED_LIVE', ognisko: [275, 150], ile: 2100,
+      tlo: 'skan', wejscie: 'zamiec', proc: procTelefon,
     },
     {
       kod: 'SEQ_07 · NEXTBYTE', podkod: 'READY', ognisko: [200, 250], ile: 2100,
@@ -377,6 +447,21 @@ function rysujTlo(ctx: CanvasRenderingContext2D, tlo: Tlo, t: number, a: number,
         const sx2 = 200 + (g.x / (g.z + 0.04)) * 90, sy2 = 250 + (g.y / (g.z + 0.04)) * 90
         ctx.globalAlpha = a * Math.min(0.6, (1 - g.z) * 0.8)
         ctx.beginPath(); ctx.moveTo(sx2, sy2); ctx.lineTo(sx, sy); ctx.stroke()
+      }
+      break
+    }
+    case 'skan': {
+      // linie skanu jak w transmisji: cienkie poziome pasy jadą w dół, jeden jaśniejszy
+      for (let n = 0; n < 28; n++) {
+        const y = ((n / 28) * H + t * 18) % H
+        ctx.globalAlpha = a * 0.07
+        ctx.fillRect(0, y, W, 1)
+      }
+      const yS = (t * 70) % (H + 60) - 30
+      for (let n = 0; n < 14; n++) {
+        ctx.globalAlpha = a * 0.16 * (1 - n / 14)
+        ctx.fillStyle = pr
+        ctx.fillRect(0, yS - n * 2, W, 1)
       }
       break
     }
@@ -552,15 +637,15 @@ function Film({ rozdzial }: { rozdzial: number }) {
 
 /* ══ HUD — cienkie linie i kody jak na technicznym rysunku ══════════════ */
 const OGNISKA: [number, number][] = [
-  [250, 279], [200, 226], [220, 279], [200, 250], [200, 250], [200, 245], [200, 252],
+  [250, 279], [200, 226], [220, 279], [200, 250], [192, 292], [275, 150], [200, 252],
 ]
 const KODY = [
   ['SEQ_01 · HUMAN_INPUT', 'SIGNAL_01'],
   ['SEQ_02 · PROMPT_SPLIT', 'OUT_x6'],
   ['SEQ_03 · LINK_ESTABLISHED', 'TRUST_001'],
   ['SEQ_04 · NEURAL_MESH', 'NODES_14'],
-  ['SEQ_05 · GENERATION', 'VORTEX_RUN'],
-  ['SEQ_06 · GLOBAL_REACH', 'SYNC_12'],
+  ['SEQ_05 · FEATURE_CHAIN', 'LINKED_x6'],
+  ['SEQ_06 · SOURCE_FEED', 'FEED_LIVE'],
   ['SEQ_07 · NEXTBYTE', 'READY'],
 ]
 
