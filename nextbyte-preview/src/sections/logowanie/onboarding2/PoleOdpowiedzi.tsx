@@ -49,7 +49,38 @@ function probkujGlif(rysuj: (ctx: CanvasRenderingContext2D) => void, ile: number
   return wynik
 }
 
-function ulozenie(n: number, w: number, h: number, rdzen: boolean, mobilny: boolean): { el: Uklad[]; rdzen: Uklad | null } {
+/** Rozmieszczenie odpowiedzi wokół rdzenia — inne dla każdego kroku z rdzeniem:
+ *  orbita = elipsa wokół rdzenia, szyna = dwa rzędy z rdzeniem pośrodku,
+ *  lejek = łuk u góry, rdzeń na dole (sygnały „spadają” do NextByte). */
+export type TrybUkladu = 'orbita' | 'szyna' | 'lejek'
+
+function ulozenie(n: number, w: number, h: number, rdzen: boolean, mobilny: boolean, tryb: TrybUkladu = 'orbita'): { el: Uklad[]; rdzen: Uklad | null } {
+  if (!mobilny && rdzen && tryb === 'szyna') {
+    const naRzad = Math.ceil(n / 2)
+    const r = Math.min(w / naRzad * 0.28, h * 0.12)
+    return {
+      el: Array.from({ length: n }, (_, i) => {
+        const rz = i < naRzad ? 0 : 1
+        const j = rz ? i - naRzad : i
+        const ileWRz = rz ? n - naRzad : naRzad
+        const krok = w / ileWRz
+        return { x: krok * j + krok / 2, y: rz ? h * 0.78 : h * 0.16, r }
+      }),
+      rdzen: { x: w / 2, y: h * 0.5, r: Math.min(w, h) * 0.1 },
+    }
+  }
+  if (!mobilny && rdzen && tryb === 'lejek') {
+    const r = Math.min(w, h) * (n > 10 ? 0.06 : 0.08)
+    return {
+      el: Array.from({ length: n }, (_, i) => {
+        // łuk od lewej do prawej, wysoko nad rdzeniem; co drugi lekko niżej, żeby się nie stykały
+        const u = n === 1 ? 0.5 : i / (n - 1)
+        // równe odstępy w poziomie, wysokość z łuku — końce się nie ściskają
+        return { x: w * (0.06 + 0.88 * u), y: h * 0.66 - Math.sin(Math.PI * u) * h * 0.5 + (i % 2) * h * 0.1, r }
+      }),
+      rdzen: { x: w / 2, y: h * 0.82, r: Math.min(w, h) * 0.1 },
+    }
+  }
   if (mobilny) {
     const kol = n > 6 ? 3 : 2
     const gora = rdzen ? h * 0.2 : 0
@@ -90,7 +121,7 @@ function ulozenie(n: number, w: number, h: number, rdzen: boolean, mobilny: bool
 }
 
 export function PoleOdpowiedzi({
-  odpowiedzi, wybrane, onWybierz, wielokrotny, rdzen = false, tlo, mobilny, odstep = { gora: 0, dol: 0 },
+  odpowiedzi, wybrane, onWybierz, wielokrotny, rdzen = false, tlo, mobilny, odstep = { gora: 0, dol: 0 }, tryb = 'orbita',
 }: {
   odpowiedzi: Odpowiedz[]
   wybrane: string[]
@@ -99,6 +130,7 @@ export function PoleOdpowiedzi({
   rdzen?: boolean
   tlo: Tlo
   mobilny: boolean
+  tryb?: TrybUkladu
   /** Pasy u góry i u dołu zajęte przez tekst i nawigację — symbole ich omijają */
   odstep?: { gora: number; dol: number }
 }) {
@@ -118,7 +150,7 @@ export function PoleOdpowiedzi({
     return () => ro.disconnect()
   }, [])
 
-  const surowy = ulozenie(odpowiedzi.length, rozmiar.w, Math.max(0, rozmiar.h - odstep.gora - odstep.dol), rdzen, mobilny)
+  const surowy = ulozenie(odpowiedzi.length, rozmiar.w, Math.max(0, rozmiar.h - odstep.gora - odstep.dol), rdzen, mobilny, tryb)
   const uklad = {
     el: surowy.el.map(u => ({ ...u, y: u.y + odstep.gora })),
     rdzen: surowy.rdzen ? { ...surowy.rdzen, y: surowy.rdzen.y + odstep.gora } : null,
@@ -149,8 +181,24 @@ export function PoleOdpowiedzi({
     // cząsteczki: [element, indeks punktu] + pozycja i prędkość
     type Cz = { e: number; p: number; x: number; y: number; vx: number; vy: number; s: number; a: number; akc: boolean }
     const cz: Cz[] = []
-    glify.forEach((g, e) => g.forEach((_, p) => cz.push({ e, p, x: Math.random() * 2000 - 300, y: Math.random() * 1400 - 300, vx: 0, vy: 0, s: Math.random(), a: 0, akc: false })))
-    rdzenPkt.forEach((_, p) => cz.push({ e: -1, p, x: Math.random() * 2000 - 300, y: Math.random() * 1400 - 300, vx: 0, vy: 0, s: Math.random(), a: 0, akc: false }))
+    // Wejście zależy od układu: spirala do środka, wjazd z boku albo opadanie z góry
+    const { width: sw, height: sh } = c.getBoundingClientRect()
+    const start = (): [number, number, number, number] => {
+      const los = Math.random()
+      if (rdzen && tryb === 'orbita') {
+        const a = los * Math.PI * 12, rr = Math.max(sw, sh) * (0.6 + los * 0.4)
+        return [sw / 2 + Math.cos(a) * rr, sh / 2 + Math.sin(a) * rr, -Math.sin(a) * 9, Math.cos(a) * 9]
+      }
+      if (rdzen && tryb === 'szyna') return [-80 - Math.random() * sw, Math.random() * sh, 14, 0]
+      if (rdzen && tryb === 'lejek') return [Math.random() * sw, -60 - Math.random() * sh, 0, 6]
+      return [Math.random() * (sw + 600) - 300, Math.random() * (sh + 600) - 300, 0, 0]
+    }
+    const dodaj = (e: number, p: number) => {
+      const [x, y, vx, vy] = start()
+      cz.push({ e, p, x, y, vx, vy, s: Math.random(), a: 0, akc: false })
+    }
+    glify.forEach((g, e) => g.forEach((_, p) => dodaj(e, p)))
+    rdzenPkt.forEach((_, p) => dodaj(-1, p))
     const stan = nowyStanTla()
     const t0 = performance.now()
     let raf = 0

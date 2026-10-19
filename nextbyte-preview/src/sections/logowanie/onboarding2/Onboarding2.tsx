@@ -13,6 +13,8 @@ import { KROKI2 } from './kroki'
 
 /** Przy wyborze jednokrotnym — czas na odegranie animacji przed przejściem */
 const PAUZA = 1300
+/** Ostatni krok przechodzi dalej szybciej — tam nie ma już kolejnego pytania do pokazania */
+const PAUZA_OSTATNI = 600
 
 function useMobilny() {
   const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches)
@@ -49,7 +51,7 @@ function Pytania({ onZakoncz }: { onZakoncz: () => void }) {
     }
     setOdp(p => ({ ...p, [krok.id]: [id] }))
     if (timer.current) window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(dalej, PAUZA)
+    timer.current = window.setTimeout(dalej, ostatni ? PAUZA_OSTATNI : PAUZA)
   }
 
   return (
@@ -68,6 +70,7 @@ function Pytania({ onZakoncz }: { onZakoncz: () => void }) {
           onWybierz={przelacz}
           wielokrotny={krok.wielokrotny}
           rdzen={krok.rdzen}
+          tryb={krok.tryb}
           tlo={krok.tlo}
           mobilny={mobilny}
           odstep={mobilny ? { gora: 170, dol: 84 } : { gora: 200, dol: 86 }}

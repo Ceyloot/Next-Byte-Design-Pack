@@ -1,5 +1,5 @@
 import type { Tlo } from '../OnboardingSceny'
-import type { Odpowiedz } from './PoleOdpowiedzi'
+import type { Odpowiedz, TrybUkladu } from './PoleOdpowiedzi'
 
 /* Onboarding 2 — pytania i symbole odpowiedzi. Symbole to ścieżki SVG
    (pole 120×120, albo 80×80 przy `pole: 80`), z których pole odpowiedzi
@@ -10,8 +10,10 @@ export interface Krok2 {
   tytul: [string, string]
   podpowiedz: string
   wielokrotny: boolean
-  /** Rdzeń NextByte w środku, do którego płyną wybrane odpowiedzi */
+  /** Rdzeń NextByte, do którego płyną wybrane odpowiedzi */
   rdzen: boolean
+  /** Rozmieszczenie wokół rdzenia — różne dla kroków 4, 5 i 6 */
+  tryb?: TrybUkladu
   tlo: Tlo
   odpowiedzi: Odpowiedz[]
 }
@@ -56,7 +58,7 @@ export const KROKI2: Krok2[] = [
   },
   {
     id: 'moduly', tytul: ['Które moduły', 'chcesz podłączyć?'], podpowiedz: 'Wybrane podłączą się do rdzenia NextByte',
-    wielokrotny: true, rdzen: true, tlo: 'warp',
+    wielokrotny: true, rdzen: true, tlo: 'warp', tryb: 'orbita',
     odpowiedzi: [
       { id: 'chat', etyk: 'Chat AI', glif: 'M38 46 h44 a8 8 0 0 1 8 8 v18 a8 8 0 0 1 -8 8 h-26 l-12 10 v-10 h-6 a8 8 0 0 1 -8 -8 v-18 a8 8 0 0 1 8 -8 z' },
       { id: 'zdjecia', etyk: 'Studio Zdjęć', glif: 'M34 82 L52 58 L64 72 L74 62 L88 82 Z M74 46 a6 6 0 1 0 0.1 0' },
@@ -68,7 +70,7 @@ export const KROKI2: Krok2[] = [
   },
   {
     id: 'funkcje', tytul: ['Które funkcje', 'chcesz wypróbować?'], podpowiedz: 'Zaznacz dowolne, każda wpina się w NextByte',
-    wielokrotny: true, rdzen: true, tlo: 'skan',
+    wielokrotny: true, rdzen: true, tlo: 'skan', tryb: 'szyna',
     odpowiedzi: [
       { id: 'gen-zdjec', etyk: 'Zdjęcia AI', pole: 80, glif: 'M14 54 L30 34 L40 46 L48 38 L66 54 Z M52 26 a5 5 0 1 0 0.1 0' },
       { id: 'gen-wideo', etyk: 'Wideo AI', pole: 80, glif: 'M14 26 h36 v28 h-36 z M50 34 l16 -8 v28 l-16 -8' },
@@ -84,7 +86,7 @@ export const KROKI2: Krok2[] = [
   },
   {
     id: 'zrodlo', tytul: ['Skąd', 'o nas wiesz?'], podpowiedz: 'Zaznacz wszystko, co pasuje',
-    wielokrotny: true, rdzen: true, tlo: 'przeplyw',
+    wielokrotny: true, rdzen: true, tlo: 'przeplyw', tryb: 'lejek',
     odpowiedzi: [
       { id: 'tiktok', etyk: 'TikTok', pole: 80, glif: 'M44 20 v30 a10 10 0 1 1 -8 -10 M44 20 q4 10 14 10' },
       { id: 'youtube', etyk: 'YouTube', pole: 80, glif: 'M16 26 h48 a6 6 0 0 1 6 6 v16 a6 6 0 0 1 -6 6 h-48 a6 6 0 0 1 -6 -6 v-16 a6 6 0 0 1 6 -6 z M34 32 l14 8 l-14 8 z' },
