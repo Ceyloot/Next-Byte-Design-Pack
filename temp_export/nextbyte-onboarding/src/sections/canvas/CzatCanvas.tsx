@@ -1,0 +1,915 @@
+import React, { useState, useEffect, useRef } from 'react'
+import {
+  Sparkles,
+  Send,
+  Loader2,
+  Trash2,
+  ArrowRightLeft,
+  ArrowRight,
+  Shield,
+  Layers,
+  CirclePlus,
+  Paperclip,
+  Mic,
+  PanelRightClose,
+  ChevronDown,
+  PanelRightOpen,
+  ArrowUp,
+  Maximize2,
+  Wand2,
+  Check,
+  RefreshCw,
+  ExternalLink,
+  Download,
+  AlertCircle,
+  HelpCircle,
+  Plus,
+  Gem,
+  Upload,
+  Link2,
+  Clipboard,
+  FileText,
+  MessageSquare,
+  X,
+  Zap,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { GlassModelSearch, type Model } from '@/components/glass/GlassModelSearch'
+import { GeminiIcon, KlingIcon, NextByteMarkIcon, OpenAIIcon, RunwareIcon, XaiIcon } from '@/grafiki/znaki-marek'
+import '../panel2/fundament/powierzchnie.css'
+import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type StanGeneracji } from './typy'
+import { byteZaObraz } from './dostawca'
+import type { Zalacznik } from './zalaczniki'
+import { useKlawiatura, useMobilny } from './mobilny'
+import { INTENCJE, type Intencja } from './tryby-edycji'
+import type { OpcjaRol } from './role-z-polecenia'
+
+const godzina = (d: Date) => d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+/** Wersja i czasy: po pullu zmienia się hash, po restarcie serwera — godzina serwera, po odświeżeniu — godzina strony. */
+const WERSJA = typeof __CANVAS_WERSJA__ === 'string' ? __CANVAS_WERSJA__ : 'dev'
+
+export interface WiadomoscCzatu {
+  id: string
+  rola: 'uzytkownik' | 'asystent' | 'system'
+  tresc: string
+  czas: string
+  pineskiSnap?: { id: string; label: string; numer: number }[]
+  obrazUrl?: string
+  nazwaWyniku?: string
+  opisWyniku?: string
+  czasGeneracjiMs?: number
+  intencja?: Intencja
+  /** nazwa modelu, którym powstał wynik — pokazywana nad obrazem */
+  model?: string
+  /** wynik kontroli po generacji — bez niego nie twierdzimy, że się udało */
+  ocena?: { wykonane: boolean; znaczniki: boolean; tekst: string }
+}
+
+interface Props {
+  pineski: Pineska[]
+  warstwy: Warstwa[]
+  /** zaznaczone zdjęcie na płótnie — pokazujemy je w kompozytorze jako „w odniesieniu do” */
+  wybranaWarstwa: string | null
+  /** wiele zaznaczonych zdjęć (≥2) = referencje generacji bez pinesek */
+  zaznaczoneWarstwy: Warstwa[]
+  onOdznaczWarstwe: () => void
+  tekst: string
+  onTekst: (t: string) => void
+  onWybierzPineske: (id: string | null) => void
+  wybranaPineska: string | null
+  onUsunPineske: (id: string) => void
+  onZmienNazwePineski: (id: string, label: string) => void
+  onWlaczNarzędziePineska: () => void
+  onGeneruj: () => void
+  stanGeneracji: StanGeneracji
+  powodBlokady: string | null
+  trwa: boolean
+  intencja: Intencja
+  podgladPolecenia: string
+  /** odpowiedź na pytanie o role pinesek (poziom 4) — od razu uruchamia generację */
+  onOdpowiedzRol: (opcja: OpcjaRol) => void
+  modelObrazu: ModelObrazu
+  onModelObrazu: (m: ModelObrazu) => void
+  /** wersja promptów: Studio (zdanie użytkownika + bloki Studia Zdjęć) albo Nasz */
+  trybPromptow: 'studio' | 'hybryda' | 'nasz'
+  onTrybPromptow: (t: 'studio' | 'hybryda' | 'nasz') => void
+  /** menu „+”: dodawanie zdjęć na płótno */
+  onDodajPlik: () => void
+  /** załączniki czatu: zdjęcia-referencje i instrukcje tekstowe (poza płótnem) */
+  zalaczniki: Zalacznik[]
+  onZalacz: () => void
+  onUsunZalacznik: (id: string) => void
+  onWklejZeSchowka: () => void
+  onDodajZAdresu: () => void
+}
+
+/** Modele obrazu w panelu „Modele”. `dostepny: false` — model jest w cenniku, ale Canvas jeszcze go nie obsługuje. */
+export type ModelObrazu = 'auto' | 'lite' | 'nb2' | 'pro' | 'gptimage2'
+
+const MODELE_OBRAZU = [
+  { id: 'lite', nazwa: 'Nano Banana 2 Lite', krotko: 'Lite', ikona: Zap, opis: 'Szybkie szkice i proste zmiany', dostepny: true },
+  { id: 'nb2', nazwa: 'Nano Banana 2', krotko: 'NB 2', ikona: Sparkles, opis: 'Uniwersalny, na co dzień', dostepny: true },
+  { id: 'pro', nazwa: 'Nano Banana Pro', krotko: 'Pro', ikona: Gem, opis: 'Najlepszy detal i wierność obiektu', dostepny: true },
+  { id: 'flux2pro', nazwa: 'FLUX.2 Pro', krotko: 'FLUX', ikona: Layers, opis: 'Black Forest Labs — wkrótce w Canvas.', dostepny: false },
+  { id: 'ideogram4', nazwa: 'Ideogram 4.0', krotko: 'Ideogram', ikona: Layers, opis: 'Ideogram — wkrótce w Canvas.', dostepny: false },
+  { id: 'seedream5', nazwa: 'Seedream 5.0 Pro', krotko: 'Seedream', ikona: Layers, opis: 'ByteDance — wkrótce w Canvas.', dostepny: false },
+  { id: 'qwen3', nazwa: 'Qwen Image 3.0 Pro', krotko: 'Qwen', ikona: Layers, opis: 'Alibaba — wkrótce w Canvas.', dostepny: false },
+  { id: 'klingo3', nazwa: 'Kling Image O3', krotko: 'Kling', ikona: Layers, opis: 'Kling AI — wkrótce w Canvas.', dostepny: false },
+  { id: 'grok', nazwa: 'Grok Imagine', krotko: 'Grok', ikona: Layers, opis: 'xAI — wkrótce w Canvas.', dostepny: false },
+  { id: 'gptimage2', nazwa: 'GPT Image 2', krotko: 'GPT', ikona: Layers, opis: 'Skala, perspektywa i napisy', dostepny: true },
+  { id: 'zimage', nazwa: 'Z-Image Turbo', krotko: 'Z-Image', ikona: Layers, opis: 'Runware — wkrótce w Canvas.', dostepny: false },
+] as const
+
+/** Mały przycisk narzędzia — kształt i obwódka jak przyciski „Ustawienia” / „Aa” w górnym pasku nawigacji. */
+/** Mała miniatura zdjęcia w chipie odniesienia (promień 4px = 8px chipa − 4px). */
+function Miniatura({ src }: { src: string }) {
+  return src ? (
+    <img src={src} alt="" className="h-5 w-5 shrink-0 rounded-[4px] object-cover ring-1 ring-foreground/15" />
+  ) : (
+    <span className="h-5 w-5 shrink-0 rounded-[4px] bg-foreground/10" />
+  )
+}
+
+const NARZEDZIE =
+  'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl p-0 text-foreground/55 transition-all duration-200 hover:bg-foreground/[0.07] hover:text-foreground active:scale-95'
+
+/** Znak dostawcy modelu — z biblioteki znaków marek; brak znaku = neutralna ikona. */
+const ZNAK_MODELU: Record<string, React.ComponentType<{ className?: string }>> = {
+  auto: NextByteMarkIcon,
+  lite: GeminiIcon,
+  nb2: GeminiIcon,
+  pro: GeminiIcon,
+  klingo3: KlingIcon,
+  grok: XaiIcon,
+  gptimage2: OpenAIIcon,
+  zimage: RunwareIcon,
+}
+const znakModelu = (id: string) => ZNAK_MODELU[id] ?? Layers
+
+/** Mały numerek pinezki do chipów — czytelny na jasnym i ciemnym szkle (kropla ze zdjęcia ginęła na jasnym). */
+function NumerPinezki({ n }: { n: number }) {
+  return (
+    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-md border border-foreground/[0.12] bg-foreground/[0.08] text-[10px] font-semibold leading-none text-foreground">
+      {n}
+    </span>
+  )
+}
+
+/** Model w formacie wyszukiwarki z biblioteki (GlassModelSearch); znak dostawcy z biblioteki znaków marek. */
+const metryki = (jakosc: number, precyzja: number, szybkosc: number) => [
+  { label: 'Jakość', value: jakosc },
+  { label: 'Precyzja', value: precyzja },
+  { label: 'Szybkość', value: szybkosc },
+]
+/** Oceny i opisy z jednego porównania (ten sam prompt: auto z Nürburgringu wstawione na zdjęcie z Le Mans; Runware: czas i koszt jednego obrazu). */
+const OCENY_MODELI: Record<string, { jakosc: number; precyzja: number; szybkosc: number; pelny: string }> = {
+  lite: {
+    jakosc: 5, precyzja: 4, szybkosc: 10,
+    pelny: 'Najszybszy i najtańszy. Dobry do szkiców, szybkich prób i prostych zmian. Przy złożonych scenach częściej myli kolor i skalę wstawianego obiektu.',
+  },
+  nb2: {
+    jakosc: 7, precyzja: 7, szybkosc: 8,
+    pelny: 'Dobry wybór na co dzień: trzyma światło i detale i sprawnie edytuje zdjęcia. Skalę wstawianych obiektów czasem lekko zawyża.',
+  },
+  pro: {
+    jakosc: 10, precyzja: 8, szybkosc: 6,
+    pelny: 'Najwierniejszy w detalach i fakturach obiektu — najlepszy tam, gdzie liczy się jakość i podobieństwo do oryginału, także w 4K. Dlatego działa w Inpaint i Eraser. Skalę i odległość wstawianych obiektów trzeba czasem poprawić.',
+  },
+  gptimage2: {
+    jakosc: 9, precyzja: 10, szybkosc: 2,
+    pelny: 'Najlepiej trzyma skalę, perspektywę i położenie obiektów, dokładnie wykonuje polecenia i radzi sobie z napisami. Domyślny model; używany też do Outpaintu. Obiekt bywa mniej wierny oryginałowi.',
+  },
+}
+const MODELE_DO_WYSZUKIWARKI: Model[] = [...MODELE_OBRAZU]
+  .filter(m => m.dostepny) // w wyszukiwarce tylko modele, które Canvas naprawdę obsługuje
+  .sort((x, y) => (x.id === 'gptimage2' ? -1 : y.id === 'gptimage2' ? 1 : 0)) // domyślny model na górze listy
+  .map((m): Model => {
+    const Z = znakModelu(m.id)
+    return {
+      id: m.id, name: m.nazwa, provider: m.id === 'gptimage2' ? 'OpenAI' : 'Google Gemini', badge: m.id === 'gptimage2' ? 'OpenAI' : 'Google',
+      // bez opisów — karta modelu pokazuje tylko paski Jakość / Precyzja / Szybkość i koszt
+      group: 'NEXTBYTE', description: '', tags: ['obraz', m.krotko.toLowerCase()],
+      cost: byteZaObraz(m.id), speed: 'balanced', icon: <Z className="h-4 w-4" />,
+      metrics: metryki(OCENY_MODELI[m.id]?.jakosc ?? 6, OCENY_MODELI[m.id]?.precyzja ?? 6, OCENY_MODELI[m.id]?.szybkosc ?? 5),
+      messageCost: byteZaObraz(m.id), reasoningLevels: [],
+    }
+  })
+
+export function CzatCanvas({
+  pineski,
+  warstwy,
+  wybranaWarstwa,
+  zaznaczoneWarstwy,
+  onOdznaczWarstwe,
+  tekst,
+  onTekst,
+  onWybierzPineske,
+  wybranaPineska,
+  onUsunPineske,
+  onZmienNazwePineski,
+  onWlaczNarzędziePineska,
+  onGeneruj,
+  stanGeneracji,
+  powodBlokady,
+  trwa,
+  intencja,
+  onOdpowiedzRol,
+  modelObrazu,
+  onModelObrazu,
+  trybPromptow,
+  onTrybPromptow,
+  onDodajPlik,
+  zalaczniki,
+  onZalacz,
+  onUsunZalacznik,
+  onWklejZeSchowka,
+  onDodajZAdresu,
+}: Props) {
+  const zaznaczona = warstwy.find(w => w.id === wybranaWarstwa && w.type === 'image' && !w.generator && w.src) ?? null
+  // Jedno menu naraz: plus (dodawanie), modele
+  const [menu, setMenu] = useState<null | 'plus' | 'modele'>(null)
+  const [odswiez, setOdswiez] = useState(0)
+  const [nagrywa, setNagrywa] = useState(false)
+  const rozpoznawanie = useRef<{ stop: () => void } | null>(null)
+  const przelaczNagrywanie = () => {
+    if (nagrywa) { rozpoznawanie.current?.stop(); return }
+    const SR = (window as unknown as { SpeechRecognition?: new () => any; webkitSpeechRecognition?: new () => any }).SpeechRecognition
+      ?? (window as unknown as { webkitSpeechRecognition?: new () => any }).webkitSpeechRecognition
+    if (!SR) return
+    const r = new SR()
+    r.lang = 'pl-PL'
+    r.interimResults = false
+    r.onresult = (e: any) => { const t = Array.from(e.results as ArrayLike<any>).map(x => x[0].transcript).join(' '); onTekst(`${tekst} ${t}`.trim()) }
+    r.onend = () => setNagrywa(false)
+    r.onerror = () => setNagrywa(false)
+    rozpoznawanie.current = r
+    setNagrywa(true)
+    r.start()
+  }
+  const refPasek = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!menu) return
+    const naKlik = (e: MouseEvent) => {
+      if (refPasek.current && !refPasek.current.contains(e.target as Node)) setMenu(null)
+    }
+    const naEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(null) }
+    document.addEventListener('mousedown', naKlik)
+    document.addEventListener('keydown', naEsc)
+    return () => {
+      document.removeEventListener('mousedown', naKlik)
+      document.removeEventListener('keydown', naEsc)
+    }
+  }, [menu])
+  const mobilny = useMobilny()
+  const klawiatura = useKlawiatura()
+  // Telefon (jak w Lovarcie): domyślnie widać sam czat na całym ekranie; płótno otwiera się jednym dotknięciem
+  const [zwiniety, setZwiniety] = useState(false)
+  // Zmiana układu telefon ↔ komputer: czat wraca rozwinięty (na komputerze karta, na telefonie czat na całym ekranie)
+  const poprzedniMobilny = useRef(mobilny)
+  useEffect(() => {
+    if (poprzedniMobilny.current !== mobilny) { poprzedniMobilny.current = mobilny; setZwiniety(false) }
+  }, [mobilny])
+  // Telefon: wysokość dolnego stosu (chipy + pole pisania) mierzona na żywo — dok narzędzi i ołówek odsuwają się o tyle, ile trzeba
+  const refStos = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = refStos.current
+    if (!mobilny || !zwiniety || !el || typeof ResizeObserver === 'undefined') {
+      document.documentElement.style.removeProperty('--nb-mob-stos')
+      return
+    }
+    const o = new ResizeObserver(() => document.documentElement.style.setProperty('--nb-mob-stos', `${Math.round(el.getBoundingClientRect().height)}px`))
+    o.observe(el)
+    return () => { o.disconnect(); document.documentElement.style.removeProperty('--nb-mob-stos') }
+  }, [mobilny, zwiniety, pineski.length, zalaczniki.length, zaznaczona, zaznaczoneWarstwy.length])
+  // Skrót C (z Canvasa): rozwiń panel i ustaw kursor w polu polecenia
+  useEffect(() => {
+    const naCzat = () => {
+      setZwiniety(false)
+      window.setTimeout(() => refTextarea.current?.focus({ preventScroll: true }), 60)
+    }
+    window.addEventListener('nb-canvas-czat', naCzat)
+    return () => window.removeEventListener('nb-canvas-czat', naCzat)
+  }, [])
+  // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
+  useEffect(() => {
+    document.documentElement.style.setProperty('--nb-czat-szer', '0px')
+    // telefon: otwarty arkusz czatu chowa dok narzędzi (nie ma na nim miejsca)
+    if (mobilny && !zwiniety) document.documentElement.setAttribute('data-nb-czat-mob', 'otwarty')
+    else if (mobilny && (pineski.length > 0 || zalaczniki.length > 0 || zaznaczona || zaznaczoneWarstwy.length > 0)) document.documentElement.setAttribute('data-nb-czat-mob', 'chipy')
+    else document.documentElement.removeAttribute('data-nb-czat-mob')
+    return () => {
+      document.documentElement.style.removeProperty('--nb-czat-szer')
+      document.documentElement.removeAttribute('data-nb-czat-mob')
+    }
+  }, [zwiniety, mobilny, pineski.length, zalaczniki.length, zaznaczona, zaznaczoneWarstwy.length])
+  // Commit na dysku (z gita, przy każdym otwarciu) — inny niż załadowany = serwer wymaga restartu
+  const [wersjaDysk, setWersjaDysk] = useState<string | null>(null)
+  useEffect(() => {
+    void fetch('/api/canvas/wersja', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { dysk?: string } | null) => setWersjaDysk(d?.dysk ?? null))
+      .catch(() => setWersjaDysk(null))
+  }, [])
+  const [, setWycinki] = useState<Record<string, string>>({})
+  const wycinkiKlucze = useRef<Record<string, string>>({})
+  const [historiaWiadomosci, setHistoriaWiadomosci] = useState<WiadomoscCzatu[]>([])
+
+  const refKoniecWiadomosci = useRef<HTMLDivElement>(null)
+  const refTextarea = useRef<HTMLTextAreaElement>(null)
+  // Pozycja kursora w polu — do rozpoznania fragmentu słowa, który user pisze.
+  const [pozKursora, setPozKursora] = useState(0)
+
+  /**
+   * Fragment słowa tuż przed kursorem — podstawa smart-chipa.
+   *
+   * User pisze „podusz", a system ma zrozumieć, że chodzi o oznaczoną
+   * „poduszkę". Bierzemy ostatni wyraz przed kursorem (min. 2 znaki) i
+   * szukamy pinesek, których nazwa go zawiera. Reżyser i tak dopisuje resztę
+   * opisu — tu chodzi tylko o szybkie związanie słowa z konkretną pineską.
+   */
+  const fragment = (() => {
+    const przed = tekst.slice(0, pozKursora || tekst.length)
+    const m = przed.match(/([\p{L}]{2,})$/u)
+    return m ? m[1].toLowerCase() : ''
+  })()
+
+  const podpowiedzi =
+    fragment.length >= 2
+      ? pineski
+          .map((p, idx) => ({ p, idx, nazwa: etykietaPineski(p, idx + 1) }))
+          .filter(({ nazwa }) => {
+            const n = nazwa.toLowerCase()
+            return n !== fragment && (n.startsWith(fragment) || n.includes(fragment))
+          })
+          .slice(0, 4)
+      : []
+
+  // Wycinanie podglądów okolic pinesek dla miniatur (smart crop)
+  useEffect(() => {
+    let aktywne = true
+    pineski.forEach(p => {
+      const w = warstwy.find(l => l.id === p.layerId)
+      if (!w) return
+      // Klucz zawiera obecność ramki: po rozpoznaniu obiektu podgląd przelicza się na cały obiekt
+      const klucz = `${p.id}:${p.ramka ? 'r' : '-'}`
+      if (wycinkiKlucze.current[p.id] !== klucz) {
+        wycinkiKlucze.current[p.id] = klucz
+        void wytnijPodgladPineski(w.src, p, 180).then(img => {
+          if (aktywne && img) {
+            setWycinki(prev => ({ ...prev, [p.id]: img }))
+          }
+        })
+      }
+    })
+    return () => {
+      aktywne = false
+    }
+  }, [pineski, warstwy])
+
+  // Gdy generacja zakończy się sukcesem, dopisz do historii czatu
+  useEffect(() => {
+    if (stanGeneracji.faza === 'gotowe' && stanGeneracji.wynik) {
+      const istnieje = historiaWiadomosci.some(w => w.obrazUrl === stanGeneracji.wynik.obrazUrl)
+      if (!istnieje) {
+        setHistoriaWiadomosci(prev => [
+          ...prev,
+          {
+            id: `gen-${Date.now()}`,
+            rola: 'asystent',
+            tresc: '',
+            czas: 'Przed chwilą',
+            obrazUrl: stanGeneracji.wynik.obrazUrl,
+            nazwaWyniku: stanGeneracji.wynik.nazwa,
+            model: modelObrazu === 'auto' ? 'Auto' : MODELE_OBRAZU.find(m => m.id === modelObrazu)?.nazwa,
+            opisWyniku: stanGeneracji.wynik.opis,
+            intencja,
+            ocena: stanGeneracji.ocena
+              ? {
+                  wykonane: stanGeneracji.ocena.wykonane,
+                  znaczniki: stanGeneracji.ocena.znaczniki,
+                  tekst: stanGeneracji.ocena.ocena,
+                }
+              : undefined,
+          },
+        ])
+      }
+    }
+  }, [stanGeneracji])
+
+  // Przewijanie do dołu przy nowej wiadomości — tylko samej listy wiadomości.
+  // scrollIntoView przewijał też wszystkich przodków (także korzeń Canvas
+  // z overflow-hidden), przez co cały widok potrafił odjechać w bok.
+  useEffect(() => {
+    let el = refKoniecWiadomosci.current?.parentElement ?? null
+    let lista: HTMLElement | null = null
+    for (let i = 0; el && i < 5 && !lista; i++, el = el.parentElement) {
+      const oy = getComputedStyle(el).overflowY
+      if (oy === 'auto' || oy === 'scroll') lista = el
+    }
+    lista?.scrollTo({ top: lista.scrollHeight, behavior: 'smooth' })
+  }, [historiaWiadomosci, stanGeneracji.faza])
+
+  // Automatyczny rozmiar pola textarea
+  useEffect(() => {
+    const el = refTextarea.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(130, Math.max(42, el.scrollHeight))}px`
+  }, [tekst])
+
+  // Obsługa wysyłki
+  const wyslij = () => {
+    if (trwa || !tekst.trim() || powodBlokady) return
+    const aktualnyTekst = tekst.trim()
+    const pinySnap =
+      pineski.length === 0 && zaznaczoneWarstwy.length >= 2
+        ? zaznaczoneWarstwy.map((w, idx) => ({ id: w.id, label: w.name, numer: idx + 1 }))
+        : pineski.map((p, idx) => ({
+            id: p.id,
+            label: etykietaPineski(p, idx + 1),
+            numer: idx + 1,
+          }))
+
+    setHistoriaWiadomosci(prev => [
+      ...prev,
+      {
+        id: `user-${Date.now()}`,
+        rola: 'uzytkownik',
+        tresc: aktualnyTekst,
+        czas: 'Teraz',
+        pineskiSnap: pinySnap,
+        intencja,
+      },
+    ])
+
+    onGeneruj()
+  }
+
+  // Wstawianie chipa pineski do tekstu
+  const wstawChip = (p: Pineska, numer: number) => {
+    const nazwa = etykietaPineski(p, numer)
+    const el = refTextarea.current
+    if (!el) return onTekst(`${tekst} ${nazwa}`.trim())
+    const start = el.selectionStart ?? tekst.length
+    const koniec = el.selectionEnd ?? tekst.length
+    const przed = tekst.slice(0, start)
+    const po = tekst.slice(koniec)
+    const spacja = przed && !przed.endsWith(' ') ? ' ' : ''
+    const nowy = `${przed}${spacja}${nazwa} ${po}`
+    onTekst(nowy)
+    requestAnimationFrame(() => {
+      el.focus({ preventScroll: true })
+      const pozycja = (przed + spacja + nazwa + ' ').length
+      el.setSelectionRange(pozycja, pozycja)
+    })
+  }
+
+  // Smart-chip: zamień pisany fragment na pełną nazwę oznaczonej pineski.
+  const zastosujPodpowiedz = (p: Pineska, idx: number) => {
+    const nazwa = etykietaPineski(p, idx + 1)
+    const el = refTextarea.current
+    const kursor = el?.selectionStart ?? pozKursora ?? tekst.length
+    const przed = tekst.slice(0, kursor)
+    const po = tekst.slice(kursor)
+    const przedBezFragmentu = przed.replace(/[\p{L}]{2,}$/u, '')
+    const nowy = `${przedBezFragmentu}${nazwa} ${po}`
+    onTekst(nowy)
+    const pozycja = (przedBezFragmentu + nazwa + ' ').length
+    setPozKursora(pozycja)
+    requestAnimationFrame(() => {
+      el?.focus({ preventScroll: true })
+      el?.setSelectionRange(pozycja, pozycja)
+    })
+  }
+
+  /* ══ WARIANT ZWINIĘTY: Szklana pływająca pastylka ══ */
+  if (zwiniety && mobilny) {
+    const otworz = () => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus({ preventScroll: true }), 60) }
+    return (
+      <div ref={refStos} className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
+        {/* Chipy zaznaczenia: pinezki i załączniki — jeden przewijany rząd nad polem */}
+        {(pineski.length > 0 || zalaczniki.length > 0 || zaznaczona || zaznaczoneWarstwy.length > 0) && (
+          <div className="pointer-events-auto mb-1.5 flex gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {(zaznaczoneWarstwy.length > 0 ? zaznaczoneWarstwy : zaznaczona ? [zaznaczona] : []).map(w => (
+              <span key={w.id} className="p2-kontrolka flex shrink-0 items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-1.5"><Miniatura src={w.src} /><span className="max-w-[90px] truncate">{w.name}</span></span>
+                <button type="button" onClick={onOdznaczWarstwe} aria-label="Odznacz zdjęcie" className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+            {pineski.map((p, idx) => (
+              <span key={p.id} className="p2-kontrolka flex shrink-0 items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                <span className="flex items-center gap-1.5 py-0.5 pl-1.5 pr-1"><NumerPinezki n={idx + 1} />{etykietaPineski(p, idx + 1)}</span>
+                <button type="button" onClick={() => onUsunPineske(p.id)} aria-label={`Usuń pinezkę ${idx + 1}`} className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+            {zalaczniki.map(z => (
+              <span key={z.id} className="p2-kontrolka flex shrink-0 items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-1.5">{z.rodzaj === 'obraz' ? <Miniatura src={z.src ?? ''} /> : <FileText className="ml-0.5 h-4 w-4 text-muted-foreground" />}<span className="max-w-[90px] truncate">{z.nazwa}</span></span>
+                <button type="button" onClick={() => onUsunZalacznik(z.id)} aria-label={`Usuń załącznik ${z.nazwa}`} className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="p2-szklo pointer-events-auto flex min-h-12 items-end gap-1 !rounded-2xl p-1.5">
+          {/* Dedykowany przycisk otwierający pełny czat (historia, modele, załączniki) */}
+          <button type="button" onClick={otworz} aria-label="Otwórz czat" title="Otwórz czat" className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 active:bg-foreground/[0.08]">
+            <MessageSquare className="h-5 w-5" strokeWidth={1.6} />
+            {historiaWiadomosci.length > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />}
+          </button>
+          <textarea
+            ref={refTextarea}
+            value={tekst}
+            rows={1}
+            onChange={e => onTekst(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wyslij() } }}
+            placeholder={pineski.length === 1 ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?` : 'Opisz zmianę…'}
+            aria-label="Polecenie"
+            enterKeyHint="send"
+            className="max-h-[96px] min-h-9 min-w-0 flex-1 resize-none bg-transparent px-1 py-[7px] text-[16px] leading-snug text-foreground outline-none placeholder:text-muted-foreground/70"
+          />
+          <button type="button" onClick={wyslij} disabled={trwa || !tekst.trim() || !!powodBlokady} aria-label="Wyślij" title={powodBlokady ?? `Wyślij · ${byteZaObraz(modelObrazu)} Byte`} className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40">
+            {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2} />}
+          </button>
+        </div>
+      </div>
+    )
+  }
+  if (zwiniety) {
+    return (
+      <div className="pointer-events-auto absolute right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[var(--nb-canvas-gora,16px)] z-30">
+        <button
+          onClick={() => setZwiniety(false)}
+          className="group relative grid h-12 w-12 place-items-center rounded-2xl border border-foreground/[0.08] text-primary backdrop-blur-2xl transition-all duration-200 hover:border-primary/40 active:scale-95"
+          style={{ backgroundColor: 'hsl(var(--card) / 0.85)' }}
+          title="Canvas"
+          aria-label="Rozwiń czat"
+        >
+          <PanelRightOpen className="h-[18px] w-[18px]" />
+          {pineski.length > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-extrabold text-primary-foreground">{pineski.length}</span>
+          )}
+        </button>
+      </div>
+    )
+  }
+
+  /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
+  return (
+    <div className={cn('nb-czat-root p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 top-[calc(var(--nb-nav-gora,0px)+8px)]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny ? { bottom: klawiatura } : undefined}>
+      <div className={cn('p2-szklo nb-cozy-czat pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !bg-[hsl(var(--background))] slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
+        {/* Nagłówek: akcje + gradientowa kreska jak w pasku bocznym platformy */}
+        <div className="nb-czat-naglowek relative flex shrink-0 items-center justify-end pb-2">
+          <div aria-hidden className="pointer-events-none absolute inset-x-1 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => { setHistoriaWiadomosci([]); onTekst('') }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
+              title="Nowy czat"
+              aria-label="Nowy czat"
+            >
+              <CirclePlus className="h-5 w-5" strokeWidth={2.2} />
+            </button>
+            <button
+              onClick={() => { setZwiniety(true); if (mobilny) window.setTimeout(() => window.dispatchEvent(new CustomEvent('nb-canvas-dopasuj')), 120) }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
+              title={mobilny ? "Pokaż płótno" : "Zwiń"}
+              aria-label={mobilny ? "Pokaż płótno" : "Zwiń panel"}
+            >
+              {mobilny ? <Layers className="h-5 w-5" strokeWidth={1.8} /> : <PanelRightClose className="h-5 w-5" strokeWidth={2.2} />}
+            </button>
+          </div>
+        </div>
+
+      {/* ── 3. PRZEWIJANA HISTORIA WIADOMOŚCI & WYNIKÓW ── */}
+      <div className="nb-czat-hist relative z-10 min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {historiaWiadomosci.length === 0 && !trwa && stanGeneracji.faza === 'bezczynny' && (
+          <div className="nb-czat-pusty flex h-full flex-col items-center justify-center px-4 pb-6 text-center">
+            <p className="max-w-[230px] text-[13px] leading-relaxed text-muted-foreground/80">{mobilny ? 'Opisz, co chcesz wygenerować, albo dodaj zdjęcie spinaczem.' : 'Wgraj zdjęcie, zaznacz obiekt pinezką i opisz, co zmienić.'}</p>
+          </div>
+        )}
+        {historiaWiadomosci.map(msg => (
+          <div
+            key={msg.id}
+            className={cn(
+              'flex flex-col',
+              msg.rola === 'uzytkownik' ? 'items-end' : 'items-start',
+            )}
+          >
+            {/* Wiadomość użytkownika */}
+            {msg.rola === 'uzytkownik' && (
+              <div className="max-w-[88%] rounded-[20px] rounded-br-md border border-primary/30 bg-gradient-to-br from-primary/[0.18] to-primary/[0.06] px-4 py-2.5 text-[13.5px] font-medium text-[hsl(var(--foreground))]">
+                <p className="leading-relaxed">{msg.tresc}</p>
+                {msg.pineskiSnap && msg.pineskiSnap.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {msg.pineskiSnap.map(snap => (
+                      <span
+                        key={snap.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] py-0.5 pl-1 pr-2 text-[10.5px] font-medium text-[hsl(var(--foreground))]"
+                      >
+                        <NumerPinezki n={snap.numer} />
+                        {snap.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Odpowiedź asystenta: sam obraz (wynik sam ląduje na płótnie) + zapis po najechaniu */}
+            {msg.rola === 'asystent' && (
+              <div className="w-full space-y-2">
+                {msg.tresc && <p className="px-1 text-[13px] leading-[1.65] text-foreground/90">{msg.tresc}</p>}
+                {msg.obrazUrl && (
+                  <div className="group relative overflow-hidden rounded-2xl border border-foreground/[0.10] bg-foreground/[0.04] shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.10),0_8px_24px_-12px_hsl(0_0%_0%/0.35)]">
+                    <img src={msg.obrazUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl" />
+                    <img src={msg.obrazUrl} alt="Wynik generacji" className="nb-obraz-wejscie relative mx-auto max-h-[300px] w-full object-contain" />
+                    <a
+                      href={msg.obrazUrl}
+                      download={`${(msg.nazwaWyniku || 'nextbyte').replace(/[^\w.-]+/g, '_')}.jpg`}
+                      title="Zapisz obraz"
+                      aria-label="Zapisz obraz"
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-[10px] border border-foreground/[0.12] bg-[hsl(var(--background)/0.62)] text-foreground/80 opacity-0 max-md:opacity-100 backdrop-blur-md transition-all duration-150 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Trwający proces generacji / stan */}
+        {trwa && (
+          <div role="status" aria-live="polite" className="flex items-start gap-2.5 rounded-2xl bg-primary/[0.07] p-3.5 text-[12px] text-foreground">
+            <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-[11.5px]">
+                {stanGeneracji.faza === 'planuje' && 'Asystent analizuje scenę i mapę miejsc...'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting' && 'Maluję zaznaczony obszar…'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator' && 'Generuję obraz z opisu…'}
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'referencje' && (stanGeneracji.plan ?? 'Generuję z referencji…')}
+                {stanGeneracji.faza === 'trwa' && !stanGeneracji.tryb && 'Runware generuje obraz z zachowaniem skali...'}
+                {stanGeneracji.faza === 'sprawdza' && 'Weryfikacja spójności kadru i oświetlenia...'}
+                {stanGeneracji.faza === 'poprawia' && 'Drugi przebieg: dopasowuję światło, cień i ziarno do oryginału...'}
+                {stanGeneracji.faza === 'koryguje' && `Poprawiam rozmiar i miejsce: ${stanGeneracji.powod}`}
+              </p>
+              <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
+                {stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'inpainting'
+                  ? 'Model pracuje na fragmencie wokół zaznaczenia — reszta zdjęcia zostaje bez zmian.'
+                  : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'referencje'
+                    ? 'Wszystkie zaznaczone zdjęcia idą do modelu jako referencje.'
+                    : stanGeneracji.faza === 'trwa' && stanGeneracji.tryb === 'generator'
+                    ? 'Tworzę nowe zdjęcie od zera, wyłącznie z Twojego opisu.'
+                    : stanGeneracji.faza === 'trwa' && stanGeneracji.role
+                      ? stanGeneracji.role
+                      : 'Nie ruszam nieoznaczonych elementów sceny.'}
+              </p>
+              <div className="nb-pasek-pracy mt-2.5" aria-hidden />
+            </div>
+          </div>
+        )}
+
+        {/* Pytanie o role pinesek — zamiast zgadywać, jedno kliknięcie */}
+        {stanGeneracji.faza === 'pyta' && (
+          <div className="rounded-xl border border-foreground/[0.12] bg-foreground/[0.04] p-3 text-[11.5px] text-foreground">
+            <div className="mb-2 flex items-start gap-2">
+              <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="whitespace-pre-line font-semibold leading-snug">{stanGeneracji.pytanie.tresc}</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {stanGeneracji.pytanie.opcje.map(opcja => (
+                <button
+                  key={opcja.etykieta}
+                  type="button"
+                  onClick={() => onOdpowiedzRol(opcja)}
+                  className="rounded-lg border border-foreground/[0.12] bg-foreground/[0.05] px-3 py-2 text-left text-[11.5px] font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/[0.08] hover:text-foreground active:scale-[0.98]"
+                >
+                  {opcja.etykieta}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Błąd generacji */}
+        {stanGeneracji.faza === 'blad' && (
+          <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-[11.5px] text-foreground">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 nb-tekst-bledu" />
+            <div className="min-w-0 flex-1">
+              <span className="block font-semibold">Błąd generacji</span>
+              <span className="mt-0.5 block break-words text-[10.5px] leading-relaxed text-muted-foreground">
+                {stanGeneracji.tresc}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div ref={refKoniecWiadomosci} />
+      </div>
+
+      {/* Kompozytor: podgląd (na żądanie), podpowiedzi, chipy pinesek, jedno pole i jeden przycisk */}
+      <div className="relative z-20 shrink-0 space-y-2">
+        {podpowiedzi.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="mr-0.5 text-[11px] p2-cichy">„{fragment}…" →</span>
+            {podpowiedzi.map(({ p, idx }) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => zastosujPodpowiedz(p, idx)}
+                className="p2-kontrolka p2-akcent-rant flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[hsl(var(--foreground))]"
+                title={`Wstaw jako oznaczony obiekt (pinezka ${idx + 1})`}
+              >
+                <NumerPinezki n={idx + 1} />
+                {etykietaPineski(p, idx + 1)}
+              </button>
+            ))}
+          </div>
+        )}
+
+
+        <div ref={refPasek} className="nb-cozy-niecka p-3">
+          {/* W odniesieniu do czego jest polecenie: zaznaczone zdjęcie i pinezki — każda z miniaturą swojego zdjęcia */}
+          {(zaznaczona || pineski.length > 0 || zaznaczoneWarstwy.length >= 2 || zalaczniki.length > 0) && (
+            <div className="mb-2 flex flex-wrap items-center gap-1" aria-label="Polecenie dotyczy">
+              {pineski.length === 0 &&
+                zaznaczoneWarstwy.map((w, idx) => (
+                  <span key={w.id} className="p2-kontrolka flex items-center gap-1.5 py-0.5 pl-1 pr-2 text-[11px] font-medium text-foreground/85" title={`Referencja ${idx + 1}: ${w.name}`}>
+                    <Miniatura src={w.src} />
+                    <NumerPinezki n={idx + 1} />
+                    <span className="max-w-[110px] truncate">{w.name}</span>
+                  </span>
+                ))}
+              {pineski.length === 0 && zaznaczoneWarstwy.length >= 2 && (
+                <button type="button" onClick={onOdznaczWarstwe} className="grid h-6 w-6 place-items-center rounded-lg text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground" title="Odznacz wszystkie" aria-label="Odznacz wszystkie">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+              {zaznaczona && zaznaczoneWarstwy.length < 2 && !pineski.some(p => p.layerId === zaznaczona.id) && (
+                <span className="p2-kontrolka flex items-center overflow-hidden text-[11px] font-medium text-foreground/85">
+                  <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-2">
+                    <Miniatura src={zaznaczona.src} />
+                    <span className="max-w-[150px] truncate">{zaznaczona.name}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onOdznaczWarstwe}
+                    className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+                    title="Odznacz zdjęcie"
+                    aria-label="Odznacz zdjęcie"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {zalaczniki.map(z => (
+                <span key={z.id} className="p2-kontrolka flex items-center overflow-hidden text-[11px] font-medium text-foreground/85" title={z.rodzaj === 'obraz' ? `Referencja: ${z.nazwa}` : `Instrukcja z pliku: ${z.nazwa}`}>
+                  <span className="flex items-center gap-1.5 py-0.5 pl-1 pr-2">
+                    {z.rodzaj === 'obraz' ? <Miniatura src={z.src ?? ''} /> : <FileText className="ml-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}
+                    <span className="max-w-[120px] truncate">{z.nazwa}</span>
+                  </span>
+                  <button type="button" onClick={() => onUsunZalacznik(z.id)} className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground" title="Usuń załącznik" aria-label={`Usuń załącznik ${z.nazwa}`}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {pineski.map((p, idx) => {
+                const wz = warstwy.find(w => w.id === p.layerId)
+                return (
+                  <span key={p.id} className="p2-kontrolka group flex items-center overflow-hidden text-[11px] font-medium p2-cichy">
+                    <button
+                      type="button"
+                      onClick={() => wstawChip(p, idx + 1)}
+                      className="flex items-center gap-1.5 py-0.5 pl-1 pr-1 transition-colors hover:text-[hsl(var(--foreground))]"
+                      title={`Wstaw nazwę obiektu do polecenia${wz ? ` — zdjęcie: ${wz.name}` : ''}`}
+                    >
+                      {wz && <Miniatura src={wz.src} />}
+                      <NumerPinezki n={idx + 1} />@{etykietaPineski(p, idx + 1)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onUsunPineske(p.id)}
+                      className="grid h-full place-items-center px-1.5 py-1 text-muted-foreground/70 transition-colors hover:bg-[hsl(var(--destructive)/0.15)] hover:text-[hsl(var(--destructive))]"
+                      title="Usuń pinezkę"
+                      aria-label={`Usuń pinezkę ${idx + 1}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
+          <textarea
+            ref={refTextarea}
+            value={tekst}
+            onChange={e => {
+              onTekst(e.target.value)
+              setPozKursora(e.target.selectionStart ?? e.target.value.length)
+            }}
+            onKeyUp={e => setPozKursora(e.currentTarget.selectionStart ?? 0)}
+            onClick={e => setPozKursora(e.currentTarget.selectionStart ?? 0)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                wyslij()
+              }
+            }}
+            placeholder={
+              pineski.length === 0 && zaznaczoneWarstwy.length >= 2
+                ? `${zaznaczoneWarstwy.length} zdjęć — opisz wynik`
+                : pineski.length === 0
+                ? 'Opisz zmianę…'
+                : pineski.length === 1
+                  ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?`
+                  : 'Opisz zmianę…'
+            }
+            aria-label="Polecenie"
+            enterKeyHint="send"
+            className="max-h-[110px] min-h-[48px] w-full resize-none bg-transparent p-1 text-[14px] max-md:text-[16px] leading-relaxed text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)]"
+          />
+          <div className="mt-1" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-1.5">
+              {/* Załącz plik — plik, schowek albo adres */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMenu(m => (m === 'plus' ? null : 'plus'))}
+                  aria-haspopup="menu"
+                  aria-expanded={menu === 'plus'}
+                  aria-label="Załącz plik"
+                  title="Załącz plik"
+                  className={cn(NARZEDZIE, menu === 'plus' && 'border-primary/40 bg-primary/[0.15] text-primary')}
+                >
+                  <Paperclip className="h-4 w-4" />
+                </button>
+                {menu === 'plus' && (
+                  <div className="absolute bottom-full left-0 z-40 mb-2 w-[230px]">
+                    <div role="menu" className="overflow-hidden rounded-2xl border border-foreground/[0.12] bg-[hsl(var(--card))] p-1.5 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.5)]">
+                      {[
+                        { ikona: Paperclip, nazwa: 'Załącz jako referencję', akcja: onZalacz },
+                        { ikona: Upload, nazwa: 'Wstaw na płótno', akcja: onDodajPlik },
+                        { ikona: Clipboard, nazwa: 'Wklej ze schowka', akcja: onWklejZeSchowka },
+                        { ikona: Link2, nazwa: 'Z adresu URL', akcja: onDodajZAdresu },
+                      ].map(({ ikona: Ik, nazwa, akcja }) => (
+                        <button
+                          key={nazwa}
+                          role="menuitem"
+                          type="button"
+                          onClick={() => { setMenu(null); akcja() }}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12px] font-medium text-foreground/75 transition-all duration-150 hover:bg-foreground/[0.08] hover:text-foreground"
+                        >
+                          <Ik className="h-3.5 w-3.5" />
+                          {nazwa}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={przelaczNagrywanie}
+                aria-pressed={nagrywa}
+                aria-label="Nagraj"
+                title={nagrywa ? 'Zatrzymaj nagrywanie' : 'Nagraj głosem'}
+                className={cn(NARZEDZIE, nagrywa && 'border-destructive/40 bg-destructive/15 text-destructive')}
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+            <GlassModelSearch
+              key={`${modelObrazu}-${odswiez}`}
+              models={MODELE_DO_WYSZUKIWARKI}
+              selectedId={modelObrazu}
+              placement="top"
+              align="left"
+              odwroc
+              szklo
+              onSelect={mo => {
+                const model = MODELE_OBRAZU.find(x => x.id === mo.id)
+                if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)
+                else setOdswiez(n => n + 1)
+              }}
+            />
+            <button
+              onClick={wyslij}
+              disabled={trwa || !tekst.trim() || !!powodBlokady}
+              title={powodBlokady ?? `Wyślij · ${byteZaObraz(modelObrazu)} Byte`}
+              aria-label="Wyślij"
+              className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2} />}
+            </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    </div>
+  )
+}

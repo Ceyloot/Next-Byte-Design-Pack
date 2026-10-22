@@ -7,12 +7,14 @@ import { WejscieNaPlatforme } from './WejscieNaPlatforme'
 export function Onboarding({
   poczatkowyEtap = 'pytania',
   onWrocDoFormularza,
+  wariant = 'domyslny',
 }: {
   poczatkowyEtap?: 'pytania' | 'platforma'
   onWrocDoFormularza?: () => void
+  wariant?: 'domyslny' | 'trzy'
 }) {
   const [etap, setEtap] = useState(poczatkowyEtap)
   return etap === 'pytania'
-    ? <OnboardingFlow onWrocDoFormularza={onWrocDoFormularza} onZakoncz={() => setEtap('platforma')} />
+    ? <OnboardingFlow onWrocDoFormularza={onWrocDoFormularza} onZakoncz={() => setEtap('platforma')} wariant={wariant} />
     : <WejscieNaPlatforme />
 }

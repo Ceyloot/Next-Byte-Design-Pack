@@ -12,7 +12,7 @@ import {
 import { PLANY } from '@/sections/strona-glowna/data'
 import zdjAnimal from '@/assets/studio/animal.jpg'
 import zdjCar from '@/assets/studio/car.jpg'
-import zdjInterior from '@/assets/studio/interior.jpg'
+import { zdjecieCanvas } from './zdjecia-onboardingu'
 import zdjLandscape from '@/assets/studio/landscape.jpg'
 
 /* Onboarding — faza C (spec: ./ONBOARDING.md). Po ostatnim pytaniu
@@ -108,7 +108,7 @@ function Modal({ children, className, onZamknij }: { children: React.ReactNode; 
       role="dialog"
       aria-modal="true"
       className={cn(
-        'nb-modal-wchodzi relative isolate w-full overflow-hidden rounded-3xl border border-foreground/[0.10]',
+        'nb-modal-wchodzi relative isolate max-h-[calc(100dvh-16px)] w-full overflow-y-auto overflow-x-hidden rounded-3xl border border-foreground/[0.10]',
         'bg-[hsl(var(--card)/0.92)] backdrop-blur-xl',
         'shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.10),0_24px_80px_-20px_hsl(0_0%_0%/0.55)]',
         className,
@@ -215,7 +215,7 @@ function PlatformaWTle() {
         ))}
       </div>
       <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 lg:grid-cols-3">
-        {[zdjLandscape, null, zdjCar, null, zdjInterior, zdjAnimal].map((src, i) => (
+        {[zdjLandscape, null, zdjCar, null, zdjecieCanvas, zdjAnimal].map((src, i) => (
           <div key={i} className="overflow-hidden rounded-2xl bg-[hsl(var(--card))] ring-1 ring-inset ring-[hsl(var(--foreground)/0.08)]">
             {src
               ? <img src={src} alt="" className="h-full w-full object-cover opacity-70" />
@@ -228,22 +228,24 @@ function PlatformaWTle() {
 }
 
 /* ── C1: wszystkie moduły podłączone do jednego konta ────────────────── */
-function ModalModuly({ onDalej }: { onDalej: () => void }) {
+function ModalModuly({ onDalej, kompaktowy = false }: { onDalej: () => void; kompaktowy?: boolean }) {
   // Płytka składa się sama: ścieżki rosną, układy zapalają się po kolei.
   const p = usePostepWCzasie(2600, 250)
   return (
     <Modal className="max-w-[780px]" onZamknij={onDalej}>
-      <div className="px-6 pt-9 text-center sm:px-10">
+      <div className={cn('px-6 text-center sm:px-10', kompaktowy ? 'pt-6 sm:pt-9' : 'pt-9')}>
         <Etykieta>Twoje konto jest gotowe</Etykieta>
         <Naglowek tytul="Wszystkie moduły." akcent="Jedna pula Byte." className="mt-3" />
-        <p className="mx-auto mt-3 max-w-[460px] font-sans text-[15px] font-light leading-relaxed text-foreground/60">
+        <p className={cn('mx-auto mt-3 max-w-[460px] font-sans text-[15px] font-light leading-relaxed text-foreground/60', kompaktowy && 'text-[13.5px] leading-snug sm:text-[15px] sm:leading-relaxed')}>
           Chat AI, notatki i kalendarz działają w planie bez limitu. Generacje liczysz w Byte i dobierasz je, kiedy potrzebujesz więcej.
         </p>
       </div>
-      <div className="relative mx-auto -mt-1 flex max-w-[560px] justify-center px-2 sm:px-6">
-        <WorkspaceVisual postep={p} />
+      <div className={cn('relative mx-auto -mt-1 flex max-w-[560px] justify-center px-2 sm:px-6', kompaktowy && 'max-sm:overflow-hidden')}>
+        <div className={cn('w-full', kompaktowy && 'max-sm:origin-top max-sm:scale-[0.9]')}>
+          <WorkspaceVisual postep={p} />
+        </div>
       </div>
-      <div className="flex justify-center px-6 pb-8">
+      <div className={cn('flex justify-center px-6 pb-8', kompaktowy && 'pb-5 sm:pb-8')}>
         <GlowButton onClick={onDalej} className="min-w-[200px]">Kontynuuj</GlowButton>
       </div>
     </Modal>
@@ -251,61 +253,79 @@ function ModalModuly({ onDalej }: { onDalej: () => void }) {
 }
 
 /* ── C2: osobista zniżka ─────────────────────────────────────────────── */
-function ModalZnizka({ konfig, czas, onDalej, onZamknij }: { konfig: KonfiguracjaOferty; czas: Czas; onDalej: () => void; onZamknij: () => void }) {
+function ModalZnizka({ konfig, czas, onDalej, onZamknij, kompaktowy = false }: { konfig: KonfiguracjaOferty; czas: Czas; onDalej: () => void; onZamknij: () => void; kompaktowy?: boolean }) {
   // Znak Byte rysuje się jednym ruchem pióra, a procent nabija się od zera.
   const rys = usePostepWCzasie(1400, 150)
   const licz = usePostepWCzasie(1500, 500)
   const procent = Math.round(konfig.procent * licz)
 
+  // Znak Byte (animacja) — w wariancie kompaktowym na telefonie stoi obok procentu
+  const znak = (rozmiar: string) => (
+    <div className={cn('relative flex items-center justify-center', rozmiar)}>
+      {[0, 0.8, 1.6].map(d => (
+        <span key={d} aria-hidden className="nb-fala absolute inset-6 rounded-full border border-primary/40" style={{ animationDelay: `${d}s` }} />
+      ))}
+      <svg viewBox="-80 -120 160 240" className="relative h-[78px] w-[52px] overflow-visible sm:h-[150px] sm:w-[100px]" fill="none">
+        <defs>
+          <filter id="nbZnizkaGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <path d={BYTE_PATH_D} stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+          strokeDasharray={BYTE_PATH_LEN} strokeDashoffset={BYTE_PATH_LEN * (1 - rys)} filter="url(#nbZnizkaGlow)" />
+        <path d={BYTE_PATH_D} stroke="hsl(var(--foreground))" strokeOpacity="0.85" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"
+          strokeDasharray={BYTE_PATH_LEN} strokeDashoffset={BYTE_PATH_LEN * (1 - rys)} />
+      </svg>
+    </div>
+  )
+  const liczba = (
+    <>
+      <p className="relative font-heading text-[52px] font-light leading-none tracking-[-3px] text-primary tabular-nums sm:mt-2 sm:text-[64px]">
+        −{procent}%
+      </p>
+      <Etykieta className="relative mt-3">Na plany roczne</Etykieta>
+    </>
+  )
+
   return (
     <Modal className="max-w-[760px]" onZamknij={onZamknij}>
       <div className="grid md:grid-cols-[280px_1fr]">
-        {/* Lewa kolumna: znak Byte + nabijany procent */}
-        <div className="relative flex flex-col items-center justify-center overflow-hidden border-b border-foreground/[0.08] px-6 py-9 md:border-b-0 md:border-r">
-          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 42%, hsl(var(--primary) / 0.16), transparent 65%)' }} />
-          <div className="relative flex h-[168px] w-[168px] items-center justify-center">
-            {[0, 0.8, 1.6].map(d => (
-              <span key={d} aria-hidden className="nb-fala absolute inset-6 rounded-full border border-primary/40" style={{ animationDelay: `${d}s` }} />
-            ))}
-            <svg viewBox="-80 -120 160 240" className="relative h-[150px] w-[100px] overflow-visible" fill="none">
-              <defs>
-                <filter id="nbZnizkaGlow" x="-60%" y="-60%" width="220%" height="220%">
-                  <feGaussianBlur stdDeviation="4" result="b" />
-                  <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-              </defs>
-              <path d={BYTE_PATH_D} stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-                strokeDasharray={BYTE_PATH_LEN} strokeDashoffset={BYTE_PATH_LEN * (1 - rys)} filter="url(#nbZnizkaGlow)" />
-              <path d={BYTE_PATH_D} stroke="hsl(var(--foreground))" strokeOpacity="0.85" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"
-                strokeDasharray={BYTE_PATH_LEN} strokeDashoffset={BYTE_PATH_LEN * (1 - rys)} />
-            </svg>
+        {/* Telefon w wariancie kompaktowym: procent po lewej, animacja po prawej */}
+        {kompaktowy && (
+          <div className="relative flex items-center justify-between overflow-hidden border-b border-foreground/[0.08] px-6 py-5 sm:hidden">
+            <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at 80% 50%, hsl(var(--primary) / 0.16), transparent 65%)' }} />
+            <div className="relative flex flex-col items-start">{liczba}</div>
+            {znak('h-[124px] w-[124px] shrink-0')}
           </div>
-          <p className="relative mt-2 font-heading text-[64px] font-light leading-none tracking-[-3px] text-primary tabular-nums">
-            −{procent}%
-          </p>
-          <Etykieta className="relative mt-3">Na plany roczne</Etykieta>
+        )}
+        {/* Lewa kolumna (komputer; na telefonie w kompaktowym wariancie ukryta): znak Byte + nabijany procent */}
+        <div className={cn('relative flex-col items-center justify-center overflow-hidden border-b border-foreground/[0.08] px-6 py-5 sm:py-9 md:border-b-0 md:border-r', kompaktowy ? 'hidden sm:flex' : 'flex')}>
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 42%, hsl(var(--primary) / 0.16), transparent 65%)' }} />
+          {znak('h-[92px] w-[92px] sm:h-[168px] sm:w-[168px]')}
+          <div className="relative mt-1 flex flex-col items-center sm:mt-2">{liczba}</div>
         </div>
 
         {/* Prawa kolumna: treść, kod, licznik, CTA */}
-        <div className="flex flex-col px-6 py-9 sm:px-9">
+        <div className="flex flex-col px-6 py-5 sm:px-9 sm:py-9">
           <Etykieta>Osobista oferta powitalna</Etykieta>
           <Naglowek tytul="Zaczynasz taniej." akcent={`Do ${konfig.procent}% mniej.`} className="mt-3 text-[clamp(26px,3.4vw,34px)]" />
           <p className="mt-3 font-sans text-[14.5px] font-light leading-relaxed text-foreground/60">
             Zniżka jest przypisana do Twojego konta i działa tylko przez pierwsze godziny po rejestracji.
           </p>
 
-          <div className="mt-6 flex flex-col gap-1.5">
+          <div className="mt-4 flex flex-col gap-1.5 sm:mt-6">
             <Etykieta className="text-[9.5px]">Twój kod</Etykieta>
             <div><KodRabatowy kod={konfig.kod} /></div>
           </div>
 
-          <div className="mt-5 flex flex-col gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:mt-5">
             <Etykieta className="text-[9.5px]">Ważna jeszcze</Etykieta>
             <Licznik czas={czas} />
           </div>
 
-          <GlowButton onClick={onDalej} className="mt-8 w-full justify-center">Odbierz zniżkę</GlowButton>
-          <p className="mt-3 text-center font-sans text-[12px] font-light text-muted-foreground">
+          <GlowButton onClick={onDalej} className="mt-5 w-full justify-center sm:mt-8">Odbierz zniżkę</GlowButton>
+          <p className="mt-3 hidden text-center font-sans text-[12px] font-light text-muted-foreground sm:block">
             Kod dodamy automatycznie przy płatności.
           </p>
         </div>
@@ -320,6 +340,8 @@ function EkranPlanow({ konfig, czas, onZamknij }: { konfig: KonfiguracjaOferty; 
   const plan = (id: string) => PLANY.find(p => p.id === id)!
   const premium = plan('premium')
   const ultimate = plan('ultimate')
+  // Telefon: jedna karta naraz (przełącznik), żeby cały ekran mieścił się bez przewijania
+  const [mobilnyPlan, setMobilnyPlan] = useState<'premium' | 'ultimate'>('premium')
 
   /* Bez Lite na ekranie oferty — Premium zbiera więc cechy Lite i swoje
      („wszystko z Bezpłatnego, a w pakiecie…”), Ultimate dziedziczy z Premium,
@@ -339,29 +361,48 @@ function EkranPlanow({ konfig, czas, onZamknij }: { konfig: KonfiguracjaOferty; 
 
   return (
     <Modal className="max-w-[920px]" onZamknij={onZamknij}>
-      <div className="px-4 pb-8 pt-10 sm:px-10">
+      <div className="px-4 pb-6 pt-8 sm:px-10 sm:pb-8 sm:pt-10">
         <div className="text-center">
           <Etykieta>Osobista oferta · kod {konfig.kod}</Etykieta>
           <Naglowek tytul="Plany z Twoją" akcent={`zniżką do ${konfig.procent}%.`} className="mt-3" />
           <div className="mt-5 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <OkresToggle okres={okres} onChange={setOkres} etykietaRabatu={`do −${Math.max(konfig.rabatPremium, konfig.rabatUltimate)}%`} />
-            <div className="flex items-center gap-2.5">
+            <div className="hidden items-center gap-2.5 sm:flex">
               <Etykieta className="text-[9.5px]">Ważna</Etykieta>
               <Licznik czas={czas} maly />
             </div>
           </div>
         </div>
 
-        <div className="mt-8 grid items-stretch gap-5 md:grid-cols-2">
+        <div className="mt-5 hidden items-stretch gap-5 md:grid md:grid-cols-2 sm:mt-8">
           <PlanCard plan={premium} okres={okres} oferta={ofertaPremium} />
           <PlanCard plan={ultimate} okres={okres} oferta={ofertaUltimate} />
         </div>
-        <p className="mt-6 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-primary/85">
+
+        <div className="mt-4 md:hidden">
+          <div className="mb-3 grid grid-cols-2 gap-1.5 rounded-xl bg-foreground/[0.05] p-1">
+            {(['premium', 'ultimate'] as const).map(id => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setMobilnyPlan(id)}
+                aria-pressed={mobilnyPlan === id}
+                className={cn('h-9 rounded-lg text-[13px] font-semibold transition-colors', mobilnyPlan === id ? 'bg-primary/[0.14] text-primary' : 'text-muted-foreground')}
+              >
+                {id === 'premium' ? 'Premium' : 'Ultimate'}
+              </button>
+            ))}
+          </div>
+          {mobilnyPlan === 'premium'
+            ? <PlanCard plan={premium} okres={okres} kompakt oferta={{ ...ofertaPremium, widoczne: 2 }} />
+            : <PlanCard plan={ultimate} okres={okres} kompakt oferta={{ ...ofertaUltimate, widoczne: 2 }} />}
+        </div>
+        <p className="mt-4 hidden text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-primary/85 sm:mt-6 sm:block">
           Anulujesz w dowolnym momencie · Bez ukrytych opłat · Zniżka tylko na plan roczny
         </p>
 
         {/* Decyzja na dole — po przewinięciu kart nikt nie musi wracać na górę do krzyżyka */}
-        <div className="mt-7 flex flex-col items-center justify-center gap-3 border-t border-foreground/[0.08] pt-7 sm:flex-row sm:gap-5">
+        <div className="mt-5 flex flex-col items-center justify-center gap-2 border-t border-foreground/[0.08] pt-5 sm:mt-7 sm:flex-row sm:gap-5 sm:pt-7">
           <GlowButton onClick={onZamknij} className="min-w-[240px]">Kontynuuj ze zniżką</GlowButton>
           <button
             type="button"
@@ -382,18 +423,15 @@ function ModalFunkcja({ onDalej }: { onDalej: () => void }) {
     <Modal className="max-w-[620px]" onZamknij={onDalej}>
       {/* Wnętrze z nakładką Canvas: zaznaczenie miejsca, pinezka i polecenie
           dla agenta — od razu widać, co ta funkcja robi */}
-      <div className="relative h-[260px] overflow-hidden sm:h-[300px]">
-        <img src={zdjInterior} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="relative aspect-[3/2] overflow-hidden">
+        <img src={zdjecieCanvas} alt="" className="absolute inset-0 h-full w-full object-cover object-[50%_30%]" />
+        <span aria-hidden className="nb-skan-przelatuje pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         <span className="absolute inset-0 bg-gradient-to-b from-transparent via-[hsl(var(--card)/0.15)] to-[hsl(var(--card))]" />
-        <div className="absolute left-[60%] top-[50%] h-[24%] w-[18%] rounded-lg border-2 border-dashed border-primary shadow-[0_0_0_9999px_hsl(0_0%_0%/0.18)]">
+        <div className="nb-zaznaczenie-pulsuje absolute left-[60%] top-[50%] h-[24%] w-[18%] rounded-lg border-2 border-dashed border-primary bg-primary/10">
           <span className="absolute -left-2.5 -top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-mono text-[10px] font-bold text-primary-foreground">1</span>
         </div>
-        <div className="absolute left-[34%] top-[30%] flex items-center gap-2 rounded-xl border border-white/15 bg-black/55 px-3 py-2 backdrop-blur-md">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-          <span className="font-mono text-[11px] text-white/90">Wstaw tu fotel z referencji</span>
-        </div>
       </div>
-      <div className="relative -mt-12 px-6 pb-9 text-center sm:px-12">
+      <div className="relative -mt-10 px-6 pb-7 text-center sm:-mt-12 sm:px-12 sm:pb-9">
         <Etykieta>Nowość w NextByte</Etykieta>
         <h2 className="mt-3 text-[30px] font-extrabold uppercase leading-[1.02] tracking-[-0.03em] text-foreground sm:text-[38px]">
           Nowa funkcja
@@ -412,10 +450,13 @@ function ModalFunkcja({ onDalej }: { onDalej: () => void }) {
 export function WejscieNaPlatforme({
   konfig = KONFIG_OFERTY,
   onZakoncz,
+  kompaktowy = false,
 }: {
   konfig?: KonfiguracjaOferty
   /** Po zamknięciu ostatniego modala — użytkownik jest na platformie */
   onZakoncz?: () => void
+  /** Ciaśniejszy pierwszy modal, żeby mieścił się na telefonie bez przewijania (Onboarding 3) */
+  kompaktowy?: boolean
 }) {
   const [etap, setEtap] = useState<Etap>('moduly')
   const czas = useOdliczanie(konfig.czasSekund)
@@ -436,9 +477,9 @@ export function WejscieNaPlatforme({
           className="nb-tlo-wchodzi absolute inset-0 overflow-y-auto bg-[hsl(var(--background)/0.55)] backdrop-blur-md"
         >
           <div className="flex min-h-full items-center justify-center p-4 sm:p-8">
-            {etap === 'moduly' && <ModalModuly onDalej={() => setEtap('znizka')} />}
+            {etap === 'moduly' && <ModalModuly onDalej={() => setEtap('znizka')} kompaktowy={kompaktowy} />}
             {etap === 'znizka' && (
-              <ModalZnizka konfig={konfig} czas={czas} onDalej={() => setEtap('plany')} onZamknij={() => setEtap('funkcja')} />
+              <ModalZnizka konfig={konfig} czas={czas} onDalej={() => setEtap('plany')} onZamknij={() => setEtap('funkcja')} kompaktowy={kompaktowy} />
             )}
             {etap === 'plany' && <EkranPlanow konfig={konfig} czas={czas} onZamknij={() => setEtap('funkcja')} />}
             {etap === 'funkcja' && <ModalFunkcja onDalej={() => setEtap('koniec')} />}

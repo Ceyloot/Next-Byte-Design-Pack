@@ -639,6 +639,11 @@ function Film({ rozdzial }: { rozdzial: number }) {
 const OGNISKA: [number, number][] = [
   [250, 279], [200, 226], [220, 279], [200, 250], [192, 292], [275, 150], [200, 252],
 ]
+
+/** Punkt ogniskowy sceny w układzie 400×560 — to w nim rysuje się kółko z linią */
+export function ogniskoSceny(scena: IdSceny): [number, number] {
+  return OGNISKA[Math.max(0, KOLEJNOSC.indexOf(scena))]
+}
 const KODY = [
   ['SEQ_01 · HUMAN_INPUT', 'SIGNAL_01'],
   ['SEQ_02 · PROMPT_SPLIT', 'OUT_x6'],
@@ -649,7 +654,7 @@ const KODY = [
   ['SEQ_07 · NEXTBYTE', 'READY'],
 ]
 
-function Hud({ rozdzial }: { rozdzial: number }) {
+function Hud({ rozdzial, bezNapisow = true }: { rozdzial: number; bezNapisow?: boolean }) {
   const [fx, fy] = OGNISKA[rozdzial]
   const [kod, podkod] = KODY[rozdzial]
   const fa = (a: number) => `hsl(var(--foreground) / ${a})`
@@ -658,18 +663,17 @@ function Hud({ rozdzial }: { rozdzial: number }) {
     <svg viewBox={`0 0 ${W} ${H}`} className="pointer-events-none absolute inset-0 h-full w-full" fill="none" aria-hidden>
       <line x1={0} y1={34} x2={W} y2={34} stroke={fa(0.14)} />
       <circle cx={30} cy={34} r={18} stroke={fa(0.16)} />
-      <text key={kod} x={58} y={26} fill={fa(0.55)} fontSize={8.5} fontFamily={mono} letterSpacing={1.2} className="nb-film-etykieta">{kod}</text>
+      {!bezNapisow && <text key={kod} x={58} y={26} fill={fa(0.55)} fontSize={8.5} fontFamily={mono} letterSpacing={1.2} className="nb-film-etykieta">{kod}</text>}
+      {!bezNapisow && (<>
       {/* duże cienkie okręgi wokół ogniska */}
       <g style={{ transform: `translate(${fx}px, ${fy}px)`, transition: 'transform 1.2s cubic-bezier(.4,0,.2,1)' }}>
         {[70, 120, 170].map(r => <circle key={r} cx={0} cy={0} r={r} stroke={fa(0.07)} />)}
         <circle cx={0} cy={0} r={5} stroke="hsl(var(--primary))" />
         <line x1={5} y1={-5} x2={60} y2={-60} stroke={fa(0.3)} />
         <line x1={60} y1={-60} x2={110} y2={-60} stroke={fa(0.3)} />
-        <text key={podkod} x={62} y={-65} fill="hsl(var(--primary))" fontSize={8} fontFamily={mono} letterSpacing={1.2} className="nb-film-etykieta">{podkod}</text>
+        {!bezNapisow && <text key={podkod} x={62} y={-65} fill="hsl(var(--primary))" fontSize={8} fontFamily={mono} letterSpacing={1.2} className="nb-film-etykieta">{podkod}</text>}
       </g>
-      <rect x={W - 70} y={70} width={46} height={1} fill={fa(0.25)} />
-      <rect x={W - 70} y={75} width={46} height={1} fill={fa(0.25)} />
-      <rect x={W - 70} y={80} width={46} height={1} fill={fa(0.25)} />
+      </>)}
     </svg>
   )
 }
@@ -677,14 +681,26 @@ function Hud({ rozdzial }: { rozdzial: number }) {
 /** Lewy panel: film + HUD + podpis. Film nie jest montowany od nowa między
  *  krokami — dostaje tylko numer rozdziału. */
 export function PanelSceny({
-  scena, podpis,
+  scena, podpis, sama = false, bezNapisow = false,
 }: {
   scena: IdSceny
   wybrane: string[]
   podpis: string
   kanaly: { id: string; nazwa: string }[]
+  /** sama: tylko scena, bez karty i podpisu (górna połowa ekranu na telefonie) */
+  sama?: boolean
+  /** bezNapisow: ukrywa etykiety HUD (np. „SEQ_05 · …”) — tylko w trybie sama */
+  bezNapisow?: boolean
 }) {
   const rozdzial = Math.max(0, KOLEJNOSC.indexOf(scena))
+  if (sama) {
+    return (
+      <div className="relative h-full w-full overflow-hidden">
+        <Film rozdzial={rozdzial} />
+        <Hud rozdzial={rozdzial} bezNapisow={bezNapisow} />
+      </div>
+    )
+  }
   return (
     <div className="relative isolate flex h-full w-full flex-col overflow-hidden rounded-2xl bg-[hsl(var(--card))] ring-1 ring-inset ring-[hsl(var(--foreground)/0.10)]">
       <div className="relative min-h-0 flex-1">

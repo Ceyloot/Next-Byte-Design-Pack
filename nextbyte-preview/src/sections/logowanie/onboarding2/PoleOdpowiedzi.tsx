@@ -121,7 +121,7 @@ function ulozenie(n: number, w: number, h: number, rdzen: boolean, mobilny: bool
 }
 
 export function PoleOdpowiedzi({
-  odpowiedzi, wybrane, onWybierz, wielokrotny, rdzen = false, tlo, mobilny, odstep = { gora: 0, dol: 0 }, tryb = 'orbita',
+  odpowiedzi, wybrane, onWybierz, wielokrotny, rdzen = false, tlo, mobilny, odstep = { gora: 0, dol: 0 }, tryb = 'orbita', trzymajWszystkie = false, podpisyMale = false, bezTla = false, pozycje, skalaSymboli = 1,
 }: {
   odpowiedzi: Odpowiedz[]
   wybrane: string[]
@@ -131,6 +131,16 @@ export function PoleOdpowiedzi({
   tlo: Tlo
   mobilny: boolean
   tryb?: TrybUkladu
+  /** Nie rozsypuj pozostałych odpowiedzi po wyborze (Onboarding 1) */
+  trzymajWszystkie?: boolean
+  /** Mniejsze, zawijane podpisy (wąski ekran Onboardingu 1) */
+  podpisyMale?: boolean
+  /** Bez falującego tła pod symbolami (oszczędność na telefonie) */
+  bezTla?: boolean
+  /** Pozycje symboli w ułamkach pola [x, y] — zamiast automatycznego układu */
+  pozycje?: [number, number][]
+  /** Mnożnik wielkości symboli (1 = jak w Onboardingu 2) */
+  skalaSymboli?: number
   /** Pasy u góry i u dołu zajęte przez tekst i nawigację — symbole ich omijają */
   odstep?: { gora: number; dol: number }
 }) {
@@ -150,7 +160,13 @@ export function PoleOdpowiedzi({
     return () => ro.disconnect()
   }, [])
 
-  const surowy = ulozenie(odpowiedzi.length, rozmiar.w, Math.max(0, rozmiar.h - odstep.gora - odstep.dol), rdzen, mobilny, tryb)
+  // Własne pozycje (ułamki pola) zamiast automatycznego układu — np. 3-2-3 na telefonie
+  const surowy = pozycje && rozmiar.w > 0
+    ? {
+        el: pozycje.map(([px, py]) => ({ x: px * rozmiar.w, y: py * rozmiar.h, r: Math.min(rozmiar.w, rozmiar.h) * 0.095 })),
+        rdzen: null,
+      }
+    : ulozenie(odpowiedzi.length, rozmiar.w, Math.max(0, rozmiar.h - odstep.gora - odstep.dol), rdzen, mobilny, tryb)
   const uklad = {
     el: surowy.el.map(u => ({ ...u, y: u.y + odstep.gora })),
     rdzen: surowy.rdzen ? { ...surowy.rdzen, y: surowy.rdzen.y + odstep.gora } : null,
@@ -223,7 +239,7 @@ export function PoleOdpowiedzi({
       // tło sceny — skalowane tak, by pokryło cały ekran
       const sTla = Math.max(r.width / 400, r.height / 560)
       ctx.setTransform(sTla * dpr, 0, 0, sTla * dpr, ((r.width - 400 * sTla) / 2) * dpr, ((r.height - 560 * sTla) / 2) * dpr)
-      rysujTlo(ctx, tlo, t, Math.min(1, t / 0.8) * 0.5, `hsl(${kolory.fg})`, `hsl(${kolory.pr})`, stan)
+      if (!bezTla) rysujTlo(ctx, tlo, t, Math.min(1, t / 0.8) * 0.5, `hsl(${kolory.fg})`, `hsl(${kolory.pr})`, stan)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
       const { el, rdzen: rz } = ukladRef.current
@@ -245,11 +261,11 @@ export function PoleOdpowiedzi({
           const [ox, oy] = glify[q.e][q.p]
           const on = wyb.includes(o.id)
           const hov = najechany.current === o.id
-          const odpada = !wielokrotny && jestWybor && !on
+          const odpada = !trzymajWszystkie && !wielokrotny && jestWybor && !on
           const skala = on && !wielokrotny ? 1.35 : hov ? 1.08 : 1
           const luz = on || hov ? 0.6 : 1.8
-          tx = u.x + ox * u.r * skala + Math.sin(t * 1.3 + q.s * 40) * luz
-          ty = u.y + oy * u.r * skala + Math.cos(t * 1.1 + q.s * 30) * luz
+          tx = u.x + ox * u.r * skala * skalaSymboli + Math.sin(t * 1.3 + q.s * 40) * luz
+          ty = u.y + oy * u.r * skala * skalaSymboli + Math.cos(t * 1.1 + q.s * 30) * luz
           a = on ? 1 : hov ? 0.95 : 0.55
           akc = on
           if (odpada) {
@@ -316,7 +332,10 @@ export function PoleOdpowiedzi({
           >
             <span
               className={cn(
-                'pointer-events-none translate-y-1 whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.16em] transition-all duration-300',
+                'pointer-events-none translate-y-1 font-mono uppercase transition-all duration-300',
+                podpisyMale
+                  ? 'min-h-[2.6em] w-[150px] text-center text-[11px] leading-tight tracking-[0.06em]'
+                  : 'whitespace-nowrap text-[10.5px] tracking-[0.16em]',
                 on ? 'text-primary' : 'text-foreground/50 group-hover:text-foreground',
               )}
             >

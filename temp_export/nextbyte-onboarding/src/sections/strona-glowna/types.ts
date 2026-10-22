@@ -1,0 +1,29 @@
+/** Podstrony publicznej witryny. `logowanie`/`rejestracja` żyją w osobnym
+ *  podglądzie (sections/logowanie), ale zostają w tym typie, bo CTA na
+ *  stronie głównej wciąż na nie kierują. */
+export type HomePage =
+  | 'home' | 'cennik' | 'historia' | 'logowanie' | 'rejestracja' | 'onboarding' | 'wejscie' | 'onboarding2' | 'onboarding3'
+
+/** Ekrany obsługiwane przez podgląd „Logowanie" */
+export const EKRANY_AUTH = ['logowanie', 'rejestracja', 'onboarding', 'wejscie', 'onboarding2', 'onboarding3'] as const
+export type EkranAuth = (typeof EKRANY_AUTH)[number]
+
+export const jestEkranemAuth = (p: HomePage): p is EkranAuth =>
+  (EKRANY_AUTH as readonly string[]).includes(p)
+
+/** Pozycje pod-nawigacji podglądu „Strona główna" */
+export const STRONY: { id: HomePage; label: string }[] = [
+  { id: 'home',     label: 'Strona główna' },
+  { id: 'cennik',   label: 'Cennik' },
+  { id: 'historia', label: 'Historia' },
+]
+
+/** Pozycje pod-nawigacji podglądu „Logowanie" */
+export const STRONY_AUTH: { id: EkranAuth; label: string }[] = [
+  { id: 'logowanie',   label: 'Logowanie' },
+  { id: 'rejestracja', label: 'Rejestracja' },
+  { id: 'onboarding',  label: 'Onboarding' },
+  { id: 'wejscie',     label: 'Wejście na platformę' },
+  { id: 'onboarding2', label: 'Onboarding 2' },
+  { id: 'onboarding3', label: 'Onboarding 3' },
+]

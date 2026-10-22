@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { LogowaniePage } from './logowanie/LogowaniePage'
 import { Onboarding } from './logowanie/Onboarding'
 import { Onboarding2 } from './logowanie/onboarding2/Onboarding2'
+import { Onboarding3 } from './logowanie/onboarding3/Onboarding3'
 import type { EkranAuth } from './strona-glowna/types'
 
 export type { EkranAuth }
@@ -31,6 +32,8 @@ export function LogowanieSection({ ekran = 'logowanie' }: LogowanieSectionProps)
     <div ref={rootRef} className="w-full h-full font-landing text-foreground">
       {ekran === 'onboarding2'
         ? <Onboarding2 key={ekran} />
+        : ekran === 'onboarding3'
+          ? <Onboarding3 key={ekran} />
         : ekran === 'onboarding' || ekran === 'wejscie'
           ? <Onboarding key={ekran} poczatkowyEtap={ekran === 'wejscie' ? 'platforma' : 'pytania'} />
           : <LogowaniePage key={ekran} initialTryb={ekran} />}

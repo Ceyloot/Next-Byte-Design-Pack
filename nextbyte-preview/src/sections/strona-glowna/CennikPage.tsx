@@ -475,8 +475,8 @@ export interface OfertaPlanu {
 }
 
 export function PlanCard({
-  plan, okres, podswietlony = false, oferta,
-}: { plan: Plan; okres: Okres; podswietlony?: boolean; oferta?: OfertaPlanu }) {
+  plan, okres, podswietlony = false, oferta, kompakt = false,
+}: { plan: Plan; okres: Okres; podswietlony?: boolean; oferta?: OfertaPlanu; kompakt?: boolean }) {
   const [prog, setProg] = useState(0)
   const [rozwiniete, setRozwiniete] = useState(false)
   // Wszystkie cechy widoczne — długość listy ma rosnąć z planem
@@ -506,6 +506,7 @@ export function PlanCard({
     <div
       className={cn(
         'group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border p-6 sm:p-7 transition-all duration-300 backdrop-blur-xl',
+        kompakt && 'p-4 sm:p-4',
         wyroznione
           ? 'border-primary/45 bg-[hsl(var(--card)/0.94)] shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.3)]'
           : 'border-foreground/[0.09] bg-[hsl(var(--card)/0.88)] hover:border-foreground/[0.2] hover:bg-[hsl(var(--card)/0.96)] shadow-lg',
@@ -606,8 +607,8 @@ export function PlanCard({
           )}
         </div>
 
-        {/* Suwak progów Byte / Pula Byte + "To wystarczy na" — 100% wyrównane w pionie */}
-        <div className="mb-5 space-y-3">
+        {/* Suwak progów Byte / Pula Byte + "To wystarczy na" — 100% wyrównane w pionie. W wersji kompakt (telefon, onboarding) schowane, żeby ekran się mieścił */}
+        <div className={cn('mb-5 space-y-3', kompakt && 'hidden')}>
           {plan.progi ? (
             <ByteSlider progi={plan.progi} indeks={prog} onChange={setProg} kolor={plan.kolor} />
           ) : (

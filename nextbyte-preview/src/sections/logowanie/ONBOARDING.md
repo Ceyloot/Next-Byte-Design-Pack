@@ -111,3 +111,8 @@ funkcji: duży obraz u góry przechodzący gradientem w tło karty, plakietka
   token oferty.
 - Musi działać w `dark-theme` i `future-theme`.
 - Przejścia kroków: reuse animacji z `OnboardingFlow.tsx` (`nb-krok-wchodzi`/`znika`).
+
+## Telefon (dopasowanie, 22.10.2026)
+
+- Kroki pytań: na telefonie kafelki w dwóch kolumnach, mniejsze odstępy i karty — wszystkie 7 kroków mieści się na ekranie 375×812 bez przewijania. Na komputerze układ bez zmian.
+- Zdjęcie w oknie „Nowa funkcja” (ekran wejścia) to `src/assets/onboarding/zdjecie-canvas.jpg`. Żeby je zmienić: podmień ten plik (ta sama nazwa). Ścieżki są w `zdjecia-onboardingu.ts`.

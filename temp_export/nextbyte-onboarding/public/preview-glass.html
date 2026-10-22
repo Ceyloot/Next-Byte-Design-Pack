@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NextByte · Glass</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:13px;
+  color:#e2e2f0;
+  background:#060610;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 15% 0%,   rgba(100,104,255,.18) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 15%,  rgba(34,211,238,.10) 0%,transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(192,132,252,.08) 0%,transparent 50%);
+  display:flex;overflow:hidden;
+}
+
+/* ── Glass util ── */
+.glass{
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(20px) saturate(1.4);
+  -webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.09);
+}
+.glass-card{
+  background:rgba(255,255,255,.035);
+  backdrop-filter:blur(14px) saturate(1.3);
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  transition:background .18s,border-color .18s,box-shadow .18s;
+}
+.glass-card:hover{
+  background:rgba(255,255,255,.065);
+  border-color:rgba(110,114,255,.45);
+  box-shadow:0 0 0 1px rgba(110,114,255,.15), 0 8px 32px rgba(0,0,0,.3);
+}
+
+/* ── Sidebar ── */
+.sb{
+  width:220px;flex-shrink:0;height:100vh;
+  display:flex;flex-direction:column;
+  background:rgba(255,255,255,.03);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-right:1px solid rgba(255,255,255,.07);
+}
+.sb-logo{
+  height:52px;display:flex;align-items:center;
+  padding:0 14px;gap:9px;
+  border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;
+}
+.sb-mark{
+  width:27px;height:27px;border-radius:8px;
+  background:linear-gradient(135deg,#7b7ef7,#22d3ee);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(123,126,247,.4);
+}
+.sb-mark svg{width:13px;height:13px;color:#fff}
+.sb-name{font-size:14px;font-weight:650;letter-spacing:-.3px;color:#f0f0ff}
+.sb-chip{
+  margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:#9698f9;background:rgba(123,126,247,.15);padding:2px 6px;border-radius:5px;
+  border:1px solid rgba(123,126,247,.25);
+}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 8px}
+.sb-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:12px 10px 4px;display:block}
+.sb-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:9px;
+  color:rgba(255,255,255,.45);font-size:13px;
+  cursor:default;user-select:none;
+  transition:background .12s,color .12s;
+}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.sb-item.on{background:rgba(123,126,247,.14);color:#b0b2fb;border:1px solid rgba(123,126,247,.2)}
+.sb-item.on .ico{color:#9698f9}
+.ico{width:14px;height:14px;flex-shrink:0;color:rgba(255,255,255,.25)}
+.sb-badge{margin-left:auto;font-size:10px;font-weight:600;font-family:monospace;color:#34d399;background:rgba(52,211,153,.12);padding:0 5px;height:15px;border-radius:4px;display:inline-flex;align-items:center;border:1px solid rgba(52,211,153,.2)}
+.sb-div{height:1px;background:rgba(255,255,255,.05);margin:5px 0}
+.sb-foot{border-top:1px solid rgba(255,255,255,.06);padding:10px;flex-shrink:0}
+.sb-user{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;cursor:default}
+.av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7b7ef7,#22d3ee);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(123,126,247,.35)}
+.un{font-size:12px;font-weight:500;color:rgba(255,255,255,.8)}
+.up{font-size:10px;color:rgba(255,255,255,.3)}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{
+  height:52px;display:flex;align-items:center;padding:0 20px;gap:8px;flex-shrink:0;
+  background:rgba(255,255,255,.025);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.crumb{display:flex;align-items:center;gap:5px;font-size:12.5px}
+.crumb .d{color:rgba(255,255,255,.2)}
+.crumb .c{color:rgba(255,255,255,.85);font-weight:500}
+.sp{flex:1}
+.td-s{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.3)}
+.td-dot{width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 6px rgba(52,211,153,.6)}
+.td{font-size:11px;color:rgba(255,255,255,.3);font-family:monospace;padding:0 14px;border-left:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);height:52px;display:flex;align-items:center}
+.btn-p{
+  display:inline-flex;align-items:center;gap:5px;padding:0 13px;height:30px;border-radius:8px;
+  font-size:12px;font-weight:500;border:none;cursor:default;
+  background:linear-gradient(135deg,#7b7ef7,#6366f1);
+  color:#fff;
+  box-shadow:0 2px 12px rgba(123,126,247,.4),0 1px 0 rgba(255,255,255,.12) inset;
+  transition:filter .12s,box-shadow .12s;
+}
+.btn-p:hover{filter:brightness(1.1);box-shadow:0 4px 20px rgba(123,126,247,.55),0 1px 0 rgba(255,255,255,.15) inset}
+.btn-p svg{width:12px;height:12px}
+.btn-g{display:inline-flex;align-items:center;gap:5px;padding:0 11px;height:28px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(255,255,255,.12);cursor:default;background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);backdrop-filter:blur(8px)}
+.btn-g svg{width:12px;height:12px}
+
+.content{flex:1;overflow-y:auto;padding:20px 22px}
+
+/* ── Welcome ── */
+.wl{display:flex;align-items:center;margin-bottom:20px}
+.wl h1{font-size:17px;font-weight:650;letter-spacing:-.4px;line-height:1.2;color:rgba(255,255,255,.92)}
+.wl p{font-size:12px;color:rgba(255,255,255,.35);margin-top:2px}
+.wl-a{margin-left:auto}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.sc{
+  background:rgba(255,255,255,.035);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:16px;
+  transition:background .15s,border-color .15s,box-shadow .15s;
+}
+.sc:hover{background:rgba(255,255,255,.065);border-color:rgba(123,126,247,.4);box-shadow:0 0 24px rgba(123,126,247,.1)}
+.sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.sc-lbl{font-size:11px;font-weight:500;color:rgba(255,255,255,.4)}
+.sc-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center}
+.sc-ico svg{width:12px;height:12px}
+.sc-n{font-family:monospace;font-size:27px;font-weight:650;color:rgba(255,255,255,.9);letter-spacing:-.8px;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:9px}
+.sc-ft{display:flex;align-items:center;justify-content:space-between}
+.sc-sub{font-size:11px;color:rgba(255,255,255,.25);display:flex;align-items:center;gap:3px}
+.up-c{color:#34d399}.dn-c{color:#f87171}
+.spk{width:60px;height:20px;overflow:visible}
+.spk polyline{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+
+/* ── Columns ── */
+.cols{display:grid;grid-template-columns:1fr 300px;gap:13px;margin-bottom:18px}
+.cstack{display:flex;flex-direction:column;gap:13px}
+
+.panel{
+  background:rgba(255,255,255,.03);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;
+  overflow:hidden;
+}
+.ph{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.ph-t{font-size:12px;font-weight:600;color:rgba(255,255,255,.8)}
+.ph-l{font-size:11.5px;color:#9698f9;cursor:default}
+.pb{padding:14px 16px}
+
+/* ── Tools ── */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tc{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;
+  padding:13px;cursor:default;
+  display:flex;flex-direction:column;gap:6px;
+  transition:background .12s,border-color .12s;
+}
+.tc:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14)}
+.tc-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.tc-ico svg{width:13px;height:13px}
+.tc-n{font-size:12px;font-weight:600;color:rgba(255,255,255,.85)}
+.tc-d{font-size:10.5px;color:rgba(255,255,255,.28);line-height:1.3}
+.tc-k{font-size:9.5px;font-family:monospace;color:rgba(255,255,255,.25);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:0 4px;height:14px;border-radius:3px;display:inline-flex;align-items:center;align-self:flex-start}
+
+/* ── Usage ── */
+.ring-w{display:flex;align-items:center;gap:13px;padding:5px 0 16px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:11px}
+.ring{width:48px;height:48px;flex-shrink:0}
+.ring circle{fill:none;stroke-width:4;stroke-linecap:round}
+.rt{stroke:rgba(255,255,255,.08)}
+.rf{stroke:#7b7ef7;stroke-dasharray:131 200;transform:rotate(-90deg);transform-origin:50% 50%;filter:drop-shadow(0 0 4px rgba(123,126,247,.6))}
+.r-lbl{font-size:10.5px;color:rgba(255,255,255,.35)}
+.r-val{font-size:17px;font-weight:650;font-family:monospace;color:rgba(255,255,255,.9);font-variant-numeric:tabular-nums}
+.r-pct{font-size:10.5px;color:rgba(255,255,255,.25)}
+.ur{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.ur:last-child{border-bottom:none}
+.u-l{font-size:11.5px;color:rgba(255,255,255,.4);width:90px;flex-shrink:0}
+.u-t{flex:1;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.u-f{height:100%;border-radius:2px}
+.u-v{font-size:11px;font-family:monospace;color:rgba(255,255,255,.35);width:70px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+
+/* ── Tasks ── */
+.tr{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.tr:last-child{border-bottom:none}
+.ck{width:14px;height:14px;border:1.5px solid rgba(255,255,255,.2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ck.done{background:rgba(52,211,153,.15);border-color:#34d399}
+.ck.done::after{content:'';width:5px;height:3px;border-left:1.5px solid #34d399;border-bottom:1.5px solid #34d399;transform:rotate(-45deg) translateY(-1px)}
+.tt{flex:1;font-size:12px;color:rgba(255,255,255,.8)}
+.tt.done{text-decoration:line-through;color:rgba(255,255,255,.25)}
+.tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px}
+.tac{background:rgba(123,126,247,.15);color:#9698f9;border:1px solid rgba(123,126,247,.25)}
+.tcy{background:rgba(34,211,238,.12);color:#22d3ee;border:1px solid rgba(34,211,238,.2)}
+.twa{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.tok{background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.2)}
+.tpu{background:rgba(192,132,252,.12);color:#c084fc;border:1px solid rgba(192,132,252,.2)}
+
+/* ── Activity ── */
+.ar{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.ar:last-child{border-bottom:none}
+.ad{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.at{font-size:12px;color:rgba(255,255,255,.65);line-height:1.4}
+.at strong{font-weight:600;color:rgba(255,255,255,.85)}
+.atm{font-size:10px;color:rgba(255,255,255,.22);font-family:monospace;margin-top:2px}
+</style>
+</head>
+<body>
+
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-mark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 8h3l2-5 3 9 2-4h2"/></svg></div>
+    <span class="sb-name">NextByte</span>
+    <span class="sb-chip">Pro</span>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-item on">
+      <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      Panel Główny
+    </div>
+    <span class="sb-lbl">Narzędzia AI</span>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10c0 .93-.75 1.67-1.67 1.67H5L2 14.33V4.67C2 3.75 2.75 3 3.67 3h8.66C13.25 3 14 3.75 14 4.67V10Z"/></svg>Chat AI</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="2"/><path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M12.5 2.5l1 1-1 1"/></svg>Agent AI</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="12" height="10" rx="1.5"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></svg>Studio Zdjęć</div>
+    <div class="sb-div"></div>
+    <span class="sb-lbl">Produktywność</span>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="13" rx="1.5"/><path d="M5 1v2M11 1v2M2 6h12"/></svg>Kalendarz</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h8M4 8h8M4 12h5"/><circle cx="2" cy="4" r=".7" fill="currentColor" stroke="none"/><circle cx="2" cy="8" r=".7" fill="currentColor" stroke="none"/><circle cx="2" cy="12" r=".7" fill="currentColor" stroke="none"/></svg>Zadania<span class="sb-badge">7</span></div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h8a1 1 0 0 1 1 1v11l-4-2-4 2V3a1 1 0 0 1 1-1Z"/></svg>Notatki</div>
+    <div class="sb-div"></div>
+    <span class="sb-lbl">Platforma</span>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z"/></svg>Akademia</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 6V4a3 3 0 0 1 6 0v2"/></svg>B2B Panel</div>
+    <div class="sb-item"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h1.5l1 6h7l1-5H5"/><circle cx="6.5" cy="12.5" r="1"/><circle cx="11" cy="12.5" r="1"/></svg>Sklep</div>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="av">AK</div>
+      <div><div class="un">Artur K.</div><div class="up">Plan Pro · 12 dni</div></div>
+      <svg style="margin-left:auto;color:rgba(255,255,255,.2)" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 12l4-4-4-4"/></svg>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="crumb"><span style="color:rgba(255,255,255,.3)">NextByte</span><span class="d">/</span><span class="c">Panel Główny</span></div>
+    <div class="sp"></div>
+    <div class="td-s"><div class="td-dot"></div>Systemy sprawne</div>
+    <div class="td">pon, 11 sie 2026</div>
+    <button class="btn-p" style="margin-left:10px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Nowy chat</button>
+  </header>
+
+  <div class="content">
+    <div class="wl">
+      <div><h1>Panel Główny</h1><p>Przegląd aktywności i skróty do narzędzi.</p></div>
+      <div class="wl-a"><button class="btn-g"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Nowe zadanie</button></div>
+    </div>
+
+    <div class="stats">
+      <div class="sc"><div class="sc-top"><span class="sc-lbl">Tokeny AI</span><div class="sc-ico" style="background:rgba(123,126,247,.15)"><svg viewBox="0 0 16 16" fill="none" stroke="#9698f9" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h3l2-5 3 9 2-4h2"/></svg></div></div><div class="sc-n">284k</div><div class="sc-ft"><div class="sc-sub"><span class="up-c">↑ 12%</span> vs. poprz.</div><svg class="spk" viewBox="0 0 64 22"><polyline points="0,18 8,14 16,16 24,10 32,12 40,7 48,9 56,4 64,6" stroke="#7b7ef7" opacity=".7"/><polyline points="0,22 0,18 8,14 16,16 24,10 32,12 40,7 48,9 56,4 64,6 64,22" fill="#7b7ef7" opacity=".08" stroke="none"/></svg></div></div>
+      <div class="sc"><div class="sc-top"><span class="sc-lbl">Zdjęcia AI</span><div class="sc-ico" style="background:rgba(34,211,238,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="4" width="12" height="10" rx="1.5"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></svg></div></div><div class="sc-n">143</div><div class="sc-ft"><div class="sc-sub"><span class="up-c">↑ 34%</span> mies.</div><svg class="spk" viewBox="0 0 64 22"><polyline points="0,16 8,18 16,12 24,14 32,8 40,11 48,6 56,8 64,4" stroke="#22d3ee" opacity=".7"/><polyline points="0,22 0,16 8,18 16,12 24,14 32,8 40,11 48,6 56,8 64,4 64,22" fill="#22d3ee" opacity=".07" stroke="none"/></svg></div></div>
+      <div class="sc"><div class="sc-top"><span class="sc-lbl">Aktywne zadania</span><div class="sc-ico" style="background:rgba(251,191,36,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#fbbf24" stroke-width="1.6" stroke-linecap="round"><path d="M4 4h8M4 8h8M4 12h5"/><circle cx="2" cy="4" r=".7" fill="#fbbf24" stroke="none"/><circle cx="2" cy="8" r=".7" fill="#fbbf24" stroke="none"/><circle cx="2" cy="12" r=".7" fill="#fbbf24" stroke="none"/></svg></div></div><div class="sc-n">7</div><div class="sc-ft"><div class="sc-sub"><span class="dn-c">↓ 2</span> do jutra</div><svg class="spk" viewBox="0 0 64 22"><polyline points="0,10 8,12 16,14 24,10 32,16 40,12 48,14 56,10 64,12" stroke="#fbbf24" opacity=".6"/></svg></div></div>
+      <div class="sc"><div class="sc-top"><span class="sc-lbl">Notatki</span><div class="sc-ico" style="background:rgba(192,132,252,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#c084fc" stroke-width="1.6" stroke-linecap="round"><path d="M4 2h8a1 1 0 0 1 1 1v11l-4-2-4 2V3a1 1 0 0 1 1-1Z"/></svg></div></div><div class="sc-n">38</div><div class="sc-ft"><div class="sc-sub"><span class="up-c">+3</span> tydzień</div><svg class="spk" viewBox="0 0 64 22"><polyline points="0,18 8,16 16,15 24,14 32,12 40,13 48,10 56,11 64,8" stroke="#c084fc" opacity=".6"/></svg></div></div>
+    </div>
+
+    <div class="cols">
+      <div class="cstack">
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Narzędzia</span><a class="ph-l">Wszystkie →</a></div>
+          <div class="pb">
+            <div class="tools">
+              <a class="tc"><div class="tc-ico" style="background:rgba(123,126,247,.15)"><svg viewBox="0 0 16 16" fill="none" stroke="#9698f9" stroke-width="1.6" stroke-linecap="round"><path d="M14 10c0 .93-.75 1.67-1.67 1.67H5L2 14.33V4.67C2 3.75 2.75 3 3.67 3h8.66C13.25 3 14 3.75 14 4.67V10Z"/></svg></div><div class="tc-n">Chat AI</div><div class="tc-d">GPT, Claude, Gemini</div><span class="tc-k">⌘C</span></a>
+              <a class="tc"><div class="tc-ico" style="background:rgba(99,102,241,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#a5b4fc" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="6" r="2"/><path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M12.5 2.5l1 1-1 1"/></svg></div><div class="tc-n">Agent AI</div><div class="tc-d">Autonomiczne workflow</div><span class="tc-k">⌘A</span></a>
+              <a class="tc"><div class="tc-ico" style="background:rgba(34,211,238,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="4" width="12" height="10" rx="1.5"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></svg></div><div class="tc-n">Studio Zdjęć</div><div class="tc-d">Generowanie obrazów</div><span class="tc-k">⌘S</span></a>
+              <a class="tc"><div class="tc-ico" style="background:rgba(52,211,153,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#34d399" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="2" width="12" height="13" rx="1.5"/><path d="M5 1v2M11 1v2M2 6h12"/></svg></div><div class="tc-n">Kalendarz</div><div class="tc-d">Harmonogram i sync</div><span class="tc-k">⌘K</span></a>
+              <a class="tc"><div class="tc-ico" style="background:rgba(251,191,36,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#fbbf24" stroke-width="1.6" stroke-linecap="round"><path d="M2 4h12M2 8h12M2 12h8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 11v1.5l1 .5"/></svg></div><div class="tc-n">Zadania</div><div class="tc-d">Kanban dla zespołu</div><span class="tc-k">⌘T</span></a>
+              <a class="tc"><div class="tc-ico" style="background:rgba(192,132,252,.12)"><svg viewBox="0 0 16 16" fill="none" stroke="#c084fc" stroke-width="1.6" stroke-linecap="round"><path d="M4 2h8a1 1 0 0 1 1 1v11l-4-2-4 2V3a1 1 0 0 1 1-1Z"/><path d="M6 7h4M6 9.5h2.5"/></svg></div><div class="tc-n">Notatki</div><div class="tc-d">Markdown + bloki</div><span class="tc-k">⌘N</span></a>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Zużycie zasobów</span><a class="ph-l">Kup limity →</a></div>
+          <div class="pb">
+            <div class="ring-w">
+              <svg class="ring" viewBox="0 0 48 48"><circle class="rt" cx="24" cy="24" r="19"/><circle class="rf" cx="24" cy="24" r="19"/></svg>
+              <div><div class="r-lbl">Tokeny ChatAI</div><div class="r-val">284k</div><div class="r-pct">z 500k — 56,8% pozostało</div></div>
+            </div>
+            <div class="ur"><span class="u-l">Zdjęcia</span><div class="u-t"><div class="u-f" style="width:71%;background:#22d3ee"></div></div><span class="u-v">143 / 200</span></div>
+            <div class="ur"><span class="u-l">Przechowywanie</span><div class="u-t"><div class="u-f" style="width:34%;background:#34d399"></div></div><span class="u-v">3,4 / 10 GB</span></div>
+            <div class="ur"><span class="u-l">Agenci</span><div class="u-t"><div class="u-f" style="width:20%;background:#c084fc"></div></div><span class="u-v">4 / 20 uruch.</span></div>
+            <div class="ur"><span class="u-l">API calle</span><div class="u-t"><div class="u-f" style="width:8%;background:#fbbf24"></div></div><span class="u-v">820 / 10k</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cstack">
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Zadania na dziś</span><a class="ph-l">Wszystkie →</a></div>
+          <div class="pb">
+            <div class="tr"><div class="ck done"></div><span class="tt done">Grafiki do kampanii</span><span class="tag tcy">AI</span></div>
+            <div class="tr"><div class="ck done"></div><span class="tt done">Raport B2B za lipiec</span><span class="tag tok">Gotowe</span></div>
+            <div class="tr"><div class="ck"></div><span class="tt">Prompt do agenta AI</span><span class="tag tac">Pro</span></div>
+            <div class="tr"><div class="ck"></div><span class="tt">Onboarding klient 14:00</span><span class="tag twa">Pilne</span></div>
+            <div class="tr"><div class="ck"></div><span class="tt">Post na LinkedIn</span><span class="tag tpu">Treść</span></div>
+            <div class="tr" style="border:none"><div class="ck"></div><span class="tt">Notatki ze spotkania</span><span class="tag tac">Pro</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><span class="ph-t">Ostatnia aktywność</span><a class="ph-l">Historia →</a></div>
+          <div class="pb">
+            <div class="ar"><div class="ad" style="background:#7b7ef7;box-shadow:0 0 5px rgba(123,126,247,.5)"></div><div><div class="at">Chat z <strong>Claude 3.5</strong> — strategia content</div><div class="atm">przed 8 min</div></div></div>
+            <div class="ar"><div class="ad" style="background:#22d3ee;box-shadow:0 0 5px rgba(34,211,238,.5)"></div><div><div class="at">Studio: <strong>6 obrazów</strong> dla klienta</div><div class="atm">przed 42 min</div></div></div>
+            <div class="ar"><div class="ad" style="background:#34d399;box-shadow:0 0 5px rgba(52,211,153,.5)"></div><div><div class="at">Zadanie <strong>„Raport B2B"</strong> ukończone</div><div class="atm">przed 1 godz.</div></div></div>
+            <div class="ar"><div class="ad" style="background:#c084fc;box-shadow:0 0 5px rgba(192,132,252,.5)"></div><div><div class="at">Notatka <strong>„Spotkanie klient X"</strong> edytowana</div><div class="atm">09:14</div></div></div>
+            <div class="ar" style="border:none"><div class="ad" style="background:#fbbf24;box-shadow:0 0 5px rgba(251,191,36,.5)"></div><div><div class="at">Agent <strong>„Analityk treści"</strong> zakończył</div><div class="atm">08:52</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
