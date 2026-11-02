@@ -1,3 +1,4 @@
+import { czytelnyBlad } from './komunikat-bledu'
 import type { ComponentType, ReactNode } from 'react'
 import { Image as IkonaObrazu, Layers, MapPin, Sparkles } from 'lucide-react'
 import { type Pineska, type StanGeneracji, type Warstwa, type Widok } from './typy'
@@ -108,7 +109,7 @@ const panelWyniku: PanelDoku = {
   pasuje: k => k.stanGeneracji.faza === 'gotowe' || k.stanGeneracji.faza === 'blad',
   Tresc: ({ k }) => {
     const s = k.stanGeneracji
-    if (s.faza === 'blad') return <p className="text-[11.5px] leading-relaxed nb-tekst-bledu">{s.tresc}</p>
+    if (s.faza === 'blad') return <p className="text-[11.5px] leading-relaxed nb-tekst-bledu">{czytelnyBlad(s.tresc)}</p>
     if (s.faza !== 'gotowe') return null
     return (
       <>

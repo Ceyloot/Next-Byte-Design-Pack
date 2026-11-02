@@ -156,7 +156,7 @@ function AppInner() {
       {/* Tło — fixed */}
       <AppBackground bgKey={bgKey} />
 
-      <div className="relative min-h-screen text-foreground font-sans flex flex-col" style={{ zIndex: 1 }}>
+      <div className="relative min-h-screen supports-[height:100dvh]:min-h-dvh text-foreground font-sans flex flex-col" style={{ zIndex: 1 }}>
 
         {/* ══ CONTENT ══ */}
         <div className="flex-1 flex flex-col min-h-0">

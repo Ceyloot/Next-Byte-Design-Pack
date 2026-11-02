@@ -109,6 +109,9 @@
 .nb-cozy [data-podpowiedz] {
   position: relative;
 }
+/* Dymek tylko tam, gdzie jest prawdziwy kursor: na dotyku „hover” zostawał po puknięciu
+   i świecił białą plamą zza paska ołówka. z-index nad paskami, żeby nie był przycinany. */
+@media (hover: hover) and (pointer: fine) {
 .nb-cozy [data-podpowiedz]:hover::after,
 .nb-cozy [data-podpowiedz]:focus-visible::after {
   content: attr(data-podpowiedz);
@@ -116,7 +119,7 @@
   bottom: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 60;
+  z-index: 90;
   padding: 6px 11px;
   border-radius: 10px;
   background: hsl(var(--foreground));
@@ -128,6 +131,7 @@
   pointer-events: none;
   box-shadow: 0 8px 20px -8px hsl(var(--cozy-cien) / 0.5);
   animation: nb-cozy-wejscie 0.16s ease-out both;
+}
 }
 
 /* Podpowiedź pod elementem (dla kontrolek przy górnej krawędzi) */
@@ -518,11 +522,43 @@ html[data-nb-czat-mob='otwarty'] .nb-cozy .nb-karta-pin,
 html[data-nb-czat-mob='otwarty'] .nb-cozy .nb-prompter { display: none !important; }
 /* Telefon: dok narzędzi i pasek ołówka leżą nad dolnym stosem (chipy + pole pisania) o zmierzonej wysokości */
 @media (max-width: 767px) {
-  .nb-dok-mob:not(.nb-pencil-bar) { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + 20px) !important; }
-  .nb-dok-mob.nb-pencil-bar { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + 80px) !important; }
+  .nb-dok-mob:not(.nb-pencil-bar) { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + var(--nb-klaw, 0px) + 20px) !important; }
+  .nb-dok-mob.nb-pencil-bar { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + var(--nb-klaw, 0px) + 80px) !important; }
 }
 
 /* Tryb adnotacji: czat schowany, całe pole dla zdjęcia i jednego panelu */
-html[data-nb-adn='1'] .nb-czat-root {
-  display: none !important;
+/* czat na komputerze zostaje widoczny w adnotacjach i Quick edit; chowa się tylko na telefonie (reguły niżej) */
+
+/* Quick edit: na czas pisania zwykły czat (pastylka / panel / przycisk) i dok narzędzi na telefonie są schowane */
+@media (max-width: 767px) {
+  html[data-nb-quick='1'] .nb-czat-ukryj,
+  html[data-nb-quick='1'] .nb-dok-mob { display: none !important; }
+}
+
+/* Adnotacje na telefonie: zwykły czat schowany, pasek malowania przy dolnej krawędzi (nad klawiaturą) */
+@media (max-width: 767px) {
+  html[data-nb-adn='1'] .nb-czat-ukryj { display: none !important; }
+  html[data-nb-adn='1'] .nb-dok-mob.nb-pencil-bar { bottom: calc(var(--nb-nav-dol, 0px) + var(--nb-klaw, 0px) + 8px) !important; }
+}
+
+/* Adnotacje: ekran stoi w miejscu — żadnego przewijania ani „gumowania” strony pod palcem.
+   Przewija się tylko wnętrze karty opisu, jeśli kiedyś urośnie. */
+html[data-nb-adn='1'],
+html[data-nb-adn='1'] body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+  height: 100%;
+}
+
+/* Telefon: gdy opisujesz zamalowane miejsce, pasek adnotacji schodzi z drogi —
+   nad klawiaturą zostaje sama karta, a zamalowane miejsce dalej widać. */
+@media (max-width: 767px) {
+  html[data-nb-adn-opis='1'] .nb-dok-mob.nb-pencil-bar { display: none !important; }
+}
+
+/* Komputer: gdy czat jest otwarty, pasek adnotacji nie nachodzi na jego panel (panel ~400 px razem z marginesami po prawej) */
+@media (min-width: 768px) {
+  html[data-nb-adn='1']:has(.nb-czat-root) .nb-dok-mob.nb-pencil-bar { left: calc(50% - 208px) !important; }
+  html[data-nb-adn='1']:has(.nb-czat-root) .nb-pencil-bar [role='toolbar'] { max-width: calc(100vw - 440px); }
 }

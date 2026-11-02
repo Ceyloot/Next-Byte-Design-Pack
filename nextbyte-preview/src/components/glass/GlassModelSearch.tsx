@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Sparkles, Star, Zap, Brain, Image as ImageIcon, ChevronDown, Search, Server, Rocket, Crown, Check } from 'lucide-react'
+import { Info, Sparkles, Star, Zap, Brain, Image as ImageIcon, ChevronDown, Search, Server, Rocket, Crown, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGlass } from '@/lib/glass-context'
 
@@ -251,7 +251,7 @@ function MetricBars({ value, max = 10, gladki = false }: { value: number; max?: 
 function MiniWskaznik({ etykieta, value }: { etykieta: string; value: number }) {
   const pelne = Math.round(value / 2)
   return (
-    <span className="flex items-center gap-1.5 text-[11.5px] font-medium text-foreground/70" title={`${etykieta}: ${pelne}/5`}>
+    <span className="flex min-w-0 flex-col items-start gap-1 text-[11.5px] font-medium text-foreground/70" title={`${etykieta}: ${pelne}/5`}>
       {etykieta}
       <span className="flex gap-[2px]" aria-hidden>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -310,6 +310,10 @@ export function GlassModelSearch({
     grok: 'Średni',
     gpt: 'Średni',
   })
+
+  // tryb kompaktowy: wskaźniki jakości otwiera dopiero ikonka „i” przy modelu
+  const [infoId, setInfoId] = useState<string | null>(null)
+  useEffect(() => { if (!open) setInfoId(null) }, [open])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const przyciskRef = useRef<HTMLButtonElement>(null)
@@ -566,7 +570,7 @@ export function GlassModelSearch({
                         {!odwroc && model.description && <p className={cn(compact ? 'mt-1 text-[12.5px] leading-snug text-foreground/65' : 'mt-0.5 truncate text-[11px] text-muted-foreground/80 leading-none')}>
                           {model.description}
                         </p>}
-                        {compact && (
+                        {compact && infoId === model.id && (
                           <div className="mt-2 grid grid-cols-3 items-center gap-x-3">
                             {['Jakość', 'Precyzja', 'Szybkość'].map((et) => {
                               const m = model.metrics.find((x) => x.label === et)
@@ -575,6 +579,21 @@ export function GlassModelSearch({
                           </div>
                         )}
                       </div>
+
+                      {compact && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Informacje o modelu ${model.name}`}
+                          aria-pressed={infoId === model.id}
+                          title="Informacje o modelu"
+                          onClick={(e) => { e.stopPropagation(); setInfoId((k) => (k === model.id ? null : model.id)) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setInfoId((k) => (k === model.id ? null : model.id)) } }}
+                          className={cn('grid h-9 w-9 shrink-0 cursor-pointer place-items-center self-start rounded-full transition-colors', infoId === model.id ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground')}
+                        >
+                          <Info className="h-4 w-4" />
+                        </span>
+                      )}
 
                       {/* Koszt */}
                       {model.cost !== undefined && (
@@ -675,7 +694,7 @@ export function GlassModelSearch({
         <div
           ref={popupRef}
           className="fixed z-[90] animate-in fade-in zoom-in-95 duration-150"
-          style={{ right: polozenie.left, bottom: polozenie.bottom, minWidth: Math.max(polozenie.width, 264), width: 'max-content', maxWidth: 'calc(100vw - 16px)' }}
+          style={{ right: compact && typeof window !== 'undefined' ? Math.max(8, Math.min(polozenie.left, window.innerWidth - 8 - Math.min(372, window.innerWidth * 0.95))) : polozenie.left, bottom: polozenie.bottom, minWidth: Math.max(polozenie.width, 264), width: 'max-content', maxWidth: 'calc(100vw - 16px)' }}
         >
           {popoverContent}
         </div>,

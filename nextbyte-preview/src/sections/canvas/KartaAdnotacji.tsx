@@ -31,7 +31,8 @@ export function KartaAdnotacji({
       <div
         // klik w kartę nie zabiera polu fokusu — dzięki temu przyciski działają, a pole nie zatwierdza się samo
         onMouseDown={e => { if ((e.target as HTMLElement).tagName !== 'INPUT') e.preventDefault() }}
-        className="w-[292px] overflow-hidden rounded-2xl border border-foreground/[0.1] bg-[hsl(var(--card))] p-3 shadow-[0_8px_24px_-8px_hsl(0_0%_0%/0.35)]"
+        // szkło takie samo jak pasek adnotacji i reszta chrome Canvasa (liquid glass, nie płaska płyta)
+        className="nb-cozy-plyta w-[292px] overflow-hidden rounded-2xl border p-3"
       >
         <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -49,7 +50,7 @@ export function KartaAdnotacji({
             }}
             placeholder="np. gęstsze chmury, złote światło"
             aria-label="Opis zmiany w tym miejscu"
-            className="min-w-0 flex-1 rounded-[10px] border border-foreground/[0.07] bg-foreground/[0.045] px-3 py-1.5 text-[13px] font-medium text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)] focus:border-[hsl(var(--primary)/0.5)]"
+            className="nb-cozy-niecka min-w-0 flex-1 !rounded-[10px] px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--foreground))] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.75)] focus:border-[hsl(var(--primary)/0.5)] md:text-[13px]"
           />
           <button
             type="button"

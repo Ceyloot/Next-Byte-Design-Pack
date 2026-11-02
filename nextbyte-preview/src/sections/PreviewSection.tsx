@@ -956,6 +956,8 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
    *  od tego, gdzie przypięto pasek podglądu. Górny/dolny pasek w module znika,
    *  a „‹ MENU” pokazuje menu podglądu w tym samym bocznym pasku. */
   const wModule = activeTab === 'preview' && previewSubView === 'notebook'
+  // Canvas na telefonie: bez górnego/dolnego paska podglądu — płótno i czat zajmują cały ekran
+  const canvasMobilny = useMobilny() && activeTab === 'canvas'
   const bokiem = isSidebar
 
   // overflow-clip zamiast overflow-hidden: górny pasek bywa szerszy niż ekran,
@@ -964,7 +966,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
   return (
     <div
       className={cn(
-        'relative w-full h-screen font-sans antialiased overflow-clip bg-transparent',
+        'relative w-full h-screen supports-[height:100dvh]:h-dvh font-sans antialiased overflow-clip bg-transparent',
         (isSidebar || (wModule && menuWModule)) ? 'flex flex-row' : 'flex flex-col',
         (isSidebar || (wModule && menuWModule)) && navPosition === 'right' && 'flex-row-reverse',
       )}
@@ -973,7 +975,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       <NbGlassFilters />
 
       {/* ── Navbar — w Next Scribe platformowa nawigacja znika (Next Scribe ma własną) ── */}
-      {pelnyEkran || (wModule && !menuWModule) ? null : (isSidebar || (wModule && menuWModule)) ? (
+      {pelnyEkran || canvasMobilny || (wModule && !menuWModule) ? null : (isSidebar || (wModule && menuWModule)) ? (
         activeTab === 'canvas' ? (
           // Canvas: pasek boczny leży na płótnie (nie zabiera mu miejsca), da się zwinąć do szyny
           <div className={cn('pointer-events-none absolute inset-y-0 z-[60] [&>*]:pointer-events-auto', navPosition === 'right' ? 'right-0' : 'left-0')}>{SidebarNav()}</div>
@@ -1053,12 +1055,12 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           ? { paddingTop: '48px' }
           : activeTab === 'canvas'
             ? ({
-                '--nb-canvas-gora': navPosition === 'top' ? '84px' : '16px',
-                '--nb-canvas-dol': navPosition === 'bottom' ? '80px' : '16px',
-                '--nb-nav-gora': navPosition === 'top' ? '68px' : '0px',
-                '--nb-nav-dol': navPosition === 'bottom' ? '64px' : '0px',
-                '--nb-nav-lewo': navPosition === 'left' ? (navZwiniety ? '92px' : '288px') : '0px',
-                '--nb-nav-prawo': navPosition === 'right' ? (navZwiniety ? '92px' : '288px') : '0px',
+                '--nb-canvas-gora': !canvasMobilny && navPosition === 'top' ? '84px' : '16px',
+                '--nb-canvas-dol': !canvasMobilny && navPosition === 'bottom' ? '80px' : '16px',
+                '--nb-nav-gora': !canvasMobilny && navPosition === 'top' ? '68px' : '0px',
+                '--nb-nav-dol': !canvasMobilny && navPosition === 'bottom' ? '64px' : '0px',
+                '--nb-nav-lewo': !canvasMobilny && navPosition === 'left' ? (navZwiniety ? '92px' : '288px') : '0px',
+                '--nb-nav-prawo': !canvasMobilny && navPosition === 'right' ? (navZwiniety ? '92px' : '288px') : '0px',
               } as React.CSSProperties)
             : {}
       )}
@@ -1637,7 +1639,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
       </main>
 
       {/* Bottom navbar — renderowany po <main> żeby był na dole */}
-      {!pelnyEkran && !bokiem && navPosition === 'bottom' && <HorizontalNav />}
+      {!pelnyEkran && !canvasMobilny && !bokiem && navPosition === 'bottom' && <HorizontalNav />}
 
       {/* ── DRAG TO DOCK OVERLAY ZONES (Góra / Dół / Lewo / Prawo) ── */}
       {isDraggingNav && (

@@ -31,6 +31,12 @@ import {
   Scissors,
   X,
   ImagePlus,
+  MoreHorizontal,
+  ArrowLeft,
+  MessageSquareText,
+  PencilLine,
+  Redo2,
+  ClipboardPaste,
   Type,
   Sparkles,
   Highlighter,
@@ -56,6 +62,7 @@ import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
 import { podzielMaske } from '@/sections/canvas/maska-grupy'
 import { wykonajGenerowanie } from '@/sections/canvas/generowanie'
 import { wykonajGeneracjeZReferencji } from '@/sections/canvas/referencje'
+import { Slider } from '@/components/ui/slider'
 import { KartaPineski } from '@/sections/canvas/KartaPineski'
 import { PRZESUNIECIE_LEBKA } from '@/sections/canvas/ZnacznikPineski'
 import { CzatCanvas, type ModelObrazu } from '@/sections/canvas/CzatCanvas'
@@ -238,6 +245,9 @@ const MODEL_OUTPAINTU = 'gptimage2' as const
 /** Model, którym zawsze działa Inpaint i Eraser (niezależnie od wyboru w czacie). */
 const MODEL_INPAINTINGU = 'pro' as const
 
+/** Kolory adnotacji — tyle samo i w tej samej kolejności co kolory obszarów na mapie układu dla modelu. */
+const KOLORY_ADNOTACJI = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#14b8a6', '#3b82f6', '#a855f7', '#ec4899']
+
 export function CanvasSection() {
   // motyw Canvasa (domyślnie jasny; wyjście oddaje platformie jej motyw) — przełącznik jest w górnym pasku platformy
   useMotywCanvasa()
@@ -311,6 +321,20 @@ export function CanvasSection() {
   const [zaznaczoneRysunki, setZaznaczoneRysunki] = useState<string[]>([])
   const [kolorOlowka, setKolorOlowka] = useState('auto') // „auto” = kolor tekstu motywu: biały na ciemnym, ciemny na jasnym
   const [gruboscOlowka, setGruboscOlowka] = useState(5)
+  /** cofnięte kreski — Ctrl+Shift+Z (albo przycisk „Ponów”) przywraca je po kolei */
+  const [cofniete, setCofniete] = useState<Rysunek[]>([])
+  /** adnotacje: chwilowy podgląd rozmiaru pędzla na zdjęciu (przy ruszaniu suwakiem) */
+  const [podgladPedzla, setPodgladPedzla] = useState(false)
+  const znikPodgladu = useRef<number | undefined>(undefined)
+  const pokazPodgladPedzla = useCallback(() => {
+    setPodgladPedzla(true)
+    window.clearTimeout(znikPodgladu.current)
+    znikPodgladu.current = window.setTimeout(() => setPodgladPedzla(false), 900)
+  }, [])
+  const schowajPodgladPedzla = useCallback(() => {
+    window.clearTimeout(znikPodgladu.current)
+    znikPodgladu.current = window.setTimeout(() => setPodgladPedzla(false), 350)
+  }, [])
   /** pisak: linia, gruby „zakres” (adnotacje) albo napis z klawiatury */
   const [trybOlowka, setTrybOlowka] = useState<'linia' | 'zakres' | 'tekst'>('linia')
   /** napis w trakcie wpisywania: miejsce w scenie i treść */
@@ -431,7 +455,7 @@ export function CanvasSection() {
   }, [])
   const refRoot = useRef<HTMLDivElement>(null)
   /** Telefon: okna robocze (prompter, outpaint, edycja tekstu, karta obiektu) siedzą u dołu ekranu, nad paskiem czatu */
-  const stylMobilny: React.CSSProperties = { left: 8, right: 8, top: 'auto', bottom: 'calc(var(--nb-nav-dol, 0px) + 76px)', width: 'auto', maxWidth: 'none' }
+  const stylMobilny: React.CSSProperties = { left: 8, right: 8, top: 'auto', bottom: 'calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 0px) + var(--nb-klaw, 0px) + 12px)', width: 'auto', maxWidth: 'none' }
   // Pierwsze ustawienie widoku: pod nawigacją platformy leżącą na płótnie nic nie ląduje
   useEffect(() => {
     const od = odsuniecia()
@@ -768,6 +792,23 @@ export function CanvasSection() {
 
   /* ── Menu kontekstowe zdjęcia (prawy klik) ─────────────────────── */
 
+  /** Telefon: jednorazowa podpowiedź, że opcje zdjęcia kryją się pod przytrzymaniem */
+  const [podpowiedzOpcji, setPodpowiedzOpcji] = useState(false)
+  const znikPodpowiedzi = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    if (!mobilny || !wybranaWarstwa) return
+    let widziana = false
+    try { widziana = localStorage.getItem('nb-podp-opcje') === '1' } catch { /* tryb prywatny */ }
+    if (widziana) return
+    try { localStorage.setItem('nb-podp-opcje', '1') } catch { /* tryb prywatny */ }
+    setPodpowiedzOpcji(true)
+    window.clearTimeout(znikPodpowiedzi.current)
+    znikPodpowiedzi.current = window.setTimeout(() => setPodpowiedzOpcji(false), 3500)
+  }, [mobilny, wybranaWarstwa])
+  useEffect(() => () => window.clearTimeout(znikPodpowiedzi.current), [])
+
+  /** akcje paska zdjęcia — na telefonie to samo trafia do menu opcji */
+  const akcjeMenuRef = useRef<AkcjaPaska[]>([])
   const [menuWarstwy, setMenuWarstwy] = useState<{ id: string; x: number; y: number } | null>(null)
   useEffect(() => {
     if (!menuWarstwy) return
@@ -783,12 +824,34 @@ export function CanvasSection() {
     }
   }, [menuWarstwy])
 
+  /* ── Menu pustego płótna (długie przytrzymanie palca) ─────────── */
+  const [menuPlotna, setMenuPlotna] = useState<{ x: number; y: number } | null>(null)
+  useEffect(() => {
+    if (!menuPlotna) return
+    const zamknij = () => setMenuPlotna(null)
+    const naKlawisz = (e: KeyboardEvent) => e.key === 'Escape' && zamknij()
+    window.addEventListener('pointerdown', zamknij)
+    window.addEventListener('keydown', naKlawisz)
+    window.addEventListener('resize', zamknij)
+    return () => {
+      window.removeEventListener('pointerdown', zamknij)
+      window.removeEventListener('keydown', naKlawisz)
+      window.removeEventListener('resize', zamknij)
+    }
+  }, [menuPlotna])
+
   /* ── Szybkie akcje AI na zdjęciu (pływający pasek nad zdjęciem) ── */
   const [akcjaAI, setAkcjaAI] = useState<string | null>(null)
   // Edit text: prompter nad zdjęciem („co zmienić w napisie?”)
   const [edycjaTekstu, setEdycjaTekstu] = useState<string | null>(null)
   /** Quick edit: id zdjęcia, nad którym otwarty jest prompter (opis zmiany bez zamalowywania) */
   const [quickEdit, setQuickEdit] = useState<string | null>(null)
+  // Na czas pisania w Quick edit zwykły czat (i dok narzędzi) chowa się — pisze się w jednym miejscu
+  useEffect(() => {
+    if (!quickEdit) return
+    document.documentElement.setAttribute('data-nb-quick', '1')
+    return () => document.documentElement.removeAttribute('data-nb-quick')
+  }, [quickEdit])
   /** Outpaint: id zdjęcia, przy którym otwarty jest panel rozszerzania kadru */
   const [outpaint, setOutpaint] = useState<string | null>(null)
   const AKCJE_AI = useMemo(
@@ -966,7 +1029,8 @@ export function CanvasSection() {
   const maOpis = Boolean(celAdn?.rysunki.some(r => r.tekst) || projekt.tekst.trim())
   /**
    * Adnotacje → edycja: czyste zdjęcie + to samo zdjęcie z naniesionymi adnotacjami idą do modelu jako plan zmian.
-   * Wynik ląduje obok oryginału, adnotacje zostają na zdjęciu (można je poprawić i puścić jeszcze raz).
+   * Wynik ląduje obok oryginału, a zamalowane miejsca znikają ze zdjęcia JUŻ przy kliknięciu „Wykonaj”
+   * (plan jest wtedy zabrany w pamięć i leci do modelu — na zdjęciu nie ma po co dłużej leżeć).
    */
   const wykonajAdnotacje = useCallback(async () => {
     // w trybie adnotacji liczą się wszystkie adnotacje na zdjęciu; poza nim — zaznaczone szkice
@@ -977,6 +1041,8 @@ export function CanvasSection() {
     refGeneruje.current = true
     setMenuRysunku(null)
     setAkcjaAI('adnotacje')
+    // plan mamy już w `adn` — kreski, opisy i pineski schodzą ze zdjęcia od razu, nie po powrocie z modelu
+    zuzyjZnaczniki()
     const model = modelObrazu === 'auto' ? 'nb2' : modelObrazu
     try {
       startDucha(w, 'Adnotacje…')
@@ -988,10 +1054,6 @@ export function CanvasSection() {
       const src = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
       const nazwa = nazwijWynik(projekt.tekst.trim() || 'adnotacje', [])
       dodajZeZrodla(src, nazwa, 'wynik', w)
-      // adnotacje spełniły swoją rolę — znikają po udanym wygenerowaniu (przy błędzie zostają, żeby można było spróbować jeszcze raz)
-      const zuzyte = new Set(adn.map(a => a.id))
-      setRysunki(rs => rs.filter(r => !zuzyte.has(r.id)))
-      setZaznaczoneRysunki([])
       setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: 'Zmiany z adnotacji wykonane na kopii zdjęcia.' } })
     } catch (e) {
       setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wykonać adnotacji.' })
@@ -1023,17 +1085,16 @@ export function CanvasSection() {
     }
     setNapis(null)
   }, [kolorOlowka, setNapis])
-  // klik poza kartą opisu zatwierdza opis (tak jak karta pinezki)
+  // Karta opisu NIE znika sama: zamyka ją dopiero „Gotowe” (albo Enter / kosz).
+  // Klik obok zostawia ją otwartą — wpisany opis nie przepada przy nieuważnym kliknięciu.
+  const zatwierdzNapisRef = useRef(zatwierdzNapis)
+  zatwierdzNapisRef.current = zatwierdzNapis
+  // na czas opisywania zamalowanego miejsca chowamy pasek adnotacji (telefon) — zdjęcie zostaje widoczne
   useEffect(() => {
-    if (!napis) return
-    const naKlik = (e: PointerEvent) => {
-      if (Date.now() - (napisRef.current?.utworzony ?? 0) < 250) return
-      if ((e.target as HTMLElement | null)?.closest?.('[data-karta-adn]')) return
-      zatwierdzNapis()
-    }
-    document.addEventListener('pointerdown', naKlik, true)
-    return () => document.removeEventListener('pointerdown', naKlik, true)
-  }, [napis, zatwierdzNapis])
+    if (napis) document.documentElement.setAttribute('data-nb-adn-opis', '1')
+    else document.documentElement.removeAttribute('data-nb-adn-opis')
+    return () => document.documentElement.removeAttribute('data-nb-adn-opis')
+  }, [napis])
   /** Kosz na karcie: usuwa opis razem z kreską, przy której powstał (albo edytowany napis). */
   const usunNapis = useCallback(() => {
     const n = napisRef.current
@@ -1047,6 +1108,87 @@ export function CanvasSection() {
   const przesunRysunki = useCallback((ids: string[], dx: number, dy: number) => {
     setRysunki(r => r.map(x => (ids.includes(x.id) ? { ...x, punkty: x.punkty.map(q => [q[0] + dx, q[1] + dy] as [number, number]) } : x)))
   }, [])
+  /* ── Cofnij / ponów kreski (Ctrl+Z, Ctrl+Shift+Z) ───────────────── */
+  const cofnijRysunek = useCallback(() => {
+    if (!rysunki.length) return
+    setCofniete(c => [...c, rysunki[rysunki.length - 1]])
+    setRysunki(r => r.slice(0, -1))
+    setZaznaczoneRysunki([])
+  }, [rysunki])
+  const ponowRysunek = useCallback(() => {
+    if (!cofniete.length) return
+    const ost = cofniete[cofniete.length - 1]
+    setCofniete(c => c.slice(0, -1))
+    setRysunki(r => [...r, ost])
+  }, [cofniete])
+  /** Kosz: wszystkie kreski trafiają do cofniętych, więc „Ponów” przywraca je po kolei. */
+  const wyczyscRysunki = useCallback(() => {
+    if (!rysunki.length) return
+    setCofniete(c => [...c, ...rysunki])
+    setRysunki([])
+    setZaznaczoneRysunki([])
+  }, [rysunki])
+  /**
+   * Wysłane = zużyte: po oddaniu zadania do modelu znikają z płótna pineski i kreski/adnotacje,
+   * bo zdjęcie ma zostać czyste (plan poszedł dalej, nie jest już do niczego potrzebny na wierzchu).
+   * Dotyczy też nieudanej generacji — polecenie zostaje w czacie, więc da się puścić je jeszcze raz.
+   * Agent, który dopytuje, trzyma własną kopię pinesek (`rozmowaAgenta`), więc rozmowa się nie gubi.
+   */
+  const zuzyjZnaczniki = useCallback(() => {
+    setRysunki([])
+    setCofniete([])
+    setZaznaczoneRysunki([])
+    setWybranaPineska(null)
+    setProjekt(p => (p.pineski.length ? { ...p, pineski: [] } : p))
+  }, [])
+  const cofnijRef = useRef(cofnijRysunek)
+  const ponowRef = useRef(ponowRysunek)
+  cofnijRef.current = cofnijRysunek
+  ponowRef.current = ponowRysunek
+  const rysunkiRef = useRef<Rysunek[]>([])
+  rysunkiRef.current = rysunki
+  /** odliczanie po ostatniej kresce — dopiero wtedy pytamy, co ma się znaleźć w zamalowanym miejscu */
+  const pytanieOOpis = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(pytanieOOpis.current), [])
+  /**
+   * Po zamalowaniu miejsca otwiera kartę „co ma się tutaj znaleźć?” — jak karta pinezki, osobną dla każdego
+   * zamalowanego miejsca. Sąsiadujące kreski tego samego koloru to jedno miejsce (tak samo grupuje je model),
+   * a miejsce, które ma już opis, nie pyta drugi raz.
+   */
+  const zapytajOOpis = (kreska: Rysunek) => {
+    if (!trybAdnRef.current || kreska.tekst) return
+    // zamalowanie kolejnego miejsca zapisuje opis poprzedniego (karta sama z siebie nie znika)
+    if (napisRef.current) zatwierdzNapisRef.current()
+    const ramka = (r: Rysunek) => {
+      const xs = r.punkty.map(p => p[0])
+      const ys = r.punkty.map(p => p[1])
+      return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) }
+    }
+    const w = ramkaRef.current
+    const luz = w ? Math.max(w.width, w.height) * 0.04 : 24
+    const pole = ramka(kreska)
+    const styka = (a: typeof pole) => a.x0 - luz < pole.x1 && a.x1 + luz > pole.x0 && a.y0 - luz < pole.y1 && a.y1 + luz > pole.y0
+    for (let i = 0; i < 3; i++) {
+      for (const q of rysunkiRef.current) {
+        if (q.tekst || q.kolor !== kreska.kolor || q.id === kreska.id) continue
+        const a = ramka(q)
+        if (!styka(a)) continue
+        pole.x0 = Math.min(pole.x0, a.x0)
+        pole.x1 = Math.max(pole.x1, a.x1)
+        pole.y0 = Math.min(pole.y0, a.y0)
+        pole.y1 = Math.max(pole.y1, a.y1)
+      }
+    }
+    const opisane = rysunkiRef.current.some(q => {
+      if (!q.tekst) return false
+      const [qx, qy] = q.punkty[0]
+      return qx > pole.x0 - luz * 2 && qx < pole.x1 + luz * 2 && qy > pole.y0 - luz * 4 && qy < pole.y1 + luz * 2
+    })
+    if (opisane) return
+    const zoom = Math.max(0.05, widokRef.current.zoom)
+    const sx = (pole.x0 + pole.x1) / 2
+    setNapis({ x: sx, y: pole.y0, srodek: false, ax: sx, ay: pole.y0, tekst: '', rozmiar: 16 / zoom, utworzony: Date.now() })
+  }
   /** Wejście w tryb adnotacji: widok przybliża się do zdjęcia, pasek szybkich akcji i dok znikają, zostaje jeden panel. */
   const wejdzAdnotacje = (w: { id: string; x: number; y: number; width: number; height: number }, opcje?: { przybliz?: boolean }) => {
     const przybliz = opcje?.przybliz !== false
@@ -1056,9 +1198,10 @@ export function CanvasSection() {
     setWybranaPineska(null)
     setZaznaczone([])
     setTrybAdn(w.id)
-    if (przybliz) {
-      setTrybOlowka('zakres')
-    }
+    // biały / „domyślny” kolor ginie na zdjęciu — adnotacje zaczynają od czerwonego
+    setKolorOlowka(k => (k === 'auto' ? '#ef4444' : k))
+    // adnotacje robi się wyłącznie pędzlem — zamalowujemy miejsce, nie obrysowujemy kreską
+    setTrybOlowka('zakres')
     setNarzedzie('olowek')
     if (!przybliz) return
     // zdjęcie w całości nad panelem, na środku ekranu (czat jest wtedy schowany, więc cała szerokość jest do dyspozycji)
@@ -1512,7 +1655,10 @@ export function CanvasSection() {
   useEffect(() => {
     const naKlawisz = (e: KeyboardEvent) => {
       const cel = e.target as HTMLElement
-      if (cel && ['INPUT', 'TEXTAREA', 'SELECT'].includes(cel.tagName)) return
+      const wPolu = Boolean(cel) && ['INPUT', 'TEXTAREA', 'SELECT'].includes(cel.tagName)
+      // w adnotacjach Ctrl+Z / Ctrl+Shift+Z cofa kreskę także wtedy, gdy kursor stoi w pustym polu opisu
+      const skrotCofania = (e.ctrlKey || e.metaKey) && ['z', 'y'].includes(e.key.toLowerCase())
+      if (wPolu && !(skrotCofania && trybAdnRef.current && !(cel as HTMLInputElement).value)) return
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
         // Ctrl+A: zaznacz wszystkie zdjęcia
         e.preventDefault()
@@ -1523,10 +1669,17 @@ export function CanvasSection() {
         } else if (ids.length === 1) setWybranaWarstwa(ids[0])
         return
       }
-      // Ctrl+Z przy ołówku: cofnij ostatnie pociągnięcie
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && narzedzieRef.current === 'olowek') {
+      // Ctrl+Z / Ctrl+Shift+Z przy ołówku i w adnotacjach: cofnij i ponów kreskę
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && (narzedzieRef.current === 'olowek' || trybAdnRef.current)) {
         e.preventDefault()
-        setRysunki(r => r.slice(0, -1))
+        if (e.shiftKey) ponowRef.current()
+        else cofnijRef.current()
+        return
+      }
+      // Ctrl+Y: ponów (drugi, przyzwyczajeniowy skrót)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && (narzedzieRef.current === 'olowek' || trybAdnRef.current)) {
+        e.preventDefault()
+        ponowRef.current()
         return
       }
       if (e.ctrlKey || e.metaKey) return
@@ -1539,6 +1692,11 @@ export function CanvasSection() {
       if (e.key === 'Escape') {
         if (trybAdnRef.current) {
           wyjdzAdnRef.current(true)
+          return
+        }
+        // Esc wychodzi też z ołówka — pasek znika, wraca zwykły kursor
+        if (narzedzieRef.current === 'olowek') {
+          setNarzedzie('wybor')
           return
         }
         setZaznaczone([])
@@ -1649,6 +1807,7 @@ export function CanvasSection() {
     if (!projekt.tekst.trim() || !pierwsze || refGeneruje.current) return
     refGeneruje.current = true
     setStanGeneracji({ faza: 'trwa', plan: `Generuję z ${wielu.length} referencji…`, tryb: 'referencje' })
+    zuzyjZnaczniki()
     startDucha(pierwsze, 'Generuję…')
     try {
       const obrazy = await Promise.all([...wielu, ...zalaczniki.filter(z => z.rodzaj === 'obraz').map(z => zalacznikJakoWarstwa(z))].map(w => konwertujNaDataUrl(w.src)))
@@ -1708,11 +1867,15 @@ export function CanvasSection() {
         return
       }
       if (p.typ === 'blad') {
+        // zadanie wyszło z płótna (np. brak klucza, agent padł) — znaczniki też schodzą, polecenie zostaje w czacie
+        zuzyjZnaczniki()
         setStanGeneracji({ faza: 'blad', tresc: p.blad })
         return
       }
       rozmowaAgenta.current = null
       setStanGeneracji({ faza: 'trwa', plan: p.opis, tryb: 'referencje' })
+      // zadanie poszło do modelu — pineski i kreski znikają ze zdjęcia
+      zuzyjZnaczniki()
       startDucha(p.baza, 'Generuję…')
       setOstatniPrompt(p.prompt)
       const wynik = await generuj({
@@ -1728,12 +1891,13 @@ export function CanvasSection() {
       dodajZeZrodla(src, nazwa, 'wynik', p.baza)
       setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: `${p.opis} (${p.zrodlo === 'agent' ? 'prompt od agenta' : 'szablon'})` } })
     } catch (e) {
+      zuzyjZnaczniki()
       setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wygenerować obrazu.' })
     } finally {
       usunDucha()
       refGeneruje.current = false
     }
-  }, [projekt.tekst, projekt.warstwy, projekt.pineski, wielu, zalaczniki, wybranaWarstwa, modelObrazu, dodajZeZrodla, startDucha, usunDucha])
+  }, [projekt.tekst, projekt.warstwy, projekt.pineski, wielu, zalaczniki, wybranaWarstwa, modelObrazu, dodajZeZrodla, startDucha, usunDucha, zuzyjZnaczniki])
 
   const uruchomGeneracje = useCallback(async () => {
     if (refGeneruje.current) return
@@ -2600,6 +2764,84 @@ export function CanvasSection() {
     return { left, top, naLewo, ogonY: Math.min(WYS - 24, Math.max(20, sy - top)) }
   }, [napis, widok, rozmiar])
 
+  /* ── Adnotacje: kolory i suwak pędzla (na telefonie w dwóch rzędach, na komputerze w jednym) ── */
+  // obwódka zaznaczenia jest WEWNĄTRZ kółka (ring-offset wychodził poza pasek i ucinał pierwszy kolor)
+  const przyciskKoloru = (k: string) => (
+    <button
+      key={k}
+      type="button"
+      aria-label={k === 'auto' ? 'Kolor domyślny (zgodny z motywem)' : `Kolor ${k}`}
+      aria-pressed={kolorOlowka === k}
+      onClick={() => setKolorOlowka(k)}
+      className={cn(
+        'grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 transition-transform',
+        kolorOlowka === k ? 'border-primary' : 'border-transparent hover:scale-110',
+      )}
+    >
+      <span className="h-[18px] w-[18px] rounded-full border border-foreground/20" style={{ background: k === 'auto' ? 'hsl(var(--foreground))' : k }} />
+    </button>
+  )
+  const koloryAdnotacji = (
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-1 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-none md:justify-start md:gap-1.5 md:overflow-visible">
+      {KOLORY_ADNOTACJI.map(przyciskKoloru)}
+    </div>
+  )
+  /** Cofnij / ponów / wyczyść — te same przyciski w pasku ołówka co w adnotacjach */
+  const przyciskiHistorii = (
+    <>
+      <button type="button" title="Cofnij ostatnie (Ctrl+Z)" aria-label="Cofnij" disabled={rysunki.length === 0} onClick={cofnijRysunek} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+        <Undo2 className="h-4 w-4" />
+      </button>
+      <button type="button" title="Ponów (Ctrl+Shift+Z)" aria-label="Ponów" disabled={cofniete.length === 0} onClick={ponowRysunek} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+        <Redo2 className="h-4 w-4" />
+      </button>
+      <button type="button" title="Wyczyść szkice" aria-label="Wyczyść szkice" disabled={rysunki.length === 0} onClick={wyczyscRysunki} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+        <Trash2 className="h-4 w-4" />
+      </button>
+      {/* wyjście z ołówka — bez tego z rysowania nie dało się wrócić do kursora */}
+      <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-foreground/[0.12]" />
+      <button type="button" title="Zakończ rysowanie (Esc)" aria-label="Zakończ rysowanie" onClick={() => setNarzedzie('wybor')} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground">
+        <X className="h-4 w-4" />
+      </button>
+    </>
+  )
+  const suwakWielkosciPedzla = (
+    <div className="flex min-w-0 flex-1 items-center gap-2.5">
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/50" />
+      {/* suwak z biblioteki komponentów (ten sam co w reszcie platformy) */}
+      <div className="min-w-0 flex-1">
+      <Slider
+        min={2}
+        max={40}
+        step={1}
+        value={[gruboscOlowka]}
+        aria-label="Wielkość pędzla"
+        title="Wielkość pędzla"
+        onPointerDown={pokazPodgladPedzla}
+        onPointerUp={schowajPodgladPedzla}
+        onPointerCancel={schowajPodgladPedzla}
+        onValueChange={v => {
+          setGruboscOlowka(v[0])
+          pokazPodgladPedzla()
+        }}
+        onValueCommit={schowajPodgladPedzla}
+        className="w-full cursor-ew-resize py-2"
+      />
+      </div>
+      <span aria-hidden className="h-4 w-4 shrink-0 rounded-full bg-foreground/50" />
+      <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-[10px] bg-foreground/[0.06]" title={`Wielkość pędzla: ${gruboscOlowka}`}>
+        <span
+          className="rounded-full"
+          style={{
+            width: 4 + Math.round(gruboscOlowka / 2.4),
+            height: 4 + Math.round(gruboscOlowka / 2.4),
+            background: kolorOlowka === 'auto' ? 'hsl(var(--foreground) / 0.8)' : kolorOlowka,
+          }}
+        />
+      </span>
+    </div>
+  )
+
   // overflow-clip, nie overflow-hidden: element z overflow-hidden da się
   // przewinąć (fokus na polu przy krawędzi, scrollIntoView) i wtedy cały
   // widok Canvas odjeżdżał w bok — ucięty pasek narzędzi, czat na środku,
@@ -2639,7 +2881,7 @@ export function CanvasSection() {
         trybOlowka={trybOlowka}
         grubosciEkranowe={Boolean(trybAdn)}
         ramkaRysowania={ramkaRysowania}
-        znacznikiZadan={znacznikiZadan}
+        znacznikiZadan={[]}
         numeryNapisow={numeryNapisow}
         onPrzesunRysunki={przesunRysunki}
         onNapis={(x, y) => { zatwierdzNapis(); setNapis({ x, y, srodek: false, ax: x, ay: y, tekst: '', rozmiar: 16 / Math.max(0.05, widok.zoom), utworzony: Date.now() }) }}
@@ -2653,33 +2895,20 @@ export function CanvasSection() {
           // adnotacja na zdjęciu ma być wyraźna: kolor „domyślny” (biały / ciemny wg motywu) zamieniamy na czerwony
           const r = trybAdn ? { ...r0, warstwaId: trybAdn } : r0
           setRysunki(prev => [...prev, r])
+          setCofniete([])
           if (r.tekst) return
-          // zwykły ołówek: kreska narysowana na zdjęciu od razu staje się adnotacją — wchodzimy w tryb adnotacji (bez przybliżania)
-          let aktywne = Boolean(trybAdn)
-          if (!aktywne) {
-            const p0 = r.punkty[0]
-            const foto = projekt.warstwy.find(w => w.type === 'image' && w.visible && !w.generator && w.src && p0[0] >= w.x && p0[0] <= w.x + w.width && p0[1] >= w.y && p0[1] <= w.y + w.height)
-            if (foto) {
-              wejdzAdnotacje(foto, { przybliz: false })
-              aktywne = true
-              setRysunki(prev => prev.map(q => (q.id === r.id ? { ...q, warstwaId: foto.id } : q)))
-            }
-          }
-          // w trybie adnotacji po narysowaniu od razu pytamy, co tam zmienić
-          if (aktywne) {
-            const xs = r.punkty.map(q => q[0])
-            const ys = r.punkty.map(q => q[1])
-            const rozmiar = 16 / Math.max(0.05, widok.zoom)
-            zatwierdzNapis()
-            const cx = (Math.min(...xs) + Math.max(...xs)) / 2
-            const cy = (Math.min(...ys) + Math.max(...ys)) / 2
-            setNapis({ x: cx, y: cy, srodek: true, ax: Math.max(...xs), ay: cy, tekst: '', rozmiar, utworzony: Date.now(), powiazany: r.id })
-          }
+          // Ołówek to zwykłe rysowanie po płótnie — NIE włącza adnotacji i o nic nie pyta.
+          // Adnotacje zaczynają się tylko świadomie: przyciskiem „Maluj adnotacje” na pasku zdjęcia.
+          if (!trybAdn) return
+          // Zamalowane miejsce samo pyta, co ma się tutaj znaleźć — karta jak przy pinezce, osobna dla każdego miejsca.
+          // Czekamy chwilę po ostatniej kresce: malowanie jednego miejsca kilkoma pociągnięciami nie otwiera kilku kart.
+          window.clearTimeout(pytanieOOpis.current)
+          pytanieOOpis.current = window.setTimeout(() => zapytajOOpis(r), 450)
         }}
         onZaznaczRysunki={setZaznaczoneRysunki}
         onMenuRysunku={(x, y) => setMenuRysunku({ x, y })}
         warstwy={projekt.warstwy}
-        pineski={projekt.pineski}
+        pineski={trybAdn ? [] : projekt.pineski}
         wybranaWarstwa={wybranaWarstwa}
         wybranaPineska={wybranaPineska}
         narzedzie={narzedzie}
@@ -2699,6 +2928,7 @@ export function CanvasSection() {
         intencja={intencja}
         onOtworzDodawanie={() => refPlik.current?.click()}
         onMenuWarstwy={(id, x, y) => setMenuWarstwy({ id, x, y })}
+        onMenuPlotna={(x, y) => setMenuPlotna({ x, y })}
         maska={maska}
         srednicaPedzla={srednicaPedzla}
         gumkaMaski={gumkaMaski}
@@ -2777,23 +3007,11 @@ export function CanvasSection() {
             onClick: () => uruchomAkcjeAI(w.id, aid),
             ...extra,
           })
-          return (
-            <PasekAkcji
-              etykieta="Szybkie akcje AI"
-              zablokowane={Boolean(akcjaAI)}
-              style={{
-                // przyklejony do zdjęcia: środek jego górnej krawędzi, bez żadnego przycinania do ekranu — gdy zdjęcie wyjedzie poza stronę, pasek jedzie razem z nim;
-                // telefon: środek ekranu, bo pasek jest tam szerszy niż zdjęcie
-                left: mobilny ? window.innerWidth / 2 : lewo + (w.width * widok.zoom) / 2,
-                transform: 'translateX(-50%)',
-                maxWidth: mobilny ? 'calc(100vw - 16px)' : undefined,
-                top: mobilny ? (gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64)) : gora - 56,
-              }}
-              akcje={[
+          const lista: AkcjaPaska[] = [
                 {
                   id: 'quick',
-                  etykieta: 'Quick edit',
-                  ikona: Sparkles,
+                  etykieta: 'Opisz zmianę',
+                  ikona: MessageSquareText,
                   skrot: 'Tab',
                   tytul: 'Quick edit — opisz zmianę, zdjęcie idzie do modelu jako referencja',
                   onClick: () => {
@@ -2803,9 +3021,9 @@ export function CanvasSection() {
                 },
                 {
                   id: 'adnotacje',
-                  etykieta: 'Adnotacje',
-                  ikona: PencilRuler,
-                  tytul: 'Adnotacje — zaznacz na zdjęciu miejsca, dopisz co zmienić i model to wykona',
+                  etykieta: 'Maluj adnotacje',
+                  ikona: PencilLine,
+                  tytul: 'Adnotacje — zamaluj na zdjęciu miejsca, dopisz co zmienić i model to wykona',
                   trwa: akcjaAI === 'adnotacje',
                   onClick: () => wejdzAdnotacje(w),
                 },
@@ -2866,7 +3084,23 @@ export function CanvasSection() {
                   separator: true,
                   onClick: () => akcjaWarstwy(w.id, 'pobierz'),
                 },
-              ]}
+          ]
+          akcjeMenuRef.current = lista
+          // Telefon: bez paska i bez przycisku — opcje zdjęcia otwiera przytrzymanie (menu poniżej)
+          if (mobilny) return null
+          return (
+            <PasekAkcji
+              etykieta="Szybkie akcje AI"
+              zablokowane={Boolean(akcjaAI)}
+              style={{
+                // przyklejony do zdjęcia: środek jego górnej krawędzi, bez żadnego przycinania do ekranu — gdy zdjęcie wyjedzie poza stronę, pasek jedzie razem z nim;
+                // telefon: środek ekranu, bo pasek jest tam szerszy niż zdjęcie
+                left: mobilny ? window.innerWidth / 2 : lewo + (w.width * widok.zoom) / 2,
+                transform: 'translateX(-50%)',
+                maxWidth: mobilny ? 'calc(100vw - 16px)' : undefined,
+                top: mobilny ? (gora - 56 >= odsuniecia().t + 72 ? gora - 56 : Math.min(gora + w.height * widok.zoom + 10, window.innerHeight - 64)) : gora - 56,
+              }}
+              akcje={lista}
             />
           )
         })()}
@@ -2885,6 +3119,53 @@ export function CanvasSection() {
             { akcja: 'ukryj', etykieta: 'Ukryj', ikona: EyeOff },
             { akcja: 'usun', etykieta: 'Usuń zdjęcie', niebezpieczna: true, ikona: Trash2 },
           ]
+          if (mobilny) {
+            // Telefon: dolny arkusz — „Zmień zdjęcie” (akcje AI z paska) i „Zdjęcie” (kopiuj, duplikuj…), usuń zawsze na dole
+            const akcjeAI = akcjeMenuRef.current.filter(a => a.id !== 'pobierz')
+            const zwykle = pozycje.filter(p => !p.niebezpieczna)
+            const usun = pozycje.find(p => p.niebezpieczna)
+            const wiersz = 'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] font-medium text-foreground/85 transition-colors active:bg-foreground/[0.1]'
+            return (
+              <div
+                role="menu"
+                aria-label={`Opcje zdjęcia ${w.name}`}
+                onPointerDown={e => e.stopPropagation()}
+                onContextMenu={e => e.preventDefault()}
+                className="!fixed inset-x-2 bottom-2 z-50 flex max-h-[min(72dvh,560px)] flex-col overflow-hidden rounded-2xl border border-foreground/[0.12] shadow-[0_20px_60px_rgba(0,0,0,0.55)] nb-szklo nb-szklo-plynne"
+                style={{ backgroundColor: 'hsl(var(--card) / 0.96)', bottom: 'calc(8px + var(--nb-klaw, 0px))' }}
+              >
+                <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-1.5">
+                  <p className="truncate px-2.5 pb-1 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{w.name}</p>
+                  {akcjeAI.length > 0 && (
+                    <>
+                      <p className="px-2.5 pb-0.5 pt-1 text-[11px] font-semibold text-muted-foreground/80">Zmień zdjęcie</p>
+                      {akcjeAI.map(a => (
+                        <button key={a.id} role="menuitem" type="button" disabled={Boolean(akcjaAI)} onClick={() => { setMenuWarstwy(null); a.onClick() }} className={cn(wiersz, 'disabled:opacity-50')}>
+                          <a.ikona className="h-4 w-4 text-primary" />
+                          {a.etykieta}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  <p className="px-2.5 pb-0.5 pt-2 text-[11px] font-semibold text-muted-foreground/80">Zdjęcie</p>
+                  {zwykle.map(({ akcja, etykieta, ikona: Ik }) => (
+                    <button key={akcja} role="menuitem" type="button" onClick={() => akcjaWarstwy(w.id, akcja)} className={wiersz}>
+                      <Ik className="h-4 w-4" />
+                      {etykieta}
+                    </button>
+                  ))}
+                </div>
+                {usun && (
+                  <div className="shrink-0 border-t border-foreground/[0.08] p-1.5">
+                    <button role="menuitem" type="button" onClick={() => akcjaWarstwy(w.id, usun.akcja)} className={cn(wiersz, 'text-destructive active:bg-destructive/10')}>
+                      <usun.ikona className="h-4 w-4" />
+                      {usun.etykieta}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          }
           return (
             <div
               role="menu"
@@ -2906,7 +3187,7 @@ export function CanvasSection() {
                   type="button"
                   onClick={() => akcjaWarstwy(w.id, akcja)}
                   className={cn(
-                    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12px] font-medium transition-all duration-150',
+                    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12px] font-medium transition-all duration-150 max-md:min-h-11 max-md:text-[14px]',
                     niebezpieczna
                       ? 'text-destructive hover:bg-destructive/10'
                       : 'text-foreground/75 hover:bg-foreground/[0.08] hover:text-foreground',
@@ -2921,13 +3202,52 @@ export function CanvasSection() {
           )
         })()}
 
+      {podpowiedzOpcji && !menuWarstwy && !trybAdn && (
+        <div role="status" className="pointer-events-none absolute left-1/2 top-4 z-[60] -translate-x-1/2 rounded-full border border-foreground/[0.14] px-3.5 py-2 text-[12px] font-medium text-foreground/85 shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200" style={{ backgroundColor: 'hsl(var(--card) / 0.92)' }}>
+          Przytrzymaj zdjęcie, by zobaczyć opcje
+        </div>
+      )}
+
+      {menuPlotna && (
+        <div
+          role="menu"
+          aria-label="Opcje płótna"
+          onPointerDown={e => e.stopPropagation()}
+          onContextMenu={e => e.preventDefault()}
+          className="fixed z-50 min-w-[200px]"
+          style={{
+            left: Math.max(8, Math.min(menuPlotna.x - 20, window.innerWidth - 216)),
+            top: Math.max(8, Math.min(menuPlotna.y - 20, window.innerHeight - 190)),
+          }}
+        >
+          <div className="nb-szklo nb-szklo-plynne nb-powierzchnia rounded-2xl border border-foreground/[0.12] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]" style={{ backgroundColor: 'hsl(var(--card) / 0.9)' }}>
+            {([
+              { etykieta: 'Dodaj zdjęcie', ikona: ImagePlus, akcja: () => refPlik.current?.click() },
+              { etykieta: 'Wklej ze schowka', ikona: ClipboardPaste, akcja: () => void wstawZeSchowka() },
+              { etykieta: 'Dopasuj widok', ikona: Maximize, akcja: () => dopasujWidokRef.current() },
+            ] as const).map(({ etykieta, ikona: Ik, akcja }) => (
+              <button
+                key={etykieta}
+                role="menuitem"
+                type="button"
+                onClick={() => { setMenuPlotna(null); akcja() }}
+                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[13px] font-medium text-foreground/80 transition-all duration-150 hover:bg-foreground/[0.08] hover:text-foreground active:bg-foreground/[0.12]"
+              >
+                <Ik className="h-4 w-4" />
+                {etykieta}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ══ Karta zaznaczonego obiektu na płótnie ══ */}
       {kartaPozycja && (
         <div
           key={kartaPozycja.pineska.id}
           className="nb-karta-pin absolute z-30 animate-in fade-in zoom-in-95 duration-150"
           style={mobilny
-            ? { left: '50%', bottom: 'calc(var(--nb-nav-dol, 0px) + 76px)', transform: 'translateX(-50%)' }
+            ? { left: '50%', bottom: 'calc(var(--nb-nav-dol, 0px) + var(--nb-mob-stos, 60px) + var(--nb-klaw, 0px) + 20px)', transform: 'translateX(-50%)', width: 'calc(100vw - 16px)', maxHeight: 'calc(100dvh - var(--nb-nav-gora, 0px) - var(--nb-mob-stos, 60px) - var(--nb-klaw, 0px) - 96px)', overflowY: 'auto' }
             : {
                 left: kartaPozycja.left,
                 top: kartaPozycja.top,
@@ -2964,110 +3284,111 @@ export function CanvasSection() {
         <div className={cn('p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-[70] flex max-w-[calc(100vw-16px)] -translate-x-1/2 flex-col items-center', trybAdn ? 'md:bottom-[calc(var(--nb-nav-dol,0px)+24px)]' : 'md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]')}>
           <div role="toolbar" aria-label={trybAdn ? 'Adnotacje' : 'Ołówek'} className={cn('nb-cozy-plyta pointer-events-auto flex max-w-full flex-col gap-2 rounded-2xl border p-2', trybAdn && 'w-[min(760px,calc(100vw-16px))]')}>
             {trybAdn && (
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    'flex h-9 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[12px] font-medium',
-                    zadaniaAdn.length === 0 ? 'border-foreground/[0.1] text-muted-foreground' : maOpis ? 'border-primary/30 bg-primary/10 text-foreground' : 'border-warning/40 bg-warning/10 text-foreground',
-                  )}
-                >
-                  <PencilRuler className="h-3.5 w-3.5 text-primary" />
-                  {zadaniaAdn.length === 0 ? 'Zaznacz miejsce' : !maOpis ? 'Dopisz, co zmienić' : `${zadaniaAdn.length} ${zadaniaAdn.length === 1 ? 'zadanie' : zadaniaAdn.length < 5 ? 'zadania' : 'zadań'}`}
-                </span>
-                <input
-                  value={projekt.tekst}
-                  onChange={e => setProjekt(p => ({ ...p, tekst: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'Enter' && celAdn && maOpis && !akcjaAI) void wykonajAdnotacje() }}
-                  placeholder="Dodatkowy opis dla modelu (opcjonalnie)"
-                  aria-label="Dodatkowy opis dla modelu"
-                  className="h-9 min-w-0 flex-1 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] px-3 text-[13px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40"
-                />
-                <button
-                  type="button"
-                  disabled={!celAdn || !maOpis || Boolean(akcjaAI)}
-                  title={!celAdn ? 'Najpierw zaznacz miejsce lub dopisz napis' : !maOpis ? 'Dopisz, co zmienić (Napis), albo wpisz opis obok' : 'Wyślij zdjęcie z adnotacjami do modelu'}
-                  onClick={() => void wykonajAdnotacje()}
-                  className="nb-cta flex h-9 shrink-0 items-center gap-2 rounded-xl px-3.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {akcjaAI === 'adnotacje' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Wykonaj
-                  <span className="font-mono text-[11px] opacity-75">· {byteZaObraz(modelObrazu)} ⟠</span>
-                </button>
-                <button type="button" title="Zamknij adnotacje (Esc)" aria-label="Zamknij adnotacje" onClick={() => wyjdzAdnotacje(true)} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-            <div className="flex h-10 items-center gap-1 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {trybAdn && (
-                <>
-                  <div className="flex shrink-0 items-center gap-0.5 rounded-xl bg-foreground/[0.06] p-0.5">
-                  {([
-                    ['przesun', 'Przesuń', MousePointer2, 'Przesuń — przeciągnij napis lub szkic w inne miejsce (V)'],
-                    ['linia', 'Linia', Pencil, 'Cienka kreska (D)'],
-                    ['zakres', 'Zakres', Highlighter, 'Zakres — gruby pisak do zaznaczania miejsca zmiany'],
-                    ['tekst', 'Napis', Type, 'Napis — kliknij na zdjęciu i wpisz, co tam zmienić'],
-                  ] as const).map(([id, nazwa, Ik, tytul]) => {
-                    const aktywny = id === 'przesun' ? narzedzie === 'wybor' : narzedzie === 'olowek' && trybOlowka === id
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        title={tytul}
-                        aria-label={nazwa}
-                        aria-pressed={aktywny}
-                        onClick={() => {
-                          if (id === 'przesun') { zatwierdzNapis(); setNarzedzie('wybor'); return }
-                          setNarzedzie('olowek')
-                          setTrybOlowka(id)
-                        }}
-                        className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[12px] font-medium transition-all', aktywny ? 'bg-card text-foreground shadow-[0_1px_4px_hsl(0_0%_0%/0.25),inset_0_0_0_1px_hsl(var(--primary)/0.45)]' : 'text-foreground/65 hover:bg-foreground/[0.08] hover:text-foreground')}
-                      >
-                        <Ik className="h-4 w-4" />
-                        <span className="max-sm:sr-only">{nazwa}</span>
-                      </button>
-                    )
-                  })}
+              <>
+                {/* Nagłówek: co robimy + zamknięcie (X zawsze w rogu, nie wypychane poza panel) */}
+                <div className="flex items-center justify-between gap-2 px-1">
+                  <span className="flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-foreground/80">
+                    <PencilLine className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="truncate">
+                      {zadaniaAdn.length === 0 ? 'Zamaluj miejsce zmiany' : `${zadaniaAdn.length} ${zadaniaAdn.length === 1 ? 'obszar' : zadaniaAdn.length < 5 ? 'obszary' : 'obszarów'} do zmiany`}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-0.5">
+                    <button type="button" title="Cofnij ostatnią kreskę (Ctrl+Z)" aria-label="Cofnij" disabled={rysunki.length === 0} onClick={cofnijRysunek} className="grid h-9 w-9 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+                      <Undo2 className="h-4 w-4" />
+                    </button>
+                    <button type="button" title="Ponów (Ctrl+Shift+Z)" aria-label="Ponów" disabled={cofniete.length === 0} onClick={ponowRysunek} className="grid h-9 w-9 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+                      <Redo2 className="h-4 w-4" />
+                    </button>
+                    <button type="button" title="Wyczyść zamalowane" aria-label="Wyczyść" disabled={rysunki.length === 0} onClick={wyczyscRysunki} className="grid h-9 w-9 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <button type="button" title="Wróć do zdjęcia (Esc)" aria-label="Wróć do zdjęcia" onClick={() => wyjdzAdnotacje(true)} className="grid h-9 w-9 place-items-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground">
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                  </span>
+                </div>
+                {/* Opis zmiany + wykonaj: jeden opis dla wszystkich zamalowanych miejsc */}
+                <div className="flex items-center gap-2">
+                  <input
+                    value={projekt.tekst}
+                    onChange={e => setProjekt(p => ({ ...p, tekst: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter' && celAdn && maOpis && !akcjaAI) void wykonajAdnotacje() }}
+                    placeholder="Co zmienić w zamalowanych miejscach?"
+                    aria-label="Opis zmiany"
+                    enterKeyHint="send"
+                    className="h-10 min-w-0 flex-1 rounded-xl border border-foreground/[0.08] bg-foreground/[0.04] px-3 text-[16px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40 md:h-9 md:text-[13px]"
+                  />
+                  <button
+                    type="button"
+                    disabled={!celAdn || !maOpis || Boolean(akcjaAI)}
+                    title={!celAdn ? 'Najpierw zamaluj miejsce na zdjęciu' : !maOpis ? 'Wpisz, co zmienić w zamalowanych miejscach' : 'Wyślij zdjęcie z adnotacjami do modelu'}
+                    onClick={() => void wykonajAdnotacje()}
+                    className="nb-cta flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-40 md:h-9"
+                  >
+                    {akcjaAI === 'adnotacje' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Wykonaj
+                    <span className="font-mono text-[11px] opacity-75">{byteZaObraz(modelObrazu)} ⟠</span>
+                  </button>
+                </div>
+                {/* Telefon: suwak wielkości pędzla w osobnym rzędzie, kolory pod nim (szeroko, pod palec) */}
+                {mobilny ? (
+                  <div className="flex items-center px-1">{suwakWielkosciPedzla}</div>
+                ) : (
+                  /* Komputer: w jednym rzędzie — kolory z lewej, wielkość pędzla z prawej */
+                  <div className="flex items-center gap-3 px-1">
+                    {koloryAdnotacji}
+                    <span aria-hidden className="h-5 w-px shrink-0 bg-foreground/[0.12]" />
+                    <div className="flex min-w-[180px] max-w-[280px] flex-1 items-center">{suwakWielkosciPedzla}</div>
                   </div>
-                  <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.12]" />
-                </>
-              )}
-              {['auto', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'].map(k => (
-                <button
-                  key={k}
-                  type="button"
-                  aria-label={k === 'auto' ? 'Kolor domyślny (zgodny z motywem)' : `Kolor ${k}`}
-                  aria-pressed={kolorOlowka === k}
-                  onClick={() => setKolorOlowka(k)}
-                  className={cn('grid h-7 w-7 shrink-0 place-items-center rounded-full transition-transform', kolorOlowka === k ? 'ring-2 ring-primary ring-offset-2 ring-offset-transparent' : 'hover:scale-110')}
-                >
-                  <span className="h-4 w-4 rounded-full border border-foreground/20" style={{ background: k === 'auto' ? 'hsl(var(--foreground))' : k }} />
-                </button>
-              ))}
-              <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.12]" />
-              {[3, 6, 12].map(gr => (
-                <button
-                  key={gr}
-                  type="button"
-                  aria-label={`Grubość ${gr}`}
-                  aria-pressed={gruboscOlowka === gr}
-                  onClick={() => setGruboscOlowka(gr)}
-                  className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border transition-colors', gruboscOlowka === gr ? 'border-primary/40 bg-primary/20' : 'border-transparent hover:bg-foreground/[0.08]')}
-                >
-                  <span className="rounded-full bg-foreground/80" style={{ width: gr + 3, height: gr + 3 }} />
-                </button>
-              ))}
-              <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.12]" />
-              <button type="button" title="Cofnij ostatnie (Ctrl+Z)" aria-label="Cofnij" disabled={rysunki.length === 0} onClick={() => setRysunki(r => r.slice(0, -1))} className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
-                <Undo2 className="h-4 w-4" />
-              </button>
-              <button type="button" title="Wyczyść szkice" aria-label="Wyczyść szkice" disabled={rysunki.length === 0} onClick={() => { setRysunki([]); setZaznaczoneRysunki([]) }} className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
+                )}
+              </>
+            )}
+            {trybAdn && mobilny && <div className="flex h-10 items-center px-0.5">{koloryAdnotacji}</div>}
+            {!trybAdn && (
+              <>
+                {/* Ołówek: te same kolory i ten sam suwak wielkości co w adnotacjach.
+                    Telefon: kolory w jednym rzędzie, suwak i przyciski w drugim. Komputer: wszystko w jednym. */}
+                <div className="flex h-11 items-center justify-between gap-0.5 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:justify-start md:gap-1.5">
+                  {['auto', ...KOLORY_ADNOTACJI].map(przyciskKoloru)}
+                  {!mobilny && (
+                    <>
+                      <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.12]" />
+                      <div className="flex w-[180px] shrink-0 items-center">{suwakWielkosciPedzla}</div>
+                      <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-foreground/[0.12]" />
+                      {przyciskiHistorii}
+                    </>
+                  )}
+                </div>
+                {mobilny && (
+                  <div className="flex items-center gap-2 px-0.5">
+                    {suwakWielkosciPedzla}
+                    <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-foreground/[0.12]" />
+                    {przyciskiHistorii}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       ) : null}
+
+      {/* Podgląd wielkości pędzla przy suwaku: kółko o prawdziwej średnicy kreski, na środku zdjęcia */}
+      {trybAdn && podgladPedzla && (() => {
+        const d = Math.max(4, gruboscOlowka * 0.72 * (trybOlowka === 'zakres' ? 5 : 1))
+        const w = ramkaRysowania
+        const srodek = w
+          ? { left: widok.x + (w.x + w.width / 2) * widok.zoom, top: widok.y + (w.y + w.height / 2) * widok.zoom }
+          : { left: window.innerWidth / 2, top: window.innerHeight * 0.38 }
+        return (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute z-[80] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 shadow-[0_0_0_1px_hsl(0_0%_0%/0.35)]"
+            style={{ left: srodek.left, top: srodek.top, width: d, height: d, backgroundColor: kolorOlowka === 'auto' ? 'hsl(var(--foreground) / 0.45)' : `${kolorOlowka}73` }}
+          />
+        )
+      })()}
+
 
       {/* ══ Karta opisu adnotacji — jak karta pinezki: obok zaznaczonego miejsca, kursor od razu w polu ══ */}
       {napis && kartaNapisu && (
@@ -3075,7 +3396,10 @@ export function CanvasSection() {
           key={`adn-${napis.utworzony}`}
           data-karta-adn=""
           className="absolute z-[75] animate-in fade-in zoom-in-95 duration-150"
-          style={mobilny ? { left: '50%', bottom: 'calc(var(--nb-nav-dol, 0px) + 190px)', transform: 'translateX(-50%)' } : { left: kartaNapisu.left, top: kartaNapisu.top, transformOrigin: kartaNapisu.naLewo ? 'right top' : 'left top' }}
+          style={mobilny
+            // w adnotacjach pasek chowa się na czas pisania, więc karta siada nisko — nad samą klawiaturą
+            ? { left: '50%', bottom: `calc(var(--nb-nav-dol, 0px) + ${trybAdn ? '0px' : 'var(--nb-mob-stos, 60px)'} + var(--nb-klaw, 0px) + 16px)`, transform: 'translateX(-50%)' }
+            : { left: kartaNapisu.left, top: kartaNapisu.top, transformOrigin: kartaNapisu.naLewo ? 'right top' : 'left top' }}
           onPointerDown={e => e.stopPropagation()}
         >
           <span
@@ -3244,7 +3568,9 @@ export function CanvasSection() {
       )}
 
       {/* ══ DOCK NARZĘDZI PO LEWYM BOKU (Nextbyte Liquid Glass) ══ */}
-      <div className={cn('p2 !bg-transparent nb-dok-mob pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+76px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-20 md:bottom-[calc(var(--nb-nav-dol,0px)+16px)] flex -translate-x-1/2 flex-col items-center gap-2', trybAdn && 'hidden')}>
+      {/* z-[72]: nad paskiem ołówka (z-70), żeby dymek podpowiedzi nie był przez niego przycinany,
+          ale pod kartami (z-75) i podglądem pędzla (z-80) */}
+      <div className={cn('p2 !bg-transparent nb-dok-mob pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+76px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-[72] md:bottom-[calc(var(--nb-nav-dol,0px)+16px)] flex -translate-x-1/2 flex-col items-center gap-2', trybAdn && 'hidden')}>
         <div className="nb-cozy-plyta pointer-events-auto relative flex h-12 flex-row items-center gap-1 rounded-2xl border p-1.5">
           {/* Wybór i przesuwanie (V) */}
           <Narzedzie

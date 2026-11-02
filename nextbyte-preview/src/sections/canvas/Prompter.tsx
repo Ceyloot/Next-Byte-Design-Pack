@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, Eraser, Loader2, Paintbrush, X } from 'lucide-react'
+import { ArrowLeft, ArrowUp, Eraser, Loader2, Paintbrush } from 'lucide-react'
 
 /**
  * Pływający prompter nad zdjęciem: po zamalowaniu pędzlem („co zrobić w tym obszarze?”)
@@ -106,8 +106,8 @@ export function Prompter({
             />
           </label>
         )}
-        <button type="button" onClick={onAnuluj} aria-label="Anuluj" title="Anuluj (Esc)" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/55 transition-colors hover:bg-foreground/[0.07] hover:text-foreground">
-          <X className="h-4 w-4" />
+        <button type="button" onClick={onAnuluj} aria-label="Wróć do zdjęcia" title="Wróć (Esc)" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/55 transition-colors hover:bg-foreground/[0.07] hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" />
         </button>
         <button
           type="button"
