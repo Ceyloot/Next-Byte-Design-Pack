@@ -1,0 +1,103 @@
+/*
+  POŚWIATA GŁOSU — warstwy (komponent: src/components/ui/poswiata-glosu.tsx).
+  Rekonstrukcja techniki z voice-glow (Jakub Antalik, MIT) ustalona przez REA 20.10.2026 — kod własny.
+  Plamy są malowane RAZ (gradienty w CSS); co klatkę zmienia się tylko transform i opacity. Barwy przychodzą
+  ze zmiennych --pg-* liczonych z --primary motywu, więc efekt jest zawsze w odcieniach platformy, nie tęczowy.
+*/
+.nb-pg {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  /* Pod treścią karty: rodzic musi tworzyć kontekst warstw (`relative isolate`), inaczej światło zejdzie pod tło karty. */
+  z-index: -1;
+  opacity: var(--pg-obecnosc, 0);
+  contain: strict;
+}
+/* Nad półprzezroczystym tłem z rodzeństwa (szkło nakładki rozmowy), a pod treścią z wyższym z-index. */
+.nb-pg.nb-pg-nad-tlem { z-index: 0; }
+.nb-pg i,
+.nb-pg b {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+.nb-pg i {
+  width: calc(var(--w) * 2px);
+  height: calc(var(--h) * 2px);
+  margin-left: calc(var(--w) * -1px);
+  margin-bottom: calc(var(--h) * -1px);
+}
+
+/* Poświata: miękkie elipsy — miękkość w gradiencie zamiast filter: blur (blur na każdej klatce kosztuje). */
+.nb-pg-poswiata {
+  position: absolute;
+  inset: 0;
+  opacity: var(--pg-sila-poswiaty, 0.85);
+  -webkit-mask-image: radial-gradient(ellipse 75% 95% at 50% 100%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 75% 95% at 50% 100%, #000 35%, transparent 100%);
+}
+.nb-pg-poswiata i {
+  background: radial-gradient(closest-side,
+    var(--k) 0%,
+    color-mix(in srgb, var(--k) 78%, transparent) 18%,
+    color-mix(in srgb, var(--k) 46%, transparent) 40%,
+    color-mix(in srgb, var(--k) 18%, transparent) 62%,
+    color-mix(in srgb, var(--k) 5%, transparent) 82%,
+    transparent 100%);
+}
+
+/* Światło przy krawędzi: te same plamy widoczne tylko w pasie 28 px przy obrysie. */
+.nb-pg-krawedz {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.55;
+  box-shadow: inset 0 0 9px 1px var(--pg-cien);
+  -webkit-mask-image:
+    linear-gradient(#000, transparent 28px, transparent calc(100% - 28px), #000),
+    linear-gradient(to right, #000, transparent 28px, transparent calc(100% - 28px), #000);
+  mask-image:
+    linear-gradient(#000, transparent 28px, transparent calc(100% - 28px), #000),
+    linear-gradient(to right, #000, transparent 28px, transparent calc(100% - 28px), #000);
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+}
+.nb-pg-krawedz i { background: radial-gradient(closest-side, var(--k), transparent 100%); }
+
+/* Obrys 1 px: stała maska-pierścień, w środku elipsa skalowana transformem. */
+.nb-pg-obrys {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.nb-pg-obrys b {
+  width: calc(var(--pg-skala, 1) * 340px);
+  height: calc(var(--pg-skala-y, 1) * 128px);
+  margin-left: calc(var(--pg-skala, 1) * -170px);
+  margin-bottom: calc(var(--pg-skala-y, 1) * -64px);
+  background: radial-gradient(closest-side, var(--pg-rdzen), var(--pg-jasny) 30%, var(--pg-baza) 55%, transparent 100%);
+}
+
+.nb-pg canvas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 60%;
+}
+/* Na ciemnym tle linia DODAJE światło do poświaty pod spodem (zamiast ją zakrywać). */
+.nb-pg[data-jasny='nie'] canvas { mix-blend-mode: screen; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-pg i,
+  .nb-pg b { will-change: auto; }
+}
