@@ -1,5 +1,6 @@
 import { Check, Eye, Loader2, TriangleAlert, X } from 'lucide-react'
 import type { StanGeneracji } from './typy'
+import { czytelnyBlad } from './komunikat-bledu'
 
 /**
  * Karta generacji — od planu do oceny.
@@ -28,7 +29,7 @@ export function KartaWyniku({ stan, onZamknij }: { stan: StanGeneracji; onZamkni
       {stan.faza === 'blad' && (
         <div className="flex items-start gap-2.5">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-          <p className="flex-1 text-[11.5px] leading-relaxed text-foreground/70">{stan.tresc}</p>
+          <p className="flex-1 text-[11.5px] leading-relaxed text-foreground/70">{czytelnyBlad(stan.tresc)}</p>
           <Zamknij onClick={onZamknij} />
         </div>
       )}

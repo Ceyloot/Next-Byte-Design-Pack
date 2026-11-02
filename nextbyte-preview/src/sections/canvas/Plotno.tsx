@@ -68,6 +68,8 @@ interface Props {
   onRysunek?: (r: Rysunek) => void
   onZaznaczRysunki?: (ids: string[]) => void
   onMenuRysunku?: (x: number, y: number) => void
+  /** długie przytrzymanie palca na pustym płótnie (telefon) — menu: dodaj zdjęcie, wklej, dopasuj widok */
+  onMenuPlotna?: (x: number, y: number) => void
 }
 
 type Uchwyt = 'nw' | 'ne' | 'se' | 'sw'
@@ -162,6 +164,7 @@ export function Plotno({
   onRysunek,
   onZaznaczRysunki,
   onMenuRysunku,
+  onMenuPlotna,
 }: Props) {
   const refKontener = useRef<HTMLDivElement>(null)
   const refOperacja = useRef<Operacja | null>(null)
@@ -216,9 +219,37 @@ export function Plotno({
     const cy = (pts[0].y + pts[1].y) / 2 - (r?.top ?? 0)
     return { cx, cy, dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) }
   }
+  /* Długie przytrzymanie palca (telefon): na zdjęciu otwiera jego menu (kopiuj, duplikuj…), na pustym
+     płótnie menu płótna (dodaj zdjęcie…). Wystarczy ~0,5 s bez ruchu; ruch >10 px, drugi palec albo
+     puszczenie palca anulują. iOS nie wysyła `contextmenu` przy długim dotyku, więc robimy to sami. */
+  const dlugiDotyk = useRef<{ id: number; x: number; y: number; cel: Element; timer: number } | null>(null)
+  const dlugiDotykTs = useRef(0)
+  const anulujDlugiDotyk = () => {
+    if (dlugiDotyk.current) window.clearTimeout(dlugiDotyk.current.timer)
+    dlugiDotyk.current = null
+  }
+  useEffect(() => anulujDlugiDotyk, [])
   function dotykWDol(e: React.PointerEvent) {
     if (e.pointerType !== 'touch') return
     dotyki.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    anulujDlugiDotyk()
+    if (dotyki.current.size === 1 && narzedzie === 'wybor') {
+      const start = { id: e.pointerId, x: e.clientX, y: e.clientY, cel: e.target as Element, timer: 0 }
+      start.timer = window.setTimeout(() => {
+        dlugiDotyk.current = null
+        dlugiDotykTs.current = Date.now()
+        refOperacja.current = null
+        navigator.vibrate?.(12)
+        const idWarstwy = start.cel.closest('[data-warstwa-id]')?.getAttribute('data-warstwa-id')
+        if (idWarstwy && onMenuWarstwy) {
+          onWybierzWarstwe(idWarstwy)
+          onMenuWarstwy(idWarstwy, start.x, start.y)
+        } else if (!idWarstwy) {
+          onMenuPlotna?.(start.x, start.y)
+        }
+      }, 520)
+      dlugiDotyk.current = start
+    }
     if (dotyki.current.size === 2) {
       refOperacja.current = null
       const { cx, cy, dist } = srodekDotykow()
@@ -228,6 +259,8 @@ export function Plotno({
   function dotykRuch(e: React.PointerEvent) {
     if (e.pointerType !== 'touch' || !dotyki.current.has(e.pointerId)) return
     dotyki.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const dd = dlugiDotyk.current
+    if (dd && dd.id === e.pointerId && Math.hypot(e.clientX - dd.x, e.clientY - dd.y) > 10) anulujDlugiDotyk()
     if (pinch.current && dotyki.current.size >= 2) {
       e.stopPropagation()
       const { cx, cy, dist } = srodekDotykow()
@@ -238,6 +271,7 @@ export function Plotno({
   function dotykGora(e: React.PointerEvent) {
     if (e.pointerType !== 'touch') return
     dotyki.current.delete(e.pointerId)
+    anulujDlugiDotyk()
     if (dotyki.current.size < 2) pinch.current = null
   }
 
@@ -642,17 +676,26 @@ export function Plotno({
     <div
       ref={refKontener}
       onContextMenu={e => {
+        // po długim dotyku obsługujemy menu sami — bez systemowego menu przeglądarki
+        if (Date.now() - dlugiDotykTs.current < 1500) { e.preventDefault(); return }
         // prawy przycisk wewnątrz ramki zaznaczonych szkiców → menu „Zamień w obraz” (a nie menu inspekcji platformy)
         const wyb = rysunki.filter(ry => zaznaczoneRysunki.includes(ry.id))
-        if (wyb.length === 0 || !onMenuRysunku) return
-        const p = doSceny(e)
-        const xs = wyb.flatMap(ry => ry.punkty.map(q => q[0]))
-        const ys = wyb.flatMap(ry => ry.punkty.map(q => q[1]))
-        const pad = 10 / widok.zoom
-        if (p.x >= Math.min(...xs) - pad && p.x <= Math.max(...xs) + pad && p.y >= Math.min(...ys) - pad && p.y <= Math.max(...ys) + pad) {
+        if (wyb.length > 0 && onMenuRysunku) {
+          const p = doSceny(e)
+          const xs = wyb.flatMap(ry => ry.punkty.map(q => q[0]))
+          const ys = wyb.flatMap(ry => ry.punkty.map(q => q[1]))
+          const pad = 10 / widok.zoom
+          if (p.x >= Math.min(...xs) - pad && p.x <= Math.max(...xs) + pad && p.y >= Math.min(...ys) - pad && p.y <= Math.max(...ys) + pad) {
+            e.preventDefault()
+            e.stopPropagation()
+            onMenuRysunku(e.clientX, e.clientY)
+            return
+          }
+        }
+        // puste płótno (zdjęcia i szkice mają własne menu i zatrzymują zdarzenie wcześniej) → menu płótna
+        if (onMenuPlotna) {
           e.preventDefault()
-          e.stopPropagation()
-          onMenuRysunku(e.clientX, e.clientY)
+          onMenuPlotna(e.clientX, e.clientY)
         }
       }}
       onPointerDownCapture={dotykWDol}
@@ -681,6 +724,8 @@ export function Plotno({
             ? 'crosshair'
             : 'default',
         touchAction: 'none',
+        userSelect: 'none',
+        WebkitTouchCallout: 'none',
         // siatka tła podąża za widokiem (przesuwanie i zoom)
         ['--nb-wx' as string]: `${widok.x}px`,
         ['--nb-wy' as string]: `${widok.y}px`,
@@ -705,6 +750,7 @@ export function Plotno({
           return (
             <div
               key={warstwa.id}
+              data-warstwa-id={warstwa.id}
               className="nb-warstwa-wejscie"
               onPointerDown={e => {
                 if (e.button === 2) return

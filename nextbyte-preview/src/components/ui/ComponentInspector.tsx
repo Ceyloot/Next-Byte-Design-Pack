@@ -48,37 +48,8 @@ export function InspectorProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('click', handleClick)
   }, [])
 
-  // Globalny interceptor prawego przycisku myszy — blokuje domyślne menu przeglądarki i pokazuje customowe menu
-  useEffect(() => {
-    const handleGlobalContextMenu = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      // Jeśli kliknięto wewnątrz elementu z własnym Inspectable, zostaw (Inspectable załatwi e.stopPropagation)
-      if (target.closest('.nb-inspectable')) return
-
-      // W przeciwnym razie zapobiegamy otwarciu domyślnego menu przeglądarki i generujemy menu inteligentne
-      e.preventDefault()
-
-      // Wyciągamy nagłówek lub nazwę najbliższego elementu
-      const cardParent = target.closest('.bg-card, .nb-glass, button, section')
-      const heading = cardParent?.querySelector('h1, h2, h3, h4, p, span')?.textContent?.slice(0, 30) || 'Komponent UI'
-
-      const outerHTML = cardParent?.outerHTML || target.outerHTML || '<div>Komponent</div>'
-      const cleanTsx = outerHTML.length > 400 ? outerHTML.slice(0, 400) + '\n  /* ... */\n</div>' : outerHTML
-
-      setInspectData({
-        title: heading,
-        category: 'Wyryty Element',
-        description: 'Auto-wykryty komponent ze struktury DOM.',
-        tsx: cleanTsx,
-        importPath: "import { GlassCard, Button } from '@/components/glass'",
-        css: `/* Zmienne CSS aktualnego motywu HSL */\n--background: var(--background);\n--primary: var(--primary);`,
-      })
-      setContextMenuPos({ x: e.clientX, y: e.clientY })
-    }
-
-    window.addEventListener('contextmenu', handleGlobalContextMenu)
-    return () => window.removeEventListener('contextmenu', handleGlobalContextMenu)
-  }, [])
+  // Menu inspekcji na prawy przycisk jest WYŁĄCZONE: blokowało menu przeglądarki, narzędzia deweloperskie
+  // i (przez długie przytrzymanie) dotyk na telefonie. Wrócić do niego można tylko wprost na prośbę.
 
   const openContextMenu = (e: React.MouseEvent, data: ComponentInspectData) => {
     e.preventDefault()
@@ -336,31 +307,6 @@ export function Inspectable({
   children: React.ReactNode
   className?: string
 }) {
-  const { openContextMenu } = useInspector()
-
-  return (
-    <div
-      onContextMenu={(e) =>
-        openContextMenu(e, {
-          title,
-          category,
-          description,
-          tsx,
-          css,
-          importPath,
-          previewNode: children,
-        })
-      }
-      className={cn(
-        'nb-inspectable group relative transition-all rounded-lg hover:ring-1 hover:ring-primary/40 hover:ring-dashed cursor-context-menu',
-        className
-      )}
-      title="Kliknij prawym przyciskiem myszy, aby skopiować kod"
-    >
-      {children}
-      <span className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 text-primary-foreground text-[9px] px-1.5 py-0.5 rounded font-sans pointer-events-none z-10 shadow-sm">
-        Prawy przycisk = Kod
-      </span>
-    </div>
-  )
+  // Bez własnego menu, bez obramowania i bez podpowiedzi: opakowanie nic nie przechwytuje
+  return <div className={className}>{children}</div>
 }

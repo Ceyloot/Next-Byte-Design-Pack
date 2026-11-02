@@ -212,3 +212,37 @@ Gdy przystępujesz do czyszczenia pozostałych plików platformy (np. Chat AI, U
 - **Object transfer / wstawienie / zamiana obiektu / przesunięcie w nowym systemie agenta (dwukrokowy agent z recepturami)** — zatwierdzone przez użytkownika jako działające (test Cadillac Escalade → podjazd domu, 08.10.2026; poprawne na GPT Image 2 i Nano Banana Pro). Zamrożone: skala liczona z kotwicy i realnych wymiarów (STEP 5 w `nextbyte-preview/src/sections/canvas/nowy/agent-instrukcja.ts`, `zdanieOSkali` / `srednicaZeSkali` w `nowy/agent.ts`), receptury `wstawienie`, `zamiana_obiektu`, `przeniesienie` w `nowy/receptury.ts`, maska układu zamiast pierścienia na zdjęciu (czarny obraz, biały dysk = cel, szary = skąd rzecz znika; `narysujMaskeUkladu` w `nowy/obrazy.ts`, `nowy/przygotuj.ts`, flaga `PRZEWODNIK_MIEJSCA`), zakaz „pin N” w prompcie i współrzędne w ułamkach bazy. **Modele rekomendowane do tego trybu: GPT Image 2 (preferowany) i Nano Banana Pro; Nano Banana 2 Lite nie radzi sobie ze skalą i położeniem.** Nie zmieniaj tej logiki, dopóki użytkownik wprost nie poprosi. **WYJĄTEK na prośbę użytkownika (test żaba → foka, 10.10.2026: „nie zachowało masy i półprzezroczystości”):** receptura `zamiana_obiektu` — nowa rzecz dziedziczy rozmiar, masę i miejsce ZASTĘPOWANEJ (ramka `cel`, `zdanieOZastapieniu` w `nowy/przygotuj.ts`, maska z `cel`; bez skali z realnych wymiarów, `skala: null`) oraz sposób wyrenderowania (półprzezroczystość, rozmycie, poświata — pola karty `old_object_size`, `old_object_rendering`). Wstawienie i przeniesienie bez zmian.
 - **Inpainting (Inpaint i Eraser w pasku akcji)** — zatwierdzone przez użytkownika jako działające (12.10.2026). Zamrożone: logika z commita `fd55867` (6.10) w `nextbyte-preview/src/sections/canvas/inpainting.ts` — wycinek wokół maski z kontekstem, do modelu idzie JEDEN obraz (wycinek z magentą, bez osobnej maski i bez `maskImage`), CAŁY wygenerowany wycinek wstawiany w oryginał z miękkim wtopieniem brzegów, bez przycinania maską (obiekt nie zostaje ucięty); prompt `promptInpaintingu`, stałe kontekstu (`KONTEKST`, `MIN_KONTEKST`, `PROG_CALEGO`), prompt Erasera. Model: ZAWSZE Nano Banana Pro (`MODEL_INPAINTINGU` w `CanvasSection.tsx`), niezależnie od wyboru w czacie. Dodatki, które są częścią tej wersji: gumka maski (`gumka` w `Pociagniecie`) i opis STYLU od Gemini (`opiszStylZdjecia`, tryb `styl` w `runware-proxy.ts`, punkt „STYLE MATCH” w prompcie). Nie zmieniaj tej logiki ani nie podpinaj inpaintingu pod inne modele / maskę jako obraz, dopóki użytkownik wprost nie poprosi.
 
+
+---
+
+## 7. Biblioteki i paczki — ZAMKNIĘTA LISTA (nigdy nic innego)
+
+Źródłem prawdy jest `nextbyte-preview/package.json` + `package-lock.json`. Każdy eksport do ZIP-a / każda implementacja na platformie **kopiuje te dwa pliki 1:1** i nie zmienia ani jednej wersji.
+
+**Zasady bez wyjątków (bez wyraźnej prośby użytkownika):**
+1. **Nie dodawaj, nie podmieniaj i nie aktualizuj żadnej paczki npm.** Brakuje czegoś? Zrób to z tego, co jest, albo zapytaj.
+2. **Ikony: wyłącznie `lucide-react`.** Logotypy marek tylko z `src/grafiki/znaki-marek.tsx`. Żadnych Heroicons, FontAwesome, własnych „szybkich" SVG.
+3. **Style: Tailwind 3.4** + tokeny HSL motywu (`text-foreground`, `bg-card`, `border-border`, `text-primary`…). Nie Tailwind 4, nie CSS-in-JS, nie styled-components, nie `bg-black` / `text-white`.
+4. **Klasy łączymy przez `cn()`** z `@/lib/utils` (clsx + tailwind-merge). Warianty przez `class-variance-authority`.
+5. **Komponenty bazowe:** `@radix-ui/*` i `@base-ui/react` (tylko jeśli już użyte w danym miejscu), toasty przez `sonner` (`@/components/ui/toaster`). Nie dodawaj shadcn/MUI/Chakra/Mantine/Headless UI.
+6. **Animacje: CSS (keyframes / transition) i istniejące style.** Bez framer-motion, GSAP, react-spring.
+7. **Czcionka:** Plus Jakarta Sans (`font-heading` / `font-landing`). Nie wprowadzaj innych krojów.
+8. **Stos:** React 19, Vite 8, TypeScript 6, alias `@/` → `src/`. Wykresy i WebGL tylko tymi paczkami, które już są (`ogl` itd.).
+9. **Reużywaj gotowców:** `Tile`, `GlowButton`, `AnimStyles`, `NextByteMarkIcon`, `Plotno`… zanim napiszesz własne.
+10. **Eksport do ZIP-a:** skopiuj pliki bez zmian, dołóż tylko odchudzone `main.tsx` / `App.tsx` / `vite.config.ts`, sprawdź `vite build`, usuń `node_modules` i `dist`, spakuj z ukośnikami `/` (np. `C:\Windows\System32\tar.exe -a -c -f x.zip *`).
+
+---
+
+## 8. Telefon i dotyk — checklista (każdy ekran)
+
+Emulacja węższego okna w przeglądarce **nie sprawdza dotyku** (kliknięcia myszą działają inaczej niż palec). Ekran uznajemy za działający na telefonie dopiero po sprawdzeniu poniższego, a w odpowiedzi do użytkownika piszemy wprost, czego nie dało się sprawdzić bez prawdziwego telefonu.
+
+1. **Nic nie przykrywa płótna ani treści.** Pełnoekranowe warstwy (czat, modale, tła) mają `pointer-events-none`, a tylko ich interaktywne elementy `pointer-events-auto`. Test: `document.elementFromPoint(x, y)` w kilku punktach.
+2. **Układ mobilny Canvasa:** płótno na całym ekranie; z czatu tylko pole pisania na dole (pastylka); pełny czat otwiera ikona dymka. Domyślny stan telefonu = zwinięty.
+3. **Gesty:** powierzchnie przesuwane / skalowane palcem mają `touch-action: none` i obsługę `pointer*` (jeden palec = przesuwanie, dwa = pinch). Nie polegamy na `mouse*` ani `hover`.
+4. **Cele dotyku ≥ 44 px**, pola tekstowe `font-size ≥ 16px` (iOS nie powiększa strony), brak funkcji dostępnych tylko po `hover`.
+5. **Klawiatura ekranowa nie zasłania pola pisania** (`useKlawiatura`), a dół ekranu uwzględnia `env(safe-area-inset-bottom)`.
+6. **Brak poziomego przewijania** przy 320 px i 375 px.
+7. **Menu / dropdowny** zamykają się dopiero po wyborze, nie przy otwarciu (sprawdź `pointerdown` na `window`).
+8. **Canvas na telefonie: bez górnego paska podglądu** (`PreviewSection`: `canvasMobilny` chowa pasek i zeruje `--nb-nav-*`). Eksport Canvasa do ZIP-a **nigdy nie zawiera paska nawigacji podglądu** — tylko samo płótno, pasek narzędzi i czat.
+9. **Telefon: zero przewijania strony.** Układ ma się mieścić na wysokość ekranu: używamy `100dvh` (nie `100vh`, które na telefonie wychodzi poza widoczny ekran przez pasek adresu). Przewijać wolno tylko wnętrze czatu (historia) i listy.

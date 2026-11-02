@@ -41,6 +41,7 @@ import { etykietaPineski, wytnijPodgladPineski, type Pineska, type Warstwa, type
 import { byteZaObraz } from './dostawca'
 import type { Zalacznik } from './zalaczniki'
 import { useKlawiatura, useMobilny } from './mobilny'
+import { czytelnyBlad } from './komunikat-bledu'
 import { INTENCJE, type Intencja } from './tryby-edycji'
 import type { OpcjaRol } from './role-z-polecenia'
 
@@ -262,12 +263,13 @@ export function CzatCanvas({
   }, [menu])
   const mobilny = useMobilny()
   const klawiatura = useKlawiatura()
-  // Telefon (jak w Lovarcie): domyślnie widać sam czat na całym ekranie; płótno otwiera się jednym dotknięciem
-  const [zwiniety, setZwiniety] = useState(false)
-  // Zmiana układu telefon ↔ komputer: czat wraca rozwinięty (na komputerze karta, na telefonie czat na całym ekranie)
+  // Czat startuje ROZŁOŻONY na komputerze (tak prosił użytkownik). Na telefonie zostaje zwinięty do pastylki,
+  // bo rozłożony panel zasłania płótno i chowa dok narzędzi (checklista telefonu, pkt 2).
+  const [zwiniety, setZwiniety] = useState(() => mobilny)
+  // Zmiana układu telefon ↔ komputer: telefon zwija czat, komputer go rozkłada
   const poprzedniMobilny = useRef(mobilny)
   useEffect(() => {
-    if (poprzedniMobilny.current !== mobilny) { poprzedniMobilny.current = mobilny; setZwiniety(false) }
+    if (poprzedniMobilny.current !== mobilny) { poprzedniMobilny.current = mobilny; setZwiniety(mobilny) }
   }, [mobilny])
   // Telefon: wysokość dolnego stosu (chipy + pole pisania) mierzona na żywo — dok narzędzi i ołówek odsuwają się o tyle, ile trzeba
   const refStos = useRef<HTMLDivElement>(null)
@@ -290,6 +292,12 @@ export function CzatCanvas({
     window.addEventListener('nb-canvas-czat', naCzat)
     return () => window.removeEventListener('nb-canvas-czat', naCzat)
   }, [])
+  // Wysokość klawiatury ekranowej jako zmienna CSS: karty nad dolnym stosem (pinezka, napis, dok) unoszą się razem z nim
+  useEffect(() => {
+    if (!mobilny) { document.documentElement.style.removeProperty('--nb-klaw'); return }
+    document.documentElement.style.setProperty('--nb-klaw', `${klawiatura}px`)
+    return () => { document.documentElement.style.removeProperty('--nb-klaw') }
+  }, [mobilny, klawiatura])
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
     document.documentElement.style.setProperty('--nb-czat-szer', '0px')
@@ -486,7 +494,7 @@ export function CzatCanvas({
   if (zwiniety && mobilny) {
     const otworz = () => { setZwiniety(false); window.setTimeout(() => refTextarea.current?.focus({ preventScroll: true }), 60) }
     return (
-      <div ref={refStos} className="p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
+      <div ref={refStos} className="nb-czat-ukryj p2 !bg-transparent pointer-events-none absolute inset-x-3 bottom-[calc(var(--nb-nav-dol,0px)+12px)] z-30" style={{ transform: klawiatura ? `translateY(-${klawiatura}px)` : undefined }}>
         {/* Chipy zaznaczenia: pinezki i załączniki — jeden przewijany rząd nad polem */}
         {(pineski.length > 0 || zalaczniki.length > 0 || zaznaczona || zaznaczoneWarstwy.length > 0) && (
           <div className="pointer-events-auto mb-1.5 flex gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -510,12 +518,8 @@ export function CzatCanvas({
             ))}
           </div>
         )}
-        <div className="p2-szklo pointer-events-auto flex min-h-12 items-end gap-1 !rounded-2xl p-1.5">
-          {/* Dedykowany przycisk otwierający pełny czat (historia, modele, załączniki) */}
-          <button type="button" onClick={otworz} aria-label="Otwórz czat" title="Otwórz czat" className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 active:bg-foreground/[0.08]">
-            <MessageSquare className="h-5 w-5" strokeWidth={1.6} />
-            {historiaWiadomosci.length > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />}
-          </button>
+        {/* Dwa rzędy: pole pisania na całą szerokość (nic się nie ściska przy pisaniu), pod nim dymek, wybór modelu i wyślij */}
+        <div className="p2-szklo pointer-events-auto flex flex-col gap-0.5 !rounded-2xl p-1.5">
           <textarea
             ref={refTextarea}
             value={tekst}
@@ -525,18 +529,42 @@ export function CzatCanvas({
             placeholder={pineski.length === 1 ? `Co zrobić z: ${etykietaPineski(pineski[0], 1)}?` : 'Opisz zmianę…'}
             aria-label="Polecenie"
             enterKeyHint="send"
-            className="max-h-[96px] min-h-9 min-w-0 flex-1 resize-none bg-transparent px-1 py-[7px] text-[16px] leading-snug text-foreground outline-none placeholder:text-muted-foreground/70"
+            className="max-h-[96px] min-h-9 w-full resize-none bg-transparent px-2 py-[7px] text-[16px] leading-snug text-foreground outline-none placeholder:text-muted-foreground/70"
           />
-          <button type="button" onClick={wyslij} disabled={trwa || !tekst.trim() || !!powodBlokady} aria-label="Wyślij" title={powodBlokady ?? `Wyślij · ${byteZaObraz(modelObrazu)} Byte`} className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40">
-            {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2} />}
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Dedykowany przycisk otwierający pełny czat (historia, modele, załączniki) */}
+            <button type="button" onClick={otworz} aria-label="Otwórz czat" title="Otwórz czat" className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 active:bg-foreground/[0.08]">
+              <MessageSquare className="h-5 w-5" strokeWidth={1.6} />
+              {historiaWiadomosci.length > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />}
+            </button>
+            <div className="min-w-0 flex-1">
+              <GlassModelSearch
+                key={`pastylka-${modelObrazu}-${odswiez}`}
+                models={MODELE_DO_WYSZUKIWARKI}
+                selectedId={modelObrazu}
+                placement="top"
+                align="left"
+                compact
+                odwroc
+                szklo
+                onSelect={mo => {
+                  const model = MODELE_OBRAZU.find(x => x.id === mo.id)
+                  if (model?.dostepny) onModelObrazu(mo.id as ModelObrazu)
+                  else setOdswiez(n => n + 1)
+                }}
+              />
+            </div>
+            <button type="button" onClick={wyslij} disabled={trwa || !tekst.trim() || !!powodBlokady} aria-label="Wyślij" title={powodBlokady ?? `Wyślij · ${byteZaObraz(modelObrazu)} Byte`} className="nb-cta flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0 disabled:cursor-not-allowed disabled:opacity-40">
+              {trwa ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2} />}
+            </button>
+          </div>
         </div>
       </div>
     )
   }
   if (zwiniety) {
     return (
-      <div className="pointer-events-auto absolute right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[var(--nb-canvas-gora,16px)] z-30">
+      <div className="nb-czat-ukryj pointer-events-auto absolute right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[var(--nb-canvas-gora,16px)] z-30">
         <button
           onClick={() => setZwiniety(false)}
           className="group relative grid h-12 w-12 place-items-center rounded-2xl border border-foreground/[0.08] text-primary backdrop-blur-2xl transition-all duration-200 hover:border-primary/40 active:scale-95"
@@ -555,7 +583,7 @@ export function CzatCanvas({
 
   /* ══ WARIANT ROZWINIĘTY: jedna szklana karta NextByte — nagłówek, pinezki, historia, kompozytor ══ */
   return (
-    <div className={cn('nb-czat-root p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 top-[calc(var(--nb-nav-gora,0px)+8px)]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny ? { bottom: klawiatura } : undefined}>
+    <div className={cn('nb-czat-root nb-czat-ukryj p2 !bg-transparent pointer-events-none absolute z-30 flex flex-col', mobilny ? 'inset-x-0 top-[calc(var(--nb-nav-gora,0px)+8px)]' : 'bottom-[calc(var(--nb-nav-dol,0px)+12px)] right-[calc(var(--nb-nav-prawo,0px)+12px)] top-[calc(var(--nb-nav-gora,0px)+8px)] w-[340px] max-w-[calc(100vw-24px)]')} style={mobilny ? { bottom: klawiatura } : undefined}>
       <div className={cn('p2-szklo nb-cozy-czat pointer-events-auto flex h-full min-h-0 w-full flex-col gap-3 p-3 animate-in duration-300', mobilny ? '!rounded-b-none !rounded-t-2xl !bg-[hsl(var(--background))] slide-in-from-bottom-4' : '!rounded-2xl slide-in-from-right-4')}>
         {/* Nagłówek: akcje + gradientowa kreska jak w pasku bocznym platformy */}
         <div className="nb-czat-naglowek relative flex shrink-0 items-center justify-end pb-2">
@@ -699,7 +727,7 @@ export function CzatCanvas({
             <div className="min-w-0 flex-1">
               <span className="block font-semibold">Błąd generacji</span>
               <span className="mt-0.5 block break-words text-[10.5px] leading-relaxed text-muted-foreground">
-                {stanGeneracji.tresc}
+                {czytelnyBlad(stanGeneracji.tresc)}
               </span>
             </div>
           </div>
