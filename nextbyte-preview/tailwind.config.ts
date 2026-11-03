@@ -7,7 +7,13 @@ export default {
   // występującą wyłącznie w tych plikach — układ rozsypuje się bez błędu.
   content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {
-    screens: { xs: '475px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px' },
+    screens: {
+      // Próg trybu jednego ekranu — przeniesiony z paczki panelu razem
+      // z kopią Panelu Głównego. Wysokość liczy się tu tak samo jak
+      // szerokość: „bez przewijania" ma znaczyć „wszystko widać".
+      ekran1: { raw: '(min-width: 1024px) and (min-height: 800px)' },
+      xs: '475px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px',
+    },
     extend: {
       colors: {
         background: 'hsl(var(--background))',

@@ -23,7 +23,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@d2/*": ["./src/dashboard2/*"]
     }
   },
   "include": ["src"]

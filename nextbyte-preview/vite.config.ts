@@ -15,6 +15,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Kopia Panelu Głównego 1:1 wyglądowo, bez Supabase i bez danych.
+      // Własny korzeń, żeby przeniesione pliki zachowały swoje `@/…`
+      // i nie mieszały się z komponentami preview o tych samych nazwach.
+      '@d2': path.resolve(__dirname, './src/dashboard2'),
     },
   },
 })
+

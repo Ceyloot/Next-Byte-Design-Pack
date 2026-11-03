@@ -36,6 +36,7 @@ import type { EkranAuth } from '@/sections/strona-glowna/types'
 import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
 import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
 import { PanelGlownyOsadzony } from '@/sections/panel2/PanelGlownyOsadzony'
+import { Dashboard2 } from '@d2/index'
 import { NotebookSection } from '@/sections/NotebookSection'
 import { NawigacjaBoczna, type SekcjaNawigacji } from '@/components/NawigacjaBoczna'
 
@@ -50,6 +51,10 @@ const DESIGN_TABS: { key: string; label: string; icon: React.ComponentType<{ cla
     { name: 'Logowanie',     icon: LogIn,      subView: 'logowanie' },
     { name: 'Dashboard',     icon: LayoutGrid, subView: 'dashboard' },
     { name: 'Dashboard 2.0', icon: Grid,       badge: 'NEW', subView: 'dashboard2' },
+    /* Ta sama rzecz, ale narysowana tutaj, a nie wzięta z drugiego serwera:
+       bez logowania i bez Supabase, więc wchodzi od razu i da się na niej
+       pracować nad wyglądem razem z przełącznikiem motywów. */
+    { name: 'Dashboard 2.0 — kopia', icon: Grid, badge: 'DESIGN', subView: 'dashboard2-kopia' },
     { name: 'Next Scribe', icon: BookOpen,  badge: 'WIP', subView: 'notebook' },
   ] },
   { key: 'karty',      label: 'Karty',      icon: LayoutGrid,   items: [
@@ -495,7 +500,17 @@ function renderSection(key: string): React.ReactNode {
 export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'preview', navPosition = 'top', onNavPositionChange }: PreviewSectionProps) {
   const { showContent, isGlass } = useGlass()
   const [activeSection, setActiveSection] = useState('preview')
-  const [previewSubView, setPreviewSubView] = useState<'dashboard' | 'dashboard2' | 'strona-glowna' | 'logowanie' | 'notebook'>('strona-glowna')
+  /* Widok startowy da się podać adresem: `?widok=dashboard2-kopia`.
+     Bez tego każde wejście zaczyna się od strony głównej i do panelu trzeba
+     dojść przez menu — przy pracy nad jednym ekranem to kilkanaście kliknięć
+     dziennie na to samo. Nieznana wartość jest ignorowana. */
+  const WIDOKI = ['dashboard', 'dashboard2', 'dashboard2-kopia', 'strona-glowna', 'logowanie', 'notebook'] as const
+  const widokZAdresu = (() => {
+    if (typeof window === 'undefined') return null
+    const w = new URLSearchParams(window.location.search).get('widok')
+    return (WIDOKI as readonly string[]).includes(w ?? '') ? (w as (typeof WIDOKI)[number]) : null
+  })()
+  const [previewSubView, setPreviewSubView] = useState<(typeof WIDOKI)[number]>(widokZAdresu ?? 'strona-glowna')
   /** W module z własnym paskiem (Next Scribe) „‹ MENU” podmienia treść paska na menu podglądu. */
   const [menuWModule, setMenuWModule] = useState(false)
   /** Aktywna podstrona publicznej witryny w podglądzie „Strona główna" */
@@ -508,7 +523,13 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
      firm, Historia) i na ekranach auth, które inaczej nie mają jak wrócić. */
   /** Panel 2.0 zajmuje cały ekran — chrome podglądu (górny/boczny pasek)
    *  znika, a powrót prowadzi przez „Wyjdź" w jego własnej nawigacji. */
-  const pelnyEkran = activeTab === 'preview' && previewSubView === 'dashboard2'
+  /* Kopia też idzie na pełny ekran. Powód jest konkretny: niesie własny
+     pasek boczny, a chrome podglądu dokłada do tego swój przeciągalny
+     pasek nawigacji — dwie nawigacje naraz, z których jedna reaguje na
+     chwycenie uchwytu i przestawia cały układ. Przy pracy nad wyglądem
+     panelu to wygląda jak usterka panelu, a jest funkcją podglądu. */
+  const pelnyEkran = activeTab === 'preview'
+    && (previewSubView === 'dashboard2' || previewSubView === 'dashboard2-kopia')
 
   const podNawigacja =
     activeTab !== 'preview' ? []
@@ -988,7 +1009,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
           ? ''
           : activeTab !== 'preview'
           ? 'p-6 w-full'
-          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'dashboard2' || previewSubView === 'notebook')
+          : (previewSubView === 'strona-glowna' || previewSubView === 'logowanie' || previewSubView === 'dashboard2' || previewSubView === 'dashboard2-kopia' || previewSubView === 'notebook')
             ? 'p-0 w-full'
             : cn('px-4 lg:px-5 pb-4 flex flex-col justify-between flex-1 min-h-0', isSidebar || navPosition === 'bottom' ? 'pt-4' : 'pt-0'),
       )}
@@ -1015,6 +1036,11 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
               />
             ) : previewSubView === 'dashboard2' ? (
               <PanelGlownyOsadzony onWyjscie={() => setPreviewSubView('strona-glowna')} />
+            ) : previewSubView === 'dashboard2-kopia' ? (
+              /* Kopia zostaje W CHROME podglądu, w przeciwieństwie do wersji
+                 z iframe. Cały sens tego widoku to praca nad wyglądem, a do
+                 tego potrzebny jest przełącznik motywów z górnego paska. */
+              <Dashboard2 />
             ) : previewSubView === 'strona-glowna' ? (
               <StronaGlownaSection page={stronaPage} onPageChange={idzDoPodstrony} />
             ) : previewSubView === 'logowanie' ? (
