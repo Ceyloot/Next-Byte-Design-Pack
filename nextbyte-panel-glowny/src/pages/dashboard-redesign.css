@@ -1,0 +1,95 @@
+.dashboard-redesign {
+  --dashboard-bg: #080f19;
+  --dashboard-surface: #101b29;
+  --dashboard-border: #293b4e;
+  --dashboard-text: #f2f6fb;
+  --dashboard-muted: #a4b1c1;
+  --dashboard-accent: #379beb;
+
+  min-width: 0;
+  background: var(--dashboard-bg);
+  color: var(--dashboard-text);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-redesign .nb-kafelek,
+.dashboard-redesign .dashboard-redesign-byte .nb-kafelek,
+.dashboard-redesign .dashboard-redesign-chat [data-tour="szybki-kreator"] {
+  min-width: 0;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 12px;
+  background: var(--dashboard-surface);
+  color: var(--dashboard-text);
+}
+
+.dashboard-redesign .dashboard-redesign-folder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 96px;
+  margin-top: 12px;
+  padding: 20px;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 4px 12px 12px 12px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--dashboard-accent) 20%, var(--dashboard-surface)), var(--dashboard-surface) 65%, var(--dashboard-bg));
+  color: var(--dashboard-text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.dashboard-redesign .dashboard-redesign-folder::before {
+  position: absolute;
+  bottom: 100%;
+  left: -1px;
+  width: 36%;
+  max-width: 120px;
+  height: 10px;
+  border: 1px solid var(--dashboard-border);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: var(--dashboard-surface);
+  content: "";
+}
+
+.dashboard-redesign .dashboard-redesign-folder:hover,
+.dashboard-redesign .dashboard-redesign-folder:focus-visible {
+  border-color: var(--dashboard-accent);
+  box-shadow: 0 0 0 2px var(--dashboard-accent);
+}
+
+.dashboard-redesign .dashboard-redesign-chat [data-tour="szybki-kreator"] input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+.dashboard-redesign .dashboard-redesign-chat [data-tour="szybki-kreator"] select,
+.dashboard-redesign .dashboard-redesign-chat [data-tour="szybki-kreator"] textarea {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 40px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 8px;
+  background: var(--dashboard-bg);
+  color: var(--dashboard-text);
+  font: inherit;
+}
+
+.dashboard-redesign .dashboard-redesign-chat [data-tour="szybki-kreator"] input::placeholder,
+.dashboard-redesign .dashboard-redesign-chat [data-tour="szybki-kreator"] textarea::placeholder {
+  color: var(--dashboard-muted);
+  opacity: 1;
+}
+
+.dashboard-redesign :focus-visible {
+  outline: 2px solid var(--dashboard-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .dashboard-redesign .dashboard-redesign-folder {
+    width: 100%;
+  }
+}

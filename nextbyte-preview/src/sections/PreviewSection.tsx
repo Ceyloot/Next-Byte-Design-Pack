@@ -38,7 +38,7 @@ import { STRONY, STRONY_AUTH, jestEkranemAuth } from '@/sections/strona-glowna/t
 import type { EkranAuth } from '@/sections/strona-glowna/types'
 import { StronaGlowna } from '@/sections/strona-glowna/StronaGlowna'
 import { AKTUALNOSCI } from '@/sections/strona-glowna/aktualnosci'
-import { PanelGlownyOsadzony } from '@/sections/panel2/PanelGlownyOsadzony'
+import { PanelOdNowa } from '@/sections/panel2/PanelOdNowa'
 import { NotebookSection } from '@/sections/NotebookSection'
 import { NawigacjaBoczna, type SekcjaNawigacji } from '@/components/NawigacjaBoczna'
 
@@ -1083,7 +1083,7 @@ export function PreviewSection({ onSelectTab, onToggleSettings, activeTab = 'pre
                 onMenu={() => setMenuWModule(true)}
               />
             ) : previewSubView === 'dashboard2' ? (
-              <PanelGlownyOsadzony onWyjscie={() => setPreviewSubView('strona-glowna')} />
+              <PanelOdNowa onWyjscie={() => setPreviewSubView('strona-glowna')} />
             ) : previewSubView === 'strona-glowna' ? (
               <StronaGlownaSection page={stronaPage} onPageChange={idzDoPodstrony} />
             ) : previewSubView === 'logowanie' ? (

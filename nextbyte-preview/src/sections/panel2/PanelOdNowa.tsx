@@ -1,122 +1,82 @@
 import { useState } from 'react'
 import {
-  Bot, Brain, Calendar as IkonaKalendarz, Camera, CheckSquare, Cloud, FileText,
-  GraduationCap, Image as IkonaObraz, LayoutGrid, MessageSquare, PenTool, Shield,
-  ShoppingBag, Sparkles, Store, Terminal, Video,
+  Activity, ArrowUpRight, Bell, Brain, CalendarDays, Camera, Check, CheckSquare,
+  CircleHelp, Cloud, FileText, Grid2X2, MessageSquare, ChevronRight,
+  Moon, MoreHorizontal, Paperclip, PanelLeftClose, PenTool, Plus, Search, Send,
+  Settings, Sparkles, Sun, User, Video, WandSparkles, Zap,
 } from 'lucide-react'
 import './fundament/powierzchnie.css'
-import { PasekBoczny, type PozycjaMenu } from './widgety/PasekBoczny'
-import { PasAktywnosci } from './widgety/Aktywnosc'
-import { Kreator } from './widgety/Kreator'
-import { Skrzynka, type Sprawa } from './widgety/Skrzynka'
-import { Kalendarz, NicNieCzeka } from './widgety/Prawa'
-import { StopkaMiejsce, StopkaTylkoOdczyt, SzybkaPodroz, TwojeChmury, type Chmura, type Skrot } from './widgety/Dol'
+import './dashboard-preview.css'
 
-/**
- * ════════════════════════════════════════════════════════════════════════════
- *  PANEL 2.0 — zbudowany od zera na drabinie powierzchni
- * ════════════════════════════════════════════════════════════════════════════
- *
- * Uklad 1:1 z Panelem Glownym platformy. Rozni sie WYLACZNIE tym, jak powstaja
- * powierzchnie: zaden komponent nie wpisuje koloru, tylko wybiera poziom
- * drabiny. Patrz `fundament/powierzchnie.css` i `fundament/README.md`.
- *
- * DLACZEGO OD ZERA, A NIE POPRAWKI. Panel 1.0 mial ~390 regul przypietych do
- * `[data-theme="nextbyte-light"]`, neumorficzne cienie wpisane z reki i krycia
- * dobierane per kafelek. Kazda poprawka przesuwala problem gdzie indziej.
- * Zmierzone przypadki: kafelek z wypelnieniem 0.075 pod dzieckiem 0.82, obrys
- * kart na 4% kontrastu, wytloczenie 3px/-3px na pozycjach paska bocznego.
- * Tego nie dalo sie nastroic, bo to nie byly tokeny.
- *
- * SPRAWDZIAN DLA KAZDEGO NOWEGO KAFELKA: przelacz motyw. Jesli cokolwiek
- * trzeba poprawic pod konkretny motyw — kafelek jest zle zbudowany.
- */
+const NAV = [
+  { title: '', items: [['panel', 'Panel Główny', Grid2X2]] },
+  { title: 'AI', items: [['assistant', 'Personalny Asystent', Sparkles], ['chat', 'Chat AI', MessageSquare], ['promptex', 'PromptEx', WandSparkles], ['memory', 'Pamięć AI', Brain]] },
+  { title: 'PRZYPIĘTE MODUŁY', items: [['trend', 'Trend', Activity], ['photos', 'Studio Zdjęć', Camera], ['video', 'Studio Video', Video]] },
+  { title: 'PRACA', items: [['calendar', 'Kalendarz', CalendarDays], ['tasks', 'Zadania', CheckSquare], ['notes', 'Notatki', FileText], ['boards', 'Tablice', PenTool], ['cloud', 'NextCloud', Cloud]] },
+  { title: 'PANEL', items: [['settings', 'Ustawienia', Settings], ['help', 'Pomoc', CircleHelp]] },
+] as const
 
-const MENU: PozycjaMenu[] = [
-  { id: 'panel', nazwa: 'Panel Glowny', ikona: LayoutGrid, grupa: 'Pulpit' },
-  { id: 'asystent', nazwa: 'Personalny Asystent', ikona: Sparkles, grupa: 'AI' },
-  { id: 'chat', nazwa: 'Chat AI', ikona: MessageSquare, grupa: 'AI' },
-  { id: 'promptex', nazwa: 'PromptEx', ikona: PenTool, grupa: 'AI' },
-  { id: 'pamiec', nazwa: 'Pamiec AI', ikona: Brain, grupa: 'AI' },
-  { id: 'redzone', nazwa: 'Red Zone', ikona: Shield, grupa: 'AI' },
-  { id: 'trend', nazwa: 'Trend', ikona: Bot, grupa: 'Przypiete moduly' },
-  { id: 'studio-zdjec', nazwa: 'Studio Zdjec', ikona: Camera, grupa: 'Przypiete moduly' },
-  { id: 'studio-video', nazwa: 'Studio Video', ikona: Video, grupa: 'Przypiete moduly' },
-  { id: 'kalendarz', nazwa: 'Kalendarz', ikona: IkonaKalendarz, grupa: 'Praca' },
-  { id: 'zadania', nazwa: 'Zadania', ikona: CheckSquare, grupa: 'Praca' },
-  { id: 'notatki', nazwa: 'Notatki', ikona: FileText, grupa: 'Praca' },
-  { id: 'tablice', nazwa: 'Tablice', ikona: PenTool, grupa: 'Praca' },
-  { id: 'nextcloud', nazwa: 'NextCloud', ikona: Cloud, grupa: 'Praca' },
-  { id: 'firma', nazwa: 'Firma', ikona: ShoppingBag, grupa: 'Praca' },
-  { id: 'tworca', nazwa: 'Panel Tworcy', ikona: Sparkles, grupa: 'Spolecznosc' },
-  { id: 'sklep', nazwa: 'Sklep', ikona: Store, grupa: 'Spolecznosc' },
-  { id: 'akademia', nazwa: 'Akademia', ikona: GraduationCap, grupa: 'Spolecznosc' },
+const AKTYWNOSCI = [
+  { icon: MessageSquare, color: 'blue', title: 'Czat AI', desc: 'Pisz i pracuj z modelami' },
+  { icon: Sparkles, color: 'violet', title: 'Personalny asystent', desc: 'Pomoc dopasowana do Ciebie' },
+  { icon: Camera, color: 'rose', title: 'Studio zdjęć', desc: 'Twórz i edytuj obrazy' },
+  { icon: Video, color: 'amber', title: 'Studio wideo', desc: 'Twórz klipy i rolki' },
+]
+const RECENT = [
+  { icon: MessageSquare, color: 'blue', title: 'Opisy do katalogu jesiennego', meta: 'Chat AI · dziś 16:00' },
+  { icon: Camera, color: 'violet', title: 'Packshot — seria biała', meta: 'Studio Zdjęć · dziś 11:00' },
+  { icon: Video, color: 'rose', title: 'Rolka: montaż w 15 minut', meta: 'Studio Video · wczoraj' },
+  { icon: FileText, color: 'amber', title: 'Ustalenia ze spotkania', meta: 'Notatki · 1 lis' },
 ]
 
-const SPRAWY: Sprawa[] = [
-  { id: '1', tytul: 'INSTERUKCJA', zrodlo: 'Notatka', kiedy: 'niedz.', grupa: 'Ten tydzien', ikona: FileText },
-  { id: '2', tytul: 'wygeneruj tego miniaturowego konia jedzacego zupke chinska', zrodlo: 'Studio Zdjec', kiedy: 'sob.', grupa: 'Ten tydzien', ikona: IkonaObraz },
-  { id: '3', tytul: 'Roadmapa studio zdjec', zrodlo: 'Notatka', kiedy: '2 dni temu', grupa: 'Wczesniej', ikona: FileText },
-  { id: '4', tytul: 'Jakie umiejetnosci potrzebuje aby bez problemu', zrodlo: 'Rozmowa', kiedy: '31 lip', grupa: 'Wczesniej', ikona: MessageSquare },
-  { id: '5', tytul: 'zamien D na J', zrodlo: 'Studio Zdjec', kiedy: '30 lip', grupa: 'Wczesniej', ikona: Camera },
-]
-
-const CHMURY: Chmura[] = [
-  { id: 'system', nazwa: 'System', akcent: 'Cloud', opis: 'Notatki, prompty, pamiec AI i studio zdjec — spiete z platforma, w jednym drzewie.', stopka: <StopkaTylkoOdczyt /> },
-  { id: 'private', nazwa: 'Private', akcent: 'Cloud', opis: 'Twoje pliki i foldery. Zasady ustalasz sam — nic tu nie jest z gory ustalone.', stopka: <StopkaMiejsce uzyte="0,0 GB" cale="1,0 GB" plikow={2} /> },
-]
-
-const SKROTY: Skrot[] = [
-  { id: 's1', nazwa: 'Co trzeba w kambipo zro...', ikona: MessageSquare },
-  { id: 's2', nazwa: 'Kalendarz', ikona: IkonaKalendarz, odcien: 'ostrzezenie' },
-  { id: 's3', nazwa: 'Studio Zdjec v2.1', ikona: Camera },
-  { id: 's4', nazwa: 'Prompty AI Master', ikona: Terminal },
-]
+function MiniBars({ muted = false }: { muted?: boolean }) {
+  return <div className={`sp-bars ${muted ? 'muted' : ''}`} aria-hidden="true">{Array.from({ length: 32 }, (_, i) => <i key={i} style={{ height: `${26 + ((i * 17 + 21) % 66)}%` }} />)}</div>
+}
 
 export function PanelOdNowa({ onWyjscie }: { onWyjscie?: () => void }) {
-  const [sekcja, setSekcja] = useState('panel')
+  const [jasny, setJasny] = useState(true)
+  const [aktywny, setAktywny] = useState('panel')
+  const [prompt, setPrompt] = useState('')
+  const [wybranaGodzina, setWybranaGodzina] = useState('12:00')
+  const [ukonczone, setUkonczone] = useState(false)
+  const [filtr, setFiltr] = useState('Wszystko')
+  const [dataOpen, setDataOpen] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [tryb, setTryb] = useState('Czat AI')
 
   return (
-    <div className="p2 flex h-full min-h-0 w-full overflow-hidden">
-      <PasekBoczny pozycje={MENU} aktywna={sekcja} onWybor={setSekcja} />
+    <div className={`sp-shell ${jasny ? 'sp-light' : ''}`}>
+      <aside className="sp-sidebar">
+        <header className="sp-brand"><span className="sp-logo">N</span><b>NEXTBYTE</b><button onClick={() => setJasny(!jasny)} aria-label="Zmień motyw">{jasny ? <Moon/> : <Sun/>}</button><button aria-label="Zwiń menu"><PanelLeftClose/></button></header>
+        <div className="sp-side-search"><Search/><input placeholder="Wyszukaj..."/><kbd>⌘ K</kbd><button aria-label="Pomoc"><CircleHelp/></button></div>
+        <nav className="sp-nav">{NAV.map(group => <section key={group.title || 'home'}>{group.title && <h3>{group.title}</h3>}{group.items.map(([id, label, Icon]) => <button key={id} title={label} onClick={() => setAktywny(id)} className={aktywny === id ? 'active' : ''}><Icon/><span>{label}</span></button>)}</section>)}</nav>
+        <footer className="sp-dock">{[[Activity,'Aktywność'],[Bell,'Powiadomienia'],[Zap,'Byte'],[User,'Konto']].map(([Icon,label]: any)=><button key={label} title={label}><Icon/></button>)}</footer>
+      </aside>
 
-      <main className="min-w-0 flex-1 overflow-y-auto">
-        {/* WYMIARY 1:1 Z ORYGINALEM (`pages/Dashboard.tsx:250`):
-            max-w-[1600px], gap-4, px-4 py-4 / md:px-6 md:py-5. */}
-        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-4 md:px-6 md:py-5">
-          <PasAktywnosci saldo={0} dni={0} />
+      <main className="sp-main"><header className="sp-topbar"><label><Search/><input placeholder="Szukaj w całej platformie..."/><kbd>⌘ K</kbd></label><div className="sp-top-actions"><button aria-label="Powiadomienia" className="sp-notify"><Bell/><i/></button><div className="sp-date-control"><button className="sp-current-date" onClick={()=>setDataOpen(!dataOpen)}><CalendarDays/>3 listopada 2026<ChevronRight/></button>{dataOpen&&<div className="sp-date-popover"><b>Listopad 2026</b><div>{['Pn','Wt','Śr','Cz','Pt','So','Nd'].map(x=><small key={x}>{x}</small>)}{Array.from({length:35},(_,i)=><button className={i===8?'selected':''} key={i}>{i<6?26+i:i-5}</button>)}</div></div>}</div><button className="sp-create"><Plus/> Utwórz</button></div></header><div className="sp-dashboard">
+        <section className="sp-top-grid">
+          <article className="sp-widget sp-stat-card"><div className="sp-stat-head"><div><span>Twoje Byte</span><strong>57 <i>♢</i></strong><small>Starczy do <b>14 listopada</b> przy 5 ⟠ dziennie</small></div><button aria-label="Portfel"><Zap/></button></div><div className="sp-progress-track"><i style={{width:'72%'}}/></div><div className="sp-stat-foot"><span>Wydane</span><b>0 ⟠</b><span>Saldo · 500 ⟠</span></div></article>
+          <article className="sp-widget sp-stat-card"><div className="sp-stat-head"><div><span>Aktywność</span><strong>69 <small>dni</small></strong><small>Pracujesz w dobrym rytmie. Tak trzymaj.</small></div><button aria-label="Aktywność"><Activity/></button></div><div className="sp-progress-track"><i style={{width:'66%'}}/></div><div className="sp-stat-foot"><span>Aktywne</span><b>69</b><span>W pół roku</span></div></article>
+          <article className="sp-widget sp-stat-card"><div className="sp-stat-head"><div><span>Czeka na Ciebie</span><strong>1 <small>sprawa</small></strong><small>Nic nie jest spóźnione. Spokojnie.</small></div><button aria-label="Zadania"><CheckSquare/></button></div><div className="sp-progress-track quiet"><i style={{width:'4%'}}/></div><div className="sp-stat-foot"><span>Po terminie</span><b>0</b><span>Na później</span><b>1</b></div></article>
+          <article className="sp-widget sp-stat-card"><div className="sp-stat-head"><div><span>Pamięć AI</span><strong>8 <small>wspomnień</small></strong><small>Ostatnie: „Zawód”. Sięgnęło 1× w tym tygodniu.</small></div><button aria-label="Pamięć AI"><Brain/></button></div><div className="sp-progress-track"><i style={{width:'54%'}}/></div><div className="sp-stat-foot"><span>Praca</span><b>5</b><span>Zainteresowania</span><b>3</b></div></article>
+        </section>
 
-          {/* SIATKA 3-KOLUMNOWA, LEWA NA `col-span-2` — dokladnie jak oryginal
-              (`Dashboard.tsx:337`). To daje stosunek 2:1, a nie 1.6:1:
-              przy `grid-cols-3` z `gap-4` lewa kolumna to dwie trzecie SZEROKOSCI
-              plus jedna przerwa, czego zapis `[2fr_1fr]` nie odtwarza. */}
-          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-            <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
-              <Kreator koszt={2} posiadane={0} />
-              {/* `min-h-[15rem]` z oryginalu — gwarantuje cztery pozycje,
-                  inaczej lista zapada sie do samego naglowka. */}
-              <Skrzynka sprawy={SPRAWY} className="min-h-[15rem]" />
-            </div>
-            <div className="flex min-w-0 flex-col gap-4">
-              <NicNieCzeka />
-              <Kalendarz />
+        <div className="sp-work-grid">
+          <div className="sp-work-left">
+            <section className="sp-widget sp-chat">
+              <header className="sp-chat-welcome"><span><Sparkles/></span><div><b>Cześć, Artur. Od czego zaczynamy?</b><small>Napisz zdanie albo wybierz jedną z czynności.</small></div><div className="sp-chat-tools"><div className="sp-picker"><button title="Wybierz tryb pracy" onClick={()=>setPickerOpen(!pickerOpen)}><Sparkles/>{tryb}<ChevronRight/></button>{pickerOpen&&<div>{['Czat AI','Personalny asystent','Studio zdjęć','Studio wideo'].map(x=><button key={x} onClick={()=>{setTryb(x);setPickerOpen(false)}}>{x}</button>)}</div>}</div><button title="Dołącz plik"><Paperclip/></button><button title="Dodaj obraz"><Camera/></button><button title="Więcej"><MoreHorizontal/></button></div></header>
+              <form className="sp-prompt" onSubmit={(e) => { e.preventDefault(); setPrompt('') }}><input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Np. opisz produkt do katalogu jesiennego..."/><button aria-label="Wyślij prompt"><Send/></button></form>
+              <div className="sp-action-cards">{AKTYWNOSCI.map(({icon: Icon,color,title,desc})=><button className={color} key={title}><span><Icon/></span><b>{title}</b><small>{desc}</small></button>)}</div>
+            </section>
+            <div className="sp-lower-grid">
+              <article className="sp-widget sp-spending"><header><div className="sp-spending-title"><b>Na co idą Byte</b><button aria-label="Otwórz wydatki"><ArrowUpRight/></button></div><strong>443 <i>♢</i><small>w tym miesiącu</small></strong><div className="sp-spend-tags"><span className="violet">Studio Zdjęć · 186 ⟠</span><span className="blue">Chat AI · 152 ⟠</span><span className="rose">Studio Video · 105 ⟠</span></div></header><div className="sp-spend-chart"><MiniBars/><span>5 ⟠ / dzień</span></div></article>
+              <article className="sp-widget sp-recent"><header><b>Wróć do roboty</b><div>{['Wszystko','Chat AI','Studio Zdjęć','Studio Video','Notatki'].map(x=><button key={x} className={filtr===x?'selected':''} onClick={()=>setFiltr(x)}>{x}</button>)}</div></header><div className="sp-recent-items">{RECENT.map(({icon: Icon,color,title,meta})=><button key={title}><span className={`sp-folder-art tint-${color}`}><i/><Icon/></span><b>{title}</b><small>{meta}</small></button>)}</div></article>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <TwojeChmury chmury={CHMURY} />
-            </div>
-            <SzybkaPodroz skroty={SKROTY} />
-          </div>
-
-          {onWyjscie && (
-            <button type="button" onClick={onWyjscie} className="p2-kontrolka mx-auto mt-2 px-4 py-2 text-sm">
-              Wroc do podgladu
-            </button>
-          )}
+          <aside className="sp-today sp-widget"><header><div><b>Dziś</b><small>Twój plan na dziś</small></div><button aria-label="Otwórz plan"><ArrowUpRight/></button></header><div className="sp-date-select"><div><b>Listopad</b><span>3 wolne okna</span></div><div className="sp-date-pills">{['12','13','14','15','16','17','18'].map((d,i)=><button className={i===2?'selected':''} key={d}>{d}</button>)}</div><div className="sp-time-grid">{['10:00','11:00','12:00','13:00','14:00','16:00'].map(t=><button className={wybranaGodzina===t?'selected':''} onClick={()=>setWybranaGodzina(t)} key={t}>{t}</button>)}</div></div><div className="sp-tasks"><span>CZEKA NA CIEBIE</span><button className={ukonczone?'completed':''} onClick={()=>setUkonczone(!ukonczone)}><i>{ukonczone&&<Check/>}</i><b>{ukonczone?'Zadanie ukończone':'zadanie'}</b><small>bez terminu</small><em>{ukonczone?'gotowe':'pilne'}</em></button></div><div className="sp-cloud-meter"><div><Cloud/><span>PrivateCloud</span><small>0.4 GB z 1 GB</small></div><div className="sp-storage"><i/></div></div></aside>
         </div>
-      </main>
+        {onWyjscie && <button className="sp-back" onClick={onWyjscie}>Wróć do podglądu</button>}
+      </div></main>
     </div>
   )
 }

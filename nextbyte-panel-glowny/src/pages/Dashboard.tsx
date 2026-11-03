@@ -10,7 +10,7 @@ import { WrocDoRoboty } from "@/components/dashboard/WrocDoRoboty";
 
 import { PendingDashboardActionsCard } from "@/components/dashboard/PendingDashboardActionsCard";
 import { useOptimizedDashboard } from "@/hooks/useOptimizedDashboard";
-import { Gift } from "lucide-react";
+import { Folder, Gift } from "lucide-react";
 import { QuickShortcutsPanel } from "@/components/dashboard/QuickShortcutsPanel";
 import { KafelkiChmury } from "@/components/dashboard/KafelkiChmury";
 import { SzybkiKreator } from "@/components/dashboard/SzybkiKreator";
@@ -47,6 +47,7 @@ import { SzkieletPulpitu } from '@/components/dashboard/SzkieletPulpitu';
 import { KalendarzMiesiaca } from '@/components/dashboard/KalendarzMiesiaca';
 import { useNavigationMode } from '@/contexts/NavigationModeContext';
 import { cn } from '@/lib/utils';
+import './dashboard-redesign.css';
 
 class DashboardWidgetBoundary extends React.Component<
   { children: React.ReactNode; name: string },
@@ -201,7 +202,7 @@ const DashboardContent = () => {
           `overflow-x-hidden` tutaj przycina też w pionie, więc wciągnięty
           sam `main` był ucinany na dolnej krawędzi szyby i pod szkłem nie
           było nic (zmierzone 26.09: elementsFromPoint pod paskiem = pusto). */}
-      <div className="flex w-full overflow-x-hidden relative -mt-[var(--nb-pasek-gora,0px)] -mb-[var(--nb-pasek-dol,0px)] h-[calc(100%+var(--nb-pasek-gora,0px)+var(--nb-pasek-dol,0px))] min-h-[calc(100%+var(--nb-pasek-gora,0px)+var(--nb-pasek-dol,0px))]">
+      <div className="dashboard-redesign flex w-full overflow-x-hidden relative -mt-[var(--nb-pasek-gora,0px)] -mb-[var(--nb-pasek-dol,0px)] h-[calc(100%+var(--nb-pasek-gora,0px)+var(--nb-pasek-dol,0px))] min-h-[calc(100%+var(--nb-pasek-gora,0px)+var(--nb-pasek-dol,0px))]">
         {/* Wzór użytkownika ma pierwszeństwo. TechGrid sam się wycofa, gdy
             ktoś ustawił własny wzór albo tło — patrz TechGrid.tsx. */}
         <PatternOverlay location="dashboard" />
@@ -283,7 +284,7 @@ const DashboardContent = () => {
                   Ci starczy. */}
               <div className={cn('shrink-0', ukladPigulki && 'grid grid-cols-1 gap-4 lg:grid-cols-3')}>
               <motion.div
-                className={cn('shrink-0', ukladPigulki && 'lg:col-span-2 [&>*]:h-full')}
+                className={cn('dashboard-redesign-byte shrink-0', ukladPigulki && 'lg:col-span-2 [&>*]:h-full')}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -370,10 +371,14 @@ const DashboardContent = () => {
                 <div className="flex flex-col gap-4 ekran1:min-h-0 ekran1:overflow-y-auto lg:col-span-2">
                   {/* Najcenniejsze miejsce na ekranie dostaje KREATOR, bo to
                       jedyny element panelu, który coś TWORZY. */}
-                  <div className="shrink-0">
+                  <div className="dashboard-redesign-chat shrink-0">
                     <DashboardWidgetBoundary name="szybki-kreator">
                       <SzybkiKreator />
                     </DashboardWidgetBoundary>
+                    <button type="button" className="dashboard-redesign-folder" onClick={() => navigate('/notatki')}>
+                      <Folder aria-hidden="true" />
+                      <span>Notatki</span>
+                    </button>
                   </div>
 
                   {/* Lista ostatnich rzeczy — zawsze ma czym wypełnić kolumnę,
