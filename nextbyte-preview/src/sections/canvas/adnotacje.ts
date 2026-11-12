@@ -261,3 +261,84 @@ export async function przygotujAdnotacje(opcje: {
 
   return { polecenie, obrazy: [baza, plan], szerokosc: w.naturalWidth, wysokosc: w.naturalHeight, zadania }
 }
+
+
+/* ── Edycja tylko w zaznaczonym polu ─────────────────────────────────────────────────────────────────────────── */
+
+const wczytajObraz = (src: string) =>
+  new Promise<HTMLImageElement>((ok, blad) => {
+    const o = new Image()
+    o.crossOrigin = 'anonymous'
+    o.onload = () => ok(o)
+    o.onerror = () => blad(new Error('Nie udało się wczytać obrazu'))
+    o.src = src
+  })
+
+/** Zapas wokół obszaru narysowanego kreskami (ułamek zdjęcia) — na cień, odbicie i naturalne dojście zmiany do brzegu. */
+const ZAPAS_OBSZARU = 0.05
+/** Pinezka bez kreski wskazuje tylko punkt, a zmiana (np. „niech się opiera o koło”) potrzebuje miejsca: obszar wokół punktu. */
+const PROMIEN_PINEZKI = { x: 0.17, y: 0.2 }
+
+/**
+ * Składa wynik modelu z oryginałem tak, że zmiana zostaje wyłącznie w zaznaczonych miejscach: wewnątrz obszarów zadań bierzemy
+ * piksele z wyniku (brzeg miękko wtopiony), na zewnątrz — oryginał bez zmian. Model, dostając całe zdjęcie, potrafi przy okazji
+ * „poprawić” twarze, kolory czy tło; dzięki temu to, czego nie zaznaczono, zostaje dokładnie takie jak było.
+ * Bez żadnego obszaru (np. tylko opis w czacie) zwraca wynik bez zmian.
+ */
+export async function ogranczDoZaznaczenia(
+  oryginalSrc: string,
+  wynikSrc: string,
+  zadania: ZadanieAdnotacji[],
+  szer: number,
+  wys: number,
+): Promise<string> {
+  if (!zadania.length) return wynikSrc
+  const [oryg, wynik] = await Promise.all([wczytajObraz(oryginalSrc), wczytajObraz(wynikSrc)])
+  const nowe = (w: number, h: number) => {
+    const c = document.createElement('canvas')
+    c.width = w
+    c.height = h
+    return { c, g: c.getContext('2d') as CanvasRenderingContext2D }
+  }
+
+  // maska obszarów: pełne prostokąty z zaokrągleniem, potem rozmycie brzegu
+  const maska = nowe(szer, wys)
+  const rozmycie = Math.max(4, Math.round(Math.min(szer, wys) * 0.012))
+  maska.g.filter = `blur(${rozmycie}px)`
+  maska.g.fillStyle = '#fff'
+  for (const z of zadania) {
+    let { x0, y0, x1, y1 } = z.ramka
+    const jakPunkt = x1 - x0 < 0.08 && y1 - y0 < 0.1
+    if (jakPunkt) {
+      const cx = (x0 + x1) / 2
+      const cy = (y0 + y1) / 2
+      x0 = cx - PROMIEN_PINEZKI.x
+      x1 = cx + PROMIEN_PINEZKI.x
+      y0 = cy - PROMIEN_PINEZKI.y
+      y1 = cy + PROMIEN_PINEZKI.y
+    } else {
+      x0 -= ZAPAS_OBSZARU
+      x1 += ZAPAS_OBSZARU
+      y0 -= ZAPAS_OBSZARU
+      y1 += ZAPAS_OBSZARU
+    }
+    const px0 = Math.max(0, x0) * szer
+    const py0 = Math.max(0, y0) * wys
+    const px1 = Math.min(1, x1) * szer
+    const py1 = Math.min(1, y1) * wys
+    maska.g.beginPath()
+    maska.g.roundRect(px0, py0, px1 - px0, py1 - py0, Math.min(px1 - px0, py1 - py0) * 0.12)
+    maska.g.fill()
+  }
+  maska.g.filter = 'none'
+
+  // wynik wycięty maską → nałożony na oryginał
+  const zmiana = nowe(szer, wys)
+  zmiana.g.drawImage(wynik, 0, 0, szer, wys)
+  zmiana.g.globalCompositeOperation = 'destination-in'
+  zmiana.g.drawImage(maska.c, 0, 0)
+  const koniec = nowe(szer, wys)
+  koniec.g.drawImage(oryg, 0, 0, szer, wys)
+  koniec.g.drawImage(zmiana.c, 0, 0)
+  return koniec.c.toDataURL('image/jpeg', 0.95)
+}

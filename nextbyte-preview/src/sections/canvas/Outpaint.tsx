@@ -3,11 +3,12 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Expand, Loader2, Maximize2, 
 import '../panel2/fundament/powierzchnie.css'
 import { cn } from '@/lib/utils'
 import { byteZaObraz } from './dostawca'
-import { PROPORCJE_OUTPAINT, typWymiarow, ukladRozszerzenia, type Kotwica, type ZadanieRozszerzenia } from './rozszerzanie-kadru'
+import { PROPORCJE_OUTPAINT, marginesyZUkladu, typWymiarow, ukladRozszerzenia, type Kotwica, type Marginesy, type ZadanieRozszerzenia } from './rozszerzanie-kadru'
 
 /**
- * Outpaint: rozszerzenie kadru poza zdjęcie. Wybór proporcji, strony, z której przybywa treść, i (opcjonalnie) opisu nowych miejsc.
- * Podgląd pokazuje, gdzie stanie oryginał w nowym kadrze — dokładnie tak, jak złoży go `outpaint.ts`.
+ * Outpaint: rozszerzenie kadru poza zdjęcie. Kadr ustawia się na płótnie przeciągając ramkę (dowolnie), a ten panel daje gotowe
+ * proporcje + stronę, z której przybywa treść (skrót: ustawia ramkę za użytkownika), i (opcjonalnie) opis nowych miejsc.
+ * Podgląd pokazuje, gdzie stanie oryginał w nowym kadrze — dokładnie tak, jak złoży go `rozszerzanie-kadru.ts`.
  */
 
 const KIERUNKI: { id: Kotwica; ikona: typeof ArrowLeft; podpis: string }[] = [
@@ -24,6 +25,8 @@ export function Outpaint({
   src,
   model,
   trwa,
+  marginesy,
+  onMarginesy,
   onRozszerz,
   onAnuluj,
   style,
@@ -33,21 +36,28 @@ export function Outpaint({
   src: string
   model: string | undefined
   trwa: boolean
+  /** ramka ustawiana też przeciągnięciem na płótnie — stan żyje w Canvasie */
+  marginesy: Marginesy
+  onMarginesy: (m: Marginesy) => void
   onRozszerz: (z: ZadanieRozszerzenia) => void
   onAnuluj: () => void
   style: React.CSSProperties
 }) {
-  // domyślnie proporcje najbardziej różne od obecnych w sensownym kierunku: poziome → 1:1/ pion; pionowe → 16:9
-  const [propId, setPropId] = useState(szerokosc / wysokosc >= 1 ? '1:1' : '16:9')
   const [kotwica, setKotwica] = useState<Kotwica>('srodek')
   const [opis, setOpis] = useState('')
 
-  const prop = PROPORCJE_OUTPAINT.find(p => p.id === propId) ?? PROPORCJE_OUTPAINT[0]
-  const zadanie: ZadanieRozszerzenia = { proporcja: prop.w / prop.h, kotwica, opis }
+  const zadanie: ZadanieRozszerzenia = { proporcja: 1, kotwica: 'srodek', marginesy, opis }
   const uklad = useMemo(
-    () => ukladRozszerzenia(szerokosc, wysokosc, { proporcja: prop.w / prop.h, kotwica }, typWymiarow(model)),
-    [szerokosc, wysokosc, prop.w, prop.h, kotwica, model],
+    () => ukladRozszerzenia(szerokosc, wysokosc, { proporcja: 1, kotwica: 'srodek', marginesy }, typWymiarow(model)),
+    [szerokosc, wysokosc, marginesy, model],
   )
+  // preset = skrót: układa ramkę tak, jakby użytkownik przeciągnął ją do tych proporcji z wybranej strony
+  const ustawPreset = (w: number, h: number, k: Kotwica) => {
+    const u = ukladRozszerzenia(szerokosc, wysokosc, { proporcja: w / h, kotwica: k }, typWymiarow(model))
+    if (u) onMarginesy(marginesyZUkladu(u))
+  }
+  const proporcjaRamki = uklad ? uklad.W / uklad.H : szerokosc / wysokosc
+  const aktywnyPreset = PROPORCJE_OUTPAINT.find(p => Math.abs(proporcjaRamki / (p.w / p.h) - 1) < 0.03)
 
   // podgląd: kadr po rozszerzeniu mieści się w polu 168×104
   const pole = { w: 168, h: 104 }
@@ -92,17 +102,17 @@ export function Outpaint({
           </div>
         </div>
 
-        <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Proporcje</p>
+        <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Proporcje <span className="font-normal opacity-70">· albo przeciągnij ramkę na zdjęciu{uklad ? ` · ${uklad.W}×${uklad.H}` : ''}</span></p>
         <div className="mb-2.5 grid grid-cols-4 gap-1">
           {PROPORCJE_OUTPAINT.map(p => (
             <button
               key={p.id}
               type="button"
-              aria-pressed={propId === p.id}
-              onClick={() => setPropId(p.id)}
+              aria-pressed={aktywnyPreset?.id === p.id}
+              onClick={() => ustawPreset(p.w, p.h, kotwica)}
               className={cn(
                 'flex h-8 items-center justify-center rounded-[10px] border text-[11.5px] font-medium transition-colors',
-                propId === p.id ? 'border-primary/40 bg-primary/[0.12] text-primary' : 'border-foreground/[0.07] bg-foreground/[0.045] text-foreground/70 hover:border-primary/30 hover:text-foreground',
+                aktywnyPreset?.id === p.id ? 'border-primary/40 bg-primary/[0.12] text-primary' : 'border-foreground/[0.07] bg-foreground/[0.045] text-foreground/70 hover:border-primary/30 hover:text-foreground',
               )}
             >
               {p.etykieta}
@@ -119,7 +129,7 @@ export function Outpaint({
               title={podpis}
               aria-label={podpis}
               aria-pressed={kotwica === id}
-              onClick={() => setKotwica(id)}
+              onClick={() => { setKotwica(id); ustawPreset(aktywnyPreset?.w ?? Math.round(proporcjaRamki * 100), aktywnyPreset?.h ?? 100, id) }}
               className={cn(
                 'grid h-8 place-items-center rounded-[10px] border transition-colors',
                 kotwica === id ? 'border-primary/40 bg-primary/[0.12] text-primary' : 'border-foreground/[0.07] bg-foreground/[0.045] text-foreground/70 hover:border-primary/30 hover:text-foreground',

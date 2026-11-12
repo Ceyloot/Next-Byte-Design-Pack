@@ -50,13 +50,14 @@ import { PasekAkcji, type AkcjaPaska } from '@/sections/canvas/PasekAkcji'
 import { Prompter } from '@/sections/canvas/Prompter'
 import { KartaAdnotacji } from '@/sections/canvas/KartaAdnotacji'
 import { Outpaint } from '@/sections/canvas/Outpaint'
+import { RamkaOutpaint } from '@/sections/canvas/RamkaOutpaint'
 import { dopasujWymiary } from '@/sections/canvas/formaty-modelu'
 import { typWymiarow } from '@/sections/canvas/rozszerzanie-kadru'
 import type { Rysunek } from '@/sections/canvas/typy'
-import { celAdnotacji, przygotujAdnotacje, rysujRysunki, zadaniaZAdnotacji } from '@/sections/canvas/adnotacje'
+import { celAdnotacji, ogranczDoZaznaczenia, przygotujAdnotacje, rysujRysunki, zadaniaZAdnotacji } from '@/sections/canvas/adnotacje'
 import { byteZaObraz } from '@/sections/canvas/dostawca'
 import { useMobilny } from '@/sections/canvas/mobilny'
-import { rozpoznajRozszerzenie, ukladRozszerzenia, wykonajRozszerzenie, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
+import { marginesyZUkladu, rozpoznajRozszerzenie, ukladRozszerzenia, wykonajRozszerzenie, type Marginesy, type ZadanieRozszerzenia } from '@/sections/canvas/rozszerzanie-kadru'
 import { MenuGeneratora } from '@/sections/canvas/MenuGeneratora'
 import { wykonajInpainting, promptErasera } from '@/sections/canvas/inpainting'
 import { podzielMaske } from '@/sections/canvas/maska-grupy'
@@ -854,6 +855,19 @@ export function CanvasSection() {
   }, [quickEdit])
   /** Outpaint: id zdjęcia, przy którym otwarty jest panel rozszerzania kadru */
   const [outpaint, setOutpaint] = useState<string | null>(null)
+  /** Ramka outpaintu (ułamki oryginału z każdej strony) — ustawiana presetami w panelu albo przeciągnięciem uchwytów na płótnie */
+  const [margOutpaint, setMargOutpaint] = useState<Marginesy>({ l: 0, t: 0, r: 0, b: 0 })
+  useEffect(() => {
+    if (!outpaint) return
+    const w = projekt.warstwy.find(x => x.id === outpaint)
+    if (!w) return
+    // na starcie: poziome → 1:1, pionowe → 16:9 (najbardziej inne proporcje), zdjęcie na środku
+    const p = w.naturalWidth / w.naturalHeight >= 1 ? 1 : 16 / 9
+    const u = ukladRozszerzenia(w.naturalWidth, w.naturalHeight, { proporcja: p, kotwica: 'srodek' }, typWymiarow(MODEL_OUTPAINTU))
+    setMargOutpaint(u ? marginesyZUkladu(u) : { l: 0.25, t: 0.25, r: 0.25, b: 0.25 })
+    // tylko przy otwarciu panelu dla danego zdjęcia
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outpaint])
   const AKCJE_AI = useMemo(
     () => [
       { id: 'enhance', etykieta: 'Enhance', ikona: Wand2, skala: 1, prompt: 'Enhance this photograph: improve clarity, fine detail, dynamic range, contrast and colour so it looks like a higher-end camera took it. Keep every object, person, position, framing and the lighting direction exactly the same. Natural, photographic — no over-sharpening, no HDR look, no plastic skin.' },
@@ -969,8 +983,8 @@ export function CanvasSection() {
    * Szkice → obraz: zaznaczone pociągnięcia ołówka oddajemy na białym tle w formacie obsługiwanym przez model
    * i generujemy z nich gotowy obraz. Opis z czatu i zaznaczone zdjęcia (np. osoba) idą jako dodatkowe wskazówki / referencje.
    */
-  const zamienSzkicWObraz = useCallback(async () => {
-    const wyb = rysunki.filter(r => zaznaczoneRysunki.includes(r.id))
+  const zamienSzkicWObraz = useCallback(async (ids?: string[]) => {
+    const wyb = rysunki.filter(r => (ids ?? zaznaczoneRysunki).includes(r.id))
     if (wyb.length === 0 || refGeneruje.current) return
     setMenuRysunku(null)
     refGeneruje.current = true
@@ -1051,10 +1065,12 @@ export function CanvasSection() {
       setStanGeneracji({ faza: 'trwa', plan: 'Wykonuję adnotacje…', tryb: 'generator' })
       const zad = await przygotujAdnotacje({ warstwa: w, rysunki: adn, opis: projekt.tekst.trim(), model: typWymiarow(model) })
       const wynik = await generuj({ polecenie: zad.polecenie, obrazy: zad.obrazy, szerokosc: zad.szerokosc, wysokosc: zad.wysokosc, model })
-      const src = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
+      const dopasowany = await dopasujFormatDoObrazu(wynik.obrazUrl, w.naturalWidth, w.naturalHeight)
+      // zmiana ma zostać TYLKO w zaznaczonych miejscach: reszta zdjęcia wraca bit w bit z oryginału (model lubi „poprawiać” całość)
+      const src = await ogranczDoZaznaczenia(zad.obrazy[0], dopasowany, zad.zadania, w.naturalWidth, w.naturalHeight)
       const nazwa = nazwijWynik(projekt.tekst.trim() || 'adnotacje', [])
       dodajZeZrodla(src, nazwa, 'wynik', w)
-      setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: 'Zmiany z adnotacji wykonane na kopii zdjęcia.' } })
+      setStanGeneracji({ faza: 'gotowe', wynik: { obrazUrl: src, kosztUSD: wynik.kosztUSD, model: wynik.model, nazwa, opis: 'Zmiany z adnotacji wykonane na kopii zdjęcia, tylko w zaznaczonych miejscach.' } })
     } catch (e) {
       setStanGeneracji({ faza: 'blad', tresc: e instanceof Error ? e.message : 'Nie udało się wykonać adnotacji.' })
     } finally {
@@ -1902,6 +1918,13 @@ export function CanvasSection() {
   const uruchomGeneracje = useCallback(async () => {
     if (refGeneruje.current) return
     if (trybReferencji) return uruchomZReferencjami()
+    // Ołówek działa jak czat: narysowałeś coś, napisałeś, co ma być → Wyślij.
+    // Kreski na zdjęciu = „zmień TO miejsce” (jak adnotacje, wynik wraca tylko w zaznaczone pole); kreski na pustym tle = szkic → obraz.
+    const kreski = rysunki.filter(r => !r.tekst)
+    if (kreski.length > 0 && projekt.pineski.length === 0 && projekt.tekst.trim()) {
+      if (celAdnotacji(rysunki, [], projekt.warstwy, wybranaWarstwa)) return wykonajAdnotacje()
+      return zamienSzkicWObraz(kreski.map(r => r.id))
+    }
     // „Zmień wymiary na 16:9”, „rozszerz w prawo” (bez pinesek, jedno zdjęcie) → outpainting, nie zwykła edycja (ta przycinałaby wynik do starych proporcji)
     if (warstwaZrodlowa && projekt.pineski.length === 0 && zalaczniki.length === 0) {
       const zad = rozpoznajRozszerzenie(projekt.tekst, warstwaZrodlowa.naturalWidth, warstwaZrodlowa.naturalHeight)
@@ -2652,6 +2675,10 @@ export function CanvasSection() {
     hybryda,
     modelObrazu,
     zalaczniki,
+    rysunki,
+    wybranaWarstwa,
+    wykonajAdnotacje,
+    zamienSzkicWObraz,
   ])
 
   /**
@@ -2787,6 +2814,13 @@ export function CanvasSection() {
     </div>
   )
   /** Cofnij / ponów / wyczyść — te same przyciski w pasku ołówka co w adnotacjach */
+  /** Co zrobi „Wyślij” na czacie z tym, co narysowano ołówkiem — podpowiedź w pasku ołówka */
+  const podpowiedzOlowka = (() => {
+    if (!rysunki.some(r => !r.tekst) || projekt.pineski.length > 0) return ''
+    return celAdnotacji(rysunki, [], projekt.warstwy, wybranaWarstwa)
+      ? 'Napisz na czacie, co tu zmienić.'
+      : 'Napisz na czacie, co ma powstać ze szkicu.'
+  })()
   const przyciskiHistorii = (
     <>
       <button type="button" title="Cofnij ostatnie (Ctrl+Z)" aria-label="Cofnij" disabled={rysunki.length === 0} onClick={cofnijRysunek} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
@@ -2795,12 +2829,12 @@ export function CanvasSection() {
       <button type="button" title="Ponów (Ctrl+Shift+Z)" aria-label="Ponów" disabled={cofniete.length === 0} onClick={ponowRysunek} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
         <Redo2 className="h-4 w-4" />
       </button>
-      <button type="button" title="Wyczyść szkice" aria-label="Wyczyść szkice" disabled={rysunki.length === 0} onClick={wyczyscRysunki} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/70 transition-colors hover:bg-foreground/[0.08] disabled:opacity-30">
-        <Trash2 className="h-4 w-4" />
-      </button>
-      {/* wyjście z ołówka — bez tego z rysowania nie dało się wrócić do kursora */}
       <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-foreground/[0.12]" />
-      <button type="button" title="Zakończ rysowanie (Esc)" aria-label="Zakończ rysowanie" onClick={() => setNarzedzie('wybor')} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground">
+      {/* ✓ kończy rysowanie i ZOSTAWIA kreski (idą z czatem do modelu); ✕ odrzuca je i wychodzi */}
+      <button type="button" title="Zakończ rysowanie (Esc) — kreski zostają" aria-label="Zakończ rysowanie" onClick={() => setNarzedzie('wybor')} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary transition-colors hover:bg-primary/25">
+        <Check className="h-4 w-4" />
+      </button>
+      <button type="button" title="Odrzuć rysunek i wyjdź" aria-label="Odrzuć rysunek" onClick={() => { wyczyscRysunki(); setNarzedzie('wybor') }} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-foreground/60 transition-colors hover:bg-red-500/15 hover:text-red-400">
         <X className="h-4 w-4" />
       </button>
     </>
@@ -3281,7 +3315,7 @@ export function CanvasSection() {
 
       {/* ══ Ołówek: kolor, grubość, cofnij — a w trybie adnotacji jeden panel na najwyższej warstwie ══ */}
       {narzedzie === 'olowek' || trybAdn ? (
-        <div className={cn('p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-szer,0px))/2)] z-[70] flex max-w-[calc(100vw-16px)] -translate-x-1/2 flex-col items-center', trybAdn ? 'md:bottom-[calc(var(--nb-nav-dol,0px)+24px)]' : 'md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]')}>
+        <div className={cn('p2 !bg-transparent nb-dok-mob nb-pencil-bar pointer-events-none absolute bottom-[calc(var(--nb-nav-dol,0px)+134px)] left-[calc(50%+(var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-zajete,0px))/2)] z-[70] flex max-w-[calc(100vw-16px)] -translate-x-1/2 flex-col items-center md:max-w-[calc(100vw-var(--nb-nav-lewo,0px)-var(--nb-nav-prawo,0px)-var(--nb-czat-zajete,0px)-24px)]', trybAdn ? 'md:bottom-[calc(var(--nb-nav-dol,0px)+24px)]' : 'md:bottom-[calc(var(--nb-nav-dol,0px)+76px)]')}>
           <div role="toolbar" aria-label={trybAdn ? 'Adnotacje' : 'Ołówek'} className={cn('nb-cozy-plyta pointer-events-auto flex max-w-full flex-col gap-2 rounded-2xl border p-2', trybAdn && 'w-[min(760px,calc(100vw-16px))]')}>
             {trybAdn && (
               <>
@@ -3349,7 +3383,7 @@ export function CanvasSection() {
               <>
                 {/* Ołówek: te same kolory i ten sam suwak wielkości co w adnotacjach.
                     Telefon: kolory w jednym rzędzie, suwak i przyciski w drugim. Komputer: wszystko w jednym. */}
-                <div className="flex h-11 items-center justify-between gap-0.5 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:justify-start md:gap-1.5">
+                <div className="flex h-11 items-center justify-between gap-0.5 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:h-auto md:min-h-11 md:flex-wrap md:justify-start md:gap-1.5 md:overflow-visible">
                   {['auto', ...KOLORY_ADNOTACJI].map(przyciskKoloru)}
                   {!mobilny && (
                     <>
@@ -3360,6 +3394,7 @@ export function CanvasSection() {
                     </>
                   )}
                 </div>
+                {podpowiedzOlowka && <p className="px-1 text-[11.5px] leading-snug text-foreground/60">{podpowiedzOlowka}</p>}
                 {mobilny && (
                   <div className="flex items-center gap-2 px-0.5">
                     {suwakWielkosciPedzla}
@@ -3506,6 +3541,24 @@ export function CanvasSection() {
           const w = projekt.warstwy.find(x => x.id === outpaint)
           if (!w) return null
           return (
+            <RamkaOutpaint
+              warstwa={w}
+              widok={widok}
+              marginesy={margOutpaint}
+              onZmiana={setMargOutpaint}
+              onKoniec={m => {
+                // po puszczeniu uchwytu dociągamy kadr do formatu, który przyjmie model (pokazana ramka = to, co naprawdę zostanie wygenerowane)
+                const u = ukladRozszerzenia(w.naturalWidth, w.naturalHeight, { proporcja: 1, kotwica: 'srodek', marginesy: m }, typWymiarow(MODEL_OUTPAINTU))
+                if (u) setMargOutpaint(marginesyZUkladu(u))
+              }}
+            />
+          )
+        })()}
+      {outpaint &&
+        (() => {
+          const w = projekt.warstwy.find(x => x.id === outpaint)
+          if (!w) return null
+          return (
             <Outpaint
               key={`outpaint-${w.id}`}
               src={w.src}
@@ -3513,6 +3566,8 @@ export function CanvasSection() {
               wysokosc={w.naturalHeight}
               model={MODEL_OUTPAINTU}
               trwa={Boolean(akcjaAI)}
+              marginesy={margOutpaint}
+              onMarginesy={setMargOutpaint}
               onRozszerz={z => uruchomOutpaint(w.id, z)}
               onAnuluj={() => setOutpaint(null)}
               style={mobilny ? stylMobilny : {

@@ -301,12 +301,27 @@ export function CzatCanvas({
   // Szerokość zajęta przez panel — ekran startowy centruje się w pozostałej części płótna (między lewą krawędzią a panelem)
   useEffect(() => {
     document.documentElement.style.setProperty('--nb-czat-szer', '0px')
+    // miejsce realnie zajęte przez otwarty panel czatu na komputerze (340 px + odstęp) — pasek ołówka nie może się pod nim chować
+    // (szerokość panelu zależy od przybliżenia/okna, więc mierzymy go zamiast zgadywać)
+    const mierzCzat = () => {
+      const el = document.querySelector<HTMLElement>('.nb-czat-root')
+      const zajete = !mobilny && !zwiniety && el ? Math.max(0, Math.round(window.innerWidth - el.getBoundingClientRect().left)) : 0
+      document.documentElement.style.setProperty('--nb-czat-zajete', `${zajete}px`)
+    }
+    mierzCzat()
+    const obserwator = new ResizeObserver(mierzCzat)
+    const elCzatu = document.querySelector<HTMLElement>('.nb-czat-root')
+    if (elCzatu) obserwator.observe(elCzatu)
+    window.addEventListener('resize', mierzCzat)
     // telefon: otwarty arkusz czatu chowa dok narzędzi (nie ma na nim miejsca)
     if (mobilny && !zwiniety) document.documentElement.setAttribute('data-nb-czat-mob', 'otwarty')
     else if (mobilny && (pineski.length > 0 || zalaczniki.length > 0 || zaznaczona || zaznaczoneWarstwy.length > 0)) document.documentElement.setAttribute('data-nb-czat-mob', 'chipy')
     else document.documentElement.removeAttribute('data-nb-czat-mob')
     return () => {
       document.documentElement.style.removeProperty('--nb-czat-szer')
+      document.documentElement.style.removeProperty('--nb-czat-zajete')
+      obserwator.disconnect()
+      window.removeEventListener('resize', mierzCzat)
       document.documentElement.removeAttribute('data-nb-czat-mob')
     }
   }, [zwiniety, mobilny, pineski.length, zalaczniki.length, zaznaczona, zaznaczoneWarstwy.length])

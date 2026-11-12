@@ -35,10 +35,23 @@ export const PROPORCJE_OUTPAINT: Proporcja[] = [
 /** Gdzie ma przybyć nowa treść: wokół (zdjęcie na środku) albo tylko z jednej strony. */
 export type Kotwica = 'srodek' | 'lewo' | 'prawo' | 'gora' | 'dol'
 
+/** Dowolne rozszerzenie: o ile kadr rośnie z każdej strony, jako ułamek szerokości (l, r) i wysokości (t, b) ORYGINAŁU. */
+export interface Marginesy {
+  l: number
+  t: number
+  r: number
+  b: number
+}
+
+/** Największy sensowny margines z jednej strony (×oryginał): dalej model i tak zgaduje, a klatka rośnie ponad limit. */
+export const MAKS_MARGINES = 3
+
 export interface ZadanieRozszerzenia {
   /** docelowe proporcje (szerokość / wysokość) */
   proporcja: number
   kotwica: Kotwica
+  /** wolne rozszerzenie przeciągnięciem ramki: ma pierwszeństwo przed `proporcja` i `kotwica` (proporcję klatki dobieramy do niego) */
+  marginesy?: Marginesy
   /** dodatkowy zapas kadru (1 = tylko do proporcji; 1.3 = kadr 30% większy w obu osiach) */
   zapas?: number
   /** opis tego, co ma być w nowych miejscach (opcjonalny) */
@@ -73,6 +86,7 @@ export interface UkladRozszerzenia {
 
 /** Układ rozszerzenia; `null`, gdy kadr już ma te proporcje (nie ma czego dorysowywać). */
 export function ukladRozszerzenia(sw: number, sh: number, z: ZadanieRozszerzenia, model: ModelDlaWymiarow): UkladRozszerzenia | null {
+  if (z.marginesy) return ukladZMarginesow(sw, sh, z.marginesy, model)
   const { width: fw, height: fh } = dopasujWymiary(Math.round(z.proporcja * 1000), 1000, model)
   const R = fw / fh
   const zapas = Math.max(1, z.zapas ?? 1)
@@ -95,6 +109,48 @@ export function ukladRozszerzenia(sw: number, sh: number, z: ZadanieRozszerzenia
   const y = z.kotwica === 'gora' ? extraY : z.kotwica === 'dol' ? 0 : Math.round(extraY / 2)
   const k = fw / W
   return { fw, fh, W, H, x, y, ow, oh, mx: Math.round(x * k), my: Math.round(y * k), mw: Math.round(ow * k), mh: Math.round(oh * k) }
+}
+
+/**
+ * Układ dla wolnej ramki. Model obsługuje tylko niektóre formaty, więc kadr dociągamy do najbliższego z nich:
+ * oś, której brakuje, rośnie po obu stronach proporcjonalnie do tego, co użytkownik już tam przeciągnął (albo po równo).
+ * Oryginał nigdy nie jest rozciągany — zmienia się tylko ilość dorysowywanej treści.
+ */
+function ukladZMarginesow(sw: number, sh: number, m: Marginesy, model: ModelDlaWymiarow): UkladRozszerzenia | null {
+  const klamra = (v: number) => Math.min(MAKS_MARGINES, Math.max(0, v))
+  let l = klamra(m.l) * sw
+  let r = klamra(m.r) * sw
+  let t = klamra(m.t) * sh
+  let b = klamra(m.b) * sh
+  if (l + r + t + b < Math.max(sw, sh) * 0.004) return null
+  const { width: fw, height: fh } = dopasujWymiary(Math.round(((sw + l + r) / (sh + t + b)) * 1000), 1000, model)
+  const R = fw / fh
+  const dociagnij = (a: number, c: number, brak: number): [number, number] => {
+    const suma = a + c
+    return suma > 0.5 ? [a + (brak * a) / suma, c + (brak * c) / suma] : [a + brak / 2, c + brak / 2]
+  }
+  const W0 = sw + l + r
+  const H0 = sh + t + b
+  if (W0 / H0 < R) [l, r] = dociagnij(l, r, H0 * R - W0)
+  else [t, b] = dociagnij(t, b, W0 / R - H0)
+  let W = sw + l + r
+  let H = sh + t + b
+  const dlugi = Math.max(W, H)
+  const s = dlugi > MAKS_BOK ? MAKS_BOK / dlugi : 1
+  const ow = Math.round(sw * s)
+  const oh = Math.round(sh * s)
+  W = Math.round(W * s)
+  H = Math.round(H * s)
+  const x = Math.round(l * s)
+  const y = Math.round(t * s)
+  const kx = fw / W
+  const ky = fh / H
+  return { fw, fh, W, H, x, y, ow, oh, mx: Math.round(x * kx), my: Math.round(y * ky), mw: Math.round(ow * kx), mh: Math.round(oh * ky) }
+}
+
+/** Marginesy odpowiadające układowi (po dociągnięciu do formatu modelu) — to „przyciągnięta” ramka pokazywana po puszczeniu uchwytu. */
+export function marginesyZUkladu(u: UkladRozszerzenia): Marginesy {
+  return { l: u.x / u.ow, t: u.y / u.oh, r: (u.W - u.x - u.ow) / u.ow, b: (u.H - u.y - u.oh) / u.oh }
 }
 
 const wczytaj = (src: string) =>
@@ -138,7 +194,9 @@ function poleceniePoOpisie(u: UkladRozszerzenia, z: ZadanieRozszerzenia, notatki
     gora: 'against the BOTTOM edge of the frame, with the empty grey area above it',
     dol: 'against the TOP edge of the frame, with the empty grey area below it',
   }
-  const gdzie = u.mx + u.mw >= u.fw - 1 && u.mx <= 1 ? 'spanning the full width' : strona[z.kotwica]
+  const gdzie = z.marginesy
+    ? `inside the frame, with empty grey area on its ${stronyRozszerzenia(u).join(', ')} side${stronyRozszerzenia(u).length > 1 ? 's' : ''}`
+    : u.mx + u.mw >= u.fw - 1 && u.mx <= 1 ? 'spanning the full width' : strona[z.kotwica]
   const opis = z.opis?.trim()
   return [
     'Outpaint this picture: extend the scene beyond its original borders.',
